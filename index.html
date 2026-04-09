@@ -13,6 +13,9 @@
 <link rel="icon" href="data:,">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 <style>
+   /* ============================================================
+   MODIFICATION AVEC GEMINI
+   ============================================================ */
    /* --- Réduction dynamique de la console --- */
 .tama-shell {
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -26,6 +29,15 @@
 /* Cache les icônes quand c'est réduit pour faire de la place */
 .tama-shell.shrunk .icon-row {
   display: none; 
+}
+   /* --- Cache la barre de navigation du bas --- */
+.fixed.bottom-0.left-0.w-full.flex {
+  display: none !important;
+}
+
+/* On enlève l'espace vide en bas de l'écran qui était réservé à la barre */
+body {
+  padding-bottom: env(safe-area-inset-bottom, 20px) !important;
 }
 /* ============================================================
    PALETTE — modifie ici pour tout changer
@@ -385,6 +397,19 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
           <div style="font-size:20px;font-weight:bold;color:var(--lilac)" id="s-str">0</div>
           <div class="slbl">série</div>
         </div>
+         </div> 
+
+<div style="margin-top: 32px; border-top: 2px dashed var(--border); padding-top: 16px;">
+  <h3 style="font-weight:bold; margin-bottom: 8px;">🧠 Bilan IA</h3>
+  
+  <div id="claude-summary" style="background: var(--card); padding: 12px; border-radius: 8px; font-size: 13px; color: var(--text2); min-height: 50px;">
+    Ton bilan apparaîtra ici...
+  </div>
+  
+  <button onclick="resetBilan()" style="margin-top: 12px; background: var(--coral); color: white; border: 2px solid #c87a7a; padding: 6px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; transition: 0.2s;">
+    🔄 Réinitialiser le bilan
+  </button>
+</div>
         <div style="text-align:center;padding:8px;background:rgba(128,208,168,.07);border-radius:10px">
           <div style="font-size:20px;font-weight:bold;color:var(--mint)" id="s-xp">0</div>
           <div class="slbl">XP total</div>
@@ -1115,6 +1140,14 @@ new p5(p5s);
 
 /* INIT */
 updUI();renderHabs();
+
+   function resetBilan() {
+  if(confirm("Voulez-vous vraiment effacer le bilan de l'IA ?")) {
+    document.getElementById('claude-summary').innerHTML = 'Ton bilan apparaîtra ici...';
+    // Si tu as une vibration configurée :
+    if(navigator.vibrate) navigator.vibrate(50);
+  }
+}
 </script>
 </body>
 </html>

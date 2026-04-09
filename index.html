@@ -585,10 +585,21 @@ const CATS=[
   {id:'intel',  icon:'📚',label:'Intellectuel',def:'20 min lecture'},
   {id:'serene', icon:'🕯️',label:'Sérénité',    def:'10 min calme'},
 ];
-function defs(){return{
-  g:{name:'Petit·e Gotchi',totalXp:0,stage:'egg',energy:3,happiness:3,envLv:0,moodDay:null,mood:null, activeEnv:'parc', props:[]},
-  habits:CATS.map(c=>({catId:c.id,label:c.def})),log:{},journal:[],pin:null,lastActive:null,apiKey:null,meteo:null
-}}
+function defs(){
+  return{ 
+    g:{
+      name:'Petit·e Gotchi', totalXp:0, stage:'egg', energy:3, happiness:3, envLv:0, moodDay:null, activeEnv:'parc', 
+      // Tes 3 objets de base pour tester le système :
+      props: [
+        { nom: "Plante Grasse", type: "decor", emoji: "🪴", actif: true },
+        { nom: "Tapis Doux", type: "decor", emoji: "☁️", actif: false },
+        { nom: "Pluie de confettis", type: "ambiance", emoji: "✨", actif: false }
+      ],
+      customBubbles: [] // Le futur cerveau à mots doux de Claude
+    }, 
+    habits:CATS.map(c=>({catId:c.id,label:c.id})), log:{}, journal:[], pin:null, apiKey:null 
+  }
+}
 function load(){try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);return{...defs(),...d,g:{...defs().g,...d.g},habits:d.habits||defs().habits}}}catch(e){}return defs()}
 function save(){try{localStorage.setItem(SK,JSON.stringify(D))}catch(e){}}
 let D=load();
@@ -739,8 +750,23 @@ function getBubble(){
   if(Math.random()<.15&&done>0&&done<6)pool=MSG.idle;
   return pool[Math.floor(Math.random()*pool.length)];
 }
-function updBubbleNow(){ if(document.getElementById('bubble')) document.getElementById('bubble').textContent=getBubble() }
-updBubbleNow();setInterval(updBubbleNow,18000);
+function updBubbleNow(){ 
+  const h=hr(), ha=D.g.happiness; 
+  let pool=["♪ la la ♪","*regarde les nuages*","*boing*","✿"]; 
+  
+  // On ajoute les mots doux de Claude au répertoire !
+  if(D.g.customBubbles && D.g.customBubbles.length > 0) {
+    pool = pool.concat(D.g.customBubbles);
+  }
+
+  // Conditions spéciales (Nuit, Tristesse)
+  if(h>=22||h<7) pool=["Zzz... 🌙","*pionce*","Bonne nuit ✿"]; 
+  else if(ha<=1) pool=["Ça va aller... 💜","Je suis là ✿"]; 
+  
+  // Affichage au hasard
+  if(document.getElementById('bubble')) document.getElementById('bubble').textContent=pool[Math.floor(Math.random()*pool.length)]; 
+} 
+updBubbleNow(); setInterval(updBubbleNow, 20000);
 
 /* ============================================================
    API CLAUDE (PROPS + SOUTIEN + BILAN)
@@ -748,52 +774,57 @@ updBubbleNow();setInterval(updBubbleNow,18000);
 function saveApi(){const v=document.getElementById('api-inp').value.trim();if(v){D.apiKey=v;save();toast('Clé API sauvegardée ✿')}else toast('Colle ta clé sk-ant-...')}
 
 async function askClaude(){
-  const key=D.apiKey; if(!key){toast('Clé API manquante');return}
+  const key=D.apiKey; if(!key){toast('Clé API manquante dans les Réglages');return}
   const g=D.g, recentJ=D.journal.slice(-2).map(j=>j.text).join(' ');
   const td = today();
 
-  // --- LOGIQUE D'ÉCONOMIE (Tous les 3 jours) ---
+  // 1. Règle d'économie : Un cadeau tous les 3 jours maximum
   let giveGift = false;
-  if (!D.lastGiftDate) { giveGift = true; } // Premier cadeau !
+  if (!D.lastGiftDate) { giveGift = true; }
   else {
-    const last = new Date(D.lastGiftDate);
-    const now = new Date();
-    const diffDays = Math.floor((now - last) / (1000 * 60 * 60 * 24));
-    if(diffDays >= 3) giveGift = true; // 3 jours sont passés
+    const diffDays = Math.floor((new Date() - new Date(D.lastGiftDate)) / (1000 * 60 * 60 * 24));
+    if(diffDays >= 3) giveGift = true; 
   }
 
-  // On prépare le prompt de base
-  let prompt = `Tu es le compagnon numérique d'Émilie. Énergie ${g.energy}/5, Humeur ${g.happiness}/5, Notes: ${recentJ||'(vide)'}. Donne-lui une pensée complice et douce en 2 phrases max.`;
-  
-  // Si c'est le jour du cadeau, on ajoute l'instruction pour l'objet
+  // 2. Préparation du prompt pour Claude
+  let prompt = `Tu es le compagnon numérique d'Émilie. Énergie ${g.energy}/5, Humeur ${g.happiness}/5, Notes: ${recentJ||'(vide)'}.
+  Action 1: Donne une pensée complice (2 phrases max).
+  Action 2: Invente une TRÈS COURTE phrase (1 à 4 mots) qu'un compagnon dirait en patientant (ex: "*s'étire*", "Hmm...").`;
+
   if(giveGift) {
-    prompt += ` INVENTE AUSSI UN SEUL (1) objet pixel mignon pour elle. Catégories possibles: "decor", "accessoire", ou "couleur". Réponds UNIQUEMENT avec ce format JSON strict : {"message": "ta pensée", "cadeau": {"nom": "nom de l'objet", "type": "la catégorie choisie", "emoji": "🎨"}}`;
+    prompt += ` Action 3: INVENTE un objet pixel (catégories: "decor", "accessoire", "couleur", "ambiance" VISUELLE uniquement).
+    Réponds UNIQUEMENT en format JSON strict : {"message": "ta pensée", "bulle": "phrase courte", "cadeau": {"nom": "nom de l'objet", "type": "catégorie", "emoji": "🎨"}}`;
   } else {
-    prompt += ` Réponds UNIQUEMENT avec ce format JSON strict : {"message": "ta pensée"}`;
+    prompt += ` Réponds UNIQUEMENT en format JSON strict : {"message": "ta pensée", "bulle": "phrase courte"}`;
   }
 
-  if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Je lis tes notes... 📖';
+  if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Je réfléchis... 💭';
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}, body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]}) });
-    const d=await r.json(); 
+    const d=await r.json();
     const match = d.content[0].text.match(/\{[\s\S]*\}/);
-    
-    if(match) { 
-      const data = JSON.parse(match[0]); 
-      if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = data.message; 
-      
-      // Si Claude a envoyé un cadeau, on l'enregistre !
+
+    if(match) {
+      const data = JSON.parse(match[0]);
+      if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = data.message;
+
+      // Sauvegarder la nouvelle phrase pour la bulle !
+      if(data.bulle) {
+        if(!D.g.customBubbles) D.g.customBubbles = [];
+        if(!D.g.customBubbles.includes(data.bulle)) D.g.customBubbles.push(data.bulle);
+        if(D.g.customBubbles.length > 10) D.g.customBubbles.shift(); // Garde les 10 plus récentes
+      }
+
+      // Sauvegarder le cadeau !
       if(giveGift && data.cadeau) {
         if(!D.g.props) D.g.props = [];
-        // On évite les doublons
         if(!D.g.props.find(p => p.nom === data.cadeau.nom)) {
-            // L'objet a maintenant un état "actif" (équipé ou non)
             D.g.props.push({ nom: data.cadeau.nom, type: data.cadeau.type, emoji: data.cadeau.emoji, actif: false });
-            D.lastGiftDate = td; // On relance le chrono des 3 jours !
+            D.lastGiftDate = td; // Relance le chrono !
             toast(`🎁 Nouveau cadeau débloqué : ${data.cadeau.nom} !`);
         }
       }
-      save(); renderProps(); 
+      save(); renderProps();
     }
   }catch(e){if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Erreur API.'}
 }
@@ -1155,16 +1186,17 @@ const p5s=(p)=>{
   }
 
 function drawZzz(p,x,y){
-    p.noStroke();
     for(let i=0;i<3;i++){
-      const fy=y - i*15 - (p.frameCount%40)*0.5;
-      const fx=x + i*10 + Math.sin(p.frameCount*.1+i)*3;
-      const sz=PX * (1 + (i*0.3)); // Les Z grossissent en montant
-      p.fill(p.color(176,144,208, 200 - i*50));
-      // Dessin d'un vrai Z pixelisé en 3 barres
-      p.rect(fx, fy, sz*3, sz); // Barre haut
-      p.rect(fx+sz, fy+sz, sz, sz); // Diagonale (milieu)
-      p.rect(fx, fy+sz*2, sz*3, sz); // Barre bas
+      const fy=y-i*15-(p.frameCount%50)*0.4;
+      const fx=x+i*10+Math.sin(p.frameCount*.1+i)*3;
+      const sz=PX; // Taille d'un pixel
+      p.fill(p.color(176,144,208, 200-i*50));
+      
+      // Un VRAI Z pixelisé sur 4 lignes !
+      px(fx, fy, sz*4, sz);           // Barre du haut
+      px(fx+sz*2, fy+sz, sz, sz);     // Diagonale haut
+      px(fx+sz, fy+sz*2, sz, sz);     // Diagonale bas
+      px(fx, fy+sz*3, sz*4, sz);      // Barre du bas
     }
   }
 

@@ -1025,65 +1025,114 @@ let bounceT=0,particles=[],blinkT=0,blink=false,celebQueue=[];
 const p5s=(p)=>{
   p.setup=function(){p.createCanvas(CS,CS).parent('cbox');p.noSmooth();p.frameRate(12)};
 
-  p.draw=function(){
-    const g=D.g, h=hr(), sleeping=(h>=22||h<7);
-    const en=g.energy*20, ha=g.happiness*20;
-    const n=(h>=21||h<6);
+p.draw = function() {
+    const g = D.g, h = hr(), sleeping = (h >= 22 || h < 7);
+    const en = g.energy * 20, ha = g.happiness * 20;
+    const n = (h >= 21 || h < 6);
 
-    if(shakeTimer>0){shakeTimer--;p.translate(Math.sin(p.frameCount*2)*2,0)}
+    // --- 1. SECOUSSE (Célébration quand tu coches une habitude) ---
+    if (shakeTimer > 0) { shakeTimer--; p.translate(Math.sin(p.frameCount * 2) * 2, 0); }
 
-    drawSky(p,h,ha);
-    if(meteoData&&meteoData.windspeed>30) drawWind(p);
+    // --- 2. CIEL & MÉTÉO ---
+    drawSky(p, h, ha);
+    if (meteoData && meteoData.windspeed > 30) drawWind(p);
 
-    let envActif = g.activeEnv || 'parc';
-    drawActiveEnv(p, envActif, n);
+    // Affichage de la Température en haut à droite
+    if (typeof meteoData !== 'undefined' && meteoData && meteoData.temperature) {
+      p.fill(255); p.noStroke(); p.textSize(12); p.textFont('Courier New'); p.textAlign(p.RIGHT, p.TOP);
+      p.text(Math.round(meteoData.temperature) + "°C", CS - 8, 8);
+    }
 
+    // --- 3. DÉCORS (Normal ou Mode Focus) ---
+    if (isFocusMode) {
+      drawFocusEnv(p, n);
+    } else {
+      let envActif = g.activeEnv || 'parc';
+      drawActiveEnv(p, envActif, n);
+    }
+
+    // --- 4. PROPS : OBJETS DE DÉCOR (Sur le sol) ---
+    if (D.g.props) {
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(24);
+      let decors = D.g.props.filter(pr => pr.actif && pr.type === 'decor');
+      decors.forEach((pr, i) => {
+        let objX = 40 + (i * 45); // Espacés sur le sol
+        p.text(pr.emoji, objX, 100); 
+      });
+    }
+
+    // --- 5. MOUVEMENT DU GOTCHI (Ton code amélioré !) ---
     bounceT += sleeping ? 0.04 : 0.12;
-    let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
+    let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT) * 3;
     let amplitude = 15;
     let vitesse = 0.02;
+    
+    let cx = CS / 2;
+    let by = g.stage === 'egg' ? 115 : g.stage === 'baby' ? 108 : g.stage === 'teen' ? 98 : 85;
 
-    if (!sleeping && ha >= 80 && en >= 80) {
-      amplitude = 40; vitesse = 0.06;
-      if (p.frameCount % 20 < 10) bobY -= PX;
-    } else if (!sleeping && ha >= 60 && en >= 60) {
-      amplitude = 25; vitesse = 0.04;
+    if (isFocusMode) {
+      // En mode focus, il est assis à son bureau et ne marche pas
+      cx = CS / 2 - 20;
+      by = 95;
+      bobY = Math.sin(bounceT) * 1;
+    } else if (!sleeping) {
+      // Logique de balade normale
+      if (ha >= 80 && en >= 80) {
+        amplitude = 40; vitesse = 0.06;
+        if (p.frameCount % 20 < 10) bobY -= PX; // Petits sauts de joie
+      } else if (ha >= 60 && en >= 60) {
+        amplitude = 25; vitesse = 0.04;
+      }
+      let moveX = Math.sin(p.frameCount * vitesse) * amplitude;
+      cx += moveX;
     }
 
-    let moveX = sleeping ? 0 : Math.sin(p.frameCount * vitesse) * amplitude;
-    const cx = CS/2 + moveX;
-    const by = g.stage==='egg'?115:g.stage==='baby'?108:g.stage==='teen'?98:85;
+    // --- 6. DESSIN DU GOTCHI ---
+    if (g.stage === 'egg') drawEgg(p, cx, by + bobY);
+    else if (g.stage === 'baby') drawBaby(p, cx, by + bobY, sleeping, en, ha);
+    else if (g.stage === 'teen') drawTeen(p, cx, by + bobY, sleeping, en, ha);
+    else drawAdult(p, cx, by + bobY, sleeping, en, ha);
 
-    if(g.stage==='egg') drawEgg(p,cx,by+bobY);
-    else if(g.stage==='baby') drawBaby(p,cx,by+bobY,sleeping,en,ha);
-    else if(g.stage==='teen') drawTeen(p,cx,by+bobY,sleeping,en,ha);
-    else drawAdult(p,cx,by+bobY,sleeping,en,ha);
+    // Dessiner le petit bureau par-dessus le Gotchi en mode focus
+    if (isFocusMode) drawFocusTable(p, n);
 
-    if(sleeping&&g.stage!=='egg') drawZzz(p,cx+16,by-10);
-    if(ha>=100&&!sleeping) drawRainbow(p);
+    // --- 7. EFFETS SPÉCIAUX (Zzz, Arc-en-ciel) ---
+    if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
+    if (ha >= 100 && !sleeping && !isFocusMode) drawRainbow(p);
 
-    updateParts(p);
-     // --- Météo intégrée au décor ---
-    if (typeof meteoData !== 'undefined' && meteoData && meteoData.temperature) {
-      p.fill(255); // Couleur blanche
-      p.noStroke();
-      p.textSize(12);
-      p.textFont('Courier New');
-      p.textAlign(p.RIGHT, p.TOP);
-      p.text(Math.round(meteoData.temperature) + "°C", CS - 8, 8); // Dans le coin en haut à droite
+    // --- 8. PROPS : ACCESSOIRES & AMBIANCES ---
+    if (D.g.props && !sleeping) {
+      p.textAlign(p.CENTER, p.CENTER);
+      
+      // Accessoires (Sur la tête)
+      let accs = D.g.props.filter(pr => pr.actif && pr.type === 'accessoire');
+      p.textSize(18);
+      accs.forEach((pr, i) => {
+         // Calcule la hauteur de la tête selon le stade
+         let headY = (by + bobY) - (g.stage === 'egg' ? 20 : g.stage === 'baby' ? 15 : g.stage === 'teen' ? 25 : 35);
+         p.text(pr.emoji, cx, headY - (i * 10)); // Empilés si plusieurs
+      });
+
+      // Ambiances (Magie dans le ciel)
+      let ambs = D.g.props.filter(pr => pr.actif && pr.type === 'ambiance');
+      p.textSize(16);
+      ambs.forEach((pr, i) => {
+         let floatX = CS/2 + Math.sin(p.frameCount * 0.05 + i) * 60;
+         let floatY = 40 + Math.cos(p.frameCount * 0.03 + i) * 15;
+         p.text(pr.emoji, floatX, floatY);
+      });
     }
-    blinkT++;
-    if (blinkT > 45 + Math.random() * 35) {
-      blink = true;
+
+    // --- 9. CLIGNOTEMENT DES YEUX ET CÉLÉBRATION ---
+    blinkT++; 
+    if (blinkT > 45 + Math.random() * 35) { 
+      blink = true; 
       if (blinkT > 49 + Math.random() * 4) { blink = false; blinkT = 0; }
     }
-
-    while (celebQueue.length) {
-      const cid = celebQueue.shift();
-      for(let i=0; i<15; i++) {
-        spawnP(cx + (Math.random()-.5)*40, by - 10, C.rainbow[Math.floor(Math.random()*C.rainbow.length)]);
-      }
-      bounceT = Math.PI * 1.5;
+    while (celebQueue.length) { 
+      celebQueue.shift(); 
+      bounceT = Math.PI * 1.5; 
     }
   };
 
@@ -1091,24 +1140,50 @@ const p5s=(p)=>{
 
   function drawActiveEnv(p, env, n) {
     p.noStroke();
+    
     if (env === 'parc') {
-      p.fill(n ? C.gndN : C.gnd); p.rect(0, 120, CS, 80);
-      p.fill(n ? '#305028' : C.gndDk); p.rect(0, 120, CS, PX*2);
-      if(!n){ drawFl(p, 14, 126, C.flPk); drawFl(p, 186, 128, C.flYl); }
-      drawTree(p, 8, 86, n); drawTree(p, 160, 90, n);
-    } 
-    else if (env === 'chambre') {
-      p.fill(n ? '#a090a8' : C.wallIn); p.rect(0, 60, CS, 60);
-      p.fill(n ? '#807080' : C.floorIn); p.rect(0, 120, CS, 80);
-      p.fill(n ? '#605070' : C.rug); p.rect(20, 140, 160, 40, 10);
-      p.fill(n ? C.skyN1 : C.skyD1); p.rect(20, 70, 40, 40);
-      p.fill('#e8e8f0'); p.rect(38, 70, 4, 40); p.rect(20, 88, 40, 4);
-    } 
-    else if (env === 'montagne') {
-      p.fill(n ? '#404858' : C.mnt1); p.rect(0, 120, CS, 80);
-      p.fill(n ? '#202838' : C.mnt2); p.rect(0, 120, CS, PX*2); 
-      p.fill(n ? '#505868' : '#b0b8c8'); p.triangle(40, 120, 100, 50, 160, 120);
-      p.fill(n ? '#c0c0d0' : C.snow); p.triangle(100, 50, 83, 70, 117, 70);
+      p.fill(n ? C.gndN : C.gnd); 
+      p.rect(0, 120, CS, 80);
+      
+      p.fill(n ? '#305028' : C.gndDk); 
+      p.rect(0, 120, CS, PX * 2);
+      
+      if (!n) { 
+        drawFl(p, 14, 126, C.flPk); 
+        drawFl(p, 186, 128, C.flYl); 
+      }
+      drawTree(p, 8, 86, n); 
+      drawTree(p, 160, 90, n);
+      
+    } else if (env === 'chambre') {
+      p.fill(n ? '#a090a8' : C.wallIn); 
+      p.rect(0, 60, CS, 60);
+      
+      p.fill(n ? '#807080' : C.floorIn); 
+      p.rect(0, 120, CS, 80);
+      
+      p.fill(n ? '#605070' : C.rug); 
+      p.rect(20, 140, 160, 40, 10);
+      
+      p.fill(n ? C.skyN1 : C.skyD1); 
+      p.rect(20, 70, 40, 40);
+      
+      p.fill('#e8e8f0'); 
+      p.rect(38, 70, 4, 40); 
+      p.rect(20, 88, 40, 4);
+      
+    } else if (env === 'montagne') {
+      p.fill(n ? '#404858' : C.mnt1); 
+      p.rect(0, 120, CS, 80);
+      
+      p.fill(n ? '#202838' : C.mnt2); 
+      p.rect(0, 120, CS, PX * 2); 
+      
+      p.fill(n ? '#505868' : '#b0b8c8'); 
+      p.triangle(40, 120, 100, 50, 160, 120);
+      
+      p.fill(n ? '#c0c0d0' : C.snow); 
+      p.triangle(100, 50, 83, 70, 117, 70);
     }
   }
 
@@ -1130,59 +1205,186 @@ const p5s=(p)=>{
   function drawFl(p,x,y,c){p.fill('#58a058');px(x,y,PX,PX*2);p.fill(c);px(x-PX,y-PX,PX,PX);px(x+PX,y-PX,PX,PX);px(x,y-PX*2,PX,PX);p.fill('#f0d878');px(x,y-PX,PX,PX)}
   function drawTree(p,x,y,n){p.fill(C.trunk);px(x+PX*2,y+PX*4,PX*2,PX*5);p.fill(n?C.leafN:C.leaf);px(x,y+PX,PX*6,PX*3);px(x+PX,y-PX,PX*4,PX*2);px(x+PX*2,y-PX*2,PX*2,PX)}
 
-  function drawEgg(p,cx,cy){
-    const x=cx-PX*3,y=cy;p.noStroke();
-    p.fill(C.egg);px(x+PX*2,y,PX*3,PX);px(x+PX,y+PX,PX*5,PX);px(x,y+PX*2,PX*7,PX*3);px(x+PX,y+PX*5,PX*5,PX);px(x+PX*2,y+PX*6,PX*3,PX);
-    p.fill(C.eggSp);px(x+PX*2,y+PX*2,PX,PX);px(x+PX*4,y+PX*3,PX*2,PX);px(x+PX*3,y+PX*5,PX,PX);
-    if(D.g.totalXp>30){p.fill(C.eggCr);px(x+PX*3,y+PX,PX,PX);px(x+PX*4,y+PX*2,PX,PX);px(x+PX*3,y+PX*3,PX,PX)}
+  
+  function drawEgg(p, cx, cy) {
+    const x = cx - PX * 3, y = cy;
+    p.noStroke();
+    
+    p.fill(C.egg);
+    px(x + PX * 2, y, PX * 3, PX);
+    px(x + PX, y + PX, PX * 5, PX);
+    px(x, y + PX * 2, PX * 7, PX * 3);
+    px(x + PX, y + PX * 5, PX * 5, PX);
+    px(x + PX * 2, y + PX * 6, PX * 3, PX);
+    
+    p.fill(C.eggSp);
+    px(x + PX * 2, y + PX * 2, PX, PX);
+    px(x + PX * 4, y + PX * 3, PX * 2, PX);
+    px(x + PX * 3, y + PX * 5, PX, PX);
+    
+    if (D.g.totalXp > 30) {
+      p.fill(C.eggCr);
+      px(x + PX * 3, y + PX, PX, PX);
+      px(x + PX * 4, y + PX * 2, PX, PX);
+      px(x + PX * 3, y + PX * 3, PX, PX);
+    }
   }
 
-  function drawBaby(p,cx,cy,sl,en,ha){
-    const x=cx-PX*3,y=cy;p.noStroke();
-    p.fill(C.body);px(x+PX,y,PX*4,PX);px(x,y+PX,PX*6,PX*3);px(x+PX,y+PX*4,PX*4,PX);
-    p.fill(C.bodyLt);px(x+PX,y+PX,PX,PX);px(x+PX*2,y,PX,PX);
-    if(sl||blink){p.fill(C.eye);px(x+PX,y+PX*2,PX*2,PX);px(x+PX*3,y+PX*2,PX*2,PX)}
-    else{p.fill(C.eye);px(x+PX,y+PX*2,PX,PX);px(x+PX*4,y+PX*2,PX,PX);p.fill('#fff');p.rect(x+PX,y+PX*2,2,2);p.rect(x+PX*4,y+PX*2,2,2)}
-    p.fill(C.cheek);px(x,y+PX*3,PX,PX);px(x+PX*5,y+PX*3,PX,PX);
+  function drawBaby(p, cx, cy, sl, en, ha) {
+    const x = cx - PX * 3, y = cy;
+    p.noStroke();
+    
+    // Corps
+    p.fill(C.body);
+    px(x + PX, y, PX * 4, PX);
+    px(x, y + PX, PX * 6, PX * 3);
+    px(x + PX, y + PX * 4, PX * 4, PX);
+    
+    // Reflets
+    p.fill(C.bodyLt);
+    px(x + PX, y + PX, PX, PX);
+    px(x + PX * 2, y, PX, PX);
+    
+    // Yeux
+    if (sl || blink) {
+      p.fill(C.eye);
+      px(x + PX, y + PX * 2, PX * 2, PX);
+      px(x + PX * 3, y + PX * 2, PX * 2, PX);
+    } else {
+      p.fill(C.eye);
+      px(x + PX, y + PX * 2, PX, PX);
+      px(x + PX * 4, y + PX * 2, PX, PX);
+      p.fill('#fff');
+      p.rect(x + PX, y + PX * 2, 2, 2);
+      p.rect(x + PX * 4, y + PX * 2, 2, 2);
+    }
+    
+    // Joues
+    p.fill(C.cheek);
+    px(x, y + PX * 3, PX, PX);
+    px(x + PX * 5, y + PX * 3, PX, PX);
+    
+    // Bouche
     p.fill(C.mouth);
-    if(!sl){if(ha>60)px(x+PX*2,y+PX*3,PX*2,PX);else if(ha<25)px(x+PX*2,y+PX*3+2,PX*2,PX);else px(x+PX*2,y+PX*3,PX,PX)}
-    p.fill(C.bodyDk);px(x+PX,y+PX*5,PX,PX);px(x+PX*4,y+PX*5,PX,PX);
-    if(en<25&&!sl){px(x+PX*2,y+PX*5,PX*2,PX)}
-  }
-
-  function drawTeen(p,cx,cy,sl,en,ha){
-    const x=cx-PX*4,y=cy;p.noStroke();
-    p.fill(C.body);px(x+PX*2,y,PX*4,PX);px(x+PX,y+PX,PX*6,PX);px(x,y+PX*2,PX*8,PX*4);px(x+PX,y+PX*6,PX*6,PX*2);px(x+PX*2,y+PX*8,PX*4,PX);
-    p.fill(C.bodyLt);px(x+PX*2,y+PX,PX*2,PX);px(x+PX,y+PX*2,PX*2,PX);
-    if(sl||blink){p.fill(C.eye);px(x+PX*2,y+PX*3,PX*2,PX);px(x+PX*4,y+PX*3,PX*2,PX)}
-    else{p.fill(C.eye);px(x+PX*2,y+PX*3,PX,PX*2);px(x+PX*5,y+PX*3,PX,PX*2);p.fill('#fff');p.rect(x+PX*2,y+PX*3,2,2);p.rect(x+PX*5,y+PX*3,2,2)}
-    p.fill(C.cheek);px(x+PX,y+PX*5,PX,PX);px(x+PX*6,y+PX*5,PX,PX);
-    p.fill(C.mouth);
-    if(!sl){if(ha>70){px(x+PX*3,y+PX*5,PX*2,PX);px(x+PX*2,y+PX*5,PX,PX);px(x+PX*5,y+PX*5,PX,PX)}
-      else if(ha>40)px(x+PX*3,y+PX*5,PX*2,PX);else if(ha<20)px(x+PX*3,y+PX*6,PX*2,PX);else px(x+PX*3,y+PX*5,PX,PX)}
+    if (!sl) {
+      if (ha > 60) px(x + PX * 2, y + PX * 3, PX * 2, PX);
+      else if (ha < 25) px(x + PX * 2, y + PX * 3 + 2, PX * 2, PX);
+      else px(x + PX * 2, y + PX * 3, PX, PX);
+    }
+    
+    // Ombres / Bras
     p.fill(C.bodyDk);
-    if(en<25&&!sl){px(x-PX,y+PX*4,PX,PX);px(x+PX*8,y+PX*4,PX,PX)}else{px(x-PX,y+PX*3,PX,PX*2);px(x+PX*8,y+PX*3,PX,PX*2)}
-    px(x+PX*2,y+PX*9,PX*2,PX);px(x+PX*5,y+PX*9,PX*2,PX);
+    px(x + PX, y + PX * 5, PX, PX);
+    px(x + PX * 4, y + PX * 5, PX, PX);
+    if (en < 25 && !sl) px(x + PX * 2, y + PX * 5, PX * 2, PX);
   }
 
-  function drawAdult(p,cx,cy,sl,en,ha){
-    const x=cx-PX*5,y=cy;p.noStroke();
-    p.fill(C.body);px(x+PX*3,y,PX*4,PX);px(x+PX*2,y+PX,PX*6,PX);px(x+PX,y+PX*2,PX*8,PX);
-    px(x,y+PX*3,PX*10,PX*4);px(x+PX,y+PX*7,PX*8,PX*2);px(x+PX*2,y+PX*9,PX*6,PX);px(x+PX*3,y+PX*10,PX*4,PX);
-    p.fill(C.bodyLt);px(x+PX*3,y+PX,PX*2,PX);px(x+PX*2,y+PX*2,PX*2,PX);px(x+PX,y+PX*3,PX*2,PX);
-    if(sl||blink){p.fill(C.eye);px(x+PX*2,y+PX*5,PX*2,PX);px(x+PX*6,y+PX*5,PX*2,PX)}
-    else{p.fill(C.eye);px(x+PX*2,y+PX*4,PX*2,PX*2);px(x+PX*6,y+PX*4,PX*2,PX*2);p.fill('#fff');px(x+PX*2,y+PX*4,PX,PX);px(x+PX*6,y+PX*4,PX,PX);}
-    p.fill(C.cheek);px(x+PX,y+PX*6,PX,PX);px(x+PX*8,y+PX*6,PX,PX);
+  function drawTeen(p, cx, cy, sl, en, ha) {
+    const x = cx - PX * 4, y = cy;
+    p.noStroke();
+    
+    p.fill(C.body);
+    px(x + PX * 2, y, PX * 4, PX);
+    px(x + PX, y + PX, PX * 6, PX);
+    px(x, y + PX * 2, PX * 8, PX * 4);
+    px(x + PX, y + PX * 6, PX * 6, PX * 2);
+    px(x + PX * 2, y + PX * 8, PX * 4, PX);
+    
+    p.fill(C.bodyLt);
+    px(x + PX * 2, y + PX, PX * 2, PX);
+    px(x + PX, y + PX * 2, PX * 2, PX);
+    
+    if (sl || blink) {
+      p.fill(C.eye);
+      px(x + PX * 2, y + PX * 3, PX * 2, PX);
+      px(x + PX * 4, y + PX * 3, PX * 2, PX);
+    } else {
+      p.fill(C.eye);
+      px(x + PX * 2, y + PX * 3, PX, PX * 2);
+      px(x + PX * 5, y + PX * 3, PX, PX * 2);
+      p.fill('#fff');
+      p.rect(x + PX * 2, y + PX * 3, 2, 2);
+      p.rect(x + PX * 5, y + PX * 3, 2, 2);
+    }
+    
+    p.fill(C.cheek);
+    px(x + PX, y + PX * 5, PX, PX);
+    px(x + PX * 6, y + PX * 5, PX, PX);
+    
     p.fill(C.mouth);
-    if(!sl){if(ha>80){px(x+PX*3,y+PX*7,PX*4,PX);px(x+PX*3,y+PX*6,PX,PX);px(x+PX*6,y+PX*6,PX,PX)}
-      else if(ha>50)px(x+PX*4,y+PX*7,PX*2,PX);else if(ha<20){px(x+PX*4,y+PX*8,PX*2,PX);px(x+PX*3,y+PX*7,PX,PX)}
-      else px(x+PX*4,y+PX*7,PX,PX)}
+    if (!sl) {
+      if (ha > 70) { px(x + PX * 3, y + PX * 5, PX * 2, PX); px(x + PX * 2, y + PX * 5, PX, PX); px(x + PX * 5, y + PX * 5, PX, PX); }
+      else if (ha > 40) px(x + PX * 3, y + PX * 5, PX * 2, PX);
+      else if (ha < 20) px(x + PX * 3, y + PX * 6, PX * 2, PX);
+      else px(x + PX * 3, y + PX * 5, PX, PX);
+    }
+    
     p.fill(C.bodyDk);
-    if(en<20&&!sl){px(x-PX,y+PX*5,PX,PX*3);px(x+PX*10,y+PX*5,PX,PX*3)}
-    else if(ha>85&&!sl){px(x-PX,y+PX*2,PX,PX*2);px(x+PX*10,y+PX*2,PX,PX*2);px(x-PX*2,y+PX,PX,PX);px(x+PX*11,y+PX,PX,PX)}
-    else{px(x-PX,y+PX*4,PX,PX*3);px(x+PX*10,y+PX*4,PX,PX*3)}
-    px(x+PX*2,y+PX*11,PX*2,PX);px(x+PX*6,y+PX*11,PX*2,PX);
-    if(en<25&&!sl)px(x+PX*3,y+PX*11,PX,PX);
+    if (en < 25 && !sl) {
+      px(x - PX, y + PX * 4, PX, PX); px(x + PX * 8, y + PX * 4, PX, PX);
+    } else {
+      px(x - PX, y + PX * 3, PX, PX * 2); px(x + PX * 8, y + PX * 3, PX, PX * 2);
+    }
+    px(x + PX * 2, y + PX * 9, PX * 2, PX);
+    px(x + PX * 5, y + PX * 9, PX * 2, PX);
+  }
+
+  function drawAdult(p, cx, cy, sl, en, ha) {
+    const x = cx - PX * 5, y = cy;
+    p.noStroke();
+    
+    p.fill(C.body);
+    px(x + PX * 3, y, PX * 4, PX);
+    px(x + PX * 2, y + PX, PX * 6, PX);
+    px(x + PX, y + PX * 2, PX * 8, PX);
+    px(x, y + PX * 3, PX * 10, PX * 4);
+    px(x + PX, y + PX * 7, PX * 8, PX * 2);
+    px(x + PX * 2, y + PX * 9, PX * 6, PX);
+    px(x + PX * 3, y + PX * 10, PX * 4, PX);
+    
+    p.fill(C.bodyLt);
+    px(x + PX * 3, y + PX, PX * 2, PX);
+    px(x + PX * 2, y + PX * 2, PX * 2, PX);
+    px(x + PX, y + PX * 3, PX * 2, PX);
+    
+    if (sl || blink) {
+      p.fill(C.eye);
+      px(x + PX * 2, y + PX * 5, PX * 2, PX);
+      px(x + PX * 6, y + PX * 5, PX * 2, PX);
+    } else {
+      p.fill(C.eye);
+      px(x + PX * 2, y + PX * 4, PX * 2, PX * 2);
+      px(x + PX * 6, y + PX * 4, PX * 2, PX * 2);
+      p.fill('#fff');
+      px(x + PX * 2, y + PX * 4, PX, PX);
+      px(x + PX * 6, y + PX * 4, PX, PX);
+    }
+    
+    p.fill(C.cheek);
+    px(x + PX, y + PX * 6, PX, PX);
+    px(x + PX * 8, y + PX * 6, PX, PX);
+    
+    p.fill(C.mouth);
+    if (!sl) {
+      if (ha > 80) { px(x + PX * 3, y + PX * 7, PX * 4, PX); px(x + PX * 3, y + PX * 6, PX, PX); px(x + PX * 6, y + PX * 6, PX, PX); }
+      else if (ha > 50) px(x + PX * 4, y + PX * 7, PX * 2, PX);
+      else if (ha < 20) { px(x + PX * 4, y + PX * 8, PX * 2, PX); px(x + PX * 3, y + PX * 7, PX, PX); }
+      else px(x + PX * 4, y + PX * 7, PX, PX);
+    }
+    
+    p.fill(C.bodyDk);
+    if (en < 20 && !sl) {
+      px(x - PX, y + PX * 5, PX, PX * 3); px(x + PX * 10, y + PX * 5, PX, PX * 3);
+    } else if (ha > 85 && !sl) {
+      px(x - PX, y + PX * 2, PX, PX * 2); px(x + PX * 10, y + PX * 2, PX, PX * 2);
+      px(x - PX * 2, y + PX, PX, PX); px(x + PX * 11, y + PX, PX, PX);
+    } else {
+      px(x - PX, y + PX * 4, PX, PX * 3); px(x + PX * 10, y + PX * 4, PX, PX * 3);
+    }
+    
+    px(x + PX * 2, y + PX * 11, PX * 2, PX);
+    px(x + PX * 6, y + PX * 11, PX * 2, PX);
+    if (en < 25 && !sl) px(x + PX * 3, y + PX * 11, PX, PX);
   }
 
 function drawZzz(p,x,y){

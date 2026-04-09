@@ -13,6 +13,20 @@
 <link rel="icon" href="data:,">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 <style>
+   /* --- Réduction dynamique de la console --- */
+.tama-shell {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: top center;
+}
+.tama-shell.shrunk {
+  max-width: 180px; 
+  padding: 4px;
+  margin-top: 2px;
+}
+/* Cache les icônes quand c'est réduit pour faire de la place */
+.tama-shell.shrunk .icon-row {
+  display: none; 
+}
 /* ============================================================
    PALETTE — modifie ici pour tout changer
    ============================================================ */
@@ -366,13 +380,20 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     </div>
     <div class="card">
       <h2>Stats</h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-        <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px"><div style="font-size:20px;font-weight:bold;color:var(--lilac)" id="s-str">0</div><div class="slbl">série</div></div>
-        <div style="text-align:center;padding:8px;background:rgba(128,208,168,.07);border-radius:10px"><div style="font-size:20px;font-weight:bold;color:var(--mint)" id="s-xp">0</div><div class="slbl">XP total</div></div>
-        <div style="text-align:center;padding:8px;background:rgba(232,196,160,.07);border-radius:10px"><div style="font-size:20px;font-weight:bold;color:var(--peach)" id="s-hab">0</div><div class="slbl">habitudes</div></div>
-        <div style="text-align:center;padding:8px;background:rgba(136,190,232,.07);border-radius:10px"><div style="font-size:20px;font-weight:bold;color:var(--sky)" id="s-jrn">0</div><div class="slbl">journal</div></div>
+      <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px">
+        <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
+          <div style="font-size:20px;font-weight:bold;color:var(--lilac)" id="s-str">0</div>
+          <div class="slbl">série</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:rgba(128,208,168,.07);border-radius:10px">
+          <div style="font-size:20px;font-weight:bold;color:var(--mint)" id="s-xp">0</div>
+          <div class="slbl">XP total</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:rgba(136,190,232,.07);border-radius:10px">
+          <div style="font-size:20px;font-weight:bold;color:var(--sky)" id="s-jrn">0</div>
+          <div class="slbl">journal</div>
+        </div>
       </div>
-    </div>
     <div class="card" style="text-align:center">
       <h2>Bilan pour Claude</h2>
       <button class="btn btn-p" onclick="genBilan()" style="width:100%;margin-bottom:6px;font-size:10px">✿ Bilan semaine</button>
@@ -458,7 +479,7 @@ const CATS=[
   {id:'serene', icon:'🕯️',label:'Sérénité',    def:'10 min calme'},
 ];
 function defs(){return{
-  g:{name:'Petit·e Gotchi',totalXp:0,stage:'egg',energy:3,happiness:3,envLv:0,moodDay:null,mood:null},
+  g:{name:'Petit·e Gotchi',totalXp:0,stage:'egg',energy:3,happiness:3,envLv:0,moodDay:null,mood:null, activeEnv:'parc', props:[]},
   habits:CATS.map(c=>({catId:c.id,label:c.def})),log:{},journal:[],pin:null,lastActive:null,apiKey:null,meteo:null
 }}
 function load(){try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);return{...defs(),...d,g:{...defs().g,...d.g},habits:d.habits||defs().habits}}}catch(e){}return defs()}
@@ -479,6 +500,15 @@ function go(t){
   document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
   document.getElementById('p-'+t).classList.add('on');
   const btn=document.querySelector(`.tb[data-t="${t}"]`);if(btn)btn.classList.add('on');
+  
+  // --- Animation de réduction de la console ---
+  const shell = document.querySelector('.tama-shell');
+  if(t === 'gotchi') {
+    shell.classList.remove('shrunk');
+  } else {
+    shell.classList.add('shrunk');
+  }
+  
   if(t==='gotchi'||t==='habits')renderHabs();
   if(t==='progress')renderProg();
   if(t==='journal'){journalLocked=true;renderJ()}

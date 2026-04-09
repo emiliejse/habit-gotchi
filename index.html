@@ -869,7 +869,7 @@ function genSOS(){
     <textarea class="inp" rows="6" readonly style="font-size:9px">${txt}</textarea>
     <button class="btn btn-p" style="width:100%;margin-top:6px" onclick="navigator.clipboard.writeText(document.querySelector('#mbox textarea').value).then(()=>this.textContent='✓ Copié !')">📋 Copier</button>
     <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>`;
-}
+} 
 function saveName(){const n=document.getElementById('name-inp').value.trim();if(n){D.g.name=n;save();updUI()}}
 function genSoutien(){
   haptic();

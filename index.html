@@ -10,7 +10,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#ddd6e8">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="data:,">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 <style>
    /* ============================================================
@@ -743,35 +748,85 @@ updBubbleNow();setInterval(updBubbleNow,18000);
 function saveApi(){const v=document.getElementById('api-inp').value.trim();if(v){D.apiKey=v;save();toast('Clé API sauvegardée ✿')}else toast('Colle ta clé sk-ant-...')}
 
 async function askClaude(){
-  const key=D.apiKey; if(!key){toast('Configure ta clé API dans Réglages');return}
-  const prompt=`Tu es le compagnon Habit-Gotchi. Fais un court message d'encouragement ET invente 3 petits objets (props) mignons pour l'inventaire. Tu DOIS répondre UNIQUEMENT avec ce format JSON : {"message": "ton texte", "props": ["objet1", "objet2", "objet3"]}`;
+  const key=D.apiKey; if(!key){toast('Clé API manquante');return}
+  const g=D.g, recentJ=D.journal.slice(-2).map(j=>j.text).join(' ');
+  const td = today();
+
+  // --- LOGIQUE D'ÉCONOMIE (Tous les 3 jours) ---
+  let giveGift = false;
+  if (!D.lastGiftDate) { giveGift = true; } // Premier cadeau !
+  else {
+    const last = new Date(D.lastGiftDate);
+    const now = new Date();
+    const diffDays = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+    if(diffDays >= 3) giveGift = true; // 3 jours sont passés
+  }
+
+  // On prépare le prompt de base
+  let prompt = `Tu es le compagnon numérique d'Émilie. Énergie ${g.energy}/5, Humeur ${g.happiness}/5, Notes: ${recentJ||'(vide)'}. Donne-lui une pensée complice et douce en 2 phrases max.`;
   
-  if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Je cherche des cadeaux... 🎁';
+  // Si c'est le jour du cadeau, on ajoute l'instruction pour l'objet
+  if(giveGift) {
+    prompt += ` INVENTE AUSSI UN SEUL (1) objet pixel mignon pour elle. Catégories possibles: "decor", "accessoire", ou "couleur". Réponds UNIQUEMENT avec ce format JSON strict : {"message": "ta pensée", "cadeau": {"nom": "nom de l'objet", "type": "la catégorie choisie", "emoji": "🎨"}}`;
+  } else {
+    prompt += ` Réponds UNIQUEMENT avec ce format JSON strict : {"message": "ta pensée"}`;
+  }
+
+  if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Je lis tes notes... 📖';
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})
-    });
-    const d=await r.json();
-    const txt = d.content[0].text;
-    const jsonMatch = txt.match(/\{[\s\S]*\}/);
-    if(jsonMatch) {
-        const data = JSON.parse(jsonMatch[0]);
-        if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = data.message;
-        D.g.props = [...new Set([...(D.g.props||[]), ...data.props])]; 
-        save(); renderProps(); toast('Tu as reçu 3 nouveaux objets ! 🎒');
-    } else {
-        if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = txt; 
+    const r=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}, body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]}) });
+    const d=await r.json(); 
+    const match = d.content[0].text.match(/\{[\s\S]*\}/);
+    
+    if(match) { 
+      const data = JSON.parse(match[0]); 
+      if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = data.message; 
+      
+      // Si Claude a envoyé un cadeau, on l'enregistre !
+      if(giveGift && data.cadeau) {
+        if(!D.g.props) D.g.props = [];
+        // On évite les doublons
+        if(!D.g.props.find(p => p.nom === data.cadeau.nom)) {
+            // L'objet a maintenant un état "actif" (équipé ou non)
+            D.g.props.push({ nom: data.cadeau.nom, type: data.cadeau.type, emoji: data.cadeau.emoji, actif: false });
+            D.lastGiftDate = td; // On relance le chrono des 3 jours !
+            toast(`🎁 Nouveau cadeau débloqué : ${data.cadeau.nom} !`);
+        }
+      }
+      save(); renderProps(); 
     }
   }catch(e){if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Erreur API.'}
 }
 
-function renderProps() {
-  const c = document.getElementById('props-list'); if(!c) return;
-  if(!D.g.props || D.g.props.length === 0) {
-      c.innerHTML = '<p style="font-size:11px; color:var(--text2);">Ton sac est vide.</p>'; return;
-  }
-  c.innerHTML = D.g.props.map(p => `<div style="background:var(--card); border:2px solid var(--border); border-radius:10px; padding:6px 12px; font-size:11px; font-weight:bold; box-shadow:0 2px 4px var(--shadow);">${p}</div>`).join('');
+function renderProps() { 
+  const c = document.getElementById('props-list'); if(!c) return; 
+  if(!D.g.props || D.g.props.length === 0) { 
+    c.innerHTML = '<p style="font-size:10px; color:var(--text2);">Ton sac est vide. Reviens plus tard pour des surprises !</p>'; 
+    return; 
+  } 
+  
+  // On crée de jolies cartes interactives
+  c.innerHTML = D.g.props.map((p, index) => `
+    <div onclick="toggleProp(${index})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; color:${p.actif ? '#fff' : 'var(--text)'}; border:2px solid var(--border); border-radius:8px; padding:8px 12px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <span style="font-size:20px;">${p.emoji || '🎁'}</span>
+      <span>${p.nom}</span>
+      <span style="font-size:8px; text-transform:uppercase; opacity:0.8;">${p.type || 'objet'}</span>
+    </div>
+  `).join(''); 
+}
+
+// Fonction pour Équiper / Ranger un objet
+function toggleProp(index) {
+    haptic();
+    // Inverse l'état (actif devient inactif, et vice versa)
+    D.g.props[index].actif = !D.g.props[index].actif;
+    save();
+    renderProps();
+    
+    // Si on active un objet, on prévient l'utilisateur
+    if(D.g.props[index].actif) {
+        toast(`✨ ${D.g.props[index].nom} équipé !`);
+    }
 }
 
 function genSoutien(){
@@ -1099,9 +1154,18 @@ const p5s=(p)=>{
     if(en<25&&!sl)px(x+PX*3,y+PX*11,PX,PX);
   }
 
-  function drawZzz(p,x,y){
-    for(let i=0;i<3;i++){const fy=y-i*PX*3-(p.frameCount%50)/50*PX*2;const fx=x+i*PX*2+Math.sin(p.frameCount*.08+i)*2;const sz=i===1?PX*2:PX;
-      p.fill(p.color(176,144,208,170-i*45));px(fx,fy,sz,sz);px(fx+sz,fy,sz,sz);px(fx+sz,fy+sz,sz,sz);px(fx,fy+sz*2,sz,sz);px(fx+sz,fy+sz*2,sz,sz)}
+function drawZzz(p,x,y){
+    p.noStroke();
+    for(let i=0;i<3;i++){
+      const fy=y - i*15 - (p.frameCount%40)*0.5;
+      const fx=x + i*10 + Math.sin(p.frameCount*.1+i)*3;
+      const sz=PX * (1 + (i*0.3)); // Les Z grossissent en montant
+      p.fill(p.color(176,144,208, 200 - i*50));
+      // Dessin d'un vrai Z pixelisé en 3 barres
+      p.rect(fx, fy, sz*3, sz); // Barre haut
+      p.rect(fx+sz, fy+sz, sz, sz); // Diagonale (milieu)
+      p.rect(fx, fy+sz*2, sz*3, sz); // Barre bas
+    }
   }
 
   function spawnP(x,y,c){particles.push({x,y,vx:(Math.random()-.5)*4,vy:-Math.random()*3-1.5,life:16,c})}

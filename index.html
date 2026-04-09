@@ -380,51 +380,66 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   </div>
 
   <!-- PROGRESS -->
-  <div id="p-progress" class="pnl">
-    <div class="card">
-      <div class="nav-r"><button class="nav-a" onclick="navW(-1)">◀</button><h2 style="margin:0" id="w-title">Cette semaine</h2><button class="nav-a" onclick="navW(1)">▶</button></div>
-      <div id="w-view" class="cal"></div>
-      <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="font-size:8px;color:var(--text2)">L</span><span style="font-size:8px;color:var(--text2)">M</span><span style="font-size:8px;color:var(--text2)">M</span><span style="font-size:8px;color:var(--text2)">J</span><span style="font-size:8px;color:var(--text2)">V</span><span style="font-size:8px;color:var(--text2)">S</span><span style="font-size:8px;color:var(--text2)">D</span></div>
+<div id="p-progress" class="pnl">
+  <div class="card">
+    <div class="nav-r">
+      <button class="nav-a" onclick="navW(-1)">◀</button>
+      <h2 style="margin:0" id="w-title">Cette semaine</h2>
+      <button class="nav-a" onclick="navW(1)">▶</button>
     </div>
-    <div class="card">
-      <div class="nav-r"><button class="nav-a" onclick="navM(-1)">◀</button><h2 style="margin:0" id="m-title">Ce mois</h2><button class="nav-a" onclick="navM(1)">▶</button></div>
-      <div id="m-view" class="cal"></div>
+    <div id="w-view" class="cal"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:3px">
+      <span style="font-size:8px;color:var(--text2)">L</span><span style="font-size:8px;color:var(--text2)">M</span><span style="font-size:8px;color:var(--text2)">M</span><span style="font-size:8px;color:var(--text2)">J</span><span style="font-size:8px;color:var(--text2)">V</span><span style="font-size:8px;color:var(--text2)">S</span><span style="font-size:8px;color:var(--text2)">D</span>
     </div>
-    <div class="card">
-      <h2>Stats</h2>
-      <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px">
-        <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
-          <div style="font-size:20px;font-weight:bold;color:var(--lilac)" id="s-str">0</div>
-          <div class="slbl">série</div>
-        </div>
-         </div> 
+  </div>
 
-<div style="margin-top: 32px; border-top: 2px dashed var(--border); padding-top: 16px;">
-  <h3 style="font-weight:bold; margin-bottom: 8px;">🧠 Bilan IA</h3>
-  
-  <div id="claude-summary" style="background: var(--card); padding: 12px; border-radius: 8px; font-size: 13px; color: var(--text2); min-height: 50px;">
-    Ton bilan apparaîtra ici...
+  <div class="card">
+    <div class="nav-r">
+      <button class="nav-a" onclick="navM(-1)">◀</button>
+      <h2 style="margin:0" id="m-title">Ce mois</h2>
+      <button class="nav-a" onclick="navM(1)">▶</button>
+    </div>
+    <div id="m-view" class="cal"></div>
   </div>
-  
-  <button onclick="resetBilan()" style="margin-top: 12px; background: var(--coral); color: white; border: 2px solid #c87a7a; padding: 6px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; transition: 0.2s;">
-    🔄 Réinitialiser le bilan
-  </button>
-</div>
-        <div style="text-align:center;padding:8px;background:rgba(128,208,168,.07);border-radius:10px">
-          <div style="font-size:20px;font-weight:bold;color:var(--mint)" id="s-xp">0</div>
-          <div class="slbl">XP total</div>
-        </div>
-        <div style="text-align:center;padding:8px;background:rgba(136,190,232,.07);border-radius:10px">
-          <div style="font-size:20px;font-weight:bold;color:var(--sky)" id="s-jrn">0</div>
-          <div class="slbl">journal</div>
-        </div>
+
+  <div class="card">
+    <h2>Stats</h2>
+    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px">
+      <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
+        <div style="font-size:20px;font-weight:bold;color:var(--lilac)" id="s-str">0</div>
+        <div class="slbl">série</div>
       </div>
-    <div class="card" style="text-align:center">
-      <h2>Bilan pour Claude</h2>
-      <button class="btn btn-p" onclick="genBilan()" style="width:100%;margin-bottom:6px;font-size:10px">✿ Bilan semaine</button>
-      <div id="bil-out" style="display:none"><textarea id="bil-txt" class="inp" rows="7" readonly style="font-size:9px"></textarea><button class="btn btn-s" onclick="copyBil()" style="width:100%;margin-top:4px;font-size:10px">📋 Copier</button></div>
+      <div style="text-align:center;padding:8px;background:rgba(128,208,168,.07);border-radius:10px">
+        <div style="font-size:20px;font-weight:bold;color:var(--mint)" id="s-xp">0</div>
+        <div class="slbl">XP total</div>
+      </div>
+      <div style="text-align:center;padding:8px;background:rgba(136,190,232,.07);border-radius:10px">
+        <div style="font-size:20px;font-weight:bold;color:var(--sky)" id="s-jrn">0</div>
+        <div class="slbl">journal</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px; border-top: 2px dashed rgba(0,0,0,0.05); padding-top: 16px;">
+      <h3 style="font-weight:bold; margin-bottom: 8px; font-size: 14px;">🧠 Bilan IA</h3>
+      <div id="claude-summary" style="background: var(--card); padding: 12px; border-radius: 8px; font-size: 13px; color: var(--text2); min-height: 50px; border: 1px solid rgba(0,0,0,0.03);">
+        Ton bilan apparaîtra ici...
+      </div>
+      <button onclick="resetBilan()" style="margin-top: 12px; background: var(--coral); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 10px; transition: 0.2s;">
+        🔄 Réinitialiser le bilan
+      </button>
     </div>
   </div>
+
+  <div class="card" style="text-align:center">
+    <h2>Bilan pour Claude</h2>
+    <p style="font-size:10px; color:var(--text2); margin-bottom:10px;">Génère le texte à copier dans Claude pour obtenir ton analyse.</p>
+    <button class="btn btn-p" onclick="genBilan()" style="width:100%;margin-bottom:6px;font-size:10px">✿ Bilan semaine</button>
+    <div id="bil-out" style="display:none">
+      <textarea id="bil-txt" class="inp" rows="7" readonly style="font-size:9px"></textarea>
+      <button class="btn btn-s" onclick="copyBil()" style="width:100%;margin-top:4px;font-size:10px">📋 Copier</button>
+    </div>
+  </div>
+</div>
 
   <!-- FOCUS -->
   <div id="p-focus" class="pnl">

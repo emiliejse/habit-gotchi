@@ -521,18 +521,29 @@ function haptic(){try{navigator.vibrate&&navigator.vibrate([50])}catch(e){}}
    ============================================================ */
 let journalLocked=true;
 function go(t){
+  // 1. On cache tous les panneaux
   document.querySelectorAll('.pnl').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
-  document.getElementById('p-'+t).classList.add('on');
-  const btn=document.querySelector(`.tb[data-t="${t}"]`);if(btn)btn.classList.add('on');
   
-  // --- Animation de réduction de la console ---
+  // 2. On affiche le panneau demandé
+  const targetPanel = document.getElementById('p-'+t);
+  if(targetPanel) targetPanel.classList.add('on');
+  
+  // 3. Animation de réduction de la console
   const shell = document.querySelector('.tama-shell');
   if(t === 'gotchi') {
     shell.classList.remove('shrunk');
   } else {
     shell.classList.add('shrunk');
   }
+  
+  // 4. Mises à jour spécifiques
+  if(t==='gotchi'||t==='habits') renderHabs();
+  if(t==='progress') renderProg();
+  if(t==='journal') { journalLocked=true; renderJ(); }
+  
+  // Remet le scroll en haut
+  document.getElementById('dynamic-zone').scrollTop = 0;
+}
   
   if(t==='gotchi'||t==='habits')renderHabs();
   if(t==='progress')renderProg();

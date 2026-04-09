@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Habit-Gotchi - Santé Mentale TDAH-Friendly</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Habit-Gotchi">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#ddd6e8">
+  <link rel="manifest" href="assets/manifest.json">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js" integrity="sha512-5q2Vx2u2s8VJ9q32kX5p5FzHMXh3VqM3lYQ5Q4G2F2aF2aJ5j0l4q8XJ2aVlwqNOFOUEUuZZZJdRf3qJ5GZXmZk==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <!-- Console Tama-Shell -->
+  <div class="hdr bg-gray-200 p-2 flex justify-between items-center">
+    <div id="console">
+      <div id="habit-icons" class="flex justify-center space-x-2 my-2">
+        <div class="w-6 h-6 bg-pink-200 rounded"></div>
+        <div class="w-6 h-6 bg-lilac-200 rounded"></div>
+        <div class="w-6 h-6 bg-mint-200 rounded"></div>
+        <div class="w-6 h-6 bg-peach-200 rounded"></div>
+        <div class="w-6 h-6 bg-sky-200 rounded"></div>
+        <div class="w-6 h-6 bg-coral-200 rounded"></div>
+      </div>
+      <div id="tama-canvas"></div>
+      <div id="speech-bubble" class="text-center text-xs mt-2">Salut ! 👋</div>
+    </div>
+  </div>
+
+  <!-- Menu -->
+  <button id="menu-button">MENU</button>
+
+  <!-- Overlay Menu -->
+  <div id="menu-overlay" class="menu-overlay">
+    <div class="menu-content">
+      <h2 class="font-bold mb-4">MENU</h2>
+      <div class="space-y-2">
+        <div class="menu-item cursor-pointer" data-tab="habits">Habitudes</div>
+        <div class="menu-item cursor-pointer" data-tab="journal">Journal</div>
+        <div class="menu-item cursor-pointer" data-tab="progress">Progrès</div>
+        <div class="menu-item cursor-pointer" data-tab="focus">Mode Focus</div>
+      </div>
+      <button id="close-menu" class="mt-4 bg-pink-200 px-4 py-1 rounded">Fermer</button>
+    </div>
+  </div>
+
+  <!-- Timer Focus -->
+  <div id="focus-timer" style="display: none;">
+    <div id="timer">25:00</div>
+    <div id="focus-message"></div>
+  </div>
+
+  <!-- Zone de contenu -->
+  <div class="content-panels">
+    <div id="habits-panel" class="pnl on p-4">
+      <h1 class="text-lg mb-2">Habitudes</h1>
+      <p>Gère tes habitudes ici.</p>
+    </div>
+    <div id="journal-panel" class="pnl p-4">
+      <h1 class="text-lg mb-2">Journal</h1>
+      <textarea placeholder="Écris ici..." class="w-full h-32 p-2 border rounded font-mono"></textarea>
+    </div>
+    <div id="progress-panel" class="pnl p-4">
+      <h1 class="text-lg mb-2">Progrès</h1>
+      <p>Suivi de tes progrès.</p>
+    </div>
+    <div id="focus-panel" class="pnl p-4">
+      <h1 class="text-lg mb-2">Mode Focus</h1>
+      <p>Active le mode pour te concentrer.</p>
+    </div>
+  </div>
+
+  <div id="breath-guide"></div>
+
+  <!-- Scripts -->
+  <script src="assets/js/meteo.js"></script>
+  <script src="assets/js/claude.js"></script>
+  <script src="assets/js/focus.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

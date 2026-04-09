@@ -9,6 +9,16 @@
 <meta name="theme-color" content="#ddd6e8">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 <style>
+   /* Sliders 0-5 */
+.slider-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.slider-row label{font-size:9px;font-weight:bold;width:55px;text-transform:uppercase;letter-spacing:1px;color:var(--text2)}
+.slider-row input[type=range]{flex:1;-webkit-appearance:none;height:8px;border-radius:4px;outline:none;opacity:.85}
+.slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.slider-row .sv{font-size:13px;font-weight:bold;width:20px;text-align:center}
+#sl-energy{background:linear-gradient(90deg,var(--peach),var(--coral))}
+#sl-energy::-webkit-slider-thumb{background:var(--coral)}
+#sl-happy{background:linear-gradient(90deg,var(--sky),var(--mint))}
+#sl-happy::-webkit-slider-thumb{background:var(--mint)}
 /* ============================================================
    PALETTE & BASES
    ============================================================ */
@@ -185,6 +195,18 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
   <div class="bubble" id="bubble">...</div>
   <div class="meteo-badge" id="meteo-badge"></div>
+   <div style="max-width:320px;margin:6px auto 4px;padding:0 4px">
+    <div class="slider-row">
+      <label>Énergie</label>
+      <input type="range" id="sl-energy" min="0" max="5" step="1" value="3" oninput="setEnergy(this.value)">
+      <span class="sv" id="sv-energy">3</span>
+    </div>
+    <div class="slider-row">
+      <label>Bonheur</label>
+      <input type="range" id="sl-happy" min="0" max="5" step="1" value="3" oninput="setHappy(this.value)">
+      <span class="sv" id="sv-happy">3</span>
+    </div>
+  </div>
 </div>
 
 <div id="dynamic-zone">
@@ -293,8 +315,12 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
       <h2>✏️ Modifier Habitudes</h2>
       <div id="hab-edit"></div>
     </div>
-    <div class="card">
-      <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:5px;font-size:10px">📦 Exporter JSON</button>
+<div class="card">
+      <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:6px;font-size:10px">📦 Exporter JSON</button>
+      
+      <input type="file" id="import-file" style="display:none" accept=".json" onchange="importD(event)">
+      <button class="btn btn-s" onclick="document.getElementById('import-file').click()" style="width:100%;margin-bottom:12px;font-size:10px;background:var(--mint);color:#fff;border:none;">📥 Importer JSON</button>
+      
       <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Réinitialiser tout</button>
     </div>
   </div>
@@ -437,8 +463,12 @@ function editH(i,v){D.habits[i].label=v.trim()||D.habits[i].label;save()}
 function getSt(xp){let s=STG[0];for(const st of STG)if(xp>=st.th)s=st;return s}
 function nxtTh(xp){for(const s of STG)if(xp<s.th)return s.th;return 3000}
 function addXp(n){D.g.totalXp=Math.max(0,D.g.totalXp+n);D.g.stage=getSt(D.g.totalXp).k;save();updUI()}
+function setEnergy(v){D.g.energy=+v;if(document.getElementById('sv-energy'))document.getElementById('sv-energy').textContent=v;save()}
+function setHappy(v){D.g.happiness=+v;if(document.getElementById('sv-happy'))document.getElementById('sv-happy').textContent=v;save();updBubbleNow()}
 
 function updUI(){
+   if(document.getElementById('sl-energy')){ document.getElementById('sl-energy').value=D.g.energy; document.getElementById('sv-energy').textContent=D.g.energy; }
+  if(document.getElementById('sl-happy')){ document.getElementById('sl-happy').value=D.g.happiness; document.getElementById('sv-happy').textContent=D.g.happiness; }
   const g=D.g,s=getSt(g.totalXp),nt=nxtTh(g.totalXp),pt=s.th;
   const pct=nt>pt?((g.totalXp-pt)/(nt-pt))*100:100;
   if(document.getElementById('g-name')) document.getElementById('g-name').textContent=g.name;
@@ -584,6 +614,27 @@ function saveName(){D.g.name=document.getElementById('name-inp').value;save();up
 function savePin(){const v=document.getElementById('pin-inp').value;if(v.length===4){D.pin=v;save();toast('PIN OK');}}
 function exportD(){const b=new Blob([JSON.stringify(D)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`gotchi.json`;a.click();}
 function confirmReset(){if(confirm("Tout effacer ?")){localStorage.removeItem(SK);location.reload()}}
+   // Fonction pour importer la sauvegarde
+function importD(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    try {
+      const data = JSON.parse(evt.target.result);
+      if(data && data.g){ // Vérifie que c'est bien un fichier Habit-Gotchi
+        localStorage.setItem(SK, JSON.stringify(data));
+        toast("✿ Sauvegarde restaurée ! Redémarrage...");
+        setTimeout(() => location.reload(), 1500); // Recharge l'application
+      } else { 
+        toast("Ce fichier n'est pas valide."); 
+      }
+    } catch(err) { 
+      toast("Erreur de lecture du fichier."); 
+    }
+  };
+  reader.readAsText(file);
+}
 function clModal(){document.getElementById('modal').style.display='none'}
 function toast(m){document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<p style="font-size:12px;text-align:center">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:5px">OK</button>`}
 
@@ -593,13 +644,19 @@ function toast(m){document.getElementById('modal').style.display='flex';document
 /* ==============================================
    p5.js — PIXEL ENGINE v5 (Arcs + Focus Body Doubling)
    ============================================== */
+/* ==============================================
+   p5.js — PIXEL ENGINE (BEAU GOTCHI RESTAURÉ)
+   ============================================== */
 const C={
   body:'#d8b8e8',bodyDk:'#c0a0d0',bodyLt:'#ecd8f8',eye:'#38304a',cheek:'#f0a0b0',tama:'#c8d8c0',
-  egg:'#f4e6d0', gnd:'#a8d498', gndN:'#3c6030', skyD1:'#b8d4f0', skyN1:'#28203c',
+  egg:'#f4e6d0',eggSp:'#e4d2b8',eggCr:'#d4bfa0',
+  gnd:'#a8d498',gndDk:'#90c480',gndN:'#3c6030', skyD1:'#b8d4f0', skyN1:'#28203c',
+  skyGray1:'#a0a0a8', skyGray2:'#c0c0c8', mouth:'#38304a',
   wallIn:'#e0d8c8', floorIn:'#c8b8a8', rug:'#b898d4',
-  mnt1:'#a0a8b8', snow:'#e8e8f0', trunk:'#b09068', leaf:'#78c488',
-  star:'#f0e498', rainbow:['#e8a0a0','#e8c8a0','#e8e0a0','#a0d8a0','#a0b8e0','#c0a0d8'],
-  gui:'#38304a55',guiEn:'#e09090',guiHa:'#80d0a8', guiDark: '#fff'
+  mnt1:'#a0a8b8', mnt2:'#808898', snow:'#e8e8f0', trunk:'#b09068', leaf:'#78c488', leafN:'#406848',
+  star:'#f0e498', flPk:'#e898b8',flYl:'#f0d878',
+  rainbow:['#e8a0a0','#e8c8a0','#e8e0a0','#a0d8a0','#a0b8e0','#c0a0d8'],
+  guiDark: '#fff'
 };
 
 const PX=5,CS=200;
@@ -615,65 +672,52 @@ const p5s=(p)=>{
 
     if(shakeTimer>0){shakeTimer--;p.translate(Math.sin(p.frameCount*2)*2,0)}
 
-    // 1. Fond Météo/Ciel
-    drawSky(p,h,g.happiness);
+    drawSky(p,h,g.happiness*20);
 
-    // 2. Environnement (Normal ou Focus Body Doubling)
     if(isFocusMode) {
-      drawFocusEnv(p, n); // Décor de bureau
+      drawFocusEnv(p, n); 
     } else {
-      drawActiveEnv(p, g.activeEnv || 'parc', n); // Décors normaux
+      drawActiveEnv(p, g.activeEnv || 'parc', n); 
     }
 
-    // 3. Mouvement & Dessin Gotchi
     bounceT += sleeping ? 0.04 : 0.12;
     let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
     
-    // Position de base
     let cx = CS/2;
     let by = g.stage==='egg'?115:g.stage==='baby'?108:g.stage==='teen'?98:85;
 
-    // Si focus, il est assis au bureau
     if(isFocusMode) { cx = CS/2 - 20; by = 95; bobY = Math.sin(bounceT)*1; } 
-    // Sinon balade si heureux
     else if (!sleeping && g.happiness >= 4 && g.energy >= 4) {
       cx += Math.sin(p.frameCount * 0.04) * 30;
-      if (p.frameCount % 20 < 10) bobY -= PX; // Petits sauts
+      if (p.frameCount % 20 < 10) bobY -= PX;
     }
 
-    // Dessin selon stade
-    if(g.stage==='egg') drawEgg(p,cx,by+bobY);
-    else if(g.stage==='baby') drawBaby(p,cx,by+bobY,sleeping,blink,g.happiness);
-    else if(g.stage==='teen') drawTeen(p,cx,by+bobY,sleeping,blink,g.happiness);
-    else drawAdult(p,cx,by+bobY,sleeping,blink,g.happiness);
+    const en = g.energy * 20;
+    const ha = g.happiness * 20;
 
-    // Si focus, on dessine la table devant
+    if(g.stage==='egg') drawEgg(p,cx,by+bobY);
+    else if(g.stage==='baby') drawBaby(p,cx,by+bobY,sleeping,en,ha);
+    else if(g.stage==='teen') drawTeen(p,cx,by+bobY,sleeping,en,ha);
+    else drawAdult(p,cx,by+bobY,sleeping,en,ha);
+
     if(isFocusMode) drawFocusTable(p, n);
 
-    // Effets Zzz et Arc-en-ciel
     if(sleeping&&g.stage!=='egg') drawZzz(p,cx+16,by-10);
     if(g.happiness>=5&&!sleeping&&!isFocusMode) drawRainbow(p);
 
-    // 4. GUI : Les Arcs Énergie/Bonheur (En bas de l'écran)
-    drawGuiArcs(p, g.energy, g.happiness, n);
+    blinkT++; if (blinkT > 45 + Math.random()*35) { blink=true; if(blinkT>49+Math.random()*4){blink=false;blinkT=0;}}
 
-    // Gestion clignotement
-    blinkT++; if (blinkT > 50) { blink=true; if(blinkT>54){blink=false;blinkT=0;}}
-
-    // Célébration (cochage habitude)
     while (celebQueue.length) {
       celebQueue.shift();
-      bounceT = Math.PI * 1.5; // Petit saut
+      bounceT = Math.PI * 1.5; 
     }
   };
 
-  // --- Outils pixel ---
   function px(x,y,w,h){p.rect(Math.floor(x/PX)*PX,Math.floor(y/PX)*PX,Math.max(PX,Math.floor(w/PX)*PX),Math.max(PX,Math.floor(h/PX)*PX))}
 
-  // --- Décors ---
   function drawSky(p,h,ha){
     p.noStroke(); let c1,c2;
-    if(ha<=1&&h>=7&&h<21){c1=C.skyGray1;c2=C.skyGray2} // Gris si triste
+    if(ha<=20&&h>=7&&h<21){c1=C.skyGray1;c2=C.skyGray2} 
     else if(h>=7&&h<17){c1=C.skyD1;c2='#fff'}
     else if(h>=17&&h<21){c1='#e8c0a0';c2='#f0e0c0'}
     else {c1=C.skyN1;c2='#3c3058'}
@@ -685,81 +729,94 @@ const p5s=(p)=>{
     p.noStroke();
     if (env === 'parc') {
       p.fill(n ? C.gndN : C.gnd); p.rect(0, 110, CS, 90);
-      drawTree(p, 20, 70, n); drawTree(p, 150, 80, n);
+      p.fill(n ? '#305028' : C.gndDk); p.rect(0, 110, CS, PX*2);
+      if(!n){ drawFl(p, 14, 116, C.flPk); drawFl(p, 186, 118, C.flYl); }
+      drawTree(p, 8, 76, n); drawTree(p, 160, 80, n);
     } 
     else if (env === 'chambre') {
       p.fill(n ? '#807080' : C.floorIn); p.rect(0, 110, CS, 90);
       p.fill(n ? '#a090a8' : C.wallIn); p.rect(0, 60, CS, 50);
-      p.fill(n ? '#605070' : C.rug); px(40, 140, PX*24, PX*6); // Tapis
+      p.fill(n ? '#605070' : C.rug); px(20, 130, PX*32, PX*8); // Tapis
     } 
     else if (env === 'montagne') {
       p.fill(n ? '#404858' : C.mnt1); p.rect(0, 110, CS, 90);
-      p.fill(n ? '#c0c0d0' : C.snow); p.triangle(100, 50, 40, 110, 160, 110);
+      p.fill(n ? '#202838' : C.mnt2); p.rect(0, 110, CS, PX*2);
+      p.fill(n ? '#505868' : '#b0b8c8'); p.triangle(40, 110, 100, 40, 160, 110);
+      p.fill(n ? '#c0c0d0' : C.snow); p.triangle(100, 40, 83, 60, 117, 60);
     }
   }
 
-  // --- Focus : Body Doubling Décor ---
   function drawFocusEnv(p, n) {
-    // Mur et Sol de bureau cosy
     p.noStroke();
-    p.fill(n ? '#605868' : '#e0d8cc'); p.rect(0, 60, CS, 60); // Mur
-    p.fill(n ? '#484050' : '#b8a898'); p.rect(0, 120, CS, 80); // Sol
-    // Petite lampe allumée
+    p.fill(n ? '#605868' : '#e0d8cc'); p.rect(0, 60, CS, 60); 
+    p.fill(n ? '#484050' : '#b8a898'); p.rect(0, 120, CS, 80); 
     p.fill(C.star); px(CS-40, 70, PX*3, PX*5);
-    p.fill(n ? '#38304a' : '#fff'); p.rect(CS-35, 95, 5, 25); // Pied
+    p.fill(n ? '#38304a' : '#fff'); p.rect(CS-35, 95, 5, 25); 
   }
   function drawFocusTable(p, n) {
-    p.fill(n ? '#907860' : C.trunk); p.rect(PX*6, 110, PX*28, PX*8); // Table pixel
-    p.fill(n ? C.guiDark : C.eye); px(PX*8, 100, PX*5, PX*2); // Petit carnet
+    p.fill(n ? '#907860' : C.trunk); p.rect(PX*6, 110, PX*28, PX*8); 
+    p.fill(n ? C.guiDark : C.eye); px(PX*8, 100, PX*5, PX*2); 
   }
 
-  // --- GUI : Arcs Énergie & Bonheur ---
-  function drawGuiArcs(p, en, ha, n) {
-    const yc = CS - 25; // Centre vertical des arcs
-    const r = 50; // Rayon de base
-    p.noFill(); p.strokeWeight(PX);
+  function drawFl(p,x,y,c){p.fill('#58a058');px(x,y,PX,PX*2);p.fill(c);px(x-PX,y-PX,PX,PX);px(x+PX,y-PX,PX,PX);px(x,y-PX*2,PX,PX);p.fill('#f0d878');px(x,y-PX,PX,PX)}
+  function drawTree(p,x,y,n){p.fill(C.trunk);px(x+PX*2,y+PX*4,PX*2,PX*5);p.fill(n?C.leafN:C.leaf);px(x,y+PX,PX*6,PX*3);px(x+PX,y-PX,PX*4,PX*2);px(x+PX*2,y-PX*2,PX*2,PX)}
+  function drawZzz(p,x,y){for(let i=0;i<3;i++){const fy=y-i*PX*3-(p.frameCount%50)/50*PX*2;const fx=x+i*PX*2+Math.sin(p.frameCount*.08+i)*2;const sz=i===1?PX*2:PX;p.fill(p.color(176,144,208,170-i*45));px(fx,fy,sz,sz);px(fx+sz,fy,sz,sz);px(fx+sz,fy+sz,sz,sz);px(fx,fy+sz*2,sz,sz);px(fx+sz,fy+sz*2,sz,sz)}}
+  function drawRainbow(p){C.rainbow.forEach((c,i)=>{p.fill(c);px(CS/2-PX*(7-i),10+i*PX,PX*(14-i*2),PX)})}
 
-    // Couleur GUI selon jour/nuit
-    const baseCol = n ? p.color(255,50) : p.color(0,30);
-    const colEn = p.color(C.guiEn);
-    const colHa = p.color(C.guiHa);
-
-    // Énergie (Arc Gauche)
-    p.stroke(baseCol); p.arc(CS/2 - 35, yc, r, r, p.PI/2, p.PI*1.5);
-    let enAng = p.map(clamp(en,0,5), 0, 5, 0, p.PI);
-    p.stroke(colEn); p.arc(CS/2 - 35, yc, r, r, p.PI*1.5 - enAng, p.PI*1.5);
-
-    // Bonheur (Arc Droit)
-    p.stroke(baseCol); p.arc(CS/2 + 35, yc, r, r, p.PI*1.5, p.PI*2.5);
-    let haAng = p.map(clamp(ha,0,5), 0, 5, 0, p.PI);
-    
-    // Animation Bonheur
-    if(ha >= 5 && p.frameCount%8<4) p.stroke(C.star); // Scintille si max
-    else if(ha <= 1 && p.frameCount%6<3) p.stroke(C.skyGray1); // Clignote si triste
-    else p.stroke(colHa);
-    
-    p.arc(CS/2 + 35, yc, r, r, p.PI*1.5, p.PI*1.5 + haAng);
-
-    p.noStroke();
+  /* --- BEAUX SPRITES RESTAURÉS --- */
+  function drawEgg(p,cx,cy){
+    const x=cx-PX*3,y=cy;p.noStroke();
+    p.fill(C.egg);px(x+PX*2,y,PX*3,PX);px(x+PX,y+PX,PX*5,PX);px(x,y+PX*2,PX*7,PX*3);px(x+PX,y+PX*5,PX*5,PX);px(x+PX*2,y+PX*6,PX*3,PX);
+    p.fill(C.eggSp);px(x+PX*2,y+PX*2,PX,PX);px(x+PX*4,y+PX*3,PX*2,PX);px(x+PX*3,y+PX*5,PX,PX);
+    if(D.g.totalXp>30){p.fill(C.eggCr);px(x+PX*3,y+PX,PX,PX);px(x+PX*4,y+PX*2,PX,PX);px(x+PX*3,y+PX*3,PX,PX)}
   }
 
-  // --- Sprites Basics (Adaptés pour absence curseurs) ---
-  function drawTree(p,x,y,n){p.fill(C.trunk);px(x+10,y+20,PX*2,PX*5);p.fill(n?'#305028':C.leaf);px(x,y,PX*6,PX*4);}
-  function drawZzz(p,x,y){p.fill(p.color(176,144,208,200));px(x+Math.sin(p.frameCount*0.1)*3,y-(p.frameCount%30),PX,PX);}
-  function drawRainbow(p){C.rainbow.forEach((c,i)=>{p.fill(c);px(CS/2-30+i*5,20,PX,PX)})}
-
-  // Stade sprites (Simplified for brevity, assume functional as before)
-  function drawEgg(p,cx,cy){p.fill(C.egg);px(cx-15,cy,30,35);p.fill('#ecd8f8');px(cx-5,cy+10,5,5);}
-  function drawBaby(p,cx,cy,sl,bl,ha){
-    p.fill(C.body);px(cx-15,cy,30,25);
-    p.fill(ha<=1?C.skyGray1:C.eye);
-    if(sl||bl){px(cx-10,cy+10,8,3);px(cx+2,cy+10,8,3);}else{px(cx-8,cy+8,4,6);px(cx+4,cy+8,4,6);}
+  function drawBaby(p,cx,cy,sl,en,ha){
+    const x=cx-PX*3,y=cy;p.noStroke();
+    p.fill(C.body);px(x+PX,y,PX*4,PX);px(x,y+PX,PX*6,PX*3);px(x+PX,y+PX*4,PX*4,PX);
+    p.fill(C.bodyLt);px(x+PX,y+PX,PX,PX);px(x+PX*2,y,PX,PX);
+    if(sl||blink){p.fill(C.eye);px(x+PX,y+PX*2,PX*2,PX);px(x+PX*3,y+PX*2,PX*2,PX)}
+    else{p.fill(C.eye);px(x+PX,y+PX*2,PX,PX);px(x+PX*4,y+PX*2,PX,PX);p.fill('#fff');p.rect(x+PX,y+PX*2,2,2);p.rect(x+PX*4,y+PX*2,2,2)}
+    p.fill(C.cheek);px(x,y+PX*3,PX,PX);px(x+PX*5,y+PX*3,PX,PX);
+    p.fill(C.mouth);
+    if(!sl){if(ha>60)px(x+PX*2,y+PX*3,PX*2,PX);else if(ha<25)px(x+PX*2,y+PX*3+2,PX*2,PX);else px(x+PX*2,y+PX*3,PX,PX)}
+    p.fill(C.bodyDk);px(x+PX,y+PX*5,PX,PX);px(x+PX*4,y+PX*5,PX,PX);
+    if(en<25&&!sl){px(x+PX*2,y+PX*5,PX*2,PX)}
   }
-  function drawTeen(p,cx,cy,sl,bl,ha){p.fill(C.body);px(cx-20,cy,40,35);drawBaby(p,cx,cy,sl,bl,ha);} // Teen = Big baby
-  function drawAdult(p,cx,cy,sl,bl,ha){
-    p.fill(C.body);px(cx-25,cy,50,45);
-    if(sl||bl){p.fill(C.eye);px(cx-15,cy+15,10,3);px(cx+5,cy+15,10,3);}else{p.fill(C.eye);px(cx-12,cy+12,6,8);px(cx+6,cy+12,6,8);}
-    p.fill(C.mouth); if(!sl){if(ha>=4)px(cx-5,cy+25,10,3); else if(ha<=1)px(cx-5,cy+28,10,3); else px(cx-2,cy+25,4,3);}
+
+  function drawTeen(p,cx,cy,sl,en,ha){
+    const x=cx-PX*4,y=cy;p.noStroke();
+    p.fill(C.body);px(x+PX*2,y,PX*4,PX);px(x+PX,y+PX,PX*6,PX);px(x,y+PX*2,PX*8,PX*4);px(x+PX,y+PX*6,PX*6,PX*2);px(x+PX*2,y+PX*8,PX*4,PX);
+    p.fill(C.bodyLt);px(x+PX*2,y+PX,PX*2,PX);px(x+PX,y+PX*2,PX*2,PX);
+    if(sl||blink){p.fill(C.eye);px(x+PX*2,y+PX*3,PX*2,PX);px(x+PX*4,y+PX*3,PX*2,PX)}
+    else{p.fill(C.eye);px(x+PX*2,y+PX*3,PX,PX*2);px(x+PX*5,y+PX*3,PX,PX*2);p.fill('#fff');p.rect(x+PX*2,y+PX*3,2,2);p.rect(x+PX*5,y+PX*3,2,2)}
+    p.fill(C.cheek);px(x+PX,y+PX*5,PX,PX);px(x+PX*6,y+PX*5,PX,PX);
+    p.fill(C.mouth);
+    if(!sl){if(ha>70){px(x+PX*3,y+PX*5,PX*2,PX);px(x+PX*2,y+PX*5,PX,PX);px(x+PX*5,y+PX*5,PX,PX)}
+      else if(ha>40)px(x+PX*3,y+PX*5,PX*2,PX);else if(ha<20)px(x+PX*3,y+PX*6,PX*2,PX);else px(x+PX*3,y+PX*5,PX,PX)}
+    p.fill(C.bodyDk);
+    if(en<25&&!sl){px(x-PX,y+PX*4,PX,PX);px(x+PX*8,y+PX*4,PX,PX)}else{px(x-PX,y+PX*3,PX,PX*2);px(x+PX*8,y+PX*3,PX,PX*2)}
+    px(x+PX*2,y+PX*9,PX*2,PX);px(x+PX*5,y+PX*9,PX*2,PX);
+  }
+
+  function drawAdult(p,cx,cy,sl,en,ha){
+    const x=cx-PX*5,y=cy;p.noStroke();
+    p.fill(C.body);px(x+PX*3,y,PX*4,PX);px(x+PX*2,y+PX,PX*6,PX);px(x+PX,y+PX*2,PX*8,PX);
+    px(x,y+PX*3,PX*10,PX*4);px(x+PX,y+PX*7,PX*8,PX*2);px(x+PX*2,y+PX*9,PX*6,PX);px(x+PX*3,y+PX*10,PX*4,PX);
+    p.fill(C.bodyLt);px(x+PX*3,y+PX,PX*2,PX);px(x+PX*2,y+PX*2,PX*2,PX);px(x+PX,y+PX*3,PX*2,PX);
+    if(sl||blink){p.fill(C.eye);px(x+PX*2,y+PX*5,PX*2,PX);px(x+PX*6,y+PX*5,PX*2,PX)}
+    else{p.fill(C.eye);px(x+PX*2,y+PX*4,PX*2,PX*2);px(x+PX*6,y+PX*4,PX*2,PX*2);p.fill('#fff');px(x+PX*2,y+PX*4,PX,PX);px(x+PX*6,y+PX*4,PX,PX);}
+    p.fill(C.cheek);px(x+PX,y+PX*6,PX,PX);px(x+PX*8,y+PX*6,PX,PX);
+    p.fill(C.mouth);
+    if(!sl){if(ha>80){px(x+PX*3,y+PX*7,PX*4,PX);px(x+PX*3,y+PX*6,PX,PX);px(x+PX*6,y+PX*6,PX,PX)}
+      else if(ha>50)px(x+PX*4,y+PX*7,PX*2,PX);else if(ha<20){px(x+PX*4,y+PX*8,PX*2,PX);px(x+PX*3,y+PX*7,PX,PX)}
+      else px(x+PX*4,y+PX*7,PX,PX)}
+    p.fill(C.bodyDk);
+    if(en<20&&!sl){px(x-PX,y+PX*5,PX,PX*3);px(x+PX*10,y+PX*5,PX,PX*3)}
+    else if(ha>85&&!sl){px(x-PX,y+PX*2,PX,PX*2);px(x+PX*10,y+PX*2,PX,PX*2);px(x-PX*2,y+PX,PX,PX);px(x+PX*11,y+PX,PX,PX)}
+    else{px(x-PX,y+PX*4,PX,PX*3);px(x+PX*10,y+PX*4,PX,PX*3)}
+    px(x+PX*2,y+PX*11,PX*2,PX);px(x+PX*6,y+PX*11,PX*2,PX);
+    if(en<25&&!sl)px(x+PX*3,y+PX*11,PX,PX);
   }
 };
 new p5(p5s);

@@ -38,4 +38,4 @@ Le projet est déployé sur GitHub Pages :
 👉 [https://votre-username.github.io/habit-gotchi/](https://votre-username.github.io/habit-gotchi/)
 
 ## 📜 Licence
-MIT
+Copyright (c) 2026 Émilie Josse

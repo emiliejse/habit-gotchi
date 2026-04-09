@@ -317,7 +317,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   </div>
 
   <div class="bubble" id="bubble">...</div>
-  <div class="meteo-badge" id="meteo-badge"></div>
+<div class="meteo-badge" id="meteo-badge" style="display:none;"></div>
 
   <!-- Sliders énergie & bonheur (0-5) -->
   <div style="max-width:340px;margin:6px auto 4px;padding:0 4px">
@@ -348,19 +348,33 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
       <div id="hab-home"></div>
     </div>
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+    <div class="card" style="background: linear-gradient(135deg, rgba(176,144,208,0.15), rgba(232,160,191,0.15)); border: 2px solid var(--lilac); text-align: center; padding: 15px;">
+      <div style="font-size: 16px; font-weight: bold; color: var(--text);">
+        <span id="g-name">Petit·e Gotchi</span> <span style="color:var(--lilac); opacity:0.3;">|</span> <span id="g-stage" style="color: var(--lilac);">Œuf</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:9px; margin-top:10px; font-weight:bold;">
+        <span class="slbl" style="color:var(--lilac)">Progression</span>
+        <span class="slbl" id="xp-l" style="color: var(--text);">0/60 XP</span>
+      </div>
+      <div class="pbar" style="height:10px; margin-top:5px; background: rgba(0,0,0,0.06); border-radius: 5px;">
+        <div class="pfill" id="xp-b" style="width:0%; background: linear-gradient(90deg, var(--lilac), var(--pink)); border-radius: 5px;"></div>
+      </div>
+    </div>
         <span style="font-size:13px;font-weight:bold" id="g-name">Petit·e Gotchi</span>
         <span id="g-stage" style="font-size:10px;background:var(--peach);padding:2px 8px;border-radius:6px;font-weight:bold">Œuf</span>
       </div>
       <div><div style="display:flex;justify-content:space-between"><span class="slbl">XP</span><span class="slbl" id="xp-l">0/60</span></div><div class="pbar"><div class="pfill" id="xp-b" style="width:0%;background:linear-gradient(90deg,var(--lilac),var(--pink))"></div></div></div>
     </div>
     <!-- Claude AI card -->
-    <div class="card" id="claude-card">
-      <h2>🤖 Analyse Claude</h2>
-      <div id="claude-msg" style="font-size:11px;color:var(--text2);min-height:30px">Coche des habitudes pour que je puisse t'analyser ✿</div>
-      <button class="btn btn-p" onclick="askClaude()" style="width:100%;margin-top:6px;font-size:10px">✿ Demander à Claude</button>
+<div class="card" id="claude-card">
+      <h2>💬 La pensée du Gotchi</h2>
+      <div id="claude-msg" style="font-size:11px;color:var(--text2);min-height:30px;line-height:1.4;">
+        Coche tes habitudes ou écris dans ton carnet pour m'inspirer ✿
+      </div>
+      <button class="btn btn-p" onclick="askClaude()" style="width:100%;margin-top:8px;font-size:10px;background:var(--lilac);border:none;">
+        ✿ Demander une petite pensée
+      </button>
     </div>
-  </div>
 
   <!-- HABITS EDIT -->
   <div id="p-habits" class="pnl">
@@ -567,10 +581,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 // --- Haptique Douce (Vibration Android + Flash visuel iPhone) ---
 function haptic() {
-  try { if(navigator.vibrate) navigator.vibrate([50]); } catch(e){}
-  const bg = document.body.style.backgroundColor;
-  document.body.style.backgroundColor = '#f4eaf4';
-  setTimeout(() => { document.body.style.backgroundColor = bg; }, 100);
+try { if(navigator.vibrate) navigator.vibrate([50]); } catch(e){}
 }
 
 /* ============================================================
@@ -934,6 +945,15 @@ const p5s=(p)=>{
     if(ha>=100&&!sleeping) drawRainbow(p);
 
     updateParts(p);
+     // --- Météo intégrée au décor ---
+    if (typeof meteoData !== 'undefined' && meteoData && meteoData.temperature) {
+      p.fill(255); // Couleur blanche
+      p.noStroke();
+      p.textSize(12);
+      p.textFont('Courier New');
+      p.textAlign(p.RIGHT, p.TOP);
+      p.text(Math.round(meteoData.temperature) + "°C", CS - 8, 8); // Dans le coin en haut à droite
+    }
     blinkT++;
     if (blinkT > 45 + Math.random() * 35) {
       blink = true;

@@ -487,13 +487,6 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
         </div>
       </div>
       <div style="margin-bottom:10px">
-        <label class="slbl" style="display:block;margin-bottom:3px">Changer le PIN</label>
-        <div style="display:flex;gap:6px">
-          <input type="password" id="pin-inp" class="inp" placeholder="4 chiffres" maxlength="4" inputmode="numeric" style="flex:1">
-          <button class="btn btn-p" onclick="savePin()">OK</button>
-        </div>
-      </div>
-      <div style="margin-bottom:10px">
         <label class="slbl" style="display:block;margin-bottom:3px">Clé API Claude</label>
         <div style="display:flex;gap:6px">
           <input type="password" id="api-inp" class="inp" placeholder="sk-ant-..." style="flex:1">
@@ -512,24 +505,21 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
     <div class="card">
       <h2>✏️ Mes Habitudes</h2>
-      <p style="font-size:10px;color:var(--text2);margin-bottom:8px">Personnalise tes 6 actions quotidiennes :</p>
       <div id="hab-edit"></div>
     </div>
+  </div>
 
-    <div class="card">
-      <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:5px;font-size:10px">📦 Exporter JSON</button>
-      <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Réinitialiser l'App</button>
+  <div id="p-props" class="pnl">
+    <div class="card" style="text-align:center;">
+      <h2>🎒 Mon Inventaire</h2>
+      <p style="font-size:10px; color:var(--text2); margin-bottom:12px;">Demande une analyse à Claude pour trouver des objets !</p>
+      <div id="props-list" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+        </div>
     </div>
-    
-    <div class="card" style="text-align:center">
-      <p style="font-size:9px;color:var(--text2)">Habit-Gotchi v4 ✿ Local 💜</p>
-    </div>
-    
-  </div> </div>
+  </div>
 
-<!-- ============================================================
-     MENU NOTEBOOK OVERLAY
-     ============================================================ -->
+</div> <button class="menu-languette" onclick="toggleMenu()">📓</button>
+
 <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()">
   <div class="menu-book" onclick="event.stopPropagation()">
     <h2>📓 Carnet</h2>
@@ -537,39 +527,18 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     <div class="menu-item" onclick="goMenu('journal')"><span class="mi-icon">📖</span>Journal intime</div>
     <div class="menu-item" onclick="goMenu('progress')"><span class="mi-icon">📊</span>Mes Progrès</div>
     <div class="menu-item" onclick="goMenu('focus')"><span class="mi-icon">🎯</span>Focus & Méditation</div>
-    <div class="menu-item" onclick="goMenu('props')"><span class="mi-icon">🎒</span>Décor & Objets</div>
-    <div class="menu-item" onclick="goMenu('settings')"><span class="mi-icon">⚙️</span>Réglages & Habitudes</div>
-    
+    <div class="menu-item" onclick="goMenu('props')"><span class="mi-icon">🎒</span>Mon Inventaire</div>
+    <div class="menu-item" onclick="goMenu('settings')"><span class="mi-icon">⚙️</span>Réglages</div>
     <div class="menu-item" style="color:var(--lilac); border-top: 1px dashed #c8b898; margin-top: 8px; padding-top: 12px;" onclick="genSoutien(); toggleMenu()">
       <span class="mi-icon">💜</span>Besoin de soutien
     </div>
-    
     <button class="menu-close" onclick="toggleMenu()">Fermer ✕</button>
   </div>
 </div>
 
-<!-- FOCUS OVERLAY -->
-<div class="focus-overlay" id="focus-ov">
-  <div class="focus-timer" id="focus-timer">25:00</div>
-  <div class="focus-msg" id="focus-msg">Concentre-toi... ton Gotchi travaille avec toi ✿</div>
-  <div class="breath-circle" id="breath-circle"></div>
-  <button class="btn btn-s" onclick="stopFocus()" style="margin-top:20px;font-size:11px">✕ Arrêter</button>
+<div id="modal" class="modal" style="display:none" onclick="clModal(event)">
+  <div class="modal-box" id="mbox" onclick="event.stopPropagation()"></div>
 </div>
-
-<!-- SOS floating (hidden in menu to keep clean, but also via header btn) -->
-
-<!-- Tab bar -->
-<nav class="tbar">
-  <button class="tb on" onclick="go('gotchi')" data-t="gotchi"><i>🏠</i>Gotchi</button>
-  <button class="tb" onclick="go('habits')" data-t="habits"><i>✏️</i>Modifier</button>
-  <button class="tb" onclick="go('journal')" data-t="journal"><i>📖</i>Journal</button>
-  <button class="tb" onclick="go('progress')" data-t="progress"><i>📊</i>Progrès</button>
-  <button class="tb" onclick="go('focus')" data-t="focus"><i>🎯</i>Focus</button>
-</nav>
-
-<!-- Modal -->
-   <button class="menu-languette" onclick="toggleMenu()">📓</button>
-<div id="modal" class="modal" style="display:none" onclick="clModal(event)"><div class="modal-box" id="mbox" onclick="event.stopPropagation()"></div></div>
 
 <script>
 /* ============================================================
@@ -595,7 +564,15 @@ let D=load();
 const today=()=>new Date().toISOString().split('T')[0];
 const hr=()=>new Date().getHours();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function haptic(){try{navigator.vibrate&&navigator.vibrate([50])}catch(e){}}
+function haptic() {
+  // Essaie de vibrer (pour Android)
+  try { if(navigator.vibrate) navigator.vibrate([50]); } catch(e){}
+  
+  // Flash visuel doux pour iPhone
+  const bg = document.body.style.backgroundColor;
+  document.body.style.backgroundColor = '#f4eaf4'; // Flash lilas très clair
+  setTimeout(() => { document.body.style.backgroundColor = bg; }, 100);
+}
 
 /* ============================================================
    TABS, MENU, DATE (Corrigé !)
@@ -871,28 +848,65 @@ function genSOS(){
     <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>`;
 } 
 function saveName(){const n=document.getElementById('name-inp').value.trim();if(n){D.g.name=n;save();updUI()}}
+// --- Fonction de Soutien Réparée ---
 function genSoutien(){
   haptic();
-  const g=D.g, td=today(), log=D.log[td]||[];
-  const sos={
-    etat:{energie:`${g.energy}/5`, bonheur:`${g.happiness}/5`},
-    msg:'Émilie a besoin de douceur et de body doubling. Agis comme son compagnon Habit-Gotchi, rassure-la en 2 phrases très douces.'
-  };
-  
-  const modal = document.getElementById('modal');
-  const mbox = document.getElementById('mbox');
-  
-  if(modal && mbox) {
-    modal.style.display = 'flex';
-    mbox.innerHTML = `
-      <h3 style="font-size:14px;margin-bottom:6px;color:var(--lilac);">💜 Besoin de douceur</h3>
-      <p style="font-size:10px;color:var(--text2);margin-bottom:6px">Copie ceci pour Claude.</p>
-      <textarea class="inp" rows="4" readonly style="font-size:9px">${JSON.stringify(sos,null,2)}</textarea>
-      <button class="btn btn-p" style="width:100%;margin-top:6px" onclick="navigator.clipboard.writeText(document.querySelector('#mbox textarea').value).then(()=>this.textContent='✓ Copié !')">📋 Copier</button>
-      <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>
-    `;
-  }
+  const g=D.g, td=today();
+  const sos={ etat:{energie:`${g.energy}/5`, bonheur:`${g.happiness}/5`}, msg:'Besoin de réconfort et de body doubling doux.' };
+  document.getElementById('modal').style.display='flex';
+  document.getElementById('mbox').innerHTML=`
+    <h3 style="font-size:14px;margin-bottom:6px;color:var(--lilac);">💜 Soutien Douceur</h3>
+    <p style="font-size:10px;color:var(--text2);margin-bottom:6px">Copie ceci pour Claude.</p>
+    <textarea class="inp" rows="3" readonly style="font-size:9px">${JSON.stringify(sos)}</textarea>
+    <button class="btn btn-p" style="width:100%;margin-top:6px" onclick="navigator.clipboard.writeText(document.querySelector('#mbox textarea').value).then(()=>this.textContent='✓ Copié !')">📋 Copier</button>
+    <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>`;
 }
+
+// --- API Claude (Génère Message + 3 Props) ---
+async function askClaude(){
+  const key=D.apiKey; if(!key){toast('Configure ta clé API dans Réglages');return}
+  
+  // On force Claude à répondre en JSON strict
+  const prompt=`Tu es le compagnon Habit-Gotchi. Fais un court message d'encouragement ET invente 3 petits objets mignons (props) pour l'inventaire. Tu DOIS répondre UNIQUEMENT avec ce format JSON : {"message": "ton texte", "props": ["objet1", "objet2", "objet3"]}`;
+  
+  document.getElementById('claude-msg').textContent='Je cherche des cadeaux... 🎁';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})
+    });
+    const d=await r.json();
+    const txt = d.content[0].text;
+    
+    // On extrait le JSON de la réponse de Claude
+    const jsonMatch = txt.match(/\{[\s\S]*\}/);
+    if(jsonMatch) {
+        const data = JSON.parse(jsonMatch[0]);
+        document.getElementById('claude-msg').textContent = data.message;
+        // On ajoute les nouveaux objets sans supprimer les anciens
+        D.g.props = [...new Set([...(D.g.props||[]), ...data.props])]; 
+        save();
+        renderProps(); // Met à jour l'affichage
+        toast('Tu as reçu 3 nouveaux objets ! 🎒');
+    } else {
+        document.getElementById('claude-msg').textContent = txt; 
+    }
+  }catch(e){document.getElementById('claude-msg').textContent='Erreur API.'}
+}
+
+// --- Affichage de l'inventaire ---
+function renderProps() {
+  const c = document.getElementById('props-list');
+  if(!c) return;
+  if(!D.g.props || D.g.props.length === 0) {
+      c.innerHTML = '<p style="font-size:11px; color:var(--text2);">Ton sac est vide.</p>';
+      return;
+  }
+  c.innerHTML = D.g.props.map(p => `<div style="background:var(--card); border:2px solid var(--border); border-radius:10px; padding:6px 12px; font-size:11px; font-weight:bold; box-shadow:0 2px 4px var(--shadow);">${p}</div>`).join('');
+}
+
+// Appeler cette fonction au chargement (ajoute ça à la fin de ton script, à côté de updUI() )
+renderProps();
 function savePin(){const v=document.getElementById('pin-inp').value.trim();if(v.length===4&&/^\d+$/.test(v)){D.pin=v;save();document.getElementById('pin-inp').value='';toast('PIN mis à jour ✿')}else toast('4 chiffres requis')}
 function exportD(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`habitgotchi_${today()}.json`;a.click();URL.revokeObjectURL(u)}
 function confirmReset(){document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`}

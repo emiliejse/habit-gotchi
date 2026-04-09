@@ -45,6 +45,30 @@ nav,
 #dynamic-zone {
   padding-bottom: 80px !important; /* Pour garder une marge de confort au scroll */
 }
+   /* --- Bouton Menu Central (Façon Console) --- */
+.fab-menu {
+  position: fixed;
+  bottom: calc(20px + var(--sab));
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--lilac);
+  color: white;
+  border: 4px solid #9a7ab8;
+  border-radius: 20px;
+  padding: 12px 24px;
+  font: bold 16px 'Courier New', monospace;
+  box-shadow: 0 8px 0 #9a7ab8, 0 15px 20px rgba(0,0,0,0.2);
+  cursor: pointer;
+  z-index: 150;
+  transition: all 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fab-menu:active {
+  transform: translateX(-50%) translateY(8px);
+  box-shadow: 0 0 0 #9a7ab8, 0 5px 10px rgba(0,0,0,0.2);
+}
 /* ============================================================
    PALETTE — modifie ici pour tout changer
    ============================================================ */
@@ -282,10 +306,8 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
      CONSOLE FIXE (top) : shell + icônes + bulle
      ============================================================ -->
 <div id="console-top">
-  <div class="hdr">
-    <button class="menu-btn" onclick="toggleMenu()">📓</button>
+<div class="hdr">
     <h1>✿ Habit-Gotchi ✿</h1>
-    <button class="menu-btn" onclick="genSOS()">🆘</button>
   </div>
   <sub id="date-d" style="display:block;text-align:center;font-size:8px;color:var(--text2)"></sub>
 
@@ -388,64 +410,22 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   <!-- PROGRESS -->
 <div id="p-progress" class="pnl">
   <div class="card">
-    <div class="nav-r">
-      <button class="nav-a" onclick="navW(-1)">◀</button>
-      <h2 style="margin:0" id="w-title">Cette semaine</h2>
-      <button class="nav-a" onclick="navW(1)">▶</button>
-    </div>
-    <div id="w-view" class="cal"></div>
-    <div style="display:flex;justify-content:space-between;margin-top:3px">
-      <span style="font-size:8px;color:var(--text2)">L</span><span style="font-size:8px;color:var(--text2)">M</span><span style="font-size:8px;color:var(--text2)">M</span><span style="font-size:8px;color:var(--text2)">J</span><span style="font-size:8px;color:var(--text2)">V</span><span style="font-size:8px;color:var(--text2)">S</span><span style="font-size:8px;color:var(--text2)">D</span>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="nav-r">
-      <button class="nav-a" onclick="navM(-1)">◀</button>
-      <h2 style="margin:0" id="m-title">Ce mois</h2>
-      <button class="nav-a" onclick="navM(1)">▶</button>
-    </div>
-    <div id="m-view" class="cal"></div>
-  </div>
-
-  <div class="card">
-    <h2>Stats</h2>
-    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px">
-      <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
-        <div style="font-size:20px;font-weight:bold;color:var(--lilac)" id="s-str">0</div>
-        <div class="slbl">série</div>
-      </div>
-      <div style="text-align:center;padding:8px;background:rgba(128,208,168,.07);border-radius:10px">
-        <div style="font-size:20px;font-weight:bold;color:var(--mint)" id="s-xp">0</div>
-        <div class="slbl">XP total</div>
-      </div>
-      <div style="text-align:center;padding:8px;background:rgba(136,190,232,.07);border-radius:10px">
-        <div style="font-size:20px;font-weight:bold;color:var(--sky)" id="s-jrn">0</div>
-        <div class="slbl">journal</div>
-      </div>
+    <h2 style="display:flex; justify-content:space-between; align-items:center;">
+      <span>🧠 Bilan IA de la semaine</span>
+      <button onclick="resetBilan()" style="background:none; border:none; color:var(--coral); font-size:16px; cursor:pointer;" title="Effacer le bilan">🔄</button>
+    </h2>
+    
+    <div id="claude-summary" style="background: rgba(255,255,255,0.5); padding: 12px; border-radius: 8px; font-size: 12px; color: var(--text); min-height: 50px; border: 1px dashed var(--border); margin-bottom: 12px; white-space: pre-wrap;">
+      Ton bilan apparaîtra ici...
     </div>
 
-    <div style="margin-top: 24px; border-top: 2px dashed rgba(0,0,0,0.05); padding-top: 16px;">
-      <h3 style="font-weight:bold; margin-bottom: 8px; font-size: 14px;">🧠 Bilan IA</h3>
-      <div id="claude-summary" style="background: var(--card); padding: 12px; border-radius: 8px; font-size: 13px; color: var(--text2); min-height: 50px; border: 1px solid rgba(0,0,0,0.03);">
-        Ton bilan apparaîtra ici...
-      </div>
-      <button onclick="resetBilan()" style="margin-top: 12px; background: var(--coral); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 10px; transition: 0.2s;">
-        🔄 Réinitialiser le bilan
-      </button>
+    <div style="display:flex; gap:6px;">
+      <button class="btn btn-p" onclick="genBilanSemaine()" style="flex:1; font-size:10px;">1. Générer Data</button>
+      <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="flex:1; font-size:10px; display:none;">2. 📋 Copier Data</button>
     </div>
+    
+    <textarea id="bil-txt-hidden" style="display:none;"></textarea>
   </div>
-
-  <div class="card" style="text-align:center">
-    <h2>Bilan pour Claude</h2>
-    <p style="font-size:10px; color:var(--text2); margin-bottom:10px;">Génère le texte à copier dans Claude pour obtenir ton analyse.</p>
-    <button class="btn btn-p" onclick="genBilan()" style="width:100%;margin-bottom:6px;font-size:10px">✿ Bilan semaine</button>
-    <div id="bil-out" style="display:none">
-      <textarea id="bil-txt" class="inp" rows="7" readonly style="font-size:9px"></textarea>
-      <button class="btn btn-s" onclick="copyBil()" style="width:100%;margin-top:4px;font-size:10px">📋 Copier</button>
-    </div>
-  </div>
-</div>
 
   <!-- FOCUS -->
   <div id="p-focus" class="pnl">
@@ -485,6 +465,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     <div class="menu-item" onclick="goMenu('progress')"><span class="mi-icon">📊</span>Progrès</div>
     <div class="menu-item" onclick="goMenu('focus')"><span class="mi-icon">🎯</span>Focus & Méditation</div>
     <div class="menu-item" onclick="goMenu('settings')"><span class="mi-icon">⚙️</span>Réglages</div>
+     <div class="menu-item" onclick="genSOS(); toggleMenu()"><span class="mi-icon">🆘</span>Bouton d'Urgence</div>
     <button class="menu-close" onclick="toggleMenu()">Fermer ✕</button>
   </div>
 </div>
@@ -509,6 +490,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 </nav>
 
 <!-- Modal -->
+   <button class="fab-menu" onclick="toggleMenu()">📓 MENU</button>
 <div id="modal" class="modal" style="display:none" onclick="clModal(event)"><div class="modal-box" id="mbox" onclick="event.stopPropagation()"></div></div>
 
 <script>
@@ -779,7 +761,23 @@ function renderProg(){
 }
 function genBilan(){document.getElementById('bil-out').style.display='block';}
 function copyBil(){navigator.clipboard.writeText(document.getElementById('bil-txt').value).then(()=>{const b=document.querySelector('#bil-out .btn-s');b.textContent='✓ Copié !';setTimeout(()=>b.textContent='📋 Copier',1200)})}
-function genSOS(){toast("SOS généré (logique masquée pour brièveté)");}
+function genSOS(){
+  haptic();
+  const g=D.g, td=today(), log=D.log[td]||[], done=log.length;
+  const sos={
+    type:'SOS', date:new Date().toISOString(),
+    etat:{energie:`${g.energy}/5`, bonheur:`${g.happiness}/5`, habitudes:`${done}/6`},
+    msg:'Je me sens submergée, aide-moi à redescendre en pression.'
+  };
+  const txt=JSON.stringify(sos,null,2);
+  document.getElementById('modal').style.display='flex';
+  document.getElementById('mbox').innerHTML=`
+    <h3 style="font-size:14px;margin-bottom:6px">🆘 Appel à l'aide</h3>
+    <p style="font-size:10px;color:var(--text2);margin-bottom:6px">Copie ceci pour Claude.</p>
+    <textarea class="inp" rows="6" readonly style="font-size:9px">${txt}</textarea>
+    <button class="btn btn-p" style="width:100%;margin-top:6px" onclick="navigator.clipboard.writeText(document.querySelector('#mbox textarea').value).then(()=>this.textContent='✓ Copié !')">📋 Copier</button>
+    <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>`;
+}
 function saveName(){const n=document.getElementById('name-inp').value.trim();if(n){D.g.name=n;save();updUI()}}
 function savePin(){const v=document.getElementById('pin-inp').value.trim();if(v.length===4&&/^\d+$/.test(v)){D.pin=v;save();document.getElementById('pin-inp').value='';toast('PIN mis à jour ✿')}else toast('4 chiffres requis')}
 function exportD(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`habitgotchi_${today()}.json`;a.click();URL.revokeObjectURL(u)}
@@ -827,22 +825,27 @@ const p5s=(p)=>{
     drawSky(p,h,ha);
     if(meteoData&&meteoData.windspeed>30) drawWind(p);
 
-    // 2. Environnement actif (Décor)
-    drawActiveEnv(p, g.activeEnv || 'parc', n);
+    // 2. Environnement actif (Décor qui suit les onglets)
+    let envActif = g.activeEnv || 'parc';
+    drawActiveEnv(p, envActif, n);
 
-    // 3. Mouvement du Gotchi
-    bounceT += sleeping ? 0.04 : 0.14;
+    // 3. Mouvement du Gotchi (Balade perpétuelle)
+    bounceT += sleeping ? 0.04 : 0.12;
     let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
-    let moveX = 0;
     
-    // Si très heureux et plein d'énergie, il se promène beaucoup !
+    // Il se balade doucement par défaut
+    let amplitude = 15; 
+    let vitesse = 0.02;
+    
+    // S'il déborde d'énergie et de joie, il va plus vite et plus loin !
     if (!sleeping && ha >= 80 && en >= 80) {
-      moveX = Math.sin(p.frameCount * 0.05) * 40; 
-      if (p.frameCount % 20 < 10) bobY -= PX; // Petits sauts de joie
-    } else if (!sleeping && ha >= 60 && en >= 60) {
-      moveX = Math.sin(p.frameCount * 0.03) * 15; // Petite balade tranquille
+      amplitude = 40; 
+      vitesse = 0.06;
+      if (p.frameCount % 20 < 10) bobY -= PX; // Petits sauts
     }
-
+    
+    // Application du mouvement
+    let moveX = sleeping ? 0 : Math.sin(p.frameCount * vitesse) * amplitude;
     const cx = CS/2 + moveX;
     const by = g.stage==='egg'?115:g.stage==='baby'?108:g.stage==='teen'?98:85;
 
@@ -991,7 +994,36 @@ const p5s=(p)=>{
       p.fill(p.color(176,144,208,170-i*45));px(fx,fy,sz,sz);px(fx+sz,fy,sz,sz);px(fx+sz,fy+sz,sz,sz);px(fx,fy+sz*2,sz,sz);px(fx+sz,fy+sz*2,sz,sz)}
   }
 
-  function spawnP(x,y,c){particles.push({x,y,vx:(Math.random()-.5)*4,vy:-Math.random()*3-1.5,life:16,c})}
+  function genBilanSemaine(){
+  haptic();
+  const wd = getWkDates(wOff); // Utilise la semaine actuellement affichée (wOff)
+  const g = D.g, s = getSt(g.totalXp);
+  const hs = D.habits.map(h => {
+    const days = wd.filter(d => (D.log[d]||[]).includes(h.catId)).length;
+    return { habitude: h.label, jours_faits: days };
+  });
+  const wj = D.journal.filter(j => wd.includes(j.date.split('T')[0]));
+  
+  const b = {
+    periode: `${wd[0]} → ${wd[6]}`,
+    gotchi: { nom: g.name, stade: s.l, energie: `${g.energy}/5`, bonheur: `${g.happiness}/5` },
+    habitudes: hs,
+    notes_journal: wj.map(j => ({ humeur: j.mood, texte: j.text }))
+  };
+  
+  document.getElementById('bil-txt-hidden').value = "Contexte pour Claude : \n" + JSON.stringify(b, null, 2);
+  document.getElementById('btn-copy-bilan').style.display = 'block';
+  document.getElementById('claude-summary').textContent = "Données prêtes ! Copie-les et donne-les à Claude, puis colle sa réponse ici (via un futur bouton).";
+}
+
+function copyBilanSemaine(){
+  navigator.clipboard.writeText(document.getElementById('bil-txt-hidden').value).then(()=>{
+    const b = document.getElementById('btn-copy-bilan');
+    b.textContent = '✓ Copié !';
+    setTimeout(() => b.textContent = '2. 📋 Copier Data', 1500);
+  });
+}
+   function spawnP(x,y,c){particles.push({x,y,vx:(Math.random()-.5)*4,vy:-Math.random()*3-1.5,life:16,c})}
   function updateParts(p){
     p.noStroke();particles=particles.filter(pt=>{
       pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=.12;pt.life--;

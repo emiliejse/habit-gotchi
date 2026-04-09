@@ -195,25 +195,36 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .btn-m{background:var(--mint);color:var(--text)}
 .btn-sos{background:linear-gradient(135deg,var(--coral),var(--pink));color:#fff;font-size:11px;padding:8px 12px;border-radius:10px}
 
-/* --- Habitudes & Animations --- */
+/* --- Habitudes & Animation Rebond --- */
 .hab {
-  display:flex; align-items:center; gap:8px; padding:8px; border-radius:8px;
-  border:2px solid var(--border); margin-bottom:4px; background:#fff; cursor:pointer;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px;
+  border: 2px solid var(--border); margin-bottom: 4px; background: #fff; cursor: pointer;
+  transition: transform 0.1s ease;
 }
-.hab:active { transform: scale(0.97); } /* Petit effet quand on appuie */
+.hab:active { transform: scale(0.97); } /* Petit écrasement au clic */
+
 .hab.done {
-  background:linear-gradient(135deg,rgba(128,208,168,.15),rgba(176,144,208,.15));
-  border-color:var(--mint);
+  background: linear-gradient(135deg, rgba(128,208,168,.15), rgba(176,144,208,.15));
+  border-color: var(--mint);
 }
+
 .hab .ck {
-  width:24px; height:24px; border-radius:6px; border:2px solid var(--border);
-  display:flex; align-items:center; justify-content:center; font-size:14px; color:transparent;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Animation fluide */
+  width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 14px; color: transparent;
+  transition: background 0.2s, border-color 0.2s;
 }
+
+/* L'animation magique s'applique quand la classe 'done' est ajoutée */
 .hab.done .ck {
-  background:var(--mint); border-color:var(--mint); color:#fff;
-  transform: rotate(360deg) scale(1.1); /* L'animation magique ici ! */
+  background: var(--mint); border-color: var(--mint); color: #fff;
+  animation: popBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* La clé de l'animation rebond */
+@keyframes popBounce {
+  0%   { transform: scale(0.5); opacity: 0; }
+  50%  { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); }
 }
 
 /* Sliders 0-5 */
@@ -500,49 +511,38 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
   <!-- SETTINGS -->
 <div id="p-settings" class="pnl">
-    <div class="card">
+    
+    <div class="card" style="margin-bottom: 12px;">
       <h2>⚙️ Réglages</h2>
       <div style="margin-bottom:10px">
-        <label class="slbl" style="display:block;margin-bottom:3px">Nom du Gotchi</label>
-        <div style="display:flex;gap:6px">
-          <input type="text" id="name-inp" class="inp" style="flex:1">
-          <button class="btn btn-p" onclick="saveName()">OK</button>
-        </div>
+        <label class="slbl">Nom du Gotchi</label>
+        <div style="display:flex;gap:5px"><input type="text" id="name-inp" class="inp"><button class="btn btn-p" onclick="saveName()">OK</button></div>
       </div>
       <div style="margin-bottom:10px">
-        <label class="slbl" style="display:block;margin-bottom:3px">Clé API Claude</label>
-        <div style="display:flex;gap:6px">
-          <input type="password" id="api-inp" class="inp" placeholder="sk-ant-..." style="flex:1">
-          <button class="btn btn-p" onclick="saveApi()">OK</button>
-        </div>
+        <label class="slbl">Clé API Claude</label>
+        <div style="display:flex;gap:5px"><input type="password" id="api-inp" class="inp"><button class="btn btn-p" onclick="saveApi()">OK</button></div>
       </div>
       <div>
-        <label class="slbl" style="display:block;margin-bottom:3px">Décor par défaut</label>
-        <select id="env-sel" class="inp" onchange="changeEnv(this.value)">
-          <option value="parc">Parc 🌳</option>
-          <option value="chambre">Chambre 🛏️</option>
-          <option value="montagne">Montagne ⛰️</option>
-        </select>
+        <label class="slbl">Code PIN</label>
+        <div style="display:flex;gap:5px"><input type="password" id="pin-inp" class="inp" maxlength="4"><button class="btn btn-p" onclick="savePin()">OK</button></div>
       </div>
-       <div class="card">
-      <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:6px;font-size:10px">📦 Exporter ma sauvegarde (JSON)</button>
-      <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
-    </div>
     </div>
 
-    <div class="card">
+    <div class="card" style="margin-bottom: 12px;">
       <h2>✏️ Mes Habitudes</h2>
       <div id="hab-edit"></div>
     </div>
-  </div>
 
-  <div id="p-props" class="pnl">
-    <div class="card" style="text-align:center;">
-      <h2>🎒 Mon Inventaire</h2>
-      <p style="font-size:10px; color:var(--text2); margin-bottom:12px;">Demande une analyse à Claude pour trouver des objets !</p>
-      <div id="props-list" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
-        </div>
+    <div class="card" style="margin-top: 15px;">
+      <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:8px;font-size:10px">📦 Exporter ma sauvegarde (JSON)</button>
+      
+      <input type="file" id="import-file" style="display:none" accept=".json" onchange="importD(event)">
+      <button class="btn btn-s" onclick="document.getElementById('import-file').click()" style="width:100%;margin-bottom:15px;font-size:10px;background:var(--mint);color:#fff;border:none;">📥 Importer JSON</button>
+      
+      <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
     </div>
+    
+  </div>
   </div>
 
 </div> <button class="menu-languette" onclick="toggleMenu()">📓</button>

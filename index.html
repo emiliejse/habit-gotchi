@@ -542,7 +542,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 <script>
 /* ============================================================
-   DATA
+   DATA & INITIALISATION
    ============================================================ */
 const SK='hg4';
 const CATS=[
@@ -564,47 +564,41 @@ let D=load();
 const today=()=>new Date().toISOString().split('T')[0];
 const hr=()=>new Date().getHours();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+// --- Haptique Douce (Vibration Android + Flash visuel iPhone) ---
 function haptic() {
-  // Essaie de vibrer (pour Android)
   try { if(navigator.vibrate) navigator.vibrate([50]); } catch(e){}
-  
-  // Flash visuel doux pour iPhone
   const bg = document.body.style.backgroundColor;
-  document.body.style.backgroundColor = '#f4eaf4'; // Flash lilas très clair
+  document.body.style.backgroundColor = '#f4eaf4';
   setTimeout(() => { document.body.style.backgroundColor = bg; }, 100);
 }
 
 /* ============================================================
-   TABS, MENU, DATE (Corrigé !)
+   NAVIGATION & MENUS
    ============================================================ */
 let journalLocked=true;
 function go(t){
-  // 1. On cache tout
   document.querySelectorAll('.pnl').forEach(p=>p.classList.remove('on'));
-  
-  // 2. On affiche la cible
   const targetPanel = document.getElementById('p-'+t);
   if(targetPanel) targetPanel.classList.add('on');
   
-  // 3. Gestion de la Console et du DÉCOR p5.js
   const shell = document.querySelector('.tama-shell');
   if(t === 'gotchi') {
     shell.classList.remove('shrunk');
     D.g.activeEnv = 'parc'; 
   } else {
     shell.classList.add('shrunk');
-    // Le décor change VRAIMENT selon l'onglet
     if(t === 'journal') D.g.activeEnv = 'chambre';
     else if(t === 'focus') D.g.activeEnv = 'chambre';
     else if(t === 'progress') D.g.activeEnv = 'montagne';
     else if(t === 'settings') D.g.activeEnv = 'chambre';
     else if(t === 'props') D.g.activeEnv = 'parc';
   }
-  save(); // Force p5.js à lire le nouveau décor
+  save(); 
   
-  // 4. Mises à jour du contenu
-  if(t==='gotchi'||t==='settings') renderHabs(); // On met à jour les habitudes ici aussi
+  if(t==='gotchi'||t==='settings') renderHabs();
   if(t==='progress') renderProg();
+  if(t==='props') renderProps();
   if(t==='journal') { journalLocked=true; renderJ(); }
   
   document.getElementById('dynamic-zone').scrollTop = 0;
@@ -614,34 +608,13 @@ function toggleMenu(){document.getElementById('menu-overlay').classList.toggle('
 function goMenu(t){toggleMenu();go(t)}
 
 function updDate(){
-  const d=new Date(),days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],
-    mos=['jan','fév','mars','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+  const d=new Date(),days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],mos=['jan','fév','mars','avr','mai','juin','juil','août','sep','oct','nov','déc'];
   document.getElementById('date-d').textContent=`${days[d.getDay()]} ${d.getDate()} ${mos[d.getMonth()]}`;
 }
 updDate();
 
 /* ============================================================
-   ICON BARS
-   ============================================================ */
-function renderIconBar(){
-  const log=D.log[today()]||[];
-  const top=CATS.slice(0,3),bot=CATS.slice(3,6);
-  document.getElementById('icons-top').innerHTML=top.map(c=>{
-    const lit=log.includes(c.id);
-    return`<div class="icon-slot ${lit?'lit':'dim'}" id="ic-${c.id}" onclick="toggleHab('${c.id}')"><span class="ico">${c.icon}</span><span>${c.label.substring(0,4)}</span></div>`;
-  }).join('');
-  document.getElementById('icons-bot').innerHTML=bot.map(c=>{
-    const lit=log.includes(c.id);
-    return`<div class="icon-slot ${lit?'lit':'dim'}" id="ic-${c.id}" onclick="toggleHab('${c.id}')"><span class="ico">${c.icon}</span><span>${c.label.substring(0,4)}</span></div>`;
-  }).join('');
-}
-function bounceIcon(catId){
-  const el=document.getElementById('ic-'+catId);
-  if(el){el.classList.remove('bounce');void el.offsetWidth;el.classList.add('bounce')}
-}
-
-/* ============================================================
-   HABITS & XP
+   HABITUDES & XP
    ============================================================ */
 let shakeTimer=0;
 function toggleHab(catId){
@@ -649,26 +622,24 @@ function toggleHab(catId){
   const td=today();if(!D.log[td])D.log[td]=[];
   const idx=D.log[td].indexOf(catId);
   if(idx>=0){D.log[td].splice(idx,1);addXp(-10)}
-  else{D.log[td].push(catId);addXp(10);celebQueue.push(catId);bounceIcon(catId);shakeTimer=8}
-  save();renderHabs();renderIconBar();updUI();updBubbleNow();
+  else{D.log[td].push(catId);addXp(10);celebQueue.push(catId);shakeTimer=8}
+  save();renderHabs();updUI();updBubbleNow();
 }
 function renderHabs(){
   const td=today(),log=D.log[td]||[],done=log.length;
-  document.getElementById('hab-home').innerHTML=D.habits.map(h=>{
-    const c=CATS.find(c=>c.id===h.catId),d=log.includes(h.catId);
-    return`<div class="hab ${d?'done':''}" onclick="toggleHab('${h.catId}')">
-      <div class="ck">${d?'✓':''}</div><span style="flex:1;font-size:12px">${h.label}</span><span style="font-size:16px">${c.icon}</span></div>`;
-  }).join('');
-  document.getElementById('hab-count').textContent=`${done}/6`;
+  const habHome=document.getElementById('hab-home');
+  if(habHome) {
+    habHome.innerHTML=D.habits.map(h=>{
+      const c=CATS.find(c=>c.id===h.catId),d=log.includes(h.catId);
+      return`<div class="hab ${d?'done':''}" onclick="toggleHab('${h.catId}')"><div class="ck">${d?'✓':''}</div><span style="flex:1;font-size:12px">${h.label}</span><span style="font-size:16px">${c.icon}</span></div>`;
+    }).join('');
+  }
+  const hc=document.getElementById('hab-count'); if(hc) hc.textContent=`${done}/6`;
   const edit=document.getElementById('hab-edit');
   if(edit)edit.innerHTML=D.habits.map((h,i)=>{
     const c=CATS.find(c=>c.id===h.catId);
-    return`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-      <span style="font-size:20px;width:28px;text-align:center">${c.icon}</span>
-      <input class="inp" value="${h.label}" onchange="editH(${i},this.value)" style="flex:1;font-size:12px">
-    </div>`;
+    return`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:20px;width:28px;text-align:center">${c.icon}</span><input class="inp" value="${h.label}" onchange="editH(${i},this.value)" style="flex:1;font-size:12px"></div>`;
   }).join('');
-  renderIconBar();
 }
 function editH(i,v){D.habits[i].label=v.trim()||D.habits[i].label;save()}
 
@@ -684,25 +655,23 @@ function changeEnv(v){D.g.activeEnv=v;save();haptic();}
 function updUI(){
   const g=D.g,s=getSt(g.totalXp),nt=nxtTh(g.totalXp),pt=s.th;
   const pct=nt>pt?((g.totalXp-pt)/(nt-pt))*100:100;
-  document.getElementById('g-name').textContent=g.name;
-  document.getElementById('g-stage').textContent=s.l;
-  document.getElementById('xp-l').textContent=`${g.totalXp-pt}/${nt-pt}`;
-  document.getElementById('xp-b').style.width=pct+'%';
-  document.getElementById('sl-energy').value=g.energy;document.getElementById('sv-energy').textContent=g.energy;
-  document.getElementById('sl-happy').value=g.happiness;document.getElementById('sv-happy').textContent=g.happiness;
-  document.getElementById('s-xp').textContent=g.totalXp;
-  document.getElementById('s-str').textContent=calcStr();
-  const jrnEl=document.getElementById('s-jrn'); if(jrnEl) jrnEl.textContent=D.journal.length;
-  document.getElementById('name-inp').value=g.name;
-  const envSel=document.getElementById('env-sel'); if(envSel) envSel.value=g.activeEnv||'parc';
+  if(document.getElementById('g-name')) document.getElementById('g-name').textContent=g.name;
+  if(document.getElementById('g-stage')) document.getElementById('g-stage').textContent=s.l;
+  if(document.getElementById('xp-l')) document.getElementById('xp-l').textContent=`${g.totalXp-pt}/${nt-pt}`;
+  if(document.getElementById('xp-b')) document.getElementById('xp-b').style.width=pct+'%';
+  if(document.getElementById('sl-energy')){ document.getElementById('sl-energy').value=g.energy; document.getElementById('sv-energy').textContent=g.energy; }
+  if(document.getElementById('sl-happy')){ document.getElementById('sl-happy').value=g.happiness; document.getElementById('sv-happy').textContent=g.happiness; }
+  if(document.getElementById('s-xp')) document.getElementById('s-xp').textContent=g.totalXp;
+  if(document.getElementById('s-str')) document.getElementById('s-str').textContent=calcStr();
+  if(document.getElementById('s-jrn')) document.getElementById('s-jrn').textContent=D.journal.length;
+  if(document.getElementById('name-inp')) document.getElementById('name-inp').value=g.name;
+  if(document.getElementById('env-sel')) document.getElementById('env-sel').value=g.activeEnv||'parc';
+  if(document.getElementById('api-inp')) document.getElementById('api-inp').value = D.apiKey || '';
 }
-   // Permet de réafficher la clé API si elle est déjà enregistrée
-  const apiInp = document.getElementById('api-inp');
-  if (apiInp) apiInp.value = D.apiKey || '';
 function calcStr(){let s=0,d=new Date();while(true){const ds=d.toISOString().split('T')[0];const l=D.log[ds]||[];if(l.length>0)s++;else if(ds!==today())break;d.setDate(d.getDate()-1);if(s>999)break}return s}
 
 /* ============================================================
-   MÉTÉO & BUBBLE
+   MÉTÉO & BULLE
    ============================================================ */
 let meteoData=null;
 async function fetchMeteo(){
@@ -712,7 +681,7 @@ async function fetchMeteo(){
     const wind=meteoData.windspeed||0, temp=meteoData.temperature||0;
     let badge=`${Math.round(temp)}°C`;
     if(wind>40)badge+=` · 🌬️ Vent d'Autan !`; else if(wind>20)badge+=` · 💨 Venteux`;
-    document.getElementById('meteo-badge').textContent=badge;
+    if(document.getElementById('meteo-badge')) document.getElementById('meteo-badge').textContent=badge;
   }catch(e){}
 }
 fetchMeteo();setInterval(fetchMeteo,1800000);
@@ -740,27 +709,91 @@ function getBubble(){
   if(Math.random()<.15&&done>0&&done<6)pool=MSG.idle;
   return pool[Math.floor(Math.random()*pool.length)];
 }
-function updBubbleNow(){document.getElementById('bubble').textContent=getBubble()}
+function updBubbleNow(){ if(document.getElementById('bubble')) document.getElementById('bubble').textContent=getBubble() }
 updBubbleNow();setInterval(updBubbleNow,18000);
 
-/* API & FOCUS (inchangés) */
+/* ============================================================
+   API CLAUDE (PROPS + SOUTIEN + BILAN)
+   ============================================================ */
 function saveApi(){const v=document.getElementById('api-inp').value.trim();if(v){D.apiKey=v;save();toast('Clé API sauvegardée ✿')}else toast('Colle ta clé sk-ant-...')}
+
 async function askClaude(){
   const key=D.apiKey; if(!key){toast('Configure ta clé API dans Réglages');return}
-  const g=D.g,log=D.log[today()]||[],done=log.length;
-  const habsDone=D.habits.filter(h=>log.includes(h.catId)).map(h=>h.label), habsMissing=D.habits.filter(h=>!log.includes(h.catId)).map(h=>h.label);
-  const recentJ=D.journal.slice(-3).map(j=>`[${j.mood}] ${(j.text||'').substring(0,100)}`).join('\n');
-  const prompt=`Tu es le compagnon Habit-Gotchi d'Émilie. Analyse sa journée en 2-3 phrases, bienveillant. Données: Énergie ${g.energy}/5, Bonheur ${g.happiness}/5, Faites: ${habsDone.join(', ')||'aucune'}, Manquantes: ${habsMissing.join(', ')}. Journal: ${recentJ||'(vide)'}`;
-  document.getElementById('claude-msg').textContent='Réflexion en cours... 🤔';
+  const prompt=`Tu es le compagnon Habit-Gotchi. Fais un court message d'encouragement ET invente 3 petits objets (props) mignons pour l'inventaire. Tu DOIS répondre UNIQUEMENT avec ce format JSON : {"message": "ton texte", "props": ["objet1", "objet2", "objet3"]}`;
+  
+  if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Je cherche des cadeaux... 🎁';
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})
     });
-    const d=await r.json(); document.getElementById('claude-msg').textContent=d.content?d.content.map(c=>c.text||'').join(''):'Pas de réponse.';
-  }catch(e){document.getElementById('claude-msg').textContent='Erreur API.'}
+    const d=await r.json();
+    const txt = d.content[0].text;
+    const jsonMatch = txt.match(/\{[\s\S]*\}/);
+    if(jsonMatch) {
+        const data = JSON.parse(jsonMatch[0]);
+        if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = data.message;
+        D.g.props = [...new Set([...(D.g.props||[]), ...data.props])]; 
+        save(); renderProps(); toast('Tu as reçu 3 nouveaux objets ! 🎒');
+    } else {
+        if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = txt; 
+    }
+  }catch(e){if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Erreur API.'}
 }
 
+function renderProps() {
+  const c = document.getElementById('props-list'); if(!c) return;
+  if(!D.g.props || D.g.props.length === 0) {
+      c.innerHTML = '<p style="font-size:11px; color:var(--text2);">Ton sac est vide.</p>'; return;
+  }
+  c.innerHTML = D.g.props.map(p => `<div style="background:var(--card); border:2px solid var(--border); border-radius:10px; padding:6px 12px; font-size:11px; font-weight:bold; box-shadow:0 2px 4px var(--shadow);">${p}</div>`).join('');
+}
+
+function genSoutien(){
+  haptic();
+  const g=D.g, td=today();
+  const sos={ etat:{energie:`${g.energy}/5`, bonheur:`${g.happiness}/5`}, msg:'Besoin de réconfort et de body doubling doux.' };
+  document.getElementById('modal').style.display='flex';
+  document.getElementById('mbox').innerHTML=`
+    <h3 style="font-size:14px;margin-bottom:6px;color:var(--lilac);">💜 Soutien Douceur</h3>
+    <p style="font-size:10px;color:var(--text2);margin-bottom:6px">Copie ceci pour Claude.</p>
+    <textarea class="inp" rows="3" readonly style="font-size:9px">${JSON.stringify(sos)}</textarea>
+    <button class="btn btn-p" style="width:100%;margin-top:6px" onclick="navigator.clipboard.writeText(document.querySelector('#mbox textarea').value).then(()=>this.textContent='✓ Copié !')">📋 Copier</button>
+    <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>`;
+}
+
+function genBilanSemaine(){
+  haptic();
+  const wd = getWkDates(wOff); 
+  const g = D.g, s = getSt(g.totalXp);
+  const hs = D.habits.map(h => {
+    const days = wd.filter(d => (D.log[d]||[]).includes(h.catId)).length;
+    return { habitude: h.label, jours_faits: days };
+  });
+  const wj = D.journal.filter(j => wd.includes(j.date.split('T')[0]));
+  
+  const b = {
+    periode: `${wd[0]} → ${wd[6]}`, gotchi: { nom: g.name, stade: s.l, energie: `${g.energy}/5`, bonheur: `${g.happiness}/5` },
+    habitudes: hs, notes_journal: wj.map(j => ({ humeur: j.mood, texte: j.text }))
+  };
+  
+  if(document.getElementById('bil-txt-hidden')) document.getElementById('bil-txt-hidden').value = "Contexte pour Claude : \n" + JSON.stringify(b, null, 2);
+  if(document.getElementById('btn-copy-bilan')) document.getElementById('btn-copy-bilan').style.display = 'block';
+  if(document.getElementById('claude-summary')) document.getElementById('claude-summary').textContent = "Données prêtes ! Copie-les et donne-les à Claude, puis colle sa réponse ici (via un futur bouton).";
+}
+function copyBilanSemaine(){
+  const hid = document.getElementById('bil-txt-hidden');
+  if(!hid) return;
+  navigator.clipboard.writeText(hid.value).then(()=>{
+    const b = document.getElementById('btn-copy-bilan');
+    if(b) { b.textContent = '✓ Copié !'; setTimeout(() => b.textContent = '📋 Copier pour Claude', 1500); }
+  });
+}
+function resetBilan() {if(confirm("Effacer le bilan IA ?")){if(document.getElementById('claude-summary')) document.getElementById('claude-summary').textContent='Ton bilan apparaîtra ici...';haptic();}}
+
+/* ============================================================
+   FOCUS, JOURNAL & REGLAGES DIVERS
+   ============================================================ */
 let focusInterval=null,focusTime=0,focusMode=null;
 function startFocus(mode){
   focusMode=mode; focusTime=mode==='work'?25*60:5*60;
@@ -777,10 +810,9 @@ function startFocus(mode){
 function stopFocus(){clearInterval(focusInterval);focusInterval=null;document.getElementById('focus-ov').classList.remove('open')}
 function updFocusDisplay(){const m=Math.floor(focusTime/60),s=focusTime%60;document.getElementById('focus-timer').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
 
-/* JOURNAL (inchangé) */
 let pinBuf='',pinMode='check';
 function renderPin(){
-  const dots=document.getElementById('pin-dots');dots.innerHTML='';
+  const dots=document.getElementById('pin-dots'); if(!dots)return; dots.innerHTML='';
   for(let i=0;i<4;i++){const d=document.createElement('div');d.className='pin-dot'+(i<pinBuf.length?' f':'');dots.appendChild(d)}
   const pad=document.getElementById('pin-pad');pad.innerHTML='';
   for(let n=1;n<=9;n++){const b=document.createElement('button');b.className='pin-k';b.textContent=n;b.onclick=()=>{haptic();pinBuf+=n;renderPin();if(pinBuf.length===4)pinSubmit()};pad.appendChild(b)}
@@ -798,7 +830,7 @@ function renderJ(){
 }
 const MOODS=[{id:'super',e:'🌟'},{id:'bien',e:'😊'},{id:'ok',e:'😐'},{id:'bof',e:'😔'},{id:'dur',e:'🌧️'}];
 let selMood=null;
-document.getElementById('mood-pick').innerHTML=MOODS.map(m=>`<button class="mood-b" data-m="${m.id}" onclick="pickM('${m.id}')">${m.e}</button>`).join('');
+if(document.getElementById('mood-pick')) document.getElementById('mood-pick').innerHTML=MOODS.map(m=>`<button class="mood-b" data-m="${m.id}" onclick="pickM('${m.id}')">${m.e}</button>`).join('');
 function pickM(id){selMood=id;haptic();document.querySelectorAll('.mood-b').forEach(b=>b.classList.toggle('sel',b.dataset.m===id))}
 function saveJ(){const t=document.getElementById('j-text').value.trim();if(!t&&!selMood)return;D.journal.push({date:new Date().toISOString(),mood:selMood||'ok',text:t});addXp(15);save();haptic();document.getElementById('j-text').value='';selMood=null;document.querySelectorAll('.mood-b').forEach(b=>b.classList.remove('sel'));renderJEntries();updBubbleNow();}
 
@@ -806,8 +838,9 @@ let jWeekOff=0; function navJWeek(d){jWeekOff+=d;renderJEntries()}
 function getWkDates(off){const t=new Date();t.setDate(t.getDate()+off*7);const day=(t.getDay()+6)%7;const mon=new Date(t);mon.setDate(t.getDate()-day);const dates=[];for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);dates.push(d.toISOString().split('T')[0])}return dates;}
 function renderJEntries(){
   const wd=getWkDates(jWeekOff), wt=document.getElementById('j-week-title');
-  if(jWeekOff===0)wt.textContent='Cette semaine'; else{const a=new Date(wd[0]),b=new Date(wd[6]);wt.textContent=`${a.getDate()}/${a.getMonth()+1} — ${b.getDate()}/${b.getMonth()+1}`}
+  if(jWeekOff===0){ if(wt) wt.textContent='Cette semaine'; } else{const a=new Date(wd[0]),b=new Date(wd[6]); if(wt) wt.textContent=`${a.getDate()}/${a.getMonth()+1} — ${b.getDate()}/${b.getMonth()+1}`}
   const entries=D.journal.filter(j=>wd.includes(j.date.split('T')[0])).reverse(), c=document.getElementById('j-entries'), me={super:'🌟',bien:'😊',ok:'😐',bof:'😔',dur:'🌧️'};
+  if(!c) return;
   if(!entries.length){c.innerHTML='<p style="font-size:11px;color:#a09880;text-align:center">Aucune entrée</p>';return}
   c.innerHTML=entries.map(e=>{const d=new Date(e.date);const gi=D.journal.indexOf(e);return`<div class="j-entry"><div style="display:flex;justify-content:space-between"><span class="j-date">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})} ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span><span style="font-size:16px">${me[e.mood]||'😐'}</span></div><div style="font-size:11px;margin-top:3px">${e.text||'—'}</div><div class="j-actions"><button onclick="editJEntry(${gi})">✏️</button><button onclick="delJEntry(${gi})">🗑️</button></div></div>`;}).join('');
 }
@@ -815,12 +848,11 @@ function editJEntry(i){const e=D.journal[i];if(!e)return;document.getElementById
 function saveEditJ(i){D.journal[i].text=document.getElementById('edit-j-txt').value.trim();save();clModal();renderJEntries()}
 function delJEntry(i){document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<p>Supprimer ?</p><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="confirmDelJ(${i})" style="flex:1">Oui</button></div>`}
 function confirmDelJ(i){D.journal.splice(i,1);save();clModal();renderJEntries();updUI()}
-let recog=null,isRec=false; function toggleVoice(){/* Voice logic */ if(!('webkitSpeechRecognition'in window)&&!('SpeechRecognition'in window)){document.getElementById('v-status').textContent='Non supporté.';return} if(isRec){recog.stop();return} const SR=window.SpeechRecognition||window.webkitSpeechRecognition;recog=new SR();recog.lang='fr-FR';recog.continuous=true;recog.interimResults=true; recog.onstart=()=>{isRec=true;const b=document.getElementById('voice-btn');b.textContent='⏹️ Stop'}; recog.onresult=e=>{let t='';for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;document.getElementById('j-text').value=t}; recog.onend=()=>{isRec=false;const b=document.getElementById('voice-btn');b.textContent='🎙️ Dicter'}; recog.start();}
 
-/* PROGRESS & SETTINGS (inchangé) */
 let wOff=0,mOff=0; function navW(d){wOff+=d;renderProg()}function navM(d){mOff+=d;renderProg()}
 function renderProg(){
   const wd=getWkDates(wOff), wt=document.getElementById('w-title');
+  if(!wt) return;
   if(wOff===0)wt.textContent='Cette semaine';else{const a=new Date(wd[0]),b=new Date(wd[6]);wt.textContent=`${a.getDate()}/${a.getMonth()+1} — ${b.getDate()}/${b.getMonth()+1}`}
   document.getElementById('w-view').innerHTML=wd.map(ds=>{const l=D.log[ds]||[],r=l.length/6,isT=ds===today();let bg='var(--border)';if(r>.8)bg='var(--mint)';else if(r>.5)bg='var(--sky)';else if(r>0)bg='var(--peach)';return`<div class="cal-c" style="background:${bg};${isT?'border:2px solid var(--lilac)':''}">${new Date(ds+'T12:00').getDate()}</div>`;}).join('');
   const now=new Date();now.setMonth(now.getMonth()+mOff);const y=now.getFullYear(),m=now.getMonth(); document.getElementById('m-title').textContent=now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
@@ -828,98 +860,20 @@ function renderProg(){
   for(let d=1;d<=last.getDate();d++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const l=D.log[ds]||[],r=l.length/6,isT=ds===today(); let bg='rgba(204,196,216,.15)';if(r>.8)bg='var(--mint)';else if(r>.5)bg='var(--sky)';else if(r>0)bg='rgba(232,196,160,.3)'; cells+=`<div class="cal-c" style="background:${bg};${isT?'border:2px solid var(--lilac);font-weight:bold':''}">${d}</div>`}
   document.getElementById('m-view').innerHTML=cells;updUI();
 }
-function genBilan(){document.getElementById('bil-out').style.display='block';}
-function copyBil(){navigator.clipboard.writeText(document.getElementById('bil-txt').value).then(()=>{const b=document.querySelector('#bil-out .btn-s');b.textContent='✓ Copié !';setTimeout(()=>b.textContent='📋 Copier',1200)})}
-function genSOS(){
-  haptic();
-  const g=D.g, td=today(), log=D.log[td]||[], done=log.length;
-  const sos={
-    type:'SOS', date:new Date().toISOString(),
-    etat:{energie:`${g.energy}/5`, bonheur:`${g.happiness}/5`, habitudes:`${done}/6`},
-    msg:'Je me sens submergée, aide-moi à redescendre en pression.'
-  };
-  const txt=JSON.stringify(sos,null,2);
-  document.getElementById('modal').style.display='flex';
-  document.getElementById('mbox').innerHTML=`
-    <h3 style="font-size:14px;margin-bottom:6px">🆘 Appel à l'aide</h3>
-    <p style="font-size:10px;color:var(--text2);margin-bottom:6px">Copie ceci pour Claude.</p>
-    <textarea class="inp" rows="6" readonly style="font-size:9px">${txt}</textarea>
-    <button class="btn btn-p" style="width:100%;margin-top:6px" onclick="navigator.clipboard.writeText(document.querySelector('#mbox textarea').value).then(()=>this.textContent='✓ Copié !')">📋 Copier</button>
-    <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>`;
-} 
+
 function saveName(){const n=document.getElementById('name-inp').value.trim();if(n){D.g.name=n;save();updUI()}}
-// --- Fonction de Soutien Réparée ---
-function genSoutien(){
-  haptic();
-  const g=D.g, td=today();
-  const sos={ etat:{energie:`${g.energy}/5`, bonheur:`${g.happiness}/5`}, msg:'Besoin de réconfort et de body doubling doux.' };
-  document.getElementById('modal').style.display='flex';
-  document.getElementById('mbox').innerHTML=`
-    <h3 style="font-size:14px;margin-bottom:6px;color:var(--lilac);">💜 Soutien Douceur</h3>
-    <p style="font-size:10px;color:var(--text2);margin-bottom:6px">Copie ceci pour Claude.</p>
-    <textarea class="inp" rows="3" readonly style="font-size:9px">${JSON.stringify(sos)}</textarea>
-    <button class="btn btn-p" style="width:100%;margin-top:6px" onclick="navigator.clipboard.writeText(document.querySelector('#mbox textarea').value).then(()=>this.textContent='✓ Copié !')">📋 Copier</button>
-    <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>`;
-}
-
-// --- API Claude (Génère Message + 3 Props) ---
-async function askClaude(){
-  const key=D.apiKey; if(!key){toast('Configure ta clé API dans Réglages');return}
-  
-  // On force Claude à répondre en JSON strict
-  const prompt=`Tu es le compagnon Habit-Gotchi. Fais un court message d'encouragement ET invente 3 petits objets mignons (props) pour l'inventaire. Tu DOIS répondre UNIQUEMENT avec ce format JSON : {"message": "ton texte", "props": ["objet1", "objet2", "objet3"]}`;
-  
-  document.getElementById('claude-msg').textContent='Je cherche des cadeaux... 🎁';
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})
-    });
-    const d=await r.json();
-    const txt = d.content[0].text;
-    
-    // On extrait le JSON de la réponse de Claude
-    const jsonMatch = txt.match(/\{[\s\S]*\}/);
-    if(jsonMatch) {
-        const data = JSON.parse(jsonMatch[0]);
-        document.getElementById('claude-msg').textContent = data.message;
-        // On ajoute les nouveaux objets sans supprimer les anciens
-        D.g.props = [...new Set([...(D.g.props||[]), ...data.props])]; 
-        save();
-        renderProps(); // Met à jour l'affichage
-        toast('Tu as reçu 3 nouveaux objets ! 🎒');
-    } else {
-        document.getElementById('claude-msg').textContent = txt; 
-    }
-  }catch(e){document.getElementById('claude-msg').textContent='Erreur API.'}
-}
-
-// --- Affichage de l'inventaire ---
-function renderProps() {
-  const c = document.getElementById('props-list');
-  if(!c) return;
-  if(!D.g.props || D.g.props.length === 0) {
-      c.innerHTML = '<p style="font-size:11px; color:var(--text2);">Ton sac est vide.</p>';
-      return;
-  }
-  c.innerHTML = D.g.props.map(p => `<div style="background:var(--card); border:2px solid var(--border); border-radius:10px; padding:6px 12px; font-size:11px; font-weight:bold; box-shadow:0 2px 4px var(--shadow);">${p}</div>`).join('');
-}
-
-// Appeler cette fonction au chargement (ajoute ça à la fin de ton script, à côté de updUI() )
-renderProps();
 function savePin(){const v=document.getElementById('pin-inp').value.trim();if(v.length===4&&/^\d+$/.test(v)){D.pin=v;save();document.getElementById('pin-inp').value='';toast('PIN mis à jour ✿')}else toast('4 chiffres requis')}
 function exportD(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`habitgotchi_${today()}.json`;a.click();URL.revokeObjectURL(u)}
 function confirmReset(){document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`}
 function clModal(e){if(!e||e.target.id==='modal')document.getElementById('modal').style.display='none'}
 function toast(m){document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<p style="text-align:center;font-size:12px">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`}
-function resetBilan() {if(confirm("Effacer le bilan IA ?")){document.getElementById('claude-summary').innerHTML='Ton bilan apparaîtra ici...';haptic();}}
 
 (function(){const td=today();if(D.lastActive&&D.lastActive!==td){D.g.energy=clamp(D.g.energy-1,0,5);D.g.happiness=clamp(D.g.happiness-1,0,5)}
   if(D.g.moodDay!==td){const ms=['happy','chill','sleepy','playful','curious'];D.g.mood=ms[Math.floor(Math.random()*ms.length)];D.g.moodDay=td}
   D.lastActive=td;save()})();
 
 /* ============================================================
-   p5.js — PIXEL ENGINE (Modifié pour Environnements & Mouvements)
+   p5.js — MOTEUR DE RENDU (SÉCURISÉ)
    ============================================================ */
 const C={
   body:'#d8b8e8',bodyDk:'#c0a0d0',bodyLt:'#ecd8f8',
@@ -930,8 +884,8 @@ const C={
   skyGray1:'#a0a0a8',skyGray2:'#c0c0c8',
   gnd:'#a8d498',gndDk:'#90c480',gndN:'#3c6030',
   cloud:'#ece8f4',trunk:'#b09068',leaf:'#78c488',leafN:'#406848',
-  wallIn:'#e0d8c8', floorIn:'#c8b8a8', rug:'#b898d4', // Couleurs Chambre
-  mnt1:'#a0a8b8', mnt2:'#808898', snow:'#e8e8f0', // Couleurs Montagne
+  wallIn:'#e0d8c8', floorIn:'#c8b8a8', rug:'#b898d4',
+  mnt1:'#a0a8b8', mnt2:'#808898', snow:'#e8e8f0',
   water:'#88c0d8',star:'#f0e498', flPk:'#e898b8',flYl:'#f0d878',
   rainbow:['#e8a0a0','#e8c8a0','#e8e0a0','#a0d8a0','#a0b8e0','#c0a0d8'],
 };
@@ -944,40 +898,33 @@ const p5s=(p)=>{
 
   p.draw=function(){
     const g=D.g, h=hr(), sleeping=(h>=22||h<7);
-    const en=g.energy*20, ha=g.happiness*20; // 0-100 pour la logique visuelle
-    const n=(h>=21||h<6); // Nuit vraie/fausse
+    const en=g.energy*20, ha=g.happiness*20;
+    const n=(h>=21||h<6);
 
     if(shakeTimer>0){shakeTimer--;p.translate(Math.sin(p.frameCount*2)*2,0)}
 
-    // 1. Ciel & Météo de fond
     drawSky(p,h,ha);
     if(meteoData&&meteoData.windspeed>30) drawWind(p);
 
-    // 2. Environnement actif (Décor qui suit les onglets)
     let envActif = g.activeEnv || 'parc';
     drawActiveEnv(p, envActif, n);
 
-    // 3. Mouvement du Gotchi (Balade perpétuelle)
     bounceT += sleeping ? 0.04 : 0.12;
     let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
-    
-    // Il se balade doucement par défaut
-    let amplitude = 15; 
+    let amplitude = 15;
     let vitesse = 0.02;
-    
-    // S'il déborde d'énergie et de joie, il va plus vite et plus loin !
+
     if (!sleeping && ha >= 80 && en >= 80) {
-      amplitude = 40; 
-      vitesse = 0.06;
-      if (p.frameCount % 20 < 10) bobY -= PX; // Petits sauts
+      amplitude = 40; vitesse = 0.06;
+      if (p.frameCount % 20 < 10) bobY -= PX;
+    } else if (!sleeping && ha >= 60 && en >= 60) {
+      amplitude = 25; vitesse = 0.04;
     }
-    
-    // Application du mouvement
+
     let moveX = sleeping ? 0 : Math.sin(p.frameCount * vitesse) * amplitude;
     const cx = CS/2 + moveX;
     const by = g.stage==='egg'?115:g.stage==='baby'?108:g.stage==='teen'?98:85;
 
-    // 4. Dessin du Gotchi
     if(g.stage==='egg') drawEgg(p,cx,by+bobY);
     else if(g.stage==='baby') drawBaby(p,cx,by+bobY,sleeping,en,ha);
     else if(g.stage==='teen') drawTeen(p,cx,by+bobY,sleeping,en,ha);
@@ -986,63 +933,47 @@ const p5s=(p)=>{
     if(sleeping&&g.stage!=='egg') drawZzz(p,cx+16,by-10);
     if(ha>=100&&!sleeping) drawRainbow(p);
 
-    // 5. Particules, Clignotement des yeux et Célébrations
     updateParts(p);
-    blinkT++; 
-    if (blinkT > 45 + Math.random() * 35) { 
-      blink = true; 
+    blinkT++;
+    if (blinkT > 45 + Math.random() * 35) {
+      blink = true;
       if (blinkT > 49 + Math.random() * 4) { blink = false; blinkT = 0; }
     }
-    
-    // Pluie de pixels quand une habitude est cochée
+
     while (celebQueue.length) {
       const cid = celebQueue.shift();
       for(let i=0; i<15; i++) {
         spawnP(cx + (Math.random()-.5)*40, by - 10, C.rainbow[Math.floor(Math.random()*C.rainbow.length)]);
       }
-      bounceT = Math.PI * 1.5; // Fait sursauter le Gotchi de joie
+      bounceT = Math.PI * 1.5;
     }
   };
 
   function px(x,y,w,h){p.rect(Math.floor(x/PX)*PX,Math.floor(y/PX)*PX,Math.max(PX,Math.floor(w/PX)*PX),Math.max(PX,Math.floor(h/PX)*PX))}
 
-  /* ============================================================
-     ENVIRONNEMENTS DYNAMIQUES
-     ============================================================ */
   function drawActiveEnv(p, env, n) {
     p.noStroke();
     if (env === 'parc') {
-      // Parc : Herbe, nuit ou jour
       p.fill(n ? C.gndN : C.gnd); p.rect(0, 120, CS, 80);
       p.fill(n ? '#305028' : C.gndDk); p.rect(0, 120, CS, PX*2);
       if(!n){ drawFl(p, 14, 126, C.flPk); drawFl(p, 186, 128, C.flYl); }
-      drawTree(p, 8, 86, n); // Arbre gauche
-      drawTree(p, 160, 90, n); // Arbre droit
+      drawTree(p, 8, 86, n); drawTree(p, 160, 90, n);
     } 
     else if (env === 'chambre') {
-      // Chambre : Mur, Plancher, Tapis
-      p.fill(n ? '#a090a8' : C.wallIn); p.rect(0, 60, CS, 60); // Mur
-      p.fill(n ? '#807080' : C.floorIn); p.rect(0, 120, CS, 80); // Sol
-      p.fill(n ? '#605070' : C.rug); p.rect(20, 140, 160, 40, 10); // Tapis moelleux
-      
-      // Petite fenêtre qui reflète la météo extérieure
+      p.fill(n ? '#a090a8' : C.wallIn); p.rect(0, 60, CS, 60);
+      p.fill(n ? '#807080' : C.floorIn); p.rect(0, 120, CS, 80);
+      p.fill(n ? '#605070' : C.rug); p.rect(20, 140, 160, 40, 10);
       p.fill(n ? C.skyN1 : C.skyD1); p.rect(20, 70, 40, 40);
-      p.fill('#e8e8f0'); p.rect(38, 70, 4, 40); p.rect(20, 88, 40, 4); // Croisillons
+      p.fill('#e8e8f0'); p.rect(38, 70, 4, 40); p.rect(20, 88, 40, 4);
     } 
     else if (env === 'montagne') {
-      // Montagne : Roches, Neige
-      p.fill(n ? '#404858' : C.mnt1); p.rect(0, 120, CS, 80); // Sol rocheux
+      p.fill(n ? '#404858' : C.mnt1); p.rect(0, 120, CS, 80);
       p.fill(n ? '#202838' : C.mnt2); p.rect(0, 120, CS, PX*2); 
-      
-      // Grand Pic en arrière-plan
-      p.fill(n ? '#505868' : '#b0b8c8');
-      p.triangle(40, 120, 100, 50, 160, 120);
-      p.fill(n ? '#c0c0d0' : C.snow); 
-      p.triangle(100, 50, 83, 70, 117, 70); // Neige au sommet
+      p.fill(n ? '#505868' : '#b0b8c8'); p.triangle(40, 120, 100, 50, 160, 120);
+      p.fill(n ? '#c0c0d0' : C.snow); p.triangle(100, 50, 83, 70, 117, 70);
     }
   }
 
-  /* SKY & ELEMENTS */
   function drawSky(p,h,ha){
     p.noStroke();let c1,c2;
     if(ha<=20&&h>=7&&h<21){c1=C.skyGray1;c2=C.skyGray2}
@@ -1061,7 +992,6 @@ const p5s=(p)=>{
   function drawFl(p,x,y,c){p.fill('#58a058');px(x,y,PX,PX*2);p.fill(c);px(x-PX,y-PX,PX,PX);px(x+PX,y-PX,PX,PX);px(x,y-PX*2,PX,PX);p.fill('#f0d878');px(x,y-PX,PX,PX)}
   function drawTree(p,x,y,n){p.fill(C.trunk);px(x+PX*2,y+PX*4,PX*2,PX*5);p.fill(n?C.leafN:C.leaf);px(x,y+PX,PX*6,PX*3);px(x+PX,y-PX,PX*4,PX*2);px(x+PX*2,y-PX*2,PX*2,PX)}
 
-  /* SPRITES */
   function drawEgg(p,cx,cy){
     const x=cx-PX*3,y=cy;p.noStroke();
     p.fill(C.egg);px(x+PX*2,y,PX*3,PX);px(x+PX,y+PX,PX*5,PX);px(x,y+PX*2,PX*7,PX*3);px(x+PX,y+PX*5,PX*5,PX);px(x+PX*2,y+PX*6,PX*3,PX);
@@ -1122,36 +1052,7 @@ const p5s=(p)=>{
       p.fill(p.color(176,144,208,170-i*45));px(fx,fy,sz,sz);px(fx+sz,fy,sz,sz);px(fx+sz,fy+sz,sz,sz);px(fx,fy+sz*2,sz,sz);px(fx+sz,fy+sz*2,sz,sz)}
   }
 
-  function genBilanSemaine(){
-  haptic();
-  const wd = getWkDates(wOff); // Utilise la semaine actuellement affichée (wOff)
-  const g = D.g, s = getSt(g.totalXp);
-  const hs = D.habits.map(h => {
-    const days = wd.filter(d => (D.log[d]||[]).includes(h.catId)).length;
-    return { habitude: h.label, jours_faits: days };
-  });
-  const wj = D.journal.filter(j => wd.includes(j.date.split('T')[0]));
-  
-  const b = {
-    periode: `${wd[0]} → ${wd[6]}`,
-    gotchi: { nom: g.name, stade: s.l, energie: `${g.energy}/5`, bonheur: `${g.happiness}/5` },
-    habitudes: hs,
-    notes_journal: wj.map(j => ({ humeur: j.mood, texte: j.text }))
-  };
-  
-  document.getElementById('bil-txt-hidden').value = "Contexte pour Claude : \n" + JSON.stringify(b, null, 2);
-  document.getElementById('btn-copy-bilan').style.display = 'block';
-  document.getElementById('claude-summary').textContent = "Données prêtes ! Copie-les et donne-les à Claude, puis colle sa réponse ici (via un futur bouton).";
-}
-
-function copyBilanSemaine(){
-  navigator.clipboard.writeText(document.getElementById('bil-txt-hidden').value).then(()=>{
-    const b = document.getElementById('btn-copy-bilan');
-    b.textContent = '✓ Copié !';
-    setTimeout(() => b.textContent = '2. 📋 Copier Data', 1500);
-  });
-
-   function spawnP(x,y,c){particles.push({x,y,vx:(Math.random()-.5)*4,vy:-Math.random()*3-1.5,life:16,c})}
+  function spawnP(x,y,c){particles.push({x,y,vx:(Math.random()-.5)*4,vy:-Math.random()*3-1.5,life:16,c})}
   function updateParts(p){
     p.noStroke();particles=particles.filter(pt=>{
       pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=.12;pt.life--;
@@ -1161,18 +1062,10 @@ function copyBilanSemaine(){
   }
 };
 new p5(p5s);
-   /* ============================================================
-     INITIALISATION
-     ============================================================ */
-  updUI();
-  renderHabs();
 
-  function resetBilan() {
-    if(confirm("Voulez-vous vraiment effacer le bilan de l'IA ?")) {
-      document.getElementById('claude-summary').innerHTML = 'Ton bilan apparaîtra ici...';
-      if(navigator.vibrate) navigator.vibrate(50);
-    }
-  }
+updUI();
+renderHabs();
+renderProps();
 </script>
 </body>
 </html>

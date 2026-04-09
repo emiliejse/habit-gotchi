@@ -1,0 +1,15 @@
+{
+  "name": "Habit-Gotchi",
+  "short_name": "Habit-Gotchi",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ddd6e8",
+  "theme_color": "#ddd6e8",
+  "icons": [
+    {
+      "src": "assets/img/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

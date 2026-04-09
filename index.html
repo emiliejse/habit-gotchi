@@ -476,22 +476,56 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   </div>
 
   <!-- SETTINGS -->
-  <div id="p-settings" class="pnl">
+<div id="p-settings" class="pnl">
+    
     <div class="card">
-      <h2>Réglages</h2>
-      <div style="margin-bottom:10px"><label class="slbl" style="display:block;margin-bottom:3px">Nom du Gotchi</label><div style="display:flex;gap:6px"><input type="text" id="name-inp" class="inp" style="flex:1"><button class="btn btn-p" onclick="saveName()">OK</button></div></div>
-      <div style="margin-bottom:10px"><label class="slbl" style="display:block;margin-bottom:3px">Changer le PIN</label><div style="display:flex;gap:6px"><input type="password" id="pin-inp" class="inp" placeholder="4 chiffres" maxlength="4" inputmode="numeric" style="flex:1"><button class="btn btn-p" onclick="savePin()">OK</button></div></div>
-      <div><label class="slbl" style="display:block;margin-bottom:3px">Clé API Claude (optionnel)</label><div style="display:flex;gap:6px"><input type="password" id="api-inp" class="inp" placeholder="sk-ant-..." style="flex:1"><button class="btn btn-p" onclick="saveApi()">OK</button></div></div>
+      <h2>⚙️ Réglages</h2>
+      <div style="margin-bottom:10px">
+        <label class="slbl" style="display:block;margin-bottom:3px">Nom du Gotchi</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="name-inp" class="inp" style="flex:1">
+          <button class="btn btn-p" onclick="saveName()">OK</button>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <label class="slbl" style="display:block;margin-bottom:3px">Changer le PIN</label>
+        <div style="display:flex;gap:6px">
+          <input type="password" id="pin-inp" class="inp" placeholder="4 chiffres" maxlength="4" inputmode="numeric" style="flex:1">
+          <button class="btn btn-p" onclick="savePin()">OK</button>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <label class="slbl" style="display:block;margin-bottom:3px">Clé API Claude (optionnel)</label>
+        <div style="display:flex;gap:6px">
+          <input type="password" id="api-inp" class="inp" placeholder="sk-ant-..." style="flex:1">
+          <button class="btn btn-p" onclick="saveApi()">OK</button>
+        </div>
+      </div>
+      <div>
+        <label class="slbl" style="display:block;margin-bottom:3px">Décor par défaut</label>
+        <select id="env-sel" class="inp" onchange="changeEnv(this.value)">
+          <option value="parc">Parc 🌳</option>
+          <option value="chambre">Chambre 🛏️</option>
+          <option value="montagne">Montagne ⛰️</option>
+        </select>
+      </div>
     </div>
-     <div id="hab-edit"></div>
+
+    <div class="card">
+      <h2>✏️ Mes Habitudes</h2>
+      <p style="font-size:10px;color:var(--text2);margin-bottom:8px">Personnalise tes 6 actions quotidiennes :</p>
+      <div id="hab-edit"></div>
+    </div>
+
     <div class="card">
       <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:5px;font-size:10px">📦 Exporter JSON</button>
       <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Réinitialiser</button>
     </div>
-    <div class="card" style="text-align:center"><p style="font-size:9px;color:var(--text2)">Habit-Gotchi v4 ✿ Local 💜</p></div>
+    
+    <div class="card" style="text-align:center">
+      <p style="font-size:9px;color:var(--text2)">Habit-Gotchi v4 ✿ Local 💜</p>
+    </div>
   </div>
-   
-</div>
 
 <!-- ============================================================
      MENU NOTEBOOK OVERLAY

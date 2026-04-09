@@ -45,29 +45,25 @@ nav,
 #dynamic-zone {
   padding-bottom: 80px !important; /* Pour garder une marge de confort au scroll */
 }
-   /* --- Bouton Menu Central (Façon Console) --- */
-.fab-menu {
+   /* --- Languette Menu Discrète --- */
+.menu-languette {
   position: fixed;
-  bottom: calc(20px + var(--sab));
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--lilac);
-  color: white;
-  border: 4px solid #9a7ab8;
-  border-radius: 20px;
-  padding: 12px 24px;
-  font: bold 16px 'Courier New', monospace;
-  box-shadow: 0 8px 0 #9a7ab8, 0 15px 20px rgba(0,0,0,0.2);
+  background: var(--card);
+  border: 3px solid #c8b8a0;
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  padding: 4px 30px 8px;
+  font-size: 24px;
   cursor: pointer;
   z-index: 150;
-  transition: all 0.1s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  box-shadow: 0 -4px 15px rgba(56,48,74,.08);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.fab-menu:active {
-  transform: translateX(-50%) translateY(8px);
-  box-shadow: 0 0 0 #9a7ab8, 0 5px 10px rgba(0,0,0,0.2);
+.menu-languette:active {
+  transform: translateX(-50%) translateY(10px);
 }
 /* ============================================================
    PALETTE — modifie ici pour tout changer
@@ -371,7 +367,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     <div class="card">
       <h2>Mes 6 habitudes</h2>
       <p style="font-size:10px;color:var(--text2);margin-bottom:8px">Catégories fixes · Texte modifiable</p>
-      <div id="hab-edit"></div>
+
     </div>
   </div>
 
@@ -410,22 +406,64 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   <!-- PROGRESS -->
 <div id="p-progress" class="pnl">
   <div class="card">
-    <h2 style="display:flex; justify-content:space-between; align-items:center;">
-      <span>🧠 Bilan IA de la semaine</span>
-      <button onclick="resetBilan()" style="background:none; border:none; color:var(--coral); font-size:16px; cursor:pointer;" title="Effacer le bilan">🔄</button>
-    </h2>
-    
-    <div id="claude-summary" style="background: rgba(255,255,255,0.5); padding: 12px; border-radius: 8px; font-size: 12px; color: var(--text); min-height: 50px; border: 1px dashed var(--border); margin-bottom: 12px; white-space: pre-wrap;">
-      Ton bilan apparaîtra ici...
+    <div class="nav-r">
+      <button class="nav-a" onclick="navW(-1)">◀</button>
+      <h2 style="margin:0" id="w-title">Cette semaine</h2>
+      <button class="nav-a" onclick="navW(1)">▶</button>
     </div>
+    <div id="w-view" class="cal"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:3px">
+      <span style="font-size:8px;color:var(--text2)">L</span><span style="font-size:8px;color:var(--text2)">M</span><span style="font-size:8px;color:var(--text2)">M</span><span style="font-size:8px;color:var(--text2)">J</span><span style="font-size:8px;color:var(--text2)">V</span><span style="font-size:8px;color:var(--text2)">S</span><span style="font-size:8px;color:var(--text2)">D</span>
+    </div>
+  </div>
 
-    <div style="display:flex; gap:6px;">
-      <button class="btn btn-p" onclick="genBilanSemaine()" style="flex:1; font-size:10px;">1. Générer Data</button>
-      <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="flex:1; font-size:10px; display:none;">2. 📋 Copier Data</button>
+  <div class="card">
+    <div class="nav-r">
+      <button class="nav-a" onclick="navM(-1)">◀</button>
+      <h2 style="margin:0" id="m-title">Ce mois</h2>
+      <button class="nav-a" onclick="navM(1)">▶</button>
     </div>
-    
+    <div id="m-view" class="cal"></div>
+  </div>
+
+  <div class="card">
+    <h2>Stats</h2>
+    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px">
+      <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
+        <div style="font-size:20px;font-weight:bold;color:var(--lilac)" id="s-str">0</div>
+        <div class="slbl">série</div>
+      </div>
+      <div style="text-align:center;padding:8px;background:rgba(128,208,168,.07);border-radius:10px">
+        <div style="font-size:20px;font-weight:bold;color:var(--mint)" id="s-xp">0</div>
+        <div class="slbl">XP total</div>
+      </div>
+      <div style="text-align:center;padding:8px;background:rgba(136,190,232,.07);border-radius:10px">
+        <div style="font-size:20px;font-weight:bold;color:var(--sky)" id="s-jrn">0</div>
+        <div class="slbl">journal</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="display:flex; justify-content:space-between; align-items:center;">
+      <span>🧠 Bilan Hebdo</span>
+      <button onclick="resetBilan()" style="background:none; border:none; color:var(--text2); font-size:14px; cursor:pointer;" title="Réinitialiser">🔄</button>
+    </h2>
+    <div id="claude-summary" style="background: rgba(255,255,255,0.5); padding: 12px; border-radius: 8px; font-size: 12px; border: 1px dashed var(--border); margin-bottom: 12px; white-space: pre-wrap;">
+      Ton bilan de la semaine apparaîtra ici...
+    </div>
+    <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%; font-size:10px; margin-bottom:6px;">✿ Générer le bilan de la semaine</button>
+    <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="width:100%; font-size:10px; display:none;">📋 Copier pour Claude</button>
     <textarea id="bil-txt-hidden" style="display:none;"></textarea>
   </div>
+</div>
+
+<div id="p-props" class="pnl">
+  <div class="card" style="text-align:center; padding: 30px 10px;">
+    <h2>🎒 Mon Inventaire</h2>
+    <p style="font-size:11px; color:var(--text2);">Tes décors et objets débloqués apparaîtront ici.</p>
+  </div>
+</div>
 
   <!-- FOCUS -->
   <div id="p-focus" class="pnl">
@@ -451,6 +489,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     </div>
     <div class="card" style="text-align:center"><p style="font-size:9px;color:var(--text2)">Habit-Gotchi v4 ✿ Local 💜</p></div>
   </div>
+   <div id="hab-edit"></div>
 </div>
 
 <!-- ============================================================
@@ -459,13 +498,17 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()">
   <div class="menu-book" onclick="event.stopPropagation()">
     <h2>📓 Carnet</h2>
-    <div class="menu-item" onclick="goMenu('gotchi')"><span class="mi-icon">🏠</span>Mon Gotchi</div>
-    <div class="menu-item" onclick="goMenu('habits')"><span class="mi-icon">✏️</span>Modifier habitudes</div>
+    <div class="menu-item" onclick="goMenu('gotchi')"><span class="mi-icon">🏠</span>Accueil Gotchi</div>
     <div class="menu-item" onclick="goMenu('journal')"><span class="mi-icon">📖</span>Journal intime</div>
-    <div class="menu-item" onclick="goMenu('progress')"><span class="mi-icon">📊</span>Progrès</div>
+    <div class="menu-item" onclick="goMenu('progress')"><span class="mi-icon">📊</span>Mes Progrès</div>
     <div class="menu-item" onclick="goMenu('focus')"><span class="mi-icon">🎯</span>Focus & Méditation</div>
-    <div class="menu-item" onclick="goMenu('settings')"><span class="mi-icon">⚙️</span>Réglages</div>
-     <div class="menu-item" onclick="genSOS(); toggleMenu()"><span class="mi-icon">🆘</span>Bouton d'Urgence</div>
+    <div class="menu-item" onclick="goMenu('props')"><span class="mi-icon">🎒</span>Décor & Objets</div>
+    <div class="menu-item" onclick="goMenu('settings')"><span class="mi-icon">⚙️</span>Réglages & Habitudes</div>
+    
+    <div class="menu-item" style="color:var(--lilac); border-top: 1px dashed #c8b898; margin-top: 8px; padding-top: 12px;" onclick="genSoutien(); toggleMenu()">
+      <span class="mi-icon">💜</span>Besoin de soutien
+    </div>
+    
     <button class="menu-close" onclick="toggleMenu()">Fermer ✕</button>
   </div>
 </div>
@@ -490,7 +533,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 </nav>
 
 <!-- Modal -->
-   <button class="fab-menu" onclick="toggleMenu()">📓 MENU</button>
+   <button class="menu-languette" onclick="toggleMenu()">📓</button>
 <div id="modal" class="modal" style="display:none" onclick="clModal(event)"><div class="modal-box" id="mbox" onclick="event.stopPropagation()"></div></div>
 
 <script>
@@ -524,20 +567,31 @@ function haptic(){try{navigator.vibrate&&navigator.vibrate([50])}catch(e){}}
    ============================================================ */
 let journalLocked=true;
 function go(t){
-  // 1. On cache tous les panneaux
+  // 1. On cache tout
   document.querySelectorAll('.pnl').forEach(p=>p.classList.remove('on'));
   
-  // 2. On affiche le panneau demandé
+  // 2. On affiche la cible
   const targetPanel = document.getElementById('p-'+t);
   if(targetPanel) targetPanel.classList.add('on');
   
-  // 3. Animation de réduction de la console
+  // 3. Gestion de la Console et du DÉCOR p5.js
   const shell = document.querySelector('.tama-shell');
-  if(t === 'gotchi') shell.classList.remove('shrunk');
-  else shell.classList.add('shrunk');
+  if(t === 'gotchi') {
+    shell.classList.remove('shrunk');
+    D.g.activeEnv = 'parc'; 
+  } else {
+    shell.classList.add('shrunk');
+    // Le décor change VRAIMENT selon l'onglet
+    if(t === 'journal') D.g.activeEnv = 'chambre';
+    else if(t === 'focus') D.g.activeEnv = 'chambre';
+    else if(t === 'progress') D.g.activeEnv = 'montagne';
+    else if(t === 'settings') D.g.activeEnv = 'chambre';
+    else if(t === 'props') D.g.activeEnv = 'parc';
+  }
+  save(); // Force p5.js à lire le nouveau décor
   
-  // 4. Mises à jour spécifiques
-  if(t==='gotchi'||t==='habits') renderHabs();
+  // 4. Mises à jour du contenu
+  if(t==='gotchi'||t==='settings') renderHabs(); // On met à jour les habitudes ici aussi
   if(t==='progress') renderProg();
   if(t==='journal') { journalLocked=true; renderJ(); }
   
@@ -1022,6 +1076,21 @@ function copyBilanSemaine(){
     b.textContent = '✓ Copié !';
     setTimeout(() => b.textContent = '2. 📋 Copier Data', 1500);
   });
+   function genSoutien(){
+  haptic();
+  const g=D.g, td=today(), log=D.log[td]||[];
+  const sos={
+    etat:{energie:`${g.energy}/5`, bonheur:`${g.happiness}/5`},
+    msg:'Émilie a besoin de douceur et de body doubling. Agis comme son compagnon Habit-Gotchi, rassure-la en 2 phrases très douces.'
+  };
+  document.getElementById('modal').style.display='flex';
+  document.getElementById('mbox').innerHTML=`
+    <h3 style="font-size:14px;margin-bottom:6px;color:var(--lilac);">💜 Besoin de douceur</h3>
+    <p style="font-size:10px;color:var(--text2);margin-bottom:6px">Copie ceci pour Claude.</p>
+    <textarea class="inp" rows="4" readonly style="font-size:9px">${JSON.stringify(sos,null,2)}</textarea>
+    <button class="btn btn-p" style="width:100%;margin-top:6px" onclick="navigator.clipboard.writeText(document.querySelector('#mbox textarea').value).then(()=>this.textContent='✓ Copié !')">📋 Copier</button>
+    <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>`;
+}
 }
    function spawnP(x,y,c){particles.push({x,y,vx:(Math.random()-.5)*4,vy:-Math.random()*3-1.5,life:16,c})}
   function updateParts(p){

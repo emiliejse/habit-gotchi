@@ -477,9 +477,6 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
   <!-- SETTINGS -->
 <div id="p-settings" class="pnl">
-    
-  <div id="p-settings" class="pnl">
-    
     <div class="card">
       <h2>⚙️ Réglages</h2>
       <div style="margin-bottom:10px">
@@ -722,6 +719,9 @@ function updUI(){
   document.getElementById('name-inp').value=g.name;
   const envSel=document.getElementById('env-sel'); if(envSel) envSel.value=g.activeEnv||'parc';
 }
+   // Permet de réafficher la clé API si elle est déjà enregistrée
+  const apiInp = document.getElementById('api-inp');
+  if (apiInp) apiInp.value = D.apiKey || '';
 function calcStr(){let s=0,d=new Date();while(true){const ds=d.toISOString().split('T')[0];const l=D.log[ds]||[];if(l.length>0)s++;else if(ds!==today())break;d.setDate(d.getDate()-1);if(s>999)break}return s}
 
 /* ============================================================
@@ -871,6 +871,28 @@ function genSOS(){
     <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>`;
 }
 function saveName(){const n=document.getElementById('name-inp').value.trim();if(n){D.g.name=n;save();updUI()}}
+function genSoutien(){
+  haptic();
+  const g=D.g, td=today(), log=D.log[td]||[];
+  const sos={
+    etat:{energie:`${g.energy}/5`, bonheur:`${g.happiness}/5`},
+    msg:'Émilie a besoin de douceur et de body doubling. Agis comme son compagnon Habit-Gotchi, rassure-la en 2 phrases très douces.'
+  };
+  
+  const modal = document.getElementById('modal');
+  const mbox = document.getElementById('mbox');
+  
+  if(modal && mbox) {
+    modal.style.display = 'flex';
+    mbox.innerHTML = `
+      <h3 style="font-size:14px;margin-bottom:6px;color:var(--lilac);">💜 Besoin de douceur</h3>
+      <p style="font-size:10px;color:var(--text2);margin-bottom:6px">Copie ceci pour Claude.</p>
+      <textarea class="inp" rows="4" readonly style="font-size:9px">${JSON.stringify(sos,null,2)}</textarea>
+      <button class="btn btn-p" style="width:100%;margin-top:6px" onclick="navigator.clipboard.writeText(document.querySelector('#mbox textarea').value).then(()=>this.textContent='✓ Copié !')">📋 Copier</button>
+      <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>
+    `;
+  }
+}
 function savePin(){const v=document.getElementById('pin-inp').value.trim();if(v.length===4&&/^\d+$/.test(v)){D.pin=v;save();document.getElementById('pin-inp').value='';toast('PIN mis à jour ✿')}else toast('4 chiffres requis')}
 function exportD(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`habitgotchi_${today()}.json`;a.click();URL.revokeObjectURL(u)}
 function confirmReset(){document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`}
@@ -1114,22 +1136,7 @@ function copyBilanSemaine(){
     b.textContent = '✓ Copié !';
     setTimeout(() => b.textContent = '2. 📋 Copier Data', 1500);
   });
-   function genSoutien(){
-  haptic();
-  const g=D.g, td=today(), log=D.log[td]||[];
-  const sos={
-    etat:{energie:`${g.energy}/5`, bonheur:`${g.happiness}/5`},
-    msg:'Émilie a besoin de douceur et de body doubling. Agis comme son compagnon Habit-Gotchi, rassure-la en 2 phrases très douces.'
-  };
-  document.getElementById('modal').style.display='flex';
-  document.getElementById('mbox').innerHTML=`
-    <h3 style="font-size:14px;margin-bottom:6px;color:var(--lilac);">💜 Besoin de douceur</h3>
-    <p style="font-size:10px;color:var(--text2);margin-bottom:6px">Copie ceci pour Claude.</p>
-    <textarea class="inp" rows="4" readonly style="font-size:9px">${JSON.stringify(sos,null,2)}</textarea>
-    <button class="btn btn-p" style="width:100%;margin-top:6px" onclick="navigator.clipboard.writeText(document.querySelector('#mbox textarea').value).then(()=>this.textContent='✓ Copié !')">📋 Copier</button>
-    <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>`;
-}
-}
+
    function spawnP(x,y,c){particles.push({x,y,vx:(Math.random()-.5)*4,vy:-Math.random()*3-1.5,life:16,c})}
   function updateParts(p){
     p.noStroke();particles=particles.filter(pt=>{

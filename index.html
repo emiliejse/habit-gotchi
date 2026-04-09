@@ -195,15 +195,26 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .btn-m{background:var(--mint);color:var(--text)}
 .btn-sos{background:linear-gradient(135deg,var(--coral),var(--pink));color:#fff;font-size:11px;padding:8px 12px;border-radius:10px}
 
-/* Habits */
-.hab{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;
-  border:2px solid var(--border);margin-bottom:5px;background:#fff;cursor:pointer;
-  transition:all .3s cubic-bezier(.34,1.56,.64,1)}
-.hab.done{background:linear-gradient(135deg,rgba(128,208,168,.12),rgba(176,144,208,.12));border-color:var(--mint)}
-.hab .ck{width:28px;height:28px;border-radius:7px;border:3px solid var(--border);
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  font-size:15px;font-weight:bold;transition:.3s;color:transparent}
-.hab.done .ck{background:var(--mint);border-color:var(--mint);color:#fff}
+/* --- Habitudes & Animations --- */
+.hab {
+  display:flex; align-items:center; gap:8px; padding:8px; border-radius:8px;
+  border:2px solid var(--border); margin-bottom:4px; background:#fff; cursor:pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.hab:active { transform: scale(0.97); } /* Petit effet quand on appuie */
+.hab.done {
+  background:linear-gradient(135deg,rgba(128,208,168,.15),rgba(176,144,208,.15));
+  border-color:var(--mint);
+}
+.hab .ck {
+  width:24px; height:24px; border-radius:6px; border:2px solid var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:14px; color:transparent;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Animation fluide */
+}
+.hab.done .ck {
+  background:var(--mint); border-color:var(--mint); color:#fff;
+  transform: rotate(360deg) scale(1.1); /* L'animation magique ici ! */
+}
 
 /* Sliders 0-5 */
 .slider-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
@@ -513,6 +524,10 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
           <option value="montagne">Montagne ⛰️</option>
         </select>
       </div>
+       <div class="card">
+      <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:6px;font-size:10px">📦 Exporter ma sauvegarde (JSON)</button>
+      <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
+    </div>
     </div>
 
     <div class="card">
@@ -667,6 +682,7 @@ function updUI(){
   if(document.getElementById('g-name')) document.getElementById('g-name').textContent=g.name;
   if(document.getElementById('g-stage')) document.getElementById('g-stage').textContent=s.l;
   if(document.getElementById('xp-l')) document.getElementById('xp-l').textContent=`${g.totalXp-pt}/${nt-pt}`;
+   if(document.getElementById('api-inp')) document.getElementById('api-inp').value = D.apiKey || '';
   if(document.getElementById('xp-b')) document.getElementById('xp-b').style.width=pct+'%';
   if(document.getElementById('sl-energy')){ document.getElementById('sl-energy').value=g.energy; document.getElementById('sv-energy').textContent=g.energy; }
   if(document.getElementById('sl-happy')){ document.getElementById('sl-happy').value=g.happiness; document.getElementById('sv-happy').textContent=g.happiness; }
@@ -871,6 +887,24 @@ function renderProg(){
 }
 
 function saveName(){const n=document.getElementById('name-inp').value.trim();if(n){D.g.name=n;save();updUI()}}
+   // Sauvegarde la clé API pour toujours
+function saveApi(){
+  const v = document.getElementById('api-inp').value.trim();
+  D.apiKey = v; 
+  save(); // Ça l'enregistre dans le localStorage de ton téléphone
+  if(v) toast('Clé API sauvegardée en mémoire ! ✿');
+  else toast('Clé API effacée.');
+}
+
+// Fonction pour télécharger tes données
+function exportD(){
+  // Crée un fichier JSON avec toutes tes données (D)
+  const b = new Blob([JSON.stringify(D, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = `HabitGotchi_Sauvegarde_${today()}.json`; // Nom du fichier avec la date
+  a.click();
+}
 function savePin(){const v=document.getElementById('pin-inp').value.trim();if(v.length===4&&/^\d+$/.test(v)){D.pin=v;save();document.getElementById('pin-inp').value='';toast('PIN mis à jour ✿')}else toast('4 chiffres requis')}
 function exportD(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`habitgotchi_${today()}.json`;a.click();URL.revokeObjectURL(u)}
 function confirmReset(){document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`}

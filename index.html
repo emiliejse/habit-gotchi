@@ -339,28 +339,38 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
      ============================================================ -->
 <div id="dynamic-zone">
   <!-- GOTCHI (habitudes + XP) -->
-  <div id="p-gotchi" class="pnl on">
+ <div id="p-gotchi" class="pnl on">
+    
+    <div class="card" style="background: linear-gradient(135deg, rgba(176,144,208,0.15), rgba(232,160,191,0.15)); border: 2px solid var(--lilac); text-align: center; padding: 16px;">
+      <div style="font-size: 18px; font-weight: bold; color: var(--text);">
+        <span id="g-name">Petit·e Gotchi</span> <span style="color:var(--lilac); opacity:0.5;">|</span> <span id="g-stage" style="color: var(--lilac);">Œuf</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:10px; margin-top:12px; font-weight:bold;">
+        <span class="slbl" style="color:var(--lilac)">Progression</span>
+        <span class="slbl" id="xp-l" style="color: var(--text);">0/150 XP</span>
+      </div>
+      <div class="pbar" style="height:12px; margin-top:6px; background: rgba(0,0,0,0.06); border-radius: 6px;">
+        <div class="pfill" id="xp-b" style="width:0%; background: linear-gradient(90deg, var(--lilac), var(--pink)); border-radius: 6px;"></div>
+      </div>
+    </div>
+
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <h2 style="margin:0">Aujourd'hui</h2>
-        <span id="hab-count" style="font-size:11px;color:var(--mint);font-weight:bold">0/6</span>
+        <span id="hab-count" style="font-size:11px;background:var(--mint);color:#fff;padding:2px 8px;border-radius:10px;font-weight:bold">0/6</span>
       </div>
       <div id="hab-home"></div>
     </div>
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <span style="font-size:13px;font-weight:bold" id="g-name">Petit·e Gotchi</span>
-        <span id="g-stage" style="font-size:10px;background:var(--peach);padding:2px 8px;border-radius:6px;font-weight:bold">Œuf</span>
-      </div>
-      <div><div style="display:flex;justify-content:space-between"><span class="slbl">XP</span><span class="slbl" id="xp-l">0/60</span></div><div class="pbar"><div class="pfill" id="xp-b" style="width:0%;background:linear-gradient(90deg,var(--lilac),var(--pink))"></div></div></div>
-    </div>
     <!-- Claude AI card -->
-    <div class="card" id="claude-card">
-      <h2>🤖 Analyse Claude</h2>
-      <div id="claude-msg" style="font-size:11px;color:var(--text2);min-height:30px">Coche des habitudes pour que je puisse t'analyser ✿</div>
-      <button class="btn btn-p" onclick="askClaude()" style="width:100%;margin-top:6px;font-size:10px">✿ Demander à Claude</button>
+<div class="card" id="claude-card">
+      <h2>💬 La pensée du Gotchi</h2>
+      <div id="claude-msg" style="font-size:11px;color:var(--text2);min-height:30px;line-height:1.4;">
+        Remplis un peu ton journal ou coche tes habitudes, et je te dirai ce que j'en pense ✿
+      </div>
+      <button class="btn btn-p" onclick="askClaude()" style="width:100%;margin-top:8px;font-size:10px;background:var(--lilac);border:none;">
+        ✿ Demander une petite pensée
+      </button>
     </div>
-  </div>
 
   <!-- HABITS EDIT -->
   <div id="p-habits" class="pnl">
@@ -567,10 +577,8 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 // --- Haptique Douce (Vibration Android + Flash visuel iPhone) ---
 function haptic() {
+  // Juste la tentative de vibration, pas de flash d'écran
   try { if(navigator.vibrate) navigator.vibrate([50]); } catch(e){}
-  const bg = document.body.style.backgroundColor;
-  document.body.style.backgroundColor = '#f4eaf4';
-  setTimeout(() => { document.body.style.backgroundColor = bg; }, 100);
 }
 
 /* ============================================================
@@ -643,7 +651,13 @@ function renderHabs(){
 }
 function editH(i,v){D.habits[i].label=v.trim()||D.habits[i].label;save()}
 
-const STG=[{k:'egg',l:'Œuf',th:0},{k:'baby',l:'Bébé',th:60},{k:'teen',l:'Ado',th:240},{k:'adult',l:'Adulte',th:600}];
+// Les paliers sont beaucoup plus longs (150 = ~1 semaine parfaite)
+const STG=[
+  {k:'egg', l:'Œuf', th:0},
+  {k:'baby', l:'Bébé', th:150},
+  {k:'teen', l:'Ado', th:500},
+  {k:'adult', l:'Adulte', th:1500}
+];
 function getSt(xp){let s=STG[0];for(const st of STG)if(xp>=st.th)s=st;return s}
 function nxtTh(xp){for(const s of STG)if(xp<s.th)return s.th;return 1200}
 function addXp(n){D.g.totalXp=Math.max(0,D.g.totalXp+n);D.g.stage=getSt(D.g.totalXp).k;D.g.envLv=Math.min(10,Math.floor(D.g.totalXp/60));save();updUI()}
@@ -719,8 +733,9 @@ function saveApi(){const v=document.getElementById('api-inp').value.trim();if(v)
 
 async function askClaude(){
   const key=D.apiKey; if(!key){toast('Configure ta clé API dans Réglages');return}
-  const prompt=`Tu es le compagnon Habit-Gotchi. Fais un court message d'encouragement ET invente 3 petits objets (props) mignons pour l'inventaire. Tu DOIS répondre UNIQUEMENT avec ce format JSON : {"message": "ton texte", "props": ["objet1", "objet2", "objet3"]}`;
-  
+ // On adoucit l'instruction pour l'IA
+  const prompt=`Tu es le petit compagnon numérique d'Émilie. Observe doucement sa journée (Énergie ${g.energy}/5, Bonheur ${g.happiness}/5, Habitudes faites: ${habsDone.join(', ')||'aucune'}, Manquantes: ${habsMissing.join(', ')}. Journal: ${recentJ||'(vide)'}). 
+  Donne-lui une petite pensée complice, poétique ou encourageante en 2 phrases maximum. Ne dis JAMAIS que tu l'analyses. Sois doux, utilise un vocabulaire visuel et chaleureux, comme un ami qui regarde par-dessus son épaule. Ajoute un seul emoji à la fin.`;
   if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Je cherche des cadeaux... 🎁';
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{

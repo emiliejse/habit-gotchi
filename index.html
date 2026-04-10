@@ -191,7 +191,6 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   background:#fff8ee;border:2px solid #c8b898;border-radius:50%;aspect-ratio:1;
   width:90px;margin:0 auto;cursor:pointer;
   box-shadow:2px 2px 0 #d4c4a8;
-  opacity:0;
   transition:transform .15s,background .15s;
 }
 .menu-circle:active{transform:scale(.92);background:#ede4d0}
@@ -199,7 +198,9 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .menu-circle .mc-label{font-size:8px;font-weight:bold;color:#6a5a40;letter-spacing:.5px;text-align:center;text-transform:uppercase}
 .menu-soutien{
   display:flex;align-items:center;justify-content:center;gap:8px;
-  padding:10px;
+  padding:8px 20px;
+  width:auto;         /* ← plus de 100% */
+  margin:6px auto 0; /* ← centré */
   background:#e8d8f0;
   border:2px solid #b090d0;
   border-bottom:3px solid #8060b0;
@@ -207,16 +208,19 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   border-radius:4px;
   color:#5a3a80;font-size:11px;font-weight:bold;
   font-family:'Courier New',monospace;cursor:pointer;letter-spacing:1px;
-  opacity:0;width:100%;margin-top:4px;
+  opacity:1;          /* ← plus de 0 */
 }
 .menu-soutien:active{
   border-bottom-width:2px;border-right-width:2px;
   transform:translate(1px,1px);
 }
-@keyframes menuPop{
-  0%{transform:scale(.3);opacity:0}
-  70%{transform:scale(1.12)}
-  100%{transform:scale(1);opacity:1}
+@keyframes bookSlideUp{
+  0%{transform:translateY(60px) scale(.95);opacity:0}
+  70%{transform:translateY(-6px) scale(1.01)}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+.menu-overlay.open .menu-book{
+  animation:bookSlideUp .35s cubic-bezier(0.34,1.56,0.64,1) forwards;
 }
 
 /* ============================================================
@@ -847,33 +851,11 @@ function go(t){
 
 function toggleMenu(){
   const ov = document.getElementById('menu-overlay');
-  const isOpen = ov.classList.contains('open');
-  if(!isOpen){
-    // Met à jour le nom dans le titre
+  if(!ov.classList.contains('open')){
     const nm = document.getElementById('menu-gotchi-name');
     if(nm) nm.textContent = D.g.name || 'Gotchi';
-    ov.classList.add('open');
-    // Animation en cascade sur les cercles
-    document.querySelectorAll('.menu-circle').forEach((el,i)=>{
-      el.style.animation='none';
-      el.style.opacity='0';
-      setTimeout(()=>{
-        el.style.animation=`menuPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards`;
-        el.style.animationDelay = (i * 0.07) + 's';
-      }, 10);
-    });
-    const soutien = document.querySelector('.menu-soutien');
-    if(soutien){
-      soutien.style.animation='none';
-      soutien.style.opacity='0';
-      setTimeout(()=>{
-        soutien.style.animation=`menuPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards`;
-        soutien.style.animationDelay='0.48s';
-      },10);
-    }
-  } else {
-    ov.classList.remove('open');
   }
+  ov.classList.toggle('open');
 }
 function goMenu(t){toggleMenu();go(t)}
 

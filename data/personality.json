@@ -1,0 +1,17 @@
+{
+  "nom": "Petit·e Gotchi",
+  "traits": ["curieux", "doux", "joueur"],
+  "bulles": {
+    "matin": ["Bon matin ☀️", "Coucou ! Prête ?", "*bâille* Salut 💜"],
+    "aprem": ["On avance bien ✿", "Un pas à la fois 💜", "Créer c'est vivre 🎨"],
+    "soir": ["On se pose ? ✿", "Tu as fait assez.", "Débranche... 💜"],
+    "nuit": ["Zzz... 🌙", "*ronronne*", "Bonne nuit ✿"],
+    "triste": ["Ça va aller... 💜", "Je suis là ✿", "Tout doux 🌸"],
+    "fatigue": ["On fait doucement...", "Repos = productif ✿", "Rien à prouver"],
+    "fierte": ["Tu déchires !! 🌟", "Si fière ! ✿", "Quelle équipe 💜"],
+    "max": ["PARFAIT !! 🎉", "6/6 !! ✿✿✿", "JE BRILLE !! 🌟"],
+    "idle": ["*regarde autour*", "♪ la la ♪", "*sourit*", "*boing*"],
+    "vent": ["Ouh, le vent d'Autan ! 🌬️", "Ça souffle dehors !"],
+    "custom": []
+  }
+}

@@ -655,7 +655,6 @@ const hr=()=>new Date().getHours();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 async function loadLibraries() {
   try {
-    // On va chercher tous les fichiers en même temps
     const [p, pers] = await Promise.all([
       fetch('data/props.json').then(r => r.ok ? r.json() : []),
       fetch('data/personality.json').then(r => r.ok ? r.json() : null)
@@ -664,16 +663,24 @@ async function loadLibraries() {
     LIB.props = p;
     LIB.personality = pers;
 
-    console.log("Bibliothèques chargées ✿");
-    
-    // Une fois chargés, on réveille la bulle et l'inventaire
+    // --- LA SYNCHRO MAGIQUE ---
+    // On synchronise les objets du sac à dos avec les pixels de la bibliothèque
+    if (D.g.props && LIB.props.length > 0) {
+      D.g.props = D.g.props.map(savedObj => {
+        const model = LIB.props.find(m => m.nom === savedObj.nom);
+        if (model) {
+          // On garde l'état "actif" mais on récupère les pixels et la palette
+          return { ...savedObj, pixels: model.pixels, palette: model.palette };
+        }
+        return savedObj;
+      });
+    }
+
+    console.log("Bibliothèques synchronisées ✿");
     updBubbleNow(); 
     renderProps();
-    
   } catch (e) {
-    console.error("Erreur de chargement des bibliothèques :", e);
-    // On met une personnalité par défaut pour éviter que ça plante si le fichier est manquant
-    LIB.personality = { nom: "Petit·e Gotchi", traits: ["doux"], bulles: { idle: ["✿"] } };
+    console.error("Erreur de synchro :", e);
   }
 }
 
@@ -1249,12 +1256,13 @@ const p5s=(p)=>{
       decors.forEach((pr, i) => {
         let objX = 40 + (i * 45);
         let objY = 110;
-        
-        if (pr.pixels) {
-          // Si c'est un objet généré en pixels
-          drawProp(p, pr, objX - 20, objY - 20); // On centre l'objet
-        } else if (pr.emoji) {
-          // Si c'est un ancien objet emoji
+
+        // Si on a des pixels, on dessine en pixels
+        if (pr.pixels && pr.palette) {
+          drawProp(p, pr, objX - 20, objY - 20);
+        } 
+        // Sinon (et seulement sinon), on met l'émoji
+        else if (pr.emoji) {
           p.textAlign(p.CENTER, p.CENTER);
           p.textSize(24);
           p.text(pr.emoji, objX, objY);

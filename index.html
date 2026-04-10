@@ -1025,7 +1025,7 @@ async function askClaude(){
 
   if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Je réfléchis... 💭';
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}, body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]}) });
+    const r=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}, body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:300,messages:[{role:'user',content:prompt}]}) });
     const d=await r.json();
     const match = d.content[0].text.match(/\{[\s\S]*\}/);
 
@@ -1203,7 +1203,7 @@ try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': D.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 300, temperature: 1, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 300, temperature: 1, messages: [{ role: 'user', content: prompt }] })
     });
     const data = await r.json();
     const match = data.content[0].text.match(/\{[\s\S]*\}/);
@@ -1365,7 +1365,7 @@ Réponses courtes, ton doux, jamais de jugement. Utilise le "tu".`;
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 300,
         system: 'Tu es un compagnon de bien-être bienveillant. Réponses courtes, chaleureuses, jamais de jugement.',
         messages
@@ -1454,7 +1454,7 @@ Ton doux, court, concret. Utilise le "tu". Pas de bullet points, juste du texte 
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 400,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -1466,7 +1466,7 @@ Ton doux, court, concret. Utilise le "tu". Pas de bullet points, juste du texte 
     document.getElementById('btn-copy-bilan').style.display = 'block';
     save();
   } catch(e) {
-    summaryEl.textContent = 'Erreur de connexion. Vérifie ta clé API dans les Réglages.';
+    summaryEl.textContent = 'Erreur : ' + (e.message || JSON.stringify(e));
   }
 }
 function copyBilanSemaine(){

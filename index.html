@@ -122,18 +122,6 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   box-shadow:0 3px 12px rgba(56,48,74,.12),inset 0 1px 0 rgba(255,255,255,.4);
   margin:4px auto 0;max-width:340px;
 }
-/* Icon row top (3 icons) */
-.icon-row{display:flex;justify-content:space-around;padding:2px 8px 4px}
-.icon-slot{
-  display:flex;flex-direction:column;align-items:center;gap:0;
-  font-size:8px;font-weight:bold;transition:all .3s;
-  padding:2px 6px;border-radius:6px;cursor:pointer;
-}
-.icon-slot.lit{color:var(--text)}
-.icon-slot.dim{color:#b0a8b8;opacity:.4;transform:scale(.9)}
-.icon-slot .ico{font-size:18px;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
-.icon-slot.bounce .ico{animation:iBounce .4s ease}
-@keyframes iBounce{0%{transform:scale(1)}30%{transform:scale(1.5)}60%{transform:scale(.85)}100%{transform:scale(1)}}
 
 /* Screen */
 .tama-screen{
@@ -146,15 +134,18 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .bubble {
   background: var(--card);
   border: 2px solid var(--lilac);
-  border-radius: 12px;
+  border-radius: 0 0 12px 12px;  /* ← arrondi seulement en bas */
   padding: 6px 12px;
   font-size: 10px;
   text-align: center;
   min-height: 24px;
   box-shadow: 0 2px 8px var(--shadow);
   position: relative;
-  margin: -30 px auto 0;   /* ← déborde de 12px sur l'écran */
-  z-index: 10;            /* ← passe par-dessus le canvas */
+  margin: -30px auto 0;   /* ← sans espace entre -30 et px */
+  z-index: 10;
+  width: 100%;            /* ← même largeur que l'écran */
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .bubble::after {
   content: '';

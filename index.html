@@ -804,10 +804,10 @@ function toggleHab(catId){
   if(idx>=0){
   D.log[td].splice(idx,1);
   addXp(-15);
-  D.g.petales = Math.max(0, (D.g.petales || 0) - 5); // retire les pétales si on décoche
+  D.g.petales = Math.max(0, (D.g.petales || 0) - 2); // retire les pétales si on décoche
   save();
 }
-  else{D.log[td].push(catId); addXp(15); D.g.petales = (D.g.petales || 0) + 5;
+  else{D.log[td].push(catId); addXp(15); D.g.petales = (D.g.petales || 0) + 2;
 save();;celebQueue.push(catId);shakeTimer=8}
   save();renderHabs();updUI();updBubbleNow();
 }

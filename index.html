@@ -174,25 +174,41 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 }
 .menu-overlay.open{display:flex}
 .menu-book{
-  background:#f4edd8;border:4px solid #c8b898;border-radius:4px;
-  padding:16px 20px;width:280px;
+  background:#f4edd8;border:4px solid #c8b898;border-radius:6px;
+  padding:18px 16px 14px;width:300px;
   box-shadow:4px 4px 0 #b8a888,inset 0 0 20px rgba(0,0,0,.05);
   font-family:'Courier New',monospace;position:relative;
 }
-.menu-book::before{content:'';position:absolute;left:16px;top:0;bottom:0;width:2px;background:#d4c4a8}
-.menu-book h2{text-align:center;font-size:14px;letter-spacing:2px;margin-bottom:12px;
-  border-bottom:2px dashed #c8b898;padding-bottom:6px;color:#6a5a40}
-.menu-item{
-  padding:10px 12px 10px 24px;margin-bottom:4px;cursor:pointer;
-  border-radius:4px;font-size:13px;font-weight:bold;color:#5a4a30;
-  transition:background .15s;border-left:3px solid transparent;
+.menu-book::before{content:'';position:absolute;left:14px;top:0;bottom:0;width:2px;background:#d4c4a8}
+.menu-book h2{text-align:center;font-size:13px;letter-spacing:2px;margin-bottom:14px;
+  border-bottom:2px dashed #c8b898;padding-bottom:8px;color:#6a5a40}
+.menu-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  margin-bottom:12px;padding:0 4px;
 }
-.menu-item:hover,.menu-item:active{background:rgba(200,184,152,.2);border-left-color:#c8b898}
-.menu-item .mi-icon{margin-right:8px}
-.menu-close{
-  display:block;margin:10px auto 0;padding:6px 20px;
-  background:#e0d4c0;border:2px solid #c8b898;border-radius:4px;
-  font:bold 11px 'Courier New',monospace;color:#6a5a40;cursor:pointer;
+.menu-circle{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  background:#fff8ee;border:2px solid #c8b898;border-radius:50%;aspect-ratio:1;
+  width:90px;margin:0 auto;cursor:pointer;
+  box-shadow:2px 2px 0 #d4c4a8;
+  opacity:0;
+  transition:transform .15s,background .15s;
+}
+.menu-circle:active{transform:scale(.92);background:#ede4d0}
+.menu-circle .mc-icon{font-size:24px;line-height:1}
+.menu-circle .mc-label{font-size:8px;font-weight:bold;color:#6a5a40;letter-spacing:.5px;text-align:center;text-transform:uppercase}
+.menu-soutien{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px;background:linear-gradient(135deg,var(--lilac),var(--pink));
+  border-radius:20px;color:#fff;font-size:11px;font-weight:bold;
+  font-family:'Courier New',monospace;cursor:pointer;letter-spacing:1px;
+  box-shadow:2px 2px 0 rgba(0,0,0,.15);
+  opacity:0;border:none;width:100%;
+}
+@keyframes menuPop{
+  0%{transform:scale(.3);opacity:0}
+  70%{transform:scale(1.12)}
+  100%{transform:scale(1);opacity:1}
 }
 
 /* ============================================================
@@ -605,17 +621,28 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()">
   <div class="menu-book" onclick="event.stopPropagation()">
-    <h2>✿ Mon Gotchi</h2>
-    <div class="menu-item" onclick="goMenu('gotchi')"><span class="mi-icon">🏠</span>Gotchi</div>
-    <div class="menu-item" onclick="goMenu('journal')"><span class="mi-icon">📓</span>Journal intime</div>
-    <div class="menu-item" onclick="goMenu('progress')"><span class="mi-icon">📊</span>Mes Progrès</div>
-    <div class="menu-item" onclick="goMenu('focus')"><span class="mi-icon">🎯</span>Focus & Méditation</div>
-    <div class="menu-item" onclick="goMenu('props')"><span class="mi-icon">🎒</span>Mon Inventaire</div>
-    <div class="menu-item" onclick="goMenu('settings')"><span class="mi-icon">⚙️</span>Réglages</div>
-    <div class="menu-item" style="color:var(--lilac); border-top: 1px dashed #c8b898; margin-top: 8px; padding-top: 12px;" onclick="genSoutien(); toggleMenu()">
-      <span class="mi-icon">💜</span>Besoin de soutien
+    <h2>✿ <span id="menu-gotchi-name">Gotchi</span> ✿</h2>
+    <div class="menu-grid" id="menu-grid">
+      <div class="menu-circle" onclick="goMenu('gotchi')">
+        <span class="mc-icon">🏠</span><span class="mc-label">Gotchi</span>
+      </div>
+      <div class="menu-circle" onclick="goMenu('journal')">
+        <span class="mc-icon">📓</span><span class="mc-label">Journal</span>
+      </div>
+      <div class="menu-circle" onclick="goMenu('progress')">
+        <span class="mc-icon">📊</span><span class="mc-label">Progrès</span>
+      </div>
+      <div class="menu-circle" onclick="goMenu('focus')">
+        <span class="mc-icon">🎯</span><span class="mc-label">Focus</span>
+      </div>
+      <div class="menu-circle" onclick="goMenu('props')">
+        <span class="mc-icon">🎒</span><span class="mc-label">Inventaire</span>
+      </div>
+      <div class="menu-circle" onclick="goMenu('settings')">
+        <span class="mc-icon">⚙️</span><span class="mc-label">Réglages</span>
+      </div>
     </div>
-    <button class="menu-close" onclick="toggleMenu()">Fermer ✕</button>
+    <button class="menu-soutien" onclick="genSoutien();toggleMenu()">💜 Besoin de soutien</button>
   </div>
 </div>
 
@@ -810,7 +837,36 @@ function go(t){
   document.getElementById('dynamic-zone').scrollTop = 0;
 }
 
-function toggleMenu(){document.getElementById('menu-overlay').classList.toggle('open')}
+function toggleMenu(){
+  const ov = document.getElementById('menu-overlay');
+  const isOpen = ov.classList.contains('open');
+  if(!isOpen){
+    // Met à jour le nom dans le titre
+    const nm = document.getElementById('menu-gotchi-name');
+    if(nm) nm.textContent = D.g.name || 'Gotchi';
+    ov.classList.add('open');
+    // Animation en cascade sur les cercles
+    document.querySelectorAll('.menu-circle').forEach((el,i)=>{
+      el.style.animation='none';
+      el.style.opacity='0';
+      setTimeout(()=>{
+        el.style.animation=`menuPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards`;
+        el.style.animationDelay = (i * 0.07) + 's';
+      }, 10);
+    });
+    const soutien = document.querySelector('.menu-soutien');
+    if(soutien){
+      soutien.style.animation='none';
+      soutien.style.opacity='0';
+      setTimeout(()=>{
+        soutien.style.animation=`menuPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards`;
+        soutien.style.animationDelay='0.48s';
+      },10);
+    }
+  } else {
+    ov.classList.remove('open');
+  }
+}
 function goMenu(t){toggleMenu();go(t)}
 
 function updDate(){

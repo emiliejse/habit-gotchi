@@ -1050,48 +1050,39 @@ function debugProps() {
 // Déclencheur du cadeau
 async function askSpecialGift() {
   if (D.g.totalXp < 100) {
-    toast(`Il te faut 100 XP (tu as ${D.g.totalXp})`);
+    toast(`Besoin de 100 XP ! (Tu as ${D.g.totalXp})`);
     return;
   }
   
-  // On demande confirmation
-  const confirmation = confirm("Dépenser 100 XP pour un objet unique dessiné par Claude ?");
-  if (!confirmation) return;
-
-  haptic();
-  // On appelle Claude
-  await askClaude(true); 
+  const ok = confirm("Dépenser 100 XP pour un objet dessiné par Claude ?");
+  if (ok) {
+    haptic();
+    // On appelle Claude en forçant le cadeau
+    await askClaude(true); 
+  }
 }
 
-// Mise à jour de l'affichage
+// Mise à jour de l'affichage du sac et du porte-monnaie
 function renderProps() { 
   const list = document.getElementById('props-list'); 
-  const xpDisp = document.getElementById('prop-xp-val');
+  const xpVal = document.getElementById('prop-xp-val');
   const btn = document.getElementById('btn-gift-ask');
   
   if(!list) return; 
-  if(xpDisp) xpDisp.textContent = D.g.totalXp;
+  if(xpVal) xpVal.textContent = D.g.totalXp;
   
-  // Désactive visuellement le bouton si pas assez d'argent
-  if(btn) {
-    if(D.g.totalXp < 100) {
-      btn.style.opacity = "0.4";
-      btn.style.filter = "grayscale(1)";
-    } else {
-      btn.style.opacity = "1";
-      btn.style.filter = "none";
-    }
-  }
+  // Griser le bouton si le porte-monnaie est trop vide
+  if(btn) btn.style.opacity = (D.g.totalXp >= 100) ? "1" : "0.3";
 
   if(!D.g.props || D.g.props.length === 0) { 
-    list.innerHTML = '<p style="font-size:10px; color:var(--text2);">Ton sac est vide.</p>'; 
+    list.innerHTML = '<p style="font-size:10px;">Sac vide.</p>'; 
     return; 
   } 
 
   list.innerHTML = D.g.props.map((p, i) => `
-    <div onclick="toggleProp(${i})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; color:${p.actif ? '#fff' : 'var(--text)'}; border:2px solid var(--border); border-radius:8px; padding:8px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; width: 80px; text-align:center;">
-      <span style="font-size:24px;">${p.pixels ? '🎨' : (p.emoji || '📦')}</span>
-      <span style="margin-top:4px; font-size:9px;">${p.nom}</span>
+    <div onclick="toggleProp(${i})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; border:2px solid var(--border); border-radius:8px; padding:8px; cursor:pointer; width: 80px; text-align:center;">
+      <div style="font-size:20px; margin-bottom:4px;">${p.pixels ? '✨' : '📦'}</div>
+      <span style="font-size:9px; font-weight:bold;">${p.nom}</span>
     </div>`).join(''); 
 }
 function genSoutien(){

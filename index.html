@@ -670,9 +670,6 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
       <div class="menu-circle" onclick="goMenu('progress')">
         <span class="mc-icon">📊</span><span class="mc-label">Progrès</span>
       </div>
-      <div class="menu-circle" onclick="goMenu('focus')">
-        <span class="mc-icon">🎯</span><span class="mc-label">Focus</span>
-      </div>
       <div class="menu-circle" onclick="goMenu('props')">
         <span class="mc-icon">🎒</span><span class="mc-label">Inventaire</span>
       </div>
@@ -1598,7 +1595,6 @@ function restorePerso() {
   if (D.g.uiPalette) applyUIPalette(D.g.uiPalette);
   if (D.g.gotchiColor) applyGotchiColor(D.g.gotchiColor);
 }
-function updFocusDisplay(){const m=Math.floor(focusTime/60),s=focusTime%60;document.getElementById('focus-timer').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
 
 let pinBuf='',pinMode='check';
 function renderPin(){
@@ -2017,6 +2013,7 @@ new p5(p5s);
 updUI();
 renderHabs();
 renderProps();
+restorePerso();
 </script>
 </body>
 </html>

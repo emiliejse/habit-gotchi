@@ -134,30 +134,21 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .bubble {
   background: var(--card);
   border: 2px solid var(--lilac);
-  border-radius: 0 0 12px 12px;  /* ← arrondi seulement en bas */
-  padding: 6px 12px;
+  border-radius: 8px;
+  padding: 5px 12px;
   font-size: 10px;
   text-align: center;
   min-height: 24px;
   box-shadow: 0 2px 8px var(--shadow);
-  position: relative;
-  margin: -30px auto 0;   /* ← sans espace entre -30 et px */
-  z-index: 10;
-  width: 100%;            /* ← même largeur que l'écran */
-  max-width: 100%;
+  position: absolute;
+  bottom: -18px;        /* ← sort par le bas du conteneur */
+  left: 6px;
+  right: 6px;           /* ← même largeur que le shell */
+  z-index: 60;
   box-sizing: border-box;
 }
-.bubble::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-top: 8px solid var(--lilac);
-}
-.bubble::before { display: none; }
+.bubble::after { display:none; }
+.bubble::before { display:none; }
 
 /* ============================================================
    MENU OVERLAY — Pixel notebook style

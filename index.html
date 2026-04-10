@@ -62,6 +62,7 @@ nav,
   border-radius: 20px 20px 0 0;
   padding: 4px 30px 8px;
   font-size: 24px;
+   color: #6a5a40;
   cursor: pointer;
   z-index: 150;
   box-shadow: 0 -4px 15px rgba(56,48,74,.08);
@@ -146,7 +147,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   max-width: 340px;          /* ← même largeur max que .tama-shell */
   width: 100%;
   box-sizing: border-box;
-  z-index: 10;
+  z-index: 55;              /* ← par-dessus le shell ET le console-top */
 }
 /* Queue pointant VERS LE HAUT (vers l'écran) */
 .bubble::before {

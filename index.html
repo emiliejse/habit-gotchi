@@ -384,8 +384,8 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
       </div>
       <div class="pbar" style="height:10px; margin-top:5px; background: rgba(0,0,0,0.06); border-radius: 5px;">
         <div class="pfill" id="xp-b" style="width:0%; background: linear-gradient(90deg, var(--lilac), var(--pink)); border-radius: 5px;"></div>
-         <span class="slbl" id="petales-l" style="color:var(--pink)">🌸 0</span>
       </div>
+       <div style="margin-top:8px; font-size:13px; font-weight:bold; color:var(--pink);" id="petales-l">🌸 0 Pétales</div>
     </div>
 
     <div class="card">
@@ -1483,6 +1483,14 @@ if (D.g.props) {
     if(ha>=100&&!sleeping) drawRainbow(p);
 
     updateParts(p);
+
+// --- Pétales dans le coin supérieur gauche ---
+p.fill(255);
+p.noStroke();
+p.textSize(10);
+p.textFont('Courier New');
+p.textAlign(p.LEFT, p.TOP);
+p.text('🌸 ' + (D.g.petales || 0), 6, 8);
 
     // --- Météo intégrée au décor ---
     if (typeof meteoData !== 'undefined' && meteoData && meteoData.temperature) {

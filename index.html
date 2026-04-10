@@ -506,6 +506,16 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   <div class="card">
     <h2>🎒 Mon Inventaire</h2>
     <div id="props-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px"></div>
+     <div class="card" id="shop-card" style="margin-top:8px; text-align:center; display:none;">
+  <h2>🛍️ Boutique</h2>
+  <p style="font-size:10px;color:var(--text2);margin-bottom:8px">
+    Dépense 100 XP pour recevoir un nouvel objet de Claude
+  </p>
+  <span id="xp-wallet" style="font-size:13px;font-weight:bold;color:var(--lilac)"></span>
+  <button class="btn btn-p" onclick="buyProp()" style="width:100%;margin-top:8px;font-size:11px">
+    🎁 Demander un objet (100 XP)
+  </button>
+</div>
   </div>
 </div>
 
@@ -592,6 +602,45 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 <script>
 
+async function buyProp() {
+  if (!D.apiKey) { toast('Clé API manquante dans les Réglages'); return; }
+  if (D.g.totalXp < 100) { toast('Il te faut 100 XP pour débloquer un objet ✿'); return; }
+
+  // Déduire les XP
+  addXp(-100);
+  toast('Claude crée ton objet... 💭');
+
+  const prompt = `Tu es le compagnon d'Émilie. Invente un petit objet pixel art mignon (max 7x7 pixels).
+  Catégories possibles: "decor", "accessoire", "ambiance".
+  Palette: tableau de couleurs hex, index 0 = transparent.
+  Réponds UNIQUEMENT en JSON strict :
+  {"id": "obj_${Date.now()}", "nom": "nom joli", "type": "decor", "emoji": "🌸", "categorie": "nature", "position": {"x": 150, "y": 128}, "palette": ["transparent", "#couleur1"], "pixels": [[0,1,0],[1,1,1],[0,1,0]]}`;
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': D.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await r.json();
+    const match = data.content[0].text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const obj = JSON.parse(match[0]);
+      D.g.props.push({ id: obj.id, nom: obj.nom, type: obj.type, emoji: obj.emoji || '🎁', actif: false });
+      if (!D.propsPixels) D.propsPixels = [];
+      D.propsPixels.push(obj);
+      window.PROPS_LOCAL = D.propsPixels;
+      save();
+      renderProps();
+      updUI();
+      toast(`🎁 ${obj.nom} ajouté à ton inventaire !`);
+    }
+  } catch(e) {
+    addXp(100); // Rembourser si erreur
+    toast('Erreur API, XP remboursés.');
+  }
+}
+
    /* ============================================================
    CHARGEMENT FICHIERS DATA (GitHub)
    ============================================================ */
@@ -635,11 +684,7 @@ function defs(){
     g:{
       name:'Petit·e Gotchi', totalXp:0, stage:'egg', energy:3, happiness:3, envLv:0, moodDay:null, activeEnv:'parc', 
       // Tes 3 objets de base pour tester le système :
-props: [
-        { id: "plante01", nom: "Plante Grasse", type: "decor", actif: false },
-        { id: "tapis01", nom: "Tapis Doux", type: "decor", actif: false },
-        { id: "etoiles01", nom: "Pluie d'Étoiles", type: "ambiance", actif: false }
-      ],
+props: [],
       customBubbles: [] // Le futur cerveau à mots doux de Claude
     }, 
     habits:CATS.map(c=>({catId:c.id,label:c.id})), log:{}, journal:[], pin:null, apiKey:null 
@@ -648,7 +693,10 @@ props: [
 function load(){try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);return{...defs(),...d,g:{...defs().g,...d.g},habits:d.habits||defs().habits}}}catch(e){}return defs()}
 function save(){try{localStorage.setItem(SK,JSON.stringify(D))}catch(e){}}
 let D=load();
-
+// Restaure les pixels des props générés par Claude
+if (D.propsPixels && D.propsPixels.length) {
+  window.PROPS_LOCAL = D.propsPixels;
+}
 const today=()=>new Date().toISOString().split('T')[0];
 const hr=()=>new Date().getHours();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -772,6 +820,12 @@ function updUI(){
   if(document.getElementById('name-inp')) document.getElementById('name-inp').value=g.name;
   if(document.getElementById('env-sel')) document.getElementById('env-sel').value=g.activeEnv||'parc';
   if(document.getElementById('api-inp')) document.getElementById('api-inp').value = D.apiKey || '';
+const shopCard = document.getElementById('shop-card');
+const wallet = document.getElementById('xp-wallet');
+if (shopCard) {
+  shopCard.style.display = D.g.totalXp >= 100 ? 'block' : 'none';
+  if (wallet) wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
+}
 }
 function calcStr(){let s=0,d=new Date();while(true){const ds=d.toISOString().split('T')[0];const l=D.log[ds]||[];if(l.length>0)s++;else if(ds!==today())break;d.setDate(d.getDate()-1);if(s>999)break}return s}
 
@@ -919,21 +973,41 @@ if(giveGift && data.cadeau) {
   }catch(e){if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Erreur API.'}
 }
 
-function renderProps() { 
-  const c = document.getElementById('props-list'); if(!c) return; 
-  if(!D.g.props || D.g.props.length === 0) { 
-    c.innerHTML = '<p style="font-size:10px; color:var(--text2);">Ton sac est vide. Reviens plus tard pour des surprises !</p>'; 
-    return; 
-  } 
-  
-  // On crée de jolies cartes interactives
-  c.innerHTML = D.g.props.map((p, index) => `
-    <div onclick="toggleProp(${index})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; color:${p.actif ? '#fff' : 'var(--text)'}; border:2px solid var(--border); border-radius:8px; padding:8px 12px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-      <span style="font-size:20px;">${p.emoji || '🎁'}</span>
-      <span>${p.nom}</span>
-      <span style="font-size:8px; text-transform:uppercase; opacity:0.8;">${p.type || 'objet'}</span>
-    </div>
-  `).join(''); 
+function renderProps() {
+  const c = document.getElementById('props-list');
+  if (!c) return;
+
+  // Fusionner catalogue GitHub + props Claude
+  const allDefs = [...(window.PROPS_LIB || []), ...(window.PROPS_LOCAL || [])];
+
+  // Grouper par catégorie
+  const categories = {
+    'decor': { label: '🌿 Décor', items: [] },
+    'accessoire': { label: '👒 Accessoires', items: [] },
+    'ambiance': { label: '✨ Ambiances', items: [] }
+  };
+
+  D.g.props.forEach((p, index) => {
+    const def = allDefs.find(l => l.id === p.id);
+    const cat = p.type || 'decor';
+    if (categories[cat]) categories[cat].items.push({ p, index, def });
+  });
+
+  // Rendre chaque catégorie
+  let html = '';
+  Object.entries(categories).forEach(([key, cat]) => {
+    if (cat.items.length === 0) return;
+    html += `<div style="..."><h3>${cat.label}</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">`;
+    cat.items.forEach(({ p, index }) => {
+      html += `<div onclick="toggleProp(${index})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; ...">
+        <span>${p.emoji || '🎁'}</span>
+        <span>${p.nom}</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  c.innerHTML = html || '<p>Ton sac est vide !</p>';
 }
 
 // Fonction pour Équiper / Ranger un objet

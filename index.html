@@ -660,24 +660,24 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()">
   <div class="menu-book" onclick="event.stopPropagation()">
     <h2>✿ <span id="menu-gotchi-name">Gotchi</span> ✿</h2>
-    <div class="menu-grid" id="menu-grid">
-<div class="menu-circle" onclick="goMenu('perso')">
-  <span class="mc-icon">🎨</span><span class="mc-label">Perso</span>
-</div>
-      <div class="menu-circle" onclick="goMenu('journal')">
-        <span class="mc-icon">📓</span><span class="mc-label">Journal</span>
-      </div>
-      <div class="menu-circle" onclick="goMenu('progress')">
-        <span class="mc-icon">📊</span><span class="mc-label">Progrès</span>
-      </div>
-      <div class="menu-circle" onclick="goMenu('props')">
-        <span class="mc-icon">🎒</span><span class="mc-label">Inventaire</span>
-      </div>
-      <div class="menu-circle" onclick="goMenu('settings')">
-        <span class="mc-icon">⚙️</span><span class="mc-label">Réglages</span>
-      </div>
-    </div>
-    <button class="menu-soutien" onclick="genSoutien();toggleMenu()">💜 Besoin de soutien</button>
+<div class="menu-grid" id="menu-grid">
+  <div class="menu-circle" onclick="goMenu('gotchi')">
+    <span class="mc-icon">🏠</span><span class="mc-label">Gotchi</span>
+  </div>
+  <div class="menu-circle" onclick="goMenu('journal')">
+    <span class="mc-icon">📓</span><span class="mc-label">Journal</span>
+  </div>
+  <div class="menu-circle" onclick="goMenu('progress')">
+    <span class="mc-icon">📊</span><span class="mc-label">Progrès</span>
+  </div>
+  <div class="menu-circle" onclick="goMenu('perso')">
+    <span class="mc-icon">🎨</span><span class="mc-label">Perso</span>
+  </div>
+  <div class="menu-circle" onclick="goMenu('props')">
+    <span class="mc-icon">🎒</span><span class="mc-label">Inventaire</span>
+  </div>
+  <div class="menu-circle" onclick="goMenu('settings')">
+    <span class="mc-icon">⚙️</span><span class="mc-label">Réglages</span>
   </div>
 </div>
 
@@ -1758,11 +1758,27 @@ const PROP_SLOTS = {
   D:   { x: 158, y: 128 },  // sol droit
   SOL: { x: 90,  y: 142 },  // sol centre (devant gotchi)
 };
-const p5s=(p)=>{
+function getGotchiC() {
+  const id = D.g.gotchiColor || 'vert';
+  const gc = GOTCHI_COLORS.find(x => x.id === id) || GOTCHI_COLORS[0];
+  return { body: gc.body, bodyLt: gc.bodyLt, bodyDk: gc.bodyDk };
+}
+function getEnvC() {
+  const id = D.g.envTheme || 'pastel';
+  const et = ENV_THEMES.find(x => x.id === id) || ENV_THEMES[0];
+  return { gnd: et.gnd, gndDk: et.gnd, gndN: '#304828', skyD1: et.sky1, skyD2: et.sky2 };
+}
+   
+   const p5s=(p)=>{
   p.setup=function(){p.createCanvas(CS,CS).parent('cbox');p.noSmooth();p.frameRate(12)};
 
   p.draw=function(){
     const g=D.g, h=hr(), sleeping=(h>=22||h<7);
+     // Applique les couleurs personnalisées
+    const gc = getGotchiC();
+    C.body = gc.body; C.bodyLt = gc.bodyLt; C.bodyDk = gc.bodyDk;
+    const ec = getEnvC();
+    C.gnd = ec.gnd; C.gndDk = ec.gndDk; C.skyD1 = ec.skyD1; C.skyD2 = ec.skyD2;
     const en=g.energy*20, ha=g.happiness*20;
     const n=(h>=21||h<6);
 

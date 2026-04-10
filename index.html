@@ -1161,23 +1161,32 @@ listEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr)
   filtered.map(({ p, index, def }) => {
     const isClaud = !!(def && def.pixels && D.propsPixels && D.propsPixels.find(x => x.id === p.id));
     const badgeId = `mini-${p.id}`;
-    return `<div onclick="toggleProp(${index})" style="
-      background:${p.actif ? 'var(--mint)' : '#fff'};
-      border:2px solid ${p.actif ? 'var(--mint)' : isClaud ? 'var(--lilac)' : 'var(--border)'};
-      border-radius:10px; padding:8px 4px; font-size:10px; font-weight:bold;
-      cursor:pointer; display:flex; flex-direction:column; align-items:center;
-      gap:4px; transition:.2s; text-align:center;
-      box-shadow:0 2px 4px rgba(0,0,0,.05); position:relative;">
-      ${def && def.pixels
-        ? `<canvas id="${badgeId}" style="image-rendering:pixelated;border-radius:3px"></canvas>`
-        : `<span style="font-size:22px">${p.emoji || '🎁'}</span>`
-      }
-      <span>${p.nom}</span>
-      <span style="font-size:8px;text-transform:uppercase;opacity:.7">${p.type}</span>
-      ${p.actif ? '<span style="font-size:8px">● actif</span>' : ''}
-      ${isClaud ? `<span style="position:absolute;top:4px;right:5px;font-size:7px;color:var(--lilac);opacity:.8;">✦</span>` : ''}
-    </div>`;
-  }).join('') + `</div>`;
+return `<div onclick="toggleProp(${index})" style="
+  background:${p.actif ? 'var(--mint)' : '#fff'};
+  border:2px solid ${p.actif ? 'var(--mint)' : isClaud ? 'var(--lilac)' : 'var(--border)'};
+  border-radius:10px; padding:6px 4px 8px; font-size:10px; font-weight:bold;
+  cursor:pointer; display:flex; flex-direction:column; align-items:center;
+  justify-content:space-between;
+  gap:4px; transition:.2s; text-align:center;
+  box-shadow:0 2px 4px rgba(0,0,0,.05); position:relative; min-height:90px;">
+  
+  ${isClaud ? `<span style="position:absolute;top:4px;right:4px;font-size:11px;color:var(--lilac);filter:drop-shadow(0 0 3px rgba(176,144,208,.6));">✦</span>` : ''}
+
+  <!-- pixel art centré, prend l'espace disponible -->
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+    ${def && def.pixels
+      ? `<canvas id="${badgeId}" style="image-rendering:pixelated;border-radius:3px"></canvas>`
+      : `<span style="font-size:22px">${p.emoji || '🎁'}</span>`
+    }
+  </div>
+
+  <!-- texte collé en bas -->
+  <div style="width:100%;">
+    <div>${p.nom}</div>
+    <div style="font-size:8px;text-transform:uppercase;opacity:.7;font-weight:normal;">${p.type}</div>
+    ${p.actif ? '<div style="font-size:8px;color:var(--mint)">● actif</div>' : ''}
+  </div>
+</div>`;
 
 // 2. SEULEMENT ICI on dessine — les canvas existent maintenant dans le DOM
 filtered.forEach(({ p, def }) => {

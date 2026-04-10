@@ -134,7 +134,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .bubble {
   background: var(--card);
   border: 3px solid var(--lilac);
-  border-radius: 8px 8px 0 0;  /* ← arrondi en haut, carré en bas */
+  border-radius: 0 0 8px 8px;  /* ← arrondi en haut, carré en bas */
   padding: 5px 12px;
   font-size: 10px;
   text-align: center;
@@ -151,7 +151,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .bubble::before {
   content: '';
   position: absolute;
-  bottom: -8px;        /* ← bas au lieu de top */
+  top: -8px;        /* ← bas au lieu de top */
   left: 50%;
   transform: translateX(-50%);
   border-left: 7px solid transparent;
@@ -349,11 +349,11 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   </div>
   <sub id="date-d" style="display:block;text-align:center;font-size:10px;color:var(--text2)"></sub>
 <div style="position:relative; max-width:340px; margin:4px auto 0;">
-  <div class="bubble" id="bubble">...</div>
-</div>
 <div class="tama-shell">
     <div class="tama-screen" id="cbox"></div>
   </div>
+     <div class="bubble" id="bubble">...</div>
+</div>
   <div class="meteo-badge" id="meteo-badge" style="display:none;"></div>
   <div style="max-width:340px;margin:6px auto 4px;padding:0 4px">
     <div class="slider-row">

@@ -1186,7 +1186,33 @@ Catégories possibles: "decor", "accessoire", "ambiance".
 Palette: tableau de couleurs hex, index 0 = toujours "transparent".
 Réponds UNIQUEMENT en JSON strict, sans texte autour :
 {"id":"obj_${Date.now()}","nom":"nom joli","type":"decor","emoji":"🌸","position":{"x":150,"y":128},"palette":["transparent","#couleur1","#couleur2"],"pixels":[[0,1,0],[1,2,1],[0,1,0]]}`;
-// Fonction pour Équiper / Ranger un objet
+try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': D.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 300, temperature: 1, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await r.json();
+    const match = data.content[0].text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const obj = JSON.parse(match[0]);
+      D.g.props.push({ id: obj.id, nom: obj.nom, type: obj.type, emoji: obj.emoji || '🎁', actif: false });
+      if (!D.propsPixels) D.propsPixels = [];
+      D.propsPixels.push(obj);
+      window.PROPS_LOCAL = D.propsPixels;
+      save();
+      renderProps();
+      updUI();
+      toast(`🎁 ${obj.nom} ajouté à ton inventaire !`);
+    }
+  } catch(e) {
+    D.g.petales = (D.g.petales || 0) + 10;
+    save();
+    toast('Erreur API, pétales remboursés.');
+  }
+}
+   
+   // Fonction pour Équiper / Ranger un objet
 async function toggleProp(index) {
     haptic();
     D.g.props[index].actif = !D.g.props[index].actif;

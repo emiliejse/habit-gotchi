@@ -729,22 +729,41 @@ function toggleHab(catId){
   save();renderHabs();updUI();updBubbleNow();
 }
 function renderHabs(){
-  const td=today(),log=D.log[td]||[],done=log.length;
+  const td=today(), log=D.log[td]||[], done=log.length;
   const habHome=document.getElementById('hab-home');
-  if(habHome) {
-    habHome.innerHTML=D.habits.map(h=>{
-      const c=CATS.find(c=>c.id===h.catId),d=log.includes(h.catId);
-      return`<div class="hab ${d?'done':''}" onclick="toggleHab('${h.catId}')"><div class="ck">${d?'✓':''}</div><span style="flex:1;font-size:12px">${h.label}</span><span style="font-size:16px">${c.icon}</span></div>`;
+  
+  // CORRECTION ICI : On utilise D.s qui contient tes habitudes
+  if(habHome && D.s) { 
+    habHome.innerHTML=D.s.map(h=>{
+      const c=CATS.find(c=>c.id===h.catId), d=log.includes(h.catId);
+      return `<div class="hab ${d?'done':''}" onclick="toggleHab('${h.catId}')">
+                <div class="ck">${d?'✓':''}</div>
+                <span style="flex:1;font-size:12px">${h.label}</span>
+                <span style="font-size:16px">${c.icon}</span>
+              </div>`;
     }).join('');
   }
+  
   const hc=document.getElementById('hab-count'); if(hc) hc.textContent=`${done}/6`;
+  
   const edit=document.getElementById('hab-edit');
-  if(edit)edit.innerHTML=D.habits.map((h,i)=>{
-    const c=CATS.find(c=>c.id===h.catId);
-    return`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:20px;width:28px;text-align:center">${c.icon}</span><input class="inp" value="${h.label}" onchange="editH(${i},this.value)" style="flex:1;font-size:12px"></div>`;
-  }).join('');
+  // CORRECTION ICI AUSSI
+  if(edit && D.s) {
+    edit.innerHTML=D.s.map((h,i)=>{
+      const c=CATS.find(c=>c.id===h.catId);
+      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+                <span style="font-size:20px;width:28px;text-align:center">${c.icon}</span>
+                <input class="inp" value="${h.label}" onchange="editH(${i},this.value)" style="flex:1;font-size:12px">
+              </div>`;
+    }).join('');
+  }
 }
-function editH(i,v){D.habits[i].label=v.trim()||D.habits[i].label;save()}
+function editH(i,v){ 
+  if(D.s[i]) {
+    D.s[i].label = v.trim() || D.s[i].label; 
+    save(); 
+  }
+}
 
 const STG=[{k:'egg',l:'Œuf',th:0},{k:'baby',l:'Bébé',th:80},{k:'teen',l:'Ado',th:300},{k:'adult',l:'Adulte',th:800}];
 function getSt(xp){let s=STG[0];for(const st of STG)if(xp>=st.th)s=st;return s}

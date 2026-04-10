@@ -712,7 +712,7 @@ props: [],
     habits: CATS.map(c => ({catId:c.id, label:c.label})), log:{}, journal:[], pin:null, apiKey:null 
   }
 }
-function load()try{
+function load(){try{
     const r=localStorage.getItem(SK);
     if(r){
       const d=JSON.parse(r);

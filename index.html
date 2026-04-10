@@ -539,18 +539,20 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     </div>
   </div>
 
-  <div class="card">
-    <h2 style="display:flex; justify-content:space-between; align-items:center;">
-      <span>🧠 Bilan Hebdo</span>
-      <button onclick="resetBilan()" style="background:none; border:none; color:var(--text2); font-size:14px; cursor:pointer;" title="Réinitialiser">🔄</button>
-    </h2>
-    <div id="claude-summary" style="background: rgba(255,255,255,0.5); padding: 12px; border-radius: 8px; font-size: 12px; border: 1px dashed var(--border); margin-bottom: 12px; white-space: pre-wrap;">
-      Ton bilan de la semaine apparaîtra ici...
-    </div>
-    <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%; font-size:10px; margin-bottom:6px;">✿ Générer le bilan de la semaine</button>
-    <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="width:100%; font-size:10px; display:none;">📋 Copier pour Claude</button>
-    <textarea id="bil-txt-hidden" style="display:none;"></textarea>
+ <div class="card">
+  <h2 style="display:flex; justify-content:space-between; align-items:center;">
+    <span>🧠 Bilan Hebdo IA</span>
+    <button onclick="resetBilan()" style="background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;" title="Réinitialiser">🔄</button>
+  </h2>
+  <div id="claude-summary" style="background:rgba(255,255,255,0.5);padding:12px;border-radius:8px;font-size:11px;border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);">
+    Ton bilan de la semaine apparaîtra ici...
   </div>
+  <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%;font-size:10px;margin-bottom:6px;">
+    ✿ Générer le bilan avec Claude
+  </button>
+  <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="width:100%;font-size:10px;display:none;">
+    📋 Copier le bilan
+  </button>
 </div>
 
 <div id="p-props" class="pnl">
@@ -1400,24 +1402,81 @@ Réponses courtes, ton doux, jamais de jugement. Utilise le "tu".`;
   }
 }
 
-function genBilanSemaine(){
+async function genBilanSemaine() {
   haptic();
-  const wd = getWkDates(wOff); 
+  const key = D.apiKey;
+  const summaryEl = document.getElementById('claude-summary');
+
+  // Collecte les données de la semaine
+  const wd = getWkDates(wOff);
   const g = D.g, s = getSt(g.totalXp);
-  const hs = D.habits.map(h => {
-    const days = wd.filter(d => (D.log[d]||[]).includes(h.catId)).length;
-    return { habitude: h.label, jours_faits: days };
+
+  const habitudes = D.habits.map(h => {
+    const jours = wd.filter(d => (D.log[d] || []).includes(h.catId)).length;
+    return { habitude: h.label, jours_faits: jours, sur: 7 };
   });
-  const wj = D.journal.filter(j => wd.includes(j.date.split('T')[0]));
-  
-  const b = {
-    periode: `${wd[0]} → ${wd[6]}`, gotchi: { nom: g.name, stade: s.l, energie: `${g.energy}/5`, bonheur: `${g.happiness}/5` },
-    habitudes: hs, notes_journal: wj.map(j => ({ humeur: j.mood, texte: j.text }))
-  };
-  
-  if(document.getElementById('bil-txt-hidden')) document.getElementById('bil-txt-hidden').value = "Contexte pour Claude : \n" + JSON.stringify(b, null, 2);
-  if(document.getElementById('btn-copy-bilan')) document.getElementById('btn-copy-bilan').style.display = 'block';
-  if(document.getElementById('claude-summary')) document.getElementById('claude-summary').textContent = "Données prêtes ! Copie-les et donne-les à Claude, puis colle sa réponse ici (via un futur bouton).";
+
+  const notes = D.journal
+    .filter(j => wd.includes(j.date.split('T')[0]))
+    .map(j => ({ humeur: j.mood, texte: j.text, date: j.date.split('T')[0] }));
+
+  const totalHabDays = wd.reduce((acc, d) => acc + (D.log[d] || []).length, 0);
+  const meilleurJour = wd.reduce((best, d) => (D.log[d]||[]).length > (D.log[best]||[]).length ? d : best, wd[0]);
+
+  // Sans clé API → affiche le résumé texte brut
+  if (!key) {
+    const lignes = habitudes.map(h => `• ${h.habitude} : ${h.jours_faits}/7 jours`).join('\n');
+    summaryEl.textContent = `Semaine du ${wd[0]} au ${wd[6]}\n\n${lignes}\n\n${notes.length} note(s) de journal.\n\nAjoute ta clé API pour un bilan personnalisé par Claude ✿`;
+    document.getElementById('btn-copy-bilan').style.display = 'block';
+    // Prépare aussi le texte à copier
+    document.getElementById('bil-txt-hidden').value = summaryEl.textContent;
+    return;
+  }
+
+  // Avec clé API → appel Claude
+  summaryEl.textContent = '💭 Claude analyse ta semaine...';
+
+  const prompt = `Tu es le Gotchi, compagnon bienveillant d'une appli de bien-être pour le TDAH.
+Voici les données de la semaine (${wd[0]} → ${wd[6]}) :
+
+GOTCHI : ${g.name}, stade ${s.l}, énergie ${g.energy}/5, bonheur ${g.happiness}/5
+HABITUDES :
+${habitudes.map(h => `- ${h.habitude} : ${h.jours_faits}/7 jours`).join('\n')}
+TOTAL : ${totalHabDays} habitudes cochées sur la semaine
+NOTES DE JOURNAL (${notes.length}) :
+${notes.length ? notes.map(n => `[${n.date} / ${n.humeur}] ${n.texte}`).join('\n') : 'aucune note cette semaine'}
+
+Écris un bilan chaleureux, honnête et bienveillant en 3 paragraphes courts :
+1. Ce qui s'est bien passé (même si peu)
+2. Ce qui a été difficile, sans jugement
+3. Une intention douce pour la semaine prochaine (pas d'injonction)
+
+Ton doux, court, concret. Utilise le "tu". Pas de bullet points, juste du texte fluide.`;
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const d = await r.json();
+    const bilan = d.content?.[0]?.text || 'Je n\'ai pas pu générer le bilan.';
+    summaryEl.textContent = bilan;
+    document.getElementById('bil-txt-hidden').value = bilan;
+    document.getElementById('btn-copy-bilan').style.display = 'block';
+    save();
+  } catch(e) {
+    summaryEl.textContent = 'Erreur de connexion. Vérifie ta clé API dans les Réglages.';
+  }
 }
 function copyBilanSemaine(){
   const hid = document.getElementById('bil-txt-hidden');

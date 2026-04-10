@@ -673,20 +673,20 @@ async function loadLibraries() {
     LIB.props = p;
     LIB.personality = pers;
 
-    // --- LA SYNCHRO MAGIQUE ---
-    // On synchronise les objets du sac à dos avec les pixels de la bibliothèque
+    // --- SYNCHRONISATION FORCÉE DES PIXELS ---
     if (D.g.props && LIB.props.length > 0) {
       D.g.props = D.g.props.map(savedObj => {
+        // On cherche l'équivalent dans le fichier JSON
         const model = LIB.props.find(m => m.nom === savedObj.nom);
-        if (model) {
-          // On garde l'état "actif" mais on récupère les pixels et la palette
-          return { ...savedObj, pixels: model.pixels, palette: model.palette };
+        if (model && model.pixels) {
+          // On injecte les pixels et la palette, on retire l'émoji
+          return { ...savedObj, pixels: model.pixels, palette: model.palette, emoji: null };
         }
         return savedObj;
       });
     }
 
-    console.log("Bibliothèques synchronisées ✿");
+    console.log("Bibliothèques synchronisées et Pixels forcés ✿");
     updBubbleNow(); 
     renderProps();
   } catch (e) {

@@ -136,7 +136,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .bubble {
   background: var(--card);
   border: 3px solid var(--lilac);
-  border-radius: 0 0 8px 8px;  /* ← arrondi en haut, carré en bas */
+  border-radius: 8px 8px 8px 8px;
    padding: 5px 12px;
   font-size: 10px;
   text-align: center;
@@ -576,10 +576,20 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
       <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
     </div>
 <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
-<button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:8px;font-size:9px">📋 État du système</button>
-<button class="btn btn-s" onclick="fixProps()" style="width:100%;margin-top:4px;font-size:9px">🔧 Réparer inventaire</button>
-   <button class="btn btn-s" onclick="cleanProps()" style="width:100%;margin-top:4px;font-size:9px">🧹 Nettoyer inventaire</button>
-<button class="btn btn-m" onclick="forceUpdate()" style="width:100%;margin-top:4px;font-size:9px">🔄 Mettre à jour l'app</button>
+
+<!-- Accordéon debug -->
+<div style="margin-top:12px;border:1px dashed var(--border);border-radius:10px;overflow:hidden">
+  <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
+    style="width:100%;background:none;border:none;padding:8px;font-size:9px;color:var(--text2);cursor:pointer;text-align:left">
+    🛠️ Outils développeur ▾
+  </button>
+  <div style="display:none;padding:0 8px 8px">
+    <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:4px;font-size:9px">📋 État du système</button>
+    <button class="btn btn-s" onclick="fixProps()" style="width:100%;margin-top:4px;font-size:9px">🔧 Réparer inventaire</button>
+    <button class="btn btn-s" onclick="cleanProps()" style="width:100%;margin-top:4px;font-size:9px">🧹 Nettoyer inventaire</button>
+    <button class="btn btn-m" onclick="forceUpdate()" style="width:100%;margin-top:4px;font-size:9px">🔄 Mettre à jour l'app</button>
+  </div>
+</div>
     
   </div><!-- ferme p-settings -->
 </div><!-- ferme dynamic-zone -->

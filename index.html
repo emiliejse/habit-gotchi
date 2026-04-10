@@ -869,8 +869,7 @@ async function askClaude(){
     La palette est un tableau de couleurs hex, index 0 = transparent.
     Les pixels sont une grille 2D de numéros qui correspondent à la palette.
     Réponds UNIQUEMENT en JSON strict :
-    {"message": "ta pensée", "bulle": "phrase courte", "cadeau": {"id": "mot_unique_${Date.now()}", "nom": "nom joli", "type": "decor", "position": {"x": 150, "y": 128}, "palette": ["transparent", "#couleur1", "#couleur2"], "pixels": [[0,1,0],[1,2,1],[0,1,0]]}}`;
-  }
+{"message": "ta pensée", "bulle": "phrase courte", "cadeau": {"id": "mot_unique_${Date.now()}", "nom": "nom joli", "type": "decor", "position": {"x": 150, "y": 128}, "palette": ["transparent", "#couleur1", "#couleur2"], "pixels": [[0,1,0],[1,2,1],[0,1,0]]}}`;
   } else {
     prompt += ` Réponds UNIQUEMENT en format JSON strict : {"message": "ta pensée", "bulle": "phrase courte"}`;
   }
@@ -948,7 +947,7 @@ async function toggleProp(index) {
         if (!window.PROPS_LIB || window.PROPS_LIB.length === 0) {
             await loadDataFiles();
         }
-        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels || []).find(l => l.id === prop.id);
+        const def = (window.PROPS_LIB || []).find(l => l.id === D.g.props[index].id) || (D.propsPixels || []).find(l => l.id === D.g.props[index].id);
         if (def && def.pixels) {
             toast(`✨ ${D.g.props[index].nom} équipé !`);
         } else {

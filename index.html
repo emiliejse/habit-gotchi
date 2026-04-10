@@ -32,7 +32,7 @@
   margin-top: 2px;
 }
 /* Cache les icônes quand c'est réduit pour faire de la place */
-.tama-shell.shrunk .icon-row {
+.shrunk .icon-row {
   display: none; 
 }
 /* --- Suppression définitive de la barre d'onglets du bas --- */
@@ -122,6 +122,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   border:3px solid #b8b0c8;border-radius:16px;padding:6px;
   box-shadow:0 3px 12px rgba(56,48,74,.12),inset 0 1px 0 rgba(255,255,255,.4);
   margin:4px auto 0;max-width:340px;
+  position:relative; z-index:1;  /* ← ajout */
 }
 
 /* Screen */
@@ -147,7 +148,8 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   max-width: 340px;          /* ← même largeur max que .tama-shell */
   width: 100%;
   box-sizing: border-box;
-  z-index: 55;              /* ← par-dessus le shell ET le console-top */
+  z-index:10;   /* ← était 55, on garde juste un z-index > 1 du shell */
+  margin-top: 0; /* ← déjà à 0, on vérifie */
 }
 /* Queue pointant VERS LE HAUT (vers l'écran) */
 .bubble::before {

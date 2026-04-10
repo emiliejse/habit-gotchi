@@ -503,11 +503,21 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 </div>
 
 <div id="p-props" class="pnl">
-  <div class="card">
-    <h2>🎒 Mon Inventaire</h2>
-    <div id="props-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px"></div>
+    <div class="card" style="text-align:center; background: linear-gradient(135deg, #fff, rgba(176,144,208,0.1));">
+      <h2>🎒 Mon Inventaire</h2>
+      
+      <div style="margin-bottom:15px; padding:10px; background:rgba(255,255,255,0.5); border-radius:10px; border:1px dashed var(--lilac);">
+        <div style="font-size:10px; font-weight:bold; color:var(--lilac); margin-bottom:4px;">
+          XP DISPONIBLE : <span id="prop-xp-val">0</span> / 100
+        </div>
+        <button id="btn-gift-ask" class="btn btn-p" onclick="askSpecialGift()" style="width:100%; opacity:0.5;" disabled>
+          🎁 Demander un cadeau (100 XP)
+        </button>
+      </div>
+
+      <div id="props-list" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+    </div>
   </div>
-</div>
 
   <!-- FOCUS -->
   <div id="p-focus" class="pnl">
@@ -876,45 +886,45 @@ function updBubbleNow() {
    ============================================================ */
 function saveApi(){const v=document.getElementById('api-inp').value.trim();if(v){D.apiKey=v;save();toast('Clé API sauvegardée ✿')}else toast('Colle ta clé sk-ant-...')}
 
-async function askClaude() {
+async function askClaude(forceGift = false) {
   if (!D.apiKey) { toast('Clé API manquante (Réglages)'); return; }
   
   const p = LIB.personality;
   const td = today();
-  const nbHab = (D.log[td] || []).length;
   const h = hr();
+  const nbHab = (D.log[td] || []).length;
   
-  // Règle du cadeau (3 jours)
-  let giveGift = false;
-  if (!D.lastGiftDate || Math.floor((new Date() - new Date(D.lastGiftDate)) / (1000 * 60 * 60 * 24)) >= 3) giveGift = true;
+  // Règle du cadeau : forcé (via XP) OU automatique tous les 3 jours
+  let giveGift = forceGift;
+  if (!giveGift && (!D.lastGiftDate || Math.floor((new Date() - new Date(D.lastGiftDate)) / (1000 * 60 * 60 * 24)) >= 3)) {
+    giveGift = true;
+  }
 
-  // Détermination du contexte pour Claude
+  // Détermination du ton selon le JSON personality
   let contexte = "idle";
   if (h < 12) contexte = "matin"; else if (h < 18) contexte = "aprem"; else contexte = "soir";
   if (D.g.happiness <= 1) contexte = "triste";
   if (D.g.energy <= 1) contexte = "fatigue";
-  if (nbHab >= 6) contexte = "max"; else if (nbHab >= 4) contexte = "fierte";
+  if (nbHab >= 6) contexte = "max";
 
   let prompt = `Tu es ${p.nom}. Traits: ${p.traits.join(', ')}. Style: ${p.style}.
-  Contexte actuel : ${contexte}. 
-  Exemples de phrases que tu aimes : ${p.bulles[contexte].join(' / ')}.
-  
-  Émilie a une énergie de ${D.g.energy}/5 et un bonheur de ${D.g.happiness}/5.
-  Dernières notes : ${D.journal.slice(-1)[0]?.text || "(aucune)"}.
+  Contexte : ${contexte}. Phrases types : ${p.bulles[contexte].join(' / ')}.
+  Énergie: ${D.g.energy}/5, Bonheur: ${D.g.happiness}/5. 
+  Notes d'Émilie: ${D.journal.slice(-1)[0]?.text || "(vide)"}.
 
-  Réponds en JSON strict :
+  Réponds UNIQUEMENT en JSON :
   {
-    "message": "Une pensée complice en 2 phrases max",
-    "bulle": "Une micro-phrase pour ton affichage permanent",
+    "message": "Ta pensée complice (2 phrases)",
+    "bulle": "Micro-phrase pour ta bulle",
     ${giveGift ? `"cadeau": {
-      "nom": "nom de l'objet",
+      "nom": "Nom de l'objet",
       "type": "decor",
-      "pixels": [[0,1,1,0...], [...]],
-      "palette": ["transparent", "#color1", "#color2"]
+      "pixels": [[0,0,1,1,1,1,0,0], [0,1,2,2,2,2,1,0], [1,2,2,2,2,2,2,1], [1,2,2,2,2,2,2,1], [1,2,2,2,2,2,2,1], [1,2,2,2,2,2,2,1], [0,1,2,2,2,2,1,0], [0,0,1,1,1,1,0,0]],
+      "palette": ["transparent", "#hex1", "#hex2"]
     }` : ''}
   }`;
 
-  document.getElementById('claude-msg').textContent = 'Le Gotchi réfléchit... 💭';
+  document.getElementById('claude-msg').textContent = giveGift ? 'Dessin en cours... 🎨' : 'Réflexion... 💭';
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -939,35 +949,52 @@ async function askClaude() {
     if (data.bulle) {
       D.g.customBubbles.push(data.bulle);
       if (D.g.customBubbles.length > 10) D.g.customBubbles.shift();
-      document.getElementById('bubble').textContent = data.bulle; // Mise à jour immédiate
+      document.getElementById('bubble').textContent = data.bulle;
     }
     
     if (giveGift && data.cadeau) {
+      if (forceGift) D.g.totalXp -= 100; // On paye les 100 XP
       D.g.props.push({ ...data.cadeau, actif: false });
       D.lastGiftDate = td;
-      toast(`🎁 Nouveau cadeau : ${data.cadeau.nom}`);
+      toast(`🎁 Cadeau pixel : ${data.cadeau.nom}`);
     }
-    save(); renderProps();
+    save(); renderProps(); updUI();
   } catch (e) {
-    document.getElementById('claude-msg').textContent = 'Erreur de connexion.';
+    document.getElementById('claude-msg').textContent = 'Erreur API Claude.';
   }
 }
 
 function renderProps() { 
-  const c = document.getElementById('props-list'); if(!c) return; 
+  const c = document.getElementById('props-list'); 
+  const btn = document.getElementById('btn-gift-ask');
+  const xpVal = document.getElementById('prop-xp-val');
+  
+  if(!c) return; 
+
+  // Mise à jour de l'affichage de l'XP
+  if(xpVal) xpVal.textContent = D.g.totalXp;
+  
+  // Activation du bouton si XP >= 100
+  if(btn) {
+    if(D.g.totalXp >= 100) {
+      btn.style.opacity = "1";
+      btn.disabled = false;
+    } else {
+      btn.style.opacity = "0.5";
+      btn.disabled = true;
+    }
+  }
+
   if(!D.g.props || D.g.props.length === 0) { 
-    c.innerHTML = '<p style="font-size:10px; color:var(--text2);">Ton sac est vide. Reviens plus tard pour des surprises !</p>'; 
+    c.innerHTML = '<p style="font-size:10px; color:var(--text2);">Ton sac est vide.</p>'; 
     return; 
   } 
-  
-  // On crée de jolies cartes interactives
-  c.innerHTML = D.g.props.map((p, index) => `
-    <div onclick="toggleProp(${index})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; color:${p.actif ? '#fff' : 'var(--text)'}; border:2px solid var(--border); border-radius:8px; padding:8px 12px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-      <span style="font-size:20px;">${p.emoji || '🎁'}</span>
-      <span>${p.nom}</span>
-      <span style="font-size:8px; text-transform:uppercase; opacity:0.8;">${p.type || 'objet'}</span>
-    </div>
-  `).join(''); 
+
+  c.innerHTML = D.g.props.map((p, i) => `
+    <div onclick="toggleProp(${i})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; color:${p.actif ? '#fff' : 'var(--text)'}; border:2px solid var(--border); border-radius:8px; padding:8px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; width: 80px; text-align:center; transition:0.2s;">
+      <span style="font-size:24px;">${p.emoji || '📦'}</span>
+      <span style="margin-top:4px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">${p.nom}</span>
+    </div>`).join(''); 
 }
 
 // Fonction pour Équiper / Ranger un objet
@@ -1017,6 +1044,19 @@ function debugProps() {
    report += '🎨 Props générés par Claude: ' + (D.propsPixels || []).length + '\n';
   
   toast(report);
+}
+
+   async function askSpecialGift() {
+  if(D.g.totalXp < 100) {
+    toast("Il te faut 100 XP pour cette requête spéciale !");
+    return;
+  }
+  
+  if(confirm("Dépenser 100 XP pour un cadeau pixel unique ?")) {
+    haptic();
+    // On lance askClaude en passant un paramètre "forceGift"
+    await askClaude(true); 
+  }
 }
 function genSoutien(){
   haptic();

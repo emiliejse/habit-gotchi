@@ -143,14 +143,32 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .tama-screen canvas{image-rendering:pixelated!important;image-rendering:crisp-edges!important;width:100%!important;height:100%!important}
 
 /* Bubble */
-.bubble{
-  background:var(--card);border:2px solid var(--border);
-  border-radius:10px;padding:5px 8px;font-size:10px;text-align:center;
-  margin:4px auto 0;max-width:340px;min-height:24px;
-  box-shadow:0 1px 4px var(--shadow);position:relative;
+.bubble {
+  background: var(--card);
+  border: 3px solid #6a5a40;        /* contour pixel épais */
+  border-radius: 0;                  /* carré = rétro */
+  image-rendering: pixelated;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-family: 'Courier New', monospace;  /* police pixel */
+  text-align: center;
+  margin: 4px auto 0;
+  max-width: 260px;
+  min-height: 24px;
+  box-shadow: 3px 3px 0 #6a5a40;    /* ombre décalée = effet rétro */
+  position: relative;
 }
-.bubble::before{content:'';position:absolute;top:-6px;left:50%;transform:translateX(-50%);
-  border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:6px solid var(--border)}
+/* La petite queue de bulle pointant VERS LE BAS (vers le gotchi) */
+.bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #6a5a40;
+}
 
 /* ============================================================
    MENU OVERLAY — Pixel notebook style
@@ -340,7 +358,8 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   </div>
   <sub id="date-d" style="display:block;text-align:center;font-size:8px;color:var(--text2)"></sub>
 
-  <div class="tama-shell">
+    <div class="bubble" id="bubble">...</div>
+   <div class="tama-shell">
     <!-- 3 icônes haut -->
     <div class="icon-row" id="icons-top"></div>
     <!-- Écran -->
@@ -349,7 +368,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     <div class="icon-row" id="icons-bot"></div>
   </div>
 
-  <div class="bubble" id="bubble">...</div>
+
 <div class="meteo-badge" id="meteo-badge" style="display:none;"></div>
 
   <!-- Sliders énergie & bonheur (0-5) -->
@@ -700,10 +719,24 @@ function defs(){
 props: [],
       customBubbles: [] // Le futur cerveau à mots doux de Claude
     }, 
-    habits:CATS.map(c=>({catId:c.id,label:c.id})), log:{}, journal:[], pin:null, apiKey:null 
+    habits: CATS.map(c => ({catId:c.id, label:c.label})), log:{}, journal:[], pin:null, apiKey:null 
   }
 }
-function load(){try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);return{...defs(),...d,g:{...defs().g,...d.g},habits:d.habits||defs().habits}}}catch(e){}return defs()}
+function load()try{
+    const r=localStorage.getItem(SK);
+    if(r){
+      const d=JSON.parse(r);
+      // Répare les labels si encore bruts
+      if(d.habits) d.habits = d.habits.map(h => {
+        const cat = CATS.find(c => c.id === h.catId);
+        const isBrut = cat && h.label === h.catId;
+        return isBrut ? {...h, label: cat.label} : h;
+      });
+      return{...defs(),...d,g:{...defs().g,...d.g},habits:d.habits||defs().habits}
+    }
+  }catch(e){}
+  return defs()
+}
 function save(){try{localStorage.setItem(SK,JSON.stringify(D))}catch(e){}}
 let D=load();
 // Peuple l'inventaire avec les props de base (cout: 0) si pas encore fait

@@ -1123,6 +1123,7 @@ function renderProps() {
     'decor':      { label: '🌿 Décor',      emoji: '🌿' },
     'accessoire': { label: '👒 Accessoires', emoji: '👒' },
     'ambiance':   { label: '✨ Ambiances',   emoji: '✨' },
+     'claude':     { label: '✦ IA'      },
   };
 
   // --- Filtres ---
@@ -1149,12 +1150,14 @@ if (!D.g.props || D.g.props.length === 0) {
 
 const filtered = D.g.props
   .map((p, index) => ({ p, index, def: allDefs.find(l => l.id === p.id) }))
-  .filter(({ p }) => propsFilterActive === 'tous' || p.type === propsFilterActive);
-
-if (filtered.length === 0) {
-  listEl.innerHTML = '<p style="font-size:10px;color:var(--text2);text-align:center;padding:12px">Aucun objet dans cette catégorie.</p>';
-  return;
-}
+  .filter(({ p, def }) => {
+    if (propsFilterActive === 'tous') return true;
+    if (propsFilterActive === 'claude') {
+      // objet Claude = il a des pixels stockés dans propsPixels
+      return !!(D.propsPixels && D.propsPixels.find(x => x.id === p.id));
+    }
+    return p.type === propsFilterActive;
+  });
 
 // 1. On construit le HTML
 listEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">` +

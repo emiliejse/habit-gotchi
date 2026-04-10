@@ -554,6 +554,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
 <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:8px;font-size:9px">📋 État du système</button>
 <button class="btn btn-s" onclick="fixProps()" style="width:100%;margin-top:4px;font-size:9px">🔧 Réparer inventaire</button>
+   <button class="btn btn-s" onclick="cleanProps()" style="width:100%;margin-top:4px;font-size:9px">🧹 Nettoyer inventaire</button>
 <button class="btn btn-m" onclick="forceUpdate()" style="width:100%;margin-top:4px;font-size:9px">🔄 Mettre à jour l'app</button>
     
   </div><!-- ferme p-settings -->
@@ -1164,6 +1165,17 @@ function toast(m){document.getElementById('modal').style.display='flex';document
   });
   save();
   toast('Corrigé ' + fixed + ' props ✿');
+  setTimeout(() => location.reload(), 800);
+}
+   function cleanProps() {
+  const before = D.g.props.length;
+  D.g.props = D.g.props.filter(p => {
+    const inLib = (window.PROPS_LIB || []).find(l => l.id === p.id);
+    const inLocal = (D.propsPixels || []).find(l => l.id === p.id);
+    return inLib || inLocal;
+  });
+  save();
+  toast('Nettoyé : ' + (before - D.g.props.length) + ' props orphelins supprimés ✿');
   setTimeout(() => location.reload(), 800);
 }
 

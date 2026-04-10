@@ -672,13 +672,18 @@ async function buyProp() {
   save();
   toast('Claude crée ton objet... 💭');
 
-  const prompt = `Invente un petit objet pixel art mignon (max 7x7 pixels) pour une appli de bien-être.
+  const nomsExistants = (D.g.props || []).map(p => p.nom).join(', ') || 'aucun';
+  const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
+  const theme = themes[Math.floor(Math.random() * themes.length)];
+
+  const prompt = `Invente un objet pixel art UNIQUE sur le thème "${theme}".
+Objets déjà dans l'inventaire (ne pas reproduire) : ${nomsExistants}.
+Max 7x7 pixels. Appli de bien-être.
 Catégories possibles: "decor", "accessoire", "ambiance".
 Palette: tableau de couleurs hex, index 0 = toujours "transparent".
 Pour type "decor", ajoute "slot" parmi : "A" (fond gauche), "B" (fond droit), "C" (sol gauche), "D" (sol droit), "SOL" (sol centre).
 Réponds UNIQUEMENT en JSON strict, sans texte autour :
 {"id":"obj_${Date.now()}","nom":"nom joli","type":"decor","emoji":"🌸","slot":"C","palette":["transparent","#couleur1","#couleur2"],"pixels":[[0,1,0],[1,2,1],[0,1,0]]}`;
-
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

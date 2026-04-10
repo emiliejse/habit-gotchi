@@ -200,7 +200,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .btn-m{background:var(--mint);color:var(--text)}
 .btn-sos{background:linear-gradient(135deg,var(--coral),var(--pink));color:#fff;font-size:11px;padding:8px 12px;border-radius:10px}
 
-/* --- Habitudes & Animation Rebond --- */
+/* --- udes & Animation Rebond --- */
 .hab {
   display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px;
   border: 2px solid var(--border); margin-bottom: 4px; background: #fff; cursor: pointer;
@@ -336,7 +336,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
      ============================================================ -->
 <div id="console-top">
 <div class="hdr">
-    <h1>✿ Habit-Gotchi ✿</h1>
+    <h1>✿ -Gotchi ✿</h1>
   </div>
   <sub id="date-d" style="display:block;text-align:center;font-size:8px;color:var(--text2)"></sub>
 
@@ -371,7 +371,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
      ZONE DYNAMIQUE (bottom, scrollable)
      ============================================================ -->
 <div id="dynamic-zone">
-  <!-- GOTCHI (habitudes + XP) -->
+  <!-- GOTCHI (udes + XP) -->
 <div id="p-gotchi" class="pnl on">
     
     <div class="card" style="background: linear-gradient(135deg, rgba(176,144,208,0.15), rgba(232,160,191,0.15)); border: 2px solid var(--lilac); text-align: center; padding: 15px;">
@@ -398,7 +398,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     <div class="card" id="claude-card">
       <h2>💬 La pensée du Gotchi</h2>
       <div id="claude-msg" style="font-size:11px;color:var(--text2);min-height:30px;line-height:1.4;">
-        Coche tes habitudes ou écris dans ton carnet pour m'inspirer ✿
+        Coche tes udes ou écris dans ton carnet pour m'inspirer ✿
       </div>
       <button class="btn btn-p" onclick="askClaude()" style="width:100%;margin-top:8px;font-size:10px;background:var(--lilac);border:none;">
         ✿ Demander une petite pensée
@@ -407,10 +407,10 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     
   </div>
 
-  <!-- HABITS EDIT -->
-  <div id="p-habits" class="pnl">
+  <!-- S EDIT -->
+  <div id="p-s" class="pnl">
     <div class="card">
-      <h2>Mes 6 habitudes</h2>
+      <h2>Mes 6 udes</h2>
       <p style="font-size:10px;color:var(--text2);margin-bottom:8px">Catégories fixes · Texte modifiable</p>
 
     </div>
@@ -539,7 +539,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     </div>
 
     <div class="card" style="margin-bottom: 12px;">
-      <h2>✏️ Mes Habitudes</h2>
+      <h2>✏️ Mes udes</h2>
       <div id="hab-edit"></div>
     </div>
 
@@ -551,7 +551,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
       
       <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
     </div>
-<div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
+<div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">-Gotchi v0.8 ✿</div>
 <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:8px;font-size:9px">📋 État du système</button>
 <button class="btn btn-s" onclick="fixProps()" style="width:100%;margin-top:4px;font-size:9px">🔧 Réparer inventaire</button>
    <button class="btn btn-s" onclick="cleanProps()" style="width:100%;margin-top:4px;font-size:9px">🧹 Nettoyer inventaire</button>
@@ -642,10 +642,10 @@ props: [
       ],
       customBubbles: [] // Le futur cerveau à mots doux de Claude
     }, 
-    habits:CATS.map(c=>({catId:c.id,label:c.id})), log:{}, journal:[], pin:null, apiKey:null 
+    s:CATS.map(c=>({catId:c.id,label:c.id})), log:{}, journal:[], pin:null, apiKey:null 
   }
 }
-function load(){try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);return{...defs(),...d,g:{...defs().g,...d.g},habits:d.habits||defs().habits}}}catch(e){}return defs()}
+function load(){try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);return{...defs(),...d,g:{...defs().g,...d.g},s:d.s||defs().s}}}catch(e){}return defs()}
 function save(){try{localStorage.setItem(SK,JSON.stringify(D))}catch(e){}}
 let D=load();
 
@@ -725,8 +725,8 @@ function toggleHab(catId){
   haptic();
   const td=today();if(!D.log[td])D.log[td]=[];
   const idx=D.log[td].indexOf(catId);
-  if(idx>=0){D.log[td].splice(idx,1);addXp(-10)}
-  else{D.log[td].push(catId);addXp(10);celebQueue.push(catId);shakeTimer=8}
+  if(idx>=0){D.log[td].splice(idx,1);addXp(-15)}
+  else{D.log[td].push(catId);addXp(15);celebQueue.push(catId);shakeTimer=8}
   save();renderHabs();updUI();updBubbleNow();
 }
 function renderHabs(){

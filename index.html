@@ -1149,7 +1149,8 @@ function renderProps() {
   // --- Boutique ---
   const shopCard = document.getElementById('shop-card');
   const wallet = document.getElementById('xp-wallet');
-  if (shopCard) shopCard.style.display = D.g.totalXp >= 100 ? 'block' : 'none';
+  if (shopCard) shopCard.style.display = (D.g.petales || 0) >= 10 ? 'block' : 'none';
+
   if (wallet) wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
 }
 
@@ -1159,7 +1160,9 @@ function setPropsFilter(cat) {
 }
 async function buyProp() {
   if (!D.apiKey) { toast('Clé API manquante dans les Réglages'); return; }
-  if (D.g.totalXp < 100) { toast('Il te faut 100 XP ✿'); return; }
+ if ((D.g.petales || 0) < 10) { toast('Il te faut 10 🌸 Pétales'); return; }
+D.g.petales -= 10;
+save();
 
   addXp(-100);
   toast('Claude crée ton objet... 💭');

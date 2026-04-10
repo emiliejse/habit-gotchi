@@ -644,19 +644,14 @@ const CATS=[
   {id:'intel',  icon:'📚',label:'Intellectuel',def:'20 min lecture'},
   {id:'serene', icon:'🕯️',label:'Sérénité',    def:'10 min calme'},
 ];
-function defs(){
-  return{ 
-    g:{
-      name:'Petit·e Gotchi', totalXp:0, stage:'egg', energy:3, happiness:3, envLv:0, moodDay:null, activeEnv:'parc', 
-      // Tes 3 objets de base pour tester le système :
-props: [
-        { id: "plante01", nom: "Plante Grasse", type: "decor", actif: false },
-        { id: "tapis01", nom: "Tapis Doux", type: "decor", actif: false },
-        { id: "etoiles01", nom: "Pluie d'Étoiles", type: "ambiance", actif: false }
-      ],
-      customBubbles: [] // Le futur cerveau à mots doux de Claude
+function defs() {
+  return { 
+    g: {
+      name: 'Petit·e Gotchi', totalXp: 0, stage: 'egg', energy: 3, happiness: 3, activeEnv: 'parc', 
+      props: [], // On laisse vide ici, c'est loadLibraries qui va remplir
+      customBubbles: []
     }, 
-    habits:CATS.map(c=>({catId:c.id,label:c.id})), log:{}, journal:[], pin:null, apiKey:null 
+    habits: CATS.map(c => ({ catId: c.id, label: c.id })), log: {}, journal: [], apiKey: null, lastGiftDate: null 
   }
 }
 function load(){try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);return{...defs(),...d,g:{...defs().g,...d.g},habits:d.habits||defs().habits}}}catch(e){}return defs()}
@@ -668,6 +663,7 @@ const hr=()=>new Date().getHours();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 async function loadLibraries() {
   try {
+    // 1. On récupère les fichiers sur GitHub
     const [p, pers] = await Promise.all([
       fetch('data/props.json').then(r => r.ok ? r.json() : []),
       fetch('data/personality.json').then(r => r.ok ? r.json() : null)
@@ -676,27 +672,29 @@ async function loadLibraries() {
     LIB.props = p;
     LIB.personality = pers;
 
-    // --- SYNCHRONISATION FORCÉE DES PIXELS ---
-    if (D.g.props && LIB.props.length > 0) {
-      D.g.props = D.g.props.map(savedObj => {
-        // On cherche l'équivalent dans le fichier JSON
-        const model = LIB.props.find(m => m.nom === savedObj.nom);
-        if (model && model.pixels) {
-          // On injecte les pixels et la palette, on retire l'émoji
-          return { ...savedObj, pixels: model.pixels, palette: model.palette, emoji: null };
-        }
-        return savedObj;
-      });
-    }
+    // 2. Si l'inventaire est vide (Reset), on injecte les objets de base du JSON
+    if (D.g.props.length === 0 && LIB.props.length > 0) {
+      // On prend les 3 premiers objets par exemple
+      D.g.props = LIB.props.slice(0, 3).map(obj => ({ ...obj, actif: false }));
+      save();
+    } 
 
-    console.log("Bibliothèques synchronisées et Pixels forcés ✿");
+    // 3. SYNCHRO : On force les pixels sur les objets existants
+    D.g.props = D.g.props.map(savedObj => {
+      const model = LIB.props.find(m => m.nom === savedObj.nom);
+      if (model) {
+        return { ...savedObj, pixels: model.pixels, palette: model.palette, emoji: null };
+      }
+      return savedObj;
+    });
+
+    console.log("Données GitHub synchronisées ✿");
     updBubbleNow(); 
     renderProps();
   } catch (e) {
-    console.error("Erreur de synchro :", e);
+    console.error("Erreur critique de chargement :", e);
   }
 }
-
 // --- Haptique Douce (Vibration Android + Flash visuel iPhone) ---
 function haptic() {
 try { if(navigator.vibrate) navigator.vibrate([50]); } catch(e){}
@@ -1052,16 +1050,17 @@ function debugProps() {
 // Déclencheur du cadeau
 async function askSpecialGift() {
   if (D.g.totalXp < 100) {
-    toast(`Il te manque ${100 - D.g.totalXp} XP pour commander un objet !`);
+    toast(`Il te faut 100 XP (tu as ${D.g.totalXp})`);
     return;
   }
   
-  const ok = confirm("Dépenser 100 XP pour que Claude dessine un objet unique ?");
-  if (ok) {
-    haptic();
-    // On appelle Claude en mode "force"
-    await askClaude(true); 
-  }
+  // On demande confirmation
+  const confirmation = confirm("Dépenser 100 XP pour un objet unique dessiné par Claude ?");
+  if (!confirmation) return;
+
+  haptic();
+  // On appelle Claude
+  await askClaude(true); 
 }
 
 // Mise à jour de l'affichage

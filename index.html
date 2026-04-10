@@ -1029,6 +1029,24 @@ function exportD(){
   a.download = `HabitGotchi_Sauvegarde_${today()}.json`; // Nom du fichier avec la date
   a.click();
 }
+   function importD(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      // Fusion avec les valeurs par défaut pour éviter les champs manquants
+      D = { ...defs(), ...imported, g: { ...defs().g, ...imported.g } };
+      save();
+      toast('Import réussi ✿');
+      setTimeout(() => location.reload(), 800);
+    } catch(err) {
+      toast('Fichier invalide.');
+    }
+  };
+  reader.readAsText(file);
+}
 function savePin(){const v=document.getElementById('pin-inp').value.trim();if(v.length===4&&/^\d+$/.test(v)){D.pin=v;save();document.getElementById('pin-inp').value='';toast('PIN mis à jour ✿')}else toast('4 chiffres requis')}
 function exportD(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`habitgotchi_${today()}.json`;a.click();URL.revokeObjectURL(u)}
 function confirmReset(){document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`}

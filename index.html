@@ -547,7 +547,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
       <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
     </div>
 <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
-<button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:8px;font-size:9px">🔍 Debug Props</button>
+<button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:8px;font-size:9px">📋 État du système</button>
     
   </div>
   </div>
@@ -901,13 +901,29 @@ function toggleProp(index) {
 function debugProps() {
   const lib = window.PROPS_LIB || [];
   const actifs = (D.g.props || []).filter(p => p.actif);
-  const matches = actifs.map(p => ({
-    id: p.id,
-    nom: p.nom,
-    trouveDansCatalogue: !!lib.find(l => l.id === p.id),
-    aDesPixels: !!(lib.find(l => l.id === p.id) || {}).pixels
-  }));
-  toast('Catalogue: ' + lib.length + ' props\nActifs: ' + actifs.length + '\n' + JSON.stringify(matches));
+  const g = D.g;
+  const s = getSt(g.totalXp);
+  
+  let report = '✿ État du système ✿\n\n';
+  report += '🎮 ' + g.name + ' (' + s.l + ', ' + g.totalXp + ' XP)\n';
+  report += '⚡ Énergie: ' + g.energy + '/5 · 💜 Bonheur: ' + g.happiness + '/5\n';
+  report += '📦 Catalogue: ' + lib.length + ' props chargés\n';
+  report += '🎒 Inventaire: ' + (D.g.props||[]).length + ' objets (' + actifs.length + ' actifs)\n\n';
+  
+  if (actifs.length) {
+    actifs.forEach(p => {
+      const def = lib.find(l => l.id === p.id);
+      report += (def && def.pixels ? '✅' : '❌') + ' ' + p.nom + ' (' + p.id + ')\n';
+    });
+  }
+  
+  report += '\n📁 Fichiers data:\n';
+  report += (window.PERSONALITY ? '✅' : '❌') + ' personality.json\n';
+  report += (lib.length > 0 ? '✅' : '❌') + ' props.json\n';
+  report += (window.ENVIRONMENTS ? '✅' : '❌') + ' environments.json\n';
+  report += (window.STYLES ? '✅' : '❌') + ' styles.json\n';
+  
+  toast(report);
 }
 function genSoutien(){
   haptic();

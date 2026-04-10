@@ -336,7 +336,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
      ============================================================ -->
 <div id="console-top">
 <div class="hdr">
-    <h1>✿ -Gotchi ✿</h1>
+    <h1>✿ Habit-Gotchi ✿</h1>
   </div>
   <sub id="date-d" style="display:block;text-align:center;font-size:8px;color:var(--text2)"></sub>
 
@@ -371,7 +371,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
      ZONE DYNAMIQUE (bottom, scrollable)
      ============================================================ -->
 <div id="dynamic-zone">
-  <!-- GOTCHI (udes + XP) -->
+  <!-- GOTCHI (habitudes + XP) -->
 <div id="p-gotchi" class="pnl on">
     
     <div class="card" style="background: linear-gradient(135deg, rgba(176,144,208,0.15), rgba(232,160,191,0.15)); border: 2px solid var(--lilac); text-align: center; padding: 15px;">
@@ -398,7 +398,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     <div class="card" id="claude-card">
       <h2>💬 La pensée du Gotchi</h2>
       <div id="claude-msg" style="font-size:11px;color:var(--text2);min-height:30px;line-height:1.4;">
-        Coche tes Habitudes ou écris dans ton carnet pour m'inspirer ✿
+        Coche tes habitudes ou écris dans ton carnet pour m'inspirer ✿
       </div>
       <button class="btn btn-p" onclick="askClaude()" style="width:100%;margin-top:8px;font-size:10px;background:var(--lilac);border:none;">
         ✿ Demander une petite pensée
@@ -407,10 +407,10 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     
   </div>
 
-  <!-- S EDIT -->
-  <div id="p-s" class="pnl">
+  <!-- HABITS EDIT -->
+  <div id="p-habits" class="pnl">
     <div class="card">
-      <h2>Mes 6 Habitudes</h2>
+      <h2>Mes 6 habitudes</h2>
       <p style="font-size:10px;color:var(--text2);margin-bottom:8px">Catégories fixes · Texte modifiable</p>
 
     </div>
@@ -537,6 +537,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
         <div style="display:flex;gap:5px"><input type="password" id="pin-inp" class="inp" maxlength="4"><button class="btn btn-p" onclick="savePin()">OK</button></div>
       </div>
     </div>
+
     <div class="card" style="margin-bottom: 12px;">
       <h2>✏️ Mes Habitudes</h2>
       <div id="hab-edit"></div>
@@ -550,11 +551,11 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
       
       <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
     </div>
+<div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
 <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:8px;font-size:9px">📋 État du système</button>
 <button class="btn btn-s" onclick="fixProps()" style="width:100%;margin-top:4px;font-size:9px">🔧 Réparer inventaire</button>
    <button class="btn btn-s" onclick="cleanProps()" style="width:100%;margin-top:4px;font-size:9px">🧹 Nettoyer inventaire</button>
 <button class="btn btn-m" onclick="forceUpdate()" style="width:100%;margin-top:4px;font-size:9px">🔄 Mettre à jour l'app</button>
-   <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">-Gotchi v0.8 ✿</div>
     
   </div><!-- ferme p-settings -->
 </div><!-- ferme dynamic-zone -->
@@ -641,10 +642,10 @@ props: [
       ],
       customBubbles: [] // Le futur cerveau à mots doux de Claude
     }, 
-    s:CATS.map(c=>({catId:c.id,label:c.id})), log:{}, journal:[], pin:null, apiKey:null 
+    habits:CATS.map(c=>({catId:c.id,label:c.id})), log:{}, journal:[], pin:null, apiKey:null 
   }
 }
-function load(){try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);return{...defs(),...d,g:{...defs().g,...d.g},s:d.s||defs().s}}}catch(e){}return defs()}
+function load(){try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);return{...defs(),...d,g:{...defs().g,...d.g},habits:d.habits||defs().habits}}}catch(e){}return defs()}
 function save(){try{localStorage.setItem(SK,JSON.stringify(D))}catch(e){}}
 let D=load();
 
@@ -724,48 +725,29 @@ function toggleHab(catId){
   haptic();
   const td=today();if(!D.log[td])D.log[td]=[];
   const idx=D.log[td].indexOf(catId);
-  if(idx>=0){D.log[td].splice(idx,1);addXp(-15)}
-  else{D.log[td].push(catId);addXp(15);celebQueue.push(catId);shakeTimer=8}
+  if(idx>=0){D.log[td].splice(idx,1);addXp(-10)}
+  else{D.log[td].push(catId);addXp(10);celebQueue.push(catId);shakeTimer=8}
   save();renderHabs();updUI();updBubbleNow();
 }
 function renderHabs(){
-  const td=today(), log=D.log[td]||[], done=log.length;
+  const td=today(),log=D.log[td]||[],done=log.length;
   const habHome=document.getElementById('hab-home');
-  
-  // CORRECTION ICI : On utilise D.s qui contient tes habitudes
-  if(habHome && D.s) { 
-    habHome.innerHTML=D.s.map(h=>{
-      const c=CATS.find(c=>c.id===h.catId), d=log.includes(h.catId);
-      return `<div class="hab ${d?'done':''}" onclick="toggleHab('${h.catId}')">
-                <div class="ck">${d?'✓':''}</div>
-                <span style="flex:1;font-size:12px">${h.label}</span>
-                <span style="font-size:16px">${c.icon}</span>
-              </div>`;
+  if(habHome) {
+    habHome.innerHTML=D.habits.map(h=>{
+      const c=CATS.find(c=>c.id===h.catId),d=log.includes(h.catId);
+      return`<div class="hab ${d?'done':''}" onclick="toggleHab('${h.catId}')"><div class="ck">${d?'✓':''}</div><span style="flex:1;font-size:12px">${h.label}</span><span style="font-size:16px">${c.icon}</span></div>`;
     }).join('');
   }
-  
   const hc=document.getElementById('hab-count'); if(hc) hc.textContent=`${done}/6`;
-  
   const edit=document.getElementById('hab-edit');
-  // CORRECTION ICI AUSSI
-  if(edit && D.s) {
-    edit.innerHTML=D.s.map((h,i)=>{
-      const c=CATS.find(c=>c.id===h.catId);
-      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-                <span style="font-size:20px;width:28px;text-align:center">${c.icon}</span>
-                <input class="inp" value="${h.label}" onchange="editH(${i},this.value)" style="flex:1;font-size:12px">
-              </div>`;
-    }).join('');
-  }
+  if(edit)edit.innerHTML=D.habits.map((h,i)=>{
+    const c=CATS.find(c=>c.id===h.catId);
+    return`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:20px;width:28px;text-align:center">${c.icon}</span><input class="inp" value="${h.label}" onchange="editH(${i},this.value)" style="flex:1;font-size:12px"></div>`;
+  }).join('');
 }
-function editH(i,v){ 
-  if(D.s[i]) {
-    D.s[i].label = v.trim() || D.s[i].label; 
-    save(); 
-  }
-}
+function editH(i,v){D.habits[i].label=v.trim()||D.habits[i].label;save()}
 
-const STG=[{k:'egg',l:'Œuf',th:0},{k:'baby',l:'Bébé',th:80},{k:'teen',l:'Ado',th:300},{k:'adult',l:'Adulte',th:800}];
+const STG=[{k:'egg',l:'Œuf',th:0},{k:'baby',l:'Bébé',th:60},{k:'teen',l:'Ado',th:240},{k:'adult',l:'Adulte',th:600}];
 function getSt(xp){let s=STG[0];for(const st of STG)if(xp>=st.th)s=st;return s}
 function nxtTh(xp){for(const s of STG)if(xp<s.th)return s.th;return 1200}
 function addXp(n){D.g.totalXp=Math.max(0,D.g.totalXp+n);D.g.stage=getSt(D.g.totalXp).k;D.g.envLv=Math.min(10,Math.floor(D.g.totalXp/60));save();updUI()}

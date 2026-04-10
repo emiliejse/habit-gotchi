@@ -683,7 +683,7 @@ Réponds UNIQUEMENT en JSON strict, sans texte autour :
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': D.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 300,temperature: 1, messages: [{ role: 'user', content: prompt }] })
     });
     const data = await r.json();
     const match = data.content[0].text.match(/\{[\s\S]*\}/);
@@ -1215,45 +1215,18 @@ save();
   addXp(-100);
   toast('Claude crée ton objet... 💭');
 
-  const prompt = `Invente un petit objet pixel art mignon (max 7x7 pixels) pour une appli de bien-être.
+  // Anti-doublon + thème aléatoire
+  const nomsExistants = (D.g.props || []).map(p => p.nom).join(', ') || 'aucun';
+  const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
+  const theme = themes[Math.floor(Math.random() * themes.length)];
+
+  const prompt = `Invente un objet pixel art UNIQUE et SURPRENANT sur le thème "${theme}".
+Objets déjà dans l'inventaire (NE PAS reproduire) : ${nomsExistants}.
+Sois créatif et inattendu. Max 7x7 pixels. Pour une appli de bien-être.
 Catégories possibles: "decor", "accessoire", "ambiance".
 Palette: tableau de couleurs hex, index 0 = toujours "transparent".
 Réponds UNIQUEMENT en JSON strict, sans texte autour :
 {"id":"obj_${Date.now()}","nom":"nom joli","type":"decor","emoji":"🌸","position":{"x":150,"y":128},"palette":["transparent","#couleur1","#couleur2"],"pixels":[[0,1,0],[1,2,1],[0,1,0]]}`;
-
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': D.apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 400,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await r.json();
-    const match = data.content[0].text.match(/\{[\s\S]*\}/);
-    if (match) {
-      const obj = JSON.parse(match[0]);
-      D.g.props.push({ id: obj.id, nom: obj.nom, type: obj.type, emoji: obj.emoji || '🎁', actif: false });
-      if (!D.propsPixels) D.propsPixels = [];
-      D.propsPixels.push(obj);
-      window.PROPS_LOCAL = D.propsPixels;
-      save();
-      renderProps();
-      updUI();
-      toast(`🎁 "${obj.nom}" ajouté à ton inventaire !`);
-    }
-  } catch(e) {
-    addXp(100); // Rembourser si erreur
-    toast('Erreur API — XP remboursés ✿');
-  }
-}
 // Fonction pour Équiper / Ranger un objet
 async function toggleProp(index) {
     haptic();

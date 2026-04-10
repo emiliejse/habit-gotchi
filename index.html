@@ -146,18 +146,18 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   max-width: 340px;          /* ← même largeur max que .tama-shell */
   width: 100%;
   box-sizing: border-box;
-  z-index: 1;
+  z-index: 10;
 }
 /* Queue pointant VERS LE HAUT (vers l'écran) */
 .bubble::before {
   content: '';
   position: absolute;
-  top: -8px;        /* ← bas au lieu de top */
+  top: -8px;
   left: 50%;
   transform: translateX(-50%);
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
-  border-top: 8px solid var(--lilac);  /* ← top au lieu de bottom */
+  border-bottom: 8px solid var(--lilac);
   display: block;
 }
 .bubble::after { display: none; }

@@ -272,7 +272,8 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .cal-c{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:bold}
 .nav-r{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .nav-a{width:28px;height:28px;border-radius:8px;border:2px solid var(--border);background:#fff;
-  font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.nav-a:active{background:var(--border)}
 
 /* Mood */
 .mood-b{width:42px;height:42px;border-radius:10px;border:3px solid var(--border);background:#fff;
@@ -425,9 +426,8 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
         <h2>📓 Mon Journal 📓</h2>
         <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px" id="mood-pick"></div>
         <textarea id="j-text" class="inp" rows="3" placeholder="Écris ici..." style="background:#faf6f0;border-color:#c8b8a0;font-size:12px"></textarea>
-        <div style="display:flex;gap:6px;margin-top:6px">
-          <button id="voice-btn" class="btn btn-s" onclick="toggleVoice()" style="flex:1;font-size:10px">🎙️ Dicter</button>
-          <button class="btn btn-p" onclick="saveJ()" style="flex:1;font-size:10px">✿ Sauver</button>
+<div style="margin-top:6px">
+          <button class="btn btn-p" onclick="saveJ()" style="width:100%;font-size:10px">✿ Sauver</button>
         </div>
         <p id="v-status" style="font-size:9px;color:#a09880;text-align:center;margin-top:3px"></p>
       </div>
@@ -498,9 +498,9 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 </div>
 
 <div id="p-props" class="pnl">
-  <div class="card" style="text-align:center; padding: 30px 10px;">
+  <div class="card">
     <h2>🎒 Mon Inventaire</h2>
-    <p style="font-size:11px; color:var(--text2);">Tes décors et objets débloqués apparaîtront ici.</p>
+    <div id="props-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px"></div>
   </div>
 </div>
 
@@ -546,17 +546,18 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
       
       <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
     </div>
+   <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
     
   </div>
   </div>
 
-</div> <button class="menu-languette" onclick="toggleMenu()">📓</button>
+</div> <button class="menu-languette" onclick="toggleMenu()">☰</button>
 
 <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()">
   <div class="menu-book" onclick="event.stopPropagation()">
-    <h2>📓 Carnet</h2>
-    <div class="menu-item" onclick="goMenu('gotchi')"><span class="mi-icon">🏠</span>Accueil Gotchi</div>
-    <div class="menu-item" onclick="goMenu('journal')"><span class="mi-icon">📖</span>Journal intime</div>
+    <h2>✿ Mon Gotchi</h2>
+    <div class="menu-item" onclick="goMenu('gotchi')"><span class="mi-icon">🏠</span>Gotchi</div>
+    <div class="menu-item" onclick="goMenu('journal')"><span class="mi-icon">📓</span>Journal intime</div>
     <div class="menu-item" onclick="goMenu('progress')"><span class="mi-icon">📊</span>Mes Progrès</div>
     <div class="menu-item" onclick="goMenu('focus')"><span class="mi-icon">🎯</span>Focus & Méditation</div>
     <div class="menu-item" onclick="goMenu('props')"><span class="mi-icon">🎒</span>Mon Inventaire</div>

@@ -546,7 +546,8 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
       
       <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
     </div>
-   <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
+<div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
+<button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:8px;font-size:9px">🔍 Debug Props</button>
     
   </div>
   </div>
@@ -897,7 +898,17 @@ function toggleProp(index) {
         toast(`✨ ${D.g.props[index].nom} équipé !`);
     }
 }
-
+function debugProps() {
+  const lib = window.PROPS_LIB || [];
+  const actifs = (D.g.props || []).filter(p => p.actif);
+  const matches = actifs.map(p => ({
+    id: p.id,
+    nom: p.nom,
+    trouveDansCatalogue: !!lib.find(l => l.id === p.id),
+    aDesPixels: !!(lib.find(l => l.id === p.id) || {}).pixels
+  }));
+  toast('Catalogue: ' + lib.length + ' props\nActifs: ' + actifs.length + '\n' + JSON.stringify(matches));
+}
 function genSoutien(){
   haptic();
   const g=D.g, td=today();

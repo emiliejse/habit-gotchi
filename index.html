@@ -747,7 +747,7 @@ function renderHabs(){
 }
 function editH(i,v){D.habits[i].label=v.trim()||D.habits[i].label;save()}
 
-const STG=[{k:'egg',l:'Œuf',th:0},{k:'baby',l:'Bébé',th:60},{k:'teen',l:'Ado',th:240},{k:'adult',l:'Adulte',th:600}];
+const STG=[{k:'egg',l:'Œuf',th:0},{k:'baby',l:'Bébé',th:80},{k:'teen',l:'Ado',th:300},{k:'adult',l:'Adulte',th:800}];
 function getSt(xp){let s=STG[0];for(const st of STG)if(xp>=st.th)s=st;return s}
 function nxtTh(xp){for(const s of STG)if(xp<s.th)return s.th;return 1200}
 function addXp(n){D.g.totalXp=Math.max(0,D.g.totalXp+n);D.g.stage=getSt(D.g.totalXp).k;D.g.envLv=Math.min(10,Math.floor(D.g.totalXp/60));save();updUI()}

@@ -145,31 +145,28 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 /* Bubble */
 .bubble {
   background: var(--card);
-  border: 3px solid #6a5a40;
-  border-radius: 0;
-  padding: 6px 10px;
+  border: 2px solid var(--lilac);
+  border-radius: 12px;
+  padding: 6px 12px;
   font-size: 10px;
-  font-family: 'Courier New', monospace;
   text-align: center;
-  margin: 0 auto 4px;   /* ← marge en BAS, pas en haut */
-  max-width: 260px;
+  max-width: 220px;
   min-height: 24px;
-  box-shadow: 3px 3px 0 #6a5a40;
+  box-shadow: 0 2px 8px var(--shadow);
   position: relative;
-  order: -1;            /* ← si le parent est flexbox, ça la remonte */
+  margin: -12px auto 0;   /* ← déborde de 12px sur l'écran */
+  z-index: 10;            /* ← passe par-dessus le canvas */
 }
-/* Queue pointant vers le BAS (vers le Gotchi) */
 .bubble::after {
   content: '';
   position: absolute;
-  bottom: -10px;
+  bottom: -8px;
   left: 50%;
   transform: translateX(-50%);
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 8px solid #6a5a40;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid var(--lilac);
 }
-/* Supprime l'ancien ::before s'il existe */
 .bubble::before { display: none; }
 
 /* ============================================================

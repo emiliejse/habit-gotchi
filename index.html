@@ -322,6 +322,11 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 /* Meteo badge */
 .meteo-badge{font-size:9px;color:var(--text2);text-align:center;margin-top:2px}
+
+   #update-banner{display:none;position:fixed;top:var(--sat);left:0;right:0;z-index:999;
+  background:var(--mint);color:#fff;text-align:center;padding:8px;font-size:11px;
+  font-weight:bold;cursor:pointer}
+
 </style>
 </head>
 <body>
@@ -549,6 +554,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
 <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:8px;font-size:9px">📋 État du système</button>
    <button class="btn btn-s" onclick="fixProps()" style="width:100%;margin-top:4px;font-size:9px">🔧 Réparer inventaire</button>
+   <button class="btn btn-m" onclick="forceUpdate()" style="width:100%;margin-top:4px;font-size:9px">🔄 Mettre à jour l'app</button>
     
   </div>
   </div>
@@ -641,6 +647,25 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 // --- Haptique Douce (Vibration Android + Flash visuel iPhone) ---
 function haptic() {
 try { if(navigator.vibrate) navigator.vibrate([50]); } catch(e){}
+}
+
+   function forceUpdate() {
+  if ('caches' in window) {
+    caches.keys().then(names => {
+      names.forEach(name => caches.delete(name));
+    });
+  }
+  toast('Mise à jour en cours... ✿');
+  setTimeout(() => {
+    window.location.reload(true);
+  }, 500);
+}
+
+// Vérifie les mises à jour au démarrage
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.update());
+  });
 }
 
 /* ============================================================
@@ -832,8 +857,12 @@ async function askClaude(){
   Action 2: Invente une TRÈS COURTE phrase (1 à 4 mots) qu'un compagnon dirait en patientant (ex: "*s'étire*", "Hmm...").`;
 
   if(giveGift) {
-    prompt += ` Action 3: INVENTE un objet pixel (catégories: "decor", "accessoire", "couleur", "ambiance" VISUELLE uniquement).
-    Réponds UNIQUEMENT en format JSON strict : {"message": "ta pensée", "bulle": "phrase courte", "cadeau": {"nom": "nom de l'objet", "type": "catégorie", "emoji": "🎨"}}`;
+    prompt += ` Action 3: INVENTE un petit objet pixel art (max 7x7 pixels). Catégories possibles: "decor", "accessoire", "ambiance".
+    La palette est un tableau de couleurs hex, index 0 = transparent.
+    Les pixels sont une grille 2D de numéros qui correspondent à la palette.
+    Réponds UNIQUEMENT en JSON strict :
+    {"message": "ta pensée", "bulle": "phrase courte", "cadeau": {"id": "mot_unique_${Date.now()}", "nom": "nom joli", "type": "decor", "position": {"x": 150, "y": 128}, "palette": ["transparent", "#couleur1", "#couleur2"], "pixels": [[0,1,0],[1,2,1],[0,1,0]]}}`;
+  }
   } else {
     prompt += ` Réponds UNIQUEMENT en format JSON strict : {"message": "ta pensée", "bulle": "phrase courte"}`;
   }
@@ -856,12 +885,25 @@ async function askClaude(){
       }
 
       // Sauvegarder le cadeau !
-      if(giveGift && data.cadeau) {
+if(giveGift && data.cadeau) {
         if(!D.g.props) D.g.props = [];
-        if(!D.g.props.find(p => p.nom === data.cadeau.nom)) {
-            D.g.props.push({ nom: data.cadeau.nom, type: data.cadeau.type, emoji: data.cadeau.emoji, actif: false });
-            D.lastGiftDate = td; // Relance le chrono !
-            toast(`🎁 Nouveau cadeau débloqué : ${data.cadeau.nom} !`);
+        if(!D.g.props.find(p => p.id === data.cadeau.id)) {
+          // Ajouter au localStorage comme prop avec pixels
+          D.g.props.push({
+            id: data.cadeau.id,
+            nom: data.cadeau.nom,
+            type: data.cadeau.type,
+            actif: false
+          });
+          // Ajouter la définition pixel au catalogue local
+          if (!window.PROPS_LOCAL) window.PROPS_LOCAL = [];
+          window.PROPS_LOCAL.push(data.cadeau);
+          // Sauvegarder les définitions pixel en local aussi
+          D.propsPixels = D.propsPixels || [];
+          D.propsPixels.push(data.cadeau);
+          D.lastGiftDate = td;
+          save();
+          toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
         }
       }
       save(); renderProps();
@@ -898,7 +940,7 @@ async function toggleProp(index) {
         if (!window.PROPS_LIB || window.PROPS_LIB.length === 0) {
             await loadDataFiles();
         }
-        const def = (window.PROPS_LIB || []).find(l => l.id === D.g.props[index].id);
+        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels || []).find(l => l.id === prop.id);
         if (def && def.pixels) {
             toast(`✨ ${D.g.props[index].nom} équipé !`);
         } else {
@@ -930,6 +972,7 @@ function debugProps() {
   report += (lib.length > 0 ? '✅' : '❌') + ' props.json\n';
   report += (window.ENVIRONMENTS ? '✅' : '❌') + ' environments.json\n';
   report += (window.STYLES ? '✅' : '❌') + ' styles.json\n';
+   report += '🎨 Props générés par Claude: ' + (D.propsPixels || []).length + '\n';
   
   toast(report);
 }
@@ -1157,7 +1200,7 @@ const p5s=(p)=>{
     // --- Props DÉCOR (au sol, avant le gotchi) ---
     if (D.g.props) {
       D.g.props.filter(pr => pr.actif && pr.type === 'decor').forEach(prop => {
-        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id);
+        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels || []).find(l => l.id === prop.id);
         if (def && def.pixels) {
           drawProp(p, def, def.position?.x || 140, def.position?.y || 130);
         }
@@ -1167,7 +1210,7 @@ const p5s=(p)=>{
     // --- Ambiances (particules répétées) ---
     if (D.g.props) {
       D.g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
-        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id);
+        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels || []).find(l => l.id === prop.id);
         if (def && def.pixels) {
           for (let i = 0; i < 3; i++) {
             const ax = (p.frameCount * 2 + i * 70) % CS;
@@ -1203,7 +1246,7 @@ const p5s=(p)=>{
     // --- Props ACCESSOIRE (sur la tête du gotchi) ---
     if (D.g.props) {
       D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
-        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id);
+        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels || []).find(l => l.id === prop.id);
         if (def && def.pixels) {
           const accX = cx - Math.floor(def.pixels[0].length / 2) * PX;
           const accY = (by + bobY) - def.pixels.length * PX - PX;

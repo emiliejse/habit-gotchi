@@ -377,6 +377,29 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   background:var(--mint);color:#fff;text-align:center;padding:8px;font-size:11px;
   font-weight:bold;cursor:pointer}
 
+   /* Toast non-bloquant */
+#toast-snack {
+  position: fixed;
+  bottom: calc(70px + var(--sab));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(56,48,74,.88);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  z-index: 300;
+  opacity: 0;
+  transition: opacity .3s, transform .3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#toast-snack.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 </style>
 </head>
 <body>
@@ -1704,7 +1727,26 @@ function savePin(){const v=document.getElementById('pin-inp').value.trim();if(v.
 function exportD(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`habitgotchi_${today()}.json`;a.click();URL.revokeObjectURL(u)}
 function confirmReset(){document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`}
 function clModal(e){if(!e||e.target.id==='modal')document.getElementById('modal').style.display='none'}
-function toast(m){document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<p style="text-align:center;font-size:12px">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`}
+// Ancien toast (bloquant) → renommer en modal utilitaire
+function toastModal(m){
+  document.getElementById('modal').style.display='flex';
+  document.getElementById('mbox').innerHTML=`<p style="text-align:center;font-size:12px">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`
+}
+
+// Nouveau toast non-bloquant
+let _toastTimer;
+function toast(m){
+  let el = document.getElementById('toast-snack');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast-snack';
+    document.body.appendChild(el);
+  }
+  el.textContent = m;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
 
 (function(){const td=today();if(D.lastActive&&D.lastActive!==td){D.g.energy=clamp(D.g.energy-1,0,5);D.g.happiness=clamp(D.g.happiness-1,0,5)}
   if(D.g.moodDay!==td){const ms=['happy','chill','sleepy','playful','curious'];D.g.mood=ms[Math.floor(Math.random()*ms.length)];D.g.moodDay=td}
@@ -2179,5 +2221,6 @@ renderHabs();
 renderProps();
 restorePerso();
 </script>
+<div id="toast-snack"></div>
 </body>
 </html>

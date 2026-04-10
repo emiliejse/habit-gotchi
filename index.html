@@ -553,13 +553,21 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     </div>
 <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
 <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:8px;font-size:9px">📋 État du système</button>
-   <button class="btn btn-s" onclick="fixProps()" style="width:100%;margin-top:4px;font-size:9px">🔧 Réparer inventaire</button>
-   <button class="btn btn-m" onclick="forceUpdate()" style="width:100%;margin-top:4px;font-size:9px">🔄 Mettre à jour l'app</button>
+<button class="btn btn-s" onclick="fixProps()" style="width:100%;margin-top:4px;font-size:9px">🔧 Réparer inventaire</button>
+<button class="btn btn-m" onclick="forceUpdate()" style="width:100%;margin-top:4px;font-size:9px">🔄 Mettre à jour l'app</button>
     
-  </div>
-  </div>
+  </div><!-- ferme p-settings -->
+</div><!-- ferme dynamic-zone -->
 
-</div> <button class="menu-languette" onclick="toggleMenu()">☰</button>
+<!-- Focus overlay -->
+<div class="focus-overlay" id="focus-ov">
+  <div class="focus-timer" id="focus-timer">25:00</div>
+  <div class="focus-msg" id="focus-msg">Concentre-toi... ✿</div>
+  <div class="breath-circle" id="breath-circle"></div>
+  <button class="btn btn-s" onclick="stopFocus()" style="margin-top:20px">✕ Arrêter</button>
+</div>
+
+<button class="menu-languette" onclick="toggleMenu()">☰</button>
 
 <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()">
   <div class="menu-book" onclick="event.stopPropagation()">

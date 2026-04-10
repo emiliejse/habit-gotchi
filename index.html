@@ -503,19 +503,22 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 </div>
 
 <div id="p-props" class="pnl">
-    <div class="card" style="text-align:center; background: linear-gradient(135deg, #fff, rgba(176,144,208,0.1));">
+    <div class="card" style="text-align:center;">
       <h2>🎒 Mon Inventaire</h2>
       
-      <div style="margin-bottom:15px; padding:10px; background:rgba(255,255,255,0.5); border-radius:10px; border:1px dashed var(--lilac);">
-        <div style="font-size:10px; font-weight:bold; color:var(--lilac); margin-bottom:4px;">
-          XP DISPONIBLE : <span id="prop-xp-val">0</span> / 100
+      <div style="margin: 10px 0; padding: 12px; background: #fdfaf0; border: 2px solid #e8d088; border-radius: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="font-size: 10px; color: #b8a888; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;">👛 Porte-monnaie</div>
+        <div style="font-size: 18px; font-weight: bold; color: var(--lilac);">
+          <span id="prop-xp-val">0</span> <span style="font-size: 10px;">XP</span>
         </div>
-        <button id="btn-gift-ask" class="btn btn-p" onclick="askSpecialGift()" style="width:100%; opacity:0.5;" disabled>
-          🎁 Demander un cadeau (100 XP)
-        </button>
+        <p style="font-size: 8px; color: var(--text2); margin-top: 4px;">Gagne de l'XP en cochant tes habitudes !</p>
       </div>
 
-      <div id="props-list" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;"></div>
+      <button id="btn-gift-ask" class="btn btn-p" onclick="askSpecialGift()" style="width:100%; margin-bottom: 15px; height: 40px;">
+        🎁 Commander un objet (100 XP)
+      </button>
+
+      <div id="props-list" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;"></div>
     </div>
   </div>
 
@@ -1046,17 +1049,51 @@ function debugProps() {
   toast(report);
 }
 
-   async function askSpecialGift() {
-  if(D.g.totalXp < 100) {
-    toast("Il te faut 100 XP pour cette requête spéciale !");
+// Déclencheur du cadeau
+async function askSpecialGift() {
+  if (D.g.totalXp < 100) {
+    toast(`Il te manque ${100 - D.g.totalXp} XP pour commander un objet !`);
     return;
   }
   
-  if(confirm("Dépenser 100 XP pour un cadeau pixel unique ?")) {
+  const ok = confirm("Dépenser 100 XP pour que Claude dessine un objet unique ?");
+  if (ok) {
     haptic();
-    // On lance askClaude en passant un paramètre "forceGift"
+    // On appelle Claude en mode "force"
     await askClaude(true); 
   }
+}
+
+// Mise à jour de l'affichage
+function renderProps() { 
+  const list = document.getElementById('props-list'); 
+  const xpDisp = document.getElementById('prop-xp-val');
+  const btn = document.getElementById('btn-gift-ask');
+  
+  if(!list) return; 
+  if(xpDisp) xpDisp.textContent = D.g.totalXp;
+  
+  // Désactive visuellement le bouton si pas assez d'argent
+  if(btn) {
+    if(D.g.totalXp < 100) {
+      btn.style.opacity = "0.4";
+      btn.style.filter = "grayscale(1)";
+    } else {
+      btn.style.opacity = "1";
+      btn.style.filter = "none";
+    }
+  }
+
+  if(!D.g.props || D.g.props.length === 0) { 
+    list.innerHTML = '<p style="font-size:10px; color:var(--text2);">Ton sac est vide.</p>'; 
+    return; 
+  } 
+
+  list.innerHTML = D.g.props.map((p, i) => `
+    <div onclick="toggleProp(${i})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; color:${p.actif ? '#fff' : 'var(--text)'}; border:2px solid var(--border); border-radius:8px; padding:8px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; width: 80px; text-align:center;">
+      <span style="font-size:24px;">${p.pixels ? '🎨' : (p.emoji || '📦')}</span>
+      <span style="margin-top:4px; font-size:9px;">${p.nom}</span>
+    </div>`).join(''); 
 }
 function genSoutien(){
   haptic();

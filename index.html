@@ -548,6 +548,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     </div>
 <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
 <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:8px;font-size:9px">📋 État du système</button>
+   <button class="btn btn-s" onclick="fixProps()" style="width:100%;margin-top:4px;font-size:9px">🔧 Réparer inventaire</button>
     
   </div>
   </div>
@@ -1090,6 +1091,31 @@ function toast(m){document.getElementById('modal').style.display='flex';document
 (function(){const td=today();if(D.lastActive&&D.lastActive!==td){D.g.energy=clamp(D.g.energy-1,0,5);D.g.happiness=clamp(D.g.happiness-1,0,5)}
   if(D.g.moodDay!==td){const ms=['happy','chill','sleepy','playful','curious'];D.g.mood=ms[Math.floor(Math.random()*ms.length)];D.g.moodDay=td}
   D.lastActive=td;save()})();
+   function fixProps() {
+  const mapping = {
+    'Plante Grasse': 'plante01',
+    'Tapis Doux': 'tapis01',
+    'Pluie de confettis': 'etoiles01',
+    'Pluie d\'Étoiles': 'etoiles01',
+    'Couronne Dorée': 'couronne01',
+    'Bougie Douce': 'bougie01',
+    'Petit Cactus': 'cactus01',
+    'Coussin Cœur': 'coussin01',
+    'Lampe de Bureau': 'lampe01',
+    'Lunettes Rondes': 'lunettes01',
+    'Nœud Papillon': 'noeud01'
+  };
+  let fixed = 0;
+  (D.g.props || []).forEach(p => {
+    if (!p.id && mapping[p.nom]) {
+      p.id = mapping[p.nom];
+      fixed++;
+    }
+  });
+  save();
+  toast('Corrigé ' + fixed + ' props ✿');
+  setTimeout(() => location.reload(), 800);
+}
 
 /* ============================================================
    p5.js — MOTEUR DE RENDU (SÉCURISÉ)

@@ -125,7 +125,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 /* Screen */
 .tama-screen{
-  background:var(--tama);border:3px solid var(--lilac);border-radius:6px;
+  background:var(--tama);border:3px solid var(--lilac);border-radius:8px;
   overflow:hidden;aspect-ratio:1/1;width:100%;margin:0 auto;
 }
 .tama-screen canvas{image-rendering:pixelated!important;image-rendering:crisp-edges!important;width:100%!important;height:100%!important}
@@ -141,7 +141,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   min-height: 24px;
   box-shadow: 0 -2px 8px var(--shadow);
   position: absolute;
-  bottom: -25px;        /* ← ajuste ce chiffre selon le rendu */
+  bottom: -22px;        /* ← ajuste ce chiffre selon le rendu */
   left: 6px;
   right: 6px;
   z-index: 49;          /* ← sous le console-top (z-index:50) */
@@ -151,12 +151,12 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .bubble::before {
   content: '';
   position: absolute;
-  top: -8px;
+  bottom: -8px;        /* ← bas au lieu de top */
   left: 50%;
-  transform: translateX(50%);
+  transform: translateX(-50%);
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
-  border-bottom: 8px solid var(--lilac);
+  border-top: 8px solid var(--lilac);  /* ← top au lieu de bottom */
   display: block;
 }
 .bubble::after { display: none; }

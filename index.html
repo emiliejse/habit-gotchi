@@ -1518,15 +1518,22 @@ function drawZzz(p,x,y){
     }
   }
 
-  function drawProp(p, prop, offsetX, offsetY) {
-  if (!prop.pixels || !prop.palette) return;
+function drawProp(p, prop, offsetX, offsetY) {
+  // Sécurité : on vérifie que l'objet prop et ses données existent
+  if (!prop || !prop.pixels || !prop.palette) return;
+  
   p.noStroke();
   for (let row = 0; row < prop.pixels.length; row++) {
     for (let col = 0; col < prop.pixels[row].length; col++) {
       const ci = prop.pixels[row][col];
+      // Si le pixel est 0, on ne dessine rien (transparence)
       if (ci === 0) continue;
+      
+      // On applique la couleur de la palette du prop
       p.fill(prop.palette[ci]);
-      px(offsetX + col * PX, offsetY + row * PX, PX, PX);
+      
+      // Utilisation directe de p.rect pour éviter l'erreur de 'px' non défini
+      p.rect(offsetX + col * PX, offsetY + row * PX, PX, PX);
     }
   }
 }

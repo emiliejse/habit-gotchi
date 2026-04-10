@@ -886,16 +886,23 @@ function renderProps() {
 }
 
 // Fonction pour Équiper / Ranger un objet
-function toggleProp(index) {
+async function toggleProp(index) {
     haptic();
-    // Inverse l'état (actif devient inactif, et vice versa)
     D.g.props[index].actif = !D.g.props[index].actif;
     save();
     renderProps();
     
-    // Si on active un objet, on prévient l'utilisateur
     if(D.g.props[index].actif) {
-        toast(`✨ ${D.g.props[index].nom} équipé !`);
+        // Vérifie que le catalogue est chargé
+        if (!window.PROPS_LIB || window.PROPS_LIB.length === 0) {
+            await loadDataFiles();
+        }
+        const def = (window.PROPS_LIB || []).find(l => l.id === D.g.props[index].id);
+        if (def && def.pixels) {
+            toast(`✨ ${D.g.props[index].nom} équipé !`);
+        } else {
+            toast(`✨ ${D.g.props[index].nom} activé (pixels non trouvés pour id: ${D.g.props[index].id})`);
+        }
     }
 }
 function debugProps() {

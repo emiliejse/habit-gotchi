@@ -503,24 +503,11 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 </div>
 
 <div id="p-props" class="pnl">
-    <div class="card" style="text-align:center;">
-      <h2>🎒 Mon Inventaire</h2>
-      
-      <div style="margin: 10px 0; padding: 12px; background: #fdfaf0; border: 2px solid #e8d088; border-radius: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
-        <div style="font-size: 10px; color: #b8a888; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;">👛 Porte-monnaie</div>
-        <div style="font-size: 18px; font-weight: bold; color: var(--lilac);">
-          <span id="prop-xp-val">0</span> <span style="font-size: 10px;">XP</span>
-        </div>
-        <p style="font-size: 8px; color: var(--text2); margin-top: 4px;">Gagne de l'XP en cochant tes habitudes !</p>
-      </div>
-
-      <button id="btn-gift-ask" class="btn btn-p" onclick="askSpecialGift()" style="width:100%; margin-bottom: 15px; height: 40px;">
-        🎁 Commander un objet (100 XP)
-      </button>
-
-      <div id="props-list" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;"></div>
-    </div>
+  <div class="card">
+    <h2>🎒 Mon Inventaire</h2>
+    <div id="props-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px"></div>
   </div>
+</div>
 
   <!-- FOCUS -->
   <div id="p-focus" class="pnl">
@@ -605,8 +592,6 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 <script>
 
-const px = (x, y, w, h) => p.rect(x, y, w, h);
-
    /* ============================================================
    CHARGEMENT FICHIERS DATA (GitHub)
    ============================================================ */
@@ -637,7 +622,6 @@ loadDataFiles();
    DATA & INITIALISATION
    ============================================================ */
 const SK='hg4';
-let LIB = { props: [], personality: null, environments: {}, styles: {} };
 const CATS=[
   {id:'sport',  icon:'🏋️',label:'Sport',     def:'30 min mouvement'},
   {id:'nutri',  icon:'🍎',label:'Nutrition',   def:'Repas fait maison'},
@@ -646,14 +630,19 @@ const CATS=[
   {id:'intel',  icon:'📚',label:'Intellectuel',def:'20 min lecture'},
   {id:'serene', icon:'🕯️',label:'Sérénité',    def:'10 min calme'},
 ];
-function defs() {
-  return { 
-    g: {
-      name: 'Petit·e Gotchi', totalXp: 0, stage: 'egg', energy: 3, happiness: 3, activeEnv: 'parc', 
-      props: [], // On laisse vide ici, c'est loadLibraries qui va remplir
-      customBubbles: []
+function defs(){
+  return{ 
+    g:{
+      name:'Petit·e Gotchi', totalXp:0, stage:'egg', energy:3, happiness:3, envLv:0, moodDay:null, activeEnv:'parc', 
+      // Tes 3 objets de base pour tester le système :
+props: [
+        { id: "plante01", nom: "Plante Grasse", type: "decor", actif: false },
+        { id: "tapis01", nom: "Tapis Doux", type: "decor", actif: false },
+        { id: "etoiles01", nom: "Pluie d'Étoiles", type: "ambiance", actif: false }
+      ],
+      customBubbles: [] // Le futur cerveau à mots doux de Claude
     }, 
-    habits: CATS.map(c => ({ catId: c.id, label: c.id })), log: {}, journal: [], apiKey: null, lastGiftDate: null 
+    habits:CATS.map(c=>({catId:c.id,label:c.id})), log:{}, journal:[], pin:null, apiKey:null 
   }
 }
 function load(){try{const r=localStorage.getItem(SK);if(r){const d=JSON.parse(r);return{...defs(),...d,g:{...defs().g,...d.g},habits:d.habits||defs().habits}}}catch(e){}return defs()}
@@ -663,40 +652,10 @@ let D=load();
 const today=()=>new Date().toISOString().split('T')[0];
 const hr=()=>new Date().getHours();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-async function loadLibraries() {
-  try {
-    const [p, pers] = await Promise.all([
-      fetch('data/props.json').then(r => r.json()),
-      fetch('data/personality.json').then(r => r.json())
-    ]);
 
-    LIB.props = p;
-    LIB.personality = pers;
-
-    // --- LE CORRECTIF : Si le sac est vide, on le remplit avec le JSON ---
-    if (D.g.props.length === 0 && LIB.props.length > 0) {
-      console.log("Initialisation du sac à dos avec les objets du JSON...");
-      D.g.props = LIB.props.map(item => ({ 
-        ...item, 
-        actif: false // On les possède, mais ils ne sont pas "équipés"
-      }));
-      save(); // On enregistre pour que ça ne soit plus vide au prochain tour
-    }
-
-    // Synchronisation des pixels (pour être sûr qu'on a les dernières versions)
-    D.g.props = D.g.props.map(saved => {
-      const model = LIB.props.find(m => m.nom === saved.nom);
-      return model ? { ...saved, pixels: model.pixels, palette: model.palette } : saved;
-    });
-
-    console.log("Synchro terminée. Objets dans le sac :", D.g.props.length);
-    
-    // On force la mise à jour de l'affichage
-    renderProps();
-    updBubbleNow();
-  } catch (e) {
-    console.error("Erreur de chargement :", e);
-  }
+// --- Haptique Douce (Vibration Android + Flash visuel iPhone) ---
+function haptic() {
+try { if(navigator.vibrate) navigator.vibrate([50]); } catch(e){}
 }
 
    function forceUpdate() {
@@ -855,30 +814,32 @@ function getBubble(){
   if(Math.random()<.15&&done>0&&done<6)pool=MSG.idle;
   return pool[Math.floor(Math.random()*pool.length)];
 }
-function updBubbleNow() {
-  if (!LIB.personality) return;
-  const p = LIB.personality;
-  const h = hr();
-  const td = today();
-  const nbHab = (D.log[td] || []).length;
-  
-  let key = "idle";
-  // Logique de sélection de la catégorie
-  if (h >= 22 || h < 7) key = "nuit";
-  else if (D.g.happiness <= 1) key = "triste";
-  else if (D.g.energy <= 1) key = "fatigue";
-  else if (nbHab >= 6) key = "max";
-  else if (nbHab >= 4) key = "fierte";
-  else if (h < 12) key = "matin";
-  else if (h < 18) key = "aprem";
-  else key = "soir";
+function updBubbleNow(){
+  const h = hr(), ha = D.g.happiness, en = D.g.energy;
+  const P = window.PERSONALITY;
+  let pool;
 
-  let pool = [...p.bulles[key]];
-  // On ajoute les phrases personnalisées de Claude
-  if (D.g.customBubbles.length > 0) pool = pool.concat(D.g.customBubbles);
+  // Source : fichier personality.json si dispo, sinon fallback local
+  const src = P ? P.bulles : MSG;
 
-  const finalMsg = pool[Math.floor(Math.random() * pool.length)];
-  document.getElementById('bubble').textContent = finalMsg;
+  if (h >= 22 || h < 7) pool = src.nuit || src.night;
+  else if (ha <= 1) pool = src.triste || src.sad;
+  else if (en <= 1) pool = src.fatigue || src.tired;
+  else if ((D.log[today()] || []).length === 6) pool = src.max || src.full;
+  else if ((D.log[today()] || []).length >= 4) pool = src.fierte || src.high;
+  else if (meteoData && meteoData.windspeed > 40) pool = src.vent || src.wind;
+  else if (h < 12) pool = src.matin || src.morning;
+  else if (h < 18) pool = src.aprem || src.afternoon;
+  else pool = src.soir || src.evening;
+
+  // Mix idle + custom bubbles
+  let extras = (src.idle || MSG.idle).concat(D.g.customBubbles || []);
+  if (P && P.bulles.custom) extras = extras.concat(P.bulles.custom);
+  if (Math.random() < 0.15 && extras.length) pool = extras;
+
+  if (!pool || !pool.length) pool = ["✿"];
+  const el = document.getElementById('bubble');
+  if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
 }
 
 /* ============================================================
@@ -886,107 +847,93 @@ function updBubbleNow() {
    ============================================================ */
 function saveApi(){const v=document.getElementById('api-inp').value.trim();if(v){D.apiKey=v;save();toast('Clé API sauvegardée ✿')}else toast('Colle ta clé sk-ant-...')}
 
-async function askClaude(forceGift = false) {
-  if (!D.apiKey) { toast('Clé API manquante (Réglages)'); return; }
-  
-  const p = LIB.personality;
+async function askClaude(){
+  const key=D.apiKey; if(!key){toast('Clé API manquante dans les Réglages');return}
+  const g=D.g, recentJ=D.journal.slice(-2).map(j=>j.text).join(' ');
   const td = today();
-  const h = hr();
-  const nbHab = (D.log[td] || []).length;
-  
-  // Règle du cadeau : forcé (via XP) OU automatique tous les 3 jours
-  let giveGift = forceGift;
-  if (!giveGift && (!D.lastGiftDate || Math.floor((new Date() - new Date(D.lastGiftDate)) / (1000 * 60 * 60 * 24)) >= 3)) {
-    giveGift = true;
+
+  // 1. Règle d'économie : Un cadeau tous les 3 jours maximum
+  let giveGift = false;
+  if (!D.lastGiftDate) { giveGift = true; }
+  else {
+    const diffDays = Math.floor((new Date() - new Date(D.lastGiftDate)) / (1000 * 60 * 60 * 24));
+    if(diffDays >= 3) giveGift = true; 
   }
 
-  // Détermination du ton selon le JSON personality
-  let contexte = "idle";
-  if (h < 12) contexte = "matin"; else if (h < 18) contexte = "aprem"; else contexte = "soir";
-  if (D.g.happiness <= 1) contexte = "triste";
-  if (D.g.energy <= 1) contexte = "fatigue";
-  if (nbHab >= 6) contexte = "max";
+  // 2. Préparation du prompt pour Claude
+  let prompt = `Tu es le compagnon numérique d'Émilie. Énergie ${g.energy}/5, Humeur ${g.happiness}/5, Notes: ${recentJ||'(vide)'}.
+  Action 1: Donne une pensée complice (2 phrases max).
+  Action 2: Invente une TRÈS COURTE phrase (1 à 4 mots) qu'un compagnon dirait en patientant (ex: "*s'étire*", "Hmm...").`;
 
-  let prompt = `Tu es ${p.nom}. Traits: ${p.traits.join(', ')}. Style: ${p.style}.
-  Contexte : ${contexte}. Phrases types : ${p.bulles[contexte].join(' / ')}.
-  Énergie: ${D.g.energy}/5, Bonheur: ${D.g.happiness}/5. 
-  Notes d'Émilie: ${D.journal.slice(-1)[0]?.text || "(vide)"}.
-
-  Réponds UNIQUEMENT en JSON :
-  {
-    "message": "Ta pensée complice (2 phrases)",
-    "bulle": "Micro-phrase pour ta bulle",
-    ${giveGift ? `"cadeau": {
-      "nom": "Nom de l'objet",
-      "type": "decor",
-      "pixels": [[0,0,1,1,1,1,0,0], [0,1,2,2,2,2,1,0], [1,2,2,2,2,2,2,1], [1,2,2,2,2,2,2,1], [1,2,2,2,2,2,2,1], [1,2,2,2,2,2,2,1], [0,1,2,2,2,2,1,0], [0,0,1,1,1,1,0,0]],
-      "palette": ["transparent", "#hex1", "#hex2"]
-    }` : ''}
-  }`;
-
-  document.getElementById('claude-msg').textContent = giveGift ? 'Dessin en cours... 🎨' : 'Réflexion... 💭';
-
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': D.apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    
-    const res = await r.json();
-    const data = JSON.parse(res.content[0].text.match(/\{[\s\S]*\}/)[0]);
-    
-    document.getElementById('claude-msg').textContent = data.message;
-    if (data.bulle) {
-      D.g.customBubbles.push(data.bulle);
-      if (D.g.customBubbles.length > 10) D.g.customBubbles.shift();
-      document.getElementById('bubble').textContent = data.bulle;
-    }
-    
-    if (giveGift && data.cadeau) {
-      if (forceGift) D.g.totalXp -= 100; // On paye les 100 XP
-      D.g.props.push({ ...data.cadeau, actif: false });
-      D.lastGiftDate = td;
-      toast(`🎁 Cadeau pixel : ${data.cadeau.nom}`);
-    }
-    save(); renderProps(); updUI();
-  } catch (e) {
-    document.getElementById('claude-msg').textContent = 'Erreur API Claude.';
+  if(giveGift) {
+    prompt += ` Action 3: INVENTE un petit objet pixel art (max 7x7 pixels). Catégories possibles: "decor", "accessoire", "ambiance".
+    La palette est un tableau de couleurs hex, index 0 = transparent.
+    Les pixels sont une grille 2D de numéros qui correspondent à la palette.
+    Réponds UNIQUEMENT en JSON strict :
+{"message": "ta pensée", "bulle": "phrase courte", "cadeau": {"id": "mot_unique_${Date.now()}", "nom": "nom joli", "type": "decor", "position": {"x": 150, "y": 128}, "palette": ["transparent", "#couleur1", "#couleur2"], "pixels": [[0,1,0],[1,2,1],[0,1,0]]}}`;
+  } else {
+    prompt += ` Réponds UNIQUEMENT en format JSON strict : {"message": "ta pensée", "bulle": "phrase courte"}`;
   }
+
+  if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Je réfléchis... 💭';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}, body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]}) });
+    const d=await r.json();
+    const match = d.content[0].text.match(/\{[\s\S]*\}/);
+
+    if(match) {
+      const data = JSON.parse(match[0]);
+      if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = data.message;
+
+      // Sauvegarder la nouvelle phrase pour la bulle !
+      if(data.bulle) {
+        if(!D.g.customBubbles) D.g.customBubbles = [];
+        if(!D.g.customBubbles.includes(data.bulle)) D.g.customBubbles.push(data.bulle);
+        if(D.g.customBubbles.length > 10) D.g.customBubbles.shift(); // Garde les 10 plus récentes
+      }
+
+      // Sauvegarder le cadeau !
+if(giveGift && data.cadeau) {
+        if(!D.g.props) D.g.props = [];
+        if(!D.g.props.find(p => p.id === data.cadeau.id)) {
+          // Ajouter au localStorage comme prop avec pixels
+          D.g.props.push({
+            id: data.cadeau.id,
+            nom: data.cadeau.nom,
+            type: data.cadeau.type,
+            actif: false
+          });
+          // Ajouter la définition pixel au catalogue local
+          if (!window.PROPS_LOCAL) window.PROPS_LOCAL = [];
+          window.PROPS_LOCAL.push(data.cadeau);
+          // Sauvegarder les définitions pixel en local aussi
+          D.propsPixels = D.propsPixels || [];
+          D.propsPixels.push(data.cadeau);
+          D.lastGiftDate = td;
+          save();
+          toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
+        }
+      }
+      save(); renderProps();
+    }
+  }catch(e){if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Erreur API.'}
 }
 
 function renderProps() { 
-  const container = document.getElementById('props-list'); 
-  const xpVal = document.getElementById('prop-xp-val');
-  const btn = document.getElementById('btn-gift-ask');
-  
-  if(!container) return; 
-
-  // Mise à jour du porte-monnaie
-  if(xpVal) xpVal.textContent = Math.floor(D.g.totalXp);
-  if(btn) btn.style.opacity = (D.g.totalXp >= 100) ? "1" : "0.4";
-
-  // Si le sac est vide
+  const c = document.getElementById('props-list'); if(!c) return; 
   if(!D.g.props || D.g.props.length === 0) { 
-    container.innerHTML = '<p style="font-size:10px; color:var(--text2); margin-top:20px;">Le sac est encore vide...</p>'; 
+    c.innerHTML = '<p style="font-size:10px; color:var(--text2);">Ton sac est vide. Reviens plus tard pour des surprises !</p>'; 
     return; 
   } 
-
-  // Génération des vignettes d'objets
-  container.innerHTML = D.g.props.map((p, i) => `
-    <div onclick="toggleProp(${i})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; color:${p.actif ? '#fff' : 'var(--text)'}; border:2px solid var(--border); border-radius:12px; padding:10px; cursor:pointer; width: 85px; text-align:center; transition: all 0.2s;">
-      <div style="font-size:24px; margin-bottom:5px;">${p.pixels ? '✨' : '📦'}</div>
-      <div style="font-size:9px; font-weight:bold; line-height:1.1;">${p.nom}</div>
-    </div>`).join(''); 
+  
+  // On crée de jolies cartes interactives
+  c.innerHTML = D.g.props.map((p, index) => `
+    <div onclick="toggleProp(${index})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; color:${p.actif ? '#fff' : 'var(--text)'}; border:2px solid var(--border); border-radius:8px; padding:8px 12px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <span style="font-size:20px;">${p.emoji || '🎁'}</span>
+      <span>${p.nom}</span>
+      <span style="font-size:8px; text-transform:uppercase; opacity:0.8;">${p.type || 'objet'}</span>
+    </div>
+  `).join(''); 
 }
 
 // Fonction pour Équiper / Ranger un objet
@@ -1036,45 +983,6 @@ function debugProps() {
    report += '🎨 Props générés par Claude: ' + (D.propsPixels || []).length + '\n';
   
   toast(report);
-}
-
-// Déclencheur du cadeau
-async function askSpecialGift() {
-  if (D.g.totalXp < 100) {
-    toast(`Besoin de 100 XP ! (Tu as ${D.g.totalXp})`);
-    return;
-  }
-  
-  const ok = confirm("Dépenser 100 XP pour un objet dessiné par Claude ?");
-  if (ok) {
-    haptic();
-    // On appelle Claude en forçant le cadeau
-    await askClaude(true); 
-  }
-}
-
-// Mise à jour de l'affichage du sac et du porte-monnaie
-function renderProps() { 
-  const list = document.getElementById('props-list'); 
-  const xpVal = document.getElementById('prop-xp-val');
-  const btn = document.getElementById('btn-gift-ask');
-  
-  if(!list) return; 
-  if(xpVal) xpVal.textContent = D.g.totalXp;
-  
-  // Griser le bouton si le porte-monnaie est trop vide
-  if(btn) btn.style.opacity = (D.g.totalXp >= 100) ? "1" : "0.3";
-
-  if(!D.g.props || D.g.props.length === 0) { 
-    list.innerHTML = '<p style="font-size:10px;">Sac vide.</p>'; 
-    return; 
-  } 
-
-  list.innerHTML = D.g.props.map((p, i) => `
-    <div onclick="toggleProp(${i})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; border:2px solid var(--border); border-radius:8px; padding:8px; cursor:pointer; width: 80px; text-align:center;">
-      <div style="font-size:20px; margin-bottom:4px;">${p.pixels ? '✨' : '📦'}</div>
-      <span style="font-size:9px; font-weight:bold;">${p.nom}</span>
-    </div>`).join(''); 
 }
 function genSoutien(){
   haptic();
@@ -1308,22 +1216,12 @@ const p5s=(p)=>{
     let envActif = g.activeEnv || 'parc';
     drawActiveEnv(p, envActif, n);
 
-// PROPS : Décors (Au sol)
-    if (D.g.props && Array.isArray(D.g.props)) {
-      let decors = D.g.props.filter(pr => pr.actif && pr.type === 'decor');
-      decors.forEach((pr, i) => {
-        let objX = 40 + (i * 45);
-        let objY = 110;
-
-        // Si on a des pixels, on dessine en pixels
-        if (pr.pixels && pr.palette) {
-          drawProp(p, pr, objX - 20, objY - 20);
-        } 
-        // Sinon (et seulement sinon), on met l'émoji
-        else if (pr.emoji) {
-          p.textAlign(p.CENTER, p.CENTER);
-          p.textSize(24);
-          p.text(pr.emoji, objX, objY);
+    // --- Props DÉCOR (au sol, avant le gotchi) ---
+    if (D.g.props) {
+      D.g.props.filter(pr => pr.actif && pr.type === 'decor').forEach(prop => {
+        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels || []).find(l => l.id === prop.id);
+        if (def && def.pixels) {
+          drawProp(p, def, def.position?.x || 140, def.position?.y || 130);
         }
       });
     }
@@ -1520,22 +1418,15 @@ function drawZzz(p,x,y){
     }
   }
 
-function drawProp(p, prop, offsetX, offsetY) {
-  // Sécurité : on vérifie que l'objet prop et ses données existent
-  if (!prop || !prop.pixels || !prop.palette) return;
-  
+  function drawProp(p, prop, offsetX, offsetY) {
+  if (!prop.pixels || !prop.palette) return;
   p.noStroke();
   for (let row = 0; row < prop.pixels.length; row++) {
     for (let col = 0; col < prop.pixels[row].length; col++) {
       const ci = prop.pixels[row][col];
-      // Si le pixel est 0, on ne dessine rien (transparence)
       if (ci === 0) continue;
-      
-      // On applique la couleur de la palette du prop
       p.fill(prop.palette[ci]);
-      
-      // Utilisation directe de p.rect pour éviter l'erreur de 'px' non défini
-      p.rect(offsetX + col * PX, offsetY + row * PX, PX, PX);
+      px(offsetX + col * PX, offsetY + row * PX, PX, PX);
     }
   }
 }
@@ -1550,13 +1441,9 @@ function drawProp(p, prop, offsetX, offsetY) {
 };
 new p5(p5s);
 
-async function initApp() {
-  updUI();
-  renderHabs();
-  await loadLibraries(); // On attend que les fichiers data soient là
-}
-
-initApp();
+updUI();
+renderHabs();
+renderProps();
 </script>
 </body>
 </html>

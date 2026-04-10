@@ -145,20 +145,20 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 /* Bubble */
 .bubble {
   background: var(--card);
-  border: 3px solid #6a5a40;        /* contour pixel épais */
-  border-radius: 0;                  /* carré = rétro */
-  image-rendering: pixelated;
+  border: 3px solid #6a5a40;
+  border-radius: 0;
   padding: 6px 10px;
   font-size: 10px;
-  font-family: 'Courier New', monospace;  /* police pixel */
+  font-family: 'Courier New', monospace;
   text-align: center;
-  margin: 4px auto 0;
+  margin: 0 auto 4px;   /* ← marge en BAS, pas en haut */
   max-width: 260px;
   min-height: 24px;
-  box-shadow: 3px 3px 0 #6a5a40;    /* ombre décalée = effet rétro */
+  box-shadow: 3px 3px 0 #6a5a40;
   position: relative;
+  order: -1;            /* ← si le parent est flexbox, ça la remonte */
 }
-/* La petite queue de bulle pointant VERS LE BAS (vers le gotchi) */
+/* Queue pointant vers le BAS (vers le Gotchi) */
 .bubble::after {
   content: '';
   position: absolute;
@@ -169,6 +169,8 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   border-right: 6px solid transparent;
   border-top: 8px solid #6a5a40;
 }
+/* Supprime l'ancien ::before s'il existe */
+.bubble::before { display: none; }
 
 /* ============================================================
    MENU OVERLAY — Pixel notebook style
@@ -357,10 +359,10 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
     <h1>✿ Habit-Gotchi ✿</h1>
   </div>
   <sub id="date-d" style="display:block;text-align:center;font-size:8px;color:var(--text2)"></sub>
+<div class="bubble" id="bubble">...</div>
   <div class="tama-shell">
     <div class="tama-screen" id="cbox"></div>
   </div>
-  <div class="bubble" id="bubble">...</div>
   <div class="meteo-badge" id="meteo-badge" style="display:none;"></div>
   <div style="max-width:340px;margin:6px auto 4px;padding:0 4px">
     <div class="slider-row">
@@ -868,7 +870,7 @@ function updUI(){
   const pct=nt>pt?((g.totalXp-pt)/(nt-pt))*100:100;
   if(document.getElementById('g-name')) document.getElementById('g-name').textContent=g.name;
   if(document.getElementById('g-stage')) document.getElementById('g-stage').textContent=s.l;
-  if(document.getElementById('xp-l')) document.getElementById('xp-l').textContent=`${g.totalXp-pt}/${nt-pt}`;
+  if(document.getElementById('xp-l')) document.getElementById('xp-l').textContent = nt > pt ? `${g.totalXp - pt}/${nt - pt} XP` : `MAX ✿`;
    if(document.getElementById('api-inp')) document.getElementById('api-inp').value = D.apiKey || '';
   if(document.getElementById('xp-b')) document.getElementById('xp-b').style.width=pct+'%';
   if(document.getElementById('sl-energy')){ document.getElementById('sl-energy').value=g.energy; document.getElementById('sv-energy').textContent=g.energy; }

@@ -663,36 +663,35 @@ const hr=()=>new Date().getHours();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 async function loadLibraries() {
   try {
-    // 1. On récupère les fichiers sur GitHub
     const [p, pers] = await Promise.all([
-      fetch('data/props.json').then(r => r.ok ? r.json() : []),
-      fetch('data/personality.json').then(r => r.ok ? r.json() : null)
+      fetch('data/props.json').then(r => r.json()),
+      fetch('data/personality.json').then(r => r.json())
     ]);
 
     LIB.props = p;
     LIB.personality = pers;
 
-    // 2. Si l'inventaire est vide (Reset), on injecte les objets de base du JSON
+    // --- SOLUTION : On remplit le sac s'il est vide ---
     if (D.g.props.length === 0 && LIB.props.length > 0) {
-      // On prend les 3 premiers objets par exemple
-      D.g.props = LIB.props.slice(0, 3).map(obj => ({ ...obj, actif: false }));
-      save();
-    } 
+      // On donne tous les objets du JSON au Gotchi pour commencer
+      D.g.props = LIB.props.map(item => ({ 
+        ...item, 
+        actif: false // Ils sont possédés mais pas encore posés
+      }));
+      save(); 
+    }
 
-    // 3. SYNCHRO : On force les pixels sur les objets existants
-    D.g.props = D.g.props.map(savedObj => {
-      const model = LIB.props.find(m => m.nom === savedObj.nom);
-      if (model) {
-        return { ...savedObj, pixels: model.pixels, palette: model.palette, emoji: null };
-      }
-      return savedObj;
+    // Synchro des pixels pour les objets déjà dans le sac
+    D.g.props = D.g.props.map(saved => {
+      const model = LIB.props.find(m => m.nom === saved.nom);
+      return model ? { ...saved, pixels: model.pixels, palette: model.palette, emoji: null } : saved;
     });
 
-    console.log("Données GitHub synchronisées ✿");
-    updBubbleNow(); 
-    renderProps();
+    console.log("Inventaire synchronisé avec succès ! ✿");
+    renderProps(); // On force l'affichage
+    updBubbleNow();
   } catch (e) {
-    console.error("Erreur critique de chargement :", e);
+    console.error("Erreur de chargement :", e);
   }
 }
 // --- Haptique Douce (Vibration Android + Flash visuel iPhone) ---
@@ -966,35 +965,27 @@ async function askClaude(forceGift = false) {
 }
 
 function renderProps() { 
-  const c = document.getElementById('props-list'); 
-  const btn = document.getElementById('btn-gift-ask');
+  const container = document.getElementById('props-list'); 
   const xpVal = document.getElementById('prop-xp-val');
+  const btn = document.getElementById('btn-gift-ask');
   
-  if(!c) return; 
+  if(!container) return; 
 
-  // Mise à jour de l'affichage de l'XP
-  if(xpVal) xpVal.textContent = D.g.totalXp;
-  
-  // Activation du bouton si XP >= 100
-  if(btn) {
-    if(D.g.totalXp >= 100) {
-      btn.style.opacity = "1";
-      btn.disabled = false;
-    } else {
-      btn.style.opacity = "0.5";
-      btn.disabled = true;
-    }
-  }
+  // Mise à jour du porte-monnaie
+  if(xpVal) xpVal.textContent = Math.floor(D.g.totalXp);
+  if(btn) btn.style.opacity = (D.g.totalXp >= 100) ? "1" : "0.4";
 
+  // Si le sac est vide
   if(!D.g.props || D.g.props.length === 0) { 
-    c.innerHTML = '<p style="font-size:10px; color:var(--text2);">Ton sac est vide.</p>'; 
+    container.innerHTML = '<p style="font-size:10px; color:var(--text2); margin-top:20px;">Le sac est encore vide...</p>'; 
     return; 
   } 
 
-  c.innerHTML = D.g.props.map((p, i) => `
-    <div onclick="toggleProp(${i})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; color:${p.actif ? '#fff' : 'var(--text)'}; border:2px solid var(--border); border-radius:8px; padding:8px; font-size:10px; font-weight:bold; cursor:pointer; display:flex; flex-direction:column; align-items:center; width: 80px; text-align:center; transition:0.2s;">
-      <span style="font-size:24px;">${p.emoji || '📦'}</span>
-      <span style="margin-top:4px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">${p.nom}</span>
+  // Génération des vignettes d'objets
+  container.innerHTML = D.g.props.map((p, i) => `
+    <div onclick="toggleProp(${i})" style="background:${p.actif ? 'var(--mint)' : '#fff'}; color:${p.actif ? '#fff' : 'var(--text)'}; border:2px solid var(--border); border-radius:12px; padding:10px; cursor:pointer; width: 85px; text-align:center; transition: all 0.2s;">
+      <div style="font-size:24px; margin-bottom:5px;">${p.pixels ? '✨' : '📦'}</div>
+      <div style="font-size:9px; font-weight:bold; line-height:1.1;">${p.nom}</div>
     </div>`).join(''); 
 }
 

@@ -848,75 +848,87 @@ function updBubbleNow(){
 function saveApi(){const v=document.getElementById('api-inp').value.trim();if(v){D.apiKey=v;save();toast('Clé API sauvegardée ✿')}else toast('Colle ta clé sk-ant-...')}
 
 async function askClaude(){
-  const key=D.apiKey; if(!key){toast('Clé API manquante dans les Réglages');return}
-  const g=D.g, recentJ=D.journal.slice(-2).map(j=>j.text).join(' ');
-  const td = today();
-
-  // 1. Règle d'économie : Un cadeau tous les 3 jours maximum
-  let giveGift = false;
-  if (!D.lastGiftDate) { giveGift = true; }
-  else {
-    const diffDays = Math.floor((new Date() - new Date(D.lastGiftDate)) / (1000 * 60 * 60 * 24));
-    if(diffDays >= 3) giveGift = true; 
-  }
-
-  // 2. Préparation du prompt pour Claude
-  let prompt = `Tu es le compagnon numérique d'Émilie. Énergie ${g.energy}/5, Humeur ${g.happiness}/5, Notes: ${recentJ||'(vide)'}.
-  Action 1: Donne une pensée complice (2 phrases max).
-  Action 2: Invente une TRÈS COURTE phrase (1 à 4 mots) qu'un compagnon dirait en patientant (ex: "*s'étire*", "Hmm...").`;
+  if(!D.apiKey){toast('Clé API manquante (Réglages)');return;}
+  let giveGift = false; const td = today();
+  if(!D.lastGiftDate || Math.floor((new Date()-new Date(D.lastGiftDate))/(1000*60*60*24)) >= 3) giveGift = true;
+  
+  let prompt = `Tu es le compagnon d'Émilie. Énergie ${D.g.energy}/5, Humeur ${D.g.happiness}/5. 
+  Action 1: Donne une pensée douce (2 phrases). 
+  Action 2: Invente une très courte phrase de bulle (ex: "*s'étire*").`;
 
   if(giveGift) {
-    prompt += ` Action 3: INVENTE un petit objet pixel art (max 7x7 pixels). Catégories possibles: "decor", "accessoire", "ambiance".
-    La palette est un tableau de couleurs hex, index 0 = transparent.
-    Les pixels sont une grille 2D de numéros qui correspondent à la palette.
-    Réponds UNIQUEMENT en JSON strict :
-{"message": "ta pensée", "bulle": "phrase courte", "cadeau": {"id": "mot_unique_${Date.now()}", "nom": "nom joli", "type": "decor", "position": {"x": 150, "y": 128}, "palette": ["transparent", "#couleur1", "#couleur2"], "pixels": [[0,1,0],[1,2,1],[0,1,0]]}}`;
+    prompt += ` Action 3: INVENTE un objet pixel art unique (grille 8x8). 
+    Le 0 est transparent. Les autres chiffres correspondent à la palette.
+    Réponds en JSON strict : {
+      "message":"...", 
+      "bulle":"...", 
+      "cadeau":{
+        "nom":"...", 
+        "type":"decor", 
+        "pixels": [
+          [0,0,1,1,1,1,0,0],
+          [0,1,2,2,2,2,1,0],
+          [1,2,2,2,2,2,2,1],
+          [1,2,2,2,2,2,2,1],
+          [1,2,2,2,2,2,2,1],
+          [1,2,2,2,2,2,2,1],
+          [0,1,2,2,2,2,1,0],
+          [0,0,1,1,1,1,0,0]
+        ],
+        "palette": ["transparent", "#C0A0D0", "#D8B8E8"]
+      }
+    }`;
   } else {
-    prompt += ` Réponds UNIQUEMENT en format JSON strict : {"message": "ta pensée", "bulle": "phrase courte"}`;
+    prompt += ` Réponds en JSON strict : {"message":"...", "bulle":"..."}`;
   }
 
-  if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Je réfléchis... 💭';
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}, body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]}) });
-    const d=await r.json();
-    const match = d.content[0].text.match(/\{[\s\S]*\}/);
-
+  document.getElementById('claude-msg').textContent = 'Dessin en cours... 🎨';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': D.apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20241022', // Utilisation de la version 3.5 pour plus de précision
+        max_tokens: 1000,
+        messages: [{role: 'user', content: prompt}]
+      })
+    });
+    
+    const res = await r.json();
+    const match = res.content[0].text.match(/\{[\s\S]*\}/);
+    
     if(match) {
-      const data = JSON.parse(match[0]);
-      if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = data.message;
-
-      // Sauvegarder la nouvelle phrase pour la bulle !
-      if(data.bulle) {
-        if(!D.g.customBubbles) D.g.customBubbles = [];
-        if(!D.g.customBubbles.includes(data.bulle)) D.g.customBubbles.push(data.bulle);
-        if(D.g.customBubbles.length > 10) D.g.customBubbles.shift(); // Garde les 10 plus récentes
+      const d = JSON.parse(match[0]);
+      document.getElementById('claude-msg').textContent = d.message;
+      
+      if(d.bulle) {
+        D.g.customBubbles.push(d.bulle);
+        if(D.g.customBubbles.length > 10) D.g.customBubbles.shift();
       }
-
-      // Sauvegarder le cadeau !
-if(giveGift && data.cadeau) {
-        if(!D.g.props) D.g.props = [];
-        if(!D.g.props.find(p => p.id === data.cadeau.id)) {
-          // Ajouter au localStorage comme prop avec pixels
-          D.g.props.push({
-            id: data.cadeau.id,
-            nom: data.cadeau.nom,
-            type: data.cadeau.type,
-            actif: false
-          });
-          // Ajouter la définition pixel au catalogue local
-          if (!window.PROPS_LOCAL) window.PROPS_LOCAL = [];
-          window.PROPS_LOCAL.push(data.cadeau);
-          // Sauvegarder les définitions pixel en local aussi
-          D.propsPixels = D.propsPixels || [];
-          D.propsPixels.push(data.cadeau);
-          D.lastGiftDate = td;
-          save();
-          toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
-        }
+      
+      if(giveGift && d.cadeau) {
+        // On ajoute le cadeau généré par l'IA dans l'inventaire
+        D.g.props.push({
+          nom: d.cadeau.nom,
+          type: d.cadeau.type,
+          pixels: d.cadeau.pixels,
+          palette: d.cadeau.palette,
+          actif: false
+        });
+        D.lastGiftDate = td;
+        toast(`🎁 L'IA a dessiné : ${d.cadeau.nom}`);
       }
       save(); renderProps();
     }
-  }catch(e){if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Erreur API.'}
+  } catch(e) {
+    document.getElementById('claude-msg').textContent = 'Erreur de connexion.';
+    console.error(e);
+  }
 }
 
 function renderProps() { 
@@ -1216,12 +1228,21 @@ const p5s=(p)=>{
     let envActif = g.activeEnv || 'parc';
     drawActiveEnv(p, envActif, n);
 
-    // --- Props DÉCOR (au sol, avant le gotchi) ---
-    if (D.g.props) {
-      D.g.props.filter(pr => pr.actif && pr.type === 'decor').forEach(prop => {
-        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels || []).find(l => l.id === prop.id);
-        if (def && def.pixels) {
-          drawProp(p, def, def.position?.x || 140, def.position?.y || 130);
+// PROPS : Décors (Au sol)
+    if (D.g.props && Array.isArray(D.g.props)) {
+      let decors = D.g.props.filter(pr => pr.actif && pr.type === 'decor');
+      decors.forEach((pr, i) => {
+        let objX = 40 + (i * 45);
+        let objY = 110;
+        
+        if (pr.pixels) {
+          // Si c'est un objet généré en pixels
+          drawProp(p, pr, objX - 20, objY - 20); // On centre l'objet
+        } else if (pr.emoji) {
+          // Si c'est un ancien objet emoji
+          p.textAlign(p.CENTER, p.CENTER);
+          p.textSize(24);
+          p.text(pr.emoji, objX, objY);
         }
       });
     }

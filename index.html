@@ -384,6 +384,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
       </div>
       <div class="pbar" style="height:10px; margin-top:5px; background: rgba(0,0,0,0.06); border-radius: 5px;">
         <div class="pfill" id="xp-b" style="width:0%; background: linear-gradient(90deg, var(--lilac), var(--pink)); border-radius: 5px;"></div>
+         <span class="slbl" id="petales-l" style="color:var(--pink)">🌸 0</span>
       </div>
     </div>
 
@@ -517,15 +518,15 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
   <!-- Boutique (carte séparée) -->
   <div class="card" id="shop-card" style="margin-top:8px;text-align:center;display:none;">
-    <h2>🛍️ Boutique</h2>
-    <p style="font-size:10px;color:var(--text2);margin-bottom:8px">
-      Dépense 100 XP pour recevoir un nouvel objet de Claude
-    </p>
-    <span id="xp-wallet" style="font-size:13px;font-weight:bold;color:var(--lilac)"></span>
-    <button class="btn btn-p" onclick="buyProp()" style="width:100%;margin-top:8px;font-size:11px">
-      🎁 Demander un objet (100 XP)
-    </button>
-  </div>
+  <h2>🛍️ Boutique</h2>
+  <p style="font-size:10px;color:var(--text2);margin-bottom:8px">
+    Dépense 10 🌸 pour recevoir un nouvel objet de Claude
+  </p>
+  <span id="petales-wallet" style="font-size:13px;font-weight:bold;color:var(--pink)"></span>
+  <button class="btn btn-p" onclick="buyProp()" style="width:100%;margin-top:8px;font-size:11px">
+    🌸 Demander un objet (10 Pétales)
+  </button>
+</div>
 
 </div>
 
@@ -614,10 +615,10 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 async function buyProp() {
   if (!D.apiKey) { toast('Clé API manquante dans les Réglages'); return; }
-  if (D.g.totalXp < 100) { toast('Il te faut 100 XP pour débloquer un objet ✿'); return; }
-
-  // Déduire les XP
-  addXp(-100);
+  if ((D.g.petales || 0) < 10) { toast('Il te faut 10 🌸 Pétales pour débloquer un objet ✿'); return; }
+D.g.petales -= 10;
+save();
+   
   toast('Claude crée ton objet... 💭');
 
   const prompt = `Invente un petit objet pixel art mignon (max 7x7 pixels) pour une appli de bien-être.
@@ -647,7 +648,8 @@ Réponds UNIQUEMENT en JSON strict, sans texte autour :
       toast(`🎁 ${obj.nom} ajouté à ton inventaire !`);
     }
   } catch(e) {
-    addXp(100); // Rembourser si erreur
+    D.g.petales = (D.g.petales || 0) + 10;
+save(); // Rembourser si erreur
     toast('Erreur API, XP remboursés.');
   }
 }
@@ -799,7 +801,12 @@ function toggleHab(catId){
   haptic();
   const td=today();if(!D.log[td])D.log[td]=[];
   const idx=D.log[td].indexOf(catId);
-  if(idx>=0){D.log[td].splice(idx,1);addXp(-15)}
+  if(idx>=0){
+  D.log[td].splice(idx,1);
+  addXp(-15);
+  D.g.petales = Math.max(0, (D.g.petales || 0) - 5); // retire les pétales si on décoche
+  save();
+}
   else{D.log[td].push(catId); addXp(15); D.g.petales = (D.g.petales || 0) + 5;
 save();;celebQueue.push(catId);shakeTimer=8}
   save();renderHabs();updUI();updBubbleNow();
@@ -832,6 +839,8 @@ function setHappy(v){D.g.happiness=+v;document.getElementById('sv-happy').textCo
 function changeEnv(v){D.g.activeEnv=v;save();haptic();}
 
 function updUI(){
+   if(document.getElementById('petales-l')) 
+  document.getElementById('petales-l').textContent = `🌸 ${D.g.petales || 0}`;
   const g=D.g,s=getSt(g.totalXp),nt=nxtTh(g.totalXp),pt=s.th;
   const pct=nt>pt?((g.totalXp-pt)/(nt-pt))*100:100;
   if(document.getElementById('g-name')) document.getElementById('g-name').textContent=g.name;
@@ -848,10 +857,16 @@ function updUI(){
   if(document.getElementById('env-sel')) document.getElementById('env-sel').value=g.activeEnv||'parc';
   if(document.getElementById('api-inp')) document.getElementById('api-inp').value = D.apiKey || '';
 const shopCard = document.getElementById('shop-card');
+if (shopCard) {
+  shopCard.style.display = (D.g.petales || 0) >= 10 ? 'block' : 'none';
+  // le texte du wallet est géré par la ligne petalesDisplay ajoutée à l'étape 2
+}
 const wallet = document.getElementById('xp-wallet');
 if (shopCard) {
   shopCard.style.display = D.g.totalXp >= 100 ? 'block' : 'none';
   if (wallet) wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
+   const petalesDisplay = document.getElementById('petales-wallet');
+if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0} Pétales`;
 }
 }
 function calcStr(){let s=0,d=new Date();while(true){const ds=d.toISOString().split('T')[0];const l=D.log[ds]||[];if(l.length>0)s++;else if(ds!==today())break;d.setDate(d.getDate()-1);if(s>999)break}return s}

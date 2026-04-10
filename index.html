@@ -709,6 +709,13 @@ save(); // Rembourser si erreur
    CHARGEMENT FICHIERS DATA (GitHub)
    ============================================================ */
 window.PROPS_LIB = [];
+fetch('data/props.json')
+  .then(r => r.json())
+  .then(data => {
+    window.PROPS_LIB = data.catalogue;
+    renderProps(); // rafraîchit l'inventaire une fois chargé
+  })
+  .catch(() => console.warn('props.json introuvable'));
 window.PERSONALITY = null;
 window.ENVIRONMENTS = null;
 window.STYLES = null;
@@ -1090,6 +1097,25 @@ if(giveGift && data.cadeau) {
 
 let propsFilterActive = 'tous';
 
+function renderPropMini(canvas, def) {
+  if (!canvas || !def || !def.pixels) return;
+  const ctx = canvas.getContext('2d');
+  const cols = def.pixels[0].length;
+  const rows = def.pixels.length;
+  const PX = Math.min(Math.floor(54 / Math.max(cols, rows)), 6); // s'adapte à la taille
+  canvas.width  = cols * PX;
+  canvas.height = rows * PX;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const ci = def.pixels[r][c];
+      if (ci === 0) continue;
+      ctx.fillStyle = def.palette[ci];
+      ctx.fillRect(c * PX, r * PX, PX, PX);
+    }
+  }
+}
+
 function renderProps() {
   const allDefs = [...(window.PROPS_LIB || []), ...(window.PROPS_LOCAL || [])];
   const cats = {
@@ -1116,36 +1142,49 @@ function renderProps() {
   const listEl = document.getElementById('props-list');
   if (!listEl) return;
 
-  if (!D.g.props || D.g.props.length === 0) {
-    listEl.innerHTML = '<p style="font-size:10px;color:var(--text2);text-align:center;padding:12px">Ton sac est vide. Reviens plus tard ! ✿</p>';
-    return;
+if (!D.g.props || D.g.props.length === 0) {
+  listEl.innerHTML = '<p style="font-size:10px;color:var(--text2);text-align:center;padding:12px">Ton sac est vide. Reviens plus tard ! ✿</p>';
+  return;
+}
+
+const filtered = D.g.props
+  .map((p, index) => ({ p, index, def: allDefs.find(l => l.id === p.id) }))
+  .filter(({ p }) => propsFilterActive === 'tous' || p.type === propsFilterActive);
+
+if (filtered.length === 0) {
+  listEl.innerHTML = '<p style="font-size:10px;color:var(--text2);text-align:center;padding:12px">Aucun objet dans cette catégorie.</p>';
+  return;
+}
+
+// 1. On construit le HTML
+listEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">` +
+  filtered.map(({ p, index, def }) => {
+    const isClaud = !!(def && def.pixels && D.propsPixels && D.propsPixels.find(x => x.id === p.id));
+    const badgeId = `mini-${p.id}`;
+    return `<div onclick="toggleProp(${index})" style="
+      background:${p.actif ? 'var(--mint)' : '#fff'};
+      border:2px solid ${p.actif ? 'var(--mint)' : isClaud ? 'var(--lilac)' : 'var(--border)'};
+      border-radius:10px; padding:8px 4px; font-size:10px; font-weight:bold;
+      cursor:pointer; display:flex; flex-direction:column; align-items:center;
+      gap:4px; transition:.2s; text-align:center;
+      box-shadow:0 2px 4px rgba(0,0,0,.05); position:relative;">
+      ${def && def.pixels
+        ? `<canvas id="${badgeId}" style="image-rendering:pixelated;border-radius:3px"></canvas>`
+        : `<span style="font-size:22px">${p.emoji || '🎁'}</span>`
+      }
+      <span>${p.nom}</span>
+      <span style="font-size:8px;text-transform:uppercase;opacity:.7">${p.type}</span>
+      ${p.actif ? '<span style="font-size:8px">● actif</span>' : ''}
+      ${isClaud ? `<span style="position:absolute;top:4px;right:5px;font-size:7px;color:var(--lilac);opacity:.8;">✦</span>` : ''}
+    </div>`;
+  }).join('') + `</div>`;
+
+// 2. SEULEMENT ICI on dessine — les canvas existent maintenant dans le DOM
+filtered.forEach(({ p, def }) => {
+  if (def && def.pixels) {
+    renderPropMini(document.getElementById(`mini-${p.id}`), def);
   }
-
-  const filtered = D.g.props
-    .map((p, index) => ({ p, index, def: allDefs.find(l => l.id === p.id) }))
-    .filter(({ p }) => propsFilterActive === 'tous' || p.type === propsFilterActive);
-
-  if (filtered.length === 0) {
-    listEl.innerHTML = '<p style="font-size:10px;color:var(--text2);text-align:center;padding:12px">Aucun objet dans cette catégorie.</p>';
-    return;
-  }
-
-  listEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">` +
-    filtered.map(({ p, index }) =>
-      `<div onclick="toggleProp(${index})" style="
-        background:${p.actif ? 'var(--mint)' : '#fff'};
-        color:${p.actif ? '#fff' : 'var(--text)'};
-        border:2px solid ${p.actif ? 'var(--mint)' : 'var(--border)'};
-        border-radius:10px; padding:8px 4px; font-size:10px; font-weight:bold;
-        cursor:pointer; display:flex; flex-direction:column; align-items:center;
-        gap:4px; transition:.2s; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,.05);">
-        <span style="font-size:22px">${p.emoji || '🎁'}</span>
-        <span>${p.nom}</span>
-        <span style="font-size:8px;text-transform:uppercase;opacity:.7">${p.type}</span>
-        ${p.actif ? '<span style="font-size:8px">● actif</span>' : ''}
-      </div>`
-    ).join('') + `</div>`;
-
+});
   // --- Boutique ---
   const shopCard = document.getElementById('shop-card');
   const wallet = document.getElementById('xp-wallet');

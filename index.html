@@ -620,11 +620,12 @@ async function buyProp() {
   addXp(-100);
   toast('Claude crée ton objet... 💭');
 
-  const prompt = `Tu es le compagnon d'Émilie. Invente un petit objet pixel art mignon (max 7x7 pixels).
-  Catégories possibles: "decor", "accessoire", "ambiance".
-  Palette: tableau de couleurs hex, index 0 = transparent.
-  Réponds UNIQUEMENT en JSON strict :
-  {"id": "obj_${Date.now()}", "nom": "nom joli", "type": "decor", "emoji": "🌸", "categorie": "nature", "position": {"x": 150, "y": 128}, "palette": ["transparent", "#couleur1"], "pixels": [[0,1,0],[1,1,1],[0,1,0]]}`;
+  const prompt = `Invente un petit objet pixel art mignon (max 7x7 pixels) pour une appli de bien-être.
+Catégories possibles: "decor", "accessoire", "ambiance".
+Palette: tableau de couleurs hex, index 0 = toujours "transparent".
+Pour type "decor", ajoute "slot" parmi : "A" (fond gauche), "B" (fond droit), "C" (sol gauche), "D" (sol droit), "SOL" (sol centre).
+Réponds UNIQUEMENT en JSON strict, sans texte autour :
+{"id":"obj_${Date.now()}","nom":"nom joli","type":"decor","emoji":"🌸","slot":"C","palette":["transparent","#couleur1","#couleur2"],"pixels":[[0,1,0],[1,2,1],[0,1,0]]}`;
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -950,7 +951,8 @@ async function askClaude(){
     La palette est un tableau de couleurs hex, index 0 = transparent.
     Les pixels sont une grille 2D de numéros qui correspondent à la palette.
     Réponds UNIQUEMENT en JSON strict :
-{"message": "ta pensée", "bulle": "phrase courte", "cadeau": {"id": "mot_unique_${Date.now()}", "nom": "nom joli", "type": "decor", "position": {"x": 150, "y": 128}, "palette": ["transparent", "#couleur1", "#couleur2"], "pixels": [[0,1,0],[1,2,1],[0,1,0]]}}`;
+    Pour type "decor", ajoute "slot" parmi : "A","B","C","D","SOL".
+{"message": "ta pensée", "bulle": "phrase courte", "cadeau": {"id": "mot_unique_${Date.now()}", "nom": "nom joli", "type": "decor", "slot": "D", "palette": ["transparent", "#couleur1", "#couleur2"], "pixels": [[0,1,0],[1,2,1],[0,1,0]]}}`;
   } else {
     prompt += ` Réponds UNIQUEMENT en format JSON strict : {"message": "ta pensée", "bulle": "phrase courte"}`;
   }
@@ -1377,7 +1379,14 @@ const C={
 
 const PX=5,CS=200;
 let bounceT=0,particles=[],blinkT=0,blink=false,celebQueue=[];
-
+// --- SLOTS FIXES pour les props décor ---
+const PROP_SLOTS = {
+  A:   { x: 20,  y: 88  },  // fond gauche (arbres, nuages bas)
+  B:   { x: 155, y: 88  },  // fond droit
+  C:   { x: 14,  y: 128 },  // sol gauche
+  D:   { x: 158, y: 128 },  // sol droit
+  SOL: { x: 90,  y: 142 },  // sol centre (devant gotchi)
+};
 const p5s=(p)=>{
   p.setup=function(){p.createCanvas(CS,CS).parent('cbox');p.noSmooth();p.frameRate(12)};
 
@@ -1394,15 +1403,18 @@ const p5s=(p)=>{
     let envActif = g.activeEnv || 'parc';
     drawActiveEnv(p, envActif, n);
 
-    // --- Props DÉCOR (au sol, avant le gotchi) ---
-    if (D.g.props) {
-      D.g.props.filter(pr => pr.actif && pr.type === 'decor').forEach(prop => {
-        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels || []).find(l => l.id === prop.id);
-        if (def && def.pixels) {
-          drawProp(p, def, def.position?.x || 140, def.position?.y || 130);
-        }
-      });
+// --- Props DÉCOR (au sol, avant le gotchi) ---
+if (D.g.props) {
+  D.g.props.filter(pr => pr.actif && pr.type === 'decor').forEach(prop => {
+    const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) 
+             || (D.propsPixels || []).find(l => l.id === prop.id);
+    if (def && def.pixels) {
+      // Slot défini sur la def, sinon fallback SOL
+      const slot = PROP_SLOTS[def.slot] || PROP_SLOTS['SOL'];
+      drawProp(p, def, slot.x, slot.y);
     }
+  });
+}
 
     // --- Ambiances (particules répétées) ---
     if (D.g.props) {

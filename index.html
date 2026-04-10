@@ -692,7 +692,7 @@ const CATS=[
 function defs(){
   return{ 
     g:{
-      name:'Petit·e Gotchi', totalXp:0, stage:'egg', energy:3, happiness:3, envLv:0, moodDay:null, activeEnv:'parc', 
+      name:'Petit·e Gotchi', totalXp:0, stage:'egg', energy:3, happiness:3, envLv:0, moodDay:null, activeEnv:'parc', petales: 0,  // La monnaie de la boutique 
       // Tes 3 objets de base pour tester le système :
 props: [],
       customBubbles: [] // Le futur cerveau à mots doux de Claude
@@ -798,8 +798,9 @@ function toggleHab(catId){
   haptic();
   const td=today();if(!D.log[td])D.log[td]=[];
   const idx=D.log[td].indexOf(catId);
-  if(idx>=0){D.log[td].splice(idx,1);addXp(-10)}
-  else{D.log[td].push(catId);addXp(10);celebQueue.push(catId);shakeTimer=8}
+  if(idx>=0){D.log[td].splice(idx,1);addXp(-15)}
+  else{D.log[td].push(catId); addXp(15); D.g.petales = (D.g.petales || 0) + 5;
+save();;celebQueue.push(catId);shakeTimer=8}
   save();renderHabs();updUI();updBubbleNow();
 }
 function renderHabs(){

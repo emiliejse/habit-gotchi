@@ -1,0 +1,23 @@
+{
+  "palettes": {
+    "defaut": {
+      "body": "#d8b8e8",
+      "bodyDk": "#c0a0d0",
+      "bodyLt": "#ecd8f8",
+      "cheek": "#f0a0b0"
+    },
+    "ocean": {
+      "body": "#a0d0e8",
+      "bodyDk": "#80b0c8",
+      "bodyLt": "#c8e8f8",
+      "cheek": "#e8b0c0"
+    },
+    "foret": {
+      "body": "#a8d8a0",
+      "bodyDk": "#80b878",
+      "bodyLt": "#c8f0c0",
+      "cheek": "#e8c0a0"
+    }
+  },
+  "active": "defaut"
+}

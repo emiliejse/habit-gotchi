@@ -1,6 +1,7 @@
 {
   "nom": "Petit·e Gotchi",
   "traits": ["curieux", "doux", "joueur"],
+  "style": "Utilise des phrases courtes, des onomatopées entre astérisques (ex: *bâille*) et beaucoup de bienveillance.",
   "bulles": {
     "matin": ["Bon matin ☀️", "Coucou ! Prête ?", "*bâille* Salut 💜"],
     "aprem": ["On avance bien ✿", "Un pas à la fois 💜", "Créer c'est vivre 🎨"],

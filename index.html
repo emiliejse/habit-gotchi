@@ -1575,21 +1575,36 @@ function applyUIPalette(id) {
   document.documentElement.style.setProperty('--mint', p.mint);
   document.documentElement.style.setProperty('--pink', p.pink);
   D.g.uiPalette = id; save(); renderPerso();
-  toast('Palette ' + p.label + ' appliquée ✿');
+  toastSnack('Palette ' + p.label + ' appliquée ✿');
 }
 
 function applyGotchiColor(id) {
   const c = GOTCHI_COLORS.find(x => x.id === id); if (!c) return;
   D.g.gotchiColor = id; save(); renderPerso();
-  toast('Couleur ' + c.label + ' appliquée ✿');
+  toastSnack('Couleur ' + c.label + ' appliquée ✿');
 }
 
 function applyEnvTheme(id) {
   const t = ENV_THEMES.find(x => x.id === id); if (!t) return;
   D.g.envTheme = id; save(); renderPerso();
-  toast('Ambiance ' + t.label + ' appliquée ✿');
+  toastSnack('Ambiance ' + t.label + ' appliquée ✿');
 }
-
+function toastSnack(msg) {
+  let el = document.getElementById('snack');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'snack';
+    el.style.cssText = `position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
+      background:#38304a;color:#fff;padding:8px 16px;border-radius:20px;font-size:10px;
+      font-family:'Courier New',monospace;z-index:500;opacity:0;transition:opacity .2s;
+      pointer-events:none;white-space:nowrap;`;
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.style.opacity = '0', 1800);
+}
 // Restaure les persos au chargement
 function restorePerso() {
   if (D.g.uiPalette) applyUIPalette(D.g.uiPalette);

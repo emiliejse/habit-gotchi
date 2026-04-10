@@ -622,6 +622,7 @@ loadDataFiles();
    DATA & INITIALISATION
    ============================================================ */
 const SK='hg4';
+let LIB = { props: [], personality: null, environments: {}, styles: {} };
 const CATS=[
   {id:'sport',  icon:'🏋️',label:'Sport',     def:'30 min mouvement'},
   {id:'nutri',  icon:'🍎',label:'Nutrition',   def:'Repas fait maison'},
@@ -652,6 +653,29 @@ let D=load();
 const today=()=>new Date().toISOString().split('T')[0];
 const hr=()=>new Date().getHours();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+async function loadLibraries() {
+  try {
+    // On va chercher tous les fichiers en même temps
+    const [p, pers] = await Promise.all([
+      fetch('data/props.json').then(r => r.ok ? r.json() : []),
+      fetch('data/personality.json').then(r => r.ok ? r.json() : null)
+    ]);
+
+    LIB.props = p;
+    LIB.personality = pers;
+
+    console.log("Bibliothèques chargées ✿");
+    
+    // Une fois chargés, on réveille la bulle et l'inventaire
+    updBubbleNow(); 
+    renderProps();
+    
+  } catch (e) {
+    console.error("Erreur de chargement des bibliothèques :", e);
+    // On met une personnalité par défaut pour éviter que ça plante si le fichier est manquant
+    LIB.personality = { nom: "Petit·e Gotchi", traits: ["doux"], bulles: { idle: ["✿"] } };
+  }
+}
 
 // --- Haptique Douce (Vibration Android + Flash visuel iPhone) ---
 function haptic() {
@@ -814,32 +838,30 @@ function getBubble(){
   if(Math.random()<.15&&done>0&&done<6)pool=MSG.idle;
   return pool[Math.floor(Math.random()*pool.length)];
 }
-function updBubbleNow(){
-  const h = hr(), ha = D.g.happiness, en = D.g.energy;
-  const P = window.PERSONALITY;
-  let pool;
+function updBubbleNow() {
+  if (!LIB.personality) return;
+  const p = LIB.personality;
+  const h = hr();
+  const td = today();
+  const nbHab = (D.log[td] || []).length;
+  
+  let key = "idle";
+  // Logique de sélection de la catégorie
+  if (h >= 22 || h < 7) key = "nuit";
+  else if (D.g.happiness <= 1) key = "triste";
+  else if (D.g.energy <= 1) key = "fatigue";
+  else if (nbHab >= 6) key = "max";
+  else if (nbHab >= 4) key = "fierte";
+  else if (h < 12) key = "matin";
+  else if (h < 18) key = "aprem";
+  else key = "soir";
 
-  // Source : fichier personality.json si dispo, sinon fallback local
-  const src = P ? P.bulles : MSG;
+  let pool = [...p.bulles[key]];
+  // On ajoute les phrases personnalisées de Claude
+  if (D.g.customBubbles.length > 0) pool = pool.concat(D.g.customBubbles);
 
-  if (h >= 22 || h < 7) pool = src.nuit || src.night;
-  else if (ha <= 1) pool = src.triste || src.sad;
-  else if (en <= 1) pool = src.fatigue || src.tired;
-  else if ((D.log[today()] || []).length === 6) pool = src.max || src.full;
-  else if ((D.log[today()] || []).length >= 4) pool = src.fierte || src.high;
-  else if (meteoData && meteoData.windspeed > 40) pool = src.vent || src.wind;
-  else if (h < 12) pool = src.matin || src.morning;
-  else if (h < 18) pool = src.aprem || src.afternoon;
-  else pool = src.soir || src.evening;
-
-  // Mix idle + custom bubbles
-  let extras = (src.idle || MSG.idle).concat(D.g.customBubbles || []);
-  if (P && P.bulles.custom) extras = extras.concat(P.bulles.custom);
-  if (Math.random() < 0.15 && extras.length) pool = extras;
-
-  if (!pool || !pool.length) pool = ["✿"];
-  const el = document.getElementById('bubble');
-  if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+  const finalMsg = pool[Math.floor(Math.random() * pool.length)];
+  document.getElementById('bubble').textContent = finalMsg;
 }
 
 /* ============================================================
@@ -847,42 +869,46 @@ function updBubbleNow(){
    ============================================================ */
 function saveApi(){const v=document.getElementById('api-inp').value.trim();if(v){D.apiKey=v;save();toast('Clé API sauvegardée ✿')}else toast('Colle ta clé sk-ant-...')}
 
-async function askClaude(){
-  if(!D.apiKey){toast('Clé API manquante (Réglages)');return;}
-  let giveGift = false; const td = today();
-  if(!D.lastGiftDate || Math.floor((new Date()-new Date(D.lastGiftDate))/(1000*60*60*24)) >= 3) giveGift = true;
+async function askClaude() {
+  if (!D.apiKey) { toast('Clé API manquante (Réglages)'); return; }
   
-  let prompt = `Tu es le compagnon d'Émilie. Énergie ${D.g.energy}/5, Humeur ${D.g.happiness}/5. 
-  Action 1: Donne une pensée douce (2 phrases). 
-  Action 2: Invente une très courte phrase de bulle (ex: "*s'étire*").`;
+  const p = LIB.personality;
+  const td = today();
+  const nbHab = (D.log[td] || []).length;
+  const h = hr();
+  
+  // Règle du cadeau (3 jours)
+  let giveGift = false;
+  if (!D.lastGiftDate || Math.floor((new Date() - new Date(D.lastGiftDate)) / (1000 * 60 * 60 * 24)) >= 3) giveGift = true;
 
-  if(giveGift) {
-    prompt += ` Action 3: INVENTE un objet pixel art unique (grille 8x8). 
-    Le 0 est transparent. Les autres chiffres correspondent à la palette.
-    Réponds en JSON strict : {
-      "message":"...", 
-      "bulle":"...", 
-      "cadeau":{
-        "nom":"...", 
-        "type":"decor", 
-        "pixels": [
-          [0,0,1,1,1,1,0,0],
-          [0,1,2,2,2,2,1,0],
-          [1,2,2,2,2,2,2,1],
-          [1,2,2,2,2,2,2,1],
-          [1,2,2,2,2,2,2,1],
-          [1,2,2,2,2,2,2,1],
-          [0,1,2,2,2,2,1,0],
-          [0,0,1,1,1,1,0,0]
-        ],
-        "palette": ["transparent", "#C0A0D0", "#D8B8E8"]
-      }
-    }`;
-  } else {
-    prompt += ` Réponds en JSON strict : {"message":"...", "bulle":"..."}`;
-  }
+  // Détermination du contexte pour Claude
+  let contexte = "idle";
+  if (h < 12) contexte = "matin"; else if (h < 18) contexte = "aprem"; else contexte = "soir";
+  if (D.g.happiness <= 1) contexte = "triste";
+  if (D.g.energy <= 1) contexte = "fatigue";
+  if (nbHab >= 6) contexte = "max"; else if (nbHab >= 4) contexte = "fierte";
 
-  document.getElementById('claude-msg').textContent = 'Dessin en cours... 🎨';
+  let prompt = `Tu es ${p.nom}. Traits: ${p.traits.join(', ')}. Style: ${p.style}.
+  Contexte actuel : ${contexte}. 
+  Exemples de phrases que tu aimes : ${p.bulles[contexte].join(' / ')}.
+  
+  Émilie a une énergie de ${D.g.energy}/5 et un bonheur de ${D.g.happiness}/5.
+  Dernières notes : ${D.journal.slice(-1)[0]?.text || "(aucune)"}.
+
+  Réponds en JSON strict :
+  {
+    "message": "Une pensée complice en 2 phrases max",
+    "bulle": "Une micro-phrase pour ton affichage permanent",
+    ${giveGift ? `"cadeau": {
+      "nom": "nom de l'objet",
+      "type": "decor",
+      "pixels": [[0,1,1,0...], [...]],
+      "palette": ["transparent", "#color1", "#color2"]
+    }` : ''}
+  }`;
+
+  document.getElementById('claude-msg').textContent = 'Le Gotchi réfléchit... 💭';
+
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -893,41 +919,30 @@ async function askClaude(){
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022', // Utilisation de la version 3.5 pour plus de précision
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 1000,
-        messages: [{role: 'user', content: prompt}]
+        messages: [{ role: 'user', content: prompt }]
       })
     });
     
     const res = await r.json();
-    const match = res.content[0].text.match(/\{[\s\S]*\}/);
+    const data = JSON.parse(res.content[0].text.match(/\{[\s\S]*\}/)[0]);
     
-    if(match) {
-      const d = JSON.parse(match[0]);
-      document.getElementById('claude-msg').textContent = d.message;
-      
-      if(d.bulle) {
-        D.g.customBubbles.push(d.bulle);
-        if(D.g.customBubbles.length > 10) D.g.customBubbles.shift();
-      }
-      
-      if(giveGift && d.cadeau) {
-        // On ajoute le cadeau généré par l'IA dans l'inventaire
-        D.g.props.push({
-          nom: d.cadeau.nom,
-          type: d.cadeau.type,
-          pixels: d.cadeau.pixels,
-          palette: d.cadeau.palette,
-          actif: false
-        });
-        D.lastGiftDate = td;
-        toast(`🎁 L'IA a dessiné : ${d.cadeau.nom}`);
-      }
-      save(); renderProps();
+    document.getElementById('claude-msg').textContent = data.message;
+    if (data.bulle) {
+      D.g.customBubbles.push(data.bulle);
+      if (D.g.customBubbles.length > 10) D.g.customBubbles.shift();
+      document.getElementById('bubble').textContent = data.bulle; // Mise à jour immédiate
     }
-  } catch(e) {
+    
+    if (giveGift && data.cadeau) {
+      D.g.props.push({ ...data.cadeau, actif: false });
+      D.lastGiftDate = td;
+      toast(`🎁 Nouveau cadeau : ${data.cadeau.nom}`);
+    }
+    save(); renderProps();
+  } catch (e) {
     document.getElementById('claude-msg').textContent = 'Erreur de connexion.';
-    console.error(e);
   }
 }
 
@@ -1462,9 +1477,13 @@ function drawZzz(p,x,y){
 };
 new p5(p5s);
 
-updUI();
-renderHabs();
-renderProps();
+async function initApp() {
+  updUI();
+  renderHabs();
+  await loadLibraries(); // On attend que les fichiers data soient là
+}
+
+initApp();
 </script>
 </body>
 </html>

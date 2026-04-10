@@ -573,15 +573,28 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 </div>
 
-  <!-- FOCUS -->
-  <div id="p-focus" class="pnl">
-    <div class="card" style="text-align:center">
-      <h2>🎯 Mode Focus</h2>
-      <p style="font-size:11px;color:var(--text2);margin-bottom:10px">Ton Gotchi travaille avec toi (body doubling)</p>
-      <button class="btn btn-p" onclick="startFocus('work')" style="width:100%;margin-bottom:6px">🧠 Focus 25 min</button>
-      <button class="btn btn-m" onclick="startFocus('meditate')" style="width:100%">🧘 Méditation 5 min</button>
-    </div>
+<!-- PERSO -->
+<div id="p-perso" class="pnl">
+
+  <!-- Palette interface -->
+  <div class="card">
+    <h2>🎨 Couleurs de l'interface</h2>
+    <div id="palette-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px"></div>
   </div>
+
+  <!-- Couleur du Gotchi -->
+  <div class="card">
+    <h2>🐣 Couleur du Gotchi</h2>
+    <div id="gotchi-colors" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
+  </div>
+
+  <!-- Ambiance environnements -->
+  <div class="card">
+    <h2>🌍 Ambiance des univers</h2>
+    <div id="env-themes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
+  </div>
+
+</div>
 
   <!-- SETTINGS -->
 <div id="p-settings" class="pnl">
@@ -648,9 +661,9 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   <div class="menu-book" onclick="event.stopPropagation()">
     <h2>✿ <span id="menu-gotchi-name">Gotchi</span> ✿</h2>
     <div class="menu-grid" id="menu-grid">
-      <div class="menu-circle" onclick="goMenu('gotchi')">
-        <span class="mc-icon">🏠</span><span class="mc-label">Gotchi</span>
-      </div>
+<div class="menu-circle" onclick="goMenu('perso')">
+  <span class="mc-icon">🎨</span><span class="mc-label">Perso</span>
+</div>
       <div class="menu-circle" onclick="goMenu('journal')">
         <span class="mc-icon">📓</span><span class="mc-label">Journal</span>
       </div>
@@ -813,7 +826,7 @@ function go(t){
   } else {
     shell.classList.add('shrunk');
     if(t === 'journal') D.g.activeEnv = 'chambre';
-    else if(t === 'focus') D.g.activeEnv = 'chambre';
+    else if(t === 'perso') D.g.activeEnv = 'chambre';
     else if(t === 'progress') D.g.activeEnv = 'montagne';
     else if(t === 'settings') D.g.activeEnv = 'chambre';
     else if(t === 'props') D.g.activeEnv = 'parc';
@@ -823,6 +836,7 @@ function go(t){
   if(t==='gotchi'||t==='settings') renderHabs();
   if(t==='progress') renderProg();
   if(t==='props') renderProps();
+   if(t==='perso') renderPerso();
   if(t==='journal') { journalLocked=true; renderJ(); }
   
   document.getElementById('dynamic-zone').scrollTop = 0;
@@ -1480,22 +1494,110 @@ function copyBilanSemaine(){
 function resetBilan() {if(confirm("Effacer le bilan IA ?")){if(document.getElementById('claude-summary')) document.getElementById('claude-summary').textContent='Ton bilan apparaîtra ici...';haptic();}}
 
 /* ============================================================
-   FOCUS, JOURNAL & REGLAGES DIVERS
+   PERSONNALISATION
    ============================================================ */
-let focusInterval=null,focusTime=0,focusMode=null;
-function startFocus(mode){
-  focusMode=mode; focusTime=mode==='work'?25*60:5*60;
-  document.getElementById('focus-ov').classList.add('open');
-  document.getElementById('breath-circle').style.display=mode==='meditate'?'block':'none';
-  updFocusDisplay(); let breathIn=true;
-  focusInterval=setInterval(()=>{
-    focusTime--;
-    if(focusTime<=0){stopFocus();addXp(mode==='work'?20:10);toast(mode==='work'?'Focus terminé ! +20 XP 🎉':'Méditation terminée ! +10 XP 🧘');return}
-    updFocusDisplay();
-    if(mode==='meditate'&&focusTime%6===0){breathIn=!breathIn;document.getElementById('breath-circle').classList.toggle('expand',breathIn);}
-  },1000);
+
+// Palettes interface disponibles
+const UI_PALETTES = [
+  { id:'lavande', label:'Lavande', bg:'#ddd6e8', lilac:'#b090d0', mint:'#80d0a8', pink:'#e8a0bf' },
+  { id:'rose',    label:'Rose',    bg:'#f0dde8', lilac:'#d080a8', mint:'#a0d8b0', pink:'#e890c0' },
+  { id:'ocean',   label:'Océan',   bg:'#d0e8f0', lilac:'#6090c0', mint:'#70d0c0', pink:'#a0c8e8' },
+  { id:'foret',   label:'Forêt',   bg:'#d8e8d0', lilac:'#70a870', mint:'#90d890', pink:'#c8e0a0' },
+  { id:'nuit',    label:'Nuit',    bg:'#2a2438', lilac:'#9070c0', mint:'#50c890', pink:'#c07090' },
+  { id:'peche',   label:'Pêche',   bg:'#f0e0d0', lilac:'#c09070', mint:'#90d0a8', pink:'#e8b090' },
+];
+
+// Couleurs corps du Gotchi
+const GOTCHI_COLORS = [
+  { id:'vert',    label:'Vert',    body:'#c8d8c0', bodyLt:'#e0ece0', bodyDk:'#a0b898' },
+  { id:'lilas',   label:'Lilas',   body:'#d0c0e0', bodyLt:'#e8e0f0', bodyDk:'#a898c0' },
+  { id:'peche',   label:'Pêche',   body:'#e8d0b8', bodyLt:'#f0e4d0', bodyDk:'#c0a888' },
+  { id:'bleu',    label:'Bleu',    body:'#b8d0e8', bodyLt:'#d0e4f4', bodyDk:'#90a8c8' },
+  { id:'rose',    label:'Rose',    body:'#e8c0d0', bodyLt:'#f4d8e4', bodyDk:'#c098a8' },
+  { id:'jaune',   label:'Jaune',   body:'#e8e0a8', bodyLt:'#f4ecc8', bodyDk:'#c0b878' },
+];
+
+// Thèmes environnements
+const ENV_THEMES = [
+  { id:'pastel',  label:'Pastel ✿',  gnd:'#a8d898', sky1:'#b8d8f0', sky2:'#d8eef8' },
+  { id:'nuit',    label:'Nuit 🌙',   gnd:'#304828', sky1:'#1a1828', sky2:'#302848' },
+  { id:'automne', label:'Automne 🍂', gnd:'#c89858', sky1:'#e8c888', sky2:'#f0d8a8' },
+  { id:'hiver',   label:'Hiver ❄️',  gnd:'#d8e8f0', sky1:'#c8d8e8', sky2:'#e8f0f8' },
+];
+
+function renderPerso() {
+  // --- Palettes interface ---
+  const pg = document.getElementById('palette-grid');
+  if (pg) {
+    const current = D.g.uiPalette || 'lavande';
+    pg.innerHTML = UI_PALETTES.map(p => `
+      <div onclick="applyUIPalette('${p.id}')" style="
+        padding:8px;border-radius:10px;cursor:pointer;text-align:center;
+        border:3px solid ${current===p.id ? p.lilac : 'transparent'};
+        background:${p.bg};transition:.2s;">
+        <div style="display:flex;gap:4px;justify-content:center;margin-bottom:4px">
+          <div style="width:14px;height:14px;border-radius:50%;background:${p.lilac}"></div>
+          <div style="width:14px;height:14px;border-radius:50%;background:${p.mint}"></div>
+          <div style="width:14px;height:14px;border-radius:50%;background:${p.pink}"></div>
+        </div>
+        <div style="font-size:9px;font-weight:bold;color:#38304a">${p.label}</div>
+      </div>`).join('');
+  }
+
+  // --- Couleurs Gotchi ---
+  const gc = document.getElementById('gotchi-colors');
+  if (gc) {
+    const current = D.g.gotchiColor || 'vert';
+    gc.innerHTML = GOTCHI_COLORS.map(c => `
+      <div onclick="applyGotchiColor('${c.id}')" style="
+        width:48px;height:48px;border-radius:12px;cursor:pointer;
+        background:${c.body};border:3px solid ${current===c.id ? '#b090d0' : 'transparent'};
+        display:flex;align-items:center;justify-content:center;
+        font-size:8px;font-weight:bold;color:#38304a;transition:.2s;
+        box-shadow:0 2px 6px rgba(0,0,0,.1);">${c.label}</div>`).join('');
+  }
+
+  // --- Thèmes environnements ---
+  const et = document.getElementById('env-themes');
+  if (et) {
+    const current = D.g.envTheme || 'pastel';
+    et.innerHTML = ENV_THEMES.map(t => `
+      <div onclick="applyEnvTheme('${t.id}')" style="
+        padding:8px 12px;border-radius:10px;cursor:pointer;
+        background:linear-gradient(135deg,${t.sky1},${t.gnd});
+        border:3px solid ${current===t.id ? '#b090d0' : 'transparent'};
+        font-size:10px;font-weight:bold;color:#fff;
+        text-shadow:0 1px 3px rgba(0,0,0,.3);transition:.2s;">${t.label}</div>`).join('');
+  }
 }
-function stopFocus(){clearInterval(focusInterval);focusInterval=null;document.getElementById('focus-ov').classList.remove('open')}
+
+function applyUIPalette(id) {
+  const p = UI_PALETTES.find(x => x.id === id); if (!p) return;
+  document.documentElement.style.setProperty('--bg', p.bg);
+  document.documentElement.style.setProperty('--lilac', p.lilac);
+  document.documentElement.style.setProperty('--mint', p.mint);
+  document.documentElement.style.setProperty('--pink', p.pink);
+  D.g.uiPalette = id; save(); renderPerso();
+  toast('Palette ' + p.label + ' appliquée ✿');
+}
+
+function applyGotchiColor(id) {
+  const c = GOTCHI_COLORS.find(x => x.id === id); if (!c) return;
+  D.g.gotchiColor = id; save(); renderPerso();
+  toast('Couleur ' + c.label + ' appliquée ✿');
+}
+
+function applyEnvTheme(id) {
+  const t = ENV_THEMES.find(x => x.id === id); if (!t) return;
+  D.g.envTheme = id; save(); renderPerso();
+  toast('Ambiance ' + t.label + ' appliquée ✿');
+}
+
+// Restaure les persos au chargement
+function restorePerso() {
+  if (D.g.uiPalette) applyUIPalette(D.g.uiPalette);
+  if (D.g.gotchiColor) applyGotchiColor(D.g.gotchiColor);
+}
 function updFocusDisplay(){const m=Math.floor(focusTime/60),s=focusTime%60;document.getElementById('focus-timer').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
 
 let pinBuf='',pinMode='check';

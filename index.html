@@ -671,32 +671,30 @@ async function loadLibraries() {
     LIB.props = p;
     LIB.personality = pers;
 
-    // --- SOLUTION : On remplit le sac s'il est vide ---
+    // --- LE CORRECTIF : Si le sac est vide, on le remplit avec le JSON ---
     if (D.g.props.length === 0 && LIB.props.length > 0) {
-      // On donne tous les objets du JSON au Gotchi pour commencer
+      console.log("Initialisation du sac à dos avec les objets du JSON...");
       D.g.props = LIB.props.map(item => ({ 
         ...item, 
-        actif: false // Ils sont possédés mais pas encore posés
+        actif: false // On les possède, mais ils ne sont pas "équipés"
       }));
-      save(); 
+      save(); // On enregistre pour que ça ne soit plus vide au prochain tour
     }
 
-    // Synchro des pixels pour les objets déjà dans le sac
+    // Synchronisation des pixels (pour être sûr qu'on a les dernières versions)
     D.g.props = D.g.props.map(saved => {
       const model = LIB.props.find(m => m.nom === saved.nom);
-      return model ? { ...saved, pixels: model.pixels, palette: model.palette, emoji: null } : saved;
+      return model ? { ...saved, pixels: model.pixels, palette: model.palette } : saved;
     });
 
-    console.log("Inventaire synchronisé avec succès ! ✿");
-    renderProps(); // On force l'affichage
+    console.log("Synchro terminée. Objets dans le sac :", D.g.props.length);
+    
+    // On force la mise à jour de l'affichage
+    renderProps();
     updBubbleNow();
   } catch (e) {
     console.error("Erreur de chargement :", e);
   }
-}
-// --- Haptique Douce (Vibration Android + Flash visuel iPhone) ---
-function haptic() {
-try { if(navigator.vibrate) navigator.vibrate([50]); } catch(e){}
 }
 
    function forceUpdate() {

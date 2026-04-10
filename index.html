@@ -163,7 +163,27 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   display: block;
 }
 .bubble::after { display: none; }
-
+   
+/* === CHAT SOUTIEN === */
+.soutien-chat {
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: 50vh; overflow-y: auto; padding: 8px 0;
+}
+.chat-bubble-user {
+  align-self: flex-end; background: var(--lilac); color: #fff;
+  border-radius: 12px 12px 2px 12px; padding: 8px 12px;
+  font-size: 11px; max-width: 85%; line-height: 1.5;
+}
+.chat-bubble-claude {
+  align-self: flex-start; background: #f0e8ff; color: var(--text);
+  border-radius: 12px 12px 12px 2px; padding: 8px 12px;
+  font-size: 11px; max-width: 90%; line-height: 1.5;
+  border: 1px solid var(--border);
+}
+.chat-bubble-system {
+  text-align: center; font-size: 9px; color: var(--text2);
+  padding: 2px 0; font-style: italic;
+}
 /* ============================================================
    MENU OVERLAY — Pixel notebook style
    ============================================================ */
@@ -1260,17 +1280,124 @@ function debugProps() {
   
   toast(report);
 }
-function genSoutien(){
+function genSoutien() {
   haptic();
-  const g=D.g, td=today();
-  const sos={ etat:{energie:`${g.energy}/5`, bonheur:`${g.happiness}/5`}, msg:'Besoin de réconfort et de body doubling doux.' };
-  document.getElementById('modal').style.display='flex';
-  document.getElementById('mbox').innerHTML=`
-    <h3 style="font-size:14px;margin-bottom:6px;color:var(--lilac);">💜 Soutien Douceur</h3>
-    <p style="font-size:10px;color:var(--text2);margin-bottom:6px">Copie ceci pour Claude.</p>
-    <textarea class="inp" rows="3" readonly style="font-size:9px">${JSON.stringify(sos)}</textarea>
-    <button class="btn btn-p" style="width:100%;margin-top:6px" onclick="navigator.clipboard.writeText(document.querySelector('#mbox textarea').value).then(()=>this.textContent='✓ Copié !')">📋 Copier</button>
-    <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:4px">Fermer</button>`;
+  const g = D.g, td = today();
+
+  // 🔍 Collecte les données du jour
+  const habsDuJour = D.habits.map(h => {
+    const faite = (D.log[td] || []).includes(h.catId);
+    return { label: h.label, faite };
+  });
+  const notesDuJour = D.journal
+    .filter(j => j.date.startsWith(td))
+    .map(j => ({ humeur: j.mood, texte: j.text }));
+
+  const contexte = {
+    energie: `${g.energy}/5`,
+    bonheur: `${g.happiness}/5`,
+    habitudes: habsDuJour,
+    notes: notesDuJour
+  };
+
+  // Construit le message initial de Claude (prompt système + contexte)
+  const promptInit = `Tu es le Gotchi, un compagnon bienveillant pour le bien-être mental et le TDAH.
+L'utilisateur a besoin de soutien en ce moment. Voici son contexte du jour :
+- Énergie : ${contexte.energie}
+- Bonheur : ${contexte.bonheur}
+- Habitudes cochées : ${habsDuJour.filter(h=>h.faite).map(h=>h.label).join(', ') || 'aucune'}
+- Habitudes non faites : ${habsDuJour.filter(h=>!h.faite).map(h=>h.label).join(', ') || 'toutes faites !'}
+- Notes du jour : ${notesDuJour.length ? notesDuJour.map(n=>`[${n.humeur}] ${n.texte}`).join(' | ') : 'aucune note'}
+
+Commence par une phrase douce et chaleureuse qui montre que tu as lu son état.
+Pose UNE seule question ouverte pour comprendre ce qui se passe.
+Réponses courtes, ton doux, jamais de jugement. Utilise le "tu".`;
+
+  // Historique de conversation (commence vide, s'enrichit au fil du chat)
+  window._soutienHistory = [];
+
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h3 style="font-size:13px;color:var(--lilac);">💜 Soutien Douceur</h3>
+      <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
+    </div>
+    <div class="soutien-chat" id="soutien-chat">
+      <div class="chat-bubble-system">Je consulte ton état du jour...</div>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <input type="text" id="soutien-inp" class="inp" placeholder="Réponds ici..." style="font-size:11px"
+        onkeydown="if(event.key==='Enter')sendSoutienMsg()">
+      <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:8px 12px">→</button>
+    </div>
+    <p style="font-size:8px;color:var(--text2);text-align:center;margin-top:4px">Cette conversation ne se sauvegarde pas.</p>`;
+
+  // Lance le premier message de Claude avec le contexte
+  sendSoutienMsg(promptInit, true);
+}
+   async function sendSoutienMsg(systemPrompt, isInit = false) {
+  const key = D.apiKey;
+  if (!key) { toast('Clé API manquante dans les Réglages'); return; }
+
+  const chat = document.getElementById('soutien-chat');
+  const inp = document.getElementById('soutien-inp');
+
+  let userText = '';
+  if (!isInit) {
+    userText = inp ? inp.value.trim() : '';
+    if (!userText) return;
+    // Affiche la bulle utilisateur
+    chat.innerHTML += `<div class="chat-bubble-user">${userText}</div>`;
+    inp.value = '';
+    window._soutienHistory.push({ role: 'user', content: userText });
+  }
+
+  // Indicateur de frappe
+  const typingId = 'typing-' + Date.now();
+  chat.innerHTML += `<div class="chat-bubble-system" id="${typingId}">Gotchi réfléchit... 💭</div>`;
+  chat.scrollTop = chat.scrollHeight;
+
+  // Construit les messages pour l'API
+  const messages = isInit
+    ? [{ role: 'user', content: systemPrompt }]
+    : [...window._soutienHistory.slice(-6)]; // garde les 6 derniers tours
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        system: 'Tu es un compagnon de bien-être bienveillant. Réponses courtes, chaleureuses, jamais de jugement.',
+        messages
+      })
+    });
+    const d = await r.json();
+    const reply = d.content?.[0]?.text || 'Je suis là. 💜';
+
+    // Retire l'indicateur de frappe
+    document.getElementById(typingId)?.remove();
+
+    // Affiche la réponse
+    chat.innerHTML += `<div class="chat-bubble-claude">${reply}</div>`;
+    chat.scrollTop = chat.scrollHeight;
+
+    // Ajoute au fil de conversation
+    if (isInit) {
+      window._soutienHistory.push({ role: 'user', content: systemPrompt });
+    }
+    window._soutienHistory.push({ role: 'assistant', content: reply });
+
+  } catch(e) {
+    document.getElementById(typingId)?.remove();
+    chat.innerHTML += `<div class="chat-bubble-system">Connexion perdue. Vérifie ta clé API.</div>`;
+  }
 }
 
 function genBilanSemaine(){

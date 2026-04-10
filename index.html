@@ -624,10 +624,10 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 async function buyProp() {
   if (!D.apiKey) { toast('Clé API manquante dans les Réglages'); return; }
-  if ((D.g.petales || 0) < 10) { toast('Il te faut 10 🌸 Pétales pour débloquer un objet ✿'); return; }
-D.g.petales -= 10;
-save();
-   
+  if ((D.g.petales || 0) < 10) { toast('Il te faut 10 pétales ✿'); return; }
+
+  D.g.petales = (D.g.petales || 0) - 10;
+  save();
   toast('Claude crée ton objet... 💭');
 
   const prompt = `Invente un petit objet pixel art mignon (max 7x7 pixels) pour une appli de bien-être.

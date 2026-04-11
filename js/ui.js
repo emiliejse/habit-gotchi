@@ -350,9 +350,9 @@ async function buyProp() {
 const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
   const theme  = themes[Math.floor(Math.random() * themes.length)];
   const ctx = window.PROMPTS && window.PROMPTS.aiContexts;
-  const prompt = ctx
+const prompt = ctx
     ? ctx.buyProp.replace('{{theme}}', theme).replace('{{existingNames}}', nomsExistants).replace('{{timestamp}}', Date.now())
-    : "Invente un objet pixel art UNIQUE et SURPRENANT sur le thème \"{{theme}}\".\nObjets déjà dans l'inventaire (NE PAS reproduire) : {{existingNames}}.\nSois créatif et inattendu. Max 7x7 pixels. Pour une appli de bien-être.\nCatégories possibles: \"decor\", \"accessoire\", \"ambiance\".\nPour type \"ambiance\", choisis \"motion\" parmi : \"drift\" (flotte horizontalement), \"fall\" (tombe vers le bas), \"float\" (monte doucement), \"sparkle\" (apparaît et disparaît) selon ce que l'objet évoque.\nPalette: tableau de couleurs hex, index 0 = toujours \"transparent\".\nRéponds UNIQUEMENT en JSON strict, sans texte autour :\n{\"id\":\"obj_{{timestamp}}\",\"nom\":\"nom joli\",\"type\":\"ambiance\",\"motion\":\"drift\",\"emoji\":\"🌸\",\"palette\":[\"transparent\",\"#couleur1\",\"#couleur2\"],\"pixels\":[[0,1,0],[1,2,1],[0,1,0]]};",
+    : `Invente un objet pixel art UNIQUE et SURPRENANT sur le thème "${theme}".\nObjets déjà dans l'inventaire (NE PAS reproduire) : ${nomsExistants}.\nSois créatif et inattendu. Max 7x7 pixels. Pour une appli de bien-être.\nCatégories possibles: "decor", "accessoire", "ambiance".\nPour type "ambiance", choisis "motion" parmi : "drift", "fall", "float", "sparkle".\nPalette: tableau hex, index 0 = "transparent".\nJSON strict sans texte autour :\n{"id":"obj_${Date.now()}","nom":"nom joli","type":"ambiance","motion":"drift","emoji":"🌸","palette":["transparent","#couleur1","#couleur2"],"pixels":[[0,1,0],[1,2,1],[0,1,0]]}`;
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

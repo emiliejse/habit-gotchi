@@ -24,6 +24,7 @@
     {
       "id": "couronne01",
       "nom": "Couronne Dorée",
+      "ancrage": "tete",
       "type": "accessoire",
       "emoji": "👑",
       "categorie": "tete",
@@ -98,6 +99,7 @@
     {
       "id": "lunettes01",
       "nom": "Lunettes Rondes",
+      "ancrage": "yeux",
       "type": "accessoire",
       "emoji": "👓",
       "categorie": "tete",
@@ -166,6 +168,7 @@
     {
       "id": "noeud01",
       "nom": "Nœud Papillon",
+      "ancrage": "cou",
       "type": "accessoire",
       "emoji": "🎀",
       "categorie": "tete",

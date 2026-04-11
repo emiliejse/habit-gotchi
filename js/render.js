@@ -322,7 +322,22 @@ const p5s = (p) => {
   }
 
   function drawCl(p,x,y)  { p.fill(C.cloud); px(x,y,PX*5,PX*2); px(x+PX,y-PX,PX*3,PX); }
-  function drawWind(p)     { p.stroke('#d0d0d8'); p.strokeWeight(1); for(let i=0;i<4;i++){const y=40+i*30+Math.sin(p.frameCount*.1+i)*10;p.line(0,y,CS,y+Math.sin(p.frameCount*.2)*5);} p.noStroke(); }
+ function drawWind(p) {
+  p.noStroke();
+  for (let i = 0; i < 8; i++) {
+    // Chaque rafale a sa propre vitesse et position
+    const speed = 2 + (i % 3);
+    const x = CS - ((p.frameCount * speed + i * 28) % (CS + 20));
+    const y = 15 + i * 22 + Math.sin(p.frameCount * .08 + i) * 6;
+    const len = 10 + (i % 3) * 5; // longueur variée : 10, 15 ou 20px
+
+    p.fill('#d8d8e8');
+    // Trait pixel : 3 petits carrés espacés
+    px(x, y, PX, PX);
+    px(x + len * .4, y, PX, PX);
+    px(x + len, y, PX, PX);
+  }
+}
   function drawRainbow(p)  { C.rainbow.forEach((c,i)=>{p.fill(c);px(CS/2-PX*(7-i),10+i*PX,PX*(14-i*2),PX);}); }
   function drawFl(p,x,y,c) { p.fill('#58a058');px(x,y,PX,PX*2);p.fill(c);px(x-PX,y-PX,PX,PX);px(x+PX,y-PX,PX,PX);px(x,y-PX*2,PX,PX);p.fill('#f0d878');px(x,y-PX,PX,PX); }
   function drawTree(p,x,y,n) { p.fill(C.trunk);px(x+PX*2,y+PX*4,PX*2,PX*5);p.fill(n?C.leafN:C.leaf);px(x,y+PX,PX*6,PX*3);px(x+PX,y-PX,PX*4,PX*2);px(x+PX*2,y-PX*2,PX*2,PX); }

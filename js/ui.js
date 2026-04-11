@@ -786,7 +786,7 @@ function renderPerso() {
   }
 }
 
-function applyUIPalette(id) {
+function applyUIPalette(id, silent = false) {
   const p = UI_PALETTES.find(x => x.id === id); if (!p) return;
   document.documentElement.style.setProperty('--bg', p.bg);
   document.documentElement.style.setProperty('--lilac', p.lilac);
@@ -795,12 +795,12 @@ function applyUIPalette(id) {
   window.D.g.uiPalette = id; save(); renderPerso();
   if (!silent) toast('Palette ' + p.label + ' appliquée ✿');
 }
-function applyGotchiColor(id) {
+function applyGotchiColor(id, silent = false) {
   const c = GOTCHI_COLORS.find(x => x.id === id); if (!c) return;
   window.D.g.gotchiColor = id; save(); renderPerso();
   if (!silent) toast('Couleur ' + c.label + ' appliquée ✿');
 }
-function applyEnvTheme(id) {
+function applyEnvTheme(id, silent = false) {
   const t = ENV_THEMES.find(x => x.id === id); if (!t) return;
   window.D.g.envTheme = id; save(); renderPerso();
   if (!silent) toast('Ambiance ' + t.label + ' appliquée ✿');

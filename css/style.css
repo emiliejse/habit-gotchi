@@ -358,7 +358,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   font-weight:bold;cursor:pointer}
 
 /* Toast non-bloquant */
-#toast-snack {
+#toast {
   position: fixed;
   bottom: calc(70px + var(--sab));
   left: 50%;
@@ -373,9 +373,12 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   opacity: 0;
   transition: opacity .3s, transform .3s;
   pointer-events: none;
-  white-space: nowrap;
+  white-space: normal;
+  max-width: calc(100vw - 40px);
+  text-align: center;
 }
-#toast-snack.show {
+
+#toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }

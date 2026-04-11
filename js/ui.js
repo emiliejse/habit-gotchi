@@ -61,8 +61,8 @@ updDate();
    ============================================================ */
 let _toastTimer;
 function toast(m) {
-  let el = document.getElementById('toast-snack');
-  if (!el) { el = document.createElement('div'); el.id = 'toast-snack'; document.body.appendChild(el); }
+  let el = document.getElementById('toast');
+  if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
   el.textContent = m;
   el.classList.add('show');
   clearTimeout(_toastTimer);
@@ -793,21 +793,21 @@ function applyUIPalette(id) {
   document.documentElement.style.setProperty('--mint', p.mint);
   document.documentElement.style.setProperty('--pink', p.pink);
   window.D.g.uiPalette = id; save(); renderPerso();
-  toastSnack('Palette ' + p.label + ' appliquée ✿');
+  if (!silent) toast('Palette ' + p.label + ' appliquée ✿');
 }
 function applyGotchiColor(id) {
   const c = GOTCHI_COLORS.find(x => x.id === id); if (!c) return;
   window.D.g.gotchiColor = id; save(); renderPerso();
-  toastSnack('Couleur ' + c.label + ' appliquée ✿');
+  if (!silent) toast('Couleur ' + c.label + ' appliquée ✿');
 }
 function applyEnvTheme(id) {
   const t = ENV_THEMES.find(x => x.id === id); if (!t) return;
   window.D.g.envTheme = id; save(); renderPerso();
-  toastSnack('Ambiance ' + t.label + ' appliquée ✿');
+  if (!silent) toast('Ambiance ' + t.label + ' appliquée ✿');
 }
 function restorePerso() {
-  if (window.D.g.uiPalette)   applyUIPalette(window.D.g.uiPalette);
-  if (window.D.g.gotchiColor) applyGotchiColor(window.D.g.gotchiColor);
+  if (window.D.g.uiPalette)   applyUIPalette(window.D.g.uiPalette, true);
+  if (window.D.g.gotchiColor) applyGotchiColor(window.D.g.gotchiColor, true);
 }
 
 /* ============================================================

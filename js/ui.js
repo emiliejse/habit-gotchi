@@ -116,16 +116,12 @@ function updUI() {
   if (document.getElementById('s-str'))   document.getElementById('s-str').textContent = calcStr();
   if (document.getElementById('s-jrn'))   document.getElementById('s-jrn').textContent = D.journal.length;
   if (document.getElementById('name-inp')) document.getElementById('name-inp').value = g.name;
-  if (document.getElementById('env-sel'))  document.getElementById('env-sel').value = g.activeEnv || 'parc';
-  if (document.getElementById('api-inp'))  document.getElementById('api-inp').value = D.apiKey || '';
-  const shopCard = document.getElementById('shop-card');
+if (document.getElementById('env-sel'))  document.getElementById('env-sel').value = g.activeEnv || 'parc';
   if (document.getElementById('api-inp'))  document.getElementById('api-inp').value = D.apiKey || '';
   const petalesDisplay = document.getElementById('petales-wallet');
   if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0}`;
   updBadgeBoutique();
 }
-}
-function updBadgeBoutique() {
   const badge = document.getElementById('badge-boutique');
   if (!badge) return;
   const lib = window.PROPS_LIB || [];

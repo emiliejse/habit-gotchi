@@ -677,8 +677,19 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   chat.innerHTML += `<div class="chat-bubble-system" id="${typingId}">Gotchi réfléchit... 💭</div>`;
   chat.scrollTop = chat.scrollHeight;
   const messages = isInit ? [{ role:'user', content:systemPrompt }] : [...window._soutienHistory.slice(-6)];
-const sysPrompt = window.AI_SYSTEM?.soutien
-  || 'Tu es un compagnon de bien-être bienveillant. Réponses courtes, chaleureuses, jamais de jugement.';
+const notesJour = window.D.journal
+  .filter(j => j.date.startsWith(today()))
+  .slice(-3)
+  .map(j => `[${j.mood}] ${j.text}`)
+  .join(' | ') || 'aucune note';
+
+const contexte = (window.AI_SYSTEM?.soutien_contexte || '')
+  .replace('{energie}', window.D.g.energy)
+  .replace('{bonheur}', window.D.g.happiness)
+  .replace('{notes}', notesJour)
+  .replace('{messages_restants}', 6 - window._soutienCount);
+
+const sysPrompt = `${window.AI_SYSTEM?.soutien || ''} ${contexte}`.trim();
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

@@ -231,7 +231,7 @@ function toggleHab(catId) {
     window.celebQueue.push(catId);
     window.shakeTimer = 8;
   }
-  save(); renderHabs(); updUI(); updBubbleNow();
+  save(); renderHabs(); updUI(); updBubbleNow(); updBadgeBoutique();
 }
 
 function editH(i, v) {

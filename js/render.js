@@ -109,7 +109,7 @@ const p5s = (p) => {
     // --- Ambiances ---
     if (g.props) {
       // TEST — à supprimer après validation
-      const testDef = { id:'test_amb', motion:'float', palette:['transparent','#88ccff','#aaddff'], pixels:[[0,1,0],[1,2,1],[0,1,0]] };
+      const testDef = { id:'test_amb', motion:'sparkle', palette:['transparent','#88ccff','#aaddff'], pixels:[[0,1,0],[1,2,1],[0,1,0]] };
       if (!window.D.propsPixels) window.D.propsPixels = [];
       if (!window.D.propsPixels.find(x => x.id === 'test_amb')) window.D.propsPixels.push(testDef);
       if (!g.props.find(x => x.id === 'test_amb')) g.props.push({ id:'test_amb', type:'ambiance', actif:true });

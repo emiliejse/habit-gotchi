@@ -330,13 +330,23 @@ else {
       // --- Plinthe ---
       p.fill(n ? '#705868' : '#d0c0b0'); p.rect(0, 118, CS, PX);
 
+            // --- Cadre mural (centre) ---
+      // Cadre
+      p.fill(n ? '#706060' : '#c8a880'); p.rect(88, 68, 28, 28);
+      // Intérieur blanc cassé
+      p.fill(n ? '#504050' : '#f0ece4'); p.rect(91, 71, 22, 22);
+      // Motif géométrique abstrait
+      p.fill(n ? '#907080' : '#c8a8d0');
+      px(96, 76, PX*2, PX*2);   // carré haut gauche
+      px(104, 84, PX*2, PX*2);  // carré bas droite
+      p.fill(n ? '#708090' : '#a8c8d0');
+      px(104, 76, PX, PX*3);    // ligne verticale droite
+      px(96, 84, PX*3, PX);     // ligne horizontale bas
+
       // --- Sol parquet ---
       p.fill(n ? '#807080' : C.floorIn); p.rect(0, 120, CS, 80);
       p.fill(n ? '#706070' : '#b8a898');
       for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); }
-      p.fill(n ? '#706070' : '#c0b0a0');
-      for (let lx = 0; lx < CS; lx += 40) { p.rect(lx, 120, 1, 80); }
-      for (let lx = 20; lx < CS; lx += 40) { p.rect(lx, 133, 1, 67); }
 
       // --- Tapis pleine hauteur ---
       p.fill(n ? '#504060' : '#c0a8e8'); p.rect(18, 138, 164, 62);
@@ -351,6 +361,9 @@ else {
       // Plateau par-dessus
       p.fill(n ? '#907878' : '#c8a880'); p.rect(bx, 100, 58, PX*2);
       p.fill(n ? '#706060' : '#a88860'); p.rect(bx, 108, 58, PX);
+      // Lampe
+      p.fill(n ? '#f0d870' : '#f0e898'); px(bx+38, 90, PX, PX*2);
+      p.fill(n ? '#e8b830' : '#f8d858'); px(bx+33, 88, PX*3, PX);
     }
 }
     else if (env === 'montagne') {

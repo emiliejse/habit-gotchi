@@ -71,7 +71,7 @@ const p5s = (p) => {
     const gc = getGotchiC();
     C.body = gc.body; C.bodyLt = gc.bodyLt; C.bodyDk = gc.bodyDk;
     const ec = getEnvC();
-    C.gnd = ec.gnd; C.gndDk = ec.gndDk; C.skyD1 = ec.skyD1; C.skyD2 = ec.skyD2;
+    C.gnd = ec.gnd; C.gndDk = ec.gndDk; C.skyD1 = ec.sky1; C.skyD2 = ec.sky2;
 
     const en = g.energy * 20, ha = g.happiness * 20;
     const n = (h >= 21 || h < 6);

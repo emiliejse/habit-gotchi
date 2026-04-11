@@ -123,10 +123,10 @@ function updUI() {
     shopCard.style.display = (D.g.petales || 0) >= 10 ? 'block' : 'none';
     const wallet = document.getElementById('xp-wallet');
     if (wallet) wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
-    const petalesDisplay = document.getElementById('petales-wallet');
-    if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0} Pétales`;
-     updBadgeBoutique();
-  }
+const petalesDisplay = document.getElementById('petales-wallet');
+  if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0}`;
+  updBadgeBoutique();
+}
 }
 function updBadgeBoutique() {
   const badge = document.getElementById('badge-boutique');

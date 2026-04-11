@@ -32,34 +32,27 @@ async function loadDataFiles() {
     ]);
     if (results[0].status === 'fulfilled') {
       window.PROPS_LIB = results[0].value.catalogue || [];
+      window.PROPS_LIB.forEach(prop => {
+        if (prop.cout === 0 && !D.g.props.find(p => p.id === prop.id)) {
+          D.g.props.push({
+            id: prop.id,
+            nom: prop.nom,
+            type: prop.type,
+            emoji: prop.emoji,
+            actif: false
+          });
+        }
+      });
+      save();
       renderProps();
       updBadgeBoutique();
     }
-  } catch(e) {
-    console.warn('Erreur chargement data:', e);
-  }
+    if (results[1].status === 'fulfilled') window.PERSONALITY = results[1].value;
+    if (results[2].status === 'fulfilled') window.ENVIRONMENTS = results[2].value;
+    if (results[3].status === 'fulfilled') window.STYLES = results[3].value;
+    console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props');
+  } catch(e) { console.log('Mode local (fichiers data absents)'); }
 }
- if (results[0].status === 'fulfilled') {
-  window.PROPS_LIB = results[0].value.catalogue || [];
-  window.PROPS_LIB.forEach(prop => {
-    if (prop.cout === 0 && !D.g.props.find(p => p.id === prop.id)) {
-      D.g.props.push({
-        id: prop.id,
-        nom: prop.nom,
-        type: prop.type,
-        emoji: prop.emoji,
-        actif: false
-      });
-    }
-  });
-  save();
-  renderProps();
-  updBadgeBoutique();
-}
-if (results[1].status === 'fulfilled') window.PERSONALITY = results[1].value;
-if (results[2].status === 'fulfilled') window.ENVIRONMENTS = results[2].value;
-if (results[3].status === 'fulfilled') window.STYLES = results[3].value;
-console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props');
 /* ============================================================
    CONSTANTES MÉTIER
    ============================================================ */

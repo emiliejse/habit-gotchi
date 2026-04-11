@@ -190,22 +190,21 @@
     </div>
   </div><!-- fin p-progress -->
 
-  <!-- PROPS / INVENTAIRE -->
-  <div id="p-props" class="pnl">
-    <div class="card">
-      <h2>🎒 Mon Inventaire</h2>
-      <div id="props-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
-      <div id="props-list" style="margin-top:6px"></div>
-    </div>
-    <div class="card" id="shop-card" style="margin-top:8px;text-align:center;display:none;">
-      <h2>🛍️ Boutique</h2>
-      <p style="font-size:10px;color:var(--text2);margin-bottom:8px">Dépense 10 🌸 pour recevoir un nouvel objet de Claude</p>
-      <span id="petales-wallet" style="font-size:13px;font-weight:bold;color:var(--pink)"></span>
-      <button class="btn btn-p" onclick="buyProp()" style="width:100%;margin-top:8px;font-size:11px">
-        🌸 Demander un objet (10 Pétales)
-      </button>
-    </div>
-  </div><!-- fin p-props -->
+<!-- PROPS / INVENTAIRE -->
+<div id="p-props" class="pnl">
+  <div class="card">
+    <h2>🎒 Mon Inventaire</h2>
+    <div id="props-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
+    <div id="props-list" style="margin-top:6px"></div>
+  </div>
+  <div class="card" style="margin-top:8px;text-align:center">
+    <h2>🛍️ Boutique</h2>
+    <span id="petales-wallet" style="font-size:13px;font-weight:bold;color:var(--pink)"></span>
+    <button class="btn btn-p" onclick="ouvrirBoutique()" style="width:100%;margin-top:8px;font-size:11px">
+      🛍️ Ouvrir la boutique
+    </button>
+  </div>
+</div><!-- fin p-props -->
 
   <!-- PERSO -->
   <div id="p-perso" class="pnl">
@@ -309,12 +308,11 @@
       <div class="menu-circle" onclick="goMenu('perso')">
         <span class="mc-icon">🎨</span><span class="mc-label">Perso</span>
       </div>
-      <div class="menu-circle" onclick="goMenu('props')">
-           <div class="menu-circle" onclick="ouvrirBoutique()">
-  <span class="mc-icon">🛍️</span><span class="mc-label">Boutique</span>
+      <div class="menu-circle" onclick="goMenu('props')" style="position:relative">
+  <span class="mc-icon">🎒</span>
+  <span class="mc-label">Inventaire</span>
+  <span id="badge-boutique" style="display:none;position:absolute;top:2px;right:2px;background:var(--pink);color:#fff;border-radius:50%;width:10px;height:10px;font-size:7px;line-height:10px;text-align:center">!</span>
 </div>
-        <span class="mc-icon">🎒</span><span class="mc-label">Inventaire</span>
-      </div>
       <div class="menu-circle" onclick="goMenu('settings')">
         <span class="mc-icon">⚙️</span><span class="mc-label">Réglages</span>
       </div>

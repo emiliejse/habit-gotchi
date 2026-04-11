@@ -346,7 +346,8 @@ async function buyProp() {
   D.g.petales -= 10; save(); addXp(-100);
   toast('Claude crée ton objet... 💭');
   const nomsExistants = (D.g.props || []).map(p => p.nom).join(', ') || 'aucun';
-  const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
+  // ✏️ PERSONNALISATION — modifie cette liste pour changer les thèmes des props achetés
+const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
   const theme  = themes[Math.floor(Math.random() * themes.length)];
   const ctx = window.PROMPTS && window.PROMPTS.aiContexts;
   const prompt = ctx

@@ -230,9 +230,7 @@ function renderProps() {
   filtered.forEach(({ p, def }) => {
     if (def && def.pixels) renderPropMini(document.getElementById(`mini-${p.id}`), def);
   });
-  const shopCard = document.getElementById('shop-card');
   const wallet   = document.getElementById('xp-wallet');
-  if (shopCard) shopCard.style.display = (D.g.petales || 0) >= 10 ? 'block' : 'none';
   if (wallet)   wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
 }
 function ouvrirBoutique() {

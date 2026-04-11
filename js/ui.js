@@ -132,8 +132,9 @@ function updBadgeBoutique() {
   const badge = document.getElementById('badge-boutique');
   if (!badge) return;
   const lib = window.PROPS_LIB || [];
+  const petales = D.g.petales || 0;
   const aDisponible = lib.some(p => 
-    !(D.g.props || []).find(inv => inv.id === p.id)
+    !(D.g.props || []).find(inv => inv.id === p.id) && petales >= p.cout
   );
   badge.style.display = aDisponible ? 'block' : 'none';
 }
@@ -308,6 +309,7 @@ function acheterProp(propId) {
   D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
   save();
   toast(`🎁 ${prop.nom} ajouté à ton inventaire !`);
+   renderProps();
   ouvrirBoutique();
 }
 function setPropsFilter(cat) { propsFilterActive = cat; renderProps(); }

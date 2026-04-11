@@ -94,18 +94,28 @@ const p5s = (p) => {
     let envActif = g.activeEnv || 'parc';
     drawActiveEnv(p, envActif, n);
 
-    // --- Props DÉCOR (au sol, avant le gotchi) ---
-    if (g.props) {
-      g.props.filter(pr => pr.actif && pr.type === 'decor').forEach(prop => {
-        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
-                 || (window.D.propsPixels || []).find(l => l.id === prop.id);
-        if (def && def.pixels) {
-          const slot = PROP_SLOTS[prop.slot] || PROP_SLOTS[def.slot] || PROP_SLOTS['SOL'];
-          drawProp(p, def, slot.x, slot.y);
-        }
-      });
+// --- Props DÉCOR fond (A, B) — dessinés EN PREMIER = derrière ---
+if (D.g.props) {
+  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
+    const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
+             || (D.propsPixels || []).find(l => l.id === prop.id);
+    if (def && def.pixels) {
+      const slot = PROP_SLOTS[prop.slot] || PROP_SLOTS[def.slot] || PROP_SLOTS['SOL'];
+      drawProp(p, def, slot.x, slot.y);
     }
-
+  });
+}
+// --- Props DÉCOR devant (C, D, SOL) — dessinés EN DERNIER = devant ---
+if (D.g.props) {
+  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot !== 'A' && pr.slot !== 'B').forEach(prop => {
+    const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
+             || (D.propsPixels || []).find(l => l.id === prop.id);
+    if (def && def.pixels) {
+      const slot = PROP_SLOTS[prop.slot] || PROP_SLOTS[def.slot] || PROP_SLOTS['SOL'];
+      drawProp(p, def, slot.x, slot.y);
+    }
+  });
+}
     // --- Ambiances ---
     if (g.props) {
       g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
@@ -175,7 +185,7 @@ const p5s = (p) => {
 
     // --- Pétales (coin sup. gauche) ---
     p.fill(255); p.noStroke();
-    p.textSize(10); p.textFont('Courier New');
+    p.textSize(12); p.textFont('Courier New');
     p.textAlign(p.LEFT, p.TOP);
     p.text('🌸 ' + (g.petales || 0), 6, 8);
 

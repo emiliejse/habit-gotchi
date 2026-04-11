@@ -352,7 +352,7 @@ const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan',
   const ctx = window.PROMPTS && window.PROMPTS.aiContexts;
   const prompt = ctx
     ? ctx.buyProp.replace('{{theme}}', theme).replace('{{existingNames}}', nomsExistants).replace('{{timestamp}}', Date.now())
-    : `Invente un objet pixel art UNIQUE sur le thème "${theme}". Objets existants (NE PAS reproduire): ${nomsExistants}. Max 7x7px. Catégories: "decor","accessoire","ambiance". Palette hex index 0=transparent. JSON strict sans texte:\n{"id":"obj_${Date.now()}","nom":"nom joli","type":"decor","emoji":"🌸","position":{"x":150,"y":128},"palette":["transparent","#couleur1","#couleur2"],"pixels":[[0,1,0],[1,2,1],[0,1,0]]}`;
+    : "Invente un objet pixel art UNIQUE et SURPRENANT sur le thème \"{{theme}}\".\nObjets déjà dans l'inventaire (NE PAS reproduire) : {{existingNames}}.\nSois créatif et inattendu. Max 7x7 pixels. Pour une appli de bien-être.\nCatégories possibles: \"decor\", \"accessoire\", \"ambiance\".\nPour type \"ambiance\", choisis \"motion\" parmi : \"drift\" (flotte horizontalement), \"fall\" (tombe de haut en bas), \"float\" (monte doucement), \"sparkle\" (apparaît/disparaît) selon ce que l'objet évoque.\nPalette: tableau de couleurs hex, index 0 = toujours \"transparent\".\nRéponds UNIQUEMENT en JSON strict, sans texte autour :\n{\"id\":\"obj_{{timestamp}}\",\"nom\":\"nom joli\",\"type\":\"ambiance\",\"motion\":\"drift\",\"emoji\":\"🌸\",\"palette\":[\"transparent\",\"#couleur1\",\"#couleur2\"],\"pixels\":[[0,1,0],[1,2,1],[0,1,0]]}",
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

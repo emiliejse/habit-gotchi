@@ -224,7 +224,82 @@ function renderProps() {
   if (shopCard) shopCard.style.display = (D.g.petales || 0) >= 10 ? 'block' : 'none';
   if (wallet)   wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
 }
+function ouvrirBoutique() {
+  haptic();
+  const onglet = window._boutiqueOnglet || 'catalogue';
+  
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h3 style="font-size:13px;color:var(--lilac);">🛍️ Boutique</h3>
+      <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button>
+    </div>
+    <p style="font-size:10px;color:var(--text2);text-align:center">🌸 Tes pétales : <b>${D.g.petales || 0}</b></p>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button onclick="switchBoutiqueOnglet('catalogue')" id="btn-onglet-catalogue" style="flex:1;padding:6px;border-radius:20px;border:2px solid var(--border);font-size:10px;cursor:pointer;background:${onglet==='catalogue'?'var(--lilac)':'#fff'};color:${onglet==='catalogue'?'#fff':'var(--text2)'}">🌸 Catalogue</button>
+      <button onclick="switchBoutiqueOnglet('claude')" id="btn-onglet-claude" style="flex:1;padding:6px;border-radius:20px;border:2px solid var(--border);font-size:10px;cursor:pointer;background:${onglet==='claude'?'var(--lilac)':'#fff'};color:${onglet==='claude'?'#fff':'var(--text2)'}">🤖 Générer</button>
+    </div>
+    <div id="boutique-contenu"></div>
+  `;
+  renderBoutiqueOnglet(onglet);
+}
 
+function switchBoutiqueOnglet(onglet) {
+  window._boutiqueOnglet = onglet;
+  ouvrirBoutique();
+}
+
+function renderBoutiqueOnglet(onglet) {
+  const el = document.getElementById('boutique-contenu');
+  if (!el) return;
+
+  if (onglet === 'catalogue') {
+    const lib = window.PROPS_LIB || [];
+    el.innerHTML = lib.map(prop => {
+      const possede = (D.g.props || []).find(p => p.id === prop.id);
+      const peutAcheter = (D.g.petales || 0) >= prop.cout;
+      
+      if (possede) {
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px;border:2px solid var(--border);border-radius:8px;margin-bottom:6px;opacity:0.5">
+          <span style="font-size:18px">${prop.emoji}</span>
+          <span style="font-size:10px;font-weight:bold">${prop.nom}</span>
+          <span style="font-size:9px;color:var(--mint)">✓ Possédé</span>
+        </div>`;
+      }
+      
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px;border:2px solid var(--border);border-radius:8px;margin-bottom:6px">
+        <span style="font-size:18px">${prop.emoji}</span>
+        <span style="font-size:10px;font-weight:bold">${prop.nom}</span>
+        <button onclick="acheterProp('${prop.id}')" 
+          style="padding:4px 8px;border-radius:12px;border:none;font-size:9px;cursor:${peutAcheter?'pointer':'not-allowed'};background:${peutAcheter?'var(--lilac)':'#ccc'};color:#fff">
+          ${prop.cout === 0 ? 'Prendre 🎁' : `🌸 ${prop.cout}`}
+        </button>
+      </div>`;
+    }).join('');
+
+  } else {
+    const peutGenerer = (D.g.petales || 0) >= 16;
+    el.innerHTML = `
+      <p style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:12px">Claude invente un prop unique rien que pour toi ✨</p>
+      <button onclick="acheterPropClaude()" style="width:100%;padding:10px;border-radius:12px;border:none;font-size:11px;font-weight:bold;cursor:${peutGenerer?'pointer':'not-allowed'};background:${peutGenerer?'var(--lilac)':'#ccc'};color:#fff">
+        ${peutGenerer ? '🤖 Générer un prop — 🌸 16' : '🌸 Il te faut 16 pétales'}
+      </button>
+    `;
+  }
+}
+
+function acheterProp(propId) {
+  const prop = (window.PROPS_LIB || []).find(p => p.id === propId);
+  if (!prop) return;
+  if ((D.g.petales || 0) < prop.cout) { toast('Pas assez de pétales 🌸'); return; }
+  
+  D.g.petales = (D.g.petales || 0) - prop.cout;
+  if (!D.g.props) D.g.props = [];
+  D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
+  save();
+  toast(`🎁 ${prop.nom} ajouté à ton inventaire !`);
+  ouvrirBoutique();
+}
 function setPropsFilter(cat) { propsFilterActive = cat; renderProps(); }
 
 function toggleProp(index) {
@@ -443,20 +518,23 @@ async function askClaude() {
   } catch(e) { if (document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = 'Erreur API.'; }
 }
 
-async function buyProp() {
-  const D = window.D;
+async function acheterPropClaude() {
+  if ((D.g.petales || 0) < 16) { toast('Pas assez de pétales 🌸'); return; }
   if (!D.apiKey) { toast('Clé API manquante dans les Réglages'); return; }
-  if ((D.g.petales || 0) < 10) { toast('Il te faut 10 🌸 Pétales'); return; }
-  D.g.petales -= 10; save(); addXp(-100);
-  toast('Claude crée ton objet... 💭');
+
+  D.g.petales -= 16; save();
+
+  const el = document.getElementById('boutique-contenu');
+  if (el) el.innerHTML = '<p style="text-align:center;font-size:11px;padding:20px">Claude crée ton prop... 💭</p>';
+
   const nomsExistants = (D.g.props || []).map(p => p.nom).join(', ') || 'aucun';
-  // ✏️ PERSONNALISATION — modifie cette liste pour changer les thèmes des props achetés
-const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
-  const theme  = themes[Math.floor(Math.random() * themes.length)];
+  const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
+  const theme = themes[Math.floor(Math.random() * themes.length)];
   const ctx = window.PROMPTS && window.PROMPTS.aiContexts;
-const prompt = ctx
+  const prompt = ctx
     ? ctx.buyProp.replace('{{theme}}', theme).replace('{{existingNames}}', nomsExistants).replace('{{timestamp}}', Date.now())
     : `Invente un objet pixel art UNIQUE et SURPRENANT sur le thème "${theme}".\nObjets déjà dans l'inventaire (NE PAS reproduire) : ${nomsExistants}.\nSois créatif et inattendu. Max 7x7 pixels. Pour une appli de bien-être.\nCatégories possibles: "decor", "accessoire", "ambiance".\nPour type "ambiance", choisis "motion" parmi : "drift", "fall", "float", "sparkle".\nPalette: tableau hex, index 0 = "transparent".\nJSON strict sans texte autour :\n{"id":"obj_${Date.now()}","nom":"nom joli","type":"ambiance","motion":"drift","emoji":"🌸","palette":["transparent","#couleur1","#couleur2"],"pixels":[[0,1,0],[1,2,1],[0,1,0]]}`;
+
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -473,8 +551,13 @@ const prompt = ctx
       window.PROPS_LOCAL = D.propsPixels;
       save(); renderProps(); updUI();
       toast(`🎁 ${obj.nom} ajouté à ton inventaire !`);
+      ouvrirBoutique();
     }
-  } catch(e) { D.g.petales = (D.g.petales || 0) + 10; save(); toast('Erreur API, pétales remboursés.'); }
+  } catch(e) {
+    D.g.petales = (D.g.petales || 0) + 16; save();
+    toast('Erreur API, pétales remboursés 🌸');
+    ouvrirBoutique();
+  }
 }
 
 /* ============================================================

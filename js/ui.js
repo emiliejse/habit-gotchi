@@ -489,9 +489,8 @@ async function askClaude() {
       ? ctx.askClaude.withGift.replace('{{timestamp}}', Date.now())
       : ctx.askClaude.withoutGift);
   } else {
-    prompt = `Tu es le compagnon numérique d'Émilie. Énergie ${g.energy}/5, Humeur ${g.happiness}/5, Notes: ${recentJ||'(vide)'}.\nAction 1: Donne une pensée complice (2 phrases max).\nAction 2: Invente une TRÈS COURTE phrase (1 à 4 mots) qu'un compagnon dirait en patientant.`;
-    if (giveGift) prompt += ` Action 3: INVENTE un petit objet pixel art (max 7x7 pixels). Catégories: "decor","accessoire","ambiance". Palette hex, index 0=transparent. Réponds UNIQUEMENT en JSON strict:\n{"message":"ta pensée","bulle":"phrase courte","cadeau":{"id":"mot_unique_${Date.now()}","nom":"nom joli","type":"decor","slot":"D","palette":["transparent","#couleur1","#couleur2"],"pixels":[[0,1,0],[1,2,1],[0,1,0]]}}`;
-    else prompt += ` Réponds UNIQUEMENT en JSON strict: {"message":"ta pensée","bulle":"phrase courte"}`;
+    toast('Erreur : fichier prompts non chargé.');
+    return;
   }
 
   if (document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = 'Je réfléchis... 💭';

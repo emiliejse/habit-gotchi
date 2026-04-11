@@ -485,8 +485,11 @@ async function askClaude() {
       .replace('{{energy}}', g.energy)
       .replace('{{happiness}}', g.happiness)
       .replace('{{notes}}', recentJ || '(vide)');
-    prompt += '\n' + (giveGift
-      ? ctx.askClaude.withGift.replace('{{timestamp}}', Date.now())
+    const nomsExistants = (D.g.props || []).map(p => p.nom).join(', ') || 'aucun';
+prompt += '\n' + (giveGift
+      ? ctx.askClaude.withGift
+          .replace('{{timestamp}}', Date.now())
+          .replace('{{existingNames}}', nomsExistants)
       : ctx.askClaude.withoutGift);
   } else {
     toast('Erreur : fichier prompts non chargé.');

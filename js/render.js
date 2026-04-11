@@ -178,7 +178,7 @@ if (D.g.props) {
                   : def.ancrage==='cou'  ? gotchiInfo.neckY
                   : gotchiInfo.topY;
       const offsetY = def.ancrage==='yeux' ? PX*2
-              : def.ancrage==='cou'  ? PX*4
+              : def.ancrage==='cou'  ? PX*3
               : PX; // tete
 const accY = baseY - def.pixels.length * PX + offsetY;
       

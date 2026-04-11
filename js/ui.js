@@ -22,7 +22,7 @@ function go(t) {
   } else {
     shell.classList.add('shrunk');
     if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
-    else if (t === 'perso')    window.D.g.activeEnv = 'chambre';
+    else if (t === 'perso')    window.D.g.activeEnv = 'parc';
     else if (t === 'progress') window.D.g.activeEnv = 'montagne';
     else if (t === 'settings') window.D.g.activeEnv = 'chambre';
     else if (t === 'props')    window.D.g.activeEnv = 'parc';

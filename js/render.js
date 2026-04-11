@@ -301,13 +301,34 @@ const accY = baseY - def.pixels.length * PX + offsetY;
         p.fill('#f0c850'); p.rect(20, 70, 40, 40);
         p.fill('#e8e8f0'); p.rect(38, 70, 4, 40); p.rect(20, 88, 40, 4);
       }
-      else {
-        p.fill(n ? '#a090a8' : C.wallIn); p.rect(0, 60, CS, 60);
-        p.fill(n ? '#807080' : C.floorIn); p.rect(0, 120, CS, 80);
-        p.fill(n ? '#605070' : C.rug); p.rect(20, 140, 160, 40, 10);
-        p.fill(n ? C.skyN1 : C.skyD1); p.rect(20, 70, 40, 40);
-        p.fill('#e8e8f0'); p.rect(38, 70, 4, 40); p.rect(20, 88, 40, 4);
+else {
+      // Mur
+      p.fill(n ? '#a090a8' : C.wallIn); p.rect(0, 60, CS, 60);
+      // Plinthe (bande séparatrice mur/sol)
+      p.fill(n ? '#705868' : '#d0c0b0'); p.rect(0, 118, CS, PX);
+      // Sol parquet
+      p.fill(n ? '#807080' : C.floorIn); p.rect(0, 120, CS, 80);
+      // Joints de parquet (3 lignes horizontales)
+      p.fill(n ? '#706070' : '#b8a898');
+      p.rect(0, 130, CS, 1); p.rect(0, 143, CS, 1); p.rect(0, 156, CS, 1);
+      // Tapis avec bord
+      p.fill(n ? '#504060' : '#c0a8e8'); p.rect(18, 138, 164, 44, 3);
+      p.fill(n ? '#605070' : C.rug);     p.rect(22, 141, 156, 38, 3);
+      // Fenêtre : ciel derrière
+      p.fill(n ? C.skyN1 : C.skyD1); p.rect(20, 68, 42, 42);
+      // Nuage ou lune dans la fenêtre
+      if (n) {
+        p.fill('#f0e8a0'); px(34, 74, PX*2, PX); px(32, 79, PX*3, PX*2); // lune
+      } else {
+        p.fill('#ece8f4'); px(24, 76, PX*3, PX); px(22, 81, PX*4, PX*2); // nuage
       }
+      // Cadre fenêtre
+      p.fill('#c8baa8'); p.rect(18, 66, 46, 46); p.fill(n ? C.skyN1 : C.skyD1); p.rect(20, 68, 42, 42);
+      // Croisillons fenêtre
+      p.fill('#e8e8f0'); p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
+      // Rebord de fenêtre
+      p.fill(n ? '#706060' : '#d8c8b8'); p.rect(16, 110, 50, PX);
+    }
     }
 
     else if (env === 'montagne') {

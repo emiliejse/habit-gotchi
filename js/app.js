@@ -22,10 +22,10 @@ window.meteoData  = null;
    CHARGEMENT FICHIERS DATA + PROMPTS
    ============================================================ */
 async function loadDataFiles() {
-  console.log('base:', base);
-console.log('promptsBase:', promptsBase);
   const base = 'data/';
   const promptsBase = 'prompts/';
+  console.log('base:', base);
+  console.log('promptsBase:', promptsBase);
  try {
   const results = await Promise.allSettled([
     fetch(base + 'props.json').then(r => r.json()),          // 0

@@ -177,7 +177,10 @@ if (D.g.props) {
       const baseY = def.ancrage==='yeux' ? gotchiInfo.eyeY
                   : def.ancrage==='cou'  ? gotchiInfo.neckY
                   : gotchiInfo.topY;
-      const accY = baseY - def.pixels.length * PX;
+      const offsetY = def.ancrage==='yeux' ? PX*2
+              : def.ancrage==='cou'  ? PX*4
+              : PX; // tete
+const accY = baseY - def.pixels.length * PX + offsetY;
       
       drawProp(p, def, accX, accY);
     }

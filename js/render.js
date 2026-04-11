@@ -305,30 +305,27 @@ else {
       // --- Mur ---
       p.fill(n ? '#a090a8' : C.wallIn); p.rect(0, 60, CS, 60);
 
-      // --- Rideaux (derrière la fenêtre) ---
+      // --- Fenêtre : ciel qui suit l'heure ---
+      let skyCol = (h>=20||h<6) ? C.skyN1 : (h>=17) ? C.skyK1 : (h>=7) ? C.skyD1 : C.skyA1;
+      p.fill(skyCol); p.rect(20, 68, 42, 42);
+      // Cadre fenêtre
+      p.fill(n ? '#706060' : '#c8baa8');
+      p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
+      p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
+      // Croisillons
+      p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
+      // Rebord
+      p.fill(n ? '#807070' : '#d8c8b8'); p.rect(16, 108, 50, PX);
+
+      // --- Rideaux DEVANT la fenêtre ---
       let rideau = n ? '#705878' : '#c8a8d8';
       let rideauDk = n ? '#504060' : '#a888c0';
       p.fill(rideau);   p.rect(10, 63, 12, 52);
       p.fill(rideauDk); p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52);
       p.fill(rideau);   p.rect(62, 63, 12, 52);
       p.fill(rideauDk); p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52);
+      // Tringle
       p.fill(n ? '#907080' : '#b8a090'); p.rect(8, 62, 68, 3);
-
-      // --- Fenêtre : ciel qui suit l'heure ---
-      let skyCol = (h>=20||h<6) ? C.skyN1 : (h>=17) ? C.skyK1 : (h>=7) ? C.skyD1 : C.skyA1;
-      p.fill(skyCol); p.rect(20, 68, 42, 42);
-      if (h>=20||h<6) {
-        p.fill('#f0e8a0'); px(34, 74, PX*2, PX); px(32, 79, PX*3, PX*2);
-      } else {
-        let wCx = 24 + (p.frameCount * 0.3) % 30;
-        p.fill('#ece8f4'); px(wCx, 76, PX*3, PX); px(wCx-PX, 81, PX*4, PX*2);
-      }
-      // Cadre + croisillons par-dessus le ciel
-      p.fill(n ? '#706060' : '#c8baa8');
-      p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
-      p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
-      p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
-      p.fill(n ? '#807070' : '#d8c8b8'); p.rect(16, 108, 50, PX);
 
       // --- Plinthe ---
       p.fill(n ? '#705868' : '#d0c0b0'); p.rect(0, 118, CS, PX);
@@ -347,13 +344,13 @@ else {
 
       // --- Bureau à droite ---
       let bx = 138;
+      // Pieds EN PREMIER (derrière le plateau)
+      p.fill(n ? '#806868' : '#b89870');
+      p.rect(bx+4,  108, PX, 18);
+      p.rect(bx+46, 108, PX, 18);
+      // Plateau par-dessus
       p.fill(n ? '#907878' : '#c8a880'); p.rect(bx, 100, 58, PX*2);
       p.fill(n ? '#706060' : '#a88860'); p.rect(bx, 108, 58, PX);
-      p.fill(n ? '#806868' : '#b89870');
-      p.rect(bx+2,  108, PX, 18);
-      p.rect(bx+48, 108, PX, 18);
-      p.fill(n ? '#f0d870' : '#f0e898'); px(bx+38, 90, PX, PX*2);
-      p.fill(n ? '#e8b830' : '#f8d858'); px(bx+33, 88, PX*3, PX);
     }
 }
     else if (env === 'montagne') {

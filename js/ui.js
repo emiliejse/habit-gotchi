@@ -647,12 +647,14 @@ function genSoutien() {
         onkeydown="if(event.key==='Enter')sendSoutienMsg()">
       <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:8px 12px">→</button>
     </div>
-    '<p style="font-size:8px;color:var(--text2);text-align:center;margin-top:4px">6 messages max · conversation non sauvegardée</p>'
+    <p style="font-size:8px;color:var(--text2);text-align:center;margin-top:4px">6 messages max · conversation non sauvegardée</p>
+`;
   sendSoutienMsg(promptInit, true);
 }
 
 async function sendSoutienMsg(systemPrompt, isInit = false) {
   const key = window.D.apiKey;
+  const chat = document.getElementById('soutien-chat');
   if (!isInit) {
   if (window._soutienCount >= 6) {
     chat.innerHTML += `<div class="chat-bubble-system">Tu as atteint la limite de 6 messages pour cette session. Prends soin de toi 💜</div>`;
@@ -664,7 +666,6 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   window._soutienCount++;
 }
   if (!key) { toast('Clé API manquante dans les Réglages'); return; }
-  const chat = document.getElementById('soutien-chat');
   const inp  = document.getElementById('soutien-inp');
   let userText = '';
   if (!isInit) {

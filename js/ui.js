@@ -632,6 +632,7 @@ function genSoutien() {
     : `Tu es le Gotchi, un compagnon bienveillant pour le bien-être mental et le TDAH.\nL'utilisateur a besoin de soutien. Énergie: ${D.g.energy}/5, Bonheur: ${D.g.happiness}/5.\nCommence par une phrase douce. Pose UNE question ouverte. Ton doux, jamais de jugement.`;
 
   window._soutienHistory = [];
+  window._soutienCount = 0;
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -646,12 +647,22 @@ function genSoutien() {
         onkeydown="if(event.key==='Enter')sendSoutienMsg()">
       <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:8px 12px">→</button>
     </div>
-    <p style="font-size:8px;color:var(--text2);text-align:center;margin-top:4px">Cette conversation ne se sauvegarde pas.</p>`;
+    '<p style="font-size:8px;color:var(--text2);text-align:center;margin-top:4px">6 messages max · conversation non sauvegardée</p>'
   sendSoutienMsg(promptInit, true);
 }
 
 async function sendSoutienMsg(systemPrompt, isInit = false) {
   const key = window.D.apiKey;
+  if (!isInit) {
+  if (window._soutienCount >= 6) {
+    chat.innerHTML += `<div class="chat-bubble-system">Tu as atteint la limite de 6 messages pour cette session. Prends soin de toi 💜</div>`;
+    chat.scrollTop = chat.scrollHeight;
+    document.getElementById('soutien-inp').disabled = true;
+    document.querySelector('#mbox .btn-p').disabled = true;
+    return;
+  }
+  window._soutienCount++;
+}
   if (!key) { toast('Clé API manquante dans les Réglages'); return; }
   const chat = document.getElementById('soutien-chat');
   const inp  = document.getElementById('soutien-inp');

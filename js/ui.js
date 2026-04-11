@@ -472,6 +472,8 @@ function cleanProps() {
    API CLAUDE — CADEAU / BULLE
    ============================================================ */
 async function askClaude() {
+  console.log('AI_CONTEXTS:', window.AI_CONTEXTS);
+console.log('PERSONALITY:', window.PERSONALITY);
   const key = D.apiKey;
   if (!key) { toast('Clé API manquante dans les Réglages'); return; }
 

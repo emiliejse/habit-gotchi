@@ -351,6 +351,9 @@ function updBubbleNow() {
 /* ============================================================
    LANCEMENT
    ============================================================ */
-loadDataFiles().then(initBaseProps);
+loadDataFiles().then(() => {
+  initBaseProps();
+  updBadgeBoutique();
+});
 fetchMeteo();
 setInterval(fetchMeteo, 1800000);

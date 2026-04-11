@@ -89,7 +89,7 @@ const p5s = (p) => {
       return;
     }
 
-    if (true) drawWind(p); // test vent
+    if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
 
     let envActif = g.activeEnv || 'parc';
     drawActiveEnv(p, envActif, n);
@@ -108,12 +108,6 @@ const p5s = (p) => {
 
     // --- Ambiances ---
     if (g.props) {
-      // TEST — à supprimer après validation
-      const testDef = { id:'test_amb', motion:'sparkle', palette:['transparent','#88ccff','#aaddff'], pixels:[[0,1,0],[1,2,1],[0,1,0]] };
-      if (!window.D.propsPixels) window.D.propsPixels = [];
-      if (!window.D.propsPixels.find(x => x.id === 'test_amb')) window.D.propsPixels.push(testDef);
-      if (!g.props.find(x => x.id === 'test_amb')) g.props.push({ id:'test_amb', type:'ambiance', actif:true });
-
       g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
         const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
                  || (window.D.propsPixels || []).find(l => l.id === prop.id);

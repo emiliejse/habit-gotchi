@@ -24,33 +24,33 @@ window.meteoData  = null;
 async function loadDataFiles() {
   const base = 'data/';
   const promptsBase = 'prompts/';
-  try {
-    const results = await Promise.allSettled([
-      fetch(base + 'props.json').then(r => r.json()),
-      fetch(base + 'personality.json').then(r => r.json()),
-      fetch(base + 'environments.json').then(r => r.json()),
-      fetch(base + 'styles.json').then(r => r.json()),
-      fetch(promptsBase + 'ai_contexts.json').then(r => r.json()),  // ✨
-      fetch(promptsBase + 'bubbles.json').then(r => r.json()),       // ✨
-      fetch(promptsBase + 'ai_system.json').then(r => r.json())       // ✨
-    ]);
-    if (results[0].status === 'fulfilled') {
-      window.PROPS_LIB = results[0].value.catalogue || [];
-      window.PROPS_LIB.forEach(prop => {
-        if (prop.cout === 0 && !D.g.props.find(p => p.id === prop.id)) {
-          D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
-        }
-      });
-      save(); renderProps(); updBadgeBoutique();
-    }
-    if (results[1].status === 'fulfilled') window.PERSONALITY  = results[1].value;
-    if (results[2].status === 'fulfilled') window.ENVIRONMENTS = results[2].value;
-    if (results[3].status === 'fulfilled') window.STYLES       = results[3].value;
-    if (results[4].status === 'fulfilled') window.PROMPTS      = { aiContexts: results[4].value };  // ✨
-    if (results[5].status === 'fulfilled') window.PROMPTS      = { ...window.PROMPTS, bubbles: results[5].value };  // ✨
-    if (results[6].status === 'fulfilled') window.PROMPTS      = { ...window.PROMPTS, aiSystem: results[6].value };  // ✨
-    console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props', '| Prompts:', !!window.PROMPTS);
-  } catch(e) { console.log('Mode local (fichiers data absents)'); }
+ try {
+  const results = await Promise.allSettled([
+    fetch(base + 'props.json').then(r => r.json()),          // 0
+    fetch(base + 'personality.json').then(r => r.json()),    // 1
+    fetch(base + 'environments.json').then(r => r.json()),   // 2
+    fetch(base + 'styles.json').then(r => r.json()),         // 3
+    fetch(promptsBase + 'ai_contexts.json').then(r => r.json()), // 4
+    fetch(promptsBase + 'ai_system.json').then(r => r.json()),   // 5
+  ]);
+
+  if (results[0].status === 'fulfilled') {
+    window.PROPS_LIB = results[0].value.catalogue || [];
+    window.PROPS_LIB.forEach(prop => {
+      if (prop.cout === 0 && !D.g.props.find(p => p.id === prop.id)) {
+        D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
+      }
+    });
+    save(); renderProps(); updBadgeBoutique();
+  }
+  if (results[1].status === 'fulfilled') window.PERSONALITY  = results[1].value;
+  if (results[2].status === 'fulfilled') window.ENVIRONMENTS = results[2].value;
+  if (results[3].status === 'fulfilled') window.STYLES       = results[3].value;
+  if (results[4].status === 'fulfilled') window.AI_CONTEXTS  = results[4].value;
+  if (results[5].status === 'fulfilled') window.AI_SYSTEM    = results[5].value;
+
+  console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props');
+} catch(e) { console.log('Mode local (fichiers data absents)'); }
 }
 /* ============================================================
    CONSTANTES MÉTIER
@@ -101,19 +101,14 @@ const ENV_THEMES = [
   { id:'desert',  label:'Désert 🏜️',  gnd:'#e8d098', gndDk:'#c8a858', sky1:'#f0c878', sky2:'#f8e0a8' },
 ];
 
-// Bulles statiques fallback (si prompts/bubbles.json absent)
+// Fallback minimal si personality.json absent
 const MSG = {
-  morning:   ["Bon matin ☀️","Coucou ! Prête ?","*bâille* Salut 💜","Belle journée ✿"],
-  afternoon: ["On avance bien ✿","Un pas à la fois 💜","Pause méritée ?","Créer c'est vivre 🎨"],
-  evening:   ["On se pose ? ✿","Le soir c'est doux 💜","Tu as fait assez.","Débranche..."],
-  night:     ["Zzz... 🌙","*ronronne*","Bonne nuit ✿","Chut... repos 💤"],
-  low:       ["Hé, viens me voir 🥺","Une habitude ?","Je suis là ✿","Pas de pression 💜"],
-  high:      ["Tu déchires !! 🌟","Si fière ! ✿","Regarde tout ça !","Quelle équipe 💜"],
-  full:      ["PARFAIT !! 🎉","6/6 !! ✿✿✿","JE BRILLE !! 🌟","Combo MAXXX !!"],
-  sad:       ["Ça va aller... 💜","Je suis là ✿","Respire...","Tout doux 🌸"],
-  tired:     ["On fait doucement...","Repos = productif ✿","Écoute ton corps 💜","Rien à prouver"],
-  wind:      ["Ouh, le vent d'Autan ! 🌬️","Ça souffle dehors !","Reste au chaud ✿"],
-  idle:      ["*regarde autour*","♪ la la ♪","*sourit*","*boing*"],
+  matin:   ["Bon matin ☀️"], aprem: ["On avance ✿"],
+  soir:    ["On se pose ✿"], nuit:  ["Zzz... 🌙"],
+  peu:     ["Je suis là ✿"], fierte: ["Tu déchires !! 🌟"],
+  max:     ["PARFAIT !! 🎉"], triste: ["Tout doux 🌸"],
+  fatigue: ["Repos = productif ✿"], vent: ["Ça souffle ! 🌬️"],
+  idle:    ["*sourit*"],
 };
 
 /* ============================================================
@@ -305,24 +300,26 @@ function getBubble() {
 }
 
 function updBubbleNow() {
-  const h=hr(), ha=window.D.g.happiness, en=window.D.g.energy;
-  const P   = window.PERSONALITY;
-  const src = P ? P.bulles : ((window.PROMPTS && window.PROMPTS.bubbles) || MSG);
+  const h = hr(), ha = D.g.happiness, en = D.g.energy;
+  const src = window.PERSONALITY ? window.PERSONALITY.bulles : MSG;
+
   let pool;
+  if      (h >= 22 || h < 7)                        pool = src.nuit    || src.night;
+  else if (ha <= 1)                                  pool = src.triste  || src.sad;
+  else if (en <= 1)                                  pool = src.fatigue || src.tired;
+  else if ((D.log[today()]||[]).length === 6)        pool = src.max     || src.full;
+  else if ((D.log[today()]||[]).length >= 4)         pool = src.fierte  || src.high;
+  else if ((D.log[today()]||[]).length === 0)        pool = src.peu     || src.low;
+  else if (meteoData && meteoData.windspeed > 40)    pool = src.vent    || src.wind;
+  else if (h < 12)                                   pool = src.matin   || src.morning;
+  else if (h < 18)                                   pool = src.aprem   || src.afternoon;
+  else                                               pool = src.soir    || src.evening;
 
-  if(h>=22||h<7)       pool = src.nuit      || src.night;
-  else if(ha<=1)       pool = src.triste    || src.sad;
-  else if(en<=1)       pool = src.fatigue   || src.tired;
-  else if((window.D.log[today()]||[]).length===6) pool = src.max || src.full;
-  else if((window.D.log[today()]||[]).length>=4)  pool = src.fierte || src.high;
-  else if(window.meteoData&&window.meteoData.windspeed>40) pool = src.vent || src.wind;
-  else if(h<12)        pool = src.matin     || src.morning;
-  else if(h<18)        pool = src.aprem     || src.afternoon;
-  else                 pool = src.soir      || src.evening;
-
-  let extras = (src.idle || MSG.idle).concat(window.D.g.customBubbles || []);
-  if (P && P.bulles.custom) extras = extras.concat(P.bulles.custom);
-  if (Math.random() < 0.15 && extras.length) pool = extras;
+  // Mélange idle + phrases apprises par Claude
+  if (Math.random() < 0.15) {
+    const extras = [...(src.idle || []), ...(D.g.customBubbles || [])];
+    if (extras.length) pool = extras;
+  }
 
   if (!pool || !pool.length) pool = ["✿"];
   const el = document.getElementById('bubble');

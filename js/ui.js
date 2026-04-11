@@ -472,59 +472,102 @@ function cleanProps() {
    API CLAUDE — CADEAU / BULLE
    ============================================================ */
 async function askClaude() {
-  const D = window.D;
-  const key = D.apiKey; if (!key) { toast('Clé API manquante dans les Réglages'); return; }
-  const g = D.g, recentJ = D.journal.slice(-2).map(j => j.text).join(' ');
-  const td = today();
-  let giveGift = !D.lastGiftDate || Math.floor((new Date() - new Date(D.lastGiftDate)) / 86400000) >= 3;
+  const key = D.apiKey;
+  if (!key) { toast('Clé API manquante dans les Réglages'); return; }
 
-  const ctx = window.PROMPTS && window.PROMPTS.aiContexts;
-  let prompt;
-  if (ctx) {
-    prompt = ctx.askClaude.base
-      .replace('{{energy}}', g.energy)
-      .replace('{{happiness}}', g.happiness)
-      .replace('{{notes}}', recentJ || '(vide)');
-    const nomsExistants = (D.g.props || []).map(p => p.nom).join(', ') || 'aucun';
-prompt += '\n' + (giveGift
-      ? ctx.askClaude.withGift
-          .replace('{{timestamp}}', Date.now())
-          .replace('{{existingNames}}', nomsExistants)
-      : ctx.askClaude.withoutGift);
-  } else {
-    toast('Erreur : fichier prompts non chargé.');
-    return;
+  const g = D.g, td = today();
+  const P = window.PERSONALITY;
+  const CTX = window.AI_CONTEXTS?.askClaude;
+
+  // --- Remplacement des variables dans le prompt base ---
+  const notesRecentes = D.journal
+    .slice(-3)
+    .map(j => j.text.slice(0, 40))
+    .filter(t => t.length > 0)
+    .join(' / ');
+
+  const vars = {
+    nom:          P?.nom || 'le Gotchi',
+    style:        P?.style || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
+    traits:       P?.traits?.join(', ') || 'doux, joueur, curieux',
+    energy:       g.energy,
+    happiness:    g.happiness,
+    notesRecentes: notesRecentes ? `Ambiance récente (extrait journal) : ${notesRecentes}` : '',
+    exemples:     (P?.bulles?.idle || []).slice(0, 3).join(', ') || '*bâille*, *sourit*',
+    existingNames: (D.g.props || []).map(p => p.nom).join(', ') || 'aucun',
+    timestamp:    Date.now(),
+  };
+
+  function fillVars(template) {
+    return template.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? '');
   }
 
-  if (document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = 'Je réfléchis... 💭';
+  // --- Règle cadeau : 1 tous les 3 jours ---
+  const giveGift = !D.lastGiftDate ||
+    Math.floor((new Date() - new Date(D.lastGiftDate)) / 86400000) >= 3;
+
+  const prompt = CTX
+    ? fillVars(CTX.base) + '\n\n' + fillVars(giveGift ? CTX.withGift : CTX.withoutGift)
+    : `Fallback : réponds en JSON {"message":"...","bulles":{"idle":"..."}}`;
+
+  if (document.getElementById('claude-msg'))
+    document.getElementById('claude-msg').textContent = 'Je réfléchis... 💭';
+
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
-      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:300, messages:[{role:'user',content:prompt}] })
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 400,
+        messages: [{ role: 'user', content: prompt }]
+      })
     });
     const d = await r.json();
     const match = d.content[0].text.match(/\{[\s\S]*\}/);
-    if (match) {
-      const data = JSON.parse(match[0]);
-      if (document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = data.message;
-      if (data.bulle) {
-        if (!D.g.customBubbles) D.g.customBubbles = [];
-        if (!D.g.customBubbles.includes(data.bulle)) D.g.customBubbles.push(data.bulle);
-        if (D.g.customBubbles.length > 10) D.g.customBubbles.shift();
-      }
-      if (giveGift && data.cadeau && !D.g.props.find(p => p.id === data.cadeau.id)) {
-        D.g.props.push({ id:data.cadeau.id, nom:data.cadeau.nom, type:data.cadeau.type, actif:false });
-        if (!window.PROPS_LOCAL) window.PROPS_LOCAL = [];
-        window.PROPS_LOCAL.push(data.cadeau);
-        D.propsPixels = D.propsPixels || [];
-        D.propsPixels.push(data.cadeau);
-        D.lastGiftDate = td;
-        save(); toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
-      }
-      save(); renderProps();
+    if (!match) throw new Error('JSON introuvable');
+    const data = JSON.parse(match[0]);
+
+    // --- Message affiché ---
+    if (document.getElementById('claude-msg'))
+      document.getElementById('claude-msg').textContent = data.message;
+
+    // --- Bulles enrichies par état (pool glissant 4 max) ---
+    if (data.bulles && typeof data.bulles === 'object') {
+      if (!D.g.customBubbles || Array.isArray(D.g.customBubbles))
+        D.g.customBubbles = {};
+      Object.entries(data.bulles).forEach(([etat, phrase]) => {
+        if (!phrase || typeof phrase !== 'string') return;
+        if (!D.g.customBubbles[etat]) D.g.customBubbles[etat] = [];
+        D.g.customBubbles[etat].unshift(phrase);
+        D.g.customBubbles[etat] = D.g.customBubbles[etat].slice(0, 4);
+      });
     }
-  } catch(e) { if (document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = 'Erreur API.'; }
+
+    // --- Cadeau ---
+    if (giveGift && data.cadeau) {
+      if (!D.g.props) D.g.props = [];
+      if (!D.g.props.find(p => p.id === data.cadeau.id)) {
+        D.g.props.push({ id: data.cadeau.id, nom: data.cadeau.nom, type: data.cadeau.type, actif: false });
+        if (!D.propsPixels) D.propsPixels = [];
+        D.propsPixels.push(data.cadeau);
+        window.PROPS_LOCAL = D.propsPixels;
+        D.lastGiftDate = td;
+        toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
+      }
+    }
+
+    save(); renderProps(); updBubbleNow();
+
+  } catch(e) {
+    if (document.getElementById('claude-msg'))
+      document.getElementById('claude-msg').textContent = 'Erreur API. ✿';
+  }
 }
 
 async function acheterPropClaude() {
@@ -623,8 +666,8 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   chat.innerHTML += `<div class="chat-bubble-system" id="${typingId}">Gotchi réfléchit... 💭</div>`;
   chat.scrollTop = chat.scrollHeight;
   const messages = isInit ? [{ role:'user', content:systemPrompt }] : [...window._soutienHistory.slice(-6)];
-  const sysPrompt = (window.PROMPTS && window.PROMPTS.aiSystem && window.PROMPTS.aiSystem.soutien)
-    || 'Tu es un compagnon de bien-être bienveillant. Réponses courtes, chaleureuses, jamais de jugement.';
+const sysPrompt = window.AI_SYSTEM?.soutien
+  || 'Tu es un compagnon de bien-être bienveillant. Réponses courtes, chaleureuses, jamais de jugement.';
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

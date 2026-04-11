@@ -100,7 +100,7 @@ const p5s = (p) => {
         const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
                  || (window.D.propsPixels || []).find(l => l.id === prop.id);
         if (def && def.pixels) {
-          const slot = PROP_SLOTS[prop.slot] || PROP_SLOTS['SOL'];
+          const slot = PROP_SLOTS[prop.slot] || PROP_SLOTS[def.slot] || PROP_SLOTS['SOL'];
           drawProp(p, def, slot.x, slot.y);
         }
       });

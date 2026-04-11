@@ -314,8 +314,8 @@ else {
         const cx = 24 + (p.frameCount * 0.3) % 30;
         p.fill('#ece8f4'); px(cx, 76, PX*3, PX); px(cx-PX, 81, PX*4, PX*2);
       }
-      // Croisillons
-      p.fill('#e8e8f0'); p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
+ // Croisillons (couleur du cadre, pas du ciel)
+      p.fill(n ? '#706060' : '#c8baa8'); p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
       // Cadre fenêtre
       p.fill(n ? '#706060' : '#c8baa8');
       p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3); // haut/bas

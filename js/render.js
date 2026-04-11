@@ -165,18 +165,21 @@ if (D.g.props) {
     else if (g.stage === 'teen')  drawTeen(p, cx, by + bobY, sleeping, en, ha);
     else                          drawAdult(p, cx, by + bobY, sleeping, en, ha);
 
-    // --- Props ACCESSOIRE (sur la tête) ---
-    if (g.props) {
-      g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
-        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
-                 || (window.D.propsPixels || []).find(l => l.id === prop.id);
-        if (def && def.pixels) {
-          const accX = cx - Math.floor(def.pixels[0].length / 2) * PX;
-          const accY = (by + bobY) - def.pixels.length * PX - PX;
-          drawProp(p, def, accX, accY);
-        }
-      });
+// --- Props ACCESSOIRE (sur la tête du gotchi) ---
+if (D.g.props) {
+  D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
+    const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels || []).find(l => l.id === prop.id);
+    if (def && def.pixels) {
+      const accX = cx - Math.floor(def.pixels[0].length / 2) * PX;
+      
+      // ✨ NOUVEAU : décalage selon le stage
+      const headOffset = g.stage==='baby' ? 18 : g.stage==='teen' ? 8 : g.stage==='adult' ? 4 : 0;
+      const accY = (by + bobY) - def.pixels.length * PX - PX + headOffset;
+      
+      drawProp(p, def, accX, accY);
     }
+  });
+}
 
     if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
     if (ha >= 100 && !sleeping) drawRainbow(p);

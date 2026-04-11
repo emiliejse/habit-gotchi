@@ -119,11 +119,8 @@ function updUI() {
   if (document.getElementById('env-sel'))  document.getElementById('env-sel').value = g.activeEnv || 'parc';
   if (document.getElementById('api-inp'))  document.getElementById('api-inp').value = D.apiKey || '';
   const shopCard = document.getElementById('shop-card');
-  if (shopCard) {
-    shopCard.style.display = (D.g.petales || 0) >= 10 ? 'block' : 'none';
-    const wallet = document.getElementById('xp-wallet');
-    if (wallet) wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
-const petalesDisplay = document.getElementById('petales-wallet');
+  if (document.getElementById('api-inp'))  document.getElementById('api-inp').value = D.apiKey || '';
+  const petalesDisplay = document.getElementById('petales-wallet');
   if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0}`;
   updBadgeBoutique();
 }

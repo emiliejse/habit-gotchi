@@ -309,6 +309,7 @@ const p5s = (p) => {
   }
 
   function drawSky(p, h, ha) {
+     console.log('SKY colors:', C.skyD1, C.skyN1, C.skyA1);
     p.noStroke(); let c1, c2;
     if(ha<=20&&h>=7&&h<21)     { c1=C.skyGray1; c2=C.skyGray2; }
     else if(h>=7&&h<17)        { c1=C.skyD1;    c2=C.skyD2;    }

@@ -22,6 +22,8 @@ window.meteoData  = null;
    CHARGEMENT FICHIERS DATA + PROMPTS
    ============================================================ */
 async function loadDataFiles() {
+  console.log('base:', base);
+console.log('promptsBase:', promptsBase);
   const base = 'data/';
   const promptsBase = 'prompts/';
  try {

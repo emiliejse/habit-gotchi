@@ -935,8 +935,10 @@ function confirmReset() {
 /* ============================================================
    INIT AU CHARGEMENT
    ============================================================ */
-updUI();
-renderHabs();
-renderProps();
-restorePerso();
-initMoodPicker();
+document.addEventListener('DOMContentLoaded', () => {
+  updUI();
+  renderHabs();
+  renderProps();
+  restorePerso();
+  initMoodPicker();
+});

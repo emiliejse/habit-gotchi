@@ -316,13 +316,12 @@ if (theme === 'automne') {
   // 4. PLINTHE — séparation mur/sol
   p.fill('#a07848'); p.rect(0, 118, CS, PX);
 
-  // 5. CADRE MURAL — feuille d'automne pixel
+// 5. CADRE MURAL — feuille simplifiée
   p.fill('#a07848'); p.rect(88, 68, 28, 28);      // cadre extérieur
-  p.fill('#f0e8d8'); p.rect(91, 71, 22, 22);      // fond du cadre
-  p.fill('#c86028'); px(99, 88, PX, PX*3);        // tige
-  p.fill('#d07828'); px(94, 78, PX*3, PX*4);      // lobe gauche
-  p.fill('#e08830'); px(99, 76, PX*3, PX*4);      // lobe droit
-  p.fill('#b05020'); px(97, 80, PX, PX*3);        // nervure centrale
+  p.fill('#f0e8d8'); p.rect(91, 71, 22, 22);      // fond
+  p.fill('#e08830'); px(94, 73, PX*3, PX*5);      // corps gauche de la feuille
+  p.fill('#d07020'); px(99, 71, PX*3, PX*5);      // corps droit
+  p.fill('#c86028'); px(100, 76, PX, PX*4);       // tige centrale
 
   // 6. SOL PARQUET — teinte bois chaud
   p.fill('#a07848'); p.rect(0, 120, CS, 80);
@@ -367,14 +366,14 @@ else if (theme === 'hiver') {
   // 4. PLINTHE
   p.fill('#a0b8cc'); p.rect(0, 118, CS, PX);
 
-  // 5. CADRE MURAL — flocon de neige pixel
+// 5. CADRE MURAL — flocon croix simple
   p.fill('#8899aa'); p.rect(88, 68, 28, 28);      // cadre extérieur
-  p.fill('#eef4ff'); p.rect(91, 71, 22, 22);      // fond du cadre
+  p.fill('#eef4ff'); p.rect(91, 71, 22, 22);      // fond
   p.fill('#a8c0d8');
-  px(100, 72, PX, PX*8);                          // axe vertical du flocon
-  px(96, 76, PX*9, PX);                           // axe horizontal
-  px(97, 73, PX, PX); px(103, 73, PX, PX);       // branches diagonales haut
-  px(97, 79, PX, PX); px(103, 79, PX, PX);       // branches diagonales bas
+  px(100, 72, PX, PX*8);                          // barre verticale
+  px(95, 77, PX*11, PX);                          // barre horizontale
+  px(96, 73, PX, PX); px(104, 73, PX, PX);       // pointes diagonales haut
+  px(96, 79, PX, PX); px(104, 79, PX, PX);       // pointes diagonales bas
 
   // 6. SOL — gris bleuté hivernal
   p.fill('#d0dce8'); p.rect(0, 120, CS, 80);
@@ -419,16 +418,17 @@ else if (theme === 'desert') {
   // 4. PLINTHE
   p.fill('#b89060'); p.rect(0, 118, CS, PX);
 
-  // 5. CADRE MURAL — soleil géométrique
+// 5. CADRE MURAL — losange géométrique
   p.fill('#b08c60'); p.rect(88, 68, 28, 28);      // cadre extérieur
-  p.fill('#fdf0d0'); p.rect(91, 71, 22, 22);      // fond du cadre
-  p.fill('#e8a020'); px(99, 76, PX*3, PX*3);      // disque central
-  p.fill('#f0c030');                               // rayons
-  px(99, 73, PX, PX); px(101, 73, PX, PX);        // rayons haut
-  px(99, 82, PX, PX); px(101, 82, PX, PX);        // rayons bas
-  px(96, 78, PX, PX); px(104, 78, PX, PX);        // rayons côtés
-  px(97, 74, PX, PX); px(103, 74, PX, PX);        // rayons diagonales haut
-  px(97, 82, PX, PX); px(103, 82, PX, PX);        // rayons diagonales bas
+  p.fill('#fdf0d0'); p.rect(91, 71, 22, 22);      // fond
+  p.fill('#e8a020');
+  px(100, 72, PX, PX);                            // sommet
+  px(98, 74, PX*3, PX);                           // rang 2
+  px(96, 76, PX*5, PX);                           // rang 3 (milieu)
+  px(98, 78, PX*3, PX);                           // rang 4
+  px(100, 80, PX, PX);                            // bas
+  p.fill('#f0c030');
+  px(100, 74, PX, PX); px(100, 78, PX, PX);      // détails intérieurs
 
   // 6. SOL — terre sable
   p.fill('#c8a870'); p.rect(0, 120, CS, 80);

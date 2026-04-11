@@ -253,7 +253,19 @@ function toggleProp(index) {
   // --- Objet décor : ouvrir le picker de slot ---
   openSlotPicker(index);
 }
-
+function makeSlotBtn(propIndex, slotId, label, arrow, occupied) {
+  const taken = occupied[slotId];
+  return `<div onclick="confirmSlot(${propIndex},'${slotId}')" style="
+    border:2px solid var(--border); border-radius:8px; padding:8px 4px;
+    cursor:pointer; text-align:center; font-size:10px; font-weight:bold;
+    background:${taken ? '#fff8f0' : '#fff'}; transition:.15s;"
+    onmouseover="this.style.borderColor='var(--mint)'"
+    onmouseout="this.style.borderColor='var(--border)'">
+    <div style="font-size:14px">${arrow}</div>
+    <div>${label}</div>
+    ${taken ? `<div style="font-size:8px;color:var(--lilac)">⚠ ${taken}</div>` : ''}
+  </div>`;
+}
 function openSlotPicker(propIndex) {
   const prop = D.g.props[propIndex];
 
@@ -291,15 +303,26 @@ const slots = [
   }).join('');
 
   document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = `
-    <h3 style="font-size:13px;margin-bottom:10px;color:var(--lilac)">
-      📍 Où placer ${prop.emoji || '🎁'} ${prop.nom} ?
-    </h3>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
-      ${slotHTML}
-    </div>
-    <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:10px">Annuler</button>
-  `;
+document.getElementById('mbox').innerHTML = `
+  <h3 style="font-size:13px;margin-bottom:10px;color:var(--lilac)">
+    📍 Où placer ${prop.emoji || '🎁'} ${prop.nom} ?
+  </h3>
+
+  <div style="font-size:9px;opacity:.5;margin-bottom:4px;text-transform:uppercase">Fond</div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px">
+    ${makeSlotBtn(propIndex, 'A', 'Gauche',  '↖', occupied)}
+    ${makeSlotBtn(propIndex, 'B', 'Droite',  '↗', occupied)}
+  </div>
+
+  <div style="font-size:9px;opacity:.5;margin-bottom:4px;text-transform:uppercase">Devant</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+    ${makeSlotBtn(propIndex, 'C',   'Gauche', '↙', occupied)}
+    ${makeSlotBtn(propIndex, 'SOL', 'Centre', '⬇', occupied)}
+    ${makeSlotBtn(propIndex, 'D',   'Droite', '↘', occupied)}
+  </div>
+
+  <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:10px">Annuler</button>
+`;
 }
 
 function confirmSlot(propIndex, slotId) {

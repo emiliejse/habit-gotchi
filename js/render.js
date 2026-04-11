@@ -118,21 +118,40 @@ if (def && def.pixels) {
 });
     }
 
-    // --- Ambiances ---
+// --- Ambiances ---
     if (g.props) {
+      // TEST — objet temporaire pour tester les motions
+      const testDef = { id:'test_amb', motion:'fall', palette:['transparent','#88ccff','#aaddff'], pixels:[[0,1,0],[1,2,1],[0,1,0]] };
+      if (!window.D.propsPixels) window.D.propsPixels = [];
+      if (!window.D.propsPixels.find(x => x.id === 'test_amb')) window.D.propsPixels.push(testDef);
+      if (!g.props.find(x => x.id === 'test_amb')) g.props.push({ id:'test_amb', type:'ambiance', actif:true });
+
       g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
         const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
                  || (window.D.propsPixels || []).find(l => l.id === prop.id);
         if (def && def.pixels) {
+          const motion = def.motion || 'drift';
           for (let i = 0; i < 3; i++) {
-            const ax = (p.frameCount * 2 + i * 70) % CS;
-            const ay = (p.frameCount + i * 50) % 110;
+            let ax, ay;
+            if (motion === 'drift') {
+              ax = CS - ((p.frameCount * 2 + i * 70) % (CS + 20));
+              ay = 20 + i * 35 + Math.sin(p.frameCount * .05 + i) * 8;
+            } else if (motion === 'fall') {
+              ax = 20 + i * 70 + Math.sin(p.frameCount * .04 + i) * 5;
+              ay = (p.frameCount * 2 + i * 40) % 130;
+            } else if (motion === 'float') {
+              ax = 30 + i * 65 + Math.sin(p.frameCount * .06 + i) * 6;
+              ay = 110 - ((p.frameCount + i * 45) % 120);
+            } else if (motion === 'sparkle') {
+              if ((p.frameCount + i * 13) % 20 < 10) continue;
+              ax = 15 + i * 75 + Math.sin(p.frameCount * .1 + i) * 10;
+              ay = 15 + i * 35 + Math.cos(p.frameCount * .08 + i) * 8;
+            }
             drawProp(p, def, ax, ay);
           }
         }
       });
     }
-
     // --- Gotchi ---
     bounceT += sleeping ? 0.04 : 0.12;
     let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT) * 3;

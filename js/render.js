@@ -32,10 +32,10 @@ let particles = [];
 
 // Slots fixes pour les props décor
 const PROP_SLOTS = {
-  A:   { x: 42,  y: 108  },  // fond gauche
-  B:   { x: 128, y: 108  },  // fond droit
-  C:   { x: 38,  y: 138 },  // sol gauche
-  D:   { x: 124, y: 138 },  // sol droit
+  A:   { x: 38,  y: 108  },  // fond gauche
+  B:   { x: 132, y: 108  },  // fond droit
+  C:   { x: 32,  y: 138 },  // sol gauche
+  D:   { x: 138, y: 138 },  // sol droit
   SOL: { x: 90,  y: 148 },  // sol centre
 };
 

@@ -278,203 +278,232 @@ const accY = baseY - def.pixels.length * PX + offsetY;
       }
     }
 
-    if (theme === 'automne') {
-      // Mur bois chaud
-      p.fill('#c0956a'); p.rect(0, 60, CS, 60);
-      // Fenêtre ciel automne
-      let skyCol = (h>=20||h<6) ? C.skyN1 : '#e8c068';
-      p.fill(skyCol); p.rect(20, 68, 42, 42);
-      p.fill('#a07848');
-      p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
-      p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
-      p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
-      p.fill('#b08858'); p.rect(16, 108, 50, PX);
-      // Rideaux orange
-      p.fill('#d07030'); p.rect(10, 63, 12, 52);
-      p.fill('#b05820'); p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52);
-      p.fill('#d07030'); p.rect(62, 63, 12, 52);
-      p.fill('#b05820'); p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52);
-      p.fill('#906040'); p.rect(8, 62, 68, 3);
-      // Plinthe
-      p.fill('#a07848'); p.rect(0, 118, CS, PX);
-      // Cadre feuille d'automne
-      p.fill('#a07848'); p.rect(88, 68, 28, 28);
-      p.fill('#f0e8d8'); p.rect(91, 71, 22, 22);
-      p.fill('#c86028'); // tige
-      px(99, 88, PX, PX*3);
-      p.fill('#d07828'); // lobe gauche
-      px(94, 78, PX*3, PX*4);
-      p.fill('#e08830'); // lobe droit
-      px(99, 76, PX*3, PX*4);
-      p.fill('#b05020'); // nervure
-      px(97, 80, PX, PX*3);
-      // Sol parquet
-      p.fill('#a07848'); p.rect(0, 120, CS, 80);
-      p.fill('#886030');
-      for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); }
-      // Tapis bordeaux
-      p.fill('#6a2030'); p.rect(18, 138, 164, 62);
-      p.fill('#8a3040'); p.rect(22, 141, 156, 59);
-      // Bureau
-      let bx = 138;
-      p.fill('#906040'); p.rect(bx+4, 108, PX, 18); p.rect(bx+46, 108, PX, 18);
-      p.fill('#c09060'); p.rect(bx, 100, 58, PX*2);
-      p.fill('#a07040'); p.rect(bx, 108, 58, PX);
-      p.fill('#f0d870'); px(bx+38, 90, PX, PX*2);
-      p.fill('#e8b830'); px(bx+33, 88, PX*3, PX);
-    }
-      else if (theme === 'hiver') {
-      // Mur bleu glacier
-      p.fill('#b8cce0'); p.rect(0, 60, CS, 60);
-      // Fenêtre ciel hiver
-      let skyCol = (h>=20||h<6) ? C.skyN1 : '#c8d8e8';
-      p.fill(skyCol); p.rect(20, 68, 42, 42);
-      p.fill('#8899aa');
-      p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
-      p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
-      p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
-      // Neige sur le rebord
-      p.fill('#e8f4ff'); p.rect(16, 108, 50, PX);
-      // Rideaux blanc neige
-      p.fill('#e8f0f8'); p.rect(10, 63, 12, 52);
-      p.fill('#c8d8e8'); p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52);
-      p.fill('#e8f0f8'); p.rect(62, 63, 12, 52);
-      p.fill('#c8d8e8'); p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52);
-      p.fill('#a0b0c0'); p.rect(8, 62, 68, 3);
-      // Plinthe
-      p.fill('#a0b8cc'); p.rect(0, 118, CS, PX);
-      // Cadre flocon
-      p.fill('#8899aa'); p.rect(88, 68, 28, 28);
-      p.fill('#eef4ff'); p.rect(91, 71, 22, 22);
-      p.fill('#a8c0d8');
-      px(100, 72, PX, PX*8); // axe vertical
-      px(96, 76, PX*9, PX);  // axe horizontal
-      px(97, 73, PX, PX);  px(103, 73, PX, PX); // branches diagonales
-      px(97, 79, PX, PX);  px(103, 79, PX, PX);
-      // Sol
-      p.fill('#d0dce8'); p.rect(0, 120, CS, 80);
-      p.fill('#b0bcc8');
-      for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); }
-      // Tapis bleu nuit
-      p.fill('#203050'); p.rect(18, 138, 164, 62);
-      p.fill('#304060'); p.rect(22, 141, 156, 59);
-      // Bureau
-      let bx = 138;
-      p.fill('#8090a0'); p.rect(bx+4, 108, PX, 18); p.rect(bx+46, 108, PX, 18);
-      p.fill('#a8b8c8'); p.rect(bx, 100, 58, PX*2);
-      p.fill('#8898a8'); p.rect(bx, 108, 58, PX);
-      p.fill('#f0f0d0'); px(bx+38, 90, PX, PX*2);
-      p.fill('#e0e0a0'); px(bx+33, 88, PX*3, PX);
-    }
-      else if (theme === 'desert') {
-      // Mur adobe beige
-      p.fill('#d4b48c'); p.rect(0, 60, CS, 60);
-      // Fenêtre ciel désert
-      let skyCol = (h>=20||h<6) ? C.skyN1 : '#f0c878';
-      p.fill(skyCol); p.rect(20, 68, 42, 42);
-      p.fill('#b08c60');
-      p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
-      p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
-      p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
-      p.fill('#c8a070'); p.rect(16, 108, 50, PX);
-      // Rideaux sable
-      p.fill('#e0c888'); p.rect(10, 63, 12, 52);
-      p.fill('#c0a860'); p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52);
-      p.fill('#e0c888'); p.rect(62, 63, 12, 52);
-      p.fill('#c0a860'); p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52);
-      p.fill('#a88848'); p.rect(8, 62, 68, 3);
-      // Plinthe
-      p.fill('#b89060'); p.rect(0, 118, CS, PX);
-      // Cadre motif soleil
-      p.fill('#b08c60'); p.rect(88, 68, 28, 28);
-      p.fill('#fdf0d0'); p.rect(91, 71, 22, 22);
-      p.fill('#e8a020'); // disque soleil
-      px(99, 76, PX*3, PX*3);
-      p.fill('#f0c030'); // rayons
-      px(99, 73, PX, PX); px(101, 73, PX, PX); // haut
-      px(99, 82, PX, PX); px(101, 82, PX, PX); // bas
-      px(96, 78, PX, PX); px(104, 78, PX, PX); // côtés
-      px(97, 74, PX, PX); px(103, 74, PX, PX); // diagonales
-      px(97, 82, PX, PX); px(103, 82, PX, PX);
-      // Sol terre
-      p.fill('#c8a870'); p.rect(0, 120, CS, 80);
-      p.fill('#a88850');
-      for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); }
-      // Tapis terracotta
-      p.fill('#8a3820'); p.rect(18, 138, 164, 62);
-      p.fill('#a84830'); p.rect(22, 141, 156, 59);
-      // Bureau
-      let bx = 138;
-      p.fill('#a07840'); p.rect(bx+4, 108, PX, 18); p.rect(bx+46, 108, PX, 18);
-      p.fill('#c8a060'); p.rect(bx, 100, 58, PX*2);
-      p.fill('#a88040'); p.rect(bx, 108, 58, PX);
-      p.fill('#f8e060'); px(bx+38, 90, PX, PX*2);
-      p.fill('#f0c820'); px(bx+33, 88, PX*3, PX);
-    }
+// ============================================================
+// CHAMBRE — 4 thèmes : automne / hiver / desert / pastel
+// Structure identique pour chaque thème :
+//   1. Mur
+//   2. Fenêtre (ciel animé + cadre + croisillons + rebord)
+//   3. Rideaux + tringle
+//   4. Plinthe
+//   5. Cadre mural (motif unique par thème)
+//   6. Sol parquet
+//   7. Tapis
+//   8. Bureau (pieds → plateau → lampe)
+// ============================================================
+else if (env === 'chambre') {
+
+if (theme === 'automne') {
+
+  // 1. MUR — bois chaud
+  p.fill('#c0956a'); p.rect(0, 60, CS, 60);
+
+  // 2. FENÊTRE — ciel doré automne (ou nuit)
+  let skyA = (h>=20||h<6) ? C.skyN1 : '#e8c068';
+  p.fill(skyA); p.rect(20, 68, 42, 42);         // vitre
+  p.fill('#a07848');                              // couleur cadre bois foncé
+  p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3); // bords haut/bas
+  p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);  // bords gauche/droite
+  p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);  // croisillons
+  p.fill('#b08858'); p.rect(16, 108, 50, PX);     // rebord fenêtre
+
+  // 3. RIDEAUX — orange automne
+  p.fill('#d07030'); p.rect(10, 63, 12, 52);      // rideau gauche
+  p.fill('#b05820'); p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52); // plis gauche
+  p.fill('#d07030'); p.rect(62, 63, 12, 52);      // rideau droit
+  p.fill('#b05820'); p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52); // plis droit
+  p.fill('#906040'); p.rect(8, 62, 68, 3);         // tringle
+
+  // 4. PLINTHE — séparation mur/sol
+  p.fill('#a07848'); p.rect(0, 118, CS, PX);
+
+  // 5. CADRE MURAL — feuille d'automne pixel
+  p.fill('#a07848'); p.rect(88, 68, 28, 28);      // cadre extérieur
+  p.fill('#f0e8d8'); p.rect(91, 71, 22, 22);      // fond du cadre
+  p.fill('#c86028'); px(99, 88, PX, PX*3);        // tige
+  p.fill('#d07828'); px(94, 78, PX*3, PX*4);      // lobe gauche
+  p.fill('#e08830'); px(99, 76, PX*3, PX*4);      // lobe droit
+  p.fill('#b05020'); px(97, 80, PX, PX*3);        // nervure centrale
+
+  // 6. SOL PARQUET — teinte bois chaud
+  p.fill('#a07848'); p.rect(0, 120, CS, 80);
+  p.fill('#886030');
+  for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); } // lames horizontales
+
+  // 7. TAPIS — bordeaux
+  p.fill('#6a2030'); p.rect(18, 138, 164, 62);    // bordure tapis
+  p.fill('#8a3040'); p.rect(22, 141, 156, 59);    // centre tapis
+
+  // 8. BUREAU
+  let bxA = 138;                                   // position x du bureau
+  p.fill('#906040');                               // couleur pieds
+  p.rect(bxA+4, 108, PX, 18); p.rect(bxA+46, 108, PX, 18); // pieds (dessinés avant le plateau)
+  p.fill('#c09060'); p.rect(bxA, 100, 58, PX*2); // plateau dessus
+  p.fill('#a07040'); p.rect(bxA, 108, 58, PX);   // ombre sous le plateau
+  p.fill('#f0d870'); px(bxA+38, 90, PX, PX*2);   // tige de la lampe
+  p.fill('#e8b830'); px(bxA+33, 88, PX*3, PX);   // abat-jour
+
+}
+else if (theme === 'hiver') {
+
+  // 1. MUR — bleu glacier
+  p.fill('#b8cce0'); p.rect(0, 60, CS, 60);
+
+  // 2. FENÊTRE — ciel hivernal (ou nuit)
+  let skyH = (h>=20||h<6) ? C.skyN1 : '#c8d8e8';
+  p.fill(skyH); p.rect(20, 68, 42, 42);           // vitre
+  p.fill('#8899aa');                               // couleur cadre gris bleuté
+  p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
+  p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
+  p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
+  p.fill('#e8f4ff'); p.rect(16, 108, 50, PX);     // rebord enneigé
+
+  // 3. RIDEAUX — blanc neige
+  p.fill('#e8f0f8'); p.rect(10, 63, 12, 52);      // rideau gauche
+  p.fill('#c8d8e8'); p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52); // plis gauche
+  p.fill('#e8f0f8'); p.rect(62, 63, 12, 52);      // rideau droit
+  p.fill('#c8d8e8'); p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52); // plis droit
+  p.fill('#a0b0c0'); p.rect(8, 62, 68, 3);         // tringle
+
+  // 4. PLINTHE
+  p.fill('#a0b8cc'); p.rect(0, 118, CS, PX);
+
+  // 5. CADRE MURAL — flocon de neige pixel
+  p.fill('#8899aa'); p.rect(88, 68, 28, 28);      // cadre extérieur
+  p.fill('#eef4ff'); p.rect(91, 71, 22, 22);      // fond du cadre
+  p.fill('#a8c0d8');
+  px(100, 72, PX, PX*8);                          // axe vertical du flocon
+  px(96, 76, PX*9, PX);                           // axe horizontal
+  px(97, 73, PX, PX); px(103, 73, PX, PX);       // branches diagonales haut
+  px(97, 79, PX, PX); px(103, 79, PX, PX);       // branches diagonales bas
+
+  // 6. SOL — gris bleuté hivernal
+  p.fill('#d0dce8'); p.rect(0, 120, CS, 80);
+  p.fill('#b0bcc8');
+  for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); }
+
+  // 7. TAPIS — bleu nuit
+  p.fill('#203050'); p.rect(18, 138, 164, 62);    // bordure
+  p.fill('#304060'); p.rect(22, 141, 156, 59);    // centre
+
+  // 8. BUREAU
+  let bxH = 138;
+  p.fill('#8090a0');
+  p.rect(bxH+4, 108, PX, 18); p.rect(bxH+46, 108, PX, 18); // pieds
+  p.fill('#a8b8c8'); p.rect(bxH, 100, 58, PX*2); // plateau
+  p.fill('#8898a8'); p.rect(bxH, 108, 58, PX);   // ombre plateau
+  p.fill('#f0f0d0'); px(bxH+38, 90, PX, PX*2);   // tige lampe
+  p.fill('#e0e0a0'); px(bxH+33, 88, PX*3, PX);   // abat-jour
+
+}
+else if (theme === 'desert') {
+
+  // 1. MUR — adobe beige
+  p.fill('#d4b48c'); p.rect(0, 60, CS, 60);
+
+  // 2. FENÊTRE — ciel ocre désert (ou nuit)
+  let skyD = (h>=20||h<6) ? C.skyN1 : '#f0c878';
+  p.fill(skyD); p.rect(20, 68, 42, 42);           // vitre
+  p.fill('#b08c60');                               // couleur cadre sable foncé
+  p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
+  p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
+  p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
+  p.fill('#c8a070'); p.rect(16, 108, 50, PX);     // rebord
+
+  // 3. RIDEAUX — sable
+  p.fill('#e0c888'); p.rect(10, 63, 12, 52);      // rideau gauche
+  p.fill('#c0a860'); p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52); // plis gauche
+  p.fill('#e0c888'); p.rect(62, 63, 12, 52);      // rideau droit
+  p.fill('#c0a860'); p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52); // plis droit
+  p.fill('#a88848'); p.rect(8, 62, 68, 3);         // tringle
+
+  // 4. PLINTHE
+  p.fill('#b89060'); p.rect(0, 118, CS, PX);
+
+  // 5. CADRE MURAL — soleil géométrique
+  p.fill('#b08c60'); p.rect(88, 68, 28, 28);      // cadre extérieur
+  p.fill('#fdf0d0'); p.rect(91, 71, 22, 22);      // fond du cadre
+  p.fill('#e8a020'); px(99, 76, PX*3, PX*3);      // disque central
+  p.fill('#f0c030');                               // rayons
+  px(99, 73, PX, PX); px(101, 73, PX, PX);        // rayons haut
+  px(99, 82, PX, PX); px(101, 82, PX, PX);        // rayons bas
+  px(96, 78, PX, PX); px(104, 78, PX, PX);        // rayons côtés
+  px(97, 74, PX, PX); px(103, 74, PX, PX);        // rayons diagonales haut
+  px(97, 82, PX, PX); px(103, 82, PX, PX);        // rayons diagonales bas
+
+  // 6. SOL — terre sable
+  p.fill('#c8a870'); p.rect(0, 120, CS, 80);
+  p.fill('#a88850');
+  for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); }
+
+  // 7. TAPIS — terracotta
+  p.fill('#8a3820'); p.rect(18, 138, 164, 62);    // bordure
+  p.fill('#a84830'); p.rect(22, 141, 156, 59);    // centre
+
+  // 8. BUREAU
+  let bxD = 138;
+  p.fill('#a07840');
+  p.rect(bxD+4, 108, PX, 18); p.rect(bxD+46, 108, PX, 18); // pieds
+  p.fill('#c8a060'); p.rect(bxD, 100, 58, PX*2); // plateau
+  p.fill('#a88040'); p.rect(bxD, 108, 58, PX);   // ombre plateau
+  p.fill('#f8e060'); px(bxD+38, 90, PX, PX*2);   // tige lampe
+  p.fill('#f0c820'); px(bxD+33, 88, PX*3, PX);   // abat-jour
+
+}
 else {
-      // --- Mur ---
-      p.fill(n ? '#a090a8' : C.wallIn); p.rect(0, 60, CS, 60);
+  // ---- THÈME PASTEL (défaut) ----
 
-      // --- Fenêtre : ciel qui suit l'heure ---
-      let skyCol = (h>=20||h<6) ? C.skyN1 : (h>=17) ? C.skyK1 : (h>=7) ? C.skyD1 : C.skyA1;
-      p.fill(skyCol); p.rect(20, 68, 42, 42);
-      // Cadre fenêtre
-      p.fill(n ? '#706060' : '#c8baa8');
-      p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
-      p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
-      // Croisillons
-      p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
-      // Rebord
-      p.fill(n ? '#807070' : '#d8c8b8'); p.rect(16, 108, 50, PX);
+  // 1. MUR — gris lilas doux (s'assombrit la nuit)
+  p.fill(n ? '#a090a8' : C.wallIn); p.rect(0, 60, CS, 60);
 
-      // --- Rideaux DEVANT la fenêtre ---
-      let rideau = n ? '#705878' : '#c8a8d8';
-      let rideauDk = n ? '#504060' : '#a888c0';
-      p.fill(rideau);   p.rect(10, 63, 12, 52);
-      p.fill(rideauDk); p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52);
-      p.fill(rideau);   p.rect(62, 63, 12, 52);
-      p.fill(rideauDk); p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52);
-      // Tringle
-      p.fill(n ? '#907080' : '#b8a090'); p.rect(8, 62, 68, 3);
+  // 2. FENÊTRE — ciel qui suit vraiment l'heure
+  let skyP = (h>=20||h<6) ? C.skyN1 : (h>=17) ? C.skyK1 : (h>=7) ? C.skyD1 : C.skyA1;
+  p.fill(skyP); p.rect(20, 68, 42, 42);           // vitre
+  p.fill(n ? '#706060' : '#c8baa8');              // cadre (plus sombre la nuit)
+  p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
+  p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
+  p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);  // croisillons
+  p.fill(n ? '#807070' : '#d8c8b8'); p.rect(16, 108, 50, PX); // rebord
 
-      // --- Plinthe ---
-      p.fill(n ? '#705868' : '#d0c0b0'); p.rect(0, 118, CS, PX);
+  // 3. RIDEAUX — lilas pastel
+  let rideauP   = n ? '#705878' : '#c8a8d8';
+  let rideauDkP = n ? '#504060' : '#a888c0';
+  p.fill(rideauP);   p.rect(10, 63, 12, 52);
+  p.fill(rideauDkP); p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52); // plis gauche
+  p.fill(rideauP);   p.rect(62, 63, 12, 52);
+  p.fill(rideauDkP); p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52); // plis droit
+  p.fill(n ? '#907080' : '#b8a090'); p.rect(8, 62, 68, 3); // tringle
 
-            // --- Cadre mural (centre) ---
-      // Cadre
-      p.fill(n ? '#706060' : '#c8a880'); p.rect(88, 68, 28, 28);
-      // Intérieur blanc cassé
-      p.fill(n ? '#504050' : '#f0ece4'); p.rect(91, 71, 22, 22);
-      // Motif géométrique abstrait
-      p.fill(n ? '#907080' : '#c8a8d0');
-      px(96, 76, PX*2, PX*2);   // carré haut gauche
-      px(104, 84, PX*2, PX*2);  // carré bas droite
-      p.fill(n ? '#708090' : '#a8c8d0');
-      px(104, 76, PX, PX*3);    // ligne verticale droite
-      px(96, 84, PX*3, PX);     // ligne horizontale bas
+  // 4. PLINTHE
+  p.fill(n ? '#705868' : '#d0c0b0'); p.rect(0, 118, CS, PX);
 
-      // --- Sol parquet ---
-      p.fill(n ? '#807080' : C.floorIn); p.rect(0, 120, CS, 80);
-      p.fill(n ? '#706070' : '#b8a898');
-      for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); }
+  // 5. CADRE MURAL — motif géométrique abstrait
+  p.fill(n ? '#706060' : '#c8a880'); p.rect(88, 68, 28, 28);  // cadre extérieur
+  p.fill(n ? '#504050' : '#f0ece4'); p.rect(91, 71, 22, 22);  // fond
+  p.fill(n ? '#907080' : '#c8a8d0');
+  px(96, 76, PX*2, PX*2);   // carré haut gauche
+  px(104, 84, PX*2, PX*2);  // carré bas droite
+  p.fill(n ? '#708090' : '#a8c8d0');
+  px(104, 76, PX, PX*3);    // ligne verticale
+  px(96, 84, PX*3, PX);     // ligne horizontale
 
-      // --- Tapis pleine hauteur ---
-      p.fill(n ? '#504060' : '#c0a8e8'); p.rect(18, 138, 164, 62);
-      p.fill(n ? '#605070' : C.rug);     p.rect(22, 141, 156, 59);
+  // 6. SOL PARQUET
+  p.fill(n ? '#807080' : C.floorIn); p.rect(0, 120, CS, 80);
+  p.fill(n ? '#706070' : '#b8a898');
+  for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); } // lames
 
-      // --- Bureau à droite ---
-      let bx = 138;
-      // Pieds EN PREMIER (derrière le plateau)
-      p.fill(n ? '#806868' : '#b89870');
-      p.rect(bx+4,  108, PX, 18);
-      p.rect(bx+46, 108, PX, 18);
-      // Plateau par-dessus
-      p.fill(n ? '#907878' : '#c8a880'); p.rect(bx, 100, 58, PX*2);
-      p.fill(n ? '#706060' : '#a88860'); p.rect(bx, 108, 58, PX);
-      // Lampe
-      p.fill(n ? '#f0d870' : '#f0e898'); px(bx+38, 90, PX, PX*2);
-      p.fill(n ? '#e8b830' : '#f8d858'); px(bx+33, 88, PX*3, PX);
-    }
+  // 7. TAPIS — lilas
+  p.fill(n ? '#504060' : '#c0a8e8'); p.rect(18, 138, 164, 62); // bordure
+  p.fill(n ? '#605070' : C.rug);     p.rect(22, 141, 156, 59); // centre
+
+  // 8. BUREAU
+  let bxP = 138;
+  p.fill(n ? '#806868' : '#b89870');
+  p.rect(bxP+4, 108, PX, 18); p.rect(bxP+46, 108, PX, 18);   // pieds
+  p.fill(n ? '#907878' : '#c8a880'); p.rect(bxP, 100, 58, PX*2); // plateau
+  p.fill(n ? '#706060' : '#a88860'); p.rect(bxP, 108, 58, PX);   // ombre plateau
+  p.fill(n ? '#f0d870' : '#f0e898'); px(bxP+38, 90, PX, PX*2);   // tige lampe
+  p.fill(n ? '#e8b830' : '#f8d858'); px(bxP+33, 88, PX*3, PX);   // abat-jour
+}
 }
     else if (env === 'montagne') {
       if (theme === 'automne') {

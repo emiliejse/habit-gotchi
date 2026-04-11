@@ -305,23 +305,21 @@ else {
       // --- Mur ---
       p.fill(n ? '#a090a8' : C.wallIn); p.rect(0, 60, CS, 60);
 
-      // --- Fenêtre : ciel animé derrière ---
-      p.fill(n ? C.skyN1 : C.skyD1); p.rect(20, 68, 42, 42);
-      // Nuage animé ou lune dans la fenêtre
-      if (n) {
-        p.fill('#f0e8a0'); px(34, 74, PX*2, PX); px(32, 79, PX*3, PX*2);
-      } else {
-        const cx = 24 + (p.frameCount * 0.3) % 30;
-        p.fill('#ece8f4'); px(cx, 76, PX*3, PX); px(cx-PX, 81, PX*4, PX*2);
-      }
- // Croisillons (couleur du cadre, pas du ciel)
-      p.fill(n ? '#706060' : '#c8baa8'); p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
-      // Cadre fenêtre
-      p.fill(n ? '#706060' : '#c8baa8');
-      p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3); // haut/bas
-      p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);   // gauche/droite
-      // Rebord fenêtre
-      p.fill(n ? '#807070' : '#d8c8b8'); p.rect(16, 108, 50, PX);
+      // --- Fenêtre : ciel dont la couleur suit l'heure ---
+const skyCol = (h>=20||h<6) ? C.skyN1 : (h>=17) ? C.skyK1 : (h>=7) ? C.skyD1 : C.skyA1;
+p.fill(skyCol); p.rect(20, 68, 42, 42);
+// Nuage animé le jour, lune la nuit
+if (h>=20||h<6) {
+  p.fill('#f0e8a0'); px(34, 74, PX*2, PX); px(32, 79, PX*3, PX*2);
+} else {
+  const wCx = 24 + (p.frameCount * 0.3) % 30;
+  p.fill('#ece8f4'); px(wCx, 76, PX*3, PX); px(wCx-PX, 81, PX*4, PX*2);
+}
+// Cadre + croisillons EN DERNIER (par-dessus le ciel)
+p.fill(n ? '#706060' : '#c8baa8');
+p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
+p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
+p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
 
       // --- Rideaux ---
       const rideau = n ? '#705878' : '#c8a8d8';

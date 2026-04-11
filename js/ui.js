@@ -307,8 +307,10 @@ function acheterProp(propId) {
   D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
   save();
   toast(`🎁 ${prop.nom} ajouté à ton inventaire !`);
-   renderProps();
-  ouvrirBoutique();
+renderProps();
+updUI();
+updBadgeBoutique();
+ouvrirBoutique();
 }
 function setPropsFilter(cat) { propsFilterActive = cat; renderProps(); }
 

@@ -313,7 +313,8 @@ function updBubbleNow() {
 
   // Mélange idle + phrases apprises par Claude
   if (Math.random() < 0.15) {
-    const extras = [...(src.idle || []), ...(D.g.customBubbles || [])];
+    const cb = Array.isArray(D.g.customBubbles) ? D.g.customBubbles : [];
+const extras = (src.idle || []).concat(cb);
     if (extras.length) pool = extras;
   }
 

@@ -33,6 +33,9 @@ async function loadDataFiles() {
     // Ajoute automatiquement les props gratuits si pas encore dans l'inventaire
 if (results[0].status === 'fulfilled') {
   window.PROPS_LIB = results[0].value.catalogue || [];
+  renderProps();
+  updBadgeBoutique();
+}
   window.PROPS_LIB.forEach(prop => {
     if (prop.cout === 0 && !D.g.props.find(p => p.id === prop.id)) {
       D.g.props.push({

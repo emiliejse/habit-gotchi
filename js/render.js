@@ -428,8 +428,11 @@ const p5s = (p) => {
     p.noStroke();
     particles = particles.filter(pt => {
       pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=.12; pt.life--;
-      const a = Math.floor(pt.life/16*255);
-      try { p.fill(p.color(pt.c+(a<16?'0':'')+a.toString(16))); } catch(e) { p.fill(200); }
+      const a = Math.floor(pt.life / 16 * 255);
+// p.color() avec hex + canal alpha séparé — compatible p5.js 1.9+
+const col = p.color(pt.c);
+col.setAlpha(a);
+p.fill(col);
       px(pt.x, pt.y, PX, PX);
       return pt.life > 0;
     });

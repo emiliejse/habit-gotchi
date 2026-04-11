@@ -687,6 +687,7 @@ const notesJour = window.D.journal
 const contexte = (window.AI_SYSTEM?.soutien_contexte || '')
   .replace('{energie}', window.D.g.energy)
   .replace('{bonheur}', window.D.g.happiness)
+  .replace('{habitesDone}', habsDone)
   .replace('{notes}', notesJour)
   .replace('{messages_restants}', 6 - window._soutienCount);
 

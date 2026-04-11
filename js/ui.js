@@ -227,18 +227,99 @@ function renderProps() {
 
 function setPropsFilter(cat) { propsFilterActive = cat; renderProps(); }
 
-async function toggleProp(index) {
-  const D = window.D;
+function toggleProp(index) {
   haptic();
-  D.g.props[index].actif = !D.g.props[index].actif;
-  save(); renderProps();
-  if (D.g.props[index].actif) {
-    if (!window.PROPS_LIB || window.PROPS_LIB.length === 0) await loadDataFiles();
-    const def = (window.PROPS_LIB || []).find(l => l.id === D.g.props[index].id)
-             || (D.propsPixels || []).find(l => l.id === D.g.props[index].id);
-    if (def && def.pixels) toast(`✨ ${D.g.props[index].nom} équipé !`);
-    else toast(`✨ ${D.g.props[index].nom} activé (pixels non trouvés pour id: ${D.g.props[index].id})`);
+  const prop = D.g.props[index];
+
+  // --- Désactiver si déjà actif ---
+  if (prop.actif) {
+    prop.actif = false;
+    prop.slot = null;
+    save();
+    renderProps();
+    toast(`📦 ${prop.nom} rangé`);
+    return;
   }
+
+  // --- Objets non-décor : activer direct (pas de slot à choisir) ---
+  if (prop.type !== 'decor') {
+    prop.actif = true;
+    save();
+    renderProps();
+    toast(`✨ ${prop.nom} activé !`);
+    return;
+  }
+
+  // --- Objet décor : ouvrir le picker de slot ---
+  openSlotPicker(index);
+}
+
+function openSlotPicker(propIndex) {
+  const prop = D.g.props[propIndex];
+
+  // Qui occupe quoi en ce moment ?
+  const occupied = {};
+  D.g.props.forEach(p => {
+    if (p.actif && p.slot) occupied[p.slot] = p.nom;
+  });
+
+  const slots = [
+    { id: 'A',   label: 'Fond gauche',   desc: 'Arbres, nuages bas' },
+    { id: 'B',   label: 'Fond droit',    desc: 'Décor arrière-plan' },
+    { id: 'C',   label: 'Sol gauche',    desc: 'Devant, côté gauche' },
+    { id: 'D',   label: 'Sol droit',     desc: 'Devant, côté droit' },
+    { id: 'SOL', label: 'Centre',        desc: 'Devant le Gotchi' },
+  ];
+
+  const slotHTML = slots.map(s => {
+    const taken = occupied[s.id];
+    const takenBadge = taken
+      ? `<span style="font-size:8px;color:var(--lilac);display:block">⚠ ${taken}</span>`
+      : '';
+    return `
+      <div onclick="confirmSlot(${propIndex},'${s.id}')" style="
+        border:2px solid var(--border); border-radius:8px; padding:8px 6px;
+        cursor:pointer; text-align:center; font-size:10px; font-weight:bold;
+        background:${taken ? '#fff8f0' : '#fff'};
+        transition:.15s;" onmouseover="this.style.borderColor='var(--mint)'"
+        onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:16px">📍</div>
+        <div>${s.label}</div>
+        <div style="font-size:8px;opacity:.6;font-weight:normal">${s.desc}</div>
+        ${takenBadge}
+      </div>`;
+  }).join('');
+
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <h3 style="font-size:13px;margin-bottom:10px;color:var(--lilac)">
+      📍 Où placer ${prop.emoji || '🎁'} ${prop.nom} ?
+    </h3>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+      ${slotHTML}
+    </div>
+    <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:10px">Annuler</button>
+  `;
+}
+
+function confirmSlot(propIndex, slotId) {
+  const prop = D.g.props[propIndex];
+
+  // Désactiver l'éventuel occupant actuel du slot
+  D.g.props.forEach(p => {
+    if (p.actif && p.slot === slotId && p !== prop) {
+      p.actif = false;
+      p.slot = null;
+      toast(`↩ ${p.nom} déplacé`);
+    }
+  });
+
+  prop.actif = true;
+  prop.slot = slotId;
+  save();
+  clModal();
+  renderProps();
+  toast(`✨ ${prop.nom} placé (${slotId}) !`);
 }
 
 function debugProps() {

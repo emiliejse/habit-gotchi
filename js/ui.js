@@ -1,0 +1,747 @@
+/* ============================================================
+   ui.js — Interactions, panneaux, modales, appels API Claude
+   Dépend de : app.js (window.D, save, today, hr, haptic, addXp,
+               getSt, nxtTh, calcStr, toggleHab, editH, updBubbleNow,
+               CATS, STG, UI_PALETTES, GOTCHI_COLORS, ENV_THEMES, SK)
+   ============================================================ */
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+let journalLocked = true;
+
+function go(t) {
+  document.querySelectorAll('.pnl').forEach(p => p.classList.remove('on'));
+  const targetPanel = document.getElementById('p-' + t);
+  if (targetPanel) targetPanel.classList.add('on');
+
+  const shell = document.querySelector('.tama-shell');
+  if (t === 'gotchi') {
+    shell.classList.remove('shrunk');
+    window.D.g.activeEnv = 'parc';
+  } else {
+    shell.classList.add('shrunk');
+    if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
+    else if (t === 'perso')    window.D.g.activeEnv = 'chambre';
+    else if (t === 'progress') window.D.g.activeEnv = 'montagne';
+    else if (t === 'settings') window.D.g.activeEnv = 'chambre';
+    else if (t === 'props')    window.D.g.activeEnv = 'parc';
+  }
+  save();
+
+  if (t === 'gotchi' || t === 'settings') renderHabs();
+  if (t === 'progress') renderProg();
+  if (t === 'props')    renderProps();
+  if (t === 'perso')    renderPerso();
+  if (t === 'journal')  { journalLocked = true; renderJ(); }
+
+  document.getElementById('dynamic-zone').scrollTop = 0;
+}
+
+function toggleMenu() {
+  const ov = document.getElementById('menu-overlay');
+  if (!ov.classList.contains('open')) {
+    const nm = document.getElementById('menu-gotchi-name');
+    if (nm) nm.textContent = window.D.g.name || 'Gotchi';
+  }
+  ov.classList.toggle('open');
+}
+function goMenu(t) { toggleMenu(); go(t); }
+
+function updDate() {
+  const d = new Date();
+  const days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const mos  = ['jan','fév','mars','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+  document.getElementById('date-d').textContent = `${days[d.getDay()]} ${d.getDate()} ${mos[d.getMonth()]}`;
+}
+updDate();
+
+/* ============================================================
+   TOAST & FEEDBACK
+   ============================================================ */
+let _toastTimer;
+function toast(m) {
+  let el = document.getElementById('toast-snack');
+  if (!el) { el = document.createElement('div'); el.id = 'toast-snack'; document.body.appendChild(el); }
+  el.textContent = m;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function toastModal(m) {
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `<p style="text-align:center;font-size:12px">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`;
+}
+
+function toastSnack(msg) {
+  let el = document.getElementById('snack');
+  if (!el) {
+    el = document.createElement('div'); el.id = 'snack';
+    el.style.cssText = `position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
+      background:#38304a;color:#fff;padding:8px 16px;border-radius:20px;font-size:10px;
+      font-family:'Courier New',monospace;z-index:500;opacity:0;transition:opacity .2s;
+      pointer-events:none;white-space:nowrap;`;
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.style.opacity = '0', 1800);
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+function clModal(e) {
+  if (!e || e.target.id === 'modal') document.getElementById('modal').style.display = 'none';
+}
+
+/* ============================================================
+   UI PRINCIPALE
+   ============================================================ */
+function updUI() {
+  const D = window.D;
+  if (document.getElementById('petales-l'))
+    document.getElementById('petales-l').textContent = `🌸 ${D.g.petales || 0}`;
+  const g = D.g, s = getSt(g.totalXp), nt = nxtTh(g.totalXp), pt = s.th;
+  const pct = nt > pt ? ((g.totalXp - pt) / (nt - pt)) * 100 : 100;
+  if (document.getElementById('g-name'))   document.getElementById('g-name').textContent = g.name;
+  if (document.getElementById('g-stage'))  document.getElementById('g-stage').textContent = s.l;
+  if (document.getElementById('xp-l'))     document.getElementById('xp-l').textContent = nt > pt ? `${g.totalXp - pt}/${nt - pt} XP` : `MAX ✿`;
+  if (document.getElementById('xp-b'))     document.getElementById('xp-b').style.width = pct + '%';
+  if (document.getElementById('sl-energy'))  { document.getElementById('sl-energy').value = g.energy; document.getElementById('sv-energy').textContent = g.energy; }
+  if (document.getElementById('sl-happy'))   { document.getElementById('sl-happy').value = g.happiness; document.getElementById('sv-happy').textContent = g.happiness; }
+  if (document.getElementById('s-xp'))    document.getElementById('s-xp').textContent = g.totalXp;
+  if (document.getElementById('s-str'))   document.getElementById('s-str').textContent = calcStr();
+  if (document.getElementById('s-jrn'))   document.getElementById('s-jrn').textContent = D.journal.length;
+  if (document.getElementById('name-inp')) document.getElementById('name-inp').value = g.name;
+  if (document.getElementById('env-sel'))  document.getElementById('env-sel').value = g.activeEnv || 'parc';
+  if (document.getElementById('api-inp'))  document.getElementById('api-inp').value = D.apiKey || '';
+  const shopCard = document.getElementById('shop-card');
+  if (shopCard) {
+    shopCard.style.display = (D.g.petales || 0) >= 10 ? 'block' : 'none';
+    const wallet = document.getElementById('xp-wallet');
+    if (wallet) wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
+    const petalesDisplay = document.getElementById('petales-wallet');
+    if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0} Pétales`;
+  }
+}
+
+/* ============================================================
+   HABITUDES
+   ============================================================ */
+function renderHabs() {
+  const D = window.D;
+  const td = today(), log = D.log[td] || [], done = log.length;
+  const habHome = document.getElementById('hab-home');
+  if (habHome) {
+    habHome.innerHTML = D.habits.map(h => {
+      const c = CATS.find(c => c.id === h.catId), d = log.includes(h.catId);
+      return `<div class="hab ${d?'done':''}" onclick="toggleHab('${h.catId}')"><div class="ck">${d?'✓':''}</div><span style="flex:1;font-size:12px">${h.label}</span><span style="font-size:16px">${c.icon}</span></div>`;
+    }).join('');
+  }
+  const hc = document.getElementById('hab-count');
+  if (hc) hc.textContent = `${done}/6`;
+  const edit = document.getElementById('hab-edit');
+  if (edit) edit.innerHTML = D.habits.map((h, i) => {
+    const c = CATS.find(c => c.id === h.catId);
+    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:20px;width:28px;text-align:center">${c.icon}</span><input class="inp" value="${h.label}" onchange="editH(${i},this.value)" style="flex:1;font-size:12px"></div>`;
+  }).join('');
+}
+
+/* ============================================================
+   PROPS & INVENTAIRE
+   ============================================================ */
+let propsFilterActive = 'tous';
+
+function renderPropMini(canvas, def) {
+  if (!canvas || !def || !def.pixels) return;
+  const ctx = canvas.getContext('2d');
+  const cols = def.pixels[0].length, rows = def.pixels.length;
+  const px = Math.min(Math.floor(54 / Math.max(cols, rows)), 6);
+  canvas.width = cols * px; canvas.height = rows * px;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const ci = def.pixels[r][c]; if (ci === 0) continue;
+      ctx.fillStyle = def.palette[ci];
+      ctx.fillRect(c * px, r * px, px, px);
+    }
+  }
+}
+
+function renderProps() {
+  const D = window.D;
+  const allDefs = [...(window.PROPS_LIB || []), ...(window.PROPS_LOCAL || [])];
+  const cats = {
+    'tous':       { label: '✿ Tous' },
+    'decor':      { label: '🌿 Décor' },
+    'accessoire': { label: '👒 Accessoires' },
+    'ambiance':   { label: '✨ Ambiances' },
+    'claude':     { label: '✦ IA' },
+  };
+  const filterEl = document.getElementById('props-filters');
+  if (filterEl) {
+    filterEl.innerHTML = Object.entries(cats).map(([key, cat]) =>
+      `<button onclick="setPropsFilter('${key}')" style="padding:4px 10px;border-radius:20px;border:2px solid var(--border);font:bold 10px 'Courier New',monospace;cursor:pointer;background:${propsFilterActive===key?'var(--lilac)':'#fff'};color:${propsFilterActive===key?'#fff':'var(--text2)'};transition:.15s;">${cat.label}</button>`
+    ).join('');
+  }
+  const listEl = document.getElementById('props-list');
+  if (!listEl) return;
+  if (!D.g.props || D.g.props.length === 0) {
+    listEl.innerHTML = '<p style="font-size:10px;color:var(--text2);text-align:center;padding:12px">Ton sac est vide. Reviens plus tard ! ✿</p>';
+    return;
+  }
+  const filtered = D.g.props
+    .map((p, index) => ({ p, index, def: allDefs.find(l => l.id === p.id) }))
+    .filter(({ p }) => {
+      if (propsFilterActive === 'tous') return true;
+      if (propsFilterActive === 'claude') return !!(D.propsPixels && D.propsPixels.find(x => x.id === p.id));
+      return p.type === propsFilterActive;
+    });
+  listEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">` +
+    filtered.map(({ p, index, def }) => {
+      const isClaud = !!(def && def.pixels && D.propsPixels && D.propsPixels.find(x => x.id === p.id));
+      const badgeId = `mini-${p.id}`;
+      return `<div onclick="toggleProp(${index})" style="background:${p.actif?'var(--mint)':'#fff'};border:2px solid ${p.actif?'var(--mint)':isClaud?'var(--lilac)':'var(--border)'};border-radius:10px;padding:6px 4px 8px;font-size:10px;font-weight:bold;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;transition:.2s;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.05);position:relative;min-height:90px;">
+        ${isClaud ? `<span style="position:absolute;top:4px;right:4px;font-size:11px;color:var(--lilac);filter:drop-shadow(0 0 3px rgba(176,144,208,.6));">✦</span>` : ''}
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+          ${def && def.pixels ? `<canvas id="${badgeId}" style="image-rendering:pixelated;border-radius:3px"></canvas>` : `<span style="font-size:22px">${p.emoji||'🎁'}</span>`}
+        </div>
+        <div style="width:100%;">
+          <div>${p.nom}</div>
+          <div style="font-size:8px;text-transform:uppercase;opacity:.7;font-weight:normal;">${p.type}</div>
+          ${p.actif ? '<div style="font-size:8px;color:var(--mint)">● actif</div>' : ''}
+        </div>
+      </div>`;
+    }).join('') + `</div>`;
+  filtered.forEach(({ p, def }) => {
+    if (def && def.pixels) renderPropMini(document.getElementById(`mini-${p.id}`), def);
+  });
+  const shopCard = document.getElementById('shop-card');
+  const wallet   = document.getElementById('xp-wallet');
+  if (shopCard) shopCard.style.display = (D.g.petales || 0) >= 10 ? 'block' : 'none';
+  if (wallet)   wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
+}
+
+function setPropsFilter(cat) { propsFilterActive = cat; renderProps(); }
+
+async function toggleProp(index) {
+  const D = window.D;
+  haptic();
+  D.g.props[index].actif = !D.g.props[index].actif;
+  save(); renderProps();
+  if (D.g.props[index].actif) {
+    if (!window.PROPS_LIB || window.PROPS_LIB.length === 0) await loadDataFiles();
+    const def = (window.PROPS_LIB || []).find(l => l.id === D.g.props[index].id)
+             || (D.propsPixels || []).find(l => l.id === D.g.props[index].id);
+    if (def && def.pixels) toast(`✨ ${D.g.props[index].nom} équipé !`);
+    else toast(`✨ ${D.g.props[index].nom} activé (pixels non trouvés pour id: ${D.g.props[index].id})`);
+  }
+}
+
+function debugProps() {
+  const D = window.D, lib = window.PROPS_LIB || [];
+  const actifs = (D.g.props || []).filter(p => p.actif);
+  const g = D.g, s = getSt(g.totalXp);
+  let r = '✿ État du système ✿\n\n';
+  r += `🎮 ${g.name} (${s.l}, ${g.totalXp} XP)\n`;
+  r += `⚡ Énergie: ${g.energy}/5 · 💜 Bonheur: ${g.happiness}/5\n`;
+  r += `📦 Catalogue: ${lib.length} props chargés\n`;
+  r += `🎒 Inventaire: ${(D.g.props||[]).length} objets (${actifs.length} actifs)\n\n`;
+  if (actifs.length) actifs.forEach(p => { const def = lib.find(l => l.id === p.id); r += (def&&def.pixels?'✅':'❌')+' '+p.nom+' ('+p.id+')\n'; });
+  r += '\n📁 Fichiers data:\n';
+  r += (window.PERSONALITY ? '✅' : '❌') + ' personality.json\n';
+  r += (lib.length > 0 ? '✅' : '❌') + ' props.json\n';
+  r += (window.ENVIRONMENTS ? '✅' : '❌') + ' environments.json\n';
+  r += (window.STYLES ? '✅' : '❌') + ' styles.json\n';
+  r += `🎨 Props générés par Claude: ${(D.propsPixels || []).length}\n`;
+  toast(r);
+}
+
+function fixProps() {
+  const mapping = {
+    'Plante Grasse':'plante01','Tapis Doux':'tapis01','Pluie de confettis':'etoiles01',
+    'Pluie d\'Étoiles':'etoiles01','Couronne Dorée':'couronne01','Bougie Douce':'bougie01',
+    'Petit Cactus':'cactus01','Coussin Cœur':'coussin01','Lampe de Bureau':'lampe01',
+    'Lunettes Rondes':'lunettes01','Nœud Papillon':'noeud01'
+  };
+  let fixed = 0;
+  (window.D.g.props || []).forEach(p => { if (!p.id && mapping[p.nom]) { p.id = mapping[p.nom]; fixed++; } });
+  save(); toast('Corrigé ' + fixed + ' props ✿');
+  setTimeout(() => location.reload(), 800);
+}
+
+function cleanProps() {
+  const before = window.D.g.props.length;
+  window.D.g.props = window.D.g.props.filter(p => {
+    return (window.PROPS_LIB || []).find(l => l.id === p.id) || (window.D.propsPixels || []).find(l => l.id === p.id);
+  });
+  save(); toast('Nettoyé : ' + (before - window.D.g.props.length) + ' props orphelins supprimés ✿');
+  setTimeout(() => location.reload(), 800);
+}
+
+/* ============================================================
+   API CLAUDE — CADEAU / BULLE
+   ============================================================ */
+async function askClaude() {
+  const D = window.D;
+  const key = D.apiKey; if (!key) { toast('Clé API manquante dans les Réglages'); return; }
+  const g = D.g, recentJ = D.journal.slice(-2).map(j => j.text).join(' ');
+  const td = today();
+  let giveGift = !D.lastGiftDate || Math.floor((new Date() - new Date(D.lastGiftDate)) / 86400000) >= 3;
+
+  const ctx = window.PROMPTS && window.PROMPTS.aiContexts;
+  let prompt;
+  if (ctx) {
+    prompt = ctx.askClaude.base
+      .replace('{{energy}}', g.energy)
+      .replace('{{happiness}}', g.happiness)
+      .replace('{{notes}}', recentJ || '(vide)');
+    prompt += '\n' + (giveGift
+      ? ctx.askClaude.withGift.replace('{{timestamp}}', Date.now())
+      : ctx.askClaude.withoutGift);
+  } else {
+    prompt = `Tu es le compagnon numérique d'Émilie. Énergie ${g.energy}/5, Humeur ${g.happiness}/5, Notes: ${recentJ||'(vide)'}.\nAction 1: Donne une pensée complice (2 phrases max).\nAction 2: Invente une TRÈS COURTE phrase (1 à 4 mots) qu'un compagnon dirait en patientant.`;
+    if (giveGift) prompt += ` Action 3: INVENTE un petit objet pixel art (max 7x7 pixels). Catégories: "decor","accessoire","ambiance". Palette hex, index 0=transparent. Réponds UNIQUEMENT en JSON strict:\n{"message":"ta pensée","bulle":"phrase courte","cadeau":{"id":"mot_unique_${Date.now()}","nom":"nom joli","type":"decor","slot":"D","palette":["transparent","#couleur1","#couleur2"],"pixels":[[0,1,0],[1,2,1],[0,1,0]]}}`;
+    else prompt += ` Réponds UNIQUEMENT en JSON strict: {"message":"ta pensée","bulle":"phrase courte"}`;
+  }
+
+  if (document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = 'Je réfléchis... 💭';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:300, messages:[{role:'user',content:prompt}] })
+    });
+    const d = await r.json();
+    const match = d.content[0].text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const data = JSON.parse(match[0]);
+      if (document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = data.message;
+      if (data.bulle) {
+        if (!D.g.customBubbles) D.g.customBubbles = [];
+        if (!D.g.customBubbles.includes(data.bulle)) D.g.customBubbles.push(data.bulle);
+        if (D.g.customBubbles.length > 10) D.g.customBubbles.shift();
+      }
+      if (giveGift && data.cadeau && !D.g.props.find(p => p.id === data.cadeau.id)) {
+        D.g.props.push({ id:data.cadeau.id, nom:data.cadeau.nom, type:data.cadeau.type, actif:false });
+        if (!window.PROPS_LOCAL) window.PROPS_LOCAL = [];
+        window.PROPS_LOCAL.push(data.cadeau);
+        D.propsPixels = D.propsPixels || [];
+        D.propsPixels.push(data.cadeau);
+        D.lastGiftDate = td;
+        save(); toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
+      }
+      save(); renderProps();
+    }
+  } catch(e) { if (document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = 'Erreur API.'; }
+}
+
+async function buyProp() {
+  const D = window.D;
+  if (!D.apiKey) { toast('Clé API manquante dans les Réglages'); return; }
+  if ((D.g.petales || 0) < 10) { toast('Il te faut 10 🌸 Pétales'); return; }
+  D.g.petales -= 10; save(); addXp(-100);
+  toast('Claude crée ton objet... 💭');
+  const nomsExistants = (D.g.props || []).map(p => p.nom).join(', ') || 'aucun';
+  const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
+  const theme  = themes[Math.floor(Math.random() * themes.length)];
+  const ctx = window.PROMPTS && window.PROMPTS.aiContexts;
+  const prompt = ctx
+    ? ctx.buyProp.replace('{{theme}}', theme).replace('{{existingNames}}', nomsExistants).replace('{{timestamp}}', Date.now())
+    : `Invente un objet pixel art UNIQUE sur le thème "${theme}". Objets existants (NE PAS reproduire): ${nomsExistants}. Max 7x7px. Catégories: "decor","accessoire","ambiance". Palette hex index 0=transparent. JSON strict sans texte:\n{"id":"obj_${Date.now()}","nom":"nom joli","type":"decor","emoji":"🌸","position":{"x":150,"y":128},"palette":["transparent","#couleur1","#couleur2"],"pixels":[[0,1,0],[1,2,1],[0,1,0]]}`;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','x-api-key':D.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:300, temperature:1, messages:[{role:'user',content:prompt}] })
+    });
+    const data = await r.json();
+    const match = data.content[0].text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const obj = JSON.parse(match[0]);
+      D.g.props.push({ id:obj.id, nom:obj.nom, type:obj.type, emoji:obj.emoji||'🎁', actif:false });
+      D.propsPixels = D.propsPixels || [];
+      D.propsPixels.push(obj);
+      window.PROPS_LOCAL = D.propsPixels;
+      save(); renderProps(); updUI();
+      toast(`🎁 ${obj.nom} ajouté à ton inventaire !`);
+    }
+  } catch(e) { D.g.petales = (D.g.petales || 0) + 10; save(); toast('Erreur API, pétales remboursés.'); }
+}
+
+/* ============================================================
+   API CLAUDE — SOUTIEN
+   ============================================================ */
+function genSoutien() {
+  haptic();
+  const D = window.D, td = today();
+  const habsDuJour  = D.habits.map(h => ({ label:h.label, faite:(D.log[td]||[]).includes(h.catId) }));
+  const notesDuJour = D.journal.filter(j => j.date.startsWith(td)).map(j => ({ humeur:j.mood, texte:j.text }));
+  const ctx = window.PROMPTS && window.PROMPTS.aiContexts;
+  const promptInit = ctx
+    ? ctx.genSoutien
+        .replace('{{energy}}',      `${D.g.energy}/5`)
+        .replace('{{happiness}}',   `${D.g.happiness}/5`)
+        .replace('{{habitsDone}}',  habsDuJour.filter(h=>h.faite).map(h=>h.label).join(', ')||'aucune')
+        .replace('{{habitsUndone}}',habsDuJour.filter(h=>!h.faite).map(h=>h.label).join(', ')||'toutes faites !')
+        .replace('{{notes}}',       notesDuJour.length ? notesDuJour.map(n=>`[${n.humeur}] ${n.texte}`).join(' | ') : 'aucune note')
+    : `Tu es le Gotchi, un compagnon bienveillant pour le bien-être mental et le TDAH.\nL'utilisateur a besoin de soutien. Énergie: ${D.g.energy}/5, Bonheur: ${D.g.happiness}/5.\nCommence par une phrase douce. Pose UNE question ouverte. Ton doux, jamais de jugement.`;
+
+  window._soutienHistory = [];
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h3 style="font-size:13px;color:var(--lilac);">💜 Besoin de soutien</h3>
+      <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
+    </div>
+    <div class="soutien-chat" id="soutien-chat">
+      <div class="chat-bubble-system">Je consulte ton état du jour...</div>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <input type="text" id="soutien-inp" class="inp" placeholder="Réponds ici..." style="font-size:11px"
+        onkeydown="if(event.key==='Enter')sendSoutienMsg()">
+      <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:8px 12px">→</button>
+    </div>
+    <p style="font-size:8px;color:var(--text2);text-align:center;margin-top:4px">Cette conversation ne se sauvegarde pas.</p>`;
+  sendSoutienMsg(promptInit, true);
+}
+
+async function sendSoutienMsg(systemPrompt, isInit = false) {
+  const key = window.D.apiKey;
+  if (!key) { toast('Clé API manquante dans les Réglages'); return; }
+  const chat = document.getElementById('soutien-chat');
+  const inp  = document.getElementById('soutien-inp');
+  let userText = '';
+  if (!isInit) {
+    userText = inp ? inp.value.trim() : ''; if (!userText) return;
+    chat.innerHTML += `<div class="chat-bubble-user">${userText}</div>`;
+    inp.value = '';
+    window._soutienHistory.push({ role:'user', content:userText });
+  }
+  const typingId = 'typing-' + Date.now();
+  chat.innerHTML += `<div class="chat-bubble-system" id="${typingId}">Gotchi réfléchit... 💭</div>`;
+  chat.scrollTop = chat.scrollHeight;
+  const messages = isInit ? [{ role:'user', content:systemPrompt }] : [...window._soutienHistory.slice(-6)];
+  const sysPrompt = (window.PROMPTS && window.PROMPTS.aiSystem && window.PROMPTS.aiSystem.soutien)
+    || 'Tu es un compagnon de bien-être bienveillant. Réponses courtes, chaleureuses, jamais de jugement.';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:300, system:sysPrompt, messages })
+    });
+    const d = await r.json();
+    const reply = d.content?.[0]?.text || 'Je suis là. 💜';
+    document.getElementById(typingId)?.remove();
+    chat.innerHTML += `<div class="chat-bubble-claude">${reply}</div>`;
+    chat.scrollTop = chat.scrollHeight;
+    if (isInit) window._soutienHistory.push({ role:'user', content:systemPrompt });
+    window._soutienHistory.push({ role:'assistant', content:reply });
+  } catch(e) {
+    document.getElementById(typingId)?.remove();
+    chat.innerHTML += `<div class="chat-bubble-system">Connexion perdue. Vérifie ta clé API.</div>`;
+  }
+}
+
+/* ============================================================
+   API CLAUDE — BILAN SEMAINE
+   ============================================================ */
+let wOff = 0, mOff = 0;
+function navW(d) { wOff += d; renderProg(); }
+function navM(d) { mOff += d; renderProg(); }
+
+async function genBilanSemaine() {
+  haptic();
+  const D = window.D, key = D.apiKey;
+  const summaryEl = document.getElementById('claude-summary');
+  const wd = getWkDates(wOff);
+  const g = D.g, s = getSt(g.totalXp);
+  const habitudes = D.habits.map(h => ({ habitude:h.label, jours_faits:wd.filter(d=>(D.log[d]||[]).includes(h.catId)).length, sur:7 }));
+  const notes = D.journal.filter(j=>wd.includes(j.date.split('T')[0])).map(j=>({humeur:j.mood,texte:j.text,date:j.date.split('T')[0]}));
+  const totalHabDays = wd.reduce((acc,d)=>acc+(D.log[d]||[]).length, 0);
+  if (!key) {
+    const lignes = habitudes.map(h=>`• ${h.habitude} : ${h.jours_faits}/7 jours`).join('\n');
+    summaryEl.textContent = `Semaine du ${wd[0]} au ${wd[6]}\n\n${lignes}\n\n${notes.length} note(s) de journal.\n\nAjoute ta clé API pour un bilan personnalisé par Claude ✿`;
+    document.getElementById('btn-copy-bilan').style.display = 'block';
+    document.getElementById('bil-txt-hidden').value = summaryEl.textContent;
+    return;
+  }
+  summaryEl.textContent = '💭 Claude analyse ta semaine...';
+  const ctx = window.PROMPTS && window.PROMPTS.aiContexts;
+  const prompt = ctx
+    ? ctx.genBilanSemaine
+        .replace('{{weekStart}}',   wd[0])
+        .replace('{{weekEnd}}',     wd[6])
+        .replace('{{name}}',        g.name)
+        .replace('{{stage}}',       s.l)
+        .replace('{{energy}}',      g.energy)
+        .replace('{{happiness}}',   g.happiness)
+        .replace('{{habitudes}}',   habitudes.map(h=>`- ${h.habitude} : ${h.jours_faits}/7 jours`).join('\n'))
+        .replace('{{totalHabDays}}',totalHabDays)
+        .replace('{{notesCount}}',  notes.length)
+        .replace('{{notes}}',       notes.length ? notes.map(n=>`[${n.date}/${n.humeur}] ${n.texte}`).join('\n') : 'aucune note cette semaine')
+    : `Tu es le Gotchi. Bilan semaine ${wd[0]}→${wd[6]} pour ${g.name} (${s.l}). Énergie ${g.energy}/5, Bonheur ${g.happiness}/5. ${totalHabDays} habitudes cochées. ${notes.length} notes. Bilan chaleureux en 3 paragraphes courts. Ton doux, pas de bullet points.`;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:400, messages:[{role:'user',content:prompt}] })
+    });
+    const d = await r.json();
+    const bilan = d.content?.[0]?.text || 'Je n\'ai pas pu générer le bilan.';
+    summaryEl.textContent = bilan;
+    document.getElementById('bil-txt-hidden').value = bilan;
+    document.getElementById('btn-copy-bilan').style.display = 'block';
+    save();
+  } catch(e) { summaryEl.textContent = 'Erreur : ' + (e.message || JSON.stringify(e)); }
+}
+
+function copyBilanSemaine() {
+  const hid = document.getElementById('bil-txt-hidden'); if (!hid) return;
+  navigator.clipboard.writeText(hid.value).then(() => {
+    const b = document.getElementById('btn-copy-bilan');
+    if (b) { b.textContent = '✓ Copié !'; setTimeout(() => b.textContent = '📋 Copier pour Claude', 1500); }
+  });
+}
+function resetBilan() {
+  if (confirm('Effacer le bilan IA ?')) {
+    if (document.getElementById('claude-summary')) document.getElementById('claude-summary').textContent = 'Ton bilan apparaîtra ici...';
+    haptic();
+  }
+}
+
+/* ============================================================
+   PERSONNALISATION
+   ============================================================ */
+function renderPerso() {
+  const D = window.D;
+  const pg = document.getElementById('palette-grid');
+  if (pg) {
+    const current = D.g.uiPalette || 'lavande';
+    pg.innerHTML = UI_PALETTES.map(p => `
+      <div onclick="applyUIPalette('${p.id}')" style="padding:8px;border-radius:10px;cursor:pointer;text-align:center;border:3px solid ${current===p.id?p.lilac:'transparent'};background:${p.bg};transition:.2s;">
+        <div style="display:flex;gap:4px;justify-content:center;margin-bottom:4px">
+          <div style="width:14px;height:14px;border-radius:50%;background:${p.lilac}"></div>
+          <div style="width:14px;height:14px;border-radius:50%;background:${p.mint}"></div>
+          <div style="width:14px;height:14px;border-radius:50%;background:${p.pink}"></div>
+        </div>
+        <div style="font-size:9px;font-weight:bold;color:#38304a">${p.label}</div>
+      </div>`).join('');
+  }
+  const gc = document.getElementById('gotchi-colors');
+  if (gc) {
+    const current = D.g.gotchiColor || 'vert';
+    gc.innerHTML = GOTCHI_COLORS.map(c => `
+      <div onclick="applyGotchiColor('${c.id}')" style="width:48px;height:48px;border-radius:12px;cursor:pointer;background:${c.body};border:3px solid ${current===c.id?'#b090d0':'transparent'};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:bold;color:#38304a;transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1);">${c.label}</div>`).join('');
+  }
+  const et = document.getElementById('env-themes');
+  if (et) {
+    const current = D.g.envTheme || 'pastel';
+    et.innerHTML = ENV_THEMES.map(t => `
+      <div onclick="applyEnvTheme('${t.id}')" style="padding:8px 12px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,${t.sky1},${t.gnd});border:3px solid ${current===t.id?'#b090d0':'transparent'};font-size:10px;font-weight:bold;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.3);transition:.2s;">${t.label}</div>`).join('');
+  }
+}
+
+function applyUIPalette(id) {
+  const p = UI_PALETTES.find(x => x.id === id); if (!p) return;
+  document.documentElement.style.setProperty('--bg', p.bg);
+  document.documentElement.style.setProperty('--lilac', p.lilac);
+  document.documentElement.style.setProperty('--mint', p.mint);
+  document.documentElement.style.setProperty('--pink', p.pink);
+  window.D.g.uiPalette = id; save(); renderPerso();
+  toastSnack('Palette ' + p.label + ' appliquée ✿');
+}
+function applyGotchiColor(id) {
+  const c = GOTCHI_COLORS.find(x => x.id === id); if (!c) return;
+  window.D.g.gotchiColor = id; save(); renderPerso();
+  toastSnack('Couleur ' + c.label + ' appliquée ✿');
+}
+function applyEnvTheme(id) {
+  const t = ENV_THEMES.find(x => x.id === id); if (!t) return;
+  window.D.g.envTheme = id; save(); renderPerso();
+  toastSnack('Ambiance ' + t.label + ' appliquée ✿');
+}
+function restorePerso() {
+  if (window.D.g.uiPalette)   applyUIPalette(window.D.g.uiPalette);
+  if (window.D.g.gotchiColor) applyGotchiColor(window.D.g.gotchiColor);
+}
+
+/* ============================================================
+   PIN & JOURNAL
+   ============================================================ */
+let pinBuf = '', pinMode = 'check';
+
+function renderPin() {
+  const dots = document.getElementById('pin-dots'); if (!dots) return;
+  dots.innerHTML = '';
+  for (let i = 0; i < 4; i++) { const d = document.createElement('div'); d.className = 'pin-dot' + (i < pinBuf.length ? ' f' : ''); dots.appendChild(d); }
+  const pad = document.getElementById('pin-pad'); pad.innerHTML = '';
+  for (let n = 1; n <= 9; n++) { const b = document.createElement('button'); b.className = 'pin-k'; b.textContent = n; b.onclick = () => { haptic(); pinBuf += n; renderPin(); if (pinBuf.length === 4) pinSubmit(); }; pad.appendChild(b); }
+  let bd = document.createElement('button'); bd.className = 'pin-k'; bd.textContent = '←'; bd.onclick = () => { pinBuf = pinBuf.slice(0,-1); renderPin(); }; pad.appendChild(bd);
+  let b0 = document.createElement('button'); b0.className = 'pin-k'; b0.textContent = '0'; b0.onclick = () => { haptic(); pinBuf += '0'; renderPin(); if (pinBuf.length === 4) pinSubmit(); }; pad.appendChild(b0);
+  let bc = document.createElement('button'); bc.className = 'pin-k'; bc.textContent = '✕'; bc.style.color = 'var(--coral)'; bc.onclick = () => { pinBuf = ''; renderPin(); }; pad.appendChild(bc);
+}
+function pinSubmit() {
+  const msg = document.getElementById('pin-msg');
+  if (pinMode === 'setup') { window.D.pin = pinBuf; save(); msg.textContent = 'PIN créé ✿'; setTimeout(unlockJ, 400); }
+  else { if (pinBuf === window.D.pin) unlockJ(); else { msg.textContent = 'Incorrect.'; pinBuf = ''; renderPin(); } }
+}
+function unlockJ() {
+  journalLocked = false;
+  document.getElementById('pin-gate').style.display = 'none';
+  document.getElementById('j-inner').style.display = 'block';
+  renderJEntries();
+}
+function renderJ() {
+  if (!journalLocked) { document.getElementById('pin-gate').style.display='none'; document.getElementById('j-inner').style.display='block'; renderJEntries(); return; }
+  document.getElementById('j-inner').style.display = 'none';
+  document.getElementById('pin-gate').style.display = 'block';
+  pinBuf = '';
+  if (!window.D.pin) { pinMode = 'setup'; document.getElementById('pin-msg').textContent = 'Choisis un code'; }
+  else { pinMode = 'check'; document.getElementById('pin-msg').textContent = 'Entre ton code'; }
+  renderPin();
+}
+
+const MOODS = [{id:'super',e:'🌟'},{id:'bien',e:'😊'},{id:'ok',e:'😐'},{id:'bof',e:'😔'},{id:'dur',e:'🌧️'}];
+let selMood = null;
+
+function initMoodPicker() {
+  const mp = document.getElementById('mood-pick');
+  if (mp) mp.innerHTML = MOODS.map(m => `<button class="mood-b" data-m="${m.id}" onclick="pickM('${m.id}')">${m.e}</button>`).join('');
+}
+function pickM(id) {
+  selMood = id; haptic();
+  document.querySelectorAll('.mood-b').forEach(b => b.classList.toggle('sel', b.dataset.m === id));
+}
+function saveJ() {
+  const t = document.getElementById('j-text').value.trim();
+  if (!t && !selMood) return;
+  window.D.journal.push({ date:new Date().toISOString(), mood:selMood||'ok', text:t });
+  addXp(15); save(); haptic();
+  document.getElementById('j-text').value = '';
+  selMood = null;
+  document.querySelectorAll('.mood-b').forEach(b => b.classList.remove('sel'));
+  renderJEntries(); updBubbleNow();
+}
+
+let jWeekOff = 0;
+function navJWeek(d) { jWeekOff += d; renderJEntries(); }
+function getWkDates(off) {
+  const t = new Date(); t.setDate(t.getDate() + off * 7);
+  const day = (t.getDay() + 6) % 7, mon = new Date(t);
+  mon.setDate(t.getDate() - day);
+  const dates = [];
+  for (let i = 0; i < 7; i++) { const d = new Date(mon); d.setDate(mon.getDate()+i); dates.push(d.toISOString().split('T')[0]); }
+  return dates;
+}
+function renderJEntries() {
+  const D = window.D;
+  const wd = getWkDates(jWeekOff), wt = document.getElementById('j-week-title');
+  if (jWeekOff === 0) { if (wt) wt.textContent = 'Cette semaine'; }
+  else { const a=new Date(wd[0]),b=new Date(wd[6]); if(wt) wt.textContent=`${a.getDate()}/${a.getMonth()+1} — ${b.getDate()}/${b.getMonth()+1}`; }
+  const entries = D.journal.filter(j=>wd.includes(j.date.split('T')[0])).reverse();
+  const c = document.getElementById('j-entries');
+  const me = {super:'🌟',bien:'😊',ok:'😐',bof:'😔',dur:'🌧️'};
+  if (!c) return;
+  if (!entries.length) { c.innerHTML = '<p style="font-size:11px;color:#a09880;text-align:center">Aucune entrée</p>'; return; }
+  c.innerHTML = entries.map(e => {
+    const d = new Date(e.date), gi = D.journal.indexOf(e);
+    return `<div class="j-entry"><div style="display:flex;justify-content:space-between"><span class="j-date">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})} ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span><span style="font-size:16px">${me[e.mood]||'😐'}</span></div><div style="font-size:11px;margin-top:3px">${e.text||'—'}</div><div class="j-actions"><button onclick="editJEntry(${gi})">✏️</button><button onclick="delJEntry(${gi})">🗑️</button></div></div>`;
+  }).join('');
+}
+function editJEntry(i) {
+  const e = window.D.journal[i]; if (!e) return;
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `<h3>Modifier</h3><textarea id="edit-j-txt" class="inp" rows="3">${e.text||''}</textarea><div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button><button class="btn btn-p" onclick="saveEditJ(${i})" style="flex:1">OK</button></div>`;
+}
+function saveEditJ(i) { window.D.journal[i].text = document.getElementById('edit-j-txt').value.trim(); save(); clModal(); renderJEntries(); }
+function delJEntry(i) {
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `<p>Supprimer ?</p><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="confirmDelJ(${i})" style="flex:1">Oui</button></div>`;
+}
+function confirmDelJ(i) { window.D.journal.splice(i, 1); save(); clModal(); renderJEntries(); updUI(); }
+
+/* ============================================================
+   PROGRESS
+   ============================================================ */
+function renderProg() {
+  const D = window.D;
+  const wd = getWkDates(wOff), wt = document.getElementById('w-title');
+  if (!wt) return;
+  if (wOff === 0) wt.textContent = 'Cette semaine';
+  else { const a=new Date(wd[0]),b=new Date(wd[6]); wt.textContent=`${a.getDate()}/${a.getMonth()+1} — ${b.getDate()}/${b.getMonth()+1}`; }
+  document.getElementById('w-view').innerHTML = wd.map(ds => {
+    const l=D.log[ds]||[],r=l.length/6,isT=ds===today();
+    let bg='var(--border)';
+    if(r>.8)bg='var(--mint)';else if(r>.5)bg='var(--sky)';else if(r>0)bg='var(--peach)';
+    return `<div class="cal-c" style="background:${bg};${isT?'border:2px solid var(--lilac)':''}">${new Date(ds+'T12:00').getDate()}</div>`;
+  }).join('');
+  const now = new Date(); now.setMonth(now.getMonth() + mOff);
+  const y = now.getFullYear(), m = now.getMonth();
+  document.getElementById('m-title').textContent = now.toLocaleDateString('fr-FR', {month:'long',year:'numeric'});
+  const first=new Date(y,m,1), last=new Date(y,m+1,0), off=(first.getDay()+6)%7;
+  let cells = '';
+  for (let i=0;i<off;i++) cells += '<div class="cal-c"></div>';
+  for (let d=1;d<=last.getDate();d++) {
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const l=D.log[ds]||[],r=l.length/6,isT=ds===today();
+    let bg='rgba(204,196,216,.15)';
+    if(r>.8)bg='var(--mint)';else if(r>.5)bg='var(--sky)';else if(r>0)bg='rgba(232,196,160,.3)';
+    cells += `<div class="cal-c" style="background:${bg};${isT?'border:2px solid var(--lilac);font-weight:bold':''}">${d}</div>`;
+  }
+  document.getElementById('m-view').innerHTML = cells;
+  updUI();
+}
+
+/* ============================================================
+   RÉGLAGES
+   ============================================================ */
+function saveName() {
+  const n = document.getElementById('name-inp').value.trim();
+  if (n) { window.D.g.name = n; save(); updUI(); }
+}
+function saveApi() {
+  const v = document.getElementById('api-inp').value.trim();
+  window.D.apiKey = v; save();
+  if (v) toast('Clé API sauvegardée en mémoire ! ✿'); else toast('Clé API effacée.');
+}
+function savePin() {
+  const v = document.getElementById('pin-inp').value.trim();
+  if (v.length === 4 && /^\d+$/.test(v)) { window.D.pin = v; save(); document.getElementById('pin-inp').value = ''; toast('PIN mis à jour ✿'); }
+  else toast('4 chiffres requis');
+}
+function exportD() {
+  const b = new Blob([JSON.stringify(window.D, null, 2)], {type:'application/json'});
+  const u = URL.createObjectURL(b), a = document.createElement('a');
+  a.href = u; a.download = `habitgotchi_${today()}.json`; a.click();
+  URL.revokeObjectURL(u);
+}
+function importD(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      window.D = { ...defs(), ...imported, g:{ ...defs().g, ...imported.g } };
+      save(); toast('Import réussi ✿');
+      setTimeout(() => location.reload(), 800);
+    } catch(err) { toast('Fichier invalide.'); }
+  };
+  reader.readAsText(file);
+}
+function confirmReset() {
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`;
+}
+
+/* ============================================================
+   INIT AU CHARGEMENT
+   ============================================================ */
+updUI();
+renderHabs();
+renderProps();
+restorePerso();
+initMoodPicker();

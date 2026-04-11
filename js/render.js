@@ -89,7 +89,7 @@ const p5s = (p) => {
       return;
     }
 
-    if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
+    if (true) drawWind(p); // test vent
 
     let envActif = g.activeEnv || 'parc';
     drawActiveEnv(p, envActif, n);

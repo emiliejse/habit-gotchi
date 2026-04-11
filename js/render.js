@@ -92,7 +92,7 @@ const p5s = (p) => {
     if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
 
     let envActif = g.activeEnv || 'parc';
-    drawActiveEnv(p, envActif, n);
+    drawActiveEnv(p, envActif, n, h);
 
 // --- Props DÉCOR fond (A, B) — dessinés EN PREMIER = derrière ---
 if (D.g.props) {
@@ -229,7 +229,7 @@ const accY = baseY - def.pixels.length * PX + offsetY;
     p.rect(Math.floor(x/PX)*PX, Math.floor(y/PX)*PX, Math.max(PX,Math.floor(w/PX)*PX), Math.max(PX,Math.floor(h/PX)*PX));
   }
 
-  function drawActiveEnv(p, env, n) {
+  function drawActiveEnv(p, env, n, h) {
     const theme = window.D.g.envTheme || 'pastel';
     p.noStroke();
 

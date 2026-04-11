@@ -263,13 +263,13 @@ function openSlotPicker(propIndex) {
     if (p.actif && p.slot) occupied[p.slot] = p.nom;
   });
 
-  const slots = [
-    { id: 'A',   label: 'Fond gauche',   desc: 'Arbres, nuages bas' },
-    { id: 'B',   label: 'Fond droit',    desc: 'Décor arrière-plan' },
-    { id: 'C',   label: 'Sol gauche',    desc: 'Devant, côté gauche' },
-    { id: 'D',   label: 'Sol droit',     desc: 'Devant, côté droit' },
-    { id: 'SOL', label: 'Centre',        desc: 'Devant le Gotchi' },
-  ];
+const slots = [
+  { id: 'A',   label: 'Fond gauche',   desc: '↖ Arrière-plan' },
+  { id: 'B',   label: 'Fond droit',    desc: '↗ Arrière-plan' },
+  { id: 'C',   label: 'Devant gauche', desc: '↙ Premier plan' },
+  { id: 'SOL', label: 'Centre',        desc: '⬇ Devant Gotchi' },
+  { id: 'D',   label: 'Devant droit',  desc: '↘ Premier plan' },
+];
 
   const slotHTML = slots.map(s => {
     const taken = occupied[s.id];

@@ -57,6 +57,12 @@ function getEnvC() {
 /* ============================================================
    MOTEUR p5.js
    ============================================================ */
+   // Variables de locomotion du Gotchi
+let walkX = 100;        // Position X courante
+let walkDir = 1;        // Direction : 1 = droite, -1 = gauche
+let walkSpeed = 0.4;    // Vitesse de base (pixels par frame)
+let walkStep = 0;       // Compteur pour l'animation de pas
+
 const p5s = (p) => {
   p.setup = function() {
     p.createCanvas(CS, CS).parent('cbox');
@@ -156,8 +162,21 @@ if (D.g.props) {
       amplitude = 25; vitesse = 0.04;
     }
 
-    let moveX = sleeping ? 0 : Math.sin(p.frameCount * vitesse) * amplitude;
-    const cx = CS / 2 + moveX;
+// --- Locomotion directionnelle ---
+if (!sleeping) {
+  walkStep++;
+  const speed = (ha >= 80 && en >= 80) ? 1.2 : (ha >= 50) ? 0.6 : 0.3;
+  walkX += walkDir * speed;
+  
+  // Demi-tour aux bords (marge de 20px)
+  if (walkX > CS - 25) { walkX = CS - 25; walkDir = -1; }
+  if (walkX < 25)       { walkX = 25;      walkDir = 1;  }
+} else {
+  // En dormant : légère dérive lente
+  walkX += walkDir * 0.05;
+  if (walkX > CS - 30 || walkX < 30) walkDir *= -1;
+}
+const cx = walkX;
     const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
 
 let gotchiInfo;

@@ -355,7 +355,7 @@ else {
       p.fill(n ? '#f0d870' : '#f0e898'); px(bx+38, 90, PX, PX*2);
       p.fill(n ? '#e8b830' : '#f8d858'); px(bx+33, 88, PX*3, PX);
     }
-
+}
     else if (env === 'montagne') {
       if (theme === 'automne') {
         p.fill('#b07840'); p.rect(0, 120, CS, 80);

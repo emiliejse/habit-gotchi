@@ -12,12 +12,15 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+<!-- Styles -->
 <link rel="stylesheet" href="css/style.css">
+
+<!-- p5.js AVANT app.js (obligatoire) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 </head>
 <body>
 
@@ -29,10 +32,10 @@
     <h1>✿ Habit-Gotchi ✿</h1>
   </div>
   <sub id="date-d" style="display:block;text-align:center;font-size:10px;color:var(--text2)"></sub>
-<div class="tama-shell">
-  <div class="tama-screen" id="cbox"></div>
-</div>
-<div class="bubble" id="bubble">...</div>
+  <div class="tama-shell">
+    <div class="tama-screen" id="cbox"></div>
+  </div>
+  <div class="bubble" id="bubble">...</div>
   <div class="meteo-badge" id="meteo-badge" style="display:none;"></div>
   <div style="max-width:340px;margin:6px auto 4px;padding:0 4px">
     <div class="slider-row">
@@ -52,19 +55,22 @@
      ZONE DYNAMIQUE (bottom, scrollable)
      ============================================================ -->
 <div id="dynamic-zone">
+
   <!-- GOTCHI (habitudes + XP) -->
-<div id="p-gotchi" class="pnl on">
-    
-    <div class="card" style="background: linear-gradient(135deg, rgba(176,144,208,0.15), rgba(232,160,191,0.15)); border: 2px solid var(--lilac); text-align: center; padding: 15px;">
-      <div style="font-size: 16px; font-weight: bold; color: var(--text);">
-        <span id="g-name">Petit·e Gotchi</span> <span style="color:var(--lilac); opacity:0.3;">|</span> <span id="g-stage" style="color: var(--lilac);">Œuf</span>
+  <div id="p-gotchi" class="pnl on">
+
+    <div class="card" style="background:linear-gradient(135deg,rgba(176,144,208,0.15),rgba(232,160,191,0.15));border:2px solid var(--lilac);text-align:center;padding:15px;">
+      <div style="font-size:16px;font-weight:bold;color:var(--text);">
+        <span id="g-name">Petit·e Gotchi</span>
+        <span style="color:var(--lilac);opacity:0.3;"> | </span>
+        <span id="g-stage" style="color:var(--lilac);">Œuf</span>
       </div>
-      <div style="display:flex; justify-content:space-between; font-size:9px; margin-top:10px; font-weight:bold;">
+      <div style="display:flex;justify-content:space-between;font-size:9px;margin-top:10px;font-weight:bold;">
         <span class="slbl" style="color:var(--lilac)">Progression</span>
-        <span class="slbl" id="xp-l" style="color: var(--text);">0/150 XP</span>
+        <span class="slbl" id="xp-l" style="color:var(--text);">0/150 XP</span>
       </div>
-      <div class="pbar" style="height:10px; margin-top:5px; background: rgba(0,0,0,0.06); border-radius: 5px;">
-        <div class="pfill" id="xp-b" style="width:0%; background: linear-gradient(90deg, var(--lilac), var(--pink)); border-radius: 5px;"></div>
+      <div class="pbar" style="height:10px;margin-top:5px;background:rgba(0,0,0,0.06);border-radius:5px;">
+        <div class="pfill" id="xp-b" style="width:0%;background:linear-gradient(90deg,var(--lilac),var(--pink));border-radius:5px;"></div>
       </div>
     </div>
 
@@ -81,21 +87,12 @@
       <div id="claude-msg" style="font-size:11px;color:var(--text2);min-height:30px;line-height:1.4;">
         Coche tes habitudes ou écris dans ton carnet pour m'inspirer ✿
       </div>
-      <button class="btn btn-p" onclick="askClaude()" style="width:100%;margin-top:8px;font-size:10px;background:var(--lilac);border:none;">
+      <button class="btn btn-p" onclick="askClaude()" style="width:100%;margin-top:8px;font-size:10px;">
         ✿ Demander une petite pensée
       </button>
     </div>
-    
-  </div>
 
-  <!-- HABITS EDIT -->
-  <div id="p-habits" class="pnl">
-    <div class="card">
-      <h2>Mes 6 habitudes</h2>
-      <p style="font-size:10px;color:var(--text2);margin-bottom:8px">Catégories fixes · Texte modifiable</p>
-
-    </div>
-  </div>
+  </div><!-- fin p-gotchi -->
 
   <!-- JOURNAL -->
   <div id="p-journal" class="pnl">
@@ -112,7 +109,7 @@
         <h2>📓 Mon Journal 📓</h2>
         <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px" id="mood-pick"></div>
         <textarea id="j-text" class="inp" rows="3" placeholder="Écris ici..." style="background:#faf6f0;border-color:#c8b8a0;font-size:12px"></textarea>
-<div style="margin-top:6px">
+        <div style="margin-top:6px">
           <button class="btn btn-p" onclick="saveJ()" style="width:100%;font-size:10px">✿ Sauver</button>
         </div>
         <p id="v-status" style="font-size:9px;color:#a09880;text-align:center;margin-top:3px"></p>
@@ -126,167 +123,163 @@
         <div id="j-entries"></div>
       </div>
     </div>
-  </div>
+  </div><!-- fin p-journal -->
 
   <!-- PROGRESS -->
-<div id="p-progress" class="pnl">
-  <div class="card">
-    <div class="nav-r">
-      <button class="nav-a" onclick="navW(-1)">◀</button>
-      <h2 style="margin:0" id="w-title">Cette semaine</h2>
-      <button class="nav-a" onclick="navW(1)">▶</button>
-    </div>
-    <div id="w-view" class="cal"></div>
-    <div style="display:flex;justify-content:space-between;margin-top:3px">
-      <span style="font-size:8px;color:var(--text2)">L</span><span style="font-size:8px;color:var(--text2)">M</span><span style="font-size:8px;color:var(--text2)">M</span><span style="font-size:8px;color:var(--text2)">J</span><span style="font-size:8px;color:var(--text2)">V</span><span style="font-size:8px;color:var(--text2)">S</span><span style="font-size:8px;color:var(--text2)">D</span>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="nav-r">
-      <button class="nav-a" onclick="navM(-1)">◀</button>
-      <h2 style="margin:0" id="m-title">Ce mois</h2>
-      <button class="nav-a" onclick="navM(1)">▶</button>
-    </div>
-    <div id="m-view" class="cal"></div>
-  </div>
-
-  <div class="card">
-    <h2>Stats</h2>
-    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px">
-      <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
-        <div style="font-size:20px;font-weight:bold;color:var(--lilac)" id="s-str">0</div>
-        <div class="slbl">série</div>
+  <div id="p-progress" class="pnl">
+    <div class="card">
+      <div class="nav-r">
+        <button class="nav-a" onclick="navW(-1)">◀</button>
+        <h2 style="margin:0" id="w-title">Cette semaine</h2>
+        <button class="nav-a" onclick="navW(1)">▶</button>
       </div>
-      <div style="text-align:center;padding:8px;background:rgba(128,208,168,.07);border-radius:10px">
-        <div style="font-size:20px;font-weight:bold;color:var(--mint)" id="s-xp">0</div>
-        <div class="slbl">XP total</div>
-      </div>
-      <div style="text-align:center;padding:8px;background:rgba(136,190,232,.07);border-radius:10px">
-        <div style="font-size:20px;font-weight:bold;color:var(--sky)" id="s-jrn">0</div>
-        <div class="slbl">journal</div>
+      <div id="w-view" class="cal"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:3px">
+        <span style="font-size:8px;color:var(--text2)">L</span>
+        <span style="font-size:8px;color:var(--text2)">M</span>
+        <span style="font-size:8px;color:var(--text2)">M</span>
+        <span style="font-size:8px;color:var(--text2)">J</span>
+        <span style="font-size:8px;color:var(--text2)">V</span>
+        <span style="font-size:8px;color:var(--text2)">S</span>
+        <span style="font-size:8px;color:var(--text2)">D</span>
       </div>
     </div>
-  </div>
 
- <div class="card">
-  <h2 style="display:flex; justify-content:space-between; align-items:center;">
-    <span>🧠 Bilan Hebdo IA</span>
-    <button onclick="resetBilan()" style="background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;" title="Réinitialiser">🔄</button>
-  </h2>
-  <div id="claude-summary" style="background:rgba(255,255,255,0.5);padding:12px;border-radius:8px;font-size:11px;border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);">
-    Ton bilan de la semaine apparaîtra ici...
-  </div>
- <textarea id="bil-txt-hidden" style="display:none"></textarea>
-  <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%;font-size:10px;margin-bottom:6px;">
-    ✿ Générer le bilan avec Claude
-  </button>
-  <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="width:100%;font-size:10px;display:none;">
-    📋 Copier le bilan
-  </button>
-</div>
-   </div>
+    <div class="card">
+      <div class="nav-r">
+        <button class="nav-a" onclick="navM(-1)">◀</button>
+        <h2 style="margin:0" id="m-title">Ce mois</h2>
+        <button class="nav-a" onclick="navM(1)">▶</button>
+      </div>
+      <div id="m-view" class="cal"></div>
+    </div>
 
-<div id="p-props" class="pnl">
+    <div class="card">
+      <h2>Stats</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+        <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
+          <div style="font-size:20px;font-weight:bold;color:var(--lilac)" id="s-str">0</div>
+          <div class="slbl">série</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:rgba(128,208,168,.07);border-radius:10px">
+          <div style="font-size:20px;font-weight:bold;color:var(--mint)" id="s-xp">0</div>
+          <div class="slbl">XP total</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:rgba(136,190,232,.07);border-radius:10px">
+          <div style="font-size:20px;font-weight:bold;color:var(--sky)" id="s-jrn">0</div>
+          <div class="slbl">journal</div>
+        </div>
+      </div>
+    </div>
 
-  <!-- Inventaire avec filtres par catégorie -->
-  <div class="card">
-    <h2>🎒 Mon Inventaire</h2>
+    <div class="card">
+      <h2 style="display:flex;justify-content:space-between;align-items:center;">
+        <span>🧠 Bilan Hebdo IA</span>
+        <button onclick="resetBilan()" style="background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;" title="Réinitialiser">🔄</button>
+      </h2>
+      <div id="claude-summary" style="background:rgba(255,255,255,0.5);padding:12px;border-radius:8px;font-size:11px;border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);">
+        Ton bilan de la semaine apparaîtra ici...
+      </div>
+      <textarea id="bil-txt-hidden" style="display:none"></textarea>
+      <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%;font-size:10px;margin-bottom:6px;">
+        ✿ Générer le bilan avec Claude
+      </button>
+      <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="width:100%;font-size:10px;display:none;">
+        📋 Copier le bilan
+      </button>
+    </div>
+  </div><!-- fin p-progress -->
 
-    <!-- Boutons filtres -->
-    <div id="props-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
+  <!-- PROPS / INVENTAIRE -->
+  <div id="p-props" class="pnl">
+    <div class="card">
+      <h2>🎒 Mon Inventaire</h2>
+      <div id="props-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
+      <div id="props-list" style="margin-top:6px"></div>
+    </div>
+    <div class="card" id="shop-card" style="margin-top:8px;text-align:center;display:none;">
+      <h2>🛍️ Boutique</h2>
+      <p style="font-size:10px;color:var(--text2);margin-bottom:8px">Dépense 10 🌸 pour recevoir un nouvel objet de Claude</p>
+      <span id="petales-wallet" style="font-size:13px;font-weight:bold;color:var(--pink)"></span>
+      <button class="btn btn-p" onclick="buyProp()" style="width:100%;margin-top:8px;font-size:11px">
+        🌸 Demander un objet (10 Pétales)
+      </button>
+    </div>
+  </div><!-- fin p-props -->
 
-    <!-- Grille des objets -->
-    <div id="props-list" style="margin-top:6px"></div>
-  </div>
-
-  <!-- Boutique (carte séparée) -->
-  <div class="card" id="shop-card" style="margin-top:8px;text-align:center;display:none;">
-  <h2>🛍️ Boutique</h2>
-  <p style="font-size:10px;color:var(--text2);margin-bottom:8px">
-    Dépense 10 🌸 pour recevoir un nouvel objet de Claude
-  </p>
-  <span id="petales-wallet" style="font-size:13px;font-weight:bold;color:var(--pink)"></span>
-  <button class="btn btn-p" onclick="buyProp()" style="width:100%;margin-top:8px;font-size:11px">
-    🌸 Demander un objet (10 Pétales)
-  </button>
-</div>
-
-</div>
-
-<!-- PERSO -->
-<div id="p-perso" class="pnl">
-
-  <!-- Palette interface -->
-  <div class="card">
-    <h2>🎨 Couleurs de l'interface</h2>
-    <div id="palette-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px"></div>
-  </div>
-
-  <!-- Couleur du Gotchi -->
-  <div class="card">
-    <h2>🐣 Couleur du Gotchi</h2>
-    <div id="gotchi-colors" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
-  </div>
-
-  <!-- Ambiance environnements -->
-  <div class="card">
-    <h2>🌍 Ambiance des univers</h2>
-    <div id="env-themes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
-  </div>
-
-</div>
+  <!-- PERSO -->
+  <div id="p-perso" class="pnl">
+    <div class="card">
+      <h2>🎨 Couleurs de l'interface</h2>
+      <div id="palette-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px"></div>
+    </div>
+    <div class="card">
+      <h2>🐣 Couleur du Gotchi</h2>
+      <div id="gotchi-colors" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
+    </div>
+    <div class="card">
+      <h2>🌍 Ambiance des univers</h2>
+      <div id="env-themes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
+    </div>
+  </div><!-- fin p-perso -->
 
   <!-- SETTINGS -->
-<div id="p-settings" class="pnl">
-    
-    <div class="card" style="margin-bottom: 12px;">
+  <div id="p-settings" class="pnl">
+    <div class="card" style="margin-bottom:12px;">
       <h2>⚙️ Réglages</h2>
       <div style="margin-bottom:10px">
         <label class="slbl">Nom du Gotchi</label>
-        <div style="display:flex;gap:5px"><input type="text" id="name-inp" class="inp"><button class="btn btn-p" onclick="saveName()">OK</button></div>
+        <div style="display:flex;gap:5px">
+          <input type="text" id="name-inp" class="inp">
+          <button class="btn btn-p" onclick="saveName()">OK</button>
+        </div>
       </div>
       <div style="margin-bottom:10px">
         <label class="slbl">Clé API Claude</label>
-        <div style="display:flex;gap:5px"><input type="password" id="api-inp" class="inp"><button class="btn btn-p" onclick="saveApi()">OK</button></div>
+        <div style="display:flex;gap:5px">
+          <input type="password" id="api-inp" class="inp">
+          <button class="btn btn-p" onclick="saveApi()">OK</button>
+        </div>
       </div>
       <div>
         <label class="slbl">Code PIN</label>
-        <div style="display:flex;gap:5px"><input type="password" id="pin-inp" class="inp" maxlength="4"><button class="btn btn-p" onclick="savePin()">OK</button></div>
+        <div style="display:flex;gap:5px">
+          <input type="password" id="pin-inp" class="inp" maxlength="4">
+          <button class="btn btn-p" onclick="savePin()">OK</button>
+        </div>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom: 12px;">
+    <div class="card" style="margin-bottom:12px;">
       <h2>✏️ Mes Habitudes</h2>
       <div id="hab-edit"></div>
     </div>
 
-    <div class="card" style="margin-top: 15px;">
+    <div class="card" style="margin-top:15px;">
       <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:8px;font-size:10px">📦 Exporter ma sauvegarde (JSON)</button>
-      
       <input type="file" id="import-file" style="display:none" accept=".json" onchange="importD(event)">
       <button class="btn btn-s" onclick="document.getElementById('import-file').click()" style="width:100%;margin-bottom:15px;font-size:10px;background:var(--mint);color:#fff;border:none;">📥 Importer JSON</button>
-      
       <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
     </div>
-<div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
 
-<!-- Accordéon debug -->
-<div style="margin-top:12px;border:1px dashed var(--border);border-radius:10px;overflow:hidden">
-  <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
-    style="width:100%;background:none;border:none;padding:8px;font-size:9px;color:var(--text2);cursor:pointer;text-align:left">
-    🛠️ Outils développeur ▾
-  </button>
-  <div style="display:none;padding:0 8px 8px">
-    <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:4px;font-size:9px">📋 État du système</button>
-    <button class="btn btn-s" onclick="fixProps()" style="width:100%;margin-top:4px;font-size:9px">🔧 Réparer inventaire</button>
-    <button class="btn btn-s" onclick="cleanProps()" style="width:100%;margin-top:4px;font-size:9px">🧹 Nettoyer inventaire</button>
-    <button class="btn btn-m" onclick="forceUpdate()" style="width:100%;margin-top:4px;font-size:9px">🔄 Mettre à jour l'app</button>
-  </div>
-</div>
-    
-  </div><!-- ferme p-settings -->
-</div><!-- ferme dynamic-zone -->
+    <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
+
+    <!-- Accordéon debug -->
+    <div style="margin-top:12px;border:1px dashed var(--border);border-radius:10px;overflow:hidden">
+      <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
+        style="width:100%;background:none;border:none;padding:8px;font-size:9px;color:var(--text2);cursor:pointer;text-align:left">
+        🛠️ Outils développeur ▾
+      </button>
+      <div style="display:none;padding:0 8px 8px">
+        <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:4px;font-size:9px">📋 État du système</button>
+        <button class="btn btn-s" onclick="fixProps()" style="width:100%;margin-top:4px;font-size:9px">🔧 Réparer inventaire</button>
+        <button class="btn btn-s" onclick="cleanProps()" style="width:100%;margin-top:4px;font-size:9px">🧹 Nettoyer inventaire</button>
+        <button class="btn btn-m" onclick="forceUpdate()" style="width:100%;margin-top:4px;font-size:9px">🔄 Mettre à jour l'app</button>
+      </div>
+    </div>
+  </div><!-- fin p-settings -->
+
+</div><!-- fin dynamic-zone -->
 
 <!-- Focus overlay -->
 <div class="focus-overlay" id="focus-ov">
@@ -296,1552 +289,51 @@
   <button class="btn btn-s" onclick="stopFocus()" style="margin-top:20px">✕ Arrêter</button>
 </div>
 
+<!-- Languette menu -->
 <button class="menu-languette" onclick="toggleMenu()">☰</button>
 
+<!-- Menu overlay -->
 <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()">
   <div class="menu-book" onclick="event.stopPropagation()">
     <h2>✿ <span id="menu-gotchi-name">Gotchi</span> ✿</h2>
-<div class="menu-grid" id="menu-grid">
-  <div class="menu-circle" onclick="goMenu('gotchi')">
-    <span class="mc-icon">🏠</span><span class="mc-label">Gotchi</span>
-  </div>
-  <div class="menu-circle" onclick="goMenu('journal')">
-    <span class="mc-icon">📓</span><span class="mc-label">Journal</span>
-  </div>
-  <div class="menu-circle" onclick="goMenu('progress')">
-    <span class="mc-icon">📊</span><span class="mc-label">Progrès</span>
-  </div>
-  <div class="menu-circle" onclick="goMenu('perso')">
-    <span class="mc-icon">🎨</span><span class="mc-label">Perso</span>
-  </div>
-  <div class="menu-circle" onclick="goMenu('props')">
-    <span class="mc-icon">🎒</span><span class="mc-label">Inventaire</span>
-  </div>
-  <div class="menu-circle" onclick="goMenu('settings')">
-    <span class="mc-icon">⚙️</span><span class="mc-label">Réglages</span>
-  </div>
-</div>
+    <div class="menu-grid" id="menu-grid">
+      <div class="menu-circle" onclick="goMenu('gotchi')">
+        <span class="mc-icon">🏠</span><span class="mc-label">Gotchi</span>
+      </div>
+      <div class="menu-circle" onclick="goMenu('journal')">
+        <span class="mc-icon">📓</span><span class="mc-label">Journal</span>
+      </div>
+      <div class="menu-circle" onclick="goMenu('progress')">
+        <span class="mc-icon">📊</span><span class="mc-label">Progrès</span>
+      </div>
+      <div class="menu-circle" onclick="goMenu('perso')">
+        <span class="mc-icon">🎨</span><span class="mc-label">Perso</span>
+      </div>
+      <div class="menu-circle" onclick="goMenu('props')">
+        <span class="mc-icon">🎒</span><span class="mc-label">Inventaire</span>
+      </div>
+      <div class="menu-circle" onclick="goMenu('settings')">
+        <span class="mc-icon">⚙️</span><span class="mc-label">Réglages</span>
+      </div>
+    </div>
     <button class="menu-soutien" onclick="genSoutien();toggleMenu()">💜 Besoin de soutien</button>
   </div>
 </div>
 
-<div id="modal"
-
+<!-- Modal générique -->
 <div id="modal" class="modal" style="display:none" onclick="clModal(event)">
   <div class="modal-box" id="mbox" onclick="event.stopPropagation()"></div>
 </div>
-<script>
 
-   /* ============================================================
-   CHARGEMENT FICHIERS DATA (GitHub)
-   ============================================================ */
-window.PROPS_LIB = [];
-fetch('data/props.json')
-  .then(r => r.json())
-  .then(data => {
-    window.PROPS_LIB = data.catalogue;
-    renderProps(); // rafraîchit l'inventaire une fois chargé
-  })
-  .catch(() => console.warn('props.json introuvable'));
-window.PERSONALITY = null;
-window.ENVIRONMENTS = null;
-window.STYLES = null;
-
-async function loadDataFiles() {
-  const base = 'data/';
-  try {
-    const results = await Promise.allSettled([
-      fetch(base + 'props.json').then(r => r.json()),
-      fetch(base + 'personality.json').then(r => r.json()),
-      fetch(base + 'environments.json').then(r => r.json()),
-      fetch(base + 'styles.json').then(r => r.json())
-    ]);
-    if (results[0].status === 'fulfilled') window.PROPS_LIB = results[0].value.catalogue || [];
-    if (results[1].status === 'fulfilled') window.PERSONALITY = results[1].value;
-    if (results[2].status === 'fulfilled') window.ENVIRONMENTS = results[2].value;
-    if (results[3].status === 'fulfilled') window.STYLES = results[3].value;
-    console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props');
-  } catch(e) { console.log('Mode local (fichiers data absents)'); }
-}
-loadDataFiles();
-   
-/* ============================================================
-   DATA & INITIALISATION
-   ============================================================ */
-const SK='hg4';
-const CATS=[
-  {id:'sport',  icon:'🏋️',label:'Sport',     def:'30 min mouvement'},
-  {id:'nutri',  icon:'🍎',label:'Nutrition',   def:'Repas fait maison'},
-  {id:'hydra',  icon:'💧',label:'Hydratation', def:'1,5L d\'eau'},
-  {id:'hygiene',icon:'🪞',label:'Hygiène',     def:'Routine soin'},
-  {id:'intel',  icon:'📚',label:'Intellectuel',def:'20 min lecture'},
-  {id:'serene', icon:'🕯️',label:'Sérénité',    def:'10 min calme'},
-];
-function defs(){
-  return{ 
-    g:{
-      name:'Petit·e Gotchi', totalXp:0, stage:'egg', energy:3, happiness:3, envLv:0, moodDay:null, activeEnv:'parc', petales: 0,  // La monnaie de la boutique 
-      // Tes 3 objets de base pour tester le système :
-props: [],
-      customBubbles: [] // Le futur cerveau à mots doux de Claude
-    }, 
-    habits: CATS.map(c => ({catId:c.id, label:c.label})), log:{}, journal:[], pin:null, apiKey:null 
-  }
-}
-function load(){try{
-    const r=localStorage.getItem(SK);
-    if(r){
-      const d=JSON.parse(r);
-      // Répare les labels si encore bruts
-      if(d.habits) d.habits = d.habits.map(h => {
-        const cat = CATS.find(c => c.id === h.catId);
-        const isBrut = cat && h.label === h.catId;
-        return isBrut ? {...h, label: cat.label} : h;
-      });
-      return{...defs(),...d,g:{...defs().g,...d.g},habits:d.habits||defs().habits}
-    }
-  }catch(e){}
-  return defs()
-}
-function save(){try{localStorage.setItem(SK,JSON.stringify(D))}catch(e){}}
-let D=load();
-// Peuple l'inventaire avec les props de base (cout: 0) si pas encore fait
-function initBaseProps() {
-  if (D.propsInitialized) return; // Ne fait ça qu'une seule fois
-  const base = (window.PROPS_LIB || []).filter(p => p.cout === 0);
-  base.forEach(b => {
-    if (!D.g.props.find(p => p.id === b.id)) {
-      D.g.props.push({ id: b.id, nom: b.nom, type: b.type, emoji: b.emoji || '🎁', actif: false });
-    }
-  });
-  D.propsInitialized = true;
-  save();
-}
-// Appel après chargement des fichiers data
-loadDataFiles().then(initBaseProps);
-   
-   // Restaure les pixels des props générés par Claude
-if (D.propsPixels && D.propsPixels.length) {
-  window.PROPS_LOCAL = D.propsPixels;
-}
-const today=()=>new Date().toISOString().split('T')[0];
-const hr=()=>new Date().getHours();
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-
-// --- Haptique Douce (Vibration Android + Flash visuel iPhone) ---
-function haptic() {
-try { if(navigator.vibrate) navigator.vibrate([50]); } catch(e){}
-}
-
-   function forceUpdate() {
-  if ('caches' in window) {
-    caches.keys().then(names => {
-      names.forEach(name => caches.delete(name));
-    });
-  }
-  toast('Mise à jour en cours... ✿');
-  setTimeout(() => {
-    window.location.reload(true);
-  }, 500);
-}
-
-// Vérifie les mises à jour au démarrage
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(reg => reg.update());
-  });
-}
-
-/* ============================================================
-   NAVIGATION & MENUS
-   ============================================================ */
-let journalLocked=true;
-function go(t){
-  document.querySelectorAll('.pnl').forEach(p=>p.classList.remove('on'));
-  const targetPanel = document.getElementById('p-'+t);
-  if(targetPanel) targetPanel.classList.add('on');
-  
-  const shell = document.querySelector('.tama-shell');
-  if(t === 'gotchi') {
-    shell.classList.remove('shrunk');
-    D.g.activeEnv = 'parc'; 
-  } else {
-    shell.classList.add('shrunk');
-    if(t === 'journal') D.g.activeEnv = 'chambre';
-    else if(t === 'perso') D.g.activeEnv = 'chambre';
-    else if(t === 'progress') D.g.activeEnv = 'montagne';
-    else if(t === 'settings') D.g.activeEnv = 'chambre';
-    else if(t === 'props') D.g.activeEnv = 'parc';
-  }
-  save(); 
-  
-  if(t==='gotchi'||t==='settings') renderHabs();
-  if(t==='progress') renderProg();
-  if(t==='props') renderProps();
-   if(t==='perso') renderPerso();
-  if(t==='journal') { journalLocked=true; renderJ(); }
-  
-  document.getElementById('dynamic-zone').scrollTop = 0;
-}
-
-function toggleMenu(){
-  const ov = document.getElementById('menu-overlay');
-  if(!ov.classList.contains('open')){
-    const nm = document.getElementById('menu-gotchi-name');
-    if(nm) nm.textContent = D.g.name || 'Gotchi';
-  }
-  ov.classList.toggle('open');
-}
-function goMenu(t){toggleMenu();go(t)}
-
-function updDate(){
-  const d=new Date(),days=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],mos=['jan','fév','mars','avr','mai','juin','juil','août','sep','oct','nov','déc'];
-  document.getElementById('date-d').textContent=`${days[d.getDay()]} ${d.getDate()} ${mos[d.getMonth()]}`;
-}
-updDate();
-
-/* ============================================================
-   HABITUDES & XP
-   ============================================================ */
-let shakeTimer=0;
-function toggleHab(catId){
-  haptic();
-  const td=today();if(!D.log[td])D.log[td]=[];
-  const idx=D.log[td].indexOf(catId);
-  if(idx>=0){
-  D.log[td].splice(idx,1);
-  addXp(-15);
-  D.g.petales = Math.max(0, (D.g.petales || 0) - 2); // retire les pétales si on décoche
-  save();
-}
-  else{D.log[td].push(catId); addXp(15); D.g.petales = (D.g.petales || 0) + 2;
-save();;celebQueue.push(catId);shakeTimer=8}
-  save();renderHabs();updUI();updBubbleNow();
-}
-function renderHabs(){
-  const td=today(),log=D.log[td]||[],done=log.length;
-  const habHome=document.getElementById('hab-home');
-  if(habHome) {
-    habHome.innerHTML=D.habits.map(h=>{
-      const c=CATS.find(c=>c.id===h.catId),d=log.includes(h.catId);
-      return`<div class="hab ${d?'done':''}" onclick="toggleHab('${h.catId}')"><div class="ck">${d?'✓':''}</div><span style="flex:1;font-size:12px">${h.label}</span><span style="font-size:16px">${c.icon}</span></div>`;
-    }).join('');
-  }
-  const hc=document.getElementById('hab-count'); if(hc) hc.textContent=`${done}/6`;
-  const edit=document.getElementById('hab-edit');
-  if(edit)edit.innerHTML=D.habits.map((h,i)=>{
-    const c=CATS.find(c=>c.id===h.catId);
-    return`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:20px;width:28px;text-align:center">${c.icon}</span><input class="inp" value="${h.label}" onchange="editH(${i},this.value)" style="flex:1;font-size:12px"></div>`;
-  }).join('');
-}
-function editH(i,v){D.habits[i].label=v.trim()||D.habits[i].label;save()}
-
-const STG=[{k:'egg',l:'Œuf',th:0},{k:'baby',l:'Bébé',th:60},{k:'teen',l:'Ado',th:240},{k:'adult',l:'Adulte',th:600}];
-function getSt(xp){let s=STG[0];for(const st of STG)if(xp>=st.th)s=st;return s}
-function nxtTh(xp){for(const s of STG)if(xp<s.th)return s.th;return 1200}
-function addXp(n){D.g.totalXp=Math.max(0,D.g.totalXp+n);D.g.stage=getSt(D.g.totalXp).k;D.g.envLv=Math.min(10,Math.floor(D.g.totalXp/60));save();updUI()}
-
-function setEnergy(v){D.g.energy=+v;document.getElementById('sv-energy').textContent=v;save()}
-function setHappy(v){D.g.happiness=+v;document.getElementById('sv-happy').textContent=v;save();updBubbleNow()}
-function changeEnv(v){D.g.activeEnv=v;save();haptic();}
-
-function updUI(){
-   if(document.getElementById('petales-l')) 
-  document.getElementById('petales-l').textContent = `🌸 ${D.g.petales || 0}`;
-  const g=D.g,s=getSt(g.totalXp),nt=nxtTh(g.totalXp),pt=s.th;
-  const pct=nt>pt?((g.totalXp-pt)/(nt-pt))*100:100;
-  if(document.getElementById('g-name')) document.getElementById('g-name').textContent=g.name;
-  if(document.getElementById('g-stage')) document.getElementById('g-stage').textContent=s.l;
-  if(document.getElementById('xp-l')) document.getElementById('xp-l').textContent = nt > pt ? `${g.totalXp - pt}/${nt - pt} XP` : `MAX ✿`;
-   if(document.getElementById('api-inp')) document.getElementById('api-inp').value = D.apiKey || '';
-  if(document.getElementById('xp-b')) document.getElementById('xp-b').style.width=pct+'%';
-  if(document.getElementById('sl-energy')){ document.getElementById('sl-energy').value=g.energy; document.getElementById('sv-energy').textContent=g.energy; }
-  if(document.getElementById('sl-happy')){ document.getElementById('sl-happy').value=g.happiness; document.getElementById('sv-happy').textContent=g.happiness; }
-  if(document.getElementById('s-xp')) document.getElementById('s-xp').textContent=g.totalXp;
-  if(document.getElementById('s-str')) document.getElementById('s-str').textContent=calcStr();
-  if(document.getElementById('s-jrn')) document.getElementById('s-jrn').textContent=D.journal.length;
-  if(document.getElementById('name-inp')) document.getElementById('name-inp').value=g.name;
-  if(document.getElementById('env-sel')) document.getElementById('env-sel').value=g.activeEnv||'parc';
-  if(document.getElementById('api-inp')) document.getElementById('api-inp').value = D.apiKey || '';
-const shopCard = document.getElementById('shop-card');
-if (shopCard) {
-  shopCard.style.display = (D.g.petales || 0) >= 10 ? 'block' : 'none';
-  // le texte du wallet est géré par la ligne petalesDisplay ajoutée à l'étape 2
-}
-const wallet = document.getElementById('xp-wallet');
-if (shopCard) {
-  shopCard.style.display = D.g.totalXp >= 100 ? 'block' : 'none';
-  if (wallet) wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
-   const petalesDisplay = document.getElementById('petales-wallet');
-if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0} Pétales`;
-}
-}
-function calcStr(){let s=0,d=new Date();while(true){const ds=d.toISOString().split('T')[0];const l=D.log[ds]||[];if(l.length>0)s++;else if(ds!==today())break;d.setDate(d.getDate()-1);if(s>999)break}return s}
-
-/* ============================================================
-   MÉTÉO & BULLE
-   ============================================================ */
-let meteoData=null;
-async function fetchMeteo(){
-  try{
-    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=43.6047&longitude=1.4442&current_weather=true&timezone=Europe/Paris');
-    const d=await r.json(); meteoData=d.current_weather; D.meteo=meteoData; save();
-    const wind=meteoData.windspeed||0, temp=meteoData.temperature||0;
-    let badge=`${Math.round(temp)}°C`;
-    if(wind>40)badge+=` · 🌬️ Vent d'Autan !`; else if(wind>20)badge+=` · 💨 Venteux`;
-    if(document.getElementById('meteo-badge')) document.getElementById('meteo-badge').textContent=badge;
-  }catch(e){}
-}
-fetchMeteo();setInterval(fetchMeteo,1800000);
-
-const MSG={
-  morning:["Bon matin ☀️","Coucou ! Prête ?","*bâille* Salut 💜","Belle journée ✿"],
-  afternoon:["On avance bien ✿","Un pas à la fois 💜","Pause méritée ?","Créer c'est vivre 🎨"],
-  evening:["On se pose ? ✿","Le soir c'est doux 💜","Tu as fait assez.","Débranche..."],
-  night:["Zzz... 🌙","*ronronne*","Bonne nuit ✿","Chut... repos 💤"],
-  low:["Hé, viens me voir 🥺","Une habitude ?","Je suis là ✿","Pas de pression 💜"],
-  high:["Tu déchires !! 🌟","Si fière ! ✿","Regarde tout ça !","Quelle équipe 💜"],
-  full:["PARFAIT !! 🎉","6/6 !! ✿✿✿","JE BRILLE !! 🌟","Combo MAXXX !!"],
-  sad:["Ça va aller... 💜","Je suis là ✿","Respire...","Tout doux 🌸"],
-  tired:["On fait doucement...","Repos = productif ✿","Écoute ton corps 💜","Rien à prouver"],
-  wind:["Ouh, le vent d'Autan ! 🌬️","Ça souffle dehors !","Reste au chaud ✿"],
-  idle:["*regarde autour*","♪ la la ♪","*sourit*","*boing*"],
-};
-function getBubble(){
-  const h=hr(),log=D.log[today()]||[],done=log.length,en=D.g.energy,ha=D.g.happiness;
-  let pool;
-  if(h>=22||h<7)pool=MSG.night; else if(done===6)pool=MSG.full; else if(ha<=1)pool=MSG.sad;
-  else if(en<=1)pool=MSG.tired; else if(meteoData&&meteoData.windspeed>40)pool=MSG.wind;
-  else if(done>=4)pool=MSG.high; else if(done===0)pool=MSG.low; else if(h<12)pool=MSG.morning;
-  else if(h<18)pool=MSG.afternoon; else pool=MSG.evening;
-  if(Math.random()<.15&&done>0&&done<6)pool=MSG.idle;
-  return pool[Math.floor(Math.random()*pool.length)];
-}
-function updBubbleNow(){
-  const h = hr(), ha = D.g.happiness, en = D.g.energy;
-  const P = window.PERSONALITY;
-  let pool;
-
-  // Source : fichier personality.json si dispo, sinon fallback local
-  const src = P ? P.bulles : MSG;
-
-  if (h >= 22 || h < 7) pool = src.nuit || src.night;
-  else if (ha <= 1) pool = src.triste || src.sad;
-  else if (en <= 1) pool = src.fatigue || src.tired;
-  else if ((D.log[today()] || []).length === 6) pool = src.max || src.full;
-  else if ((D.log[today()] || []).length >= 4) pool = src.fierte || src.high;
-  else if (meteoData && meteoData.windspeed > 40) pool = src.vent || src.wind;
-  else if (h < 12) pool = src.matin || src.morning;
-  else if (h < 18) pool = src.aprem || src.afternoon;
-  else pool = src.soir || src.evening;
-
-  // Mix idle + custom bubbles
-  let extras = (src.idle || MSG.idle).concat(D.g.customBubbles || []);
-  if (P && P.bulles.custom) extras = extras.concat(P.bulles.custom);
-  if (Math.random() < 0.15 && extras.length) pool = extras;
-
-  if (!pool || !pool.length) pool = ["✿"];
-  const el = document.getElementById('bubble');
-  if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
-}
-
-/* ============================================================
-   API CLAUDE (PROPS + SOUTIEN + BILAN)
-   ============================================================ */
-function saveApi(){const v=document.getElementById('api-inp').value.trim();if(v){D.apiKey=v;save();toast('Clé API sauvegardée ✿')}else toast('Colle ta clé sk-ant-...')}
-
-async function askClaude(){
-  const key=D.apiKey; if(!key){toast('Clé API manquante dans les Réglages');return}
-  const g=D.g, recentJ=D.journal.slice(-2).map(j=>j.text).join(' ');
-  const td = today();
-
-  // 1. Règle d'économie : Un cadeau tous les 3 jours maximum
-  let giveGift = false;
-  if (!D.lastGiftDate) { giveGift = true; }
-  else {
-    const diffDays = Math.floor((new Date() - new Date(D.lastGiftDate)) / (1000 * 60 * 60 * 24));
-    if(diffDays >= 3) giveGift = true; 
-  }
-
-  // 2. Préparation du prompt pour Claude
-  let prompt = `Tu es le compagnon numérique d'Émilie. Énergie ${g.energy}/5, Humeur ${g.happiness}/5, Notes: ${recentJ||'(vide)'}.
-  Action 1: Donne une pensée complice (2 phrases max).
-  Action 2: Invente une TRÈS COURTE phrase (1 à 4 mots) qu'un compagnon dirait en patientant (ex: "*s'étire*", "Hmm...").`;
-
-  if(giveGift) {
-    prompt += ` Action 3: INVENTE un petit objet pixel art (max 7x7 pixels). Catégories possibles: "decor", "accessoire", "ambiance".
-    La palette est un tableau de couleurs hex, index 0 = transparent.
-    Les pixels sont une grille 2D de numéros qui correspondent à la palette.
-    Réponds UNIQUEMENT en JSON strict :
-    Pour type "decor", ajoute "slot" parmi : "A","B","C","D","SOL".
-{"message": "ta pensée", "bulle": "phrase courte", "cadeau": {"id": "mot_unique_${Date.now()}", "nom": "nom joli", "type": "decor", "slot": "D", "palette": ["transparent", "#couleur1", "#couleur2"], "pixels": [[0,1,0],[1,2,1],[0,1,0]]}}`;
-  } else {
-    prompt += ` Réponds UNIQUEMENT en format JSON strict : {"message": "ta pensée", "bulle": "phrase courte"}`;
-  }
-
-  if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Je réfléchis... 💭';
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{ method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}, body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:300,messages:[{role:'user',content:prompt}]}) });
-    const d=await r.json();
-    const match = d.content[0].text.match(/\{[\s\S]*\}/);
-
-    if(match) {
-      const data = JSON.parse(match[0]);
-      if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent = data.message;
-
-      // Sauvegarder la nouvelle phrase pour la bulle !
-      if(data.bulle) {
-        if(!D.g.customBubbles) D.g.customBubbles = [];
-        if(!D.g.customBubbles.includes(data.bulle)) D.g.customBubbles.push(data.bulle);
-        if(D.g.customBubbles.length > 10) D.g.customBubbles.shift(); // Garde les 10 plus récentes
-      }
-
-      // Sauvegarder le cadeau !
-if(giveGift && data.cadeau) {
-        if(!D.g.props) D.g.props = [];
-        if(!D.g.props.find(p => p.id === data.cadeau.id)) {
-          // Ajouter au localStorage comme prop avec pixels
-          D.g.props.push({
-            id: data.cadeau.id,
-            nom: data.cadeau.nom,
-            type: data.cadeau.type,
-            actif: false
-          });
-          // Ajouter la définition pixel au catalogue local
-          if (!window.PROPS_LOCAL) window.PROPS_LOCAL = [];
-          window.PROPS_LOCAL.push(data.cadeau);
-          // Sauvegarder les définitions pixel en local aussi
-          D.propsPixels = D.propsPixels || [];
-          D.propsPixels.push(data.cadeau);
-          D.lastGiftDate = td;
-          save();
-          toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
-        }
-      }
-      save(); renderProps();
-    }
-  }catch(e){if(document.getElementById('claude-msg')) document.getElementById('claude-msg').textContent='Erreur API.'}
-}
-
-let propsFilterActive = 'tous';
-
-function renderPropMini(canvas, def) {
-  if (!canvas || !def || !def.pixels) return;
-  const ctx = canvas.getContext('2d');
-  const cols = def.pixels[0].length;
-  const rows = def.pixels.length;
-  const PX = Math.min(Math.floor(54 / Math.max(cols, rows)), 6); // s'adapte à la taille
-  canvas.width  = cols * PX;
-  canvas.height = rows * PX;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const ci = def.pixels[r][c];
-      if (ci === 0) continue;
-      ctx.fillStyle = def.palette[ci];
-      ctx.fillRect(c * PX, r * PX, PX, PX);
-    }
-  }
-}
-
-function renderProps() {
-  const allDefs = [...(window.PROPS_LIB || []), ...(window.PROPS_LOCAL || [])];
-  const cats = {
-    'tous':       { label: '✿ Tous',       emoji: '' },
-    'decor':      { label: '🌿 Décor',      emoji: '🌿' },
-    'accessoire': { label: '👒 Accessoires', emoji: '👒' },
-    'ambiance':   { label: '✨ Ambiances',   emoji: '✨' },
-     'claude':     { label: '✦ IA'      },
-  };
-
-  // --- Filtres ---
-  const filterEl = document.getElementById('props-filters');
-  if (filterEl) {
-    filterEl.innerHTML = Object.entries(cats).map(([key, cat]) =>
-      `<button onclick="setPropsFilter('${key}')" style="
-        padding:4px 10px; border-radius:20px; border:2px solid var(--border);
-        font:bold 10px 'Courier New',monospace; cursor:pointer;
-        background:${propsFilterActive===key ? 'var(--lilac)' : '#fff'};
-        color:${propsFilterActive===key ? '#fff' : 'var(--text2)'};
-        transition:.15s;">${cat.label}</button>`
-    ).join('');
-  }
-
-  // --- Liste filtrée ---
-  const listEl = document.getElementById('props-list');
-  if (!listEl) return;
-
-if (!D.g.props || D.g.props.length === 0) {
-  listEl.innerHTML = '<p style="font-size:10px;color:var(--text2);text-align:center;padding:12px">Ton sac est vide. Reviens plus tard ! ✿</p>';
-  return;
-}
-
-const filtered = D.g.props
-  .map((p, index) => ({ p, index, def: allDefs.find(l => l.id === p.id) }))
-  .filter(({ p, def }) => {
-    if (propsFilterActive === 'tous') return true;
-    if (propsFilterActive === 'claude') {
-      // objet Claude = il a des pixels stockés dans propsPixels
-      return !!(D.propsPixels && D.propsPixels.find(x => x.id === p.id));
-    }
-    return p.type === propsFilterActive;
-  });
-
-// 1. On construit le HTML
-listEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">` +
-  filtered.map(({ p, index, def }) => {
-    const isClaud = !!(def && def.pixels && D.propsPixels && D.propsPixels.find(x => x.id === p.id));
-    const badgeId = `mini-${p.id}`;
-    return `<div onclick="toggleProp(${index})" style="
-      background:${p.actif ? 'var(--mint)' : '#fff'};
-      border:2px solid ${p.actif ? 'var(--mint)' : isClaud ? 'var(--lilac)' : 'var(--border)'};
-      border-radius:10px; padding:6px 4px 8px; font-size:10px; font-weight:bold;
-      cursor:pointer; display:flex; flex-direction:column; align-items:center;
-      justify-content:space-between;
-      gap:4px; transition:.2s; text-align:center;
-      box-shadow:0 2px 4px rgba(0,0,0,.05); position:relative; min-height:90px;">
-      ${isClaud ? `<span style="position:absolute;top:4px;right:4px;font-size:11px;color:var(--lilac);filter:drop-shadow(0 0 3px rgba(176,144,208,.6));">✦</span>` : ''}
-      <div style="flex:1;display:flex;align-items:center;justify-content:center;">
-        ${def && def.pixels
-          ? `<canvas id="${badgeId}" style="image-rendering:pixelated;border-radius:3px"></canvas>`
-          : `<span style="font-size:22px">${p.emoji || '🎁'}</span>`
-        }
-      </div>
-      <div style="width:100%;">
-        <div>${p.nom}</div>
-        <div style="font-size:8px;text-transform:uppercase;opacity:.7;font-weight:normal;">${p.type}</div>
-        ${p.actif ? '<div style="font-size:8px;color:var(--mint)">● actif</div>' : ''}
-      </div>
-    </div>`;
-  }).join('') + `</div>`;          // ← fermeture du .map() et du div grille
-
-// 2. Canvas APRÈS le innerHTML
-filtered.forEach(({ p, def }) => {
-  if (def && def.pixels) {
-    renderPropMini(document.getElementById(`mini-${p.id}`), def);
-  }
-});
-
-// --- Boutique ---
-const shopCard = document.getElementById('shop-card');
-const wallet = document.getElementById('xp-wallet');
-  if (shopCard) shopCard.style.display = (D.g.petales || 0) >= 10 ? 'block' : 'none';
-
-  if (wallet) wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
-}
-
-function setPropsFilter(cat) {
-  propsFilterActive = cat;
-  renderProps();
-}
-async function buyProp() {
-  if (!D.apiKey) { toast('Clé API manquante dans les Réglages'); return; }
- if ((D.g.petales || 0) < 10) { toast('Il te faut 10 🌸 Pétales'); return; }
-D.g.petales -= 10;
-save();
-
-  addXp(-100);
-  toast('Claude crée ton objet... 💭');
-
-  // Anti-doublon + thème aléatoire
-  const nomsExistants = (D.g.props || []).map(p => p.nom).join(', ') || 'aucun';
-  const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
-  const theme = themes[Math.floor(Math.random() * themes.length)];
-
-  const prompt = `Invente un objet pixel art UNIQUE et SURPRENANT sur le thème "${theme}".
-Objets déjà dans l'inventaire (NE PAS reproduire) : ${nomsExistants}.
-Sois créatif et inattendu. Max 7x7 pixels. Pour une appli de bien-être.
-Catégories possibles: "decor", "accessoire", "ambiance".
-Palette: tableau de couleurs hex, index 0 = toujours "transparent".
-Réponds UNIQUEMENT en JSON strict, sans texte autour :
-{"id":"obj_${Date.now()}","nom":"nom joli","type":"decor","emoji":"🌸","position":{"x":150,"y":128},"palette":["transparent","#couleur1","#couleur2"],"pixels":[[0,1,0],[1,2,1],[0,1,0]]}`;
-try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': D.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 300, temperature: 1, messages: [{ role: 'user', content: prompt }] })
-    });
-    const data = await r.json();
-    const match = data.content[0].text.match(/\{[\s\S]*\}/);
-    if (match) {
-      const obj = JSON.parse(match[0]);
-      D.g.props.push({ id: obj.id, nom: obj.nom, type: obj.type, emoji: obj.emoji || '🎁', actif: false });
-      if (!D.propsPixels) D.propsPixels = [];
-      D.propsPixels.push(obj);
-      window.PROPS_LOCAL = D.propsPixels;
-      save();
-      renderProps();
-      updUI();
-      toast(`🎁 ${obj.nom} ajouté à ton inventaire !`);
-    }
-  } catch(e) {
-    D.g.petales = (D.g.petales || 0) + 10;
-    save();
-    toast('Erreur API, pétales remboursés.');
-  }
-}
-   
-   // Fonction pour Équiper / Ranger un objet
-async function toggleProp(index) {
-    haptic();
-    D.g.props[index].actif = !D.g.props[index].actif;
-    save();
-    renderProps();
-    
-    if(D.g.props[index].actif) {
-        // Vérifie que le catalogue est chargé
-        if (!window.PROPS_LIB || window.PROPS_LIB.length === 0) {
-            await loadDataFiles();
-        }
-        const def = (window.PROPS_LIB || []).find(l => l.id === D.g.props[index].id) || (D.propsPixels || []).find(l => l.id === D.g.props[index].id);
-        if (def && def.pixels) {
-            toast(`✨ ${D.g.props[index].nom} équipé !`);
-        } else {
-            toast(`✨ ${D.g.props[index].nom} activé (pixels non trouvés pour id: ${D.g.props[index].id})`);
-        }
-    }
-}
-function debugProps() {
-  const lib = window.PROPS_LIB || [];
-  const actifs = (D.g.props || []).filter(p => p.actif);
-  const g = D.g;
-  const s = getSt(g.totalXp);
-  
-  let report = '✿ État du système ✿\n\n';
-  report += '🎮 ' + g.name + ' (' + s.l + ', ' + g.totalXp + ' XP)\n';
-  report += '⚡ Énergie: ' + g.energy + '/5 · 💜 Bonheur: ' + g.happiness + '/5\n';
-  report += '📦 Catalogue: ' + lib.length + ' props chargés\n';
-  report += '🎒 Inventaire: ' + (D.g.props||[]).length + ' objets (' + actifs.length + ' actifs)\n\n';
-  
-  if (actifs.length) {
-    actifs.forEach(p => {
-      const def = lib.find(l => l.id === p.id);
-      report += (def && def.pixels ? '✅' : '❌') + ' ' + p.nom + ' (' + p.id + ')\n';
-    });
-  }
-  
-  report += '\n📁 Fichiers data:\n';
-  report += (window.PERSONALITY ? '✅' : '❌') + ' personality.json\n';
-  report += (lib.length > 0 ? '✅' : '❌') + ' props.json\n';
-  report += (window.ENVIRONMENTS ? '✅' : '❌') + ' environments.json\n';
-  report += (window.STYLES ? '✅' : '❌') + ' styles.json\n';
-   report += '🎨 Props générés par Claude: ' + (D.propsPixels || []).length + '\n';
-  
-  toast(report);
-}
-function genSoutien() {
-  haptic();
-  const g = D.g, td = today();
-
-  // 🔍 Collecte les données du jour
-  const habsDuJour = D.habits.map(h => {
-    const faite = (D.log[td] || []).includes(h.catId);
-    return { label: h.label, faite };
-  });
-  const notesDuJour = D.journal
-    .filter(j => j.date.startsWith(td))
-    .map(j => ({ humeur: j.mood, texte: j.text }));
-
-  const contexte = {
-    energie: `${g.energy}/5`,
-    bonheur: `${g.happiness}/5`,
-    habitudes: habsDuJour,
-    notes: notesDuJour
-  };
-
-  // Construit le message initial de Claude (prompt système + contexte)
-  const promptInit = `Tu es le Gotchi, un compagnon bienveillant pour le bien-être mental et le TDAH.
-L'utilisateur a besoin de soutien en ce moment. Voici son contexte du jour :
-- Énergie : ${contexte.energie}
-- Bonheur : ${contexte.bonheur}
-- Habitudes cochées : ${habsDuJour.filter(h=>h.faite).map(h=>h.label).join(', ') || 'aucune'}
-- Habitudes non faites : ${habsDuJour.filter(h=>!h.faite).map(h=>h.label).join(', ') || 'toutes faites !'}
-- Notes du jour : ${notesDuJour.length ? notesDuJour.map(n=>`[${n.humeur}] ${n.texte}`).join(' | ') : 'aucune note'}
-
-Commence par une phrase douce et chaleureuse qui montre que tu as lu son état.
-Pose UNE seule question ouverte pour comprendre ce qui se passe.
-Réponses courtes, ton doux, jamais de jugement. Utilise le "tu".`;
-
-  // Historique de conversation (commence vide, s'enrichit au fil du chat)
-  window._soutienHistory = [];
-
-  document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <h3 style="font-size:13px;color:var(--lilac);">💜 Besoin de soutien</h3>
-      <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
-    </div>
-    <div class="soutien-chat" id="soutien-chat">
-      <div class="chat-bubble-system">Je consulte ton état du jour...</div>
-    </div>
-    <div style="display:flex;gap:6px;margin-top:8px">
-      <input type="text" id="soutien-inp" class="inp" placeholder="Réponds ici..." style="font-size:11px"
-        onkeydown="if(event.key==='Enter')sendSoutienMsg()">
-      <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:8px 12px">→</button>
-    </div>
-    <p style="font-size:8px;color:var(--text2);text-align:center;margin-top:4px">Cette conversation ne se sauvegarde pas.</p>`;
-
-  // Lance le premier message de Claude avec le contexte
-  sendSoutienMsg(promptInit, true);
-}
-   async function sendSoutienMsg(systemPrompt, isInit = false) {
-  const key = D.apiKey;
-  if (!key) { toast('Clé API manquante dans les Réglages'); return; }
-
-  const chat = document.getElementById('soutien-chat');
-  const inp = document.getElementById('soutien-inp');
-
-  let userText = '';
-  if (!isInit) {
-    userText = inp ? inp.value.trim() : '';
-    if (!userText) return;
-    // Affiche la bulle utilisateur
-    chat.innerHTML += `<div class="chat-bubble-user">${userText}</div>`;
-    inp.value = '';
-    window._soutienHistory.push({ role: 'user', content: userText });
-  }
-
-  // Indicateur de frappe
-  const typingId = 'typing-' + Date.now();
-  chat.innerHTML += `<div class="chat-bubble-system" id="${typingId}">Gotchi réfléchit... 💭</div>`;
-  chat.scrollTop = chat.scrollHeight;
-
-  // Construit les messages pour l'API
-  const messages = isInit
-    ? [{ role: 'user', content: systemPrompt }]
-    : [...window._soutienHistory.slice(-6)]; // garde les 6 derniers tours
-
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 300,
-        system: 'Tu es un compagnon de bien-être bienveillant. Réponses courtes, chaleureuses, jamais de jugement.',
-        messages
-      })
-    });
-    const d = await r.json();
-    const reply = d.content?.[0]?.text || 'Je suis là. 💜';
-
-    // Retire l'indicateur de frappe
-    document.getElementById(typingId)?.remove();
-
-    // Affiche la réponse
-    chat.innerHTML += `<div class="chat-bubble-claude">${reply}</div>`;
-    chat.scrollTop = chat.scrollHeight;
-
-    // Ajoute au fil de conversation
-    if (isInit) {
-      window._soutienHistory.push({ role: 'user', content: systemPrompt });
-    }
-    window._soutienHistory.push({ role: 'assistant', content: reply });
-
-  } catch(e) {
-    document.getElementById(typingId)?.remove();
-    chat.innerHTML += `<div class="chat-bubble-system">Connexion perdue. Vérifie ta clé API.</div>`;
-  }
-}
-
-async function genBilanSemaine() {
-  haptic();
-  const key = D.apiKey;
-  const summaryEl = document.getElementById('claude-summary');
-
-  // Collecte les données de la semaine
-  const wd = getWkDates(wOff);
-  const g = D.g, s = getSt(g.totalXp);
-
-  const habitudes = D.habits.map(h => {
-    const jours = wd.filter(d => (D.log[d] || []).includes(h.catId)).length;
-    return { habitude: h.label, jours_faits: jours, sur: 7 };
-  });
-
-  const notes = D.journal
-    .filter(j => wd.includes(j.date.split('T')[0]))
-    .map(j => ({ humeur: j.mood, texte: j.text, date: j.date.split('T')[0] }));
-
-  const totalHabDays = wd.reduce((acc, d) => acc + (D.log[d] || []).length, 0);
-  const meilleurJour = wd.reduce((best, d) => (D.log[d]||[]).length > (D.log[best]||[]).length ? d : best, wd[0]);
-
-  // Sans clé API → affiche le résumé texte brut
-  if (!key) {
-    const lignes = habitudes.map(h => `• ${h.habitude} : ${h.jours_faits}/7 jours`).join('\n');
-    summaryEl.textContent = `Semaine du ${wd[0]} au ${wd[6]}\n\n${lignes}\n\n${notes.length} note(s) de journal.\n\nAjoute ta clé API pour un bilan personnalisé par Claude ✿`;
-    document.getElementById('btn-copy-bilan').style.display = 'block';
-    // Prépare aussi le texte à copier
-    document.getElementById('bil-txt-hidden').value = summaryEl.textContent;
-    return;
-  }
-
-  // Avec clé API → appel Claude
-  summaryEl.textContent = '💭 Claude analyse ta semaine...';
-
-  const prompt = `Tu es le Gotchi, compagnon bienveillant d'une appli de bien-être pour le TDAH.
-Voici les données de la semaine (${wd[0]} → ${wd[6]}) :
-
-GOTCHI : ${g.name}, stade ${s.l}, énergie ${g.energy}/5, bonheur ${g.happiness}/5
-HABITUDES :
-${habitudes.map(h => `- ${h.habitude} : ${h.jours_faits}/7 jours`).join('\n')}
-TOTAL : ${totalHabDays} habitudes cochées sur la semaine
-NOTES DE JOURNAL (${notes.length}) :
-${notes.length ? notes.map(n => `[${n.date} / ${n.humeur}] ${n.texte}`).join('\n') : 'aucune note cette semaine'}
-
-Écris un bilan chaleureux, honnête et bienveillant en 3 paragraphes courts :
-1. Ce qui s'est bien passé (même si peu)
-2. Ce qui a été difficile, sans jugement
-3. Une intention douce pour la semaine prochaine (pas d'injonction)
-
-Ton doux, court, concret. Utilise le "tu". Pas de bullet points, juste du texte fluide.`;
-
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 400,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const d = await r.json();
-    const bilan = d.content?.[0]?.text || 'Je n\'ai pas pu générer le bilan.';
-    summaryEl.textContent = bilan;
-    document.getElementById('bil-txt-hidden').value = bilan;
-    document.getElementById('btn-copy-bilan').style.display = 'block';
-    save();
-  } catch(e) {
-    summaryEl.textContent = 'Erreur : ' + (e.message || JSON.stringify(e));
-  }
-}
-function copyBilanSemaine(){
-  const hid = document.getElementById('bil-txt-hidden');
-  if(!hid) return;
-  navigator.clipboard.writeText(hid.value).then(()=>{
-    const b = document.getElementById('btn-copy-bilan');
-    if(b) { b.textContent = '✓ Copié !'; setTimeout(() => b.textContent = '📋 Copier pour Claude', 1500); }
-  });
-}
-function resetBilan() {if(confirm("Effacer le bilan IA ?")){if(document.getElementById('claude-summary')) document.getElementById('claude-summary').textContent='Ton bilan apparaîtra ici...';haptic();}}
-
-/* ============================================================
-   PERSONNALISATION
-   ============================================================ */
-
-// Palettes interface disponibles
-const UI_PALETTES = [
-  { id:'lavande', label:'Lavande', bg:'#ddd6e8', lilac:'#b090d0', mint:'#80d0a8', pink:'#e8a0bf' },
-  { id:'rose',    label:'Rose',    bg:'#f0dde8', lilac:'#d080a8', mint:'#a0d8b0', pink:'#e890c0' },
-  { id:'ocean',   label:'Océan',   bg:'#d0e8f0', lilac:'#6090c0', mint:'#70d0c0', pink:'#a0c8e8' },
-  { id:'foret',   label:'Forêt',   bg:'#d8e8d0', lilac:'#70a870', mint:'#90d890', pink:'#c8e0a0' },
-  { id:'nuit',    label:'Nuit',    bg:'#2a2438', lilac:'#9070c0', mint:'#50c890', pink:'#c07090' },
-  { id:'peche',   label:'Pêche',   bg:'#f0e0d0', lilac:'#c09070', mint:'#90d0a8', pink:'#e8b090' },
-];
-
-// Couleurs corps du Gotchi
-const GOTCHI_COLORS = [
-  { id:'vert',    label:'Vert',    body:'#c8d8c0', bodyLt:'#e0ece0', bodyDk:'#a0b898' },
-  { id:'lilas',   label:'Lilas',   body:'#d0c0e0', bodyLt:'#e8e0f0', bodyDk:'#a898c0' },
-  { id:'peche',   label:'Pêche',   body:'#e8d0b8', bodyLt:'#f0e4d0', bodyDk:'#c0a888' },
-  { id:'bleu',    label:'Bleu',    body:'#b8d0e8', bodyLt:'#d0e4f4', bodyDk:'#90a8c8' },
-  { id:'rose',    label:'Rose',    body:'#e8c0d0', bodyLt:'#f4d8e4', bodyDk:'#c098a8' },
-  { id:'jaune',   label:'Jaune',   body:'#e8e0a8', bodyLt:'#f4ecc8', bodyDk:'#c0b878' },
-];
-
-// Thèmes environnements
-const ENV_THEMES = [
-  { id:'pastel',   label:'Pastel ✿',   gnd:'#a8d898', gndDk:'#90c480', sky1:'#b8d4f0', sky2:'#d8e8f8' },
-  { id:'automne',  label:'Automne 🍂', gnd:'#c89858', gndDk:'#a87838', sky1:'#e8c068', sky2:'#f0d898' },
-  { id:'hiver',    label:'Hiver ❄️',   gnd:'#e8f0f8', gndDk:'#c8d8e8', sky1:'#c8d8e8', sky2:'#e8f0f8' },
-  { id:'desert',   label:'Désert 🏜️',  gnd:'#e8d098', gndDk:'#c8a858', sky1:'#f0c878', sky2:'#f8e0a8' },
-];
-
-function renderPerso() {
-  // --- Palettes interface ---
-  const pg = document.getElementById('palette-grid');
-  if (pg) {
-    const current = D.g.uiPalette || 'lavande';
-    pg.innerHTML = UI_PALETTES.map(p => `
-      <div onclick="applyUIPalette('${p.id}')" style="
-        padding:8px;border-radius:10px;cursor:pointer;text-align:center;
-        border:3px solid ${current===p.id ? p.lilac : 'transparent'};
-        background:${p.bg};transition:.2s;">
-        <div style="display:flex;gap:4px;justify-content:center;margin-bottom:4px">
-          <div style="width:14px;height:14px;border-radius:50%;background:${p.lilac}"></div>
-          <div style="width:14px;height:14px;border-radius:50%;background:${p.mint}"></div>
-          <div style="width:14px;height:14px;border-radius:50%;background:${p.pink}"></div>
-        </div>
-        <div style="font-size:9px;font-weight:bold;color:#38304a">${p.label}</div>
-      </div>`).join('');
-  }
-
-  // --- Couleurs Gotchi ---
-  const gc = document.getElementById('gotchi-colors');
-  if (gc) {
-    const current = D.g.gotchiColor || 'vert';
-    gc.innerHTML = GOTCHI_COLORS.map(c => `
-      <div onclick="applyGotchiColor('${c.id}')" style="
-        width:48px;height:48px;border-radius:12px;cursor:pointer;
-        background:${c.body};border:3px solid ${current===c.id ? '#b090d0' : 'transparent'};
-        display:flex;align-items:center;justify-content:center;
-        font-size:8px;font-weight:bold;color:#38304a;transition:.2s;
-        box-shadow:0 2px 6px rgba(0,0,0,.1);">${c.label}</div>`).join('');
-  }
-
-  // --- Thèmes environnements ---
-  const et = document.getElementById('env-themes');
-  if (et) {
-    const current = D.g.envTheme || 'pastel';
-    et.innerHTML = ENV_THEMES.map(t => `
-      <div onclick="applyEnvTheme('${t.id}')" style="
-        padding:8px 12px;border-radius:10px;cursor:pointer;
-        background:linear-gradient(135deg,${t.sky1},${t.gnd});
-        border:3px solid ${current===t.id ? '#b090d0' : 'transparent'};
-        font-size:10px;font-weight:bold;color:#fff;
-        text-shadow:0 1px 3px rgba(0,0,0,.3);transition:.2s;">${t.label}</div>`).join('');
-  }
-}
-
-function applyUIPalette(id) {
-  const p = UI_PALETTES.find(x => x.id === id); if (!p) return;
-  document.documentElement.style.setProperty('--bg', p.bg);
-  document.documentElement.style.setProperty('--lilac', p.lilac);
-  document.documentElement.style.setProperty('--mint', p.mint);
-  document.documentElement.style.setProperty('--pink', p.pink);
-  D.g.uiPalette = id; save(); renderPerso();
-  toastSnack('Palette ' + p.label + ' appliquée ✿');
-}
-
-function applyGotchiColor(id) {
-  const c = GOTCHI_COLORS.find(x => x.id === id); if (!c) return;
-  D.g.gotchiColor = id; save(); renderPerso();
-  toastSnack('Couleur ' + c.label + ' appliquée ✿');
-}
-
-function applyEnvTheme(id) {
-  const t = ENV_THEMES.find(x => x.id === id); if (!t) return;
-  D.g.envTheme = id; save(); renderPerso();
-  toastSnack('Ambiance ' + t.label + ' appliquée ✿');
-}
-function toastSnack(msg) {
-  let el = document.getElementById('snack');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'snack';
-    el.style.cssText = `position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
-      background:#38304a;color:#fff;padding:8px 16px;border-radius:20px;font-size:10px;
-      font-family:'Courier New',monospace;z-index:500;opacity:0;transition:opacity .2s;
-      pointer-events:none;white-space:nowrap;`;
-    document.body.appendChild(el);
-  }
-  el.textContent = msg;
-  el.style.opacity = '1';
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.style.opacity = '0', 1800);
-}
-// Restaure les persos au chargement
-function restorePerso() {
-  if (D.g.uiPalette) applyUIPalette(D.g.uiPalette);
-  if (D.g.gotchiColor) applyGotchiColor(D.g.gotchiColor);
-}
-
-let pinBuf='',pinMode='check';
-function renderPin(){
-  const dots=document.getElementById('pin-dots'); if(!dots)return; dots.innerHTML='';
-  for(let i=0;i<4;i++){const d=document.createElement('div');d.className='pin-dot'+(i<pinBuf.length?' f':'');dots.appendChild(d)}
-  const pad=document.getElementById('pin-pad');pad.innerHTML='';
-  for(let n=1;n<=9;n++){const b=document.createElement('button');b.className='pin-k';b.textContent=n;b.onclick=()=>{haptic();pinBuf+=n;renderPin();if(pinBuf.length===4)pinSubmit()};pad.appendChild(b)}
-  let bd=document.createElement('button');bd.className='pin-k';bd.textContent='←';bd.onclick=()=>{pinBuf=pinBuf.slice(0,-1);renderPin()};pad.appendChild(bd);
-  let b0=document.createElement('button');b0.className='pin-k';b0.textContent='0';b0.onclick=()=>{haptic();pinBuf+='0';renderPin();if(pinBuf.length===4)pinSubmit()};pad.appendChild(b0);
-  let bc=document.createElement('button');bc.className='pin-k';bc.textContent='✕';bc.style.color='var(--coral)';bc.onclick=()=>{pinBuf='';renderPin()};pad.appendChild(bc);
-}
-function pinSubmit(){const msg=document.getElementById('pin-msg');if(pinMode==='setup'){D.pin=pinBuf;save();msg.textContent='PIN créé ✿';setTimeout(unlockJ,400)}else{if(pinBuf===D.pin)unlockJ();else{msg.textContent='Incorrect.';pinBuf='';renderPin()}}}
-function unlockJ(){journalLocked=false;document.getElementById('pin-gate').style.display='none';document.getElementById('j-inner').style.display='block';renderJEntries()}
-function renderJ(){
-  if(!journalLocked){document.getElementById('pin-gate').style.display='none';document.getElementById('j-inner').style.display='block';renderJEntries();return}
-  document.getElementById('j-inner').style.display='none';document.getElementById('pin-gate').style.display='block'; pinBuf='';
-  if(!D.pin){pinMode='setup';document.getElementById('pin-msg').textContent='Choisis un code'} else{pinMode='check';document.getElementById('pin-msg').textContent='Entre ton code'}
-  renderPin();
-}
-const MOODS=[{id:'super',e:'🌟'},{id:'bien',e:'😊'},{id:'ok',e:'😐'},{id:'bof',e:'😔'},{id:'dur',e:'🌧️'}];
-let selMood=null;
-if(document.getElementById('mood-pick')) document.getElementById('mood-pick').innerHTML=MOODS.map(m=>`<button class="mood-b" data-m="${m.id}" onclick="pickM('${m.id}')">${m.e}</button>`).join('');
-function pickM(id){selMood=id;haptic();document.querySelectorAll('.mood-b').forEach(b=>b.classList.toggle('sel',b.dataset.m===id))}
-function saveJ(){const t=document.getElementById('j-text').value.trim();if(!t&&!selMood)return;D.journal.push({date:new Date().toISOString(),mood:selMood||'ok',text:t});addXp(15);save();haptic();document.getElementById('j-text').value='';selMood=null;document.querySelectorAll('.mood-b').forEach(b=>b.classList.remove('sel'));renderJEntries();updBubbleNow();}
-
-let jWeekOff=0; function navJWeek(d){jWeekOff+=d;renderJEntries()}
-function getWkDates(off){const t=new Date();t.setDate(t.getDate()+off*7);const day=(t.getDay()+6)%7;const mon=new Date(t);mon.setDate(t.getDate()-day);const dates=[];for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);dates.push(d.toISOString().split('T')[0])}return dates;}
-function renderJEntries(){
-  const wd=getWkDates(jWeekOff), wt=document.getElementById('j-week-title');
-  if(jWeekOff===0){ if(wt) wt.textContent='Cette semaine'; } else{const a=new Date(wd[0]),b=new Date(wd[6]); if(wt) wt.textContent=`${a.getDate()}/${a.getMonth()+1} — ${b.getDate()}/${b.getMonth()+1}`}
-  const entries=D.journal.filter(j=>wd.includes(j.date.split('T')[0])).reverse(), c=document.getElementById('j-entries'), me={super:'🌟',bien:'😊',ok:'😐',bof:'😔',dur:'🌧️'};
-  if(!c) return;
-  if(!entries.length){c.innerHTML='<p style="font-size:11px;color:#a09880;text-align:center">Aucune entrée</p>';return}
-  c.innerHTML=entries.map(e=>{const d=new Date(e.date);const gi=D.journal.indexOf(e);return`<div class="j-entry"><div style="display:flex;justify-content:space-between"><span class="j-date">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})} ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span><span style="font-size:16px">${me[e.mood]||'😐'}</span></div><div style="font-size:11px;margin-top:3px">${e.text||'—'}</div><div class="j-actions"><button onclick="editJEntry(${gi})">✏️</button><button onclick="delJEntry(${gi})">🗑️</button></div></div>`;}).join('');
-}
-function editJEntry(i){const e=D.journal[i];if(!e)return;document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<h3>Modifier</h3><textarea id="edit-j-txt" class="inp" rows="3">${e.text||''}</textarea><div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button><button class="btn btn-p" onclick="saveEditJ(${i})" style="flex:1">OK</button></div>`}
-function saveEditJ(i){D.journal[i].text=document.getElementById('edit-j-txt').value.trim();save();clModal();renderJEntries()}
-function delJEntry(i){document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<p>Supprimer ?</p><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="confirmDelJ(${i})" style="flex:1">Oui</button></div>`}
-function confirmDelJ(i){D.journal.splice(i,1);save();clModal();renderJEntries();updUI()}
-
-let wOff=0,mOff=0; function navW(d){wOff+=d;renderProg()}function navM(d){mOff+=d;renderProg()}
-function renderProg(){
-  const wd=getWkDates(wOff), wt=document.getElementById('w-title');
-  if(!wt) return;
-  if(wOff===0)wt.textContent='Cette semaine';else{const a=new Date(wd[0]),b=new Date(wd[6]);wt.textContent=`${a.getDate()}/${a.getMonth()+1} — ${b.getDate()}/${b.getMonth()+1}`}
-  document.getElementById('w-view').innerHTML=wd.map(ds=>{const l=D.log[ds]||[],r=l.length/6,isT=ds===today();let bg='var(--border)';if(r>.8)bg='var(--mint)';else if(r>.5)bg='var(--sky)';else if(r>0)bg='var(--peach)';return`<div class="cal-c" style="background:${bg};${isT?'border:2px solid var(--lilac)':''}">${new Date(ds+'T12:00').getDate()}</div>`;}).join('');
-  const now=new Date();now.setMonth(now.getMonth()+mOff);const y=now.getFullYear(),m=now.getMonth(); document.getElementById('m-title').textContent=now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-  const first=new Date(y,m,1),last=new Date(y,m+1,0),off=(first.getDay()+6)%7; let cells='';for(let i=0;i<off;i++)cells+='<div class="cal-c"></div>';
-  for(let d=1;d<=last.getDate();d++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const l=D.log[ds]||[],r=l.length/6,isT=ds===today(); let bg='rgba(204,196,216,.15)';if(r>.8)bg='var(--mint)';else if(r>.5)bg='var(--sky)';else if(r>0)bg='rgba(232,196,160,.3)'; cells+=`<div class="cal-c" style="background:${bg};${isT?'border:2px solid var(--lilac);font-weight:bold':''}">${d}</div>`}
-  document.getElementById('m-view').innerHTML=cells;updUI();
-}
-
-function saveName(){const n=document.getElementById('name-inp').value.trim();if(n){D.g.name=n;save();updUI()}}
-   // Sauvegarde la clé API pour toujours
-function saveApi(){
-  const v = document.getElementById('api-inp').value.trim();
-  D.apiKey = v; 
-  save(); // Ça l'enregistre dans le localStorage de ton téléphone
-  if(v) toast('Clé API sauvegardée en mémoire ! ✿');
-  else toast('Clé API effacée.');
-}
-
-// Fonction pour télécharger tes données
-function exportD(){
-  // Crée un fichier JSON avec toutes tes données (D)
-  const b = new Blob([JSON.stringify(D, null, 2)], {type: 'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(b);
-  a.download = `HabitGotchi_Sauvegarde_${today()}.json`; // Nom du fichier avec la date
-  a.click();
-}
-   function importD(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const imported = JSON.parse(e.target.result);
-      // Fusion avec les valeurs par défaut pour éviter les champs manquants
-      D = { ...defs(), ...imported, g: { ...defs().g, ...imported.g } };
-      save();
-      toast('Import réussi ✿');
-      setTimeout(() => location.reload(), 800);
-    } catch(err) {
-      toast('Fichier invalide.');
-    }
-  };
-  reader.readAsText(file);
-}
-function savePin(){const v=document.getElementById('pin-inp').value.trim();if(v.length===4&&/^\d+$/.test(v)){D.pin=v;save();document.getElementById('pin-inp').value='';toast('PIN mis à jour ✿')}else toast('4 chiffres requis')}
-function exportD(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`habitgotchi_${today()}.json`;a.click();URL.revokeObjectURL(u)}
-function confirmReset(){document.getElementById('modal').style.display='flex';document.getElementById('mbox').innerHTML=`<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`}
-function clModal(e){if(!e||e.target.id==='modal')document.getElementById('modal').style.display='none'}
-// Ancien toast (bloquant) → renommer en modal utilitaire
-function toastModal(m){
-  document.getElementById('modal').style.display='flex';
-  document.getElementById('mbox').innerHTML=`<p style="text-align:center;font-size:12px">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`
-}
-
-// Nouveau toast non-bloquant
-let _toastTimer;
-function toast(m){
-  let el = document.getElementById('toast-snack');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'toast-snack';
-    document.body.appendChild(el);
-  }
-  el.textContent = m;
-  el.classList.add('show');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
-}
-
-(function(){const td=today();if(D.lastActive&&D.lastActive!==td){D.g.energy=clamp(D.g.energy-1,0,5);D.g.happiness=clamp(D.g.happiness-1,0,5)}
-  if(D.g.moodDay!==td){const ms=['happy','chill','sleepy','playful','curious'];D.g.mood=ms[Math.floor(Math.random()*ms.length)];D.g.moodDay=td}
-  D.lastActive=td;save()})();
-   function fixProps() {
-  const mapping = {
-    'Plante Grasse': 'plante01',
-    'Tapis Doux': 'tapis01',
-    'Pluie de confettis': 'etoiles01',
-    'Pluie d\'Étoiles': 'etoiles01',
-    'Couronne Dorée': 'couronne01',
-    'Bougie Douce': 'bougie01',
-    'Petit Cactus': 'cactus01',
-    'Coussin Cœur': 'coussin01',
-    'Lampe de Bureau': 'lampe01',
-    'Lunettes Rondes': 'lunettes01',
-    'Nœud Papillon': 'noeud01'
-  };
-  let fixed = 0;
-  (D.g.props || []).forEach(p => {
-    if (!p.id && mapping[p.nom]) {
-      p.id = mapping[p.nom];
-      fixed++;
-    }
-  });
-  save();
-  toast('Corrigé ' + fixed + ' props ✿');
-  setTimeout(() => location.reload(), 800);
-}
-   function cleanProps() {
-  const before = D.g.props.length;
-  D.g.props = D.g.props.filter(p => {
-    const inLib = (window.PROPS_LIB || []).find(l => l.id === p.id);
-    const inLocal = (D.propsPixels || []).find(l => l.id === p.id);
-    return inLib || inLocal;
-  });
-  save();
-  toast('Nettoyé : ' + (before - D.g.props.length) + ' props orphelins supprimés ✿');
-  setTimeout(() => location.reload(), 800);
-}
-
-/* ============================================================
-   p5.js — MOTEUR DE RENDU (SÉCURISÉ)
-   ============================================================ */
-const C={
-  body:'#d8b8e8',bodyDk:'#c0a0d0',bodyLt:'#ecd8f8',
-  eye:'#38304a',cheek:'#f0a0b0',mouth:'#38304a',
-  egg:'#f4e6d0',eggSp:'#e4d2b8',eggCr:'#d4bfa0',
-  skyD1:'#b8d4f0',skyD2:'#d8e8f0',skyK1:'#d0a8c0',skyK2:'#f0d0c0',
-  skyN1:'#28203c',skyN2:'#3c3058',skyA1:'#d8c0d0',skyA2:'#f0e4d0',
-  skyGray1:'#a0a0a8',skyGray2:'#c0c0c8',
-  gnd:'#a8d498',gndDk:'#90c480',gndN:'#3c6030',
-  cloud:'#ece8f4',trunk:'#b09068',leaf:'#78c488',leafN:'#406848',
-  wallIn:'#e0d8c8', floorIn:'#c8b8a8', rug:'#b898d4',
-  mnt1:'#a0a8b8', mnt2:'#808898', snow:'#e8e8f0',
-  water:'#88c0d8',star:'#f0e498', flPk:'#e898b8',flYl:'#f0d878',
-  rainbow:['#e8a0a0','#e8c8a0','#e8e0a0','#a0d8a0','#a0b8e0','#c0a0d8'],
-};
-
-const PX=5,CS=200;
-let bounceT=0,particles=[],blinkT=0,blink=false,celebQueue=[];
-// --- SLOTS FIXES pour les props décor ---
-const PROP_SLOTS = {
-  A:   { x: 20,  y: 88  },  // fond gauche (arbres, nuages bas)
-  B:   { x: 155, y: 88  },  // fond droit
-  C:   { x: 14,  y: 128 },  // sol gauche
-  D:   { x: 158, y: 128 },  // sol droit
-  SOL: { x: 90,  y: 142 },  // sol centre (devant gotchi)
-};
-function getGotchiC() {
-  const id = D.g.gotchiColor || 'vert';
-  const gc = GOTCHI_COLORS.find(x => x.id === id) || GOTCHI_COLORS[0];
-  return { body: gc.body, bodyLt: gc.bodyLt, bodyDk: gc.bodyDk };
-}
-function getEnvC() {
-  const id = D.g.envTheme || 'pastel';
-  const et = ENV_THEMES.find(x => x.id === id) || ENV_THEMES[0];
-  return et;
-}
-   
-   const p5s=(p)=>{
-  p.setup=function(){p.createCanvas(CS,CS).parent('cbox');p.noSmooth();p.frameRate(12)};
-
-  p.draw=function(){
-    const g=D.g, h=hr(), sleeping=(h>=22||h<7);
-     // Applique les couleurs personnalisées
-    const gc = getGotchiC();
-    C.body = gc.body; C.bodyLt = gc.bodyLt; C.bodyDk = gc.bodyDk;
-    const ec = getEnvC();
-    C.gnd = ec.gnd; C.gndDk = ec.gndDk; C.skyD1 = ec.skyD1; C.skyD2 = ec.skyD2;
-    const en=g.energy*20, ha=g.happiness*20;
-    const n=(h>=21||h<6);
-
-    if(shakeTimer>0){shakeTimer--;p.translate(Math.sin(p.frameCount*2)*2,0)}
-
-    drawSky(p,h,ha);
-      // Ciel thématique désert
-  if ((D.g.envTheme || 'pastel') === 'desert' && h >= 7 && h < 20) {
-    for(let y=0;y<120;y+=PX){p.fill(p.lerpColor(p.color('#f0b850'),p.color('#f8d888'),y/120));p.rect(0,y,CS,PX)}
-    return; // pas de nuages ni d'étoiles pour le désert
-  }
-    if(meteoData&&meteoData.windspeed>30) drawWind(p);
-
-    let envActif = g.activeEnv || 'parc';
-    drawActiveEnv(p, envActif, n);
-
-// --- Props DÉCOR (au sol, avant le gotchi) ---
-if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'decor').forEach(prop => {
-    const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) 
-             || (D.propsPixels || []).find(l => l.id === prop.id);
-    if (def && def.pixels) {
-      // Slot défini sur la def, sinon fallback SOL
-      const slot = PROP_SLOTS[def.slot] || PROP_SLOTS['SOL'];
-      drawProp(p, def, slot.x, slot.y);
-    }
-  });
-}
-
-    // --- Ambiances (particules répétées) ---
-    if (D.g.props) {
-      D.g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
-        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels || []).find(l => l.id === prop.id);
-        if (def && def.pixels) {
-          for (let i = 0; i < 3; i++) {
-            const ax = (p.frameCount * 2 + i * 70) % CS;
-            const ay = (p.frameCount + i * 50) % 110;
-            drawProp(p, def, ax, ay);
-          }
-        }
-      });
-    }
-
-    // --- Gotchi ---
-    bounceT += sleeping ? 0.04 : 0.12;
-    let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
-    let amplitude = 15;
-    let vitesse = 0.02;
-
-    if (!sleeping && ha >= 80 && en >= 80) {
-      amplitude = 40; vitesse = 0.06;
-      if (p.frameCount % 20 < 10) bobY -= PX;
-    } else if (!sleeping && ha >= 60 && en >= 60) {
-      amplitude = 25; vitesse = 0.04;
-    }
-
-    let moveX = sleeping ? 0 : Math.sin(p.frameCount * vitesse) * amplitude;
-    const cx = CS/2 + moveX;
-    const by = g.stage==='egg'?115:g.stage==='baby'?108:g.stage==='teen'?98:85;
-
-    if(g.stage==='egg') drawEgg(p,cx,by+bobY);
-    else if(g.stage==='baby') drawBaby(p,cx,by+bobY,sleeping,en,ha);
-    else if(g.stage==='teen') drawTeen(p,cx,by+bobY,sleeping,en,ha);
-    else drawAdult(p,cx,by+bobY,sleeping,en,ha);
-
-    // --- Props ACCESSOIRE (sur la tête du gotchi) ---
-    if (D.g.props) {
-      D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
-        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels || []).find(l => l.id === prop.id);
-        if (def && def.pixels) {
-          const accX = cx - Math.floor(def.pixels[0].length / 2) * PX;
-          const accY = (by + bobY) - def.pixels.length * PX - PX;
-          drawProp(p, def, accX, accY);
-        }
-      });
-    }
-
-    if(sleeping&&g.stage!=='egg') drawZzz(p,cx+16,by-10);
-    if(ha>=100&&!sleeping) drawRainbow(p);
-
-    updateParts(p);
-
-// --- Pétales dans le coin supérieur gauche ---
-p.fill(255);
-p.noStroke();
-p.textSize(10);
-p.textFont('Courier New');
-p.textAlign(p.LEFT, p.TOP);
-p.text('🌸 ' + (D.g.petales || 0), 6, 8);
-
-    // --- Météo intégrée au décor ---
-    if (typeof meteoData !== 'undefined' && meteoData && meteoData.temperature) {
-      p.fill(255);
-      p.noStroke();
-      p.textSize(12);
-      p.textFont('Courier New');
-      p.textAlign(p.RIGHT, p.TOP);
-      p.text(Math.round(meteoData.temperature) + "°C", CS - 8, 8);
-    }
-
-    blinkT++;
-    if (blinkT > 45 + Math.random() * 35) {
-      blink = true;
-      if (blinkT > 49 + Math.random() * 4) { blink = false; blinkT = 0; }
-    }
-
-    while (celebQueue.length) {
-      const cid = celebQueue.shift();
-      for(let i=0; i<15; i++) {
-        spawnP(cx + (Math.random()-.5)*40, by - 10, C.rainbow[Math.floor(Math.random()*C.rainbow.length)]);
-      }
-      bounceT = Math.PI * 1.5;
-    }
-  };
-
-  function px(x,y,w,h){p.rect(Math.floor(x/PX)*PX,Math.floor(y/PX)*PX,Math.max(PX,Math.floor(w/PX)*PX),Math.max(PX,Math.floor(h/PX)*PX))}
-
-  function drawActiveEnv(p, env, n) {
-  const theme = D.g.envTheme || 'pastel';
-  p.noStroke();
-
-  if (env === 'parc') {
-    if (theme === 'automne') {
-      // Sol ocre
-      p.fill('#c89858'); p.rect(0, 120, CS, 80);
-      p.fill('#a87838'); p.rect(0, 120, CS, PX*2);
-      // Feuilles au sol
-      p.fill('#e07828'); px(20,132,PX,PX); px(60,128,PX,PX); px(140,130,PX,PX); px(175,126,PX,PX);
-      p.fill('#d05818'); px(35,130,PX,PX); px(95,125,PX,PX); px(160,132,PX,PX);
-      // Arbres orange/rouge
-      drawTreeTheme(p, 8, 86, n, '#c04818', '#e06028', '#8b4513');
-      drawTreeTheme(p, 160, 90, n, '#d05020', '#e87838', '#8b4513');
-      // Feuilles tombantes animées
-      const ft = p.frameCount;
-      p.fill('#e07828');
-      px((ft*2+10)%CS, 60 + Math.sin(ft*.1)*20, PX, PX);
-      px((ft*2+70)%CS, 40 + Math.sin(ft*.12)*25, PX, PX);
-      p.fill('#d05818');
-      px((ft*2+130)%CS, 55 + Math.sin(ft*.09)*18, PX, PX);
-    }
-    else if (theme === 'hiver') {
-      // Sol enneigé
-      p.fill('#e8f0f8'); p.rect(0, 120, CS, 80);
-      p.fill('#c8d8e8'); p.rect(0, 120, CS, PX*2);
-      // Arbres enneigés
-      drawTreeTheme(p, 8, 86, n, '#e8f0f8', '#d8e8f0', '#806050');
-      drawTreeTheme(p, 160, 90, n, '#e8f0f8', '#d8e8f0', '#806050');
-      // Flocons animés
-      const ft = p.frameCount;
-      p.fill('#e0eef8');
-      [[15,20],[55,10],[95,35],[145,18],[175,28],[30,50],[120,45],[165,55]].forEach((s,i) => {
-        const fy = ((ft + s[1]*3 + i*20) % 120);
-        const fx = s[0] + Math.sin(ft*.05 + i)*5;
-        px(fx, fy, PX, PX);
-      });
-    }
-    else if (theme === 'desert') {
-      // Sol sable
-      p.fill('#e8d098'); p.rect(0, 120, CS, 80);
-      p.fill('#c8a858'); p.rect(0, 120, CS, PX*2);
-      // Dunes
-      p.fill('#d8c080');
-      px(0, 122, PX*8, PX*2); px(140, 124, PX*10, PX*2);
-      // Cactus gauche
-      drawCactus(p, 18, 90);
-      // Cactus droit
-      drawCactus(p, 168, 94);
-      // Petits cailloux
-      p.fill('#c0a050'); px(70,136,PX*2,PX); px(110,130,PX,PX); px(150,138,PX*2,PX);
-    }
-    else {
-      // Pastel (défaut)
-      p.fill(n ? C.gndN : C.gnd); p.rect(0, 120, CS, 80);
-      p.fill(n ? '#305028' : C.gndDk); p.rect(0, 120, CS, PX*2);
-      if(!n){ drawFl(p, 14, 126, C.flPk); drawFl(p, 186, 128, C.flYl); }
-      drawTree(p, 8, 86, n); drawTree(p, 160, 90, n);
-    }
-  }
-
-  else if (env === 'chambre') {
-    if (theme === 'automne') {
-      p.fill('#c0a078'); p.rect(0, 60, CS, 60); // mur bois chaud
-      p.fill('#a08058'); p.rect(0, 120, CS, 80); // sol bois
-      p.fill('#805030'); p.rect(20, 140, 160, 40, 10); // tapis
-      p.fill('#e8b850'); p.rect(20, 70, 40, 40); // fenêtre dorée
-      p.fill('#e8e8f0'); p.rect(38, 70, 4, 40); p.rect(20, 88, 40, 4);
-    }
-    else if (theme === 'hiver') {
-      p.fill('#d0d8e8'); p.rect(0, 60, CS, 60);
-      p.fill('#b0b8c8'); p.rect(0, 120, CS, 80);
-      p.fill('#8090b0'); p.rect(20, 140, 160, 40, 10);
-      p.fill('#e0f0ff'); p.rect(20, 70, 40, 40); // fenêtre givrée
-      p.fill('#e8e8f0'); p.rect(38, 70, 4, 40); p.rect(20, 88, 40, 4);
-      // Neige sur le rebord de fenêtre
-      p.fill('#f0f8ff'); px(20, 108, 40, PX);
-    }
-    else if (theme === 'desert') {
-      p.fill('#d4b880'); p.rect(0, 60, CS, 60); // mur adobe
-      p.fill('#c09850'); p.rect(0, 120, CS, 80); // sol terre
-      p.fill('#a06828'); p.rect(20, 140, 160, 40, 10); // tapis sable
-      p.fill('#f0c850'); p.rect(20, 70, 40, 40); // fenêtre soleil
-      p.fill('#e8e8f0'); p.rect(38, 70, 4, 40); p.rect(20, 88, 40, 4);
-    }
-    else {
-      p.fill(n ? '#a090a8' : C.wallIn); p.rect(0, 60, CS, 60);
-      p.fill(n ? '#807080' : C.floorIn); p.rect(0, 120, CS, 80);
-      p.fill(n ? '#605070' : C.rug); p.rect(20, 140, 160, 40, 10);
-      p.fill(n ? C.skyN1 : C.skyD1); p.rect(20, 70, 40, 40);
-      p.fill('#e8e8f0'); p.rect(38, 70, 4, 40); p.rect(20, 88, 40, 4);
-    }
-  }
-
-  else if (env === 'montagne') {
-    if (theme === 'automne') {
-      p.fill('#b07840'); p.rect(0, 120, CS, 80);
-      p.fill('#906028'); p.rect(0, 120, CS, PX*2);
-      p.fill('#c09050'); p.triangle(40, 120, 100, 50, 160, 120);
-      p.fill('#e8c878'); p.triangle(100, 50, 83, 70, 117, 70);
-    }
-    else if (theme === 'hiver') {
-      p.fill('#c8d8e8'); p.rect(0, 120, CS, 80);
-      p.fill('#a8b8c8'); p.rect(0, 120, CS, PX*2);
-      p.fill('#d8e0e8'); p.triangle(40, 120, 100, 50, 160, 120);
-      p.fill('#f0f8ff'); p.triangle(100, 50, 83, 70, 117, 70);
-    }
-    else if (theme === 'desert') {
-      p.fill('#d4a850'); p.rect(0, 120, CS, 80);
-      p.fill('#b88830'); p.rect(0, 120, CS, PX*2);
-      // Pyramide au lieu de montagne !
-      p.fill('#e8c870'); p.triangle(40, 120, 100, 55, 160, 120);
-      p.fill('#f0d890'); p.triangle(100, 55, 88, 75, 112, 75);
-      // Ligne de détail pyramide
-      p.fill('#c8a840');
-      px(88, 95, 24, PX); px(76, 108, 48, PX);
-    }
-    else {
-      p.fill(n ? '#404858' : C.mnt1); p.rect(0, 120, CS, 80);
-      p.fill(n ? '#202838' : C.mnt2); p.rect(0, 120, CS, PX*2);
-      p.fill(n ? '#505868' : '#b0b8c8'); p.triangle(40, 120, 100, 50, 160, 120);
-      p.fill(n ? '#c0c0d0' : C.snow); p.triangle(100, 50, 83, 70, 117, 70);
-    }
-  }
-}
-
-  function drawSky(p,h,ha){
-    p.noStroke();let c1,c2;
-    if(ha<=20&&h>=7&&h<21){c1=C.skyGray1;c2=C.skyGray2}
-    else if(h>=7&&h<17){c1=C.skyD1;c2=C.skyD2}
-    else if(h>=17&&h<20){c1=C.skyK1;c2=C.skyK2}
-    else if(h>=20||h<5){c1=C.skyN1;c2=C.skyN2}
-    else{c1=C.skyA1;c2=C.skyA2}
-    for(let y=0;y<120;y+=PX){p.fill(p.lerpColor(p.color(c1),p.color(c2),y/120));p.rect(0,y,CS,PX)}
-    if(h>=20||h<6){p.fill(C.star);[[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s=>{if((p.frameCount+s[0])%35<25)px(s[0],s[1],PX,PX)})}
-    if(h>=6&&h<21&&ha>20){drawCl(p,40+Math.sin(p.frameCount*.014)*8,20);drawCl(p,150+Math.cos(p.frameCount*.011)*6,35)}
-    if(ha<=20&&h>=7&&h<21){p.fill('#8888a0');for(let i=0;i<5;i++){const rx=((p.frameCount*3+i*40)%CS);const ry=((p.frameCount*4+i*30)%80)+40;px(rx,ry,PX,PX*2)}}
-  }
-  function drawCl(p,x,y){p.fill(C.cloud);px(x,y,PX*5,PX*2);px(x+PX,y-PX,PX*3,PX)}
-  function drawWind(p){p.stroke('#d0d0d8');p.strokeWeight(1);for(let i=0;i<4;i++){const y=40+i*30+Math.sin(p.frameCount*.1+i)*10;p.line(0,y,CS,y+Math.sin(p.frameCount*.2)*5)}p.noStroke()}
-  function drawRainbow(p){C.rainbow.forEach((c,i)=>{p.fill(c);px(CS/2-PX*(7-i),10+i*PX,PX*(14-i*2),PX)})}
-  function drawFl(p,x,y,c){p.fill('#58a058');px(x,y,PX,PX*2);p.fill(c);px(x-PX,y-PX,PX,PX);px(x+PX,y-PX,PX,PX);px(x,y-PX*2,PX,PX);p.fill('#f0d878');px(x,y-PX,PX,PX)}
-  function drawTree(p,x,y,n){p.fill(C.trunk);px(x+PX*2,y+PX*4,PX*2,PX*5);p.fill(n?C.leafN:C.leaf);px(x,y+PX,PX*6,PX*3);px(x+PX,y-PX,PX*4,PX*2);px(x+PX*2,y-PX*2,PX*2,PX)}
-function drawTreeTheme(p, x, y, n, colLeaf, colLeaf2, colTrunk) {
-  p.fill(colTrunk);
-  px(x+PX*2, y+PX*4, PX*2, PX*5);
-  p.fill(n ? '#304028' : colLeaf);
-  px(x, y+PX, PX*6, PX*3);
-  px(x+PX, y-PX, PX*4, PX*2);
-  p.fill(n ? '#304028' : colLeaf2);
-  px(x+PX*2, y-PX*2, PX*2, PX);
-}
-
-function drawCactus(p, x, y) {
-  p.fill('#70a858'); // vert cactus
-  // Corps principal
-  px(x+PX, y, PX*2, PX*7);
-  // Bras gauche
-  px(x-PX, y+PX*2, PX*2, PX*2);
-  px(x-PX, y+PX, PX, PX);
-  // Bras droit
-  px(x+PX*3, y+PX*3, PX*2, PX*2);
-  px(x+PX*4, y+PX*2, PX, PX);
-  // Piques
-  p.fill('#508840');
-  px(x, y+PX*2, PX, PX); px(x+PX*3, y+PX*3, PX, PX);
-}
-  
-   function drawEgg(p,cx,cy){
-    const x=cx-PX*3,y=cy;p.noStroke();
-    p.fill(C.egg);px(x+PX*2,y,PX*3,PX);px(x+PX,y+PX,PX*5,PX);px(x,y+PX*2,PX*7,PX*3);px(x+PX,y+PX*5,PX*5,PX);px(x+PX*2,y+PX*6,PX*3,PX);
-    p.fill(C.eggSp);px(x+PX*2,y+PX*2,PX,PX);px(x+PX*4,y+PX*3,PX*2,PX);px(x+PX*3,y+PX*5,PX,PX);
-    if(D.g.totalXp>30){p.fill(C.eggCr);px(x+PX*3,y+PX,PX,PX);px(x+PX*4,y+PX*2,PX,PX);px(x+PX*3,y+PX*3,PX,PX)}
-  }
-
-  function drawBaby(p,cx,cy,sl,en,ha){
-    const x=cx-PX*3,y=cy;p.noStroke();
-    p.fill(C.body);px(x+PX,y,PX*4,PX);px(x,y+PX,PX*6,PX*3);px(x+PX,y+PX*4,PX*4,PX);
-    p.fill(C.bodyLt);px(x+PX,y+PX,PX,PX);px(x+PX*2,y,PX,PX);
-    if(sl||blink){p.fill(C.eye);px(x+PX,y+PX*2,PX*2,PX);px(x+PX*3,y+PX*2,PX*2,PX)}
-    else{p.fill(C.eye);px(x+PX,y+PX*2,PX,PX);px(x+PX*4,y+PX*2,PX,PX);p.fill('#fff');p.rect(x+PX,y+PX*2,2,2);p.rect(x+PX*4,y+PX*2,2,2)}
-    p.fill(C.cheek);px(x,y+PX*3,PX,PX);px(x+PX*5,y+PX*3,PX,PX);
-    p.fill(C.mouth);
-    if(!sl){if(ha>60)px(x+PX*2,y+PX*3,PX*2,PX);else if(ha<25)px(x+PX*2,y+PX*3+2,PX*2,PX);else px(x+PX*2,y+PX*3,PX,PX)}
-    p.fill(C.bodyDk);px(x+PX,y+PX*5,PX,PX);px(x+PX*4,y+PX*5,PX,PX);
-    if(en<25&&!sl){px(x+PX*2,y+PX*5,PX*2,PX)}
-  }
-
-  function drawTeen(p,cx,cy,sl,en,ha){
-    const x=cx-PX*4,y=cy;p.noStroke();
-    p.fill(C.body);px(x+PX*2,y,PX*4,PX);px(x+PX,y+PX,PX*6,PX);px(x,y+PX*2,PX*8,PX*4);px(x+PX,y+PX*6,PX*6,PX*2);px(x+PX*2,y+PX*8,PX*4,PX);
-    p.fill(C.bodyLt);px(x+PX*2,y+PX,PX*2,PX);px(x+PX,y+PX*2,PX*2,PX);
-    if(sl||blink){p.fill(C.eye);px(x+PX*2,y+PX*3,PX*2,PX);px(x+PX*4,y+PX*3,PX*2,PX)}
-    else{p.fill(C.eye);px(x+PX*2,y+PX*3,PX,PX*2);px(x+PX*5,y+PX*3,PX,PX*2);p.fill('#fff');p.rect(x+PX*2,y+PX*3,2,2);p.rect(x+PX*5,y+PX*3,2,2)}
-    p.fill(C.cheek);px(x+PX,y+PX*5,PX,PX);px(x+PX*6,y+PX*5,PX,PX);
-    p.fill(C.mouth);
-    if(!sl){if(ha>70){px(x+PX*3,y+PX*5,PX*2,PX);px(x+PX*2,y+PX*5,PX,PX);px(x+PX*5,y+PX*5,PX,PX)}
-      else if(ha>40)px(x+PX*3,y+PX*5,PX*2,PX);else if(ha<20)px(x+PX*3,y+PX*6,PX*2,PX);else px(x+PX*3,y+PX*5,PX,PX)}
-    p.fill(C.bodyDk);
-    if(en<25&&!sl){px(x-PX,y+PX*4,PX,PX);px(x+PX*8,y+PX*4,PX,PX)}else{px(x-PX,y+PX*3,PX,PX*2);px(x+PX*8,y+PX*3,PX,PX*2)}
-    px(x+PX*2,y+PX*9,PX*2,PX);px(x+PX*5,y+PX*9,PX*2,PX);
-  }
-
-  function drawAdult(p,cx,cy,sl,en,ha){
-    const x=cx-PX*5,y=cy;p.noStroke();
-    p.fill(C.body);px(x+PX*3,y,PX*4,PX);px(x+PX*2,y+PX,PX*6,PX);px(x+PX,y+PX*2,PX*8,PX);
-    px(x,y+PX*3,PX*10,PX*4);px(x+PX,y+PX*7,PX*8,PX*2);px(x+PX*2,y+PX*9,PX*6,PX);px(x+PX*3,y+PX*10,PX*4,PX);
-    p.fill(C.bodyLt);px(x+PX*3,y+PX,PX*2,PX);px(x+PX*2,y+PX*2,PX*2,PX);px(x+PX,y+PX*3,PX*2,PX);
-    if(sl||blink){p.fill(C.eye);px(x+PX*2,y+PX*5,PX*2,PX);px(x+PX*6,y+PX*5,PX*2,PX)}
-    else{p.fill(C.eye);px(x+PX*2,y+PX*4,PX*2,PX*2);px(x+PX*6,y+PX*4,PX*2,PX*2);p.fill('#fff');px(x+PX*2,y+PX*4,PX,PX);px(x+PX*6,y+PX*4,PX,PX);}
-    p.fill(C.cheek);px(x+PX,y+PX*6,PX,PX);px(x+PX*8,y+PX*6,PX,PX);
-    p.fill(C.mouth);
-    if(!sl){if(ha>80){px(x+PX*3,y+PX*7,PX*4,PX);px(x+PX*3,y+PX*6,PX,PX);px(x+PX*6,y+PX*6,PX,PX)}
-      else if(ha>50)px(x+PX*4,y+PX*7,PX*2,PX);else if(ha<20){px(x+PX*4,y+PX*8,PX*2,PX);px(x+PX*3,y+PX*7,PX,PX)}
-      else px(x+PX*4,y+PX*7,PX,PX)}
-    p.fill(C.bodyDk);
-    if(en<20&&!sl){px(x-PX,y+PX*5,PX,PX*3);px(x+PX*10,y+PX*5,PX,PX*3)}
-    else if(ha>85&&!sl){px(x-PX,y+PX*2,PX,PX*2);px(x+PX*10,y+PX*2,PX,PX*2);px(x-PX*2,y+PX,PX,PX);px(x+PX*11,y+PX,PX,PX)}
-    else{px(x-PX,y+PX*4,PX,PX*3);px(x+PX*10,y+PX*4,PX,PX*3)}
-    px(x+PX*2,y+PX*11,PX*2,PX);px(x+PX*6,y+PX*11,PX*2,PX);
-    if(en<25&&!sl)px(x+PX*3,y+PX*11,PX,PX);
-  }
-
-function drawZzz(p,x,y){
-    for(let i=0;i<3;i++){
-      const fy=y-i*15-(p.frameCount%50)*0.4;
-      const fx=x+i*10+Math.sin(p.frameCount*.1+i)*3;
-      const sz=PX; // Taille d'un pixel
-      p.fill(p.color(176,144,208, 200-i*50));
-      
-      // Un VRAI Z pixelisé sur 4 lignes !
-      px(fx, fy, sz*4, sz);           // Barre du haut
-      px(fx+sz*2, fy+sz, sz, sz);     // Diagonale haut
-      px(fx+sz, fy+sz*2, sz, sz);     // Diagonale bas
-      px(fx, fy+sz*3, sz*4, sz);      // Barre du bas
-    }
-  }
-
-  function drawProp(p, prop, offsetX, offsetY) {
-  if (!prop.pixels || !prop.palette) return;
-  p.noStroke();
-  for (let row = 0; row < prop.pixels.length; row++) {
-    for (let col = 0; col < prop.pixels[row].length; col++) {
-      const ci = prop.pixels[row][col];
-      if (ci === 0) continue;
-      p.fill(prop.palette[ci]);
-      px(offsetX + col * PX, offsetY + row * PX, PX, PX);
-    }
-  }
-}
-   function spawnP(x,y,c){particles.push({x,y,vx:(Math.random()-.5)*4,vy:-Math.random()*3-1.5,life:16,c})}
-  function updateParts(p){
-    p.noStroke();particles=particles.filter(pt=>{
-      pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=.12;pt.life--;
-      const a=Math.floor(pt.life/16*255);
-      try{p.fill(p.color(pt.c+(a<16?'0':'')+a.toString(16)))}catch(e){p.fill(200)}
-      px(pt.x,pt.y,PX,PX);return pt.life>0});
-  }
-};
-new p5(p5s);
-
-updUI();
-renderHabs();
-renderProps();
-restorePerso();
-</script>
+<!-- Toast non-bloquant -->
 <div id="toast-snack"></div>
+
+<!-- ============================================================
+     SCRIPTS — ordre impératif
+     ============================================================ -->
+<script src="js/app.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+
 </body>
 </html>

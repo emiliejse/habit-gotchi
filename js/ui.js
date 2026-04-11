@@ -122,6 +122,8 @@ if (document.getElementById('env-sel'))  document.getElementById('env-sel').valu
   if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0}`;
   updBadgeBoutique();
 }
+
+function updBadgeBoutique() {
   const badge = document.getElementById('badge-boutique');
   if (!badge) return;
   const lib = window.PROPS_LIB || [];

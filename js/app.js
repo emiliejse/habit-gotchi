@@ -332,10 +332,17 @@ const extras = (src.idle || []).concat(cb);
    ============================================================ */
 (function() {
   const td = today();
-if (hierLog.length === 0) {
-  addXp(-15);
-  window.D.g.petales = Math.max(0, (window.D.g.petales || 0) - 4);
-}
+  if (window.D.lastActive && window.D.lastActive !== td) {
+    const hier = new Date();
+    hier.setDate(hier.getDate() - 1);
+    const hierStr = hier.toISOString().split('T')[0];
+    const hierLog = window.D.log[hierStr] || [];
+
+    if (hierLog.length === 0) {
+      addXp(-15);
+      window.D.g.petales = Math.max(0, (window.D.g.petales || 0) - 4);
+    }
+  }
   if (window.D.g.moodDay !== td) {
     const ms = ['happy','chill','sleepy','playful','curious'];
     window.D.g.mood    = ms[Math.floor(Math.random() * ms.length)];

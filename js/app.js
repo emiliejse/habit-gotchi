@@ -23,34 +23,33 @@ window.meteoData  = null;
    ============================================================ */
 async function loadDataFiles() {
   const base = 'data/';
+  const promptsBase = 'prompts/';
   try {
     const results = await Promise.allSettled([
       fetch(base + 'props.json').then(r => r.json()),
       fetch(base + 'personality.json').then(r => r.json()),
       fetch(base + 'environments.json').then(r => r.json()),
-      fetch(base + 'styles.json').then(r => r.json())
+      fetch(base + 'styles.json').then(r => r.json()),
+      fetch(promptsBase + 'ai_contexts.json').then(r => r.json()),  // ✨
+      fetch(promptsBase + 'bubbles.json').then(r => r.json()),       // ✨
+      fetch(promptsBase + 'ai_system.json').then(r => r.json())       // ✨
     ]);
     if (results[0].status === 'fulfilled') {
       window.PROPS_LIB = results[0].value.catalogue || [];
       window.PROPS_LIB.forEach(prop => {
         if (prop.cout === 0 && !D.g.props.find(p => p.id === prop.id)) {
-          D.g.props.push({
-            id: prop.id,
-            nom: prop.nom,
-            type: prop.type,
-            emoji: prop.emoji,
-            actif: false
-          });
+          D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
         }
       });
-      save();
-      renderProps();
-      updBadgeBoutique();
+      save(); renderProps(); updBadgeBoutique();
     }
-    if (results[1].status === 'fulfilled') window.PERSONALITY = results[1].value;
+    if (results[1].status === 'fulfilled') window.PERSONALITY  = results[1].value;
     if (results[2].status === 'fulfilled') window.ENVIRONMENTS = results[2].value;
-    if (results[3].status === 'fulfilled') window.STYLES = results[3].value;
-    console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props');
+    if (results[3].status === 'fulfilled') window.STYLES       = results[3].value;
+    if (results[4].status === 'fulfilled') window.PROMPTS      = { aiContexts: results[4].value };  // ✨
+    if (results[5].status === 'fulfilled') window.PROMPTS      = { ...window.PROMPTS, bubbles: results[5].value };  // ✨
+    if (results[6].status === 'fulfilled') window.PROMPTS      = { ...window.PROMPTS, aiSystem: results[6].value };  // ✨
+    console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props', '| Prompts:', !!window.PROMPTS);
   } catch(e) { console.log('Mode local (fichiers data absents)'); }
 }
 /* ============================================================

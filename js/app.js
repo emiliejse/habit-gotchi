@@ -39,6 +39,8 @@ async function loadDataFiles() {
     console.warn('Erreur chargement data:', e);
   }
 }
+ if (results[0].status === 'fulfilled') {
+  window.PROPS_LIB = results[0].value.catalogue || [];
   window.PROPS_LIB.forEach(prop => {
     if (prop.cout === 0 && !D.g.props.find(p => p.id === prop.id)) {
       D.g.props.push({
@@ -52,29 +54,12 @@ async function loadDataFiles() {
   });
   save();
   renderProps();
+  updBadgeBoutique();
 }
-    if (results[1].status === 'fulfilled') window.PERSONALITY = results[1].value;
-    if (results[2].status === 'fulfilled') window.ENVIRONMENTS = results[2].value;
-    if (results[3].status === 'fulfilled') window.STYLES = results[3].value;
-    console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props');
-  } catch(e) { console.log('Mode local (fichiers data absents)'); }
-
-  // Chargement des prompts/
-  try {
-    const pResults = await Promise.allSettled([
-      fetch('prompts/bubbles.json').then(r => r.json()),
-      fetch('prompts/ai_system.json').then(r => r.json()),
-      fetch('prompts/ai_contexts.json').then(r => r.json())
-    ]);
-    window.PROMPTS = {
-      bubbles:    pResults[0].status === 'fulfilled' ? pResults[0].value : null,
-      aiSystem:   pResults[1].status === 'fulfilled' ? pResults[1].value : null,
-      aiContexts: pResults[2].status === 'fulfilled' ? pResults[2].value : null,
-    };
-    console.log('✿ Prompts chargés');
-  } catch(e) { console.log('Prompts absents, fallback local'); }
-}
-
+if (results[1].status === 'fulfilled') window.PERSONALITY = results[1].value;
+if (results[2].status === 'fulfilled') window.ENVIRONMENTS = results[2].value;
+if (results[3].status === 'fulfilled') window.STYLES = results[3].value;
+console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props');
 /* ============================================================
    CONSTANTES MÉTIER
    ============================================================ */

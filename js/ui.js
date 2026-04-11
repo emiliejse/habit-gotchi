@@ -125,7 +125,17 @@ function updUI() {
     if (wallet) wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
     const petalesDisplay = document.getElementById('petales-wallet');
     if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0} Pétales`;
+     updBadgeBoutique();
   }
+}
+function updBadgeBoutique() {
+  const badge = document.getElementById('badge-boutique');
+  if (!badge) return;
+  const lib = window.PROPS_LIB || [];
+  const aDisponible = lib.some(p => 
+    !(D.g.props || []).find(inv => inv.id === p.id)
+  );
+  badge.style.display = aDisponible ? 'block' : 'none';
 }
 
 /* ============================================================

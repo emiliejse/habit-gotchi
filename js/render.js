@@ -359,7 +359,7 @@ function drawWind(p) {
     for (let d = 0; d < len; d += PX) {
       px(x + d, y, PX, PX);
     }
-  } // ← c'était ça qui manquait
+  } 
 }
   function drawRainbow(p)  { C.rainbow.forEach((c,i)=>{p.fill(c);px(CS/2-PX*(7-i),10+i*PX,PX*(14-i*2),PX);}); }
   function drawFl(p,x,y,c) { p.fill('#58a058');px(x,y,PX,PX*2);p.fill(c);px(x-PX,y-PX,PX,PX);px(x+PX,y-PX,PX,PX);px(x,y-PX*2,PX,PX);p.fill('#f0d878');px(x,y-PX,PX,PX); }
@@ -378,6 +378,7 @@ function drawWind(p) {
     px(x+PX*3, y+PX*3, PX*2, PX*2); px(x+PX*4, y+PX*2, PX, PX);
     p.fill('#508840');
     px(x, y+PX*2, PX, PX); px(x+PX*3, y+PX*3, PX, PX);
+    return { topY: y, eyeY: y+PX*3, neckY: y+PX*5 };
   }
 
   function drawEgg(p, cx, cy) {
@@ -398,6 +399,7 @@ function drawWind(p) {
     if(!sl) { if(ha>60)px(x+PX*2,y+PX*3,PX*2,PX); else if(ha<25)px(x+PX*2,y+PX*3+2,PX*2,PX); else px(x+PX*2,y+PX*3,PX,PX); }
     p.fill(C.bodyDk); px(x+PX,y+PX*5,PX,PX); px(x+PX*4,y+PX*5,PX,PX);
     if(en<25&&!sl) { px(x+PX*2,y+PX*5,PX*2,PX); }
+     return { topY: y, eyeY: y+PX*2, neckY: y+PX*4 };
   }
 
   function drawTeen(p, cx, cy, sl, en, ha) {
@@ -412,6 +414,7 @@ function drawWind(p) {
     p.fill(C.bodyDk);
     if(en<25&&!sl){px(x-PX,y+PX*4,PX,PX);px(x+PX*8,y+PX*4,PX,PX);}else{px(x-PX,y+PX*3,PX,PX*2);px(x+PX*8,y+PX*3,PX,PX*2);}
     px(x+PX*2,y+PX*9,PX*2,PX); px(x+PX*5,y+PX*9,PX*2,PX);
+     return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
   }
 
   function drawAdult(p, cx, cy, sl, en, ha) {
@@ -430,6 +433,7 @@ function drawWind(p) {
     else{px(x-PX,y+PX*4,PX,PX*3);px(x+PX*10,y+PX*4,PX,PX*3);}
     px(x+PX*2,y+PX*11,PX*2,PX); px(x+PX*6,y+PX*11,PX*2,PX);
     if(en<25&&!sl) px(x+PX*3,y+PX*11,PX,PX);
+     return { topY: y, eyeY: y+PX*4, neckY: y+PX*7 };
   }
 
   function drawZzz(p, x, y) {

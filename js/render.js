@@ -112,12 +112,11 @@ if (def && def.pixels) {
       if ((p.frameCount + i * 13) % 20 < 10) continue;
       ax = 15 + i * 75 + Math.sin(p.frameCount * .1 + i) * 10;
       ay = 15 + i * 35 + Math.cos(p.frameCount * .08 + i) * 8;
+}
+          drawProp(p, def, ax, ay);
+        }
+      });
     }
-    drawProp(p, def, ax, ay);
-  }
-});
-    }
-
 // --- Ambiances ---
     if (g.props) {
       // TEST — objet temporaire pour tester les motions

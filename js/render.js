@@ -325,7 +325,7 @@ const p5s = (p) => {
 function drawWind(p) {
   p.noStroke();
   for (let i = 0; i < 8; i++) {
-    const speed = 2 + (i % 3);
+    const speed = 4 + (i % 3) * 2;
     const x = CS - ((p.frameCount * speed + i * 28) % (CS + 20));
     const y = 15 + i * 22 + Math.sin(p.frameCount * .08 + i) * 6;
     const len = 20 + (i % 3) * 10;

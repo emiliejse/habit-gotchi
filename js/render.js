@@ -160,10 +160,11 @@ if (D.g.props) {
     const cx = CS / 2 + moveX;
     const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
 
-    if      (g.stage === 'egg')   drawEgg(p, cx, by + bobY);
-    else if (g.stage === 'baby')  drawBaby(p, cx, by + bobY, sleeping, en, ha);
-    else if (g.stage === 'teen')  drawTeen(p, cx, by + bobY, sleeping, en, ha);
-    else                          drawAdult(p, cx, by + bobY, sleeping, en, ha);
+let gotchiInfo;
+if      (g.stage === 'egg')   gotchiInfo = drawEgg(p, cx, by + bobY);
+else if (g.stage === 'baby')  gotchiInfo = drawBaby(p, cx, by + bobY, sleeping, en, ha);
+else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, cx, by + bobY, sleeping, en, ha);
+else                          gotchiInfo = drawAdult(p, cx, by + bobY, sleeping, en, ha);
 
 // --- Props ACCESSOIRE (sur la tête du gotchi) ---
 if (D.g.props) {
@@ -172,9 +173,11 @@ if (D.g.props) {
     if (def && def.pixels) {
       const accX = cx - Math.floor(def.pixels[0].length / 2) * PX;
       
-      // ✨ NOUVEAU : décalage selon le stage
-      const headOffset = g.stage==='baby' ? 18 : g.stage==='teen' ? 8 : g.stage==='adult' ? 4 : 0;
-      const accY = (by + bobY) - def.pixels.length * PX - PX + headOffset;
+      // ✨ Ancrage dynamique selon le type d'accessoire
+      const baseY = def.ancrage==='yeux' ? gotchiInfo.eyeY
+                  : def.ancrage==='cou'  ? gotchiInfo.neckY
+                  : gotchiInfo.topY;
+      const accY = baseY - def.pixels.length * PX;
       
       drawProp(p, def, accX, accY);
     }

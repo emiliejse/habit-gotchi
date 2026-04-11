@@ -24,32 +24,29 @@ window.meteoData  = null;
 async function loadDataFiles() {
   const base = 'data/';
   const promptsBase = 'prompts/';
- try {
-  const results = await Promise.allSettled([
-    fetch(base + 'props.json').then(r => r.json()),          // 0
-    fetch(base + 'personality.json').then(r => r.json()),    // 1
-    fetch(base + 'environments.json').then(r => r.json()),   // 2
-    fetch(base + 'styles.json').then(r => r.json()),         // 3
-    fetch(promptsBase + 'ai_contexts.json').then(r => r.json()), // 4
-    fetch(promptsBase + 'ai_system.json').then(r => r.json()),   // 5
-  ]);
+  try {
+    const results = await Promise.allSettled([
+      fetch(base + 'props.json').then(r => r.json()),              // 0
+      fetch(base + 'personality.json').then(r => r.json()),        // 1
+      fetch(promptsBase + 'ai_contexts.json').then(r => r.json()), // 2
+      fetch(promptsBase + 'ai_system.json').then(r => r.json()),   // 3
+    ]);
 
-  if (results[0].status === 'fulfilled') {
-    window.PROPS_LIB = results[0].value.catalogue || [];
-    window.PROPS_LIB.forEach(prop => {
-      if (prop.cout === 0 && !D.g.props.find(p => p.id === prop.id)) {
-        D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
-      }
-    });
-    save(); renderProps(); updBadgeBoutique();
-  }
-  if (results[1].status === 'fulfilled') window.PERSONALITY  = results[1].value;
-  if (results[2].status === 'fulfilled') window.ENVIRONMENTS = results[2].value;
-  if (results[3].status === 'fulfilled') window.STYLES       = results[3].value;
-  if (results[4].status === 'fulfilled') window.AI_CONTEXTS  = results[4].value;
-  if (results[5].status === 'fulfilled') window.AI_SYSTEM    = results[5].value;
-console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props');
-} catch(e) { console.log('Mode local (fichiers data absents)'); }
+    if (results[0].status === 'fulfilled') {
+      window.PROPS_LIB = results[0].value.catalogue || [];
+      window.PROPS_LIB.forEach(prop => {
+        if (prop.cout === 0 && !D.g.props.find(p => p.id === prop.id)) {
+          D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
+        }
+      });
+      save(); renderProps(); updBadgeBoutique();
+    }
+    if (results[1].status === 'fulfilled') window.PERSONALITY = results[1].value;
+    if (results[2].status === 'fulfilled') window.AI_CONTEXTS = results[2].value;
+    if (results[3].status === 'fulfilled') window.AI_SYSTEM   = results[3].value;
+
+    console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props');
+  } catch(e) { console.log('Mode local (fichiers data absents)'); }
 }
 /* ============================================================
    CONSTANTES MÉTIER

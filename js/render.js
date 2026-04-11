@@ -153,7 +153,6 @@ if (D.g.props) {
     // --- Gotchi ---
     bounceT += sleeping ? 0.04 : 0.12;
     if (!sleeping) walkStep++;
-    const walkBob = sleeping ? 0 : Math.sin(walkStep * 0.4) * PX;
 let bobY = (sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3) + walkBob;
     let amplitude = 15, vitesse = 0.02;
 

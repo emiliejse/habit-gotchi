@@ -24,8 +24,6 @@ window.meteoData  = null;
 async function loadDataFiles() {
   const base = 'data/';
   const promptsBase = 'prompts/';
-  console.log('base:', base);
-  console.log('promptsBase:', promptsBase);
  try {
   const results = await Promise.allSettled([
     fetch(base + 'props.json').then(r => r.json()),          // 0
@@ -50,10 +48,6 @@ async function loadDataFiles() {
   if (results[3].status === 'fulfilled') window.STYLES       = results[3].value;
   if (results[4].status === 'fulfilled') window.AI_CONTEXTS  = results[4].value;
   if (results[5].status === 'fulfilled') window.AI_SYSTEM    = results[5].value;
-results.forEach((r, i) => {
-  if (r.status === 'rejected') console.error(`fichier ${i} échoué:`, r.reason);
-  else console.log(`fichier ${i} ok:`, r.value);
-});
 console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props');
 } catch(e) { console.log('Mode local (fichiers data absents)'); }
 }

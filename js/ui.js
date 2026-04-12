@@ -478,7 +478,7 @@ async function askClaude() {
   if (!key) { toast('Clé API manquante dans les Réglages'); return; }
 
   const g = D.g, td = today();
-if (hr() >= 22 || hr() < 7) {
+if (true) {
   const msgs = [
     "Zzz... je dors 🌙",
     "Chut ! Il est tard... 😴",

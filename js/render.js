@@ -264,6 +264,52 @@ function drawWind(p) {
   function drawRainbow(p)  { C.rainbow.forEach((c,i)=>{p.fill(c);px(p,CS/2-PX*(7-i),10+i*PX,PX*(14-i*2),PX);}); }
   function drawTree(p,x,y,n) { p.fill(C.trunk);px(p,x+PX*2,y+PX*4,PX*2,PX*5);p.fill(n?C.leafN:C.leaf);px(p,x,y+PX,PX*6,PX*3);px(p,x+PX,y-PX,PX*4,PX*2);px(p,x+PX*2,y-PX*2,PX*2,PX); }
 
+  function drawZzz(p, x, y) {
+    for(let i=0; i<3; i++) {
+      const fy = y - i*15 - (p.frameCount%50)*0.4;
+      const fx = x + i*10 + Math.sin(p.frameCount*.1+i)*3;
+      const sz = PX;
+      p.fill(p.color(176, 144, 208, 200-i*50));
+      px(p,fx, fy, sz*4, sz);
+      px(p,fx+sz*2, fy+sz, sz, sz);
+      px(p,fx+sz, fy+sz*2, sz, sz);
+      px(p,fx, fy+sz*3, sz*4, sz);
+    }
+  }
+
+  function drawProp(p, prop, offsetX, offsetY) {
+    if (!prop.pixels || !prop.palette) return;
+    p.noStroke();
+    for(let row=0; row<prop.pixels.length; row++) {
+      for(let col=0; col<prop.pixels[row].length; col++) {
+        const ci = prop.pixels[row][col];
+        if(ci === 0) continue;
+        p.fill(prop.palette[ci]);
+        px(p,offsetX + col*PX, offsetY + row*PX, PX, PX);
+      }
+    }
+  }
+
+  function spawnP(x, y, c) {
+    particles.push({x, y, vx:(Math.random()-.5)*4, vy:-Math.random()*3-1.5, life:16, c});
+  }
+
+  function updateParts(p) {
+    p.noStroke();
+    particles = particles.filter(pt => {
+      pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=.12; pt.life--;
+      const a = Math.floor(pt.life / 16 * 255);
+// p.color() avec hex + canal alpha séparé — compatible p5.js 1.9+
+const col = p.color(pt.c);
+col.setAlpha(a);
+p.fill(col);
+      px(p,pt.x, pt.y, PX, PX);
+      return pt.life > 0;
+    });
+  }
+
+}; // fin p5s
+
 function drawEgg(p, cx, cy) {
   const x=cx-PX*3, y=cy; p.noStroke();
   p.fill(C.egg); px(p,x+PX*2,y,PX*3,PX); px(p,x+PX,y+PX,PX*5,PX); px(p,x,y+PX*2,PX*7,PX*3); px(p,x+PX,y+PX*5,PX*5,PX); px(p,x+PX*2,y+PX*6,PX*3,PX);
@@ -319,51 +365,5 @@ function drawEgg(p, cx, cy) {
     if(en<25&&!sl) px(p,x+PX*3,y+PX*11,PX,PX);
      return { topY: y, eyeY: y+PX*4, neckY: y+PX*7 };
   }
-
-  function drawZzz(p, x, y) {
-    for(let i=0; i<3; i++) {
-      const fy = y - i*15 - (p.frameCount%50)*0.4;
-      const fx = x + i*10 + Math.sin(p.frameCount*.1+i)*3;
-      const sz = PX;
-      p.fill(p.color(176, 144, 208, 200-i*50));
-      px(p,fx, fy, sz*4, sz);
-      px(p,fx+sz*2, fy+sz, sz, sz);
-      px(p,fx+sz, fy+sz*2, sz, sz);
-      px(p,fx, fy+sz*3, sz*4, sz);
-    }
-  }
-
-  function drawProp(p, prop, offsetX, offsetY) {
-    if (!prop.pixels || !prop.palette) return;
-    p.noStroke();
-    for(let row=0; row<prop.pixels.length; row++) {
-      for(let col=0; col<prop.pixels[row].length; col++) {
-        const ci = prop.pixels[row][col];
-        if(ci === 0) continue;
-        p.fill(prop.palette[ci]);
-        px(p,offsetX + col*PX, offsetY + row*PX, PX, PX);
-      }
-    }
-  }
-
-  function spawnP(x, y, c) {
-    particles.push({x, y, vx:(Math.random()-.5)*4, vy:-Math.random()*3-1.5, life:16, c});
-  }
-
-  function updateParts(p) {
-    p.noStroke();
-    particles = particles.filter(pt => {
-      pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=.12; pt.life--;
-      const a = Math.floor(pt.life / 16 * 255);
-// p.color() avec hex + canal alpha séparé — compatible p5.js 1.9+
-const col = p.color(pt.c);
-col.setAlpha(a);
-p.fill(col);
-      px(p,pt.x, pt.y, PX, PX);
-      return pt.life > 0;
-    });
-  }
-
-}; // fin p5s
 
 new p5(p5s);

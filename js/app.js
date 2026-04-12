@@ -91,7 +91,7 @@ function defs() {
       name:'Petit·e Gotchi', userName: 'Émilie', totalXp:0, stage:'egg', energy:3, happiness:3,
       envLv:0, moodDay:null, activeEnv:'parc', petales:0,poops: [], poopDay: '',    // date du dernier comptage
 poopCount: 0,  // nb de cacas spawné aujourd'hui
-snackDone: '',
+snackDone: '', snackEmoji: '',
       props:[], customBubbles:[]
     },
     habits: CATS.map(c => ({catId:c.id, label:c.label})),
@@ -196,6 +196,29 @@ function spawnPoop() {
 
 function maybeSpawnPoop() {
   if (Math.random() < 0.35) spawnPoop();
+}
+
+const SNACKS = ['🍎','🍓','🍒','🍑','🍋','🍪','🍩','🧁','🍫','🍬','🍭','🧃','🍵','🧇','🍡'];
+
+function getSnackOfDay() {
+  const td = today();
+  if (window.D.g.snackDone === td) return window.D.g.snackEmoji;
+  // Génère un emoji aléatoire pour aujourd'hui
+  const emoji = SNACKS[Math.floor(Math.random() * SNACKS.length)];
+  window.D.g.snackEmoji = emoji;
+  save();
+  return emoji;
+}
+
+function giveSnack() {
+  const td = today();
+  if (window.D.g.snackDone === td) return;
+  window.D.g.snackDone = td;
+  window.D.g.petales = (window.D.g.petales || 0) + 2;
+  save();
+  // Déclenche l'animation
+  window.eatAnim = { active: true, timer: 50, emoji: window.D.g.snackEmoji };
+  if (typeof updUI === 'function') updUI();
 }
 
 function cleanPoops() {

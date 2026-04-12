@@ -100,6 +100,33 @@ function clModal(e) {
   if (!e || e.target.id === 'modal') document.getElementById('modal').style.display = 'none';
 }
 
+function ouvrirSnack() {
+  const td = today();
+  const emoji = getSnackOfDay();
+  const dejaMange = window.D.g.snackDone === td;
+
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = dejaMange
+    ? `<div style="text-align:center;padding:10px">
+        <div style="font-size:48px;margin-bottom:8px">${emoji}</div>
+        <p style="font-size:12px;margin-bottom:12px">
+          ${window.D.g.name} a déjà mangé aujourd'hui 💜
+        </p>
+        <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
+      </div>`
+    : `<div style="text-align:center;padding:10px">
+        <div style="font-size:48px;margin-bottom:8px">${emoji}</div>
+        <p style="font-size:12px;margin-bottom:12px">
+          Donner ${emoji} à ${window.D.g.name} ?<br>
+          <span style="color:var(--text2);font-size:10px">+2 🌸 • 1 fois par jour</span>
+        </p>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button>
+          <button class="btn btn-p" onclick="giveSnack();clModal();" style="flex:1">Donner !</button>
+        </div>
+      </div>`;
+}
+
 /* ============================================================
    UI PRINCIPALE
    ============================================================ */

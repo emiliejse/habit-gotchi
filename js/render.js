@@ -98,6 +98,7 @@ function getEnvC() {
    ============================================================ */
    // Variables de locomotion du Gotchi
 window.touchReactions = []; // tableau de réactions simultanées
+window.eatAnim = { active: false, timer: 0, emoji: '' };
 let walkX = 100;        // Position X courante
 let walkDir = 1;        // Direction : 1 = droite, -1 = gauche
 let walkSpeed = 0.4;    // Vitesse de base (pixels par frame)
@@ -296,6 +297,24 @@ if (g.props) {
     });
 
     updateParts(p);
+
+    // --- Animation snack ---
+    if (window.eatAnim?.active) {
+      const ea = window.eatAnim;
+      const progress = 1 - (ea.timer / 50); // 0→1
+      // Part du haut du canvas, descend vers la bouche du Gotchi
+      const fy = 20 + progress * (by - 30);
+      const fx = cx;
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(20);
+      p.drawingContext.globalAlpha = 1.0;
+      p.text(ea.emoji, fx, fy);
+      p.drawingContext.globalAlpha = 1.0;
+      ea.timer--;
+      // Quand la friandise arrive → petit saut
+      if (ea.timer === 10) bounceT = Math.PI * 1.5;
+      if (ea.timer <= 0) ea.active = false;
+    }
 
     // --- Clignement ---
     blinkT++;
@@ -572,7 +591,6 @@ function triggerTouchReaction(sleeping) {
     type,
     cx: (window._lastTapX || 100) + (Math.random() - 0.5) * 40,
   });
-  console.log('reactions', window.touchReactions.length, type);
   if (window.touchReactions.length > 8) window.touchReactions.shift();
 }
 

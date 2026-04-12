@@ -1337,7 +1337,7 @@ function saveApi() {
 }
 function savePin() {
   const v = document.getElementById('pin-inp').value.trim();
-  if (v.length === 4 && /^\d+$/.test(v)) { window.D.pin = v; save(); document.getElementById('pin-inp').value = ''; toast(`PIN mis à jour ✿'); }
+  if (v.length === 4 && /^\d+$/.test(v)) { window.D.pin = v; save(); document.getElementById('pin-inp').value = ''; toast(`PIN mis à jour ✿`); }
   else toast(`4 chiffres requis`);
 }
 function exportD() {

@@ -631,7 +631,7 @@ if (!prompt) return;
    API CLAUDE — SOUTIEN
    ============================================================ */
 function toastInfo() {
-  toastModal("✍️ Si tu écris des notes dans ton journal, le Gotchi pourra te faire des réponses personnalisées selon ton humeur du jour 💜");
+  toastModal("💬 Le Gotchi peut te partager une pensée jusqu'à 3 fois par jour.\n\n✍️ Si tu écris des notes dans ton journal, ses réponses seront personnalisées selon ton humeur du jour 💜");
 }
 
    function genSoutien() {

@@ -710,7 +710,7 @@ function cleanProps() {
   });
 
   if (!orphelins.length) {
-    toast(`Aucun prop orphelin trouvé ✿');
+    toast(`Aucun prop orphelin trouvé ✿`);
     return;
   }
 

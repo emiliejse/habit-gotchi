@@ -122,7 +122,7 @@ function defs() {
       props:[], customBubbles:[]
     },
     habits: CATS.map(c => ({catId:c.id, label:c.label})),
-    log:{}, journal:[], pin:null, apiKey:null
+    log:{}, journal:[], pin:null, apiKey:null,
     lastThoughtDate: null,
 thoughtCount: 0,
   };

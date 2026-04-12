@@ -190,52 +190,39 @@ drawFrameMotif(p, theme, n);
 function drawFrameMotif(p, theme, n) {
   if (theme.id === 'automne') {
     p.fill(tc(n, theme.frameAccent1));
-  px(p, 98, 73, PX, PX);
-  px(p, 98, 78, PX, PX);
-  px(p, 103, 78, PX, PX);
-  px(p, 108, 83, PX, PX);
-  px(p, 103, 88, PX, PX);
-p.fill(tc(n, theme.frameAccent2));
-  px(p, 103, 73, PX, PX);
-  px(p, 93, 78, PX, PX);
-  px(p, 108, 78, PX, PX);
-  px(p, 93, 83, PX, PX);
-  px(p, 98, 83, PX, PX);
-  px(p, 103, 83, PX, PX);
-  px(p, 98, 88, PX, PX);
-  px(p, 98, 93, PX, PX);
+    px(p, 93, 67, PX*3, PX);
+    px(p, 91, 70, PX*4, PX);
+    px(p, 93, 73, PX*3, PX);
+    px(p, 95, 76, PX,   PX);
+    p.fill(tc(n, theme.frameAccent2));
+    px(p, 94, 67, PX,   PX*4);
+    px(p, 96, 78, PX,   PX*2);
   }
   else if (theme.id === 'hiver') {
-  p.fill(tc(n, theme.frameAccent1));
-  px(p, 93, 73, PX, PX);
-  px(p, 103, 73, PX, PX);
-  px(p, 108, 78, PX, PX);
-  px(p, 93, 83, PX, PX);
-  px(p, 98, 88, PX, PX);
-  px(p, 108, 88, PX, PX);
-p.fill(tc(n, theme.frameAccent2));
-  px(p, 88, 68, PX, PX);
-  px(p, 108, 68, PX, PX);
-  px(p, 113, 68, PX, PX);
-  px(p, 98, 78, PX, PX);
-  px(p, 103, 83, PX, PX);
-  px(p, 88, 93, PX, PX);
-  px(p, 93, 93, PX, PX);
-  px(p, 113, 93, PX, PX);
+    p.fill(tc(n, theme.frameAccent1));
+    px(p, 98, 67, PX, PX*6);
+    px(p, 90, 75, PX*6, PX);
+    px(p, 92, 68, PX, PX);
+    px(p, 104,68, PX, PX);
+    px(p, 92, 80, PX, PX);
+    px(p, 104,80, PX, PX);
+    p.fill(tc(n, theme.frameAccent2));
+    px(p, 96, 74, PX*3, PX*3);
   }
   else if (theme.id === 'desert') {
-p.fill(tc(n, theme.frameAccent1));
-  px(p, 93, 73, PX, PX);
-  px(p, 108, 73, PX, PX);
-  px(p, 98, 88, PX, PX);
-  px(p, 103, 88, PX, PX);
-p.fill(tc(n, theme.frameAccent2));
-  px(p, 88, 68, PX, PX);
-  px(p, 113, 68, PX, PX);
-  px(p, 98, 78, PX, PX);
-  px(p, 103, 78, PX, PX);
-  px(p, 98, 83, PX, PX);
-  px(p, 103, 83, PX, PX);
+    p.fill(tc(n, theme.frameAccent1));
+    px(p, 93, 66, PX,   PX);
+    px(p, 104,66, PX,   PX);
+    px(p, 94, 68, PX,   PX);
+    px(p, 103,68, PX,   PX);
+    px(p, 95, 70, PX*3, PX);
+    px(p, 93, 73, PX*5, PX*2);
+    px(p, 92, 77, PX*6, PX*3);
+    p.fill(tc(n, theme.frameAccent2));
+    px(p, 96, 74, PX,   PX*2);
+    px(p, 101,74, PX,   PX*2);
+    px(p, 94, 78, PX,   PX*2);
+    px(p, 103,78, PX,   PX*2);
   }
   else {
     // pastel — inchangé

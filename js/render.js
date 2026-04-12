@@ -97,6 +97,7 @@ function getEnvC() {
    MOTEUR p5.js
    ============================================================ */
    // Variables de locomotion du Gotchi
+window.touchReaction = { active: false, timer: 0, type: '' };
 let walkX = 100;        // Position X courante
 let walkDir = 1;        // Direction : 1 = droite, -1 = gauche
 let walkSpeed = 0.4;    // Vitesse de base (pixels par frame)
@@ -272,7 +273,37 @@ const accY = baseY - def.pixels.length * PX + offsetY;
   });
 }
 
-    if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
+    // --- Réaction au toucher ---
+if (window.touchReaction.active) {
+  const tr = window.touchReaction;
+  const progress = 1 - (tr.timer / 30); // 0→1 pendant l'animation
+  
+  p.textAlign(p.CENTER, p.CENTER);
+  p.textFont('Arial');
+
+  if (tr.type === 'heart') {
+    const fy = by - 20 - progress * 25; // monte vers le haut
+    p.textSize(16);
+    p.text('💜', cx, fy);
+  
+  } else if (tr.type === 'jump') {
+    // Le saut est géré en modifiant bobY temporairement
+    bounceT = Math.PI * 1.5; // force un pic de saut
+  
+  } else if (tr.type === 'spin') {
+    // Étoiles qui tournent autour du gotchi
+    p.textSize(12);
+    for (let i = 0; i < 3; i++) {
+      const angle = (p.frameCount * 0.3) + (i * Math.PI * 2 / 3);
+      const sx = cx + Math.cos(angle) * 20;
+      const sy = (by - 15) + Math.sin(angle) * 12;
+      p.text('✨', sx, sy);
+    }
+  }
+
+  tr.timer--;
+  if (tr.timer <= 0) tr.active = false;
+}
 
     updateParts(p);
 
@@ -383,6 +414,23 @@ p.fill(col);
     });
   }
 
+  p.mousePressed = function() {
+  const mx = p.mouseX, my = p.mouseY;
+  const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
+           : window.D.g.stage==='teen'?98 : 85;
+  const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
+  if (hit) triggerTouchReaction();
+};
+
+p.touchStarted = function() {
+  const mx = p.touches[0]?.x ?? p.mouseX;
+  const my = p.touches[0]?.y ?? p.mouseY;
+  const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
+           : window.D.g.stage==='teen'?98 : 85;
+  const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
+  if (hit) { triggerTouchReaction(); return false; } // return false = pas de scroll
+};
+
 }; // fin p5s
 
 function drawEgg(p, cx, cy) {
@@ -468,5 +516,14 @@ function drawEgg(p, cx, cy) {
     if(en<25&&!sl) px(p,x+PX*3,y+PX*11,PX,PX);
      return { topY: y, eyeY: y+PX*4, neckY: y+PX*7 };
   }
+
+function triggerTouchReaction() {
+  const types = ['jump', 'heart', 'heart', 'spin']; // heart plus fréquent
+  window.touchReaction = {
+    active: true,
+    timer: 30, // frames (~2.5 sec à 12fps)
+    type: types[Math.floor(Math.random() * types.length)]
+  };
+}
 
 new p5(p5s);

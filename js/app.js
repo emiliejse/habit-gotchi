@@ -193,11 +193,15 @@ function maybeSpawnPoop() {
 function cleanPoops() {
   const count = (window.D.g.poops || []).length;
   if (count === 0) return;
+  
+  // Sauvegarde les positions avant de vider
+  window._cleanPositions = [...window.D.g.poops];
+  
   window.D.g.poops = [];
   window.D.g.petales = (window.D.g.petales || 0) + (count * 2);
   toast(`Propre ! +${count * 2} 🌸`);
   save();
-  updUI();
+  if (typeof updUI === 'function') updUI();
 }
 function addEvent(type, valeur, label) {
   if (!window.D.eventLog) window.D.eventLog = [];

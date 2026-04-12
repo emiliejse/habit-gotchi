@@ -367,7 +367,19 @@ if (window.touchReaction.active) {
 
     // Remet l'alpha à 1 pour le reste
     p.drawingContext.globalAlpha = 1.0;
-
+// --- Animation nettoyage ---
+    if (window._cleanPositions && window._cleanPositions.length) {
+      window._cleanPositions.forEach(pos => {
+        for (let i = 0; i < 6; i++) {
+          spawnP(
+            pos.x + (Math.random() - 0.5) * 20,
+            pos.y + (Math.random() - 0.5) * 10,
+            C.star
+          );
+        }
+      });
+      window._cleanPositions = null;
+    }
   }; // ← fin p.draw()
 
   function drawSky(p, h, ha) {

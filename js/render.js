@@ -574,7 +574,7 @@ function triggerTouchReaction(sleeping) {
     type,
     cx: (window._lastTapX || 100) + (Math.random() - 0.5) * 40,
   });
-
+  console.log('reactions', window.touchReactions.length, type);
   if (window.touchReactions.length > 8) window.touchReactions.shift();
 }
 

@@ -230,7 +230,7 @@ function cleanPoops() {
   
   window.D.g.poops = [];
   window.D.g.petales = (window.D.g.petales || 0) + (count * 2);
-  toast(`Propre ! +${count * 2} 🌸`);
+  if (typeof toast === 'function') toast(`Propre ! +${count * 2} 🌸`);
   save();
   if (typeof updUI === 'function') updUI();
 }

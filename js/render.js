@@ -97,7 +97,7 @@ function getEnvC() {
    MOTEUR p5.js
    ============================================================ */
    // Variables de locomotion du Gotchi
-window.touchReaction = { active: false, timer: 0, type: '' };
+window.touchReactions = []; // tableau de réactions simultanées
 let walkX = 100;        // Position X courante
 let walkDir = 1;        // Direction : 1 = droite, -1 = gauche
 let walkSpeed = 0.4;    // Vitesse de base (pixels par frame)
@@ -266,36 +266,36 @@ const accY = baseY - def.pixels.length * PX + offsetY;
   });
 }
 
-    // --- Réaction au toucher ---
-if (window.touchReaction.active) {
-  const tr = window.touchReaction;
-  const progress = 1 - (tr.timer / 30); // 0→1 pendant l'animation
-  
-  p.textAlign(p.CENTER, p.CENTER);
+// --- Réactions au toucher ---
+    window.touchReactions = (window.touchReactions || []).filter(tr => tr.timer > 0);
+    window.touchReactions.forEach(tr => {
+      const progress = 1 - (tr.timer / 35);
+      const fy = (by - 20) - progress * 30;
+      const fx = tr.cx + Math.sin(progress * Math.PI * 2) * 8;
 
-  if (tr.type === 'heart') {
-    const fy = by - 20 - progress * 25; // monte vers le haut
-    p.textSize(16);
-    p.text('💜', cx, fy);
-  
-  } else if (tr.type === 'jump') {
-    // Le saut est géré en modifiant bobY temporairement
-    bounceT = Math.PI * 1.5; // force un pic de saut
-  
-  } else if (tr.type === 'spin') {
-    // Étoiles qui tournent autour du gotchi
-    p.textSize(12);
-    for (let i = 0; i < 3; i++) {
-      const angle = (p.frameCount * 0.3) + (i * Math.PI * 2 / 3);
-      const sx = cx + Math.cos(angle) * 20;
-      const sy = (by - 15) + Math.sin(angle) * 12;
-      p.text('✨', sx, sy);
-    }
-  }
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(16);
+      p.drawingContext.globalAlpha = 1 - progress * 0.6;
 
-  tr.timer--;
-  if (tr.timer <= 0) tr.active = false;
-}
+      if      (tr.type === 'heart')  p.text('💜', fx, fy);
+      else if (tr.type === 'sparkle') p.text('✨', fx, fy);
+      else if (tr.type === 'star')   p.text('⭐', fx, fy);
+      else if (tr.type === 'note')   p.text('🎵', fx, fy);
+      else if (tr.type === 'flower') p.text('🌸', fx, fy);
+      else if (tr.type === 'spin') {
+        const angle = progress * Math.PI * 4;
+        const sx = cx + Math.cos(angle) * 18;
+        const sy = (by - 15) + Math.sin(angle) * 10;
+        p.text('✨', sx, sy);
+      }
+      else if (tr.type === 'jump')   bounceT = Math.PI * 1.5;
+      else if (tr.type === 'zzz')    p.text('💤', fx, fy);
+      else if (tr.type === 'moon')   p.text('🌙', fx, fy);
+      else if (tr.type === 'angry')  p.text('😤', fx, fy);
+
+      p.drawingContext.globalAlpha = 1.0;
+      tr.timer--;
+    });
 
     updateParts(p);
 
@@ -447,7 +447,11 @@ p.mousePressed = function() {
     const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
              : window.D.g.stage==='teen'?98 : 85;
     const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
-    if (hit) triggerTouchReaction();
+    if (hit) {
+  const h = window.hr ? hr() : new Date().getHours();
+  window._lastTapX = cx + (Math.random() - 0.5) * 20;
+  triggerTouchReaction(h >= 22 || h < 7);
+}
   };
 
 p.touchStarted = function() {
@@ -464,12 +468,17 @@ p.touchStarted = function() {
     ouvrirSnack(); return false;
   }
 
-// --- Gotchi ---
+  // --- Gotchi ---
+  const h = hr();
   const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
            : window.D.g.stage==='teen'?98 : 85;
   const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
-  if (hit) { triggerTouchReaction(); return false; }
-  };
+  if (hit) {
+    window._lastTapX = walkX + (Math.random() - 0.5) * 20;
+    triggerTouchReaction(h >= 22 || h < 7);
+    return false;
+  }
+};
 
 }; // fin p5s
 
@@ -575,13 +584,21 @@ if (window._gotchiNearPoop && !sl) {
      return { topY: y, eyeY: y+PX*4, neckY: y+PX*7 };
   }
 
-function triggerTouchReaction() {
-  const types = ['jump', 'heart', 'heart', 'spin']; // heart plus fréquent
-  window.touchReaction = {
-    active: true,
-    timer: 30, // frames (~2.5 sec à 12fps)
-    type: types[Math.floor(Math.random() * types.length)]
-  };
+function triggerTouchReaction(sleeping) {
+  const awakeTypes = ['heart', 'heart', 'sparkle', 'jump', 'spin', 'star', 'note', 'flower'];
+  const sleepTypes = ['zzz', 'moon', 'angry'];
+  const types = sleeping ? sleepTypes : awakeTypes;
+  const type = types[Math.floor(Math.random() * types.length)];
+  
+  window.touchReactions.push({
+    timer: 35,
+    type,
+    cx: window._lastTapX || 100, // position X du tap
+  });
+  
+  // Max 8 réactions simultanées
+  if (window.touchReactions.length > 8) window.touchReactions.shift();
+}
 }
 
 

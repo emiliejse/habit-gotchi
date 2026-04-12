@@ -350,10 +350,19 @@ function toggleProp(index) {
 }
 
 function supprimerObjetIA(propId) {
-  if (!confirm('Supprimer cet objet IA définitivement ?')) return;
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <p style="text-align:center;font-size:12px;margin-bottom:12px">Supprimer cet objet définitivement ?</p>
+    <button class="btn btn-d" onclick="confirmerSuppressionIA('${propId}')" style="width:100%;margin-bottom:6px;font-size:10px">🗑️ Supprimer</button>
+    <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:10px">Annuler</button>
+  `;
+}
+
+function confirmerSuppressionIA(propId) {
   D.g.props = D.g.props.filter(p => p.id !== propId);
   if (D.propsPixels) delete D.propsPixels[propId];
   save();
+  clModal();
   renderProps();
   toast('🗑️ Objet supprimé');
 }

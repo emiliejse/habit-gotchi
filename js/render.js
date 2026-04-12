@@ -95,7 +95,7 @@ const p5s = (p) => {
 if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
     const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
-             || (D.propsPixels || []).find(l => l.id === prop.id);
+             || (D.propsPixels && D.propsPixels[prop.id]);
     if (def && def.pixels) {
       const slot = PROP_SLOTS[prop.slot] || PROP_SLOTS[def.slot] || PROP_SLOTS['SOL'];
       drawProp(p, def, slot.x, slot.y);
@@ -106,7 +106,7 @@ if (D.g.props) {
 if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot !== 'A' && pr.slot !== 'B').forEach(prop => {
     const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
-             || (D.propsPixels || []).find(l => l.id === prop.id);
+             || (D.propsPixels && D.propsPixels[prop.id]);
     if (def && def.pixels) {
       const slot = PROP_SLOTS[prop.slot] || PROP_SLOTS[def.slot] || PROP_SLOTS['SOL'];
       drawProp(p, def, slot.x, slot.y);
@@ -180,7 +180,7 @@ else                          gotchiInfo = drawAdult(p, cx, by + bobY, sleeping,
 // --- Props ACCESSOIRE (sur la tête du gotchi) ---
 if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
-    const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels || []).find(l => l.id === prop.id);
+    const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels && D.propsPixels[prop.id]);
     if (def && def.pixels) {
       const accX = cx - Math.floor(def.pixels[0].length / 2) * PX;
       

@@ -124,23 +124,12 @@ const p5s = (p) => {
 
     if (window.shakeTimer > 0) { window.shakeTimer--; p.translate(Math.sin(p.frameCount * 2) * 2, 0); }
 
-if (p.frameCount === 60) console.log('HUD atteint', CS/2 - 14, CS/2 + 14);
     // --- HUD pétales (coin sup. gauche) ---
-p.noStroke();
 p.textSize(12); p.textFont('sans-serif');
-p.textAlign(p.LEFT, p.TOP);
-p.text('🌸 ' + (g.petales || 0), 6, 6);
-
-// --- HUD température (coin sup. droit) ---
-if (window.meteoData?.temperature) {
-  p.textAlign(p.RIGHT, p.TOP);
-  p.text(Math.round(window.meteoData.temperature) + '°C', CS - 6, 6);
-}
-
-// --- HUD boutons ---
+p.fill('#38304a'); p.noStroke();
 p.textAlign(p.CENTER, p.TOP);
-p.text('🧹', CS / 2 - 14, 6);
-p.text('🍽️', CS / 2 + 14, 6);
+p.text('[net]', CS / 2 - 14, 6);
+p.text('[eat]', CS / 2 + 14, 6);
 
     // ── drawSky() : le ciel change selon l'HEURE (h) et le BONHEUR (ha) ──
 // LOGIQUE : comme un filtre couleur qui s'applique sur tout le fond.

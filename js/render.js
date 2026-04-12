@@ -280,7 +280,6 @@ let gotchiNearPoop = false;
 poops.forEach(poop => {
   if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
   p.textAlign(p.CENTER, p.CENTER);
-  p.textFont('Arial');
   p.textSize(14);
   p.text('💩', poop.x, poop.y);
 });
@@ -292,7 +291,6 @@ if (window.touchReaction.active) {
   const progress = 1 - (tr.timer / 30); // 0→1 pendant l'animation
   
   p.textAlign(p.CENTER, p.CENTER);
-  p.textFont('Arial');
 
   if (tr.type === 'heart') {
     const fy = by - 20 - progress * 25; // monte vers le haut
@@ -452,7 +450,6 @@ p.touchStarted = function() {
   };
 
 // --- HUD ---
-    p.textFont('Arial');
     p.noStroke();
 
     // Fond pilule pour chaque icône

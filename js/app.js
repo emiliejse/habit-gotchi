@@ -89,7 +89,8 @@ function defs() {
   return {
     g: {
       name:'Petit·e Gotchi', userName: 'Émilie', totalXp:0, stage:'egg', energy:3, happiness:3,
-      envLv:0, moodDay:null, activeEnv:'parc', petales:0,poops: [],
+      envLv:0, moodDay:null, activeEnv:'parc', petales:0,poops: [], poopDay: '',    // date du dernier comptage
+poopCount: 0,  // nb de cacas spawné aujourd'hui
 snackDone: '',
       props:[], customBubbles:[]
     },
@@ -170,6 +171,12 @@ function addXp(n) {
   save(); if (typeof updUI === 'function') updUI();
 }
 function spawnPoop() {
+  const td = today();
+  if (window.D.g.poopDay !== td) {
+    window.D.g.poopDay = td;
+    window.D.g.poopCount = 0;
+  }
+  if (window.D.g.poopCount >= 5) return;
   if ((window.D.g.poops || []).length >= 5) return;
   
   let x, y, attempts = 0, tooClose;
@@ -181,6 +188,7 @@ function spawnPoop() {
   } while (tooClose && attempts < 20);
   
   window.D.g.poops.push({ id: Date.now(), x, y });
+  window.D.g.poopCount++;
   window.D.g.lastPoopSpawn = Date.now();
   save();
   if (typeof updUI === 'function') updUI();

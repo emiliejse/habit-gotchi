@@ -911,7 +911,7 @@ async function acheterPropClaude() {
   const ctx = window.AI_CONTEXTS;
   const prompt = ctx
     ? ctx.buyProp.replace('{{theme}}', theme).replace('{{existingNames}}', nomsExistants).replace('{{timestamp}}', Date.now())
-    : (() => { toast(`*inquiet* Mes fichiers de mémoire sont manquants... 💜'); return null; })();
+    : (() => { toast(`*inquiet* Mes fichiers de mémoire sont manquants... 💜`); return null; })();
   
 if (!prompt) return;
   try {

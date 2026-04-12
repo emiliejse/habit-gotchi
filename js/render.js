@@ -470,8 +470,12 @@ function updateParts(p) {
     const mx = p.touches[0]?.x ?? p.mouseX;
     const my = p.touches[0]?.y ?? p.mouseY;
 
-    if (Math.abs(mx - 72) < 14 && my < 26) { cleanPoops(); return false; }
-    if (Math.abs(mx - 128) < 14 && my < 26) { ouvrirSnack(); return false; }
+if (Math.abs(mx - 72) < 14 && my < 26) { 
+  setTimeout(() => cleanPoops(), 0); return false; 
+}
+if (Math.abs(mx - 128) < 14 && my < 26) { 
+  setTimeout(() => ouvrirSnack(), 0); return false; 
+}
 
     const h = hr();
     const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 

@@ -125,8 +125,8 @@ const p5s = (p) => {
     if (window.shakeTimer > 0) { window.shakeTimer--; p.translate(Math.sin(p.frameCount * 2) * 2, 0); }
 
 // --- HUD pétales (coin sup. gauche) ---
-p.fill(255); p.noStroke();
-p.textSize(14); p.textFont('Arial');
+p.noStroke();
+p.textSize(12); p.textFont('sans-serif');
 p.textAlign(p.LEFT, p.TOP);
 p.text('🌸 ' + (g.petales || 0), 6, 6);
 
@@ -136,8 +136,7 @@ if (window.meteoData?.temperature) {
   p.text(Math.round(window.meteoData.temperature) + '°C', CS - 6, 6);
 }
 
-// --- HUD boutons 🧹 et 🍽️ ---
-p.textSize(14);
+// --- HUD boutons ---
 p.textAlign(p.CENTER, p.TOP);
 p.text('🧹', CS / 2 - 14, 6);
 p.text('🍽️', CS / 2 + 14, 6);

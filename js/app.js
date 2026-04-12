@@ -182,7 +182,7 @@ function spawnPoop() {
   
   window.D.g.poops.push({ id: Date.now(), x, y });
   save();
-  updUI();
+  if (typeof updUI === 'function') updUI();
 }
 
 function maybeSpawnPoop() {
@@ -397,8 +397,10 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 // Spawn caca toutes les 30 min
-maybeSpawnPoop();
-setInterval(maybeSpawnPoop, 30 * 60 * 1000);
+window.addEventListener('load', () => {
+  maybeSpawnPoop();
+  setInterval(maybeSpawnPoop, 30 * 60 * 1000);
+});
 /* ============================================================
    LANCEMENT
    ============================================================ */

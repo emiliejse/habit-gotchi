@@ -252,6 +252,7 @@ if      (g.stage === 'egg')   gotchiInfo = drawEgg(p, cx, by + bobY);
 else if (g.stage === 'baby')  gotchiInfo = drawBaby(p, cx, by + bobY, sleeping, en, ha);
 else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, cx, by + bobY, sleeping, en, ha);
 else                          gotchiInfo = drawAdult(p, cx, by + bobY, sleeping, en, ha);
+if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
 
 // --- Props ACCESSOIRE (sur la tête du gotchi) ---
 if (D.g.props) {

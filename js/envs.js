@@ -190,42 +190,24 @@ drawFrameMotif(p, theme, n);
 function drawFrameMotif(p, theme, n) {
   if (theme.id === 'automne') {
     p.fill(tc(n, theme.frameAccent1));
-    px(p, 93, 67, PX*3, PX);
-    px(p, 91, 70, PX*4, PX);
-    px(p, 93, 73, PX*3, PX);
-    px(p, 95, 76, PX,   PX);
+    px(p, 96, 76, PX*2, PX*2); px(p, 104, 84, PX*2, PX*2);
     p.fill(tc(n, theme.frameAccent2));
-    px(p, 94, 67, PX,   PX*4);
-    px(p, 96, 78, PX,   PX*2);
+    px(p, 104, 76, PX, PX*3); px(p, 96, 84, PX*3, PX);
   }
   else if (theme.id === 'hiver') {
     p.fill(tc(n, theme.frameAccent1));
-    px(p, 98, 67, PX, PX*6);
-    px(p, 90, 75, PX*6, PX);
-    px(p, 92, 68, PX, PX);
-    px(p, 104,68, PX, PX);
-    px(p, 92, 80, PX, PX);
-    px(p, 104,80, PX, PX);
+    px(p, 96, 76, PX*2, PX*2); px(p, 104, 84, PX*2, PX*2);
     p.fill(tc(n, theme.frameAccent2));
-    px(p, 96, 74, PX*3, PX*3);
+    px(p, 104, 76, PX, PX*3); px(p, 96, 84, PX*3, PX);
   }
   else if (theme.id === 'desert') {
     p.fill(tc(n, theme.frameAccent1));
-    px(p, 93, 66, PX,   PX);
-    px(p, 104,66, PX,   PX);
-    px(p, 94, 68, PX,   PX);
-    px(p, 103,68, PX,   PX);
-    px(p, 95, 70, PX*3, PX);
-    px(p, 93, 73, PX*5, PX*2);
-    px(p, 92, 77, PX*6, PX*3);
+    px(p, 96, 76, PX*2, PX*2); px(p, 104, 84, PX*2, PX*2);
     p.fill(tc(n, theme.frameAccent2));
-    px(p, 96, 74, PX,   PX*2);
-    px(p, 101,74, PX,   PX*2);
-    px(p, 94, 78, PX,   PX*2);
-    px(p, 103,78, PX,   PX*2);
+    px(p, 104, 76, PX, PX*3); px(p, 96, 84, PX*3, PX);
   }
   else {
-    // pastel — inchangé
+    // pastel
     p.fill(tc(n, theme.frameAccent1));
     px(p, 96, 76, PX*2, PX*2); px(p, 104, 84, PX*2, PX*2);
     p.fill(tc(n, theme.frameAccent2));

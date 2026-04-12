@@ -3,7 +3,7 @@
 
 // envs.js
 // px est défini localement ici, miroir de celui dans p5s
-function px(p,p, x, y, w, h) {
+function px(p, x, y, w, h) {
   p.rect(Math.floor(x/PX)*PX, Math.floor(y/PX)*PX, Math.max(PX,Math.floor(w/PX)*PX), Math.max(PX,Math.floor(h/PX)*PX));
 }
 
@@ -311,12 +311,12 @@ function drawThemeAccents(p, theme) {
 
 function drawTreeTheme(p, x, y, n, colLeaf, colLeaf2, colTrunk) {
   p.fill(colTrunk);
-  px(p,p, x+PX*2, y+PX*4, PX*2, PX*5);
+  px(p, x+PX*2, y+PX*4, PX*2, PX*5);
   p.fill(n ? '#304028' : colLeaf);
   px(p,x, y+PX, PX*6, PX*3);
   px(p,x+PX, y-PX, PX*4, PX*2);
   p.fill(n ? '#304028' : colLeaf2);
-  px(p,p, x+PX*2, y-PX*2, PX*2, PX);
+  px(p, x+PX*2, y-PX*2, PX*2, PX);
 }
 
 function drawCactus(p, x, y) {

@@ -1447,22 +1447,14 @@ function checkWelcome() {
     return;
   }
 
-  if (joursAbsence >= 3) {
-    // Retour long
+if (joursAbsence >= 3) {
     const xpPerdu = joursAbsence * 15;
     titre = `Ça fait ${joursAbsence} jours... 💜`;
     corps = `${D.g.name} t'a attendue. Tu as perdu <strong>${xpPerdu} XP</strong> pendant ton absence.`;
   } else if (joursAbsence === 1 && !(D.log[td] || []).length) {
-    // Hier vide
     titre = `Bienvenue 🌸`;
     corps = `Tu as perdu <strong>15 XP</strong> hier — pas d'habitudes cochées.`;
-  } else if (h < 12) {
-    titre = `Bon matin ☀️`;
-    corps = getMorningMsg();
-  } else if (h < 18) {
-    titre = `Bon après-midi ✿`;
-    corps = getAfternoonMsg();
-} else if (h >= 22 || h < 7) {
+  } else if (h >= 22 || h < 7) {
     titre = `*chuchote* 🌙`;
     corps = getNightMsg();
   } else if (h < 12) {

@@ -583,6 +583,10 @@ if (window._gotchiNearPoop && !sl) {
   }
 
 function triggerTouchReaction(sleeping) {
+    // Anti-doublon : ignore si dernier tap < 100ms
+  const now = Date.now();
+  if (now - (window._lastTapTime || 0) < 100) return;
+  window._lastTapTime = now;
   const awakeTypes = ['heart', 'heart', 'sparkle', 'jump', 'spin', 'star', 'note', 'flower'];
   const sleepTypes = ['zzz', 'moon', 'angry'];
   const types = sleeping ? sleepTypes : awakeTypes;

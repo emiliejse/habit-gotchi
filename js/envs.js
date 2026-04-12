@@ -10,6 +10,9 @@
 function px(p, x, y, w, h) {
   p.rect(Math.floor(x/PX)*PX, Math.floor(y/PX)*PX, Math.max(PX,Math.floor(w/PX)*PX), Math.max(PX,Math.floor(h/PX)*PX));
 }
+// Raccourci nuit : retourne la couleur assombrie si n=true, sinon la couleur normale
+// "tc" = "theme color"
+function tc(n, col) { return n ? shadeN(col) : col; }
 
 // ── drawActiveEnv() : dessine l'environnement actif ─────────
 // `env`   → string : 'parc' | 'chambre' | 'montagne' (vient de D.g.activeEnv)
@@ -21,7 +24,7 @@ function px(p, x, y, w, h) {
 //   1. Ajoute un objet { id:'monenv', ... } dans ENV_THEMES (config.js)
 //      avec toutes les clés de couleur dont tu auras besoin.
 //   2. Ajoute un bloc `else if (env === 'monenv') { ... }` ici.
-//   3. Pour le mode nuit : wrape chaque fill() avec `n ? shadeN(theme.X) : theme.X`
+//   3. Pour le mode nuit : wrape chaque fill() avec `tc(n, theme..X) : theme.X`
 //      (shadeN assombrit de 35% — voir en bas du fichier)
 //
 // POUR MODIFIER UNE COULEUR D'UN ENV EXISTANT :
@@ -52,7 +55,7 @@ function drawActiveEnv(p, env, n, h) {
     const bx = 138; // position x du bureau
 
     // 1. MUR
-    p.fill(n ? shadeN(theme.wall) : theme.wall);
+    p.fill(tc(n, theme..wall) : theme.wall);
     p.rect(0, 60, CS, 60);
 
     // 2. FENÊTRE — vitre suit l'heure pour pastel, suit sky1 pour les autres
@@ -63,64 +66,64 @@ function drawActiveEnv(p, env, n, h) {
       skyCol = (h>=20||h<6) ? C.skyN1 : theme.sky1;
     }
     p.fill(skyCol); p.rect(20, 68, 42, 42);
-    p.fill(n ? shadeN(theme.windowFrame) : theme.windowFrame);
+    p.fill(tc(n, theme..windowFrame) : theme.windowFrame);
     p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
     p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
     p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
-    p.fill(n ? shadeN(theme.windowSill) : theme.windowSill);
+    p.fill(tc(n, theme..windowSill) : theme.windowSill);
     p.rect(16, 108, 50, PX);
 
     // 3. RIDEAUX + TRINGLE
-    p.fill(n ? shadeN(theme.curtain) : theme.curtain);
+    p.fill(tc(n, theme..curtain) : theme.curtain);
     p.rect(10, 63, 12, 52); p.rect(62, 63, 12, 52);
-    p.fill(n ? shadeN(theme.curtainDk) : theme.curtainDk);
+    p.fill(tc(n, theme..curtainDk) : theme.curtainDk);
     p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52);
     p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52);
-    p.fill(n ? shadeN(theme.curtainRod) : theme.curtainRod);
+    p.fill(tc(n, theme..curtainRod) : theme.curtainRod);
     p.rect(8, 62, 68, 3);
 
     // 4. PLINTHE
-    p.fill(n ? shadeN(theme.baseboard) : theme.baseboard);
+    p.fill(tc(n, theme..baseboard) : theme.baseboard);
     p.rect(0, 118, CS, PX);
 
     // 5. CADRE MURAL
-    p.fill(n ? shadeN(theme.frameOuter) : theme.frameOuter);
+    p.fill(tc(n, theme..frameOuter) : theme.frameOuter);
     p.rect(88, 68, 28, 28);
-    p.fill(n ? shadeN(theme.frameBg) : theme.frameBg);
+    p.fill(tc(n, theme..frameBg) : theme.frameBg);
     p.rect(91, 71, 22, 22);
     drawFrameMotif(p, theme, n);
 
     // 6. SOL PARQUET
-    p.fill(n ? shadeN(theme.floor) : theme.floor);
+    p.fill(tc(n, theme..floor) : theme.floor);
     p.rect(0, 120, CS, 80);
-    p.fill(n ? shadeN(theme.floorLine) : theme.floorLine);
+    p.fill(tc(n, theme..floorLine) : theme.floorLine);
     for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); }
 
     // 7. TAPIS
-    p.fill(n ? shadeN(theme.rug) : theme.rug);
+    p.fill(tc(n, theme..rug) : theme.rug);
     p.rect(18, 138, 164, 62);
-    p.fill(n ? shadeN(theme.rugCenter) : theme.rugCenter);
+    p.fill(tc(n, theme..rugCenter) : theme.rugCenter);
     p.rect(22, 141, 156, 59);
 
     // 8. BUREAU
-    p.fill(n ? shadeN(theme.desk) : theme.desk);
+    p.fill(tc(n, theme..desk) : theme.desk);
     p.rect(bx+4, 108, PX, 18); p.rect(bx+46, 108, PX, 18);
-    p.fill(n ? shadeN(theme.deskTop) : theme.deskTop);
+    p.fill(tc(n, theme..deskTop) : theme.deskTop);
     p.rect(bx, 100, 58, PX*2);
-    p.fill(n ? shadeN(theme.deskShadow) : theme.deskShadow);
+    p.fill(tc(n, theme..deskShadow) : theme.deskShadow);
     p.rect(bx, 108, 58, PX);
-    p.fill(n ? '#f0d870' : theme.lamp);
+    p.fill(tc(n, theme.lamp);
     px(p, bx+38, 90, PX, PX*2);
-    p.fill(n ? '#e8b830' : theme.lampShade);
+    p.fill(tc(n, theme.lampShade));
     px(p, bx+33, 88, PX*3, PX);
   }
 
   // ── MONTAGNE ────────────────────────────────────────────
   else if (env === 'montagne') {
-    p.fill(n ? shadeN(theme.mntGnd)   : theme.mntGnd);   p.rect(0, 120, CS, 80);
-    p.fill(n ? shadeN(theme.mntGndDk) : theme.mntGndDk); p.rect(0, 120, CS, PX*2);
-    p.fill(n ? shadeN(theme.mntPeak)  : theme.mntPeak);  p.triangle(40, 120, 100, 50, 160, 120);
-    p.fill(n ? shadeN(theme.mntSnow)  : theme.mntSnow);  p.triangle(100, 50, 83, 70, 117, 70);
+    p.fill(tc(n, theme..mntGnd)   : theme.mntGnd);   p.rect(0, 120, CS, 80);
+    p.fill(tc(n, theme..mntGndDk) : theme.mntGndDk); p.rect(0, 120, CS, PX*2);
+    p.fill(tc(n, theme..mntPeak)  : theme.mntPeak);  p.triangle(40, 120, 100, 50, 160, 120);
+    p.fill(tc(n, theme..mntSnow)  : theme.mntSnow);  p.triangle(100, 50, 83, 70, 117, 70);
 
     // Désert : dune supplémentaire + stries
     if (theme.id === 'desert') {
@@ -134,33 +137,33 @@ function drawActiveEnv(p, env, n, h) {
 // ── MOTIFS CADRE MURAL (unique par thème) ───────────────────
 function drawFrameMotif(p, theme, n) {
   if (theme.id === 'automne') {
-    p.fill(n ? shadeN(theme.frameAccent1) : theme.frameAccent1);
+    p.fill(tc(n, theme..frameAccent1) : theme.frameAccent1);
     px(p, 94, 73, PX*3, PX*5);
-    p.fill(n ? shadeN(theme.frameAccent2) : theme.frameAccent2);
+    p.fill(tc(n, theme..frameAccent2) : theme.frameAccent2);
     px(p, 99, 71, PX*3, PX*5);
-    p.fill(n ? '#c86028' : '#c86028');
+    p.fill('#c86028');
     px(p, 100, 76, PX, PX*4);
   }
   else if (theme.id === 'hiver') {
-    p.fill(n ? shadeN(theme.frameAccent1) : theme.frameAccent1);
+    p.fill(tc(n, theme..frameAccent1) : theme.frameAccent1);
     px(p, 100, 72, PX, PX*8);
     px(p, 95, 77, PX*11, PX);
     px(p, 96, 73, PX, PX); px(p, 104, 73, PX, PX);
     px(p, 96, 79, PX, PX); px(p, 104, 79, PX, PX);
   }
   else if (theme.id === 'desert') {
-    p.fill(n ? shadeN(theme.frameAccent1) : theme.frameAccent1);
+    p.fill(tc(n, theme..frameAccent1) : theme.frameAccent1);
     px(p, 100, 72, PX, PX); px(p, 98, 74, PX*3, PX);
     px(p, 96, 76, PX*5, PX); px(p, 98, 78, PX*3, PX);
     px(p, 100, 80, PX, PX);
-    p.fill(n ? shadeN(theme.frameAccent2) : theme.frameAccent2);
+    p.fill(tc(n, theme..frameAccent2) : theme.frameAccent2);
     px(p, 100, 74, PX, PX); px(p, 100, 78, PX, PX);
   }
   else {
     // pastel
-    p.fill(n ? shadeN(theme.frameAccent1) : theme.frameAccent1);
+    p.fill(tc(n, theme..frameAccent1) : theme.frameAccent1);
     px(p, 96, 76, PX*2, PX*2); px(p, 104, 84, PX*2, PX*2);
-    p.fill(n ? shadeN(theme.frameAccent2) : theme.frameAccent2);
+    p.fill(tc(n, theme..frameAccent2) : theme.frameAccent2);
     px(p, 104, 76, PX, PX*3); px(p, 96, 84, PX*3, PX);
   }
 }

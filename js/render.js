@@ -452,7 +452,7 @@ p.touchStarted = function() {
   };
 
 // --- HUD ---
-    p.textFont('sans-serif');
+    p.textFont('Arial');
     p.noStroke();
 
     // Fond pilule pour chaque icône

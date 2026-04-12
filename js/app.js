@@ -274,47 +274,47 @@ async function fetchMeteo() {
 function updBubbleNow() {
   const h = hr(), ha = D.g.happiness, en = D.g.energy;
   const src = window.PERSONALITY ? window.PERSONALITY.bulles : MSG;
+  const done = (D.log[today()] || []).length;
 
-  let pool;
+  // Nuit : état exclusif, phrase fixe
   if (h >= 22 || h < 7) {
-    pool = src.nuit || src.night || ["Zzz... 🌙", "*ronfle* 💤", "...zzZZ... 🌛", "Dors bien ✿"];
+    const pool = src.nuit || ["Zzz... 🌙", "*ronfle* 💤", "...zzZZ... 🌛", "Dors bien ✿"];
     const el = document.getElementById('bubble');
     if (el) el.textContent = pool[0];
     return;
   }
-  else if (ha <= 1)                               pool = src.triste  || src.sad;
-  else if (en <= 1)                               pool = src.fatigue || src.tired;
-  else if ((D.log[today()]||[]).length === 6)     pool = src.max     || src.full;
-  else if ((D.log[today()]||[]).length >= 4)      pool = src.fierte  || src.high;
-  else if ((D.log[today()]||[]).length === 0)     pool = src.peu     || src.low;
-  else if (meteoData && meteoData.windspeed > 40) pool = src.vent    || src.wind;
-  else if (meteoData && meteoData.temperature >= 30) pool = src.chaud   || src.hot;
-else if (meteoData && meteoData.temperature <= 10)  pool = src.froid   || src.cold;
-  else if (h < 12)                                pool = src.matin   || src.morning;
-  else if (h < 18)                                pool = src.aprem   || src.afternoon;
-  else                                            pool = src.soir    || src.evening;
 
-  if (Math.random() < 0.25) {
-    const cb = D.g.customBubbles;
-    let etatKey = 'idle';
-    if (ha <= 1) etatKey = 'triste';
-    else if (en <= 1) etatKey = 'fatigue';
-    const customPool = (cb && typeof cb === 'object' && !Array.isArray(cb))
-      ? (cb[etatKey] || cb['idle'] || [])
-      : [];
-    const extras = (src.idle || []).concat(customPool);
-    if (extras.length) pool = extras;
+  // Pool combiné : tous les états qui s'appliquent
+  let pool = [];
+
+  if (h < 12)                                    pool.push(...(src.matin   || []));
+  if (h >= 12 && h < 18)                         pool.push(...(src.aprem   || []));
+  if (h >= 18)                                   pool.push(...(src.soir    || []));
+  if (ha <= 1)                                   pool.push(...(src.triste  || []));
+  if (en <= 1)                                   pool.push(...(src.fatigue || []));
+  if (done === 6)                                pool.push(...(src.max     || []));
+  if (done >= 4 && done < 6)                     pool.push(...(src.fierte  || []));
+  if (done === 0)                                pool.push(...(src.peu     || []));
+  if (meteoData?.windspeed > 40)                 pool.push(...(src.vent    || []));
+  if (meteoData?.temperature >= 30)             pool.push(...(src.chaud   || []));
+  if (meteoData?.temperature <= 10)             pool.push(...(src.froid   || []));
+
+  // Toujours idle + bulles IA
+  pool.push(...(src.idle || []));
+  const cb = D.g.customBubbles;
+  if (cb && typeof cb === 'object' && !Array.isArray(cb)) {
+    Object.values(cb).forEach(phrases => pool.push(...phrases));
   }
 
-  if (!pool || !pool.length) pool = ["✿"];
+  if (!pool.length) pool = ["✿"];
+
   const el = document.getElementById('bubble');
   if (el) {
-  let bulle = pool[Math.floor(Math.random() * pool.length)];
-  bulle = bulle.replace('{{nom}}', window.D.g.name || 'toi');
-  el.textContent = bulle;
+    let bulle = pool[Math.floor(Math.random() * pool.length)];
+    bulle = bulle.replace('{{nom}}', D.g.name || 'toi');
+    el.textContent = bulle;
+  }
 }
-}
-
 /* ============================================================
    INIT QUOTIDIENNE (IIFE)
    ============================================================ */

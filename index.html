@@ -263,21 +263,21 @@
       <div style="margin-bottom:10px">
         <label class="slbl">Nom du Gotchi</label>
         <div style="display:flex;gap:5px">
-          <input type="text" id="name-inp" class="inp">
+          <input type="text" id="name-inp" class="inp" autocomplete="off">
           <button class="btn btn-p" onclick="saveName()">OK</button>
         </div>
       </div>
       <div style="margin-bottom:10px">
         <label class="slbl">Clé API Claude</label>
         <div style="display:flex;gap:5px">
-          <input type="password" id="api-inp" class="inp">
+          <input type="password" id="api-inp" class="inp" autocomplete="new-password">
           <button class="btn btn-p" onclick="saveApi()">OK</button>
         </div>
       </div>
       <div>
         <label class="slbl">Code PIN</label>
         <div style="display:flex;gap:5px">
-          <input type="password" id="pin-inp" class="inp" maxlength="4">
+          <input type="password" id="pin-inp" class="inp" maxlength="4" autocomplete="new-password">
           <button class="btn btn-p" onclick="savePin()">OK</button>
         </div>
       </div>

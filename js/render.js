@@ -334,26 +334,6 @@ if (window.touchReaction.active) {
       }
       bounceT = Math.PI * 1.5;
     }
-    // --- HUD ---
-    p.textFont('sans-serif');
-    p.textSize(12);
-    p.noStroke();
-
-    // Pétales
-    p.fill(255);
-    p.textAlign(p.LEFT, p.TOP);
-    p.text('🌸 ' + (g.petales || 0), 6, 6);
-
-    // Température
-    if (window.meteoData?.temperature) {
-      p.textAlign(p.RIGHT, p.TOP);
-      p.text(Math.round(window.meteoData.temperature) + '°C', CS - 6, 6);
-    }
-
-    // Boutons
-    p.textAlign(p.CENTER, p.TOP);
-    p.text('🧹', CS / 2 - 14, 6);
-    p.text('🍽️', CS / 2 + 14, 6);
 
   }; // ← fin p.draw()
 
@@ -468,7 +448,22 @@ p.touchStarted = function() {
            : window.D.g.stage==='teen'?98 : 85;
   const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
   if (hit) { triggerTouchReaction(); return false; }
-};
+  };
+
+    // --- HUD ---
+    p.textFont('sans-serif');
+    p.textSize(12);
+    p.noStroke();
+    p.fill(255);
+    p.textAlign(p.LEFT, p.TOP);
+    p.text('🌸 ' + (g.petales || 0), 6, 6);
+    if (window.meteoData?.temperature) {
+      p.textAlign(p.RIGHT, p.TOP);
+      p.text(Math.round(window.meteoData.temperature) + '°C', CS - 6, 6);
+    }
+    p.textAlign(p.CENTER, p.TOP);
+    p.text('🧹', CS / 2 - 14, 6);
+    p.text('🍽️', CS / 2 + 14, 6);
 
 }; // fin p5s
 

@@ -189,43 +189,53 @@ drawFrameMotif(p, theme, n);
 // ── MOTIFS CADRE MURAL (unique par thème) ───────────────────
 function drawFrameMotif(p, theme, n) {
   if (theme.id === 'automne') {
-    // feuille penchée — ovale avec pointe et tige
     p.fill(tc(n, theme.frameAccent1));
-    px(p, 96, 70, PX*3, PX);    // haut large
-    px(p, 94, 73, PX*4, PX);    // milieu gauche
-    px(p, 96, 76, PX*3, PX);    // bas large
-    px(p, 98, 79, PX,   PX);    // pointe basse
-    p.fill(tc(n, theme.frameAccent2));
-    px(p, 97, 70, PX,   PX*4);  // nervure gauche (pas centrale = pas de croix)
-    px(p, 99, 81, PX,   PX*2);  // tige
+  px(p, 98, 73, PX, PX);
+  px(p, 98, 78, PX, PX);
+  px(p, 103, 78, PX, PX);
+  px(p, 108, 83, PX, PX);
+  px(p, 103, 88, PX, PX);
+p.fill(tc(n, theme.frameAccent2));
+  px(p, 103, 73, PX, PX);
+  px(p, 93, 78, PX, PX);
+  px(p, 108, 78, PX, PX);
+  px(p, 93, 83, PX, PX);
+  px(p, 98, 83, PX, PX);
+  px(p, 103, 83, PX, PX);
+  px(p, 98, 88, PX, PX);
+  px(p, 98, 93, PX, PX);
   }
   else if (theme.id === 'hiver') {
-    // flocon — 6 branches courtes rayonnantes
-    p.fill(tc(n, theme.frameAccent1));
-    px(p, 101, 70, PX, PX*6);   // branche verticale
-    px(p, 93,  78, PX*6, PX);   // branche horizontale
-    px(p, 95,  71, PX,   PX);   // diagonale haut gauche
-    px(p, 107, 71, PX,   PX);   // diagonale haut droite
-    px(p, 95,  83, PX,   PX);   // diagonale bas gauche
-    px(p, 107, 83, PX,   PX);   // diagonale bas droite
-    p.fill(tc(n, theme.frameAccent2));
-    px(p, 99,  77, PX*3, PX*3); // hexagone central
+  p.fill(tc(n, theme.frameAccent1));
+  px(p, 93, 73, PX, PX);
+  px(p, 103, 73, PX, PX);
+  px(p, 108, 78, PX, PX);
+  px(p, 93, 83, PX, PX);
+  px(p, 98, 88, PX, PX);
+  px(p, 108, 88, PX, PX);
+p.fill(tc(n, theme.frameAccent2));
+  px(p, 88, 68, PX, PX);
+  px(p, 108, 68, PX, PX);
+  px(p, 113, 68, PX, PX);
+  px(p, 98, 78, PX, PX);
+  px(p, 103, 83, PX, PX);
+  px(p, 88, 93, PX, PX);
+  px(p, 93, 93, PX, PX);
+  px(p, 113, 93, PX, PX);
   }
   else if (theme.id === 'desert') {
-    // scarabée — antennes + tête ronde + corps ovale
-    p.fill(tc(n, theme.frameAccent1));
-    px(p, 96,  69, PX,   PX);   // antenne gauche
-    px(p, 107, 69, PX,   PX);   // antenne droite
-    px(p, 97,  71, PX,   PX);   // base antenne gauche
-    px(p, 106, 71, PX,   PX);   // base antenne droite
-    px(p, 98,  73, PX*3, PX);   // tête
-    px(p, 96,  76, PX*5, PX*2); // thorax
-    px(p, 95,  80, PX*6, PX*3); // abdomen large
-    p.fill(tc(n, theme.frameAccent2));
-    px(p, 99,  77, PX,   PX*2); // aile gauche reflet
-    px(p, 104, 77, PX,   PX*2); // aile droite reflet
-    px(p, 97,  81, PX,   PX*2); // patte gauche
-    px(p, 106, 81, PX,   PX*2); // patte droite
+p.fill(tc(n, theme.frameAccent1));
+  px(p, 93, 73, PX, PX);
+  px(p, 108, 73, PX, PX);
+  px(p, 98, 88, PX, PX);
+  px(p, 103, 88, PX, PX);
+p.fill(tc(n, theme.frameAccent2));
+  px(p, 88, 68, PX, PX);
+  px(p, 113, 68, PX, PX);
+  px(p, 98, 78, PX, PX);
+  px(p, 103, 78, PX, PX);
+  px(p, 98, 83, PX, PX);
+  px(p, 103, 83, PX, PX);
   }
   else {
     // pastel — inchangé

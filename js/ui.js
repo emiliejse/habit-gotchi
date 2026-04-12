@@ -122,6 +122,8 @@ if (document.getElementById('env-sel'))  document.getElementById('env-sel').valu
   if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0}`;
   const tc = document.getElementById('thought-count');
 if (tc) tc.textContent = `(${window.D.thoughtCount || 0}/3)`;
+const btnAsk = document.getElementById('btn-ask-claude');
+if (btnAsk) btnAsk.childNodes[0].textContent = `Interroger ${window.D.g.name || 'le Gotchi'} `;
   updBadgeBoutique();
 }
 

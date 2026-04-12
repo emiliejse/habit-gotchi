@@ -308,6 +308,10 @@ function ouvrirBoutique() {
     </div>
     <div id="boutique-contenu"></div>
   `;
+  const mbox = document.getElementById('mbox');
+mbox.classList.remove('shop-open');
+void mbox.offsetWidth;
+mbox.classList.add('shop-open');
   renderBoutiqueOnglet(onglet);
 }
 

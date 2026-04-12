@@ -101,6 +101,19 @@ function clModal(e) {
 }
 
 function ouvrirSnack() {
+  const h = hr();
+  if (h >= 22 || h < 7) {
+    document.getElementById('modal').style.display = 'flex';
+    document.getElementById('mbox').innerHTML = `
+      <div style="text-align:center;padding:10px">
+        <div style="font-size:48px;margin-bottom:8px">🌙</div>
+        <p style="font-size:12px;margin-bottom:12px">
+          ${window.D.g.name} dort... reviens demain 💜
+        </p>
+        <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
+      </div>`;
+    return;
+  }
   const td = today();
   const emoji = getSnackOfDay();
   const dejaMange = window.D.g.snackDone === td;

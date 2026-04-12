@@ -308,11 +308,17 @@ if (g.props) {
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(20);
       p.drawingContext.globalAlpha = 1.0;
+      p.drawingContext.globalAlpha = 1.0;
       p.text(ea.emoji, fx, fy);
       p.drawingContext.globalAlpha = 1.0;
+      p.drawingContext.globalAlpha = 1.0;
       ea.timer--;
-      // Quand la friandise arrive → petit saut
-      if (ea.timer === 10) bounceT = Math.PI * 1.5;
+            // Saut quand la friandise arrive près de la bouche
+      if (progress > 0.85 && !ea.jumped) {
+        bounceT = Math.PI * 1.5;
+        triggerTouchReaction(false);
+        ea.jumped = true;
+      }
       if (ea.timer <= 0) ea.active = false;
     }
 

@@ -349,3 +349,69 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* ---- Tablette rétro ---- */
+#tablet-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(0,0,0,.5);
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: calc(var(--sat) + 48px) 12px 0 12px;
+}
+#tablet-overlay.open {
+  display: flex;
+}
+#tablet-box {
+  background: #1a1a1a;
+  border: 2px solid #444;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 340px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  transform-origin: top right;
+  animation: tabletOpen .2s ease-out;
+  overflow: hidden;
+}
+@keyframes tabletOpen {
+  from { opacity: 0; transform: scale(.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+#tablet-screen {
+  background: #0a0a0a;
+  margin: 10px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  padding: 10px;
+  overflow-y: auto;
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #00ff41;
+}
+.tablet-line {
+  margin-bottom: 6px;
+  line-height: 1.4;
+  border-bottom: 1px solid #0f2a0f;
+  padding-bottom: 6px;
+}
+.tablet-line .tl-time {
+  color: #007a1f;
+  font-size: 9px;
+  display: block;
+}
+.tablet-line .tl-icon { margin-right: 4px; }
+#tablet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px 4px;
+  color: #00ff41;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  border-bottom: 1px solid #222;
+}

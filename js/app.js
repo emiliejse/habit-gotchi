@@ -172,7 +172,8 @@ function addEvent(type, valeur, label) {
     label
   });
   // FIFO : max 50 entrées
-  if (window.D.eventLog.length > 50) window.D.eventLog.length = 50;
+  if (window.D.eventLog.length > 20) window.D.eventLog.length = 20;
+  if (typeof updTabletBadge === 'function') updTabletBadge();
 }
 function calcStr() {
   let s=0, d=new Date();

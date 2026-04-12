@@ -1144,6 +1144,54 @@ function confirmReset() {
 }
 
 /* ============================================================
+   TABLETTE RÉTRO
+   ============================================================ */
+let tabletSeen = 0; // nb d'entrées vues à la dernière ouverture
+
+function openTablet() {
+  const D = window.D;
+  const log = D.eventLog || [];
+  const icons = { xp:'⭐', cadeau:'🎁', note:'📓', habitude:'✅' };
+  const lines = document.getElementById('tablet-lines');
+
+  if (!log.length) {
+    lines.innerHTML = '<div class="tablet-line" style="color:#007a1f">// aucun événement enregistré</div>';
+  } else {
+    lines.innerHTML = log.map(ev => {
+      const d = new Date(ev.date);
+      const heure = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+      const jour  = d.toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+      return `<div class="tablet-line">
+        <span class="tl-time">${jour} à ${heure}</span>
+        <span class="tl-icon">${icons[ev.type] || '•'}</span>${ev.label}
+      </div>`;
+    }).join('');
+  }
+
+  // Masquer le badge
+  tabletSeen = log.length;
+  document.getElementById('tablet-badge').style.display = 'none';
+
+  document.getElementById('tablet-overlay').classList.add('open');
+}
+
+function closeTablet(e) {
+  // Ferme seulement si on clique sur le fond, pas sur la tablette
+  if (e.target === document.getElementById('tablet-overlay')) {
+    document.getElementById('tablet-overlay').classList.remove('open');
+  }
+}
+
+function updTabletBadge() {
+  const log = (window.D?.eventLog || []);
+  const badge = document.getElementById('tablet-badge');
+  if (!badge) return;
+  if (log.length > tabletSeen) {
+    badge.style.display = 'block';
+  }
+}
+
+/* ============================================================
    INIT AU CHARGEMENT
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {

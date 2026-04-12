@@ -172,13 +172,12 @@ function addXp(n) {
 function spawnPoop() {
   if ((window.D.g.poops || []).length >= 5) return;
   
-  let x, y, attempts = 0;
+  let x, y, attempts = 0, tooClose;
   do {
     x = 20 + Math.floor(Math.random() * 150);
     y = 118 + Math.floor(Math.random() * 8);
+    tooClose = (window.D.g.poops || []).some(p => Math.abs(p.x - x) < 28);
     attempts++;
-    // Vérifie qu'aucun caca existant n'est trop proche (min 28px d'écart)
-    const tooClose = (window.D.g.poops || []).some(p => Math.abs(p.x - x) < 28);
   } while (tooClose && attempts < 20);
   
   window.D.g.poops.push({ id: Date.now(), x, y });

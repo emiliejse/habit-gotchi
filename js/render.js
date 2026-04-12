@@ -200,7 +200,6 @@ const accY = baseY - def.pixels.length * PX + offsetY;
 }
 
     if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
-    if (ha >= 100 && !sleeping) drawRainbow(p);
 
     updateParts(p);
 

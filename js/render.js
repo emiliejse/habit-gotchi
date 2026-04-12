@@ -584,6 +584,7 @@ function triggerTouchReaction(sleeping) {
   type,
   cx: (window._lastTapX || 100) + (Math.random() - 0.5) * 40, // ← décalage ±20px
 });
+console.log('pushed', type, window.touchReactions.length);
   
   // Max 8 réactions simultanées
   if (window.touchReactions.length > 8) window.touchReactions.shift();

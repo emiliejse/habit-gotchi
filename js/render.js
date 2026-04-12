@@ -49,6 +49,12 @@ const PX = 5, CS = 200;
 let bounceT = 0, blinkT = 0, blink = false;
 let particles = [];
 
+// Trouve la définition pixel d'un prop (catalogue ou généré par IA)
+function getPropDef(id) {
+  return (window.PROPS_LIB || []).find(l => l.id === id)
+      || (window.D.propsPixels && window.D.propsPixels[id]);
+}
+
 // ── PROP_SLOTS : les 5 emplacements fixes pour les props décor ──
 // Imagine le canvas (200×200) comme une scène de théâtre vue de face.
 // Chaque slot est un point d'ancrage (coin supérieur gauche du prop).
@@ -145,8 +151,7 @@ const p5s = (p) => {
 // --- Props DÉCOR fond (A, B) — dessinés EN PREMIER = derrière ---
 if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
-    const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
-             || (D.propsPixels && D.propsPixels[prop.id]);
+    const def = getPropDef(prop.id);
     if (def && def.pixels) {
       if (!prop.slot) return; // pas de slot défini = on ne dessine pas
 const slot = PROP_SLOTS[prop.slot];
@@ -158,8 +163,7 @@ if (!slot) return;
 // --- Props DÉCOR devant (C, D, SOL) — dessinés EN DERNIER = devant ---
 if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot !== 'A' && pr.slot !== 'B').forEach(prop => {
-    const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
-             || (D.propsPixels && D.propsPixels[prop.id]);
+    const def = getPropDef(prop.id);
     if (def && def.pixels) {
       if (!prop.slot) return; // pas de slot défini = on ne dessine pas
 const slot = PROP_SLOTS[prop.slot];
@@ -188,8 +192,7 @@ if (!slot) return;
 // La valeur `motion` vient de def.motion dans props.json (ou 'drift' par défaut)
     if (g.props) {
       g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
-        const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
-                 || Object.values(window.D.propsPixels || {}).find(l => l.id === prop.id);
+       const def = getPropDef(prop.id);
         if (def && def.pixels) {
           const motion = def.motion || 'drift';
           for (let i = 0; i < 3; i++) {
@@ -251,7 +254,7 @@ else                          gotchiInfo = drawAdult(p, cx, by + bobY, sleeping,
 // --- Props ACCESSOIRE (sur la tête du gotchi) ---
 if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
-    const def = (window.PROPS_LIB || []).find(l => l.id === prop.id) || (D.propsPixels && D.propsPixels[prop.id]);
+   const def = getPropDef(prop.id);
     if (def && def.pixels) {
       const accX = cx - Math.floor(def.pixels[0].length / 2) * PX;
       

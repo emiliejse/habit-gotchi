@@ -183,7 +183,7 @@ if (g.props) {
     const poops = window.D.g.poops || [];
     let gotchiNearPoop = false;
     poops.forEach(poop => {
-      if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
+      if (Math.abs(poop.x - walkX) < 25) gotchiNearPoop = true;
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(20);
       p.text('💩', poop.x, poop.y);

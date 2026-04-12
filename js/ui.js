@@ -521,12 +521,38 @@ function confirmSlot(propIndex, slotId) {
 }
 
 function cleanProps() {
+  const orphelins = window.D.g.props.filter(p => {
+    return !(window.PROPS_LIB || []).find(l => l.id === p.id) 
+        && (window.D.propsPixels || {})[p.id] === undefined;
+  });
+
+  if (!orphelins.length) {
+    toast('Aucun prop orphelin trouvé ✿');
+    return;
+  }
+
+  const liste = orphelins.map(p => `• ${p.emoji || '?'} ${p.nom}`).join('<br>');
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <h3>Props orphelins (${orphelins.length})</h3>
+    <p style="font-size:11px;color:var(--text2);margin:6px 0">Ces props n'ont plus de données associées :</p>
+    <div style="font-size:11px;margin:8px 0;line-height:1.8">${liste}</div>
+    <div style="display:flex;gap:6px;margin-top:10px">
+      <button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button>
+      <button class="btn btn-d" onclick="confirmCleanProps()" style="flex:1">Supprimer</button>
+    </div>
+  `;
+}
+
+function confirmCleanProps() {
   const before = window.D.g.props.length;
-window.D.g.props = window.D.g.props.filter(p => {
-  return (window.PROPS_LIB || []).find(l => l.id === p.id) 
-      || (window.D.propsPixels || {})[p.id] !== undefined;
-});
-  save(); toast('Nettoyé : ' + (before - window.D.g.props.length) + ' props orphelins supprimés ✿');
+  window.D.g.props = window.D.g.props.filter(p => {
+    return (window.PROPS_LIB || []).find(l => l.id === p.id)
+        || (window.D.propsPixels || {})[p.id] !== undefined;
+  });
+  save();
+  clModal();
+  toast(`${before - window.D.g.props.length} props supprimés ✿`);
   setTimeout(() => location.reload(), 800);
 }
 

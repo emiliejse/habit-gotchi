@@ -419,7 +419,7 @@ function renderBoutiqueOnglet(onglet) {
     const peutGenerer = (D.g.petales || 0) >= 16;
     el.innerHTML = `
       <p style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:16px;line-height:1.6">
-        L'IA invente un objet unique<br>rien que pour toi ✨
+        ${window.D.g.name} invente un objet unique<br>rien que pour toi ✨
       </p>
       <div style="text-align:center">
         <button onclick="acheterPropClaude()"
@@ -748,13 +748,13 @@ function viderJournal() {
 }
 
 function viderObjetsIA() {
-  if (!confirm('Supprimer tous les objets générés par l\'IA ? Les objets du catalogue restent intacts.')) return;
+  if (!confirm('Supprimer tous les objets générés par le Gotchi ? Les objets du catalogue restent intacts.')) return;
   D.propsPixels = {};
   D.g.props = (D.g.props || []).filter(p => {
     return (window.PROPS_LIB || []).find(l => l.id === p.id);
   });
   save();
-  toast('Objets IA supprimés ✿');
+  toast('Objets du Gotchi supprimés ✿');
   debugProps();
 }
 
@@ -763,7 +763,7 @@ function viderObjetsIA() {
    ============================================================ */
 async function askClaude() {
   const key = D.apiKey;
-  if (!key) { toast('Clé API manquante dans les Réglages'); return; }
+  if (!key) { toast('*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑'); return; }
 
   const g = D.g, td = today();
 if (hr() >= 22 || hr() < 7) {
@@ -892,18 +892,18 @@ document.getElementById('bubble').textContent = bulleCadeau.replace('{{nom}}', D
 
   } catch(e) {
     if (document.getElementById('claude-msg'))
-      document.getElementById('claude-msg').textContent = 'Erreur API. ✿';
+      document.getElementById('claude-msg').textContent = '*soupir* Je n\'arrive pas à me connecter... ✿';
   }
 }
 
 async function acheterPropClaude() {
   if ((D.g.petales || 0) < 16) { toast('Pas assez de pétales 🌸'); return; }
-  if (!D.apiKey) { toast('Clé API manquante dans les Réglages'); return; }
+  if (!D.apiKey) { toast('*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑'); return; }
 
   D.g.petales -= 16; save();
 
   const el = document.getElementById('boutique-contenu');
-  if (el) el.innerHTML = `<p style="text-align:center;font-size:11px;padding:20px">L'IA crée ton objet... 💭</p>`;
+  if (el) el.innerHTML = `<p style="text-align:center;font-size:11px;padding:20px">${window.D.g.name} crée ton objet... 💭</p>`;
 
   const nomsExistants = (D.g.props || []).map(p => `${p.nom} (${p.type})`).join(', ') || 'aucun';
   const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
@@ -911,7 +911,7 @@ async function acheterPropClaude() {
   const ctx = window.AI_CONTEXTS;
   const prompt = ctx
     ? ctx.buyProp.replace('{{theme}}', theme).replace('{{existingNames}}', nomsExistants).replace('{{timestamp}}', Date.now())
-    : (() => { toast('Erreur : fichier prompts non chargé.'); return null; })();
+    : (() => { toast('*inquiet* Mes fichiers de mémoire sont manquants... 💜'); return null; })();
   
 if (!prompt) return;
   try {
@@ -934,7 +934,7 @@ window.PROPS_LOCAL = Object.values(D.propsPixels);
     }
   } catch(e) {
     D.g.petales = (D.g.petales || 0) + 16; save();
-    toast('Erreur API, pétales remboursés 🌸');
+    toast('*soupir* Je n'ai pas pu créer l'objet... pétales remboursés 🌸');
     ouvrirBoutique();
   }
 }
@@ -994,7 +994,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   }
   window._soutienCount++;
 }
-  if (!key) { toast('Clé API manquante dans les Réglages'); return; }
+  if (!key) { toast('*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑'); return; }
   const inp  = document.getElementById('soutien-inp');
   let userText = '';
   if (!isInit) {
@@ -1043,7 +1043,7 @@ const sysPrompt = `${window.AI_SYSTEM?.soutien || ''} ${contexte}`.trim();
     window._soutienHistory.push({ role:'assistant', content:reply });
   } catch(e) {
     document.getElementById(typingId)?.remove();
-    chat.innerHTML += `<div class="chat-bubble-system">Connexion perdue. Vérifie ta clé API.</div>`;
+    chat.innerHTML += `<div class="chat-bubble-system">*soupir* Je n'arrive plus à te répondre... Vérifie ta clé API 💜</div>`;
   }
 }
 
@@ -1064,12 +1064,12 @@ async function genBilanSemaine() {
   const totalHabDays = wd.reduce((acc,d)=>acc+(D.log[d]||[]).length, 0);
   if (!key) {
     const lignes = habitudes.map(h=>`• ${h.habitude} : ${h.jours_faits}/7 jours`).join('\n');
-    summaryEl.textContent = `Semaine du ${wd[0]} au ${wd[6]}\n\n${lignes}\n\n${notes.length} note(s) de journal.\n\nAjoute ta clé API pour un bilan personnalisé par Claude ✿`;
+    summaryEl.textContent = `Semaine du ${wd[0]} au ${wd[6]}\n\n${lignes}\n\n${notes.length} note(s) de journal.\n\nAjoute ta clé API pour un bilan personnalisé par ton Gotchi ✿`;
     document.getElementById('btn-copy-bilan').style.display = 'block';
     document.getElementById('bil-txt-hidden').value = summaryEl.textContent;
     return;
   }
-  summaryEl.textContent = '💭 Claude analyse ta semaine...';
+  summaryEl.textContent = '💭 ${window.D.g.name} réfléchit à ta semaine...';
   const ctx = window.AI_CONTEXTS;
   const prompt = ctx
     ? ctx.genBilanSemaine
@@ -1103,11 +1103,11 @@ function copyBilanSemaine() {
   const hid = document.getElementById('bil-txt-hidden'); if (!hid) return;
   navigator.clipboard.writeText(hid.value).then(() => {
     const b = document.getElementById('btn-copy-bilan');
-    if (b) { b.textContent = '✓ Copié !'; setTimeout(() => b.textContent = '📋 Copier pour Claude', 1500); }
+    if (b) { b.textContent = '✓ Copié !'; setTimeout(() => b.textContent = '📋 Copier le bilan', 1500); }
   });
 }
 function resetBilan() {
-  if (confirm('Effacer le bilan IA ?')) {
+  if (confirm('Effacer le bilan ?')) {
     if (document.getElementById('claude-summary')) document.getElementById('claude-summary').textContent = 'Ton bilan apparaîtra ici...';
   }
 }
@@ -1333,7 +1333,7 @@ function saveName() {
 function saveApi() {
   const v = document.getElementById('api-inp').value.trim();
   window.D.apiKey = v; save();
-  if (v) toast('Clé API sauvegardée en mémoire ! ✿'); else toast('Clé API effacée.');
+  if (v) toast('Je me souviens de ta clé, promis 🔑 ✿'); else toast('Clé oubliée... *soupir* ✿');
 }
 function savePin() {
   const v = document.getElementById('pin-inp').value.trim();
@@ -1353,9 +1353,9 @@ function importD(event) {
     try {
       const imported = JSON.parse(e.target.result);
       window.D = { ...defs(), ...imported, g:{ ...defs().g, ...imported.g } };
-      save(); toast('Import réussi ✿');
+      save(); toast('Bienvenue de retour ${window.D.g.name} ! ✿');
       setTimeout(() => location.reload(), 800);
-    } catch(err) { toast('Fichier invalide.'); }
+    } catch(err) { toast('*perplexe* Ce fichier me semble bizarre... 💜'); }
   };
   reader.readAsText(file);
 }
@@ -1462,9 +1462,12 @@ function checkWelcome() {
   } else if (h < 18) {
     titre = `Bon après-midi ✿`;
     corps = getAfternoonMsg();
-  } else {
+  } else if (h < 22) {
     titre = `Bonne soirée 🌙`;
     corps = getEveningMsg();
+  } else {
+    titre = `*chuchote* 🌙`;
+    corps = getNightMsg();
   }
 
   if (nouveauxCadeaux > 0) {
@@ -1485,38 +1488,36 @@ function checkWelcome() {
 function getMorningMsg() {
   const D = window.D;
   const str = calcStr();
-  if (str >= 7) return `${str} jours de streak 🔥 Tu es en feu !`;
-  if (str >= 3) return `${str} jours d'affilée ✿ Continue comme ça !`;
-  return `Une nouvelle journée commence. ${D.g.name} compte sur toi 💜`;
+  const name = D.g.name;
+  if (str >= 7) return `*s'étire* ${str} jours de suite... tu m'impressionnes 🔥`;
+  if (str >= 3) return `${str} jours d'affilée ! On continue ? 💜`;
+  return `Coucou ${D.userName || 'toi'} ! Je t'attendais 🌸`;
 }
 
 function getAfternoonMsg() {
   const D = window.D;
   const done = (D.log[today()] || []).length;
-  if (done >= 4) return `${done} habitudes cochées aujourd'hui — tu gères 🌟`;
-  if (done >= 1) return `${done} habitude${done > 1 ? 's' : ''} cochée${done > 1 ? 's' : ''} — continue !`;
-  return `L'après-midi est là. Encore le temps de cocher quelque chose ✿`;
+  const name = D.g.name;
+  if (done >= 4) return `${done} habitudes déjà ! Je suis fier·e de toi 🌟`;
+  if (done >= 1) return `${done} cochée${done > 1 ? 's' : ''} — tu avances bien ✿`;
+  return `*te regarde* Il reste encore du temps pour aujourd'hui 💜`;
 }
 
 function getEveningMsg() {
   const D = window.D;
   const done = (D.log[today()] || []).length;
   const ha = D.g.happiness;
-  if (done === 6) return `Journée parfaite 🎉 ${D.g.name} est aux anges !`;
-  if (ha <= 2) return `${D.g.name} semble un peu triste ce soir 💜 Prends soin de toi.`;
-  return `Bonne soirée ✿ Tu as coché ${done} habitude${done > 1 ? 's' : ''} aujourd'hui.`;
+  if (done === 6) return `6/6 !! Tu as tout fait aujourd'hui, je suis aux anges 🎉`;
+  if (ha <= 2) return `*câlin pixel* Tu sembles fatiguée ce soir. Prends soin de toi 💜`;
+  return `${done} habitude${done > 1 ? 's' : ''} aujourd'hui. C'est bien ✿ Pose-toi maintenant.`;
 }
 
-function showWelcomeModal() {
+function getNightMsg() {
   const D = window.D;
-  document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = `
-    <h3 style="text-align:center">Bienvenue ✿</h3>
-    <p style="font-size:12px;text-align:center;margin:8px 0">Comment s'appelle ton compagnon ?</p>
-   <input id="welcome-name" class="inp" placeholder="Petit·e Gotchi" maxlength="20" style="text-align:center">
-    <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="confirmWelcome()">C'est parti 🌟</button>
-  `;
-  setTimeout(() => document.getElementById('welcome-name')?.focus(), 100);
+  const done = (D.log[today()] || []).length;
+  if (done === 6) return `*ronronne* Journée parfaite... dors bien 🌙`;
+  if (done >= 3) return `*bâille* Bonne nuit ${D.userName || 'toi'}... à demain 💜`;
+  return `*murmure* Je veille. Dors bien 🌙`;
 }
 
 function confirmWelcome() {

@@ -763,7 +763,7 @@ function viderObjetsIA() {
    ============================================================ */
 async function askClaude() {
   const key = D.apiKey;
-  if (!key) { toast('*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑'); return; }
+  if (!key) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
 
   const g = D.g, td = today();
 if (hr() >= 22 || hr() < 7) {

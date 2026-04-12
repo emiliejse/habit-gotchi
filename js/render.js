@@ -436,22 +436,6 @@ p.fill(col);
     });
   }
 
-p.mousePressed = function() {
-    const mx = p.mouseX, my = p.mouseY;
-
-    if (Math.abs(mx - 72) < 14 && my < 26)  { cleanPoops(); return; }
-    if (Math.abs(mx - 128) < 14 && my < 26) { ouvrirSnack(); return; }
-
-    const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
-             : window.D.g.stage==='teen'?98 : 85;
-    const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
-    if (hit) {
-  const h = window.hr ? hr() : new Date().getHours();
-  window._lastTapX = cx + (Math.random() - 0.5) * 20;
-  triggerTouchReaction(h >= 22 || h < 7);
-}
-  };
-
 p.touchStarted = function() {
   const mx = p.touches[0]?.x ?? p.mouseX;
   const my = p.touches[0]?.y ?? p.mouseY;

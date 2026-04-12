@@ -124,7 +124,8 @@ const p5s = (p) => {
 
     if (window.shakeTimer > 0) { window.shakeTimer--; p.translate(Math.sin(p.frameCount * 2) * 2, 0); }
 
-// --- HUD pétales (coin sup. gauche) ---
+if (p.frameCount === 60) console.log('HUD atteint', CS/2 - 14, CS/2 + 14);
+    // --- HUD pétales (coin sup. gauche) ---
 p.noStroke();
 p.textSize(12); p.textFont('sans-serif');
 p.textAlign(p.LEFT, p.TOP);

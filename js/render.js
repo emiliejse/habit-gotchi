@@ -90,6 +90,7 @@ const p5s = (p) => {
 
     let envActif = g.activeEnv || 'parc';
     drawActiveEnv(p, envActif, n, h);
+    if (ha >= 100 && !sleeping) drawRainbow(p);
 
 // --- Props DÉCOR fond (A, B) — dessinés EN PREMIER = derrière ---
 if (D.g.props) {
@@ -261,21 +262,18 @@ function drawWind(p) {
     }
   } 
 }
-  function drawRainbow(p) {
-  // Demi-cercle pixel art centré en bas du canvas.
-  // On parcourt une grille et on teste si chaque pixel est dans l'anneau de sa bande.
-  const cx = CS / 2, cy = CS - 20; // centre de l'arc en bas
-  const bands = C.rainbow;         // 6 couleurs
-  const rInner = 30;               // rayon intérieur (trou du demi-cercle)
-  const bandW = PX * 3;            // épaisseur de chaque bande en pixels
+function drawRainbow(p) {
+  const cx = CS / 2, cy = 125; // ← centre au niveau du sol
+  const bands = C.rainbow;
+  const rInner = 30;
+  const bandW = PX * 3;
 
   for (let i = 0; i < bands.length; i++) {
     const rMin = rInner + i * bandW;
     const rMax = rMin + bandW;
     p.fill(bands[i]);
-    // Balayage grille : seulement la zone utile
     for (let gx = cx - rMax - PX; gx <= cx + rMax; gx += PX) {
-      for (let gy = cy - rMax - PX; gy <= cy; gy += PX) { // gy <= cy = demi-cercle haut
+      for (let gy = cy - rMax - PX; gy < cy; gy += PX) { // gy < cy = seulement au-dessus
         const dist = Math.sqrt((gx - cx) ** 2 + (gy - cy) ** 2);
         if (dist >= rMin && dist < rMax) {
           px(p, gx, gy, PX, PX);

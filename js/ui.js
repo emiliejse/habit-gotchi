@@ -786,6 +786,9 @@ const notesRecentes = D.journal
 D.propsPixels[data.cadeau.id] = data.cadeau;
 window.PROPS_LOCAL = Object.values(D.propsPixels);
         D.lastGiftDate = td;
+        const poolCadeau = src.cadeau || ["Oh ! Un cadeau ! 🎁"];
+const bulleCadeau = poolCadeau[Math.floor(Math.random() * poolCadeau.length)];
+document.getElementById('bubble').textContent = bulleCadeau.replace('{{nom}}', D.g.name || 'toi');
         toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
       }
     }
@@ -1145,7 +1148,15 @@ function saveJ() {
   document.getElementById('j-text').value = '';
   selMood = null;
   document.querySelectorAll('.mood-b').forEach(b => b.classList.remove('sel'));
-  renderJEntries(); updBubbleNow();
+  renderJEntries();
+  const srcJ = window.PERSONALITY ? window.PERSONALITY.bulles : MSG;
+  const poolJ = srcJ.journal || ["Je t'écoute ✿"];
+  const el = document.getElementById('bubble');
+  if (el) {
+    let bulle = poolJ[Math.floor(Math.random() * poolJ.length)];
+    bulle = bulle.replace('{{nom}}', D.g.name || 'toi');
+    el.textContent = bulle;
+  }
 }
 
 let jWeekOff = 0;

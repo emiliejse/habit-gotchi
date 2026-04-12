@@ -271,24 +271,6 @@ async function fetchMeteo() {
 /* ============================================================
    BULLE DE DIALOGUE
    ============================================================ */
-function getBubble() {
-  const src = window.PERSONALITY ? window.PERSONALITY.bulles : MSG;
-  const h=hr(), log=window.D.log[today()]||[], done=log.length, en=window.D.g.energy, ha=window.D.g.happiness;
-  let pool;
-  if(h>=22||h<7)       pool=src.night;
-  else if(done===6)    pool=src.full;
-  else if(ha<=1)       pool=src.sad;
-  else if(en<=1)       pool=src.tired;
-  else if(window.meteoData&&window.meteoData.windspeed>40) pool=src.wind;
-  else if(done>=4)     pool=src.high;
-  else if(done===0)    pool=src.low;
-  else if(h<12)        pool=src.morning;
-  else if(h<18)        pool=src.afternoon;
-  else                 pool=src.evening;
-  if(Math.random()<.15&&done>0&&done<6) pool=src.idle;
-  return pool[Math.floor(Math.random()*pool.length)];
-}
-
 function updBubbleNow() {
   const h = hr(), ha = D.g.happiness, en = D.g.energy;
   const src = window.PERSONALITY ? window.PERSONALITY.bulles : MSG;
@@ -326,7 +308,11 @@ else if (meteoData && meteoData.temperature <= 10)  pool = src.froid   || src.co
 
   if (!pool || !pool.length) pool = ["✿"];
   const el = document.getElementById('bubble');
-  if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+  if (el) {
+  let bulle = pool[Math.floor(Math.random() * pool.length)];
+  bulle = bulle.replace('{{nom}}', window.D.g.name || 'toi');
+  el.textContent = bulle;
+}
 }
 
 /* ============================================================

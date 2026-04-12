@@ -150,75 +150,45 @@ const p5s = (p) => {
     if (ha >= 100 && !sleeping) drawRainbow(p);
     drawActiveEnv(p, envActif, n, h);
 
-// --- Props DÉCOR fond (A, B) — dessinés EN PREMIER = derrière ---
+// --- Props DÉCOR fond (A, B) ---
 if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
     const def = getPropDef(prop.id);
     if (def && def.pixels) {
-      if (!prop.slot) return; // pas de slot défini = on ne dessine pas
-const slot = PROP_SLOTS[prop.slot];
-if (!slot) return;
+      const slot = PROP_SLOTS[prop.slot];
+      if (!slot) return;
       drawProp(p, def, slot.x, slot.y);
     }
   });
 }
-// --- Props DÉCOR devant (C, D, SOL) — dessinés EN DERNIER = devant ---
-if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot !== 'A' && pr.slot !== 'B').forEach(prop => {
+
+// --- Ambiances ---
+if (g.props) {
+  g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
     const def = getPropDef(prop.id);
     if (def && def.pixels) {
-      if (!prop.slot) return; // pas de slot défini = on ne dessine pas
-const slot = PROP_SLOTS[prop.slot];
-if (!slot) return;
-      drawProp(p, def, slot.x, slot.y);
+      const motion = def.motion || 'drift';
+      for (let i = 0; i < 3; i++) {
+        let ax, ay;
+        if (motion === 'drift') {
+          ax = CS - ((p.frameCount * 2 + i * 70) % (CS + 20));
+          ay = 20 + i * 35 + Math.sin(p.frameCount * .05 + i) * 8;
+        } else if (motion === 'fall') {
+          ax = 20 + i * 70 + Math.sin(p.frameCount * .04 + i) * 5;
+          ay = (p.frameCount * 2 + i * 40) % 130;
+        } else if (motion === 'float') {
+          ax = 30 + i * 65 + Math.sin(p.frameCount * .06 + i) * 6;
+          ay = 110 - ((p.frameCount + i * 45) % 120);
+        } else if (motion === 'sparkle') {
+          if ((p.frameCount + i * 13) % 20 < 10) continue;
+          ax = 15 + i * 75 + Math.sin(p.frameCount * .1 + i) * 10;
+          ay = 15 + i * 35 + Math.cos(p.frameCount * .08 + i) * 8;
+        }
+        drawProp(p, def, ax, ay);
+      }
     }
   });
 }
-// --- Ambiances : props flottants avec 4 types de mouvement ──
-// Les props ambiance sont dessinés 3 fois (i=0,1,2) à des positions
-// décalées pour donner l'illusion de densité.
-// Le mouvement est calculé à partir de p.frameCount (compteur de frames).
-//
-// DRIFT   (dérive) → traverse l'écran de droite à gauche, en ondulant
-//                    Idéal pour : nuages, bulles, feuilles légères
-// FALL    (chute)  → tombe de haut en bas, avec balancement latéral
-//                    Idéal pour : neige, pétales, confettis
-// FLOAT   (lévite) → monte du sol vers le haut en boucle
-//                    Idéal pour : bulles, étincelles qui montent
-// SPARKLE (scintille) → apparaît/disparaît par intermittence (tous les 20 frames)
-//                       Idéal pour : étoiles, lucioles, paillettes
-//
-// POUR CHANGER LA VITESSE : modifie le multiplicateur de p.frameCount
-//   ex: `p.frameCount * 2` → doubler la vitesse de drift
-// POUR CHANGER L'AMPLITUDE D'ONDULATION : modifie le `* 8` de Math.sin
-// La valeur `motion` vient de def.motion dans props.json (ou 'drift' par défaut)
-    if (g.props) {
-      g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
-       const def = getPropDef(prop.id);
-        if (def && def.pixels) {
-          const motion = def.motion || 'drift';
-          for (let i = 0; i < 3; i++) {
-            let ax, ay;
-            if (motion === 'drift') {
-              ax = CS - ((p.frameCount * 2 + i * 70) % (CS + 20));
-              ay = 20 + i * 35 + Math.sin(p.frameCount * .05 + i) * 8;
-            } else if (motion === 'fall') {
-              ax = 20 + i * 70 + Math.sin(p.frameCount * .04 + i) * 5;
-              ay = (p.frameCount * 2 + i * 40) % 130;
-            } else if (motion === 'float') {
-              ax = 30 + i * 65 + Math.sin(p.frameCount * .06 + i) * 6;
-              ay = 110 - ((p.frameCount + i * 45) % 120);
-            } else if (motion === 'sparkle') {
-              if ((p.frameCount + i * 13) % 20 < 10) continue;
-              ax = 15 + i * 75 + Math.sin(p.frameCount * .1 + i) * 10;
-              ay = 15 + i * 35 + Math.cos(p.frameCount * .08 + i) * 8;
-            }
-            drawProp(p, def, ax, ay);
-          }
-        }
-      });
-    }
-
 
 // --- Gotchi ---
     bounceT += sleeping ? 0.04 : 0.12;
@@ -232,7 +202,6 @@ if (!slot) return;
       amplitude = 25; vitesse = 0.04;
     }
 
-    // --- Locomotion directionnelle ---
     if (!sleeping) {
       walkStep++;
       const speed = (ha >= 80 && en >= 80) ? 1.2 : (ha >= 50) ? 0.6 : 0.3;
@@ -246,7 +215,7 @@ if (!slot) return;
     const cx = walkX;
     const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
 
-    // --- Cacas --- (dessinés avant le Gotchi)
+    // --- Cacas ---
     const poops = window.D.g.poops || [];
     let gotchiNearPoop = false;
     poops.forEach(poop => {
@@ -257,7 +226,7 @@ if (!slot) return;
     });
     window._gotchiNearPoop = gotchiNearPoop;
 
-    // --- Dessin Gotchi --- (par-dessus les cacas)
+    // --- Dessin Gotchi ---
     let gotchiInfo;
     if      (g.stage === 'egg')   gotchiInfo = drawEgg(p, cx, by + bobY);
     else if (g.stage === 'baby')  gotchiInfo = drawBaby(p, cx, by + bobY, sleeping, en, ha);
@@ -265,6 +234,17 @@ if (!slot) return;
     else                          gotchiInfo = drawAdult(p, cx, by + bobY, sleeping, en, ha);
     if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
 
+// --- Props DÉCOR devant (C, D, SOL) ---
+if (D.g.props) {
+  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot !== 'A' && pr.slot !== 'B').forEach(prop => {
+    const def = getPropDef(prop.id);
+    if (def && def.pixels) {
+      const slot = PROP_SLOTS[prop.slot];
+      if (!slot) return;
+      drawProp(p, def, slot.x, slot.y);
+    }
+  });
+}
 // --- Props ACCESSOIRE (sur la tête du gotchi) ---
 if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {

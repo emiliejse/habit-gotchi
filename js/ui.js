@@ -17,10 +17,12 @@ function go(t) {
   if (targetPanel) targetPanel.classList.add('on');
 
   const shell = document.querySelector('.tama-shell');
-  if (t === 'gotchi') {
-    shell.classList.remove('shrunk');
-    window.D.g.activeEnv = 'parc';
-  } else {
+if (t === 'gotchi') {
+  shell.classList.remove('shrunk');
+  const h = hr();
+  window.D.g.activeEnv = (h >= 22 || h < 7) ? 'chambre' : 'parc';
+} 
+else {
     shell.classList.add('shrunk');
     if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
     else if (t === 'perso')    window.D.g.activeEnv = 'parc';

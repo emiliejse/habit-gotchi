@@ -409,9 +409,12 @@ document.addEventListener('visibilitychange', () => {
     }
   }
 });
-// Spawn caca toutes les 30 min
 window.addEventListener('load', () => {
-  // Spawn seulement si le dernier spawn date de plus de 30 min
+  // Env selon l'heure
+  const h = hr();
+  if (h >= 22 || h < 7) window.D.g.activeEnv = 'chambre';
+
+  // Spawn caca
   const lastSpawn = window.D.g.lastPoopSpawn || 0;
   const now = Date.now();
   if (now - lastSpawn > 30 * 60 * 1000) {

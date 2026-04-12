@@ -1518,6 +1518,17 @@ function getNightMsg() {
   return `*murmure* Je veille. Dors bien 🌙`;
 }
 
+function showWelcomeModal() {
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <h3 style="text-align:center">Bienvenue ✿</h3>
+    <p style="font-size:12px;text-align:center;margin:8px 0">Comment s'appelle ton compagnon ?</p>
+    <input id="welcome-name" class="inp" placeholder="Petit·e Gotchi" maxlength="20" style="text-align:center" autocomplete="off">
+    <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="confirmWelcome()">C'est parti 🌟</button>
+  `;
+  setTimeout(() => document.getElementById('welcome-name')?.focus(), 100);
+}
+
 function confirmWelcome() {
   const val = document.getElementById('welcome-name')?.value.trim();
   if (val) window.D.g.name = val;

@@ -360,11 +360,10 @@ if (window.touchReaction.active) {
     p.textSize(16);
     p.textAlign(p.CENTER, p.TOP);
     p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.3;
-    p.text('🧹', 90, 3);
+    p.text('🧹', 72, 3);
 
-    // Assiette — toujours actif pour l'instant
     p.drawingContext.globalAlpha = 1.0;
-    p.text('🍽️', 122, 3);
+    p.text('🍽️', 128, 3);
 
     // Remet l'alpha à 1 pour le reste
     p.drawingContext.globalAlpha = 1.0;
@@ -450,12 +449,10 @@ p.fill(col);
   p.mousePressed = function() {
   const mx = p.mouseX, my = p.mouseY;
     // --- Bouton 🧹 ---
-  if (Math.abs(mx - (CS/2 - 14)) < 14 && my < 22) {
-    cleanPoops(); return;
+  if (Math.abs(mx - 72) < 14 && my < 26)  { cleanPoops(); return; }
   }
   // --- Bouton 🍽️ ---
-  if (Math.abs(mx - (CS/2 + 14)) < 14 && my < 22) {
-    ouvrirSnack(); return;
+  if (Math.abs(mx - 128) < 14 && my < 26) { ouvrirSnack(); return; }
   }
   const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
            : window.D.g.stage==='teen'?98 : 85;
@@ -468,12 +465,12 @@ p.touchStarted = function() {
   const my = p.touches[0]?.y ?? p.mouseY;
 
   // --- Bouton 🧹 ---
-  if (Math.abs(mx - (CS/2 - 14)) < 14 && my < 22) {
+  if (Math.abs(mx - 72) < 14 && my < 26) {
     cleanPoops(); return false;
   }
 
   // --- Bouton 🍽️ ---
-  if (Math.abs(mx - (CS/2 + 14)) < 14 && my < 22) {
+  if (Math.abs(mx - 128) < 14 && my < 26) {
     ouvrirSnack(); return false;
   }
 

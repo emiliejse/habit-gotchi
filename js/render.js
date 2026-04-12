@@ -124,7 +124,25 @@ const p5s = (p) => {
 
     if (window.shakeTimer > 0) { window.shakeTimer--; p.translate(Math.sin(p.frameCount * 2) * 2, 0); }
 
-// ── drawSky() : le ciel change selon l'HEURE (h) et le BONHEUR (ha) ──
+// --- HUD pétales (coin sup. gauche) ---
+p.fill(255); p.noStroke();
+p.textSize(14); p.textFont('Arial');
+p.textAlign(p.LEFT, p.TOP);
+p.text('🌸 ' + (g.petales || 0), 6, 6);
+
+// --- HUD température (coin sup. droit) ---
+if (window.meteoData?.temperature) {
+  p.textAlign(p.RIGHT, p.TOP);
+  p.text(Math.round(window.meteoData.temperature) + '°C', CS - 6, 6);
+}
+
+// --- HUD boutons 🧹 et 🍽️ ---
+p.textSize(14);
+p.textAlign(p.CENTER, p.TOP);
+p.text('🧹', CS / 2 - 14, 6);
+p.text('🍽️', CS / 2 + 14, 6);
+
+    // ── drawSky() : le ciel change selon l'HEURE (h) et le BONHEUR (ha) ──
 // LOGIQUE : comme un filtre couleur qui s'applique sur tout le fond.
 //
 // Pour modifier une couleur de ciel, change la valeur dans C{} en haut
@@ -413,6 +431,14 @@ p.fill(col);
 
   p.mousePressed = function() {
   const mx = p.mouseX, my = p.mouseY;
+    // --- Bouton 🧹 ---
+  if (Math.abs(mx - (CS/2 - 14)) < 14 && my < 22) {
+    cleanPoops(); return;
+  }
+  // --- Bouton 🍽️ ---
+  if (Math.abs(mx - (CS/2 + 14)) < 14 && my < 22) {
+    ouvrirSnack(); return;
+  }
   const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
            : window.D.g.stage==='teen'?98 : 85;
   const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
@@ -422,10 +448,22 @@ p.fill(col);
 p.touchStarted = function() {
   const mx = p.touches[0]?.x ?? p.mouseX;
   const my = p.touches[0]?.y ?? p.mouseY;
+
+  // --- Bouton 🧹 ---
+  if (Math.abs(mx - (CS/2 - 14)) < 14 && my < 22) {
+    cleanPoops(); return false;
+  }
+
+  // --- Bouton 🍽️ ---
+  if (Math.abs(mx - (CS/2 + 14)) < 14 && my < 22) {
+    ouvrirSnack(); return false;
+  }
+
+  // --- Gotchi ---
   const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
            : window.D.g.stage==='teen'?98 : 85;
   const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
-  if (hit) { triggerTouchReaction(); return false; } // return false = pas de scroll
+  if (hit) { triggerTouchReaction(); return false; }
 };
 
 }; // fin p5s

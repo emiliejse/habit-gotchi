@@ -129,17 +129,6 @@ const btnAsk = document.getElementById('btn-ask-claude');
 if (btnAsk) btnAsk.childNodes[0].textContent = `Interroger ${window.D.g.name || 'le Gotchi'} `;
 const canvasBoutique = document.getElementById('canvas-boutique');
 if (canvasBoutique) drawShopIcon(canvasBoutique);
-// Bouton nettoyage
-const btnClean = document.getElementById('btn-clean');
-if (btnClean) {
-  const hasPoops = (window.D.g.poops || []).length > 0;
-  btnClean.style.opacity = hasPoops ? '1' : '0.25';
-  btnClean.style.pointerEvents = hasPoops ? 'auto' : 'none';
-}
-const shellTemp = document.getElementById('shell-temp');
-if (shellTemp && window.meteoData?.temperature) {
-  shellTemp.textContent = Math.round(window.meteoData.temperature) + '°C';
-}
   updBadgeBoutique();
 }
 

@@ -597,19 +597,18 @@ const notesRecentes = D.journal
   .join(' / ');
 
   const vars = {
-    nom:          P?.nom || 'le Gotchi',
-    style:        P?.style || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
-    traits:       P?.traits?.join(', ') || 'doux, joueur, curieux',
-    energy:       g.energy,
-    happiness:    g.happiness,
-    notesRecentes: notesRecentes ? `Ambiance récente (extrait journal) : ${notesRecentes}` : '',
-    exemples:     (P?.bulles?.idle || []).slice(0, 3).join(', ') || '*bâille*, *sourit*',
-    existingNames: (D.g.props || []).map(p => p.nom).join(', ') || 'aucun',
-    timestamp:    Date.now(),
-    notesRecentes: notesRecentes
-  ? `Aujourd'hui : ${today()}. Ambiance récente : ${notesRecentes}`
-  : `Aujourd'hui : ${today()}.`,
-  };
+  nom:           P?.nom || 'le Gotchi',
+  style:         P?.style || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
+  traits:        P?.traits?.join(', ') || 'doux, joueur, curieux',
+  energy:        g.energy,
+  happiness:     g.happiness,
+  notesRecentes: notesRecentes
+    ? `Aujourd'hui : ${today()}. Ambiance récente : ${notesRecentes}`
+    : `Aujourd'hui : ${today()}.`,
+  exemples:      (P?.bulles?.idle || []).slice(0, 3).join(', ') || '*bâille*, *sourit*',
+  existingNames: (D.g.props || []).map(p => p.nom).join(', ') || 'aucun',
+  timestamp:     Date.now(),
+};
 
   function fillVars(template) {
     return template.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? '');

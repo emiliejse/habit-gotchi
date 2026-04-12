@@ -153,7 +153,11 @@ function drawActiveEnv(p, env, n, h) {
    p.fill(tc(n, theme.mntGnd));   p.rect(0, 120, CS, 80);
     p.fill(tc(n, theme.mntGndDk)); p.rect(0, 120, CS, PX*2);
     p.fill(tc(n, theme.mntPeak));  p.triangle(40, 120, 100, 50, 160, 120);
-    p.fill(tc(n, theme.mntSnow));  p.triangle(100, 50, 83, 70, 117, 70);
+    
+    if (theme.id !== 'desert') {
+  p.fill(tc(n, theme.mntPeak));  p.triangle(40, 120, 100, 50, 160, 120);
+  p.fill(tc(n, theme.mntSnow));  p.triangle(100, 50, 83, 70, 117, 70);
+}
 
     if (theme.id === 'pastel') {
   // buissons sur la ligne du sol
@@ -173,7 +177,7 @@ function drawActiveEnv(p, env, n, h) {
       p.fill(tc(n, theme.mntGndDk));
       p.triangle(100, 55, 100, 120, 145, 120);
       // Entrée
-      p.fill('#302010');
+      p.fill('#6b3a1f');
       px(p, 96, 108, PX*2, PX*3);
       // Stries horizontales
       p.fill(tc(n, theme.mntSnow));
@@ -185,42 +189,45 @@ function drawActiveEnv(p, env, n, h) {
 // ── MOTIFS CADRE MURAL (unique par thème) ───────────────────
 function drawFrameMotif(p, theme, n) {
   if (theme.id === 'automne') {
-  // tige
+  // Contour feuille
   p.fill(tc(n, theme.frameAccent1));
-  px(p, 100, 75, PX, PX*4);
-  // feuille gauche
-  px(p, 95,  77, PX*2, PX);
-  // feuille droite
-  px(p, 102, 79, PX*2, PX);
-  // nervure
+  px(p, 101, 73, PX,   PX  ); // pointe
+  px(p, 98,  75, PX*3, PX  ); // épaules
+  px(p, 96,  77, PX*5, PX*2); // milieu large
+  px(p, 98,  80, PX*3, PX  ); // bas
+  // Nervure
   p.fill(tc(n, theme.frameAccent2));
-  px(p, 96,  77, PX,   PX);
-  px(p, 103, 79, PX,   PX);
+  px(p, 101, 73, PX, PX*4);   // tige centrale
+  // Petite tige basse
+  px(p, 101, 84, PX, PX*2);
 }
   else if (theme.id === 'hiver') {
-  p.fill(tc(n, theme.frameAccent1));
-  // croix centrale
-  px(p, 100, 73, PX, PX*6);  // vertical
-  px(p, 96,  77, PX*9, PX);  // horizontal
-  // 4 diagonales (1 px chacune)
-  px(p, 96, 73, PX, PX); px(p, 104, 73, PX, PX);
-  px(p, 96, 81, PX, PX); px(p, 104, 81, PX, PX);
+    p.fill(tc(n, theme.frameAccent1));
+  px(p, 101, 73, PX, PX*5); // barre verticale  (x101–106, y73–88)
+  px(p, 96,  78, PX*5, PX); // barre horizontale (x96–111, y78–83)
+  // 4 points aux diagonales
+  px(p, 97, 74, PX, PX);
+  px(p, 107, 74, PX, PX);
+  px(p, 97, 84, PX, PX);
+  px(p, 107, 84, PX, PX);
 }
   else if (theme.id === 'desert') {
-  // corps scarabée
-  p.fill(tc(n, theme.frameAccent1));  // brun doré
-  px(p, 98, 78, PX*3, PX*2);         // abdomen
-  px(p, 99, 76, PX*2, PX);           // thorax
-  // tête
-  p.fill(tc(n, theme.frameAccent2));  // or
-  px(p, 100, 74, PX, PX);
-  // antennes
+  // Antennes
   p.fill(tc(n, theme.frameAccent1));
-  px(p, 99,  73, PX, PX);
-  px(p, 101, 73, PX, PX);
-  // pattes (3 de chaque côté)
-  px(p, 96, 78, PX, PX); px(p, 96, 79, PX, PX); px(p, 96, 80, PX, PX);
-  px(p, 103,78, PX, PX); px(p, 103,79, PX, PX); px(p, 103,80, PX, PX);
+  px(p, 99, 74, PX, PX);
+  px(p, 102, 74, PX, PX);
+  // Tête
+  px(p, 99, 76, PX*2, PX);
+  // Corps
+  px(p, 98, 79, PX*3, PX*3);
+  // Reflets ailes
+  p.fill(tc(n, theme.frameAccent2));
+  px(p, 99, 80, PX, PX*2);
+  px(p, 102, 80, PX, PX*2);
+  // Pattes
+  p.fill(tc(n, theme.frameAccent1));
+  px(p, 96, 79, PX, PX); px(p, 96, 81, PX, PX); px(p, 96, 83, PX, PX);
+  px(p, 104, 79, PX, PX); px(p, 104, 81, PX, PX); px(p, 104, 83, PX, PX);
 }
   else {
     // pastel
@@ -258,12 +265,18 @@ function drawThemeAccents(p, theme, n) {
     px(p, 70, 136, PX*2, PX); px(p, 110, 130, PX, PX); px(p, 150, 138, PX*2, PX);
   }
 else if (theme.id === 'pastel') {
-  drawFl(p, 22,  120, theme.accent);
-  drawFl(p, 168, 122, theme.accent);
-  // petites fleurs dans les arbres
+  // Fleurs au sol : décalées des arbres
+  drawFl(p, 35,  120, theme.accent);
+  drawFl(p, 155, 122, theme.accent);
+  // Fleurs dans le feuillage arbre gauche (x=8, y=86)
   p.fill(theme.accent);
-  px(p, 15, 82, PX, PX);
-  px(p, 168, 86, PX, PX);
+  px(p, 10, 83, PX, PX);
+  px(p, 20, 80, PX, PX);
+  px(p, 15, 87, PX, PX);
+  // Fleurs dans le feuillage arbre droit (x=160, y=90)
+  px(p, 162, 87, PX, PX);
+  px(p, 172, 84, PX, PX);
+  px(p, 167, 91, PX, PX);
 }
 }
 

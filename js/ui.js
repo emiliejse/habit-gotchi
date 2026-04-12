@@ -712,7 +712,7 @@ const notesRecentes = D.journal
   .join(' / ');
 
   const vars = {
-  nom:           P?.nom || 'le Gotchi',
+  nom: D.g.name || P?.nom || 'Petit·e Gotchi',
   userName: D.userName || 'ton utilisatrice',
   style:         P?.style || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
   traits:        P?.traits?.join(', ') || 'doux, joueur, curieux',

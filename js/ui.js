@@ -370,7 +370,7 @@ function ouvrirBoutique() {
         color:${onglet==='claude'?'var(--lilac)':'var(--text2)'};
         box-shadow:${onglet==='claude'?'0 1px 4px rgba(0,0,0,.1)':'none'};
         transition:.15s">
-        🤖 Générer
+        ✨ Créations
       </button>
     </div>
 
@@ -429,7 +429,7 @@ function renderBoutiqueOnglet(onglet) {
           color:${peutGenerer?'#fff':'#aaa'};
           border-bottom:${peutGenerer?'3px solid rgba(0,0,0,0.15)':'3px solid transparent'};
           letter-spacing:.5px">
-          ${peutGenerer ? '🤖 Générer un objet — 🌸 16' : '🌸 Il te faut 16 pétales'}
+          ${peutGenerer ? '✨ Demander à ${window.D.g.name} — 🌸 16` : '🌸 Il te faut 16 pétales'}
         </button>
       </div>
     `;

@@ -9,7 +9,7 @@
    NAVIGATION
    ============================================================ */
 let journalLocked = true;
-let masquerAcquis = false;
+let masquerAcquis = true;
 
 function go(t) {
   document.querySelectorAll('.pnl').forEach(p => p.classList.remove('on'));
@@ -263,18 +263,9 @@ function renderBoutiqueOnglet(onglet) {
 
   if (onglet === 'catalogue') {
     const lib = window.PROPS_LIB || [];
-    const libFiltree = masquerAcquis
-      ? lib.filter(prop => !(D.g.props || []).find(p => p.id === prop.id))
-      : lib;
+const libFiltree = lib.filter(prop => !(D.g.props || []).find(p => p.id === prop.id));
 
-    const toggleBtn = `<div style="text-align:right;margin-bottom:8px">
-      <button onclick="toggleMasquerAcquis()" 
-        style="padding:4px 10px;border-radius:12px;border:2px solid var(--border);font-size:9px;cursor:pointer;background:${masquerAcquis ? 'var(--lilac)' : 'transparent'};color:${masquerAcquis ? '#fff' : 'var(--text2)'}">
-        ${masquerAcquis ? '✓ Acquis masqués' : 'Masquer les acquis'}
-      </button>
-    </div>`;
-
-    el.innerHTML = toggleBtn + libFiltree.map(prop => {
+el.innerHTML = libFiltree.map(prop => {
       const possede = (D.g.props || []).find(p => p.id === prop.id);
       const peutAcheter = (D.g.petales || 0) >= prop.cout;
       

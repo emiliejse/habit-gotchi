@@ -96,6 +96,9 @@ function defs() {
     log:{}, journal:[], pin:null, apiKey:null,
     lastThoughtDate: null,
 thoughtCount: 0,
+eventLog: [],        // historique (max 50)
+firstLaunch: null,   // sera rempli au 1er lancement
+lastActive: null,    // mis à jour à chaque ouverture
   };
 }
 
@@ -160,6 +163,17 @@ function addXp(n)   {
   window.D.g.envLv   = Math.min(10, Math.floor(window.D.g.totalXp / 60));
   save(); updUI();
 }
+function addEvent(type, valeur, label) {
+  if (!window.D.eventLog) window.D.eventLog = [];
+  window.D.eventLog.unshift({
+    date: new Date().toISOString(),
+    type,   // 'xp' | 'cadeau' | 'note' | 'habitude'
+    valeur,
+    label
+  });
+  // FIFO : max 50 entrées
+  if (window.D.eventLog.length > 50) window.D.eventLog.length = 50;
+}
 function calcStr() {
   let s=0, d=new Date();
   while(true) {
@@ -183,6 +197,7 @@ function toggleHab(catId) {
   if (idx >= 0) {
     window.D.log[td].splice(idx, 1);
     addXp(-15);
+    addEvent('habitude', 15, hab?.label || catId);
     window.D.g.petales = Math.max(0, (window.D.g.petales || 0) - 2);
     save();
   } else {

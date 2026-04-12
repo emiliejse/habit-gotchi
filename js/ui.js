@@ -1022,8 +1022,11 @@ function pickM(id) {
 function saveJ() {
   const t = document.getElementById('j-text').value.trim();
   if (!t && !selMood) return;
-  window.D.journal.push({ date:new Date().toISOString(), mood:selMood||'ok', text:t });
-  addXp(15); save();
+  window.D.journal.push({ date: new Date().toISOString(), mood: selMood || 'ok', text: t });
+  addXp(15);
+  addEvent('note', 15, t.slice(0, 30) || 'Note sans texte');  // ← nouveau
+  toast('+15 XP 📓');                                          // ← nouveau
+  save();
   document.getElementById('j-text').value = '';
   selMood = null;
   document.querySelectorAll('.mood-b').forEach(b => b.classList.remove('sel'));

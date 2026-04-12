@@ -13,6 +13,8 @@
     "max": ["PARFAIT !! 🎉", "6/6 !! ✿✿✿", "JE BRILLE !! 🌟"],
     "idle": ["*regarde autour*", "♪ la la ♪", "*sourit*", "*boing*"],
     "vent": ["Ouh, le vent d'Autan ! 🌬️", "Ça souffle dehors !"],
+    "chaud": ["Pfiou, quelle chaleur ! 🥵", "On fond... ✿", "Bois de l'eau ! 💧"],
+    "froid": ["Brrrr ! ❄️", "*grelotte*", "Reste au chaud 🧣"],
     "peu":  ["Hé, viens me voir 🥺", "Une habitude ?", "Je suis là ✿", "Pas de pression 💜"],
     "custom": []
   }

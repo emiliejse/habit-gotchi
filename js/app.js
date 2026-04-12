@@ -313,11 +313,13 @@ function updBubbleNow() {
   else if ((D.log[today()]||[]).length >= 4)      pool = src.fierte  || src.high;
   else if ((D.log[today()]||[]).length === 0)     pool = src.peu     || src.low;
   else if (meteoData && meteoData.windspeed > 40) pool = src.vent    || src.wind;
+  else if (meteoData && meteoData.temperature >= 30) pool = src.chaud   || src.hot;
+else if (meteoData && meteoData.temperature <= 10)  pool = src.froid   || src.cold;
   else if (h < 12)                                pool = src.matin   || src.morning;
   else if (h < 18)                                pool = src.aprem   || src.afternoon;
   else                                            pool = src.soir    || src.evening;
 
-  if (Math.random() < 0.15) {
+  if (Math.random() < 0.25) {
     const cb = D.g.customBubbles;
     let etatKey = 'idle';
     if (ha <= 1) etatKey = 'triste';

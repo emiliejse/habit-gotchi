@@ -89,8 +89,8 @@ const p5s = (p) => {
     if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
 
     let envActif = g.activeEnv || 'parc';
-    drawActiveEnv(p, envActif, n, h);
     if (ha >= 100 && !sleeping) drawRainbow(p);
+    drawActiveEnv(p, envActif, n, h);
 
 // --- Props DÉCOR fond (A, B) — dessinés EN PREMIER = derrière ---
 if (D.g.props) {

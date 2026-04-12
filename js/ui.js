@@ -754,7 +754,7 @@ function viderObjetsIA() {
     return (window.PROPS_LIB || []).find(l => l.id === p.id);
   });
   save();
-  toast(`Objets du Gotchi supprimés ✿');
+  toast(`Objets du Gotchi supprimés ✿`);
   debugProps();
 }
 

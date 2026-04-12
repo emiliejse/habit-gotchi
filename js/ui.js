@@ -892,12 +892,12 @@ document.getElementById('bubble').textContent = bulleCadeau.replace('{{nom}}', D
 
   } catch(e) {
     if (document.getElementById('claude-msg'))
-      document.getElementById('claude-msg`).textContent = '*soupir* Je n\'arrive pas à me connecter... ✿';
+      document.getElementById('claude-msg').textContent = '*soupir* Je n\'arrive pas à me connecter... ✿';
   }
 }
 
 async function acheterPropClaude() {
-  if ((D.g.petales || 0) < 16) { toast(`Pas assez de pétales 🌸'); return; }
+  if ((D.g.petales || 0) < 16) { toast(`Pas assez de pétales 🌸`); return; }
   if (!D.apiKey) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
 
   D.g.petales -= 16; save();

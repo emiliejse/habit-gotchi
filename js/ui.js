@@ -129,6 +129,11 @@ const btnAsk = document.getElementById('btn-ask-claude');
 if (btnAsk) btnAsk.childNodes[0].textContent = `Interroger ${window.D.g.name || 'le Gotchi'} `;
 const canvasBoutique = document.getElementById('canvas-boutique');
 if (canvasBoutique) drawShopIcon(canvasBoutique);
+// Bouton nettoyage
+const btnClean = document.getElementById('btn-clean');
+if (btnClean) {
+  btnClean.style.display = (window.D.g.poops || []).length > 0 ? 'block' : 'none';
+}
   updBadgeBoutique();
 }
 

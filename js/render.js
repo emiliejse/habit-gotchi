@@ -273,6 +273,18 @@ const accY = baseY - def.pixels.length * PX + offsetY;
   });
 }
 
+// --- Caças ---
+const poops = window.D.g.poops || [];
+let gotchiNearPoop = false;
+poops.forEach(poop => {
+  if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
+  p.textAlign(p.CENTER, p.CENTER);
+  p.textFont('Arial');
+  p.textSize(14);
+  p.text('💩', poop.x, poop.y);
+});
+window._gotchiNearPoop = gotchiNearPoop;
+
     // --- Réaction au toucher ---
 if (window.touchReaction.active) {
   const tr = window.touchReaction;
@@ -476,6 +488,12 @@ function drawEgg(p, cx, cy) {
     if(sl||blink) { p.fill(C.eye); px(p,x+PX,y+PX*2,PX*2,PX); px(p,x+PX*3,y+PX*2,PX*2,PX); }
     else { p.fill(C.eye); px(p,x+PX,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); p.fill('#fff'); p.rect(x+PX,y+PX*2,2,2); p.rect(x+PX*4,y+PX*2,2,2); }
     p.fill(C.cheek); px(p,x,y+PX*3,PX,PX); px(p,x+PX*5,y+PX*3,PX,PX);
+    // Sourcils froncés si caca proche
+if (window._gotchiNearPoop && !sl) {
+  p.fill(C.eye);
+  px(p, x+PX*2, y+PX*2, PX*2, PX);
+  px(p, x+PX*5, y+PX*2, PX*2, PX);
+}
     p.fill(C.mouth);
     if(!sl) { if(ha>60)px(p,x+PX*2,y+PX*3,PX*2,PX); else if(ha<25)px(p,x+PX*2,y+PX*3+2,PX*2,PX); else px(p,x+PX*2,y+PX*3,PX,PX); }
     p.fill(C.bodyDk); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*4,y+PX*5,PX,PX);
@@ -490,6 +508,12 @@ function drawEgg(p, cx, cy) {
     if(sl||blink) { p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX*2,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); }
     else { p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX,PX*2); px(p,x+PX*5,y+PX*3,PX,PX*2); p.fill('#fff'); p.rect(x+PX*2,y+PX*3,2,2); p.rect(x+PX*5,y+PX*3,2,2); }
     p.fill(C.cheek); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*6,y+PX*5,PX,PX);
+    // Sourcils froncés si caca proche
+if (window._gotchiNearPoop && !sl) {
+  p.fill(C.eye);
+  px(p, x+PX*2, y+PX*2, PX*2, PX);
+  px(p, x+PX*5, y+PX*2, PX*2, PX);
+}
     p.fill(C.mouth);
     if(!sl) { if(ha>70){px(p,x+PX*3,y+PX*5,PX*2,PX);px(p,x+PX*2,y+PX*5,PX,PX);px(p,x+PX*5,y+PX*5,PX,PX);} else if(ha>40)px(p,x+PX*3,y+PX*5,PX*2,PX); else if(ha<20)px(p,x+PX*3,y+PX*6,PX*2,PX); else px(p,x+PX*3,y+PX*5,PX,PX); }
     p.fill(C.bodyDk);
@@ -506,6 +530,12 @@ function drawEgg(p, cx, cy) {
     if(sl||blink) { p.fill(C.eye); px(p,x+PX*2,y+PX*5,PX*2,PX); px(p,x+PX*6,y+PX*5,PX*2,PX); }
     else { p.fill(C.eye); px(p,x+PX*2,y+PX*4,PX*2,PX*2); px(p,x+PX*6,y+PX*4,PX*2,PX*2); p.fill('#fff'); px(p,x+PX*2,y+PX*4,PX,PX); px(p,x+PX*6,y+PX*4,PX,PX); }
     p.fill(C.cheek); px(p,x+PX,y+PX*6,PX,PX); px(p,x+PX*8,y+PX*6,PX,PX);
+    // Sourcils froncés si caca proche
+if (window._gotchiNearPoop && !sl) {
+  p.fill(C.eye);
+  px(p, x+PX*2, y+PX*2, PX*2, PX);
+  px(p, x+PX*5, y+PX*2, PX*2, PX);
+}
     p.fill(C.mouth);
     if(!sl) { if(ha>80){px(p,x+PX*3,y+PX*7,PX*4,PX);px(p,x+PX*3,y+PX*6,PX,PX);px(p,x+PX*6,y+PX*6,PX,PX);} else if(ha>50)px(p,x+PX*4,y+PX*7,PX*2,PX); else if(ha<20){px(p,x+PX*4,y+PX*8,PX*2,PX);px(p,x+PX*3,y+PX*7,PX,PX);} else px(p,x+PX*4,y+PX*7,PX,PX); }
     p.fill(C.bodyDk);

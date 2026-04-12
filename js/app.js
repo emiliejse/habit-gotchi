@@ -89,7 +89,8 @@ function defs() {
   return {
     g: {
       name:'Petit·e Gotchi', userName: 'Émilie', totalXp:0, stage:'egg', energy:3, happiness:3,
-      envLv:0, moodDay:null, activeEnv:'parc', petales:0,
+      envLv:0, moodDay:null, activeEnv:'parc', petales:0,poops: [],
+snackDone: '',
       props:[], customBubbles:[]
     },
     habits: CATS.map(c => ({catId:c.id, label:c.label})),
@@ -167,6 +168,28 @@ function addXp(n) {
     addEvent('xp', window.D.g.totalXp, `⭐ Nouveau stade : ${nouveauStade}`);
   }
   save(); if (typeof updUI === 'function') updUI();
+}
+function spawnPoop() {
+  if ((window.D.g.poops || []).length >= 5) return;
+  // Position aléatoire sur le sol, en évitant les bords
+  const x = 20 + Math.floor(Math.random() * 160);
+  const y = 118 + Math.floor(Math.random() * 10);
+  window.D.g.poops.push({ id: Date.now(), x, y });
+  save();
+}
+
+function maybeSpawnPoop() {
+  if (Math.random() < 0.35) spawnPoop();
+}
+
+function cleanPoops() {
+  const count = (window.D.g.poops || []).length;
+  if (count === 0) return;
+  window.D.g.poops = [];
+  window.D.g.petales = (window.D.g.petales || 0) + (count * 2);
+  toast(`Propre ! +${count * 2} 🌸`);
+  save();
+  updUI();
 }
 function addEvent(type, valeur, label) {
   if (!window.D.eventLog) window.D.eventLog = [];
@@ -366,7 +389,9 @@ document.addEventListener('visibilitychange', () => {
     }
   }
 });
-
+// Spawn caca toutes les 30 min
+maybeSpawnPoop();
+setInterval(maybeSpawnPoop, 30 * 60 * 1000);
 /* ============================================================
    LANCEMENT
    ============================================================ */

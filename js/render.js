@@ -219,20 +219,10 @@ if (!slot) return;
       });
     }
 
-      // --- Cacas ---
-const poops = window.D.g.poops || [];
-let gotchiNearPoop = false;
-poops.forEach(poop => {
-  if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
-  p.textAlign(p.CENTER, p.CENTER);
-  p.textSize(20);
-  p.text('💩', poop.x, poop.y);
-});
-window._gotchiNearPoop = gotchiNearPoop;
 
-    // --- Gotchi ---
+// --- Gotchi ---
     bounceT += sleeping ? 0.04 : 0.12;
-let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
+    let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
     let amplitude = 15, vitesse = 0.02;
 
     if (!sleeping && ha >= 80 && en >= 80) {
@@ -242,29 +232,38 @@ let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
       amplitude = 25; vitesse = 0.04;
     }
 
-// --- Locomotion directionnelle ---
-if (!sleeping) {
-  walkStep++;
-  const speed = (ha >= 80 && en >= 80) ? 1.2 : (ha >= 50) ? 0.6 : 0.3;
-  walkX += walkDir * speed;
-  
-  // Demi-tour aux bords (marge de 20px)
-  if (walkX > CS - 25) { walkX = CS - 25; walkDir = -1; }
-  if (walkX < 25)       { walkX = 25;      walkDir = 1;  }
-} else {
-  // En dormant : légère dérive lente
-  walkX += walkDir * 0.05;
-  if (walkX > CS - 30 || walkX < 30) walkDir *= -1;
-}
-const cx = walkX;
+    // --- Locomotion directionnelle ---
+    if (!sleeping) {
+      walkStep++;
+      const speed = (ha >= 80 && en >= 80) ? 1.2 : (ha >= 50) ? 0.6 : 0.3;
+      walkX += walkDir * speed;
+      if (walkX > CS - 25) { walkX = CS - 25; walkDir = -1; }
+      if (walkX < 25)       { walkX = 25;      walkDir = 1;  }
+    } else {
+      walkX += walkDir * 0.05;
+      if (walkX > CS - 30 || walkX < 30) walkDir *= -1;
+    }
+    const cx = walkX;
     const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
 
-let gotchiInfo;
-if      (g.stage === 'egg')   gotchiInfo = drawEgg(p, cx, by + bobY);
-else if (g.stage === 'baby')  gotchiInfo = drawBaby(p, cx, by + bobY, sleeping, en, ha);
-else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, cx, by + bobY, sleeping, en, ha);
-else                          gotchiInfo = drawAdult(p, cx, by + bobY, sleeping, en, ha);
-if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
+    // --- Cacas --- (dessinés avant le Gotchi)
+    const poops = window.D.g.poops || [];
+    let gotchiNearPoop = false;
+    poops.forEach(poop => {
+      if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(20);
+      p.text('💩', poop.x, poop.y);
+    });
+    window._gotchiNearPoop = gotchiNearPoop;
+
+    // --- Dessin Gotchi --- (par-dessus les cacas)
+    let gotchiInfo;
+    if      (g.stage === 'egg')   gotchiInfo = drawEgg(p, cx, by + bobY);
+    else if (g.stage === 'baby')  gotchiInfo = drawBaby(p, cx, by + bobY, sleeping, en, ha);
+    else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, cx, by + bobY, sleeping, en, ha);
+    else                          gotchiInfo = drawAdult(p, cx, by + bobY, sleeping, en, ha);
+    if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
 
 // --- Props ACCESSOIRE (sur la tête du gotchi) ---
 if (D.g.props) {

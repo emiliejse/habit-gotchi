@@ -1151,17 +1151,17 @@ function applyUIPalette(id, silent = false) {
   document.documentElement.style.setProperty('--mint', p.mint);
   document.documentElement.style.setProperty('--pink', p.pink);
   window.D.g.uiPalette = id; save(); renderPerso();
-  if (!silent) toast(`Palette ' + p.label + ' appliquée ✿');
+  if (!silent) toast(`Palette ${p.label} appliquée ✿`);
 }
 function applyGotchiColor(id, silent = false) {
   const c = GOTCHI_COLORS.find(x => x.id === id); if (!c) return;
   window.D.g.gotchiColor = id; save(); renderPerso();
-  if (!silent) toast(`Couleur ' + c.label + ' appliquée ✿');
+  if (!silent) toast(`Couleur ${c.label} appliquée ✿`);
 }
 function applyEnvTheme(id, silent = false) {
   const t = ENV_THEMES.find(x => x.id === id); if (!t) return;
   window.D.g.envTheme = id; save(); renderPerso();
-  if (!silent) toast(`Ambiance ' + t.label + ' appliquée ✿');
+  if (!silent) toast(`Ambiance ${t.label} appliquée ✿`);
 }
 function restorePerso() {
   if (window.D.g.uiPalette)   applyUIPalette(window.D.g.uiPalette, true);

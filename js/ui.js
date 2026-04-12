@@ -294,24 +294,47 @@ function drawShopIcon(canvas) {
 }
 function ouvrirBoutique() {
   const onglet = window._boutiqueOnglet || 'catalogue';
-  
+
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h3 style="font-size:13px;color:var(--lilac);">🛍️ Boutique</h3>
       <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button>
     </div>
-    <p style="font-size:10px;color:var(--text2);text-align:center">🌸 Tes pétales : <b>${D.g.petales || 0}</b></p>
-    <div style="display:flex;gap:6px;margin-bottom:10px">
-      <button onclick="switchBoutiqueOnglet('catalogue')" id="btn-onglet-catalogue" style="flex:1;padding:6px;border-radius:20px;border:2px solid var(--border);font-size:10px;cursor:pointer;background:${onglet==='catalogue'?'var(--lilac)':'#fff'};color:${onglet==='catalogue'?'#fff':'var(--text2)'}">🌸 Catalogue</button>
-      <button onclick="switchBoutiqueOnglet('claude')" id="btn-onglet-claude" style="flex:1;padding:6px;border-radius:20px;border:2px solid var(--border);font-size:10px;cursor:pointer;background:${onglet==='claude'?'var(--lilac)':'#fff'};color:${onglet==='claude'?'#fff':'var(--text2)'}">🤖 Générer</button>
+
+    <div style="text-align:center;margin-bottom:16px">
+      <span style="display:inline-block;background:linear-gradient(135deg,var(--lilac),var(--pink));color:#fff;border-radius:20px;padding:6px 18px;font-size:13px;font-weight:bold;letter-spacing:.5px">
+        🌸 ${D.g.petales || 0} pétales
+      </span>
     </div>
+
+    <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
+      <button onclick="switchBoutiqueOnglet('catalogue')"
+        style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;
+        background:${onglet==='catalogue'?'#fff':'transparent'};
+        color:${onglet==='catalogue'?'var(--lilac)':'var(--text2)'};
+        box-shadow:${onglet==='catalogue'?'0 1px 4px rgba(0,0,0,.1)':'none'};
+        transition:.15s">
+        🌸 Catalogue
+      </button>
+      <button onclick="switchBoutiqueOnglet('claude')"
+        style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;
+        background:${onglet==='claude'?'#fff':'transparent'};
+        color:${onglet==='claude'?'var(--lilac)':'var(--text2)'};
+        box-shadow:${onglet==='claude'?'0 1px 4px rgba(0,0,0,.1)':'none'};
+        transition:.15s">
+        🤖 Générer
+      </button>
+    </div>
+
     <div id="boutique-contenu"></div>
   `;
+
   const mbox = document.getElementById('mbox');
-mbox.classList.remove('shop-open');
-void mbox.offsetWidth;
-mbox.classList.add('shop-open');
+  mbox.classList.remove('shop-open');
+  void mbox.offsetWidth;
+  mbox.classList.add('shop-open');
+
   renderBoutiqueOnglet(onglet);
 }
 
@@ -326,37 +349,42 @@ function renderBoutiqueOnglet(onglet) {
 
   if (onglet === 'catalogue') {
     const lib = window.PROPS_LIB || [];
-const libFiltree = lib.filter(prop => !(D.g.props || []).find(p => p.id === prop.id));
+    const libFiltree = lib.filter(prop => !(D.g.props || []).find(p => p.id === prop.id));
 
-el.innerHTML = libFiltree.map(prop => {
-      const possede = (D.g.props || []).find(p => p.id === prop.id);
+    el.innerHTML = libFiltree.map(prop => {
       const peutAcheter = (D.g.petales || 0) >= prop.cout;
-      
-      if (possede) {
-        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px;border:2px solid var(--border);border-radius:8px;margin-bottom:6px;opacity:0.5">
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px;border:2px solid var(--border);border-radius:10px;margin-bottom:6px;background:#fff">
           <span style="font-size:18px">${prop.emoji}</span>
-          <span style="font-size:10px;font-weight:bold">${prop.nom}</span>
-          <span style="font-size:9px;color:var(--mint)">✓ Possédé</span>
+          <span style="font-size:10px;font-weight:bold;flex:1;margin:0 8px">${prop.nom}</span>
+          <button onclick="acheterProp('${prop.id}')"
+            style="padding:5px 12px;border-radius:20px;border:none;font-size:9px;font-weight:bold;font-family:'Courier New',monospace;
+            cursor:${peutAcheter?'pointer':'not-allowed'};
+            background:${peutAcheter?'linear-gradient(135deg,var(--lilac),var(--pink))':'#ddd'};
+            color:${peutAcheter?'#fff':'#aaa'};
+            border-bottom:${peutAcheter?'2px solid rgba(0,0,0,0.15)':'2px solid transparent'}">
+            ${prop.cout === 0 ? 'Prendre 🎁' : `🌸 ${prop.cout}`}
+          </button>
         </div>`;
-      }
-      
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px;border:2px solid var(--border);border-radius:8px;margin-bottom:6px">
-        <span style="font-size:18px">${prop.emoji}</span>
-        <span style="font-size:10px;font-weight:bold">${prop.nom}</span>
-        <button onclick="acheterProp('${prop.id}')" 
-          style="padding:4px 8px;border-radius:12px;border:none;font-size:9px;cursor:${peutAcheter?'pointer':'not-allowed'};background:${peutAcheter?'var(--lilac)':'#ccc'};color:#fff">
-          ${prop.cout === 0 ? 'Prendre 🎁' : `🌸 ${prop.cout}`}
-        </button>
-      </div>`;
     }).join('');
 
   } else {
     const peutGenerer = (D.g.petales || 0) >= 16;
     el.innerHTML = `
-      <p style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:12px">L'IA invente un objet unique rien que pour toi ✨</p>
-      <button onclick="acheterPropClaude()" style="width:100%;padding:10px;border-radius:12px;border:none;font-size:11px;font-weight:bold;cursor:${peutGenerer?'pointer':'not-allowed'};background:${peutGenerer?'var(--lilac)':'#ccc'};color:#fff">
-        ${peutGenerer ? '🤖 Générer un objet — 🌸 16' : '🌸 Il te faut 16 pétales'}
-      </button>
+      <p style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:16px;line-height:1.6">
+        L'IA invente un objet unique<br>rien que pour toi ✨
+      </p>
+      <div style="text-align:center">
+        <button onclick="acheterPropClaude()"
+          style="padding:12px 28px;border-radius:999px;border:none;font-size:11px;font-weight:bold;font-family:'Courier New',monospace;
+          cursor:${peutGenerer?'pointer':'not-allowed'};
+          background:${peutGenerer?'linear-gradient(135deg,var(--lilac),var(--pink))':'#ddd'};
+          color:${peutGenerer?'#fff':'#aaa'};
+          border-bottom:${peutGenerer?'3px solid rgba(0,0,0,0.15)':'3px solid transparent'};
+          letter-spacing:.5px">
+          ${peutGenerer ? '🤖 Générer un objet — 🌸 16' : '🌸 Il te faut 16 pétales'}
+        </button>
+      </div>
     `;
   }
 }

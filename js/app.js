@@ -324,12 +324,18 @@ else if (meteoData && meteoData.temperature <= 10)  pool = src.froid   || src.co
       window.D.g.petales = Math.max(0, (window.D.g.petales || 0) - 4);
     }
   }
-  if (window.D.g.moodDay !== td) {
-    const ms = ['happy','chill','sleepy','playful','curious'];
-    window.D.g.mood    = ms[Math.floor(Math.random() * ms.length)];
-    window.D.g.moodDay = td;
-  }
-  window.D.lastActive = td;
+if (window.D.g.moodDay !== td) {
+  const e = window.D.g.energy;
+  const h = window.D.g.happiness;
+  let mood;
+
+  if (e >= 4 && h >= 4)      mood = Math.random() < 0.5 ? 'happy' : 'playful';
+  else if (e <= 2)            mood = 'sleepy';
+  else if (h <= 2)            mood = Math.random() < 0.5 ? 'chill' : 'curious';
+  else                        mood = Math.random() < 0.5 ? 'chill' : 'playful';
+
+  window.D.g.mood    = mood;
+  window.D.g.moodDay = td;
   save();
 })();
 

@@ -1333,12 +1333,12 @@ function saveName() {
 function saveApi() {
   const v = document.getElementById('api-inp').value.trim();
   window.D.apiKey = v; save();
-  if (v) toast(`Je me souviens de ta clé, promis 🔑 ✿`); else toast(`Clé oubliée... *soupir* ✿');
+  if (v) toast(`Je me souviens de ta clé, promis 🔑 ✿`); else toast(`Clé oubliée... *soupir* ✿`);
 }
 function savePin() {
   const v = document.getElementById('pin-inp').value.trim();
-  if (v.length === 4 && /^\d+$/.test(v)) { window.D.pin = v; save(); document.getElementById('pin-inp`).value = ''; toast(`PIN mis à jour ✿'); }
-  else toast(`4 chiffres requis');
+  if (v.length === 4 && /^\d+$/.test(v)) { window.D.pin = v; save(); document.getElementById('pin-inp').value = ''; toast(`PIN mis à jour ✿'); }
+  else toast(`4 chiffres requis`);
 }
 function exportD() {
   const b = new Blob([JSON.stringify(window.D, null, 2)], {type:'application/json'});
@@ -1353,9 +1353,9 @@ function importD(event) {
     try {
       const imported = JSON.parse(e.target.result);
       window.D = { ...defs(), ...imported, g:{ ...defs().g, ...imported.g } };
-      save(); toast(`Bienvenue de retour ${window.D.g.name} ! ✿');
+      save(); toast(`Bienvenue de retour ${window.D.g.name} ! ✿`);
       setTimeout(() => location.reload(), 800);
-    } catch(err) { toast(`*perplexe* Ce fichier me semble bizarre... 💜'); }
+    } catch(err) { toast(`*perplexe* Ce fichier me semble bizarre... 💜`); }
   };
   reader.readAsText(file);
 }

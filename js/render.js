@@ -273,17 +273,6 @@ const accY = baseY - def.pixels.length * PX + offsetY;
   });
 }
 
-// --- Caças ---
-const poops = window.D.g.poops || [];
-let gotchiNearPoop = false;
-poops.forEach(poop => {
-  if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
-  p.textAlign(p.CENTER, p.CENTER);
-  p.textFont('Arial');
-  p.textSize(14);
-  p.text('💩', poop.x, poop.y);
-});
-window._gotchiNearPoop = gotchiNearPoop;
 
     // --- Réaction au toucher ---
 if (window.touchReaction.active) {
@@ -547,6 +536,18 @@ if (window._gotchiNearPoop && !sl) {
      return { topY: y, eyeY: y+PX*4, neckY: y+PX*7 };
   }
 
+  // --- Caças ---
+const poops = window.D.g.poops || [];
+let gotchiNearPoop = false;
+poops.forEach(poop => {
+  if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
+  p.textAlign(p.CENTER, p.CENTER);
+  p.textFont('Arial');
+  p.textSize(14);
+  p.text('💩', poop.x, poop.y);
+});
+window._gotchiNearPoop = gotchiNearPoop;
+
 function triggerTouchReaction() {
   const types = ['jump', 'heart', 'heart', 'spin']; // heart plus fréquent
   window.touchReaction = {
@@ -555,5 +556,6 @@ function triggerTouchReaction() {
     type: types[Math.floor(Math.random() * types.length)]
   };
 }
+
 
 new p5(p5s);

@@ -132,7 +132,9 @@ if (canvasBoutique) drawShopIcon(canvasBoutique);
 // Bouton nettoyage
 const btnClean = document.getElementById('btn-clean');
 if (btnClean) {
-  btnClean.style.display = (window.D.g.poops || []).length > 0 ? 'block' : 'none';
+  const hasPoops = (window.D.g.poops || []).length > 0;
+  btnClean.style.opacity = hasPoops ? '1' : '0.25';
+  btnClean.style.pointerEvents = hasPoops ? 'auto' : 'none';
 }
   updBadgeBoutique();
 }

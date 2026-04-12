@@ -713,6 +713,7 @@ const notesRecentes = D.journal
 
   const vars = {
   nom:           P?.nom || 'le Gotchi',
+  userName: D.userName || 'ton utilisatrice',
   style:         P?.style || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
   traits:        P?.traits?.join(', ') || 'doux, joueur, curieux',
   energy:        g.energy,

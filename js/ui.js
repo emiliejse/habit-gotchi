@@ -1236,8 +1236,8 @@ function checkWelcome() {
   // Cadeaux reçus depuis dernière visite
   const derniereVisite = D.lastActive || td;
   const nouveauxCadeaux = (D.eventLog || []).filter(ev =>
-    ev.type === 'cadeau' && ev.date > derniereVisite
-  ).length;
+  ev.type === 'cadeau' && new Date(ev.date) > new Date(derniereVisite)
+).length;
 
   // Mise à jour lastActive
   if (!D.firstLaunch) D.firstLaunch = new Date().toISOString();
@@ -1257,7 +1257,7 @@ function checkWelcome() {
     // Retour long
     const xpPerdu = joursAbsence * 15;
     titre = `Ça fait ${joursAbsence} jours... 💜`;
-    corps = `${D.g.name} t'a attendu·e. Tu as perdu <strong>${xpPerdu} XP</strong> pendant ton absence.`;
+    corps = `${D.g.name} t'a attendue. Tu as perdu <strong>${xpPerdu} XP</strong> pendant ton absence.`;
   } else if (joursAbsence === 1 && !(D.log[td] || []).length) {
     // Hier vide
     titre = `Bienvenue 🌸`;
@@ -1274,15 +1274,17 @@ function checkWelcome() {
   }
 
   if (nouveauxCadeaux > 0) {
-    extra = `<p style="margin-top:8px;font-size:12px">🎁 ${nouveauxCadeaux} nouveau${nouveauxCadeaux > 1 ? 'x cadeaux' : ' cadeau'} depuis ta dernière visite !</p>`;
+    extra = `<p style="margin-top:8px;font-size:12px;text-align:center">🎁 ${nouveauxCadeaux} nouveau${nouveauxCadeaux > 1 ? 'x cadeaux' : ' cadeau'} depuis ta dernière visite !</p>`;
   }
 
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
-    <h3 style="text-align:center">${titre}</h3>
-    <p style="font-size:12px;text-align:center;margin:8px 0">${corps}</p>
-    ${extra}
-    <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="clModal()">C'est parti ✿</button>
+    <div style="text-align:center">
+      <h3>${titre}</h3>
+      <p style="font-size:12px;margin:8px 0">${corps}</p>
+      ${extra}
+      <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="clModal()">C'est parti ✿</button>
+    </div>
   `;
 }
 

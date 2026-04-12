@@ -150,17 +150,6 @@ const p5s = (p) => {
     if (ha >= 100 && !sleeping) drawRainbow(p);
     drawActiveEnv(p, envActif, n, h);
 
-      // --- Cacas ---
-const poops = window.D.g.poops || [];
-let gotchiNearPoop = false;
-poops.forEach(poop => {
-  if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
-  p.textAlign(p.CENTER, p.CENTER);
-  p.textSize(20);
-  p.text('💩', poop.x, poop.y);
-});
-window._gotchiNearPoop = gotchiNearPoop;
-
 // --- Props DÉCOR fond (A, B) — dessinés EN PREMIER = derrière ---
 if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
@@ -230,6 +219,16 @@ if (!slot) return;
       });
     }
 
+      // --- Cacas ---
+const poops = window.D.g.poops || [];
+let gotchiNearPoop = false;
+poops.forEach(poop => {
+  if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
+  p.textAlign(p.CENTER, p.CENTER);
+  p.textSize(20);
+  p.text('💩', poop.x, poop.y);
+});
+window._gotchiNearPoop = gotchiNearPoop;
 
     // --- Gotchi ---
     bounceT += sleeping ? 0.04 : 0.12;

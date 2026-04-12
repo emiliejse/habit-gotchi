@@ -249,55 +249,6 @@ const accY = baseY - def.pixels.length * PX + offsetY;
     p.rect(Math.floor(x/PX)*PX, Math.floor(y/PX)*PX, Math.max(PX,Math.floor(w/PX)*PX), Math.max(PX,Math.floor(h/PX)*PX));
   }
 
-  function drawActiveEnv(p, env, n, h) {
-    const theme = window.D.g.envTheme || 'pastel';
-    p.noStroke();
-
-    if (env === 'parc') {
-      if (theme === 'automne') {
-        p.fill('#c89858'); p.rect(0, 120, CS, 80);
-        p.fill('#a87838'); p.rect(0, 120, CS, PX*2);
-        p.fill('#e07828'); px(20,132,PX,PX); px(60,128,PX,PX); px(140,130,PX,PX); px(175,126,PX,PX);
-        p.fill('#d05818'); px(35,130,PX,PX); px(95,125,PX,PX); px(160,132,PX,PX);
-        drawTreeTheme(p, 8, 86, n, '#c04818', '#e06028', '#8b4513');
-        drawTreeTheme(p, 160, 90, n, '#d05020', '#e87838', '#8b4513');
-        const ft = p.frameCount;
-        p.fill('#e07828');
-        px((ft*2+10)%CS, 60+Math.sin(ft*.1)*20, PX, PX);
-        px((ft*2+70)%CS, 40+Math.sin(ft*.12)*25, PX, PX);
-        p.fill('#d05818');
-        px((ft*2+130)%CS, 55+Math.sin(ft*.09)*18, PX, PX);
-      }
-      else if (theme === 'hiver') {
-        p.fill('#e8f0f8'); p.rect(0, 120, CS, 80);
-        p.fill('#c8d8e8'); p.rect(0, 120, CS, PX*2);
-        drawTreeTheme(p, 8, 86, n, '#e8f0f8', '#d8e8f0', '#806050');
-        drawTreeTheme(p, 160, 90, n, '#e8f0f8', '#d8e8f0', '#806050');
-        const ft = p.frameCount;
-        p.fill('#e0eef8');
-        [[15,20],[55,10],[95,35],[145,18],[175,28],[30,50],[120,45],[165,55]].forEach((s,i) => {
-          const fy = ((ft + s[1]*3 + i*20) % 120);
-          const fx = s[0] + Math.sin(ft*.05 + i)*5;
-          px(fx, fy, PX, PX);
-        });
-      }
-      else if (theme === 'desert') {
-        p.fill('#e8d098'); p.rect(0, 120, CS, 80);
-        p.fill('#c8a858'); p.rect(0, 120, CS, PX*2);
-        p.fill('#d8c080');
-        px(0, 122, PX*8, PX*2); px(140, 124, PX*10, PX*2);
-        drawCactus(p, 18, 90);
-        drawCactus(p, 168, 94);
-        p.fill('#c0a050'); px(70,136,PX*2,PX); px(110,130,PX,PX); px(150,138,PX*2,PX);
-      }
-      else {
-        p.fill(n ? C.gndN : C.gnd); p.rect(0, 120, CS, 80);
-        p.fill(n ? '#305028' : C.gndDk); p.rect(0, 120, CS, PX*2);
-        if (!n) { drawFl(p, 14, 126, C.flPk); drawFl(p, 186, 128, C.flYl); }
-        drawTree(p, 8, 86, n); drawTree(p, 160, 90, n);
-      }
-    }
-
 // ============================================================
 // CHAMBRE — 4 thèmes : automne / hiver / desert / pastel
 // Structure identique pour chaque thème :
@@ -585,22 +536,6 @@ function drawWind(p) {
   function drawRainbow(p)  { C.rainbow.forEach((c,i)=>{p.fill(c);px(CS/2-PX*(7-i),10+i*PX,PX*(14-i*2),PX);}); }
   function drawFl(p,x,y,c) { p.fill('#58a058');px(x,y,PX,PX*2);p.fill(c);px(x-PX,y-PX,PX,PX);px(x+PX,y-PX,PX,PX);px(x,y-PX*2,PX,PX);p.fill('#f0d878');px(x,y-PX,PX,PX); }
   function drawTree(p,x,y,n) { p.fill(C.trunk);px(x+PX*2,y+PX*4,PX*2,PX*5);p.fill(n?C.leafN:C.leaf);px(x,y+PX,PX*6,PX*3);px(x+PX,y-PX,PX*4,PX*2);px(x+PX*2,y-PX*2,PX*2,PX); }
-
-  function drawTreeTheme(p, x, y, n, colLeaf, colLeaf2, colTrunk) {
-    p.fill(colTrunk); px(x+PX*2, y+PX*4, PX*2, PX*5);
-    p.fill(n ? '#304028' : colLeaf); px(x, y+PX, PX*6, PX*3); px(x+PX, y-PX, PX*4, PX*2);
-    p.fill(n ? '#304028' : colLeaf2); px(x+PX*2, y-PX*2, PX*2, PX);
-  }
-
-  function drawCactus(p, x, y) {
-    p.fill('#70a858');
-    px(x+PX, y, PX*2, PX*7);
-    px(x-PX, y+PX*2, PX*2, PX*2); px(x-PX, y+PX, PX, PX);
-    px(x+PX*3, y+PX*3, PX*2, PX*2); px(x+PX*4, y+PX*2, PX, PX);
-    p.fill('#508840');
-    px(x, y+PX*2, PX, PX); px(x+PX*3, y+PX*3, PX, PX);
-    return { topY: y, eyeY: y+PX*3, neckY: y+PX*5 };
-  }
 
   function drawEgg(p, cx, cy) {
     const x=cx-PX*3, y=cy; p.noStroke();

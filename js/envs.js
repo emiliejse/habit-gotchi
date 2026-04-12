@@ -3,7 +3,7 @@
 
 // envs.js
 // px est défini localement ici, miroir de celui dans p5s
-function px(p, x, y, w, h) {
+function px(p,p, x, y, w, h) {
   p.rect(Math.floor(x/PX)*PX, Math.floor(y/PX)*PX, Math.max(PX,Math.floor(w/PX)*PX), Math.max(PX,Math.floor(h/PX)*PX));
 }
 
@@ -59,9 +59,9 @@ if (theme === 'automne') {
 // 5. CADRE MURAL — feuille simplifiée
   p.fill('#a07848'); p.rect(88, 68, 28, 28);      // cadre extérieur
   p.fill('#f0e8d8'); p.rect(91, 71, 22, 22);      // fond
-  p.fill('#e08830'); px(94, 73, PX*3, PX*5);      // corps gauche de la feuille
-  p.fill('#d07020'); px(99, 71, PX*3, PX*5);      // corps droit
-  p.fill('#c86028'); px(100, 76, PX, PX*4);       // tige centrale
+  p.fill('#e08830'); px(p,94, 73, PX*3, PX*5);      // corps gauche de la feuille
+  p.fill('#d07020'); px(p,99, 71, PX*3, PX*5);      // corps droit
+  p.fill('#c86028'); px(p,100, 76, PX, PX*4);       // tige centrale
 
   // 6. SOL PARQUET — teinte bois chaud
   p.fill('#a07848'); p.rect(0, 120, CS, 80);
@@ -78,8 +78,8 @@ if (theme === 'automne') {
   p.rect(bxA+4, 108, PX, 18); p.rect(bxA+46, 108, PX, 18); // pieds (dessinés avant le plateau)
   p.fill('#c09060'); p.rect(bxA, 100, 58, PX*2); // plateau dessus
   p.fill('#a07040'); p.rect(bxA, 108, 58, PX);   // ombre sous le plateau
-  p.fill('#f0d870'); px(bxA+38, 90, PX, PX*2);   // tige de la lampe
-  p.fill('#e8b830'); px(bxA+33, 88, PX*3, PX);   // abat-jour
+  p.fill('#f0d870'); px(p,bxA+38, 90, PX, PX*2);   // tige de la lampe
+  p.fill('#e8b830'); px(p,bxA+33, 88, PX*3, PX);   // abat-jour
 
 }
 else if (theme === 'hiver') {
@@ -110,10 +110,10 @@ else if (theme === 'hiver') {
   p.fill('#8899aa'); p.rect(88, 68, 28, 28);      // cadre extérieur
   p.fill('#eef4ff'); p.rect(91, 71, 22, 22);      // fond
   p.fill('#a8c0d8');
-  px(100, 72, PX, PX*8);                          // barre verticale
-  px(95, 77, PX*11, PX);                          // barre horizontale
-  px(96, 73, PX, PX); px(104, 73, PX, PX);       // pointes diagonales haut
-  px(96, 79, PX, PX); px(104, 79, PX, PX);       // pointes diagonales bas
+  px(p,100, 72, PX, PX*8);                          // barre verticale
+  px(p,95, 77, PX*11, PX);                          // barre horizontale
+  px(p,96, 73, PX, PX); px(p,104, 73, PX, PX);       // pointes diagonales haut
+  px(p,96, 79, PX, PX); px(p,104, 79, PX, PX);       // pointes diagonales bas
 
   // 6. SOL — gris bleuté hivernal
   p.fill('#d0dce8'); p.rect(0, 120, CS, 80);
@@ -130,8 +130,8 @@ else if (theme === 'hiver') {
   p.rect(bxH+4, 108, PX, 18); p.rect(bxH+46, 108, PX, 18); // pieds
   p.fill('#a8b8c8'); p.rect(bxH, 100, 58, PX*2); // plateau
   p.fill('#8898a8'); p.rect(bxH, 108, 58, PX);   // ombre plateau
-  p.fill('#f0f0d0'); px(bxH+38, 90, PX, PX*2);   // tige lampe
-  p.fill('#e0e0a0'); px(bxH+33, 88, PX*3, PX);   // abat-jour
+  p.fill('#f0f0d0'); px(p,bxH+38, 90, PX, PX*2);   // tige lampe
+  p.fill('#e0e0a0'); px(p,bxH+33, 88, PX*3, PX);   // abat-jour
 
 }
 else if (theme === 'desert') {
@@ -162,13 +162,13 @@ else if (theme === 'desert') {
   p.fill('#b08c60'); p.rect(88, 68, 28, 28);      // cadre extérieur
   p.fill('#fdf0d0'); p.rect(91, 71, 22, 22);      // fond
   p.fill('#e8a020');
-  px(100, 72, PX, PX);                            // sommet
-  px(98, 74, PX*3, PX);                           // rang 2
-  px(96, 76, PX*5, PX);                           // rang 3 (milieu)
-  px(98, 78, PX*3, PX);                           // rang 4
-  px(100, 80, PX, PX);                            // bas
+  px(p,100, 72, PX, PX);                            // sommet
+  px(p,98, 74, PX*3, PX);                           // rang 2
+  px(p,96, 76, PX*5, PX);                           // rang 3 (milieu)
+  px(p,98, 78, PX*3, PX);                           // rang 4
+  px(p,100, 80, PX, PX);                            // bas
   p.fill('#f0c030');
-  px(100, 74, PX, PX); px(100, 78, PX, PX);      // détails intérieurs
+  px(p,100, 74, PX, PX); px(p,100, 78, PX, PX);      // détails intérieurs
 
   // 6. SOL — terre sable
   p.fill('#c8a870'); p.rect(0, 120, CS, 80);
@@ -185,8 +185,8 @@ else if (theme === 'desert') {
   p.rect(bxD+4, 108, PX, 18); p.rect(bxD+46, 108, PX, 18); // pieds
   p.fill('#c8a060'); p.rect(bxD, 100, 58, PX*2); // plateau
   p.fill('#a88040'); p.rect(bxD, 108, 58, PX);   // ombre plateau
-  p.fill('#f8e060'); px(bxD+38, 90, PX, PX*2);   // tige lampe
-  p.fill('#f0c820'); px(bxD+33, 88, PX*3, PX);   // abat-jour
+  p.fill('#f8e060'); px(p,bxD+38, 90, PX, PX*2);   // tige lampe
+  p.fill('#f0c820'); px(p,bxD+33, 88, PX*3, PX);   // abat-jour
 
 }
 else {
@@ -220,11 +220,11 @@ else {
   p.fill(n ? '#706060' : '#c8a880'); p.rect(88, 68, 28, 28);  // cadre extérieur
   p.fill(n ? '#504050' : '#f0ece4'); p.rect(91, 71, 22, 22);  // fond
   p.fill(n ? '#907080' : '#c8a8d0');
-  px(96, 76, PX*2, PX*2);   // carré haut gauche
-  px(104, 84, PX*2, PX*2);  // carré bas droite
+  px(p,96, 76, PX*2, PX*2);   // carré haut gauche
+  px(p,104, 84, PX*2, PX*2);  // carré bas droite
   p.fill(n ? '#708090' : '#a8c8d0');
-  px(104, 76, PX, PX*3);    // ligne verticale
-  px(96, 84, PX*3, PX);     // ligne horizontale
+  px(p,104, 76, PX, PX*3);    // ligne verticale
+  px(p,96, 84, PX*3, PX);     // ligne horizontale
 
   // 6. SOL PARQUET
   p.fill(n ? '#807080' : C.floorIn); p.rect(0, 120, CS, 80);
@@ -241,8 +241,8 @@ else {
   p.rect(bxP+4, 108, PX, 18); p.rect(bxP+46, 108, PX, 18);   // pieds
   p.fill(n ? '#907878' : '#c8a880'); p.rect(bxP, 100, 58, PX*2); // plateau
   p.fill(n ? '#706060' : '#a88860'); p.rect(bxP, 108, 58, PX);   // ombre plateau
-  p.fill(n ? '#f0d870' : '#f0e898'); px(bxP+38, 90, PX, PX*2);   // tige lampe
-  p.fill(n ? '#e8b830' : '#f8d858'); px(bxP+33, 88, PX*3, PX);   // abat-jour
+  p.fill(n ? '#f0d870' : '#f0e898'); px(p,bxP+38, 90, PX, PX*2);   // tige lampe
+  p.fill(n ? '#e8b830' : '#f8d858'); px(p,bxP+33, 88, PX*3, PX);   // abat-jour
 }
 }
     else if (env === 'montagne') {
@@ -264,7 +264,7 @@ else {
         p.fill('#e8c870'); p.triangle(40, 120, 100, 55, 160, 120);
         p.fill('#f0d890'); p.triangle(100, 55, 88, 75, 112, 75);
         p.fill('#c8a840');
-        px(88, 95, 24, PX); px(76, 108, 48, PX);
+        px(p,88, 95, 24, PX); px(p,76, 108, 48, PX);
       }
       else {
         p.fill(n ? '#404858' : C.mnt1); p.rect(0, 120, CS, 80);
@@ -281,10 +281,10 @@ function drawThemeAccents(p, theme) {
   if (theme.id === 'automne') {
     // Feuilles qui tombent
     p.fill(theme.accent);
-    px((ft*2+10)%CS, 60+Math.sin(ft*.1)*20,  PX, PX);
-    px((ft*2+70)%CS, 40+Math.sin(ft*.12)*25, PX, PX);
+    px(p,(ft*2+10)%CS, 60+Math.sin(ft*.1)*20,  PX, PX);
+    px(p,(ft*2+70)%CS, 40+Math.sin(ft*.12)*25, PX, PX);
     p.fill(theme.leaf1);
-    px((ft*2+130)%CS, 55+Math.sin(ft*.09)*18, PX, PX);
+    px(p,(ft*2+130)%CS, 55+Math.sin(ft*.09)*18, PX, PX);
   }
 
   else if (theme.id === 'hiver') {
@@ -294,7 +294,7 @@ function drawThemeAccents(p, theme) {
       const fy = ((ft + s[1]*3 + i*20) % 120);
       const fx = s[0] + Math.sin(ft*.05 + i)*5;
       p.fill(theme.accent);
-      px(fx, fy, PX, PX);
+      px(p,fx, fy, PX, PX);
     });
   }
 
@@ -303,7 +303,7 @@ function drawThemeAccents(p, theme) {
     drawCactus(p, 18, 90);
     drawCactus(p, 168, 94);
     p.fill(theme.accent);
-    px(70,136,PX*2,PX); px(110,130,PX,PX); px(150,138,PX*2,PX);
+    px(p,70,136,PX*2,PX); px(p,110,130,PX,PX); px(p,150,138,PX*2,PX);
   }
 
   // pastel : rien de spécial, les fleurs sont gérées ailleurs
@@ -311,22 +311,22 @@ function drawThemeAccents(p, theme) {
 
 function drawTreeTheme(p, x, y, n, colLeaf, colLeaf2, colTrunk) {
   p.fill(colTrunk);
-  px(p, x+PX*2, y+PX*4, PX*2, PX*5);
+  px(p,p, x+PX*2, y+PX*4, PX*2, PX*5);
   p.fill(n ? '#304028' : colLeaf);
-  px(x, y+PX, PX*6, PX*3);
-  px(x+PX, y-PX, PX*4, PX*2);
+  px(p,x, y+PX, PX*6, PX*3);
+  px(p,x+PX, y-PX, PX*4, PX*2);
   p.fill(n ? '#304028' : colLeaf2);
-  px(p, x+PX*2, y-PX*2, PX*2, PX);
+  px(p,p, x+PX*2, y-PX*2, PX*2, PX);
 }
 
 function drawCactus(p, x, y) {
   p.fill('#70a858');
-  px(x+PX,   y,      PX*2, PX*7);
-  px(x-PX,   y+PX*2, PX*2, PX*2);
-  px(x-PX,   y+PX,   PX,   PX);
-  px(x+PX*3, y+PX*3, PX*2, PX*2);
-  px(x+PX*4, y+PX*2, PX,   PX);
+  px(p,x+PX,   y,      PX*2, PX*7);
+  px(p,x-PX,   y+PX*2, PX*2, PX*2);
+  px(p,x-PX,   y+PX,   PX,   PX);
+  px(p,x+PX*3, y+PX*3, PX*2, PX*2);
+  px(p,x+PX*4, y+PX*2, PX,   PX);
   p.fill('#508840');
-  px(x,      y+PX*2, PX,   PX);
-  px(x+PX*3, y+PX*3, PX,   PX);
+  px(p,x,      y+PX*2, PX,   PX);
+  px(p,x+PX*3, y+PX*3, PX,   PX);
 }

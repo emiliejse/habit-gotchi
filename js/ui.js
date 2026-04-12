@@ -837,12 +837,29 @@ let pinBuf = '', pinMode = 'check';
 function renderPin() {
   const dots = document.getElementById('pin-dots'); if (!dots) return;
   dots.innerHTML = '';
-  for (let i = 0; i < 4; i++) { const d = document.createElement('div'); d.className = 'pin-dot' + (i < pinBuf.length ? ' f' : ''); dots.appendChild(d); }
-  const pad = document.getElementById('pin-pad'); pad.innerHTML = '';
-  for (let n = 1; n <= 9; n++) { const b = document.createElement('button'); b.className = 'pin-k'; b.textContent = n; b.onclick = () => { pinBuf += n; renderPin(); if (pinBuf.length === 4) pinSubmit(); };
-  let bd = document.createElement('button'); bd.className = 'pin-k'; bd.textContent = '←'; bd.onclick = () => { pinBuf = pinBuf.slice(0,-1); renderPin(); }; pad.appendChild(bd);
-  let b0 = document.createElement('button'); b0.className = 'pin-k'; b0.textContent = '0'; b0.onclick = () => { pinBuf += '0'; renderPin(); if (pinBuf.length === 4) pinSubmit(); };
-  let bc = document.createElement('button'); bc.className = 'pin-k'; bc.textContent = '✕'; bc.style.color = 'var(--coral)'; bc.onclick = () => { pinBuf = ''; renderPin(); }; pad.appendChild(bc);
+  for (let i = 0; i < 4; i++) {
+    const d = document.createElement('div');
+    d.className = 'pin-dot' + (i < pinBuf.length ? ' f' : '');
+    dots.appendChild(d);
+  }
+  const pad = document.getElementById('pin-pad');
+  pad.innerHTML = '';
+  for (let n = 1; n <= 9; n++) {
+    const b = document.createElement('button');
+    b.className = 'pin-k'; b.textContent = n;
+    b.onclick = () => { pinBuf += n; renderPin(); if (pinBuf.length === 4) pinSubmit(); };
+    pad.appendChild(b);
+  }
+  let bd = document.createElement('button'); bd.className = 'pin-k'; bd.textContent = '←';
+  bd.onclick = () => { pinBuf = pinBuf.slice(0,-1); renderPin(); };
+  pad.appendChild(bd);
+  let b0 = document.createElement('button'); b0.className = 'pin-k'; b0.textContent = '0';
+  b0.onclick = () => { pinBuf += '0'; renderPin(); if (pinBuf.length === 4) pinSubmit(); };
+  pad.appendChild(b0);
+  let bc = document.createElement('button'); bc.className = 'pin-k'; bc.textContent = '✕';
+  bc.style.color = 'var(--coral)';
+  bc.onclick = () => { pinBuf = ''; renderPin(); };
+  pad.appendChild(bc);
 }
 function pinSubmit() {
   const msg = document.getElementById('pin-msg');

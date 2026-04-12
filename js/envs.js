@@ -92,7 +92,7 @@ function drawActiveEnv(p, env, n, h) {
     p.fill(tc(n, theme.wall));
     p.rect(0, 60, CS, 60);
 
-    // 2. FENÊTRE — vitre suit l'heure pour pastel, suit sky1 pour les autres
+    // 2. FENÊTRE — vitre suit l'heure réelle (aube/jour/couchant/nuit)
     let skyCol;
     skyCol = (h>=20||h<6) ? C.skyN1 : (h>=17) ? C.skyK1 : (h>=7) ? C.skyD1 : C.skyA1;
     p.fill(skyCol); p.rect(20, 68, 42, 42);
@@ -164,11 +164,20 @@ function drawActiveEnv(p, env, n, h) {
   px(p, 175, 116, PX*3, PX);
 }
     
-    // Désert : dune supplémentaire + stries
+    // Désert : pyramide
     if (theme.id === 'desert') {
-      p.fill(theme.mntSnow); p.triangle(100, 55, 88, 75, 112, 75);
-      p.fill(theme.mntGndDk);
-      px(p, 88, 95, 24, PX); px(p, 76, 108, 48, PX);
+      // Face claire (gauche)
+      p.fill(tc(n, theme.mntPeak));
+      p.triangle(55, 120, 100, 55, 145, 120);
+      // Face ombragée (droite)
+      p.fill(tc(n, theme.mntGndDk));
+      p.triangle(100, 55, 100, 120, 145, 120);
+      // Entrée
+      p.fill('#302010');
+      px(p, 96, 108, PX*2, PX*3);
+      // Stries horizontales
+      p.fill(tc(n, theme.mntSnow));
+      px(p, 68, 88, 22, PX); px(p, 62, 102, 34, PX);
     }
   }
 }
@@ -176,28 +185,43 @@ function drawActiveEnv(p, env, n, h) {
 // ── MOTIFS CADRE MURAL (unique par thème) ───────────────────
 function drawFrameMotif(p, theme, n) {
   if (theme.id === 'automne') {
-    p.fill(tc(n, theme.frameAccent1));
-    px(p, 94, 73, PX*3, PX*5);
-    p.fill(tc(n, theme.frameAccent2));
-    px(p, 99, 71, PX*3, PX*5);
-    p.fill('#c86028');
-    px(p, 100, 76, PX, PX*4);
-  }
+  // tige
+  p.fill(tc(n, theme.frameAccent1));
+  px(p, 100, 75, PX, PX*4);
+  // feuille gauche
+  px(p, 95,  77, PX*2, PX);
+  // feuille droite
+  px(p, 102, 79, PX*2, PX);
+  // nervure
+  p.fill(tc(n, theme.frameAccent2));
+  px(p, 96,  77, PX,   PX);
+  px(p, 103, 79, PX,   PX);
+}
   else if (theme.id === 'hiver') {
-    p.fill(tc(n, theme.frameAccent1));
-    px(p, 100, 72, PX, PX*8);
-    px(p, 95, 77, PX*11, PX);
-    px(p, 96, 73, PX, PX); px(p, 104, 73, PX, PX);
-    px(p, 96, 79, PX, PX); px(p, 104, 79, PX, PX);
-  }
+  p.fill(tc(n, theme.frameAccent1));
+  // croix centrale
+  px(p, 100, 73, PX, PX*6);  // vertical
+  px(p, 96,  77, PX*9, PX);  // horizontal
+  // 4 diagonales (1 px chacune)
+  px(p, 96, 73, PX, PX); px(p, 104, 73, PX, PX);
+  px(p, 96, 81, PX, PX); px(p, 104, 81, PX, PX);
+}
   else if (theme.id === 'desert') {
-    p.fill(tc(n, theme.frameAccent1));
-    px(p, 100, 72, PX, PX); px(p, 98, 74, PX*3, PX);
-    px(p, 96, 76, PX*5, PX); px(p, 98, 78, PX*3, PX);
-    px(p, 100, 80, PX, PX);
-    p.fill(tc(n, theme.frameAccent2));
-    px(p, 100, 74, PX, PX); px(p, 100, 78, PX, PX);
-  }
+  // corps scarabée
+  p.fill(tc(n, theme.frameAccent1));  // brun doré
+  px(p, 98, 78, PX*3, PX*2);         // abdomen
+  px(p, 99, 76, PX*2, PX);           // thorax
+  // tête
+  p.fill(tc(n, theme.frameAccent2));  // or
+  px(p, 100, 74, PX, PX);
+  // antennes
+  p.fill(tc(n, theme.frameAccent1));
+  px(p, 99,  73, PX, PX);
+  px(p, 101, 73, PX, PX);
+  // pattes (3 de chaque côté)
+  px(p, 96, 78, PX, PX); px(p, 96, 79, PX, PX); px(p, 96, 80, PX, PX);
+  px(p, 103,78, PX, PX); px(p, 103,79, PX, PX); px(p, 103,80, PX, PX);
+}
   else {
     // pastel
     p.fill(tc(n, theme.frameAccent1));

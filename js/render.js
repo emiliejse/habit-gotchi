@@ -564,11 +564,6 @@ if (window._gotchiNearPoop && !sl) {
   }
 
 function triggerTouchReaction(sleeping) {
-    // Anti-doublon : ignore si dernier tap < 100ms
-    console.log('triggerTouchReaction appelé', sleeping);
-  const now = Date.now();
-  if (now - (window._lastTapTime || 0) < 100) return;
-  window._lastTapTime = now;
   const awakeTypes = ['heart', 'heart', 'sparkle', 'jump', 'spin', 'star', 'note', 'flower'];
   const sleepTypes = ['zzz', 'moon', 'angry'];
   const types = sleeping ? sleepTypes : awakeTypes;
@@ -577,16 +572,9 @@ function triggerTouchReaction(sleeping) {
   window.touchReactions.push({
     timer: 35,
     type,
-    cx: window._lastTapX || 100, // position X du tap
+    cx: (window._lastTapX || 100) + (Math.random() - 0.5) * 40,
   });
-  window.touchReactions.push({
-  timer: 35,
-  type,
-  cx: (window._lastTapX || 100) + (Math.random() - 0.5) * 40, // ← décalage ±20px
-});
-console.log('pushed', type, window.touchReactions.length);
-  
-  // Max 8 réactions simultanées
+
   if (window.touchReactions.length > 8) window.touchReactions.shift();
 }
 

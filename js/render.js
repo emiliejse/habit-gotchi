@@ -117,7 +117,7 @@ if (D.g.props) {
     if (g.props) {
       g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
         const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
-                 || (window.D.propsPixels || []).find(l => l.id === prop.id);
+                 || Object.values(window.D.propsPixels || {}).find(l => l.id === prop.id);
         if (def && def.pixels) {
           const motion = def.motion || 'drift';
           for (let i = 0; i < 3; i++) {

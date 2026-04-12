@@ -14,6 +14,40 @@ function px(p, x, y, w, h) {
 // "tc" = "theme color"
 function tc(n, col) { return n ? shadeN(col) : col; }
 
+function drawWind(p) {
+  p.noStroke();
+  for (let i = 0; i < 8; i++) {
+    const speed = 4 + (i % 3) * 2;
+    const x = CS - ((p.frameCount * speed + i * 28) % (CS + 20));
+    const y = 15 + i * 22 + Math.sin(p.frameCount * .08 + i) * 6;
+    const len = 20 + (i % 3) * 10;
+    p.fill('#d8d8e8');
+    for (let d = 0; d < len; d += PX) {
+      px(p,x + d, y, PX, PX);
+    }
+  } 
+}
+function drawRainbow(p) {
+  const cx = CS / 2, cy = 125; // ← centre au niveau du sol
+  const bands = C.rainbow;
+  const rInner = 30;
+  const bandW = PX * 3;
+
+  for (let i = 0; i < bands.length; i++) {
+    const rMin = rInner + i * bandW;
+    const rMax = rMin + bandW;
+    p.fill(bands[i]);
+    for (let gx = cx - rMax - PX; gx <= cx + rMax; gx += PX) {
+      for (let gy = cy - rMax - PX; gy < cy; gy += PX) { // gy < cy = seulement au-dessus
+        const dist = Math.sqrt((gx - cx) ** 2 + (gy - cy) ** 2);
+        if (dist >= rMin && dist < rMax) {
+          px(p, gx, gy, PX, PX);
+        }
+      }
+    }
+  }
+}
+
 // ── drawActiveEnv() : dessine l'environnement actif ─────────
 // `env`   → string : 'parc' | 'chambre' | 'montagne' (vient de D.g.activeEnv)
 // `n`     → booléen : true = mode nuit (h≥21 ou h<6)

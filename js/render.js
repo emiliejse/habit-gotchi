@@ -321,40 +321,6 @@ const accY = baseY - def.pixels.length * PX + offsetY;
   }
 
   function drawCl(p,x,y) { p.fill(C.cloud); p.rect(x,y,PX*5,PX*2); p.rect(x+PX,y-PX,PX*3,PX); }
-function drawWind(p) {
-  p.noStroke();
-  for (let i = 0; i < 8; i++) {
-    const speed = 4 + (i % 3) * 2;
-    const x = CS - ((p.frameCount * speed + i * 28) % (CS + 20));
-    const y = 15 + i * 22 + Math.sin(p.frameCount * .08 + i) * 6;
-    const len = 20 + (i % 3) * 10;
-    p.fill('#d8d8e8');
-    for (let d = 0; d < len; d += PX) {
-      px(p,x + d, y, PX, PX);
-    }
-  } 
-}
-function drawRainbow(p) {
-  const cx = CS / 2, cy = 125; // ← centre au niveau du sol
-  const bands = C.rainbow;
-  const rInner = 30;
-  const bandW = PX * 3;
-
-  for (let i = 0; i < bands.length; i++) {
-    const rMin = rInner + i * bandW;
-    const rMax = rMin + bandW;
-    p.fill(bands[i]);
-    for (let gx = cx - rMax - PX; gx <= cx + rMax; gx += PX) {
-      for (let gy = cy - rMax - PX; gy < cy; gy += PX) { // gy < cy = seulement au-dessus
-        const dist = Math.sqrt((gx - cx) ** 2 + (gy - cy) ** 2);
-        if (dist >= rMin && dist < rMax) {
-          px(p, gx, gy, PX, PX);
-        }
-      }
-    }
-  }
-}
-  function drawTree(p,x,y,n) { p.fill(C.trunk);px(p,x+PX*2,y+PX*4,PX*2,PX*5);p.fill(n?C.leafN:C.leaf);px(p,x,y+PX,PX*6,PX*3);px(p,x+PX,y-PX,PX*4,PX*2);px(p,x+PX*2,y-PX*2,PX*2,PX); }
 
   function drawZzz(p, x, y) {
     for(let i=0; i<3; i++) {

@@ -86,15 +86,6 @@ const p5s = (p) => {
 
     drawSky(p, h, ha);
 
-    // Ciel thématique désert
-    if ((window.D.g.envTheme || 'pastel') === 'desert' && h >= 7 && h < 20) {
-      for (let y = 0; y < 120; y += PX) {
-        p.fill(p.lerpColor(p.color('#f0b850'), p.color('#f8d888'), y / 120));
-        p.rect(0, y, CS, PX);
-      }
-      return;
-    }
-
     if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
 
     let envActif = g.activeEnv || 'parc';

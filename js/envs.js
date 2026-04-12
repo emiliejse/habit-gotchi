@@ -94,11 +94,7 @@ function drawActiveEnv(p, env, n, h) {
 
     // 2. FENÊTRE — vitre suit l'heure pour pastel, suit sky1 pour les autres
     let skyCol;
-    if (theme.id === 'pastel') {
-      skyCol = (h>=20||h<6) ? C.skyN1 : (h>=17) ? C.skyK1 : (h>=7) ? C.skyD1 : C.skyA1;
-    } else {
-      skyCol = (h>=20||h<6) ? C.skyN1 : theme.sky1;
-    }
+    skyCol = (h>=20||h<6) ? C.skyN1 : (h>=17) ? C.skyK1 : (h>=7) ? C.skyD1 : C.skyA1;
     p.fill(skyCol); p.rect(20, 68, 42, 42);
     p.fill(tc(n, theme.windowFrame));
     p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
@@ -159,6 +155,15 @@ function drawActiveEnv(p, env, n, h) {
     p.fill(tc(n, theme.mntPeak));  p.triangle(40, 120, 100, 50, 160, 120);
     p.fill(tc(n, theme.mntSnow));  p.triangle(100, 50, 83, 70, 117, 70);
 
+    if (theme.id === 'pastel') {
+  // buissons sur la ligne du sol
+  p.fill('#78c488');
+  px(p, 10,  115, PX*4, PX*2);
+  px(p, 50,  116, PX*3, PX*2);
+  px(p, 140, 115, PX*4, PX*2);
+  px(p, 175, 116, PX*3, PX);
+}
+    
     // Désert : dune supplémentaire + stries
     if (theme.id === 'desert') {
       p.fill(theme.mntSnow); p.triangle(100, 55, 88, 75, 112, 75);
@@ -228,11 +233,13 @@ function drawThemeAccents(p, theme, n) {
     p.fill(theme.accent);
     px(p, 70, 136, PX*2, PX); px(p, 110, 130, PX, PX); px(p, 150, 138, PX*2, PX);
   }
-  else if (theme.id === 'pastel') {
-  drawFl(p, 30,  138, theme.accent);
-  drawFl(p, 80,  142, theme.leaf1);
-  drawFl(p, 140, 138, theme.accent);
-  drawFl(p, 175, 140, theme.leaf2);
+else if (theme.id === 'pastel') {
+  drawFl(p, 22,  120, theme.accent);
+  drawFl(p, 168, 122, theme.accent);
+  // petites fleurs dans les arbres
+  p.fill(theme.accent);
+  px(p, 15, 82, PX, PX);
+  px(p, 168, 86, PX, PX);
 }
 }
 

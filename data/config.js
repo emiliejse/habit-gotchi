@@ -36,7 +36,7 @@ const ENV_THEMES = [
     desk:'#b89870', deskTop:'#c8a880', deskShadow:'#a88860',
     lamp:'#f0e898', lampShade:'#f8d858',
     // montagne
-    mntGnd:'#a0a8b8', mntGndDk:'#808898', mntPeak:'#b0b8c8', mntSnow:'#e8e8f0',
+    mntGnd:'#88b870', mntGndDk:'#6a9858', mntPeak:'#a0c888', mntSnow:'#e8f0e0',
   },
 
   { id:'automne', label:'Automne 🍂',
@@ -51,7 +51,7 @@ const ENV_THEMES = [
     frameOuter:'#a07848', frameBg:'#f0e8d8', frameAccent1:'#e08830', frameAccent2:'#d07020',
     floor:'#a07848', floorLine:'#886030',
     rug:'#7a3020', rugCenter:'#9a4830',
-    desk:'#906040', deskTop:'#c09060', deskShadow:'#a07040',
+    desk:'#906040', deskTop:'#d8b880', deskShadow:'#a07040',
     lamp:'#f4e090', lampShade:'#e8c050',
     mntGnd:'#b07840', mntGndDk:'#906028', mntPeak:'#c09050', mntSnow:'#e8c878',
   },

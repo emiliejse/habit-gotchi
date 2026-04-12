@@ -442,7 +442,7 @@ p.touchStarted = function() {
   window._lastTapTime = now;
   const mx = p.touches[0]?.x ?? p.mouseX;
   const my = p.touches[0]?.y ?? p.mouseY;
-  console.log('touch', mx, my, 'walkX', walkX);
+  console.log('hit check', Math.abs(106 - 101), Math.abs(122 - (108 - 10)));
 
   // --- Bouton 🧹 ---
   if (Math.abs(mx - 72) < 14 && my < 26) {

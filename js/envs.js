@@ -1,6 +1,12 @@
 // envs.js — Dessin des environnements pixel art
 // Dépend de : config.js (ENV_THEMES), render.js (PX, px, getEnvC)
 
+// envs.js
+// px est défini localement ici, miroir de celui dans p5s
+function px(p, x, y, w, h) {
+  p.rect(Math.floor(x/PX)*PX, Math.floor(y/PX)*PX, Math.max(PX,Math.floor(w/PX)*PX), Math.max(PX,Math.floor(h/PX)*PX));
+}
+
 function drawActiveEnv(p, env, n, h) {
   const theme = getEnvC();
   p.noStroke();
@@ -305,12 +311,12 @@ function drawThemeAccents(p, theme) {
 
 function drawTreeTheme(p, x, y, n, colLeaf, colLeaf2, colTrunk) {
   p.fill(colTrunk);
-  px(x+PX*2, y+PX*4, PX*2, PX*5);
+  px(p, x+PX*2, y+PX*4, PX*2, PX*5);
   p.fill(n ? '#304028' : colLeaf);
   px(x, y+PX, PX*6, PX*3);
   px(x+PX, y-PX, PX*4, PX*2);
   p.fill(n ? '#304028' : colLeaf2);
-  px(x+PX*2, y-PX*2, PX*2, PX);
+  px(p, x+PX*2, y-PX*2, PX*2, PX);
 }
 
 function drawCactus(p, x, y) {

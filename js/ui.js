@@ -602,6 +602,7 @@ const notesRecentes = D.journal
   traits:        P?.traits?.join(', ') || 'doux, joueur, curieux',
   energy:        g.energy,
   happiness:     g.happiness,
+  heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
   notesRecentes: notesRecentes
     ? `Aujourd'hui : ${today()}. Ambiance récente : ${notesRecentes}`
     : `Aujourd'hui : ${today()}.`,

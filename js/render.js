@@ -1,8 +1,27 @@
 /* ============================================================
-   render.js — Moteur p5.js, dessin, animations
-   Dépend de : app.js (window.D, window.PROPS_LIB, window.GOTCHI_COLORS,
-               window.ENV_THEMES, window.meteoData, window.shakeTimer,
-               window.celebQueue, hr())
+   render.js — Moteur p5.js : dessin pixel art, animations, Gotchi
+   
+   RÔLE : Ce fichier est le "pinceau". Il ne contient PAS de logique
+   métier (XP, stats) — il se contente de LIRE window.D et de dessiner.
+   
+   DÉPENDANCES (doivent être chargées AVANT dans index.html) :
+     - config.js  → GOTCHI_COLORS, ENV_THEMES (palettes par thème)
+     - app.js     → window.D (données), window.PROPS_LIB, hr(),
+                    window.meteoData, window.shakeTimer, window.celebQueue
+     - envs.js    → drawActiveEnv() (chargé APRÈS render.js)
+   
+   ORDRE DE DESSIN dans p.draw() — comme des calques Photoshop :
+     1. Ciel          drawSky()         ← fond, toujours en premier
+     2. Vent          drawWind()        ← si vent fort (météo)
+     3. Arc-en-ciel   drawRainbow()     ← si bonheur = 100%
+     4. Environnement drawActiveEnv()   ← parc / chambre / montagne
+     5. Props décor fond  (slots A, B)  ← derrière le Gotchi
+     6. Props ambiance    (drift/fall…) ← effets flottants
+     7. Gotchi        draw*()           ← personnage principal
+     8. Props accessoire  (sur la tête) ← devant le Gotchi
+     9. Props décor sol   (slots C,D,SOL)
+    10. Particules    updateParts()     ← confettis de célébration
+    11. HUD           pétales + météo   ← interface, toujours au-dessus
    ============================================================ */
 
 /* ============================================================
@@ -30,7 +49,21 @@ const PX = 5, CS = 200;
 let bounceT = 0, blinkT = 0, blink = false;
 let particles = [];
 
-// Slots fixes pour les props décor
+// ── PROP_SLOTS : les 5 emplacements fixes pour les props décor ──
+// Imagine le canvas (200×200) comme une scène de théâtre vue de face.
+// Chaque slot est un point d'ancrage (coin supérieur gauche du prop).
+//
+//   A (38, 108)  → fond gauche  : derrière le Gotchi, niveau "taille"
+//   B (132, 108) → fond droit   : idem, côté droit
+//   C (28, 140)  → sol gauche   : devant, au premier plan
+//   D (148, 140) → sol droit    : devant, côté droit
+//   SOL (88, 152)→ sol centre   : juste devant le Gotchi
+//
+// A et B sont dessinés AVANT le Gotchi (donc derrière lui).
+// C, D et SOL sont dessinés APRÈS (donc devant lui).
+//
+// POUR DÉPLACER UN SLOT : change x et/ou y ici.
+// ⚠️ y=120 = ligne de sol. Au-dessus = fond, en-dessous = sol visible.
 const PROP_SLOTS = {
   A:   { x: 38,  y: 108 },  // fond gauche
   B:   { x: 132, y: 108 },  // fond droit
@@ -84,6 +117,23 @@ const p5s = (p) => {
 
     if (window.shakeTimer > 0) { window.shakeTimer--; p.translate(Math.sin(p.frameCount * 2) * 2, 0); }
 
+// ── drawSky() : le ciel change selon l'HEURE (h) et le BONHEUR (ha) ──
+// LOGIQUE : comme un filtre couleur qui s'applique sur tout le fond.
+//
+// Pour modifier une couleur de ciel, change la valeur dans C{} en haut
+// du fichier (ex: C.skyD1 pour le bleu du jour).
+//
+// Tableau de décision :
+//   ha ≤ 20 + jour (7h–21h)  → gris (C.skyGray1/2)   ← Gotchi triste
+//   h 7–17                   → bleu jour (skyD1/D2)
+//   h 17–20                  → rose couchant (skyK1/K2)
+//   h 20–5                   → nuit (skyN1/N2) + étoiles
+//   h 5–7                    → aube (skyA1/A2)
+//
+// POUR AJOUTER UNE CONDITION : copie un bloc if/else if existant
+// et change la condition + les variables c1/c2.
+// Le dégradé est fait par la boucle for (lerpColor = mélange deux couleurs).
+
     drawSky(p, h, ha);
 
     if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
@@ -98,7 +148,9 @@ if (D.g.props) {
     const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
              || (D.propsPixels && D.propsPixels[prop.id]);
     if (def && def.pixels) {
-      const slot = PROP_SLOTS[prop.slot] || PROP_SLOTS[def.slot] || PROP_SLOTS['SOL'];
+      if (!prop.slot) return; // pas de slot défini = on ne dessine pas
+const slot = PROP_SLOTS[prop.slot];
+if (!slot) return;
       drawProp(p, def, slot.x, slot.y);
     }
   });
@@ -109,12 +161,31 @@ if (D.g.props) {
     const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
              || (D.propsPixels && D.propsPixels[prop.id]);
     if (def && def.pixels) {
-      const slot = PROP_SLOTS[prop.slot] || PROP_SLOTS[def.slot] || PROP_SLOTS['SOL'];
+      if (!prop.slot) return; // pas de slot défini = on ne dessine pas
+const slot = PROP_SLOTS[prop.slot];
+if (!slot) return;
       drawProp(p, def, slot.x, slot.y);
     }
   });
 }
-    // --- Ambiances ---
+// --- Ambiances : props flottants avec 4 types de mouvement ──
+// Les props ambiance sont dessinés 3 fois (i=0,1,2) à des positions
+// décalées pour donner l'illusion de densité.
+// Le mouvement est calculé à partir de p.frameCount (compteur de frames).
+//
+// DRIFT   (dérive) → traverse l'écran de droite à gauche, en ondulant
+//                    Idéal pour : nuages, bulles, feuilles légères
+// FALL    (chute)  → tombe de haut en bas, avec balancement latéral
+//                    Idéal pour : neige, pétales, confettis
+// FLOAT   (lévite) → monte du sol vers le haut en boucle
+//                    Idéal pour : bulles, étincelles qui montent
+// SPARKLE (scintille) → apparaît/disparaît par intermittence (tous les 20 frames)
+//                       Idéal pour : étoiles, lucioles, paillettes
+//
+// POUR CHANGER LA VITESSE : modifie le multiplicateur de p.frameCount
+//   ex: `p.frameCount * 2` → doubler la vitesse de drift
+// POUR CHANGER L'AMPLITUDE D'ONDULATION : modifie le `* 8` de Math.sin
+// La valeur `motion` vient de def.motion dans props.json (ou 'drift' par défaut)
     if (g.props) {
       g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
         const def = (window.PROPS_LIB || []).find(l => l.id === prop.id)
@@ -296,6 +367,23 @@ function drawRainbow(p) {
     }
   }
 
+  // ── drawProp() : dessine un objet pixel art depuis ses données JSON ──
+// Un prop = un objet avec deux tableaux :
+//   prop.pixels  → grille 2D d'indices : [[0,1,2,1,0], [0,2,2,2,0], ...]
+//                  0 = transparent (skippé), 1/2/3... = index dans palette
+//   prop.palette → tableau de couleurs hex : ['', '#e8a0a0', '#c87060', ...]
+//                  index 0 est toujours vide (= transparent)
+//
+// EXEMPLE : si pixels[2][3] = 2, on dessine prop.palette[2] en position
+//   x = offsetX + 3*PX, y = offsetY + 2*PX
+//
+// POUR MODIFIER UN PROP EXISTANT :
+//   → Couleur : change la valeur hex dans prop.palette[N] dans props.json
+//   → Forme : change un indice dans prop.pixels (0 = efface, N = recolore)
+//
+// offsetX, offsetY → coin supérieur gauche où commence le dessin
+//   (pour les décors : vient de PROP_SLOTS ; pour les ambiances : calculé dynamiquement)
+
   function drawProp(p, prop, offsetX, offsetY) {
     if (!prop.pixels || !prop.palette) return;
     p.noStroke();
@@ -336,6 +424,34 @@ function drawEgg(p, cx, cy) {
   if(window.D.g.totalXp>30) { p.fill(C.eggCr); px(p,x+PX*3,y+PX,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); px(p,x+PX*3,y+PX*3,PX,PX); }
   return { topY: y, eyeY: y+PX*2, neckY: y+PX*4 };
 }
+
+// ── Sprites Gotchi : baby / teen / adult ────────────────────
+// PARAMÈTRES communs :
+//   cx, cy  → centre bas du sprite (position X locomotion + bobY)
+//   sl      → sleeping : true = yeux fermés, bouche absente
+//   en      → énergie (0–5) : < 25 = bras tombants / jambes fatiguées
+//   ha      → bonheur (0–5) : pilote l'expression de la bouche
+//
+// LIRE UN SPRITE :
+//   Chaque px(p, x+PX*N, y+PX*M, PX*L, PX*H) est un rectangle de pixels.
+//   x et y sont les coins supérieur-gauche du sprite.
+//   Pense à une grille millimétrique :
+//     PX*0 = colonne 0, PX*1 = colonne 1, PX*2 = colonne 2…
+//   Pour visualiser, dessine la grille sur papier quadrillé.
+//
+// MODIFIER LE CORPS :
+//   → Couleur : change C.body, C.bodyLt, C.bodyDk dans la palette C{}
+//     (en haut de render.js) — s'applique à TOUS les stades.
+//   → Forme : modifie les coordonnées px() du bloc `p.fill(C.body)`
+//
+// MODIFIER L'EXPRESSION :
+//   → Bouche : trouve le bloc `p.fill(C.mouth)` + ses conditions ha > X
+//     Exemple baby : ha>60 = sourire, ha<25 = grimace, sinon neutre.
+//   → Yeux ouverts : bloc `else { p.fill(C.eye)... p.fill('#fff')... }`
+//   → Yeux fermés (nuit/blink) : bloc `if(sl||blink) { p.fill(C.eye)... }`
+//
+// VALEUR DE RETOUR : { topY, eyeY, neckY }
+//   → Utilisé pour positionner les accessoires (chapeau = topY, lunettes = eyeY)
 
   function drawBaby(p, cx, cy, sl, en, ha) {
     const x=cx-PX*3, y=cy; p.noStroke();

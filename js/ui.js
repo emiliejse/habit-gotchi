@@ -230,7 +230,12 @@ function renderProps() {
         <div style="width:100%;">
           <div>${p.nom}</div>
           <div style="font-size:8px;text-transform:uppercase;opacity:.7;font-weight:normal;">${p.type}</div>
-          ${p.actif ? '<div style="font-size:8px;color:var(--mint)">● actif</div>' : ''}
+          ${p.actif
+  ? `<div style="font-size:8px;background:var(--mint);border-radius:6px;padding:2px 4px;margin-top:2px;color:#fff;font-weight:bold">
+       ✓ actif${p.slot ? ' · ' + p.slot : ''}
+     </div>`
+  : `<div style="font-size:8px;opacity:.4;margin-top:2px">inactif</div>`
+}
         </div>
       </div>`;
     }).join('') + `</div>`;
@@ -416,14 +421,19 @@ function toggleProp(index) {
   const prop = D.g.props[index];
 
   // --- Désactiver si déjà actif ---
-  if (prop.actif) {
+if (prop.actif) {
+  if (prop.type === 'decor') {
+    // Décor actif → proposer de déplacer ou ranger
+    openSlotPickerAvecRangement(index);
+  } else {
     prop.actif = false;
     prop.slot = null;
     save();
     renderProps();
     toast(`📦 ${prop.nom} rangé`);
-    return;
   }
+  return;
+}
 
   // --- Objets non-décor : activer direct (pas de slot à choisir) ---
   if (prop.type !== 'decor') {
@@ -546,6 +556,48 @@ function confirmSlot(propIndex, slotId) {
   clModal();
   renderProps();
   toast(`✨ ${prop.nom} placé (${slotId}) !`);
+}
+
+function openSlotPickerAvecRangement(propIndex) {
+  const prop = D.g.props[propIndex];
+  const occupied = {};
+  D.g.props.forEach(p => { if (p.actif && p.slot) occupied[p.slot] = p.nom; });
+
+  // Réutilise makeSlotBtn existant
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <h3 style="font-size:13px;margin-bottom:6px;color:var(--lilac)">
+      📍 ${prop.emoji || '🎁'} ${prop.nom}
+    </h3>
+    <p style="font-size:10px;opacity:.6;margin-bottom:10px">
+      Actuellement en slot <b>${prop.slot}</b> — changer d'emplacement ?
+    </p>
+    <div style="font-size:9px;opacity:.5;margin-bottom:4px;text-transform:uppercase">Fond</div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px">
+      ${makeSlotBtn(propIndex, 'A', 'Gauche', '↖', occupied)}
+      ${makeSlotBtn(propIndex, 'B', 'Droite', '↗', occupied)}
+    </div>
+    <div style="font-size:9px;opacity:.5;margin-bottom:4px;text-transform:uppercase">Devant</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+      ${makeSlotBtn(propIndex, 'C',   'Gauche', '↙', occupied)}
+      ${makeSlotBtn(propIndex, 'SOL', 'Centre', '⬇', occupied)}
+      ${makeSlotBtn(propIndex, 'D',   'Droite', '↘', occupied)}
+    </div>
+    <button class="btn btn-d" onclick="rangerProp(${propIndex})" style="width:100%;font-size:10px;margin-bottom:6px">
+      📦 Ranger
+    </button>
+    <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:10px">Annuler</button>
+  `;
+}
+
+function rangerProp(propIndex) {
+  const prop = D.g.props[propIndex];
+  prop.actif = false;
+  prop.slot = null;
+  save();
+  clModal();
+  renderProps();
+  toast(`📦 ${prop.nom} rangé`);
 }
 
  function debugProps() {

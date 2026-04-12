@@ -1,9 +1,32 @@
-// envs.js — Dessin des environnements pixel art
-// Dépend de : config.js (ENV_THEMES), render.js (PX, CS, C, getEnvC)
-
+// ── px() : LA brique élémentaire de tout le pixel art ───────
+// Pense à px() comme à un tampon encreur : chaque appel pose
+// un rectangle de taille PX×PX (5×5 pixels réels à l'écran).
+// Le Math.floor(x/PX)*PX arrondit la position à la grille PX,
+// pour qu'aucun objet ne soit jamais "entre deux pixels".
+//   p  → l'instance p5.js (toujours passer `p`)
+//   x,y → coin supérieur gauche (coordonnées canvas 0–200)
+//   w,h → largeur/hauteur SOUHAITÉE — arrondies au PX supérieur
+// ⚠️ Toujours appeler p.fill() AVANT px() — px() ne set pas la couleur.
 function px(p, x, y, w, h) {
   p.rect(Math.floor(x/PX)*PX, Math.floor(y/PX)*PX, Math.max(PX,Math.floor(w/PX)*PX), Math.max(PX,Math.floor(h/PX)*PX));
 }
+
+// ── drawActiveEnv() : dessine l'environnement actif ─────────
+// `env`   → string : 'parc' | 'chambre' | 'montagne' (vient de D.g.activeEnv)
+// `n`     → booléen : true = mode nuit (h≥21 ou h<6)
+// `h`     → heure (0–23), utilisé pour la vitre de la fenêtre chambre
+// `theme` → objet de couleurs issu de getEnvC() → config.js/ENV_THEMES
+//
+// POUR AJOUTER UN ENVIRONNEMENT :
+//   1. Ajoute un objet { id:'monenv', ... } dans ENV_THEMES (config.js)
+//      avec toutes les clés de couleur dont tu auras besoin.
+//   2. Ajoute un bloc `else if (env === 'monenv') { ... }` ici.
+//   3. Pour le mode nuit : wrape chaque fill() avec `n ? shadeN(theme.X) : theme.X`
+//      (shadeN assombrit de 35% — voir en bas du fichier)
+//
+// POUR MODIFIER UNE COULEUR D'UN ENV EXISTANT :
+//   → Va dans config.js, trouve l'objet du thème, change la valeur hex.
+//   → Ne modifie RIEN dans ce fichier sauf si tu changes la structure.
 
 function drawActiveEnv(p, env, n, h) {
   const theme = getEnvC();

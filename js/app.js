@@ -302,7 +302,7 @@ function updBubbleNow() {
 
   let pool;
   if (h >= 22 || h < 7) {
-    pool = src.nuit || src.night || ["Zzz... 🌙"];
+    pool = src.nuit || src.night || ["Zzz... 🌙", "*ronfle* 💤", "...zzZZ... 🌛", "Dors bien ✿"];
     const el = document.getElementById('bubble');
     if (el) el.textContent = pool[0];
     return;

@@ -189,45 +189,42 @@ function drawActiveEnv(p, env, n, h) {
 // ── MOTIFS CADRE MURAL (unique par thème) ───────────────────
 function drawFrameMotif(p, theme, n) {
   if (theme.id === 'automne') {
-  // Contour feuille
+  // feuille : losange + tige
   p.fill(tc(n, theme.frameAccent1));
-  px(p, 101, 73, PX,   PX  ); // pointe
-  px(p, 98,  75, PX*3, PX  ); // épaules
-  px(p, 96,  77, PX*5, PX*2); // milieu large
-  px(p, 98,  80, PX*3, PX  ); // bas
-  // Nervure
-  p.fill(tc(n, theme.frameAccent2));
-  px(p, 101, 73, PX, PX*4);   // tige centrale
-  // Petite tige basse
-  px(p, 101, 84, PX, PX*2);
+  px(p, 101, 73, PX, PX);           // pointe haute
+  px(p, 98,  76, PX*3, PX);         // épaules
+  px(p, 96,  79, PX*5, PX*2);       // milieu large
+  px(p, 98,  83, PX*3, PX);         // bas
+  p.fill(tc(n, theme.frameAccent2)); // nervure
+  px(p, 101, 73, PX, PX*4);
+  px(p, 101, 83, PX, PX*2);         // tige
 }
   else if (theme.id === 'hiver') {
-    p.fill(tc(n, theme.frameAccent1));
-  px(p, 101, 73, PX, PX*5); // barre verticale  (x101–106, y73–88)
-  px(p, 96,  78, PX*5, PX); // barre horizontale (x96–111, y78–83)
-  // 4 points aux diagonales
-  px(p, 97, 74, PX, PX);
-  px(p, 107, 74, PX, PX);
-  px(p, 97, 84, PX, PX);
-  px(p, 107, 84, PX, PX);
+  p.fill(tc(n, theme.frameAccent1));
+  px(p, 101, 74, PX, PX*4);         // barre verticale
+  px(p, 96,  79, PX*9, PX);         // barre horizontale
+  px(p, 96,  74, PX, PX);           // coin haut gauche
+  px(p, 106, 74, PX, PX);           // coin haut droite
+  px(p, 96,  84, PX, PX);           // coin bas gauche
+  px(p, 106, 84, PX, PX);           // coin bas droite
 }
   else if (theme.id === 'desert') {
-  // Antennes
+  // antennes
   p.fill(tc(n, theme.frameAccent1));
-  px(p, 99, 74, PX, PX);
-  px(p, 102, 74, PX, PX);
-  // Tête
-  px(p, 99, 76, PX*2, PX);
-  // Corps
-  px(p, 98, 79, PX*3, PX*3);
-  // Reflets ailes
+  px(p, 98,  73, PX, PX);
+  px(p, 103, 73, PX, PX);
+  // tête
+  px(p, 98,  76, PX*3, PX);
+  // corps
+  px(p, 97,  79, PX*5, PX*3);
+  // reflet ailes
   p.fill(tc(n, theme.frameAccent2));
-  px(p, 99, 80, PX, PX*2);
-  px(p, 102, 80, PX, PX*2);
-  // Pattes
+  px(p, 98,  80, PX, PX*2);
+  px(p, 103, 80, PX, PX*2);
+  // pattes (courtes, 3 de chaque)
   p.fill(tc(n, theme.frameAccent1));
-  px(p, 96, 79, PX, PX); px(p, 96, 81, PX, PX); px(p, 96, 83, PX, PX);
-  px(p, 104, 79, PX, PX); px(p, 104, 81, PX, PX); px(p, 104, 83, PX, PX);
+  px(p, 95, 79, PX, PX); px(p, 95, 81, PX, PX); px(p, 95, 83, PX, PX);
+  px(p, 103,79, PX, PX); px(p, 103,81, PX, PX); px(p, 103,83, PX, PX);
 }
   else {
     // pastel
@@ -268,15 +265,16 @@ else if (theme.id === 'pastel') {
   // Fleurs au sol : décalées des arbres
   drawFl(p, 35,  120, theme.accent);
   drawFl(p, 155, 122, theme.accent);
-  // Fleurs dans le feuillage arbre gauche (x=8, y=86)
+  // Fleurs arbre gauche (feuillage : x8–38, y76–101)
   p.fill(theme.accent);
-  px(p, 10, 83, PX, PX);
-  px(p, 20, 80, PX, PX);
-  px(p, 15, 87, PX, PX);
-  // Fleurs dans le feuillage arbre droit (x=160, y=90)
-  px(p, 162, 87, PX, PX);
-  px(p, 172, 84, PX, PX);
-  px(p, 167, 91, PX, PX);
+  px(p, 13, 80, PX, PX);   // haut gauche du feuillage
+  px(p, 23, 84, PX, PX);   // milieu
+  px(p, 18, 90, PX, PX);   // bas feuillage
+
+  // Fleurs arbre droit (feuillage : x160–190, y80–105)
+  px(p, 165, 84, PX, PX);
+  px(p, 175, 88, PX, PX);
+  px(p, 170, 94, PX, PX);
 }
 }
 

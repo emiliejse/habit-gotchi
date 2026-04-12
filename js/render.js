@@ -422,51 +422,42 @@ if (g.props) {
     particles.push({x, y, vx:(Math.random()-.5)*4, vy:-Math.random()*3-1.5, life:16, c});
   }
 
-  function updateParts(p) {
+function updateParts(p) {
     p.noStroke();
     particles = particles.filter(pt => {
       pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=.12; pt.life--;
       const a = Math.floor(pt.life / 16 * 255);
-// p.color() avec hex + canal alpha séparé — compatible p5.js 1.9+
-const col = p.color(pt.c);
-col.setAlpha(a);
-p.fill(col);
+      const col = p.color(pt.c);
+      col.setAlpha(a);
+      p.fill(col);
       px(p,pt.x, pt.y, PX, PX);
       return pt.life > 0;
     });
   }
 
-p.touchStarted = function() {
-  const now = Date.now();
-  if (now - (window._lastTapTime || 0) < 200) return false;
-  window._lastTapTime = now;
+  p.touchStarted = function() {
+    const now = Date.now();
+    if (now - (window._lastTapTime || 0) < 200) return false;
+    window._lastTapTime = now;
 
-  const mx = p.touches[0]?.x ?? p.mouseX;
-  const my = p.touches[0]?.y ?? p.mouseY;
+    const mx = p.touches[0]?.x ?? p.mouseX;
+    const my = p.touches[0]?.y ?? p.mouseY;
 
-  // --- Bouton 🧹 ---
-  if (Math.abs(mx - 72) < 14 && my < 26) {
-    cleanPoops(); return false;
-  }
+    if (Math.abs(mx - 72) < 14 && my < 26) { cleanPoops(); return false; }
+    if (Math.abs(mx - 128) < 14 && my < 26) { ouvrirSnack(); return false; }
 
-  // --- Bouton 🍽️ ---
-  if (Math.abs(mx - 128) < 14 && my < 26) {
-    ouvrirSnack(); return false;
-  }
+    const h = hr();
+    const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
+             : window.D.g.stage==='teen'?98 : 85;
+    const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
+    if (hit) {
+      window._lastTapX = walkX + (Math.random() - 0.5) * 20;
+      triggerTouchReaction(h >= 22 || h < 7);
+      return false;
+    }
+  };
 
-  // --- Gotchi ---
-  const h = hr();
-  const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
-           : window.D.g.stage==='teen'?98 : 85;
-  const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
-  if (hit) {
-    window._lastTapX = walkX + (Math.random() - 0.5) * 20;
-    triggerTouchReaction(h >= 22 || h < 7);
-    return false;
-  }
-}; // ← fin p.touchStarted
-
-}; // ← fin p5s
+}; // fin p5s
 
 function drawEgg(p, cx, cy) {
   const x=cx-PX*3, y=cy; p.noStroke();

@@ -1462,12 +1462,18 @@ function checkWelcome() {
   } else if (h < 18) {
     titre = `Bon après-midi ✿`;
     corps = getAfternoonMsg();
-  } else if (h < 22) {
-    titre = `Bonne soirée 🌙`;
-    corps = getEveningMsg();
-  } else {
+} else if (h >= 22 || h < 7) {
     titre = `*chuchote* 🌙`;
     corps = getNightMsg();
+  } else if (h < 12) {
+    titre = `Bon matin ☀️`;
+    corps = getMorningMsg();
+  } else if (h < 18) {
+    titre = `Bon après-midi ✿`;
+    corps = getAfternoonMsg();
+  } else {
+    titre = `Bonne soirée 🌙`;
+    corps = getEveningMsg();
   }
 
   if (nouveauxCadeaux > 0) {

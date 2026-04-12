@@ -181,6 +181,7 @@ function spawnPoop() {
   } while (tooClose && attempts < 20);
   
   window.D.g.poops.push({ id: Date.now(), x, y });
+  window.D.g.lastPoopSpawn = Date.now();
   save();
   if (typeof updUI === 'function') updUI();
 }
@@ -398,7 +399,12 @@ document.addEventListener('visibilitychange', () => {
 });
 // Spawn caca toutes les 30 min
 window.addEventListener('load', () => {
-  maybeSpawnPoop();
+  // Spawn seulement si le dernier spawn date de plus de 30 min
+  const lastSpawn = window.D.g.lastPoopSpawn || 0;
+  const now = Date.now();
+  if (now - lastSpawn > 30 * 60 * 1000) {
+    maybeSpawnPoop();
+  }
   setInterval(maybeSpawnPoop, 30 * 60 * 1000);
 });
 /* ============================================================

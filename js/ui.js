@@ -208,15 +208,18 @@ function renderProps() {
     .map((p, index) => ({ p, index, def: allDefs.find(l => l.id === p.id) }))
     .filter(({ p }) => {
       if (propsFilterActive === 'tous') return true;
-      if (propsFilterActive === 'claude') return !!(D.propsPixels && D.propsPixels.find(x => x.id === p.id));
+      if (propsFilterActive === 'claude') return !!(D.propsPixels && D.propsPixels[p.id]);
       return p.type === propsFilterActive;
     });
   listEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">` +
     filtered.map(({ p, index, def }) => {
-      const isClaud = !!(def && def.pixels && D.propsPixels && D.propsPixels.find(x => x.id === p.id));
+      const isClaud = !!(D.propsPixels && D.propsPixels[p.id]);
       const badgeId = `mini-${p.id}`;
       return `<div onclick="toggleProp(${index})" style="background:${p.actif?'var(--mint)':'#fff'};border:2px solid ${p.actif?'var(--mint)':isClaud?'var(--lilac)':'var(--border)'};border-radius:10px;padding:6px 4px 8px;font-size:10px;font-weight:bold;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;transition:.2s;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.05);position:relative;min-height:90px;">
-        ${isClaud ? `<span style="position:absolute;top:4px;right:4px;font-size:11px;color:var(--lilac);filter:drop-shadow(0 0 3px rgba(176,144,208,.6));">✦</span>` : ''}
+        ${isClaud ? `
+  <span style="position:absolute;top:4px;left:4px;font-size:9px;color:var(--lilac);">✦</span>
+  <span onclick="event.stopPropagation();supprimerObjetIA('${p.id}')" style="position:absolute;top:2px;right:4px;font-size:13px;cursor:pointer;opacity:.6">🗑️</span>
+` : ''}
         <div style="flex:1;display:flex;align-items:center;justify-content:center;">
           ${def && def.pixels ? `<canvas id="${badgeId}" style="image-rendering:pixelated;border-radius:3px"></canvas>` : `<span style="font-size:22px">${p.emoji||'🎁'}</span>`}
         </div>
@@ -345,6 +348,16 @@ function toggleProp(index) {
   // --- Objet décor : ouvrir le picker de slot ---
   openSlotPicker(index);
 }
+
+function supprimerObjetIA(propId) {
+  if (!confirm('Supprimer cet objet IA définitivement ?')) return;
+  D.g.props = D.g.props.filter(p => p.id !== propId);
+  if (D.propsPixels) delete D.propsPixels[propId];
+  save();
+  renderProps();
+  toast('🗑️ Objet supprimé');
+}
+
 function makeSlotBtn(propIndex, slotId, label, arrow, occupied) {
   const taken = occupied[slotId];
   return `<div onclick="confirmSlot(${propIndex},'${slotId}')" style="

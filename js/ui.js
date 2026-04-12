@@ -444,36 +444,35 @@ function debugProps() {
   let r = '✿ État du système ✿\n\n';
   r += `🎮 ${g.name} (${s.l}, ${g.totalXp} XP)\n`;
   r += `⚡ Énergie: ${g.energy}/5 · 💜 Bonheur: ${g.happiness}/5\n`;
-  r += `📦 Catalogue: ${lib.length} props chargés\n`;
+  r += `📦 Catalogue: ${lib.length} objets chargés\n`;
   r += `🎒 Inventaire: ${(D.g.props||[]).length} objets (${actifs.length} actifs)\n\n`;
   if (actifs.length) actifs.forEach(p => { const def = lib.find(l => l.id === p.id); r += (def&&def.pixels?'✅':'❌')+' '+p.nom+' ('+p.id+')\n'; });
   r += '\n📁 Fichiers data:\n';
-  r += (window.PERSONALITY ? '✅' : '❌') + ' personality.json\n';
   r += (lib.length > 0 ? '✅' : '❌') + ' props.json\n';
-  r += (window.ENVIRONMENTS ? '✅' : '❌') + ' environments.json\n';
-  r += (window.STYLES ? '✅' : '❌') + ' styles.json\n';
-  r += `🎨 Props générés par Claude: ${(D.propsPixels || []).length}\n`;
-  toast(r);
-}
+  r += (window.PERSONALITY ? '✅' : '❌') + ' personality.json\n';
+  r += (window.AI_CONTEXTS ? '✅' : '❌') + ' ai_contexts.json\n';
+  r += (window.AI_SYSTEM ? '✅' : '❌') + ' ai_system.json\n';
+  r += `🎨 Objets IA: ${Object.keys(D.propsPixels || {}).length}\n`;
 
-function fixProps() {
-  const mapping = {
-    'Plante Grasse':'plante01','Tapis Doux':'tapis01','Pluie de confettis':'etoiles01',
-    'Pluie d\'Étoiles':'etoiles01','Couronne Dorée':'couronne01','Bougie Douce':'bougie01',
-    'Petit Cactus':'cactus01','Coussin Cœur':'coussin01','Lampe de Bureau':'lampe01',
-    'Lunettes Rondes':'lunettes01','Nœud Papillon':'noeud01'
-  };
-  let fixed = 0;
-  (window.D.g.props || []).forEach(p => { if (!p.id && mapping[p.nom]) { p.id = mapping[p.nom]; fixed++; } });
-  save(); toast('Corrigé ' + fixed + ' props ✿');
-  setTimeout(() => location.reload(), 800);
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h3 style="font-size:13px;color:var(--lilac);">🔍 Debug</h3>
+      <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button>
+    </div>
+    <pre id="debug-contenu" style="font-size:10px;line-height:1.6;white-space:pre-wrap;color:var(--text2);margin:0 0 10px 0">${r}</pre>
+    <button onclick="navigator.clipboard.writeText(document.getElementById('debug-contenu').textContent).then(()=>toast('Copié ✓'))"
+      style="width:100%;padding:8px;border-radius:12px;border:2px solid var(--border);font-size:10px;cursor:pointer;background:transparent;color:var(--text2)">
+      📋 Copier
+    </button>
+  `;
 }
-
 function cleanProps() {
   const before = window.D.g.props.length;
-  window.D.g.props = window.D.g.props.filter(p => {
-    return (window.PROPS_LIB || []).find(l => l.id === p.id) || (window.D.propsPixels || []).find(l => l.id === p.id);
-  });
+window.D.g.props = window.D.g.props.filter(p => {
+  return (window.PROPS_LIB || []).find(l => l.id === p.id) 
+      || (window.D.propsPixels || {})[p.id] !== undefined;
+});
   save(); toast('Nettoyé : ' + (before - window.D.g.props.length) + ' props orphelins supprimés ✿');
   setTimeout(() => location.reload(), 800);
 }

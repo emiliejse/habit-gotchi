@@ -124,12 +124,6 @@ const p5s = (p) => {
 
     if (window.shakeTimer > 0) { window.shakeTimer--; p.translate(Math.sin(p.frameCount * 2) * 2, 0); }
 
-    // --- HUD pétales (coin sup. gauche) ---
-p.textSize(12); p.textFont('sans-serif');
-p.fill('#38304a'); p.noStroke();
-p.textAlign(p.CENTER, p.TOP);
-p.text('[net]', CS / 2 - 14, 6);
-p.text('[eat]', CS / 2 + 14, 6);
 
     // ── drawSky() : le ciel change selon l'HEURE (h) et le BONHEUR (ha) ──
 // LOGIQUE : comme un filtre couleur qui s'applique sur tout le fond.
@@ -340,6 +334,28 @@ if (window.touchReaction.active) {
       }
       bounceT = Math.PI * 1.5;
     }
+    // --- HUD ---
+    p.textFont('sans-serif');
+    p.textSize(12);
+    p.noStroke();
+
+    // Pétales
+    p.fill(255);
+    p.textAlign(p.LEFT, p.TOP);
+    p.text('🌸 ' + (g.petales || 0), 6, 6);
+
+    // Température
+    if (window.meteoData?.temperature) {
+      p.textAlign(p.RIGHT, p.TOP);
+      p.text(Math.round(window.meteoData.temperature) + '°C', CS - 6, 6);
+    }
+
+    // Boutons
+    p.textAlign(p.CENTER, p.TOP);
+    p.text('🧹', CS / 2 - 14, 6);
+    p.text('🍽️', CS / 2 + 14, 6);
+
+  }; // ← fin p.draw()
   };
 
   function drawSky(p, h, ha) {

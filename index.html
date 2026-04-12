@@ -83,14 +83,13 @@
     </div>
 
 <div class="card" id="claude-card">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-    <h2 style="margin:0">💬 La pensée du Gotchi</h2>
-    <button onclick="toastInfo()" style="background:none;border:none;width:28px;height:28px;font-size:14px;cursor:pointer;flex-shrink:0;opacity:0.6;">ℹ️</button>
+  <div style="display:flex;gap:6px;align-items:center">
+    <button class="btn btn-p" onclick="askClaude()" id="btn-ask-claude" style="flex:1;font-size:10px;">
+      Interroger le Gotchi <span id="thought-count">(0/3)</span>
+    </button>
+    <button onclick="toastInfo()" style="background:none;border:none;font-size:14px;cursor:pointer;">ℹ️</button>
   </div>
-  <div id="claude-msg" style="font-size:11px;color:var(--text2);line-height:1.4;"></div>
-  <button class="btn btn-p" onclick="askClaude()" id="btn-ask-claude" style="flex:1;font-size:10px;center,">
-  Interroger le Gotchi <span id="thought-count">(0/3)</span>
-</button>
+  <div id="claude-msg" style="font-size:11px;color:var(--text2);line-height:1.4;margin-top:6px;"></div>
 </div>
 
   </div><!-- fin p-gotchi -->

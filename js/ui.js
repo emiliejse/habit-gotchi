@@ -588,10 +588,13 @@ if (tc) tc.textContent = `(${window.D.thoughtCount}/3)`;
 
   // --- Remplacement des variables dans le prompt base ---
   const notesRecentes = D.journal
-    .slice(-3)
-    .map(j => j.text.slice(0, 40))
-    .filter(t => t.length > 0)
-    .join(' / ');
+  .slice(-3)
+  .map(j => {
+    const d = j.date ? j.date.split('T')[0] : 'date inconnue';
+    return `[${d}] ${j.text.slice(0, 40)}`;
+  })
+  .filter(t => t.length > 0)
+  .join(' / ');
 
   const vars = {
     nom:          P?.nom || 'le Gotchi',
@@ -603,6 +606,9 @@ if (tc) tc.textContent = `(${window.D.thoughtCount}/3)`;
     exemples:     (P?.bulles?.idle || []).slice(0, 3).join(', ') || '*bâille*, *sourit*',
     existingNames: (D.g.props || []).map(p => p.nom).join(', ') || 'aucun',
     timestamp:    Date.now(),
+    notesRecentes: notesRecentes
+    ? `Aujourd'hui : ${today()}. Ambiance récente (extrait journal) : ${notesRecentes}`
+    : `Aujourd'hui : ${today()}.`,
   };
 
   function fillVars(template) {

@@ -266,29 +266,30 @@ if (g.props) {
 // --- Réactions au toucher ---
     window.touchReactions = (window.touchReactions || []).filter(tr => tr.timer > 0);
     window.touchReactions.forEach(tr => {
-      const progress = 1 - (tr.timer / 35);
-      const fy = (by - 20) - progress * 30;
-      const fx = tr.cx + Math.sin(progress * Math.PI * 2) * 8;
+      const progress = 1 - (tr.timer / 35); // 0→1
+      const fy = (by - 15) - progress * 45; // monte plus haut
+      const fx = tr.cx + Math.sin(progress * Math.PI * 3) * 10;
 
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(16);
-      p.drawingContext.globalAlpha = 1 - progress * 0.6;
+      // Opacité : plein pendant 70% du trajet, puis s'estompe
+      p.drawingContext.globalAlpha = progress < 0.7 ? 1.0 : 1.0 - ((progress - 0.7) / 0.3);
 
-      if      (tr.type === 'heart')  p.text('💜', fx, fy);
+      if      (tr.type === 'heart')   p.text('💜', fx, fy);
       else if (tr.type === 'sparkle') p.text('✨', fx, fy);
-      else if (tr.type === 'star')   p.text('⭐', fx, fy);
-      else if (tr.type === 'note')   p.text('🎵', fx, fy);
-      else if (tr.type === 'flower') p.text('🌸', fx, fy);
+      else if (tr.type === 'star')    p.text('⭐', fx, fy);
+      else if (tr.type === 'note')    p.text('🎵', fx, fy);
+      else if (tr.type === 'flower')  p.text('🌸', fx, fy);
       else if (tr.type === 'spin') {
         const angle = progress * Math.PI * 4;
-        const sx = cx + Math.cos(angle) * 18;
-        const sy = (by - 15) + Math.sin(angle) * 10;
+        const sx = cx + Math.cos(angle) * 22;
+        const sy = (by - 15) + Math.sin(angle) * 12;
         p.text('✨', sx, sy);
       }
-      else if (tr.type === 'jump')   bounceT = Math.PI * 1.5;
-      else if (tr.type === 'zzz')    p.text('💤', fx, fy);
-      else if (tr.type === 'moon')   p.text('🌙', fx, fy);
-      else if (tr.type === 'angry')  p.text('😤', fx, fy);
+      else if (tr.type === 'jump')  bounceT = Math.PI * 1.5;
+      else if (tr.type === 'zzz')   p.text('💤', fx, fy);
+      else if (tr.type === 'moon')  p.text('🌙', fx, fy);
+      else if (tr.type === 'angry') p.text('😤', fx, fy);
 
       p.drawingContext.globalAlpha = 1.0;
       tr.timer--;
@@ -592,6 +593,11 @@ function triggerTouchReaction(sleeping) {
     type,
     cx: window._lastTapX || 100, // position X du tap
   });
+  window.touchReactions.push({
+  timer: 35,
+  type,
+  cx: (window._lastTapX || 100) + (Math.random() - 0.5) * 40, // ← décalage ±20px
+});
   
   // Max 8 réactions simultanées
   if (window.touchReactions.length > 8) window.touchReactions.shift();

@@ -66,7 +66,7 @@ function drawActiveEnv(p, env, n, h) {
       skyCol = (h>=20||h<6) ? C.skyN1 : theme.sky1;
     }
     p.fill(skyCol); p.rect(20, 68, 42, 42);
-    p.fill(tc(n, theme.windowFrame);
+    p.fill(tc(n, theme.windowFrame));
     p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
     p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
     p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);

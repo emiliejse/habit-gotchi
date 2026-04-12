@@ -484,8 +484,16 @@ function confirmSlot(propIndex, slotId) {
     </div>
     <pre id="debug-contenu" style="font-size:10px;line-height:1.6;white-space:pre-wrap;color:var(--text2);margin:0 0 10px 0">${r}</pre>
     <button onclick="navigator.clipboard.writeText(document.getElementById('debug-contenu').textContent).then(()=>toast('Copié ✓'))"
-      style="width:100%;padding:8px;border-radius:12px;border:2px solid var(--border);font-size:10px;cursor:pointer;background:transparent;color:var(--text2)">
+      style="width:100%;padding:8px;border-radius:12px;border:2px solid var(--border);font-size:10px;cursor:pointer;background:transparent;color:var(--text2);margin-bottom:6px">
       📋 Copier
+    </button>
+    <button onclick="viderJournal()"
+      style="width:100%;padding:8px;border-radius:12px;border:none;font-size:10px;cursor:pointer;background:transparent;color:#e57373;border:2px solid #e57373;margin-bottom:6px">
+      🗑️ Vider le journal
+    </button>
+    <button onclick="viderObjetsIA()"
+      style="width:100%;padding:8px;border-radius:12px;border:none;font-size:10px;cursor:pointer;background:transparent;color:#e57373;border:2px solid #e57373">
+      🗑️ Vider les objets IA
     </button>
   `;
 }
@@ -498,6 +506,25 @@ window.D.g.props = window.D.g.props.filter(p => {
 });
   save(); toast('Nettoyé : ' + (before - window.D.g.props.length) + ' props orphelins supprimés ✿');
   setTimeout(() => location.reload(), 800);
+}
+
+function viderJournal() {
+  if (!confirm('Supprimer toutes les notes du journal ? La progression du Gotchi n\'est pas affectée.')) return;
+  D.journal = [];
+  save();
+  toast('Journal vidé ✿');
+  debugProps();
+}
+
+function viderObjetsIA() {
+  if (!confirm('Supprimer tous les objets générés par l\'IA ? Les objets du catalogue restent intacts.')) return;
+  D.propsPixels = {};
+  D.g.props = (D.g.props || []).filter(p => {
+    return (window.PROPS_LIB || []).find(l => l.id === p.id);
+  });
+  save();
+  toast('Objets IA supprimés ✿');
+  debugProps();
 }
 
 /* ============================================================

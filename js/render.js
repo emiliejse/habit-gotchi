@@ -334,6 +334,33 @@ if (window.touchReaction.active) {
       bounceT = Math.PI * 1.5;
     }
 
+     // --- HUD ---
+    p.noStroke();
+    function hudIcon(emoji, x, y, active) {
+      p.fill(0, 0, 0, active ? 80 : 40);
+      p.rect(x - 14, y - 2, 28, 22, 6);
+      p.textSize(16);
+      p.textAlign(p.CENTER, p.TOP);
+      p.text(emoji, x, y);
+    }
+    p.fill(0, 0, 0, 40);
+    p.rect(2, 2, 52, 22, 6);
+    p.fill(255);
+    p.textSize(12);
+    p.textAlign(p.LEFT, p.TOP);
+    p.text('🌸 ' + (g.petales || 0), 6, 6);
+    const hasPoops = (window.D.g.poops || []).length > 0;
+    hudIcon('🧹', 90, 4, hasPoops);
+    hudIcon('🍽️', 122, 4, false);
+    if (window.meteoData?.temperature) {
+      p.fill(0, 0, 0, 40);
+      p.rect(CS - 54, 2, 52, 22, 6);
+      p.fill(255);
+      p.textSize(12);
+      p.textAlign(p.RIGHT, p.TOP);
+      p.text(Math.round(window.meteoData.temperature) + '°C', CS - 6, 6);
+    }
+
   }; // ← fin p.draw()
 
   function drawSky(p, h, ha) {
@@ -442,49 +469,12 @@ p.touchStarted = function() {
     ouvrirSnack(); return false;
   }
 
-  // --- Gotchi ---
+// --- Gotchi ---
   const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
            : window.D.g.stage==='teen'?98 : 85;
   const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
   if (hit) { triggerTouchReaction(); return false; }
   };
-
-// --- HUD ---
-    p.noStroke();
-
-    // Fond pilule pour chaque icône
-    function hudIcon(emoji, x, y, active) {
-      p.fill(0, 0, 0, active ? 80 : 40);
-      p.rect(x - 14, y - 2, 28, 22, 6);
-      p.textSize(16);
-      p.textAlign(p.CENTER, p.TOP);
-      p.text(emoji, x, y);
-    }
-
-    // Pétales (gauche)
-    p.fill(0, 0, 0, 40);
-    p.rect(2, 2, 52, 22, 6);
-    p.fill(255);
-    p.textSize(12);
-    p.textAlign(p.LEFT, p.TOP);
-    p.text('🌸 ' + (g.petales || 0), 6, 6);
-
-    // Balai (centre-gauche)
-    const hasPoops = (window.D.g.poops || []).length > 0;
-    hudIcon('🧹', 90, 4, hasPoops);
-
-    // Assiette (centre-droit)
-    hudIcon('🍽️', 122, 4, false);
-
-    // Température (droite)
-    if (window.meteoData?.temperature) {
-      p.fill(0, 0, 0, 40);
-      p.rect(CS - 54, 2, 52, 22, 6);
-      p.fill(255);
-      p.textSize(12);
-      p.textAlign(p.RIGHT, p.TOP);
-      p.text(Math.round(window.meteoData.temperature) + '°C', CS - 6, 6);
-    }
 
 }; // fin p5s
 

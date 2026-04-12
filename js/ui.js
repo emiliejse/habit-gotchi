@@ -743,7 +743,7 @@ function viderJournal() {
   if (!confirm('Supprimer toutes les notes du journal ? La progression du Gotchi n\'est pas affectée.')) return;
   D.journal = [];
   save();
-  toast(`Journal vidé ✿');
+  toast(`Journal vidé ✿`);
   debugProps();
 }
 

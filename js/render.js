@@ -150,17 +150,6 @@ const p5s = (p) => {
     if (ha >= 100 && !sleeping) drawRainbow(p);
     drawActiveEnv(p, envActif, n, h);
 
-// --- Props DÉCOR fond (A, B) ---
-if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
-    const def = getPropDef(prop.id);
-    if (def && def.pixels) {
-      const slot = PROP_SLOTS[prop.slot];
-      if (!slot) return;
-      drawProp(p, def, slot.x, slot.y);
-    }
-  });
-}
 
 // --- Ambiances ---
 if (g.props) {
@@ -234,7 +223,18 @@ if (g.props) {
     else                          gotchiInfo = drawAdult(p, cx, by + bobY, sleeping, en, ha);
     if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
 
-// --- Props DÉCOR devant (C, D, SOL) ---
+// --- Props DÉCOR fond (A, B) ---
+if (D.g.props) {
+  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
+    const def = getPropDef(prop.id);
+    if (def && def.pixels) {
+      const slot = PROP_SLOTS[prop.slot];
+      if (!slot) return;
+      drawProp(p, def, slot.x, slot.y);
+    }
+  });
+}
+    // --- Props DÉCOR devant (C, D, SOL) ---
 if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot !== 'A' && pr.slot !== 'B').forEach(prop => {
     const def = getPropDef(prop.id);

@@ -157,10 +157,15 @@ if ('serviceWorker' in navigator) {
    ============================================================ */
 function getSt(xp)  { let s=STG[0]; for(const st of STG) if(xp>=st.th) s=st; return s; }
 function nxtTh(xp)  { for(const s of STG) if(xp<s.th) return s.th; return 1200; }
-function addXp(n)   {
+function addXp(n) {
+  const ancienStade = getSt(window.D.g.totalXp).l; // ← stade avant
   window.D.g.totalXp = Math.max(0, window.D.g.totalXp + n);
   window.D.g.stage   = getSt(window.D.g.totalXp).k;
   window.D.g.envLv   = Math.min(10, Math.floor(window.D.g.totalXp / 60));
+  const nouveauStade = getSt(window.D.g.totalXp).l; // ← stade après
+  if (ancienStade !== nouveauStade) {
+    addEvent('xp', window.D.g.totalXp, `⭐ Nouveau stade : ${nouveauStade}`);
+  }
   save(); updUI();
 }
 function addEvent(type, valeur, label) {

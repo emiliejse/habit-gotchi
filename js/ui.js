@@ -314,6 +314,7 @@ function acheterProp(propId) {
   D.g.petales = (D.g.petales || 0) - prop.cout;
   if (!D.g.props) D.g.props = [];
   D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
+  addEvent('cadeau', prop.cout, `${prop.emoji || '🎁'} ${prop.nom}`);
   save();
   toast(`🎁 ${prop.nom} ajouté à ton inventaire !`);
 renderProps();

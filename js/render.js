@@ -179,18 +179,39 @@ if (g.props) {
   });
 }
 
-// --- Gotchi ---
+    // --- Cacas ---
+    const poops = window.D.g.poops || [];
+    let gotchiNearPoop = false;
+    poops.forEach(poop => {
+      if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(20);
+      p.text('💩', poop.x, poop.y);
+    });
+    window._gotchiNearPoop = gotchiNearPoop;
+
+// --- Props DÉCOR fond (A, B) ---
+    if (D.g.props) {
+      D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
+        const def = getPropDef(prop.id);
+        if (def && def.pixels) {
+          const slot = PROP_SLOTS[prop.slot];
+          if (!slot) return;
+          drawProp(p, def, slot.x, slot.y);
+        }
+      });
+    }
+
+    // --- Locomotion ---
     bounceT += sleeping ? 0.04 : 0.12;
     let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
     let amplitude = 15, vitesse = 0.02;
-
     if (!sleeping && ha >= 80 && en >= 80) {
       amplitude = 40; vitesse = 0.06;
       if (p.frameCount % 20 < 10) bobY -= PX;
     } else if (!sleeping && ha >= 60 && en >= 60) {
       amplitude = 25; vitesse = 0.04;
     }
-
     if (!sleeping) {
       walkStep++;
       const speed = (ha >= 80 && en >= 80) ? 1.2 : (ha >= 50) ? 0.6 : 0.3;
@@ -203,17 +224,18 @@ if (g.props) {
     }
     const cx = walkX;
     const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
-
-    // --- Cacas ---
-    const poops = window.D.g.poops || [];
-    let gotchiNearPoop = false;
-    poops.forEach(poop => {
-      if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
-      p.textAlign(p.CENTER, p.CENTER);
-      p.textSize(20);
-      p.text('💩', poop.x, poop.y);
-    });
-    window._gotchiNearPoop = gotchiNearPoop;
+    
+    // --- Props DÉCOR devant (C, D, SOL) ---
+    if (D.g.props) {
+      D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot !== 'A' && pr.slot !== 'B').forEach(prop => {
+        const def = getPropDef(prop.id);
+        if (def && def.pixels) {
+          const slot = PROP_SLOTS[prop.slot];
+          if (!slot) return;
+          drawProp(p, def, slot.x, slot.y);
+        }
+      });
+    }
 
     // --- Dessin Gotchi ---
     let gotchiInfo;
@@ -223,48 +245,23 @@ if (g.props) {
     else                          gotchiInfo = drawAdult(p, cx, by + bobY, sleeping, en, ha);
     if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
 
-// --- Props DÉCOR fond (A, B) ---
-if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
-    const def = getPropDef(prop.id);
-    if (def && def.pixels) {
-      const slot = PROP_SLOTS[prop.slot];
-      if (!slot) return;
-      drawProp(p, def, slot.x, slot.y);
+    // --- Props ACCESSOIRE ---
+    if (D.g.props) {
+      D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
+        const def = getPropDef(prop.id);
+        if (def && def.pixels) {
+          const accX = cx - Math.floor(def.pixels[0].length / 2) * PX;
+          const baseY = def.ancrage==='yeux' ? gotchiInfo.eyeY
+                      : def.ancrage==='cou'  ? gotchiInfo.neckY
+                      : gotchiInfo.topY;
+          const offsetY = def.ancrage==='yeux' ? PX*2
+                        : def.ancrage==='cou'  ? PX*3
+                        : PX;
+          const accY = baseY - def.pixels.length * PX + offsetY;
+          drawProp(p, def, accX, accY);
+        }
+      });
     }
-  });
-}
-    // --- Props DÉCOR devant (C, D, SOL) ---
-if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot !== 'A' && pr.slot !== 'B').forEach(prop => {
-    const def = getPropDef(prop.id);
-    if (def && def.pixels) {
-      const slot = PROP_SLOTS[prop.slot];
-      if (!slot) return;
-      drawProp(p, def, slot.x, slot.y);
-    }
-  });
-}
-// --- Props ACCESSOIRE (sur la tête du gotchi) ---
-if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
-   const def = getPropDef(prop.id);
-    if (def && def.pixels) {
-      const accX = cx - Math.floor(def.pixels[0].length / 2) * PX;
-      
-      // ✨ Ancrage dynamique selon le type d'accessoire
-      const baseY = def.ancrage==='yeux' ? gotchiInfo.eyeY
-                  : def.ancrage==='cou'  ? gotchiInfo.neckY
-                  : gotchiInfo.topY;
-      const offsetY = def.ancrage==='yeux' ? PX*2
-              : def.ancrage==='cou'  ? PX*3
-              : PX; // tete
-const accY = baseY - def.pixels.length * PX + offsetY;
-      
-      drawProp(p, def, accX, accY);
-    }
-  });
-}
 
 // --- Réactions au toucher ---
     window.touchReactions = (window.touchReactions || []).filter(tr => tr.timer > 0);
@@ -598,7 +595,6 @@ function triggerTouchReaction(sleeping) {
   
   // Max 8 réactions simultanées
   if (window.touchReactions.length > 8) window.touchReactions.shift();
-}
 }
 
 

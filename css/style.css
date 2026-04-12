@@ -225,6 +225,23 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .btn-s{background:#fff;color:var(--text);border:2px solid var(--border)}
 .btn-d{background:var(--coral);color:#fff}
 .btn-m{background:var(--mint);color:var(--text)}
+.btn-boutique {
+  background: linear-gradient(135deg, var(--lilac), var(--pink));
+  color: #fff;
+  font-size: 12px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  border-bottom: 3px solid rgba(0,0,0,.15);
+  border-right: 2px solid rgba(0,0,0,.1);
+  letter-spacing: .5px;
+  box-shadow: 0 3px 10px rgba(176,144,208,.4);
+  transition: transform .12s, box-shadow .12s;
+}
+.btn-boutique:active {
+  transform: translate(1px,2px) scale(.96);
+  border-bottom-width: 1px;
+  box-shadow: 0 1px 4px rgba(176,144,208,.3);
+}
 
 /* --- Habitudes & Animation Rebond --- */
 .hab {

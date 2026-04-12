@@ -1479,10 +1479,9 @@ function showWelcomeModal() {
 
 function confirmWelcome() {
   const val = document.getElementById('welcome-name')?.value.trim();
-if (val) window.D.g.name = val;
-save(); updUI();
-clModal();
-  if (val) { window.D.g.name = val; save(); updUI(); }
+  if (val) window.D.g.name = val;
+  save();
+  updUI();
   clModal();
 }
 

@@ -320,7 +320,7 @@ const accY = baseY - def.pixels.length * PX + offsetY;
     if(ha<=20&&h>=7&&h<21) { p.fill('#8888a0'); for(let i=0;i<5;i++){const rx=((p.frameCount*3+i*40)%CS);const ry=((p.frameCount*4+i*30)%80)+40;px(p,rx,ry,PX,PX*2);} }
   }
 
-  function drawCl(p,x,y)  { p.fill(C.cloud); px(p,x,y,PX*5,PX*2); px(p,x+PX,y-PX,PX*3,PX); }
+  function drawCl(p,x,y) { p.fill(C.cloud); p.rect(x,y,PX*5,PX*2); p.rect(x+PX,y-PX,PX*3,PX); }
 function drawWind(p) {
   p.noStroke();
   for (let i = 0; i < 8; i++) {

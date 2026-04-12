@@ -1227,4 +1227,6 @@ document.addEventListener('DOMContentLoaded', () => {
   renderProps();
   restorePerso();
   initMoodPicker();
+  checkWelcome();
+  updBubbleNow();
 });

@@ -218,6 +218,18 @@ if (!slot) return;
         }
       });
     }
+
+      // --- Cacas ---
+const poops = window.D.g.poops || [];
+let gotchiNearPoop = false;
+poops.forEach(poop => {
+  if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
+  p.textAlign(p.CENTER, p.CENTER);
+  p.textSize(20);
+  p.text('💩', poop.x, poop.y);
+});
+window._gotchiNearPoop = gotchiNearPoop;
+
     // --- Gotchi ---
     bounceT += sleeping ? 0.04 : 0.12;
 let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
@@ -274,16 +286,6 @@ const accY = baseY - def.pixels.length * PX + offsetY;
     }
   });
 }
-  // --- Cacas ---
-const poops = window.D.g.poops || [];
-let gotchiNearPoop = false;
-poops.forEach(poop => {
-  if (Math.abs(poop.x - cx) < 25) gotchiNearPoop = true;
-  p.textAlign(p.CENTER, p.CENTER);
-  p.textSize(14);
-  p.text('💩', poop.x, poop.y);
-});
-window._gotchiNearPoop = gotchiNearPoop;
 
     // --- Réaction au toucher ---
 if (window.touchReaction.active) {
@@ -337,7 +339,7 @@ if (window.touchReaction.active) {
      // --- HUD ---
     p.noStroke();
     function hudIcon(emoji, x, y, active) {
-      p.fill(0, 0, 0, active ? 80 : 40);
+      p.fill(0, 0, 0, active ? 130 : 100);
       p.rect(x - 14, y - 2, 28, 22, 6);
       p.textSize(16);
       p.textAlign(p.CENTER, p.TOP);
@@ -350,7 +352,15 @@ if (window.touchReaction.active) {
     p.textAlign(p.LEFT, p.TOP);
     p.text('🌸 ' + (g.petales || 0), 6, 6);
     const hasPoops = (window.D.g.poops || []).length > 0;
-    hudIcon('🧹', 90, 4, hasPoops);
+if (hasPoops) {
+  p.fill(180, 120, 60, 160);
+  p.rect(90 - 14, 4 - 2, 28, 22, 6);
+  p.textSize(16);
+  p.textAlign(p.CENTER, p.TOP);
+  p.text('🧹', 90, 4);
+} else {
+  hudIcon('🧹', 90, 4, false);
+}
     hudIcon('🍽️', 122, 4, false);
     if (window.meteoData?.temperature) {
       p.fill(0, 0, 0, 40);

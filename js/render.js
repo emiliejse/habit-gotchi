@@ -335,37 +335,45 @@ if (window.touchReaction.active) {
       bounceT = Math.PI * 1.5;
     }
 
-     // --- HUD ---
+  // --- HUD ---
     p.noStroke();
-    function hudIcon(emoji, x, y, active) {
-      p.fill(0, 0, 0, active ? 130 : 100);
+    p.textStyle(p.NORMAL);
+
+    function hudIcon(emoji, x, y) {
+      p.fill(255, 255, 255, 60);
       p.rect(x - 14, y - 2, 28, 22, 6);
       p.textSize(16);
       p.textAlign(p.CENTER, p.TOP);
       p.text(emoji, x, y);
     }
-    p.fill(0, 0, 0, 40);
+
+    // Pétales (gauche)
+    p.fill(255, 255, 255, 60);
     p.rect(2, 2, 52, 22, 6);
-    p.fill(255);
-    p.textSize(12);
+    p.fill(50);
+    p.textSize(11);
+    p.textStyle(p.NORMAL);
     p.textAlign(p.LEFT, p.TOP);
     p.text('🌸 ' + (g.petales || 0), 6, 6);
+
+    // Balai
     const hasPoops = (window.D.g.poops || []).length > 0;
-if (hasPoops) {
-  p.fill(180, 120, 60, 160);
-  p.rect(90 - 14, 4 - 2, 28, 22, 6);
-  p.textSize(16);
-  p.textAlign(p.CENTER, p.TOP);
-  p.text('🧹', 90, 4);
-} else {
-  hudIcon('🧹', 90, 4, false);
-}
-    hudIcon('🍽️', 122, 4, false);
+    p.fill(255, 255, 255, hasPoops ? 180 : 60);
+    p.rect(90 - 14, 2, 28, 22, 6);
+    p.textSize(16);
+    p.textAlign(p.CENTER, p.TOP);
+    p.text('🧹', 90, 4);
+
+    // Assiette
+    hudIcon('🍽️', 122, 4);
+
+    // Température (droite)
     if (window.meteoData?.temperature) {
-      p.fill(0, 0, 0, 40);
+      p.fill(255, 255, 255, 60);
       p.rect(CS - 54, 2, 52, 22, 6);
-      p.fill(255);
-      p.textSize(12);
+      p.fill(50);
+      p.textSize(11);
+      p.textStyle(p.NORMAL);
       p.textAlign(p.RIGHT, p.TOP);
       p.text(Math.round(window.meteoData.temperature) + '°C', CS - 6, 6);
     }

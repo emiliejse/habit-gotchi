@@ -64,13 +64,13 @@ const CATS = [
 
 const STG = [
   {k:'egg',   l:'Œuf',        th:0},
-  {k:'baby',  l:'Apprenti·e', th:90},
-  {k:'teen',  l:'Initié·e',   th:240},
+  {k:'baby',  l:'Apprentie', th:90},
+  {k:'teen',  l:'Initiée',   th:240},
   {k:'adult', l:'Adepte',     th:500},
-  {k:'adult', l:'Expert·e',   th:900},
-  {k:'adult', l:'Maître·sse', th:1500},
+  {k:'adult', l:'Experte',   th:900},
+  {k:'adult', l:'Girl Boss', th:1500},
   {k:'adult', l:'Légende',    th:2500},
-  {k:'adult', l:'Divinité',   th:4000},
+  {k:'adult', l:'Déesse',   th:4000},
 ];
 
 // Palettes interface

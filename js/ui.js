@@ -898,7 +898,7 @@ document.getElementById('bubble').textContent = bulleCadeau.replace('{{nom}}', D
 
 async function acheterPropClaude() {
   if ((D.g.petales || 0) < 16) { toast('Pas assez de pétales 🌸'); return; }
-  if (!D.apiKey) { toast('*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑'); return; }
+  if (!D.apiKey) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
 
   D.g.petales -= 16; save();
 
@@ -994,7 +994,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   }
   window._soutienCount++;
 }
-  if (!key) { toast('*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑'); return; }
+  if (!key) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
   const inp  = document.getElementById('soutien-inp');
   let userText = '';
   if (!isInit) {

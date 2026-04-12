@@ -1219,6 +1219,117 @@ function updTabletBadge() {
 }
 
 /* ============================================================
+   MODALE DE BIENVENUE
+   ============================================================ */
+function checkWelcome() {
+  const D = window.D;
+  const td = today();
+  const h = hr();
+
+  // Calcul jours d'absence
+  let joursAbsence = 0;
+  if (D.lastActive && D.lastActive !== td) {
+    const diff = Date.now() - new Date(D.lastActive);
+    joursAbsence = Math.floor(diff / (1000 * 60 * 60 * 24));
+  }
+
+  // Cadeaux reçus depuis dernière visite
+  const derniereVisite = D.lastActive || td;
+  const nouveauxCadeaux = (D.eventLog || []).filter(ev =>
+    ev.type === 'cadeau' && ev.date > derniereVisite
+  ).length;
+
+  // Mise à jour lastActive
+  if (!D.firstLaunch) D.firstLaunch = new Date().toISOString();
+  D.lastActive = td;
+  save();
+
+  // Contenu selon contexte
+  let titre, corps, extra = '';
+
+  if (!D.firstLaunch || D.g.name === 'Petit·e Gotchi') {
+    // Premier lancement
+    showWelcomeModal();
+    return;
+  }
+
+  if (joursAbsence >= 3) {
+    // Retour long
+    const xpPerdu = joursAbsence * 15;
+    titre = `Ça fait ${joursAbsence} jours... 💜`;
+    corps = `${D.g.name} t'a attendu·e. Tu as perdu <strong>${xpPerdu} XP</strong> pendant ton absence.`;
+  } else if (joursAbsence === 1 && !(D.log[td] || []).length) {
+    // Hier vide
+    titre = `Bienvenue 🌸`;
+    corps = `Tu as perdu <strong>15 XP</strong> hier — pas d'habitudes cochées.`;
+  } else if (h < 12) {
+    titre = `Bon matin ☀️`;
+    corps = getMorningMsg();
+  } else if (h < 18) {
+    titre = `Bon après-midi ✿`;
+    corps = getAfternoonMsg();
+  } else {
+    titre = `Bonne soirée 🌙`;
+    corps = getEveningMsg();
+  }
+
+  if (nouveauxCadeaux > 0) {
+    extra = `<p style="margin-top:8px;font-size:12px">🎁 ${nouveauxCadeaux} nouveau${nouveauxCadeaux > 1 ? 'x cadeaux' : ' cadeau'} depuis ta dernière visite !</p>`;
+  }
+
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <h3 style="text-align:center">${titre}</h3>
+    <p style="font-size:12px;text-align:center;margin:8px 0">${corps}</p>
+    ${extra}
+    <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="clModal()">C'est parti ✿</button>
+  `;
+}
+
+function getMorningMsg() {
+  const D = window.D;
+  const str = calcStr();
+  if (str >= 7) return `${str} jours de streak 🔥 Tu es en feu !`;
+  if (str >= 3) return `${str} jours d'affilée ✿ Continue comme ça !`;
+  return `Une nouvelle journée commence. ${D.g.name} compte sur toi 💜`;
+}
+
+function getAfternoonMsg() {
+  const D = window.D;
+  const done = (D.log[today()] || []).length;
+  if (done >= 4) return `${done} habitudes cochées aujourd'hui — tu gères 🌟`;
+  if (done >= 1) return `${done} habitude${done > 1 ? 's' : ''} cochée${done > 1 ? 's' : ''} — continue !`;
+  return `L'après-midi est là. Encore le temps de cocher quelque chose ✿`;
+}
+
+function getEveningMsg() {
+  const D = window.D;
+  const done = (D.log[today()] || []).length;
+  const ha = D.g.happiness;
+  if (done === 6) return `Journée parfaite 🎉 ${D.g.name} est aux anges !`;
+  if (ha <= 2) return `${D.g.name} semble un peu triste ce soir 💜 Prends soin de toi.`;
+  return `Bonne soirée ✿ Tu as coché ${done} habitude${done > 1 ? 's' : ''} aujourd'hui.`;
+}
+
+function showWelcomeModal() {
+  const D = window.D;
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <h3 style="text-align:center">Bienvenue ✿</h3>
+    <p style="font-size:12px;text-align:center;margin:8px 0">Comment s'appelle ton compagnon ?</p>
+    <input id="welcome-name" class="inp" placeholder="Petit·e Gotchi" maxlength="20" style="text-align:center">
+    <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="confirmWelcome()">C'est parti 🌟</button>
+  `;
+  setTimeout(() => document.getElementById('welcome-name')?.focus(), 100);
+}
+
+function confirmWelcome() {
+  const val = document.getElementById('welcome-name')?.value.trim();
+  if (val) { window.D.g.name = val; save(); updUI(); }
+  clModal();
+}
+
+/* ============================================================
    INIT AU CHARGEMENT
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {

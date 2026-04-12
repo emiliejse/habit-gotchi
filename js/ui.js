@@ -303,9 +303,9 @@ function ouvrirBoutique() {
     </div>
 
     <div style="text-align:center;margin-bottom:16px">
-      <span style="display:inline-block;background:linear-gradient(135deg,var(--lilac),var(--pink));color:#fff;border-radius:20px;padding:6px 18px;font-size:13px;font-weight:bold;letter-spacing:.5px">
-        🌸 ${D.g.petales || 0} pétales
-      </span>
+      <p style="font-size:11px;color:var(--text2);text-align:center">
+  🌸 <b style="font-size:15px;color:var(--lilac)">${D.g.petales || 0}</b> pétales disponibles
+</p>
     </div>
 
     <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">

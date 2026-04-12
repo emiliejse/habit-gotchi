@@ -287,7 +287,7 @@ function renderBoutiqueOnglet(onglet) {
   } else {
     const peutGenerer = (D.g.petales || 0) >= 16;
     el.innerHTML = `
-      <p style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:12px">Claude invente un prop unique rien que pour toi ✨</p>
+      <p style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:12px">L'IA invente un objet unique rien que pour toi ✨</p>
       <button onclick="acheterPropClaude()" style="width:100%;padding:10px;border-radius:12px;border:none;font-size:11px;font-weight:bold;cursor:${peutGenerer?'pointer':'not-allowed'};background:${peutGenerer?'var(--lilac)':'#ccc'};color:#fff">
         ${peutGenerer ? '🤖 Générer un prop — 🌸 16' : '🌸 Il te faut 16 pétales'}
       </button>

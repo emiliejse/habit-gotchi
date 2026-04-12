@@ -436,6 +436,7 @@ function updateParts(p) {
   }
 
   p.touchStarted = function() {
+    console.log('touchStarted déclenché');
     const now = Date.now();
     if (now - (window._lastTapTime || 0) < 200) return false;
     window._lastTapTime = now;

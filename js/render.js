@@ -453,8 +453,11 @@ function updateParts(p) {
     const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
     console.log('mx', mx, 'my', my, 'walkX', walkX, 'by', by, 'hit', hit);
     if (hit) {
+      console.log('avant triggerTouchReaction');
       window._lastTapX = walkX + (Math.random() - 0.5) * 20;
+      console.log('_lastTapX set', window._lastTapX);
       triggerTouchReaction(h >= 22 || h < 7);
+      console.log('après triggerTouchReaction', window.touchReactions.length);
       return false;
     }
   };

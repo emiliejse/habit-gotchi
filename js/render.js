@@ -265,6 +265,7 @@ if (g.props) {
     }
 
 // --- Réactions au toucher ---
+    p.drawingContext.globalAlpha = 1.0; // ← ajoute cette ligne
     window.touchReactions = (window.touchReactions || []).filter(tr => tr.timer > 0);
     window.touchReactions.forEach(tr => {
       const progress = 1 - (tr.timer / 35); // 0→1

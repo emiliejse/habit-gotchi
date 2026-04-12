@@ -429,7 +429,7 @@ function renderBoutiqueOnglet(onglet) {
           color:${peutGenerer?'#fff':'#aaa'};
           border-bottom:${peutGenerer?'3px solid rgba(0,0,0,0.15)':'3px solid transparent'};
           letter-spacing:.5px">
-          ${peutGenerer ? '✨ Demander à ${window.D.g.name} — 🌸 16` : '🌸 Il te faut 16 pétales'}
+          ${peutGenerer ? `✨ Demander à ${window.D.g.name} — 🌸 16` : '🌸 Il te faut 16 pétales'}
         </button>
       </div>
     `;

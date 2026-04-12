@@ -188,43 +188,31 @@ function drawActiveEnv(p, env, n, h) {
 
 // ── MOTIFS CADRE MURAL (unique par thème) ───────────────────
 function drawFrameMotif(p, theme, n) {
-  if (theme.id === 'automne') {
-  // feuille : losange + tige
+ if (theme.id === 'automne') {
+  // losange = feuille, tige en bas
   p.fill(tc(n, theme.frameAccent1));
-  px(p, 101, 73, PX, PX);           // pointe haute
-  px(p, 98,  76, PX*3, PX);         // épaules
-  px(p, 96,  79, PX*5, PX*2);       // milieu large
-  px(p, 98,  83, PX*3, PX);         // bas
-  p.fill(tc(n, theme.frameAccent2)); // nervure
-  px(p, 101, 73, PX, PX*4);
-  px(p, 101, 83, PX, PX*2);         // tige
-}
-  else if (theme.id === 'hiver') {
-  p.fill(tc(n, theme.frameAccent1));
-  px(p, 101, 74, PX, PX*4);         // barre verticale
-  px(p, 96,  79, PX*9, PX);         // barre horizontale
-  px(p, 96,  74, PX, PX);           // coin haut gauche
-  px(p, 106, 74, PX, PX);           // coin haut droite
-  px(p, 96,  84, PX, PX);           // coin bas gauche
-  px(p, 106, 84, PX, PX);           // coin bas droite
-}
-  else if (theme.id === 'desert') {
-  // antennes
-  p.fill(tc(n, theme.frameAccent1));
-  px(p, 98,  73, PX, PX);
-  px(p, 103, 73, PX, PX);
-  // tête
-  px(p, 98,  76, PX*3, PX);
-  // corps
-  px(p, 97,  79, PX*5, PX*3);
-  // reflet ailes
+  px(p, 101, 74, PX,   PX  );   // pointe haute
+  px(p, 98,  78, PX*3, PX  );   // milieu large
+  px(p, 101, 82, PX,   PX  );   // pointe basse
   p.fill(tc(n, theme.frameAccent2));
-  px(p, 98,  80, PX, PX*2);
-  px(p, 103, 80, PX, PX*2);
-  // pattes (courtes, 3 de chaque)
+  px(p, 101, 74, PX,   PX*3);   // nervure centrale
+  px(p, 101, 84, PX,   PX*2);   // tige
+}
+else if (theme.id === 'hiver') {
+  // croix simple = flocon
   p.fill(tc(n, theme.frameAccent1));
-  px(p, 95, 79, PX, PX); px(p, 95, 81, PX, PX); px(p, 95, 83, PX, PX);
-  px(p, 103,79, PX, PX); px(p, 103,81, PX, PX); px(p, 103,83, PX, PX);
+  px(p, 101, 73, PX, PX*6);     // barre verticale
+  px(p, 96,  78, PX*6, PX);     // barre horizontale
+}
+else if (theme.id === 'desert') {
+  // antennes + tête + corps = scarabée
+  p.fill(tc(n, theme.frameAccent1));
+  px(p, 98,  73, PX, PX);       // antenne gauche
+  px(p, 104, 73, PX, PX);       // antenne droite
+  px(p, 101, 76, PX, PX);       // tête
+  px(p, 98,  79, PX*3, PX*3);   // corps
+  p.fill(tc(n, theme.frameAccent2));
+  px(p, 101, 80, PX, PX*2);     // reflet central
 }
   else {
     // pastel

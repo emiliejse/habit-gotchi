@@ -440,12 +440,9 @@ p.touchStarted = function() {
   const now = Date.now();
   if (now - (window._lastTapTime || 0) < 200) return false;
   window._lastTapTime = now;
+
   const mx = p.touches[0]?.x ?? p.mouseX;
   const my = p.touches[0]?.y ?? p.mouseY;
-    const hit = Math.abs(mx - walkX) < 35 && Math.abs(my - (by - 10)) < 45;
-  console.log('hit', hit);
-  if (hit) {
-
   // --- Bouton 🧹 ---
   if (Math.abs(mx - 72) < 14 && my < 26) {
     cleanPoops(); return false;

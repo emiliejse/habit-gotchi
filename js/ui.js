@@ -444,7 +444,7 @@ function toggleMasquerAcquis() {
 function acheterProp(propId) {
   const prop = (window.PROPS_LIB || []).find(p => p.id === propId);
   if (!prop) return;
-  if ((D.g.petales || 0) < prop.cout) { toast('Pas assez de pétales 🌸'); return; }
+  if ((D.g.petales || 0) < prop.cout) { toast(`Pas assez de pétales 🌸'); return; }
   
   D.g.petales = (D.g.petales || 0) - prop.cout;
   if (!D.g.props) D.g.props = [];
@@ -505,7 +505,7 @@ function confirmerSuppressionIA(propId) {
   save();
   clModal();
   renderProps();
-  toast('🗑️ Objet supprimé');
+  toast(`🗑️ Objet supprimé');
 }
 
 function makeSlotBtn(propIndex, slotId, label, arrow, occupied) {
@@ -710,7 +710,7 @@ function cleanProps() {
   });
 
   if (!orphelins.length) {
-    toast('Aucun prop orphelin trouvé ✿');
+    toast(`Aucun prop orphelin trouvé ✿');
     return;
   }
 
@@ -743,7 +743,7 @@ function viderJournal() {
   if (!confirm('Supprimer toutes les notes du journal ? La progression du Gotchi n\'est pas affectée.')) return;
   D.journal = [];
   save();
-  toast('Journal vidé ✿');
+  toast(`Journal vidé ✿');
   debugProps();
 }
 
@@ -754,7 +754,7 @@ function viderObjetsIA() {
     return (window.PROPS_LIB || []).find(l => l.id === p.id);
   });
   save();
-  toast('Objets du Gotchi supprimés ✿');
+  toast(`Objets du Gotchi supprimés ✿');
   debugProps();
 }
 
@@ -892,12 +892,12 @@ document.getElementById('bubble').textContent = bulleCadeau.replace('{{nom}}', D
 
   } catch(e) {
     if (document.getElementById('claude-msg'))
-      document.getElementById('claude-msg').textContent = '*soupir* Je n\'arrive pas à me connecter... ✿';
+      document.getElementById('claude-msg`).textContent = '*soupir* Je n\'arrive pas à me connecter... ✿';
   }
 }
 
 async function acheterPropClaude() {
-  if ((D.g.petales || 0) < 16) { toast('Pas assez de pétales 🌸'); return; }
+  if ((D.g.petales || 0) < 16) { toast(`Pas assez de pétales 🌸'); return; }
   if (!D.apiKey) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
 
   D.g.petales -= 16; save();
@@ -911,7 +911,7 @@ async function acheterPropClaude() {
   const ctx = window.AI_CONTEXTS;
   const prompt = ctx
     ? ctx.buyProp.replace('{{theme}}', theme).replace('{{existingNames}}', nomsExistants).replace('{{timestamp}}', Date.now())
-    : (() => { toast('*inquiet* Mes fichiers de mémoire sont manquants... 💜'); return null; })();
+    : (() => { toast(`*inquiet* Mes fichiers de mémoire sont manquants... 💜'); return null; })();
   
 if (!prompt) return;
   try {
@@ -934,7 +934,7 @@ window.PROPS_LOCAL = Object.values(D.propsPixels);
     }
   } catch(e) {
     D.g.petales = (D.g.petales || 0) + 16; save();
-    toast('*soupir* Je n'ai pas pu créer l'objet... pétales remboursés 🌸');
+    toast(`*soupir* Je n'ai pas pu créer l'objet... pétales remboursés 🌸`);
     ouvrirBoutique();
   }
 }
@@ -1151,17 +1151,17 @@ function applyUIPalette(id, silent = false) {
   document.documentElement.style.setProperty('--mint', p.mint);
   document.documentElement.style.setProperty('--pink', p.pink);
   window.D.g.uiPalette = id; save(); renderPerso();
-  if (!silent) toast('Palette ' + p.label + ' appliquée ✿');
+  if (!silent) toast(`Palette ' + p.label + ' appliquée ✿');
 }
 function applyGotchiColor(id, silent = false) {
   const c = GOTCHI_COLORS.find(x => x.id === id); if (!c) return;
   window.D.g.gotchiColor = id; save(); renderPerso();
-  if (!silent) toast('Couleur ' + c.label + ' appliquée ✿');
+  if (!silent) toast(`Couleur ' + c.label + ' appliquée ✿');
 }
 function applyEnvTheme(id, silent = false) {
   const t = ENV_THEMES.find(x => x.id === id); if (!t) return;
   window.D.g.envTheme = id; save(); renderPerso();
-  if (!silent) toast('Ambiance ' + t.label + ' appliquée ✿');
+  if (!silent) toast(`Ambiance ' + t.label + ' appliquée ✿');
 }
 function restorePerso() {
   if (window.D.g.uiPalette)   applyUIPalette(window.D.g.uiPalette, true);
@@ -1238,7 +1238,7 @@ function saveJ() {
   window.D.journal.push({ date: new Date().toISOString(), mood: selMood || 'ok', text: t });
   addXp(15);
   addEvent('note', 15, t.slice(0, 30) || 'Note sans texte');  // ← nouveau
-  toast('+15 XP 📓');                                          // ← nouveau
+  toast(`+15 XP 📓');                                          // ← nouveau
   save();
   document.getElementById('j-text').value = '';
   selMood = null;
@@ -1333,12 +1333,12 @@ function saveName() {
 function saveApi() {
   const v = document.getElementById('api-inp').value.trim();
   window.D.apiKey = v; save();
-  if (v) toast('Je me souviens de ta clé, promis 🔑 ✿'); else toast('Clé oubliée... *soupir* ✿');
+  if (v) toast(`Je me souviens de ta clé, promis 🔑 ✿`); else toast(`Clé oubliée... *soupir* ✿');
 }
 function savePin() {
   const v = document.getElementById('pin-inp').value.trim();
-  if (v.length === 4 && /^\d+$/.test(v)) { window.D.pin = v; save(); document.getElementById('pin-inp').value = ''; toast('PIN mis à jour ✿'); }
-  else toast('4 chiffres requis');
+  if (v.length === 4 && /^\d+$/.test(v)) { window.D.pin = v; save(); document.getElementById('pin-inp`).value = ''; toast(`PIN mis à jour ✿'); }
+  else toast(`4 chiffres requis');
 }
 function exportD() {
   const b = new Blob([JSON.stringify(window.D, null, 2)], {type:'application/json'});
@@ -1353,9 +1353,9 @@ function importD(event) {
     try {
       const imported = JSON.parse(e.target.result);
       window.D = { ...defs(), ...imported, g:{ ...defs().g, ...imported.g } };
-      save(); toast('Bienvenue de retour ${window.D.g.name} ! ✿');
+      save(); toast(`Bienvenue de retour ${window.D.g.name} ! ✿');
       setTimeout(() => location.reload(), 800);
-    } catch(err) { toast('*perplexe* Ce fichier me semble bizarre... 💜'); }
+    } catch(err) { toast(`*perplexe* Ce fichier me semble bizarre... 💜'); }
   };
   reader.readAsText(file);
 }

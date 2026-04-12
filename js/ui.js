@@ -478,6 +478,18 @@ async function askClaude() {
   if (!key) { toast('Clé API manquante dans les Réglages'); return; }
 
   const g = D.g, td = today();
+if (hr() >= 22 || hr() < 7) {
+  const msgs = [
+    "Zzz... je dors 🌙",
+    "Chut ! Il est tard... 😴",
+    "Laisse-moi tranquille, vas dormir ! 🌛",
+    "...zzzZZZ... 💤",
+    "Le Gotchi ronfle doucement. Reviens demain ✿"
+  ];
+  const el = document.getElementById('claude-msg');
+  if (el) el.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+  return;
+}
     // ✦ LIMITE 3 PENSÉES PAR JOUR
   if (window.D.lastThoughtDate !== td) {
     window.D.lastThoughtDate = td;

@@ -364,7 +364,7 @@ document.addEventListener('visibilitychange', () => {
    ============================================================ */
 loadDataFiles().then(() => {
   initBaseProps();
-  updBadgeBoutique();
+  if (typeof updBadgeBoutique === 'function') updBadgeBoutique();
 });
 fetchMeteo();
 setInterval(fetchMeteo, 1800000);

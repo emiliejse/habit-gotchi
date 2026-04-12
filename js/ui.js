@@ -675,7 +675,7 @@ async function acheterPropClaude() {
   D.g.petales -= 16; save();
 
   const el = document.getElementById('boutique-contenu');
-  if (el) el.innerHTML = '<p style="text-align:center;font-size:11px;padding:20px">L'IA crée ton prop... 💭</p>';
+  if (el) el.innerHTML = `<p style="text-align:center;font-size:11px;padding:20px">L'IA crée ton prop... 💭</p>`;
 
   const nomsExistants = (D.g.props || []).map(p => p.nom).join(', ') || 'aucun';
   const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];

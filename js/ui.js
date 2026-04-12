@@ -295,7 +295,7 @@ el.innerHTML = libFiltree.map(prop => {
     el.innerHTML = `
       <p style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:12px">L'IA invente un objet unique rien que pour toi ✨</p>
       <button onclick="acheterPropClaude()" style="width:100%;padding:10px;border-radius:12px;border:none;font-size:11px;font-weight:bold;cursor:${peutGenerer?'pointer':'not-allowed'};background:${peutGenerer?'var(--lilac)':'#ccc'};color:#fff">
-        ${peutGenerer ? '🤖 Générer un prop — 🌸 16' : '🌸 Il te faut 16 pétales'}
+        ${peutGenerer ? '🤖 Générer un objet — 🌸 16' : '🌸 Il te faut 16 pétales'}
       </button>
     `;
   }
@@ -652,9 +652,9 @@ if (tc) tc.textContent = `(${window.D.thoughtCount}/3)`;
       if (!D.g.props) D.g.props = [];
       if (!D.g.props.find(p => p.id === data.cadeau.id)) {
         D.g.props.push({ id: data.cadeau.id, nom: data.cadeau.nom, type: data.cadeau.type, actif: false });
-        if (!D.propsPixels) D.propsPixels = [];
-        D.propsPixels.push(data.cadeau);
-        window.PROPS_LOCAL = D.propsPixels;
+        if (!D.propsPixels) D.propsPixels = {};
+D.propsPixels[data.cadeau.id] = data.cadeau;
+window.PROPS_LOCAL = Object.values(D.propsPixels);
         D.lastGiftDate = td;
         toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
       }
@@ -675,12 +675,12 @@ async function acheterPropClaude() {
   D.g.petales -= 16; save();
 
   const el = document.getElementById('boutique-contenu');
-  if (el) el.innerHTML = '<p style="text-align:center;font-size:11px;padding:20px">Claude crée ton prop... 💭</p>';
+  if (el) el.innerHTML = '<p style="text-align:center;font-size:11px;padding:20px">L'IA crée ton prop... 💭</p>';
 
   const nomsExistants = (D.g.props || []).map(p => p.nom).join(', ') || 'aucun';
   const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
   const theme = themes[Math.floor(Math.random() * themes.length)];
-  const ctx = window.PROMPTS && window.PROMPTS.aiContexts;
+  const ctx = window.AI_CONTEXTS;
   const prompt = ctx
     ? ctx.buyProp.replace('{{theme}}', theme).replace('{{existingNames}}', nomsExistants).replace('{{timestamp}}', Date.now())
     : (() => { toast('Erreur : fichier prompts non chargé.'); return null; })();
@@ -697,9 +697,9 @@ if (!prompt) return;
     if (match) {
       const obj = JSON.parse(match[0]);
       D.g.props.push({ id:obj.id, nom:obj.nom, type:obj.type, emoji:obj.emoji||'🎁', actif:false });
-      D.propsPixels = D.propsPixels || [];
-      D.propsPixels.push(obj);
-      window.PROPS_LOCAL = D.propsPixels;
+      D.propsPixels = D.propsPixels || {};
+D.propsPixels[obj.id] = obj;
+window.PROPS_LOCAL = Object.values(D.propsPixels);
       save(); renderProps(); updUI();
       toast(`🎁 ${obj.nom} ajouté à ton inventaire !`);
       ouvrirBoutique();
@@ -722,7 +722,7 @@ function toastInfo() {
   const D = window.D, td = today();
   const habsDuJour  = D.habits.map(h => ({ label:h.label, faite:(D.log[td]||[]).includes(h.catId) }));
   const notesDuJour = D.journal.filter(j => j.date.startsWith(td)).map(j => ({ humeur:j.mood, texte:j.text }));
-  const ctx = window.PROMPTS && window.PROMPTS.aiContexts;
+  const ctx = window.AI_CONTEXTS;
   const promptInit = ctx
     ? ctx.genSoutien
         .replace('{{energy}}',      `${D.g.energy}/5`)
@@ -842,7 +842,7 @@ async function genBilanSemaine() {
     return;
   }
   summaryEl.textContent = '💭 Claude analyse ta semaine...';
-  const ctx = window.PROMPTS && window.PROMPTS.aiContexts;
+  const ctx = window.AI_CONTEXTS;
   const prompt = ctx
     ? ctx.genBilanSemaine
         .replace('{{weekStart}}',   wd[0])

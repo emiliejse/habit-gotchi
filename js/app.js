@@ -5,13 +5,12 @@
 /* ============================================================
    VARIABLES GLOBALES PARTAGÉES (window.X pour tous les fichiers)
    ============================================================ */
-window.D            = null;   // données utilisateur (chargé plus bas)
-window.PROPS_LIB    = [];     // catalogue props (data/props.json)
-window.PROPS_LOCAL  = [];     // props générés par Claude (session)
+window.D            = null;   // données utilisateur
+window.PROPS_LIB    = [];     // catalogue (data/props.json)
+window.PROPS_LOCAL  = [];     // objets générés par l'IA (session)
 window.PERSONALITY  = null;   // data/personality.json
-window.ENVIRONMENTS = null;   // data/environments.json
-window.STYLES       = null;   // data/styles.json
-window.PROMPTS      = null;   // prompts/ (bubbles, aiSystem, aiContexts)
+window.AI_CONTEXTS  = null;   // prompts/ai_contexts.json
+window.AI_SYSTEM    = null;   // prompts/ai_system.json
 
 // Variables partagées avec render.js
 window.celebQueue = [];
@@ -124,8 +123,8 @@ function save() {
 window.D = load();
 
 // Restaure les pixels des props générés par Claude
-if (window.D.propsPixels && window.D.propsPixels.length) {
-  window.PROPS_LOCAL = window.D.propsPixels;
+if (window.D.propsPixels && Object.keys(window.D.propsPixels).length) {
+  window.PROPS_LOCAL = Object.values(window.D.propsPixels);
 }
 
 /* ============================================================
@@ -251,7 +250,7 @@ async function fetchMeteo() {
    BULLE DE DIALOGUE
    ============================================================ */
 function getBubble() {
-  const src = (window.PROMPTS && window.PROMPTS.bubbles) ? window.PROMPTS.bubbles : MSG;
+  const src = window.PERSONALITY ? window.PERSONALITY.bulles : MSG;
   const h=hr(), log=window.D.log[today()]||[], done=log.length, en=window.D.g.energy, ha=window.D.g.happiness;
   let pool;
   if(h>=22||h<7)       pool=src.night;

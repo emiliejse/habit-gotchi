@@ -443,6 +443,7 @@ p.touchStarted = function() {
 
   const mx = p.touches[0]?.x ?? p.mouseX;
   const my = p.touches[0]?.y ?? p.mouseY;
+
   // --- Bouton 🧹 ---
   if (Math.abs(mx - 72) < 14 && my < 26) {
     cleanPoops(); return false;
@@ -463,9 +464,9 @@ p.touchStarted = function() {
     triggerTouchReaction(h >= 22 || h < 7);
     return false;
   }
-};
+}; // ← fin p.touchStarted
 
-}; // fin p5s
+}; // ← fin p5s
 
 function drawEgg(p, cx, cy) {
   const x=cx-PX*3, y=cy; p.noStroke();

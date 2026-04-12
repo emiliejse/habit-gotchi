@@ -302,44 +302,36 @@ function updBubbleNow() {
 
   let pool;
   if (h >= 22 || h < 7) {
-  pool = src.nuit || src.night || ["Zzz... 🌙"];
-  // Mode nuit : on affiche direct et on sort, sans tirer au sort
+    pool = src.nuit || src.night || ["Zzz... 🌙"];
+    const el = document.getElementById('bubble');
+    if (el) el.textContent = pool[0];
+    return;
+  }
+  else if (ha <= 1)                               pool = src.triste  || src.sad;
+  else if (en <= 1)                               pool = src.fatigue || src.tired;
+  else if ((D.log[today()]||[]).length === 6)     pool = src.max     || src.full;
+  else if ((D.log[today()]||[]).length >= 4)      pool = src.fierte  || src.high;
+  else if ((D.log[today()]||[]).length === 0)     pool = src.peu     || src.low;
+  else if (meteoData && meteoData.windspeed > 40) pool = src.vent    || src.wind;
+  else if (h < 12)                                pool = src.matin   || src.morning;
+  else if (h < 18)                                pool = src.aprem   || src.afternoon;
+  else                                            pool = src.soir    || src.evening;
+
+  if (Math.random() < 0.15) {
+    const cb = D.g.customBubbles;
+    let etatKey = 'idle';
+    if (ha <= 1) etatKey = 'triste';
+    else if (en <= 1) etatKey = 'fatigue';
+    const customPool = (cb && typeof cb === 'object' && !Array.isArray(cb))
+      ? (cb[etatKey] || cb['idle'] || [])
+      : [];
+    const extras = (src.idle || []).concat(customPool);
+    if (extras.length) pool = extras;
+  }
+
+  if (!pool || !pool.length) pool = ["✿"];
   const el = document.getElementById('bubble');
-  if (el) el.textContent = pool[0]; // toujours la même phrase la nuit
-  return;
-}
-  else if (ha <= 1)                                  pool = src.triste  || src.sad;
-  else if (en <= 1)                                  pool = src.fatigue || src.tired;
-  else if ((D.log[today()]||[]).length === 6)        pool = src.max     || src.full;
-  else if ((D.log[today()]||[]).length >= 4)         pool = src.fierte  || src.high;
-  else if ((D.log[today()]||[]).length === 0)        pool = src.peu     || src.low;
-  else if (meteoData && meteoData.windspeed > 40)    pool = src.vent    || src.wind;
-  else if (h < 12)                                   pool = src.matin   || src.morning;
-  else if (h < 18)                                   pool = src.aprem   || src.afternoon;
-  else                                               pool = src.soir    || src.evening;
-
-// Injection notes du jour dans le contexte (pour usage futur dans pool enrichi)
-const notesAujourdhui = (D.journal || [])
-  .filter(j => j.date.startsWith(today()))
-  .map(j => j.text)
-  .join(' ');
-// notesAujourdhui est disponible ici si tu veux l'utiliser dans les pools
-
-  // Mélange idle + phrases apprises par Claude (customBubbles est un OBJET par état)
-if (Math.random() < 0.15) {
-  const cb = D.g.customBubbles;
-  // On détermine l'état courant pour piocher dans le bon pool custom
-  let etatKey = 'idle';
-  if (h >= 22 || h < 7) etatKey = 'nuit';
-  else if (ha <= 1) etatKey = 'triste';
-  else if (en <= 1) etatKey = 'fatigue';
-  // ... tu peux étendre selon les états que tu utilises
-
-  const customPool = (cb && typeof cb === 'object' && !Array.isArray(cb))
-    ? (cb[etatKey] || cb['idle'] || [])
-    : [];
-  const extras = (src.idle || []).concat(customPool);
-  if (extras.length) pool = extras;
+  if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
 }
 
 /* ============================================================

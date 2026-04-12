@@ -28,28 +28,39 @@
      CONSOLE FIXE (top) : shell + icônes + bulle
      ============================================================ -->
 <div id="console-top">
+
+  <!-- Header -->
   <div class="hdr">
-  <h1>✿ Habit-Gotchi ✿</h1>
-  <button id="btn-tablet" onclick="openTablet()" class="menu-btn" style="position:relative">
-    📟
-    <span id="tablet-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--coral);color:#fff;font-size:8px;border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
-  </button>
-</div>
+    <h1>✿ Habit-Gotchi ✿</h1>
+    <button id="btn-tablet" onclick="openTablet()" class="menu-btn" style="position:relative">
+      📟
+      <span id="tablet-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--coral);color:#fff;font-size:8px;border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
+    </button>
+  </div>
+
+  <!-- Date -->
   <sub id="date-d" style="display:block;text-align:center;font-size:10px;color:var(--text2)"></sub>
+
+  <!-- Shell -->
   <div class="tama-shell">
     <div class="tama-screen" id="cbox"></div>
+
+    <!-- Barre d'actions -->
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 6px 2px;gap:4px;">
+      <span id="petales-l" style="font-size:11px;font-weight:bold;color:var(--text2);min-width:40px;">🌸 0</span>
+      <button id="btn-clean" onclick="cleanPoops()" title="Nettoyer" style="background:none;border:none;font-size:16px;cursor:pointer;padding:2px;opacity:0.25;transition:opacity .2s;">🧹</button>
+      <button onclick="ouvrirSnack()" title="Donner à manger" style="background:none;border:none;font-size:16px;cursor:pointer;padding:2px;opacity:0.85;">🍽️</button>
+      <span id="shell-temp" style="font-size:11px;font-weight:bold;color:var(--text2);min-width:40px;text-align:right;">--°C</span>
+    </div>
   </div>
+
+  <!-- Bulle -->
   <div class="bubble" id="bubble">...</div>
-  <div style="max-width:340px;margin:0 auto;padding:0 8px;display:flex;justify-content:flex-end;">
-  <button id="btn-clean" onclick="cleanPoops()" style="
-    background:none;border:none;
-    font-size:18px;cursor:pointer;
-    padding:2px 4px;
-    opacity:0.25;
-  ">🧹</button>
-</div>
-</div>
+
+  <!-- Badge météo -->
   <div class="meteo-badge" id="meteo-badge" style="display:none;"></div>
+
+  <!-- Sliders énergie / bonheur -->
   <div style="max-width:340px;margin:6px auto 4px;padding:0 4px">
     <div class="slider-row">
       <label>Énergie</label>
@@ -62,6 +73,7 @@
       <span class="sv" id="sv-happy">3</span>
     </div>
   </div>
+
 </div>
 
 <!-- ============================================================

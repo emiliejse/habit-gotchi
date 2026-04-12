@@ -136,6 +136,10 @@ if (btnClean) {
   btnClean.style.opacity = hasPoops ? '1' : '0.25';
   btnClean.style.pointerEvents = hasPoops ? 'auto' : 'none';
 }
+const shellTemp = document.getElementById('shell-temp');
+if (shellTemp && window.meteoData?.temperature) {
+  shellTemp.textContent = Math.round(window.meteoData.temperature) + '°C';
+}
   updBadgeBoutique();
 }
 

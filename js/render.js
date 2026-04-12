@@ -318,20 +318,6 @@ if (window.touchReaction.active) {
 
     updateParts(p);
 
-    // --- Pétales (coin sup. gauche) ---
-    p.fill(255); p.noStroke();
-    p.textSize(12); p.textFont('Courier New');
-    p.textAlign(p.LEFT, p.TOP);
-    p.text('🌸 ' + (g.petales || 0), 6, 8);
-
-    // --- Météo (coin sup. droit) ---
-    if (window.meteoData && window.meteoData.temperature) {
-      p.fill(255); p.noStroke();
-      p.textSize(12); p.textFont('Courier New');
-      p.textAlign(p.RIGHT, p.TOP);
-      p.text(Math.round(window.meteoData.temperature) + '°C', CS - 8, 8);
-    }
-
     // --- Clignement ---
     blinkT++;
     if (blinkT > 45 + Math.random() * 35) {

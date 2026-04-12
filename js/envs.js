@@ -11,11 +11,15 @@ function drawActiveEnv(p, env, n, h) {
   const theme = getEnvC();
   p.noStroke();
 
-  if (env === 'parc') {
+if (env === 'parc') {
     p.fill(theme.gnd);   p.rect(0, 120, CS, 80);
     p.fill(theme.gndDk); p.rect(0, 120, CS, PX*2);
-    drawTreeTheme(p, 8,   86, n, theme.leaf1, theme.leaf2, theme.trunk);
-    drawTreeTheme(p, 160, 90, n, theme.leaf1, theme.leaf2, theme.trunk);
+
+    if (theme.id !== 'desert') {
+      drawTreeTheme(p, 8,   86, n, theme.leaf1, theme.leaf2, theme.trunk);
+      drawTreeTheme(p, 160, 90, n, theme.leaf1, theme.leaf2, theme.trunk);
+    }
+
     drawThemeAccents(p, theme);
   }
 

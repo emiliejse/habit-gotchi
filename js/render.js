@@ -356,7 +356,6 @@ if (window.touchReaction.active) {
     p.text('🍽️', CS / 2 + 14, 6);
 
   }; // ← fin p.draw()
-  };
 
   function drawSky(p, h, ha) {
     p.noStroke(); let c1, c2;

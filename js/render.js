@@ -437,6 +437,9 @@ p.fill(col);
   }
 
 p.touchStarted = function() {
+  const now = Date.now();
+  if (now - (window._lastTapTime || 0) < 200) return false;
+  window._lastTapTime = now;
   const mx = p.touches[0]?.x ?? p.mouseX;
   const my = p.touches[0]?.y ?? p.mouseY;
 

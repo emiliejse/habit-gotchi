@@ -121,6 +121,8 @@ if (document.getElementById('env-sel'))  document.getElementById('env-sel').valu
   if (document.getElementById('api-inp'))  document.getElementById('api-inp').value = D.apiKey || '';
   const petalesDisplay = document.getElementById('petales-wallet');
   if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0}`;
+  const petalesBoutique = document.getElementById('petales-wallet-boutique');
+if (petalesBoutique) petalesBoutique.textContent = `${D.g.petales || 0}`;
   const tc = document.getElementById('thought-count');
 if (tc) tc.textContent = `(${window.D.thoughtCount || 0}/3)`;
 const btnAsk = document.getElementById('btn-ask-claude');

@@ -437,27 +437,49 @@ function confirmSlot(propIndex, slotId) {
   toast(`✨ ${prop.nom} placé (${slotId}) !`);
 }
 
-function debugProps() {
+ function debugProps() {
   const D = window.D, lib = window.PROPS_LIB || [];
   const actifs = (D.g.props || []).filter(p => p.actif);
-  const g = D.g, s = getSt(g.totalXp);
-  let r = '✿ État du système ✿\n\n';
-  r += `🎮 ${g.name} (${s.l}, ${g.totalXp} XP)\n`;
+  const g = D.g;
+  const s = getSt(g.totalXp);
+
+  // Habits cochés aujourd'hui
+  const today = new Date().toISOString().slice(0, 10);
+  const habitsCochés = D.habits.filter(h => (D.log[today] || []).includes(h.catId)).length;
+
+  // Taille localStorage
+  const lsSize = new Blob([JSON.stringify(localStorage)]).size;
+  const lsKo = (lsSize / 1024).toFixed(1);
+
+  let r = '';
+  r += `👾 ${g.name} — ${s.l} (${g.totalXp} XP)\n`;
   r += `⚡ Énergie: ${g.energy}/5 · 💜 Bonheur: ${g.happiness}/5\n`;
-  r += `📦 Catalogue: ${lib.length} objets chargés\n`;
-  r += `🎒 Inventaire: ${(D.g.props||[]).length} objets (${actifs.length} actifs)\n\n`;
-  if (actifs.length) actifs.forEach(p => { const def = lib.find(l => l.id === p.id); r += (def&&def.pixels?'✅':'❌')+' '+p.nom+' ('+p.id+')\n'; });
-  r += '\n📁 Fichiers data:\n';
+  r += `🌸 Pétales: ${g.petales || 0}\n`;
+  r += `😶 Humeur: ${g.mood} (${g.moodDay})\n`;
+  r += `🌍 Environnement: ${g.activeEnv} (nv.${g.envLv})\n\n`;
+
+  r += `📋 Habitudes\n`;
+  r += `${D.habits.length} configurées · ${habitsCochés} cochées aujourd'hui\n\n`;
+
+  r += `🎒 Objets\n`;
+  r += `Catalogue: ${lib.length} · Inventaire: ${(D.g.props||[]).length} (${actifs.length} actifs)\n`;
+  r += `Objets IA: ${Object.keys(D.propsPixels || {}).length}\n\n`;
+
+  r += `📓 Journal\n`;
+  r += `${(D.journal||[]).length} entrées · ${(g.customBubbles||[]).length} bulles perso\n\n`;
+
+  r += `📁 Fichiers data\n`;
   r += (lib.length > 0 ? '✅' : '❌') + ' props.json\n';
   r += (window.PERSONALITY ? '✅' : '❌') + ' personality.json\n';
   r += (window.AI_CONTEXTS ? '✅' : '❌') + ' ai_contexts.json\n';
-  r += (window.AI_SYSTEM ? '✅' : '❌') + ' ai_system.json\n';
-  r += `🎨 Objets IA: ${Object.keys(D.propsPixels || {}).length}\n`;
+  r += (window.AI_SYSTEM ? '✅' : '❌') + ' ai_system.json\n\n';
+
+  r += `💾 LocalStorage: ${lsKo} Ko`;
 
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <h3 style="font-size:13px;color:var(--lilac);">🔍 Debug</h3>
+      <h3 style="font-size:13px;color:var(--lilac);">🔍 État système</h3>
       <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button>
     </div>
     <pre id="debug-contenu" style="font-size:10px;line-height:1.6;white-space:pre-wrap;color:var(--text2);margin:0 0 10px 0">${r}</pre>
@@ -467,6 +489,7 @@ function debugProps() {
     </button>
   `;
 }
+
 function cleanProps() {
   const before = window.D.g.props.length;
 window.D.g.props = window.D.g.props.filter(p => {

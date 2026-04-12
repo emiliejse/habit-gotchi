@@ -474,7 +474,19 @@ async function askClaude() {
   if (!key) { toast('Clé API manquante dans les Réglages'); return; }
 
   const g = D.g, td = today();
-  const P = window.PERSONALITY;
+    // ✦ LIMITE 3 PENSÉES PAR JOUR
+  if (window.D.lastThoughtDate !== td) {
+    window.D.lastThoughtDate = td;
+    window.D.thoughtCount = 0;
+  }
+  if (window.D.thoughtCount >= 3) {
+    toast("Le Gotchi a besoin de calme… Reviens demain 🌙");
+    return;
+  }
+  window.D.thoughtCount++;
+  save();
+
+  const P = window.PERSONALITY; 
   const CTX = window.AI_CONTEXTS?.askClaude;
 
   // --- Remplacement des variables dans le prompt base ---
@@ -680,6 +692,13 @@ const notesJour = window.D.journal
   .slice(-3)
   .map(j => `[${j.mood}] ${j.text}`)
   .join(' | ') || 'aucune note';
+
+const habsDone = (window.D.log[today()] || [])
+  .map(catId => {
+    const h = window.D.habits.find(h => h.catId === catId);
+    return h ? h.label : catId;
+  })
+  .join(', ') || 'aucune';
 
 const contexte = (window.AI_SYSTEM?.soutien_contexte || '')
   .replace('{energie}', window.D.g.energy)

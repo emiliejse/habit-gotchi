@@ -123,6 +123,8 @@ function defs() {
     },
     habits: CATS.map(c => ({catId:c.id, label:c.label})),
     log:{}, journal:[], pin:null, apiKey:null
+    lastThoughtDate: null,
+thoughtCount: 0,
   };
 }
 
@@ -299,7 +301,13 @@ function updBubbleNow() {
   const src = window.PERSONALITY ? window.PERSONALITY.bulles : MSG;
 
   let pool;
-  if      (h >= 22 || h < 7)                        pool = src.nuit    || src.night;
+  if (h >= 22 || h < 7) {
+  pool = src.nuit || src.night || ["Zzz... 🌙"];
+  // Mode nuit : on affiche direct et on sort, sans tirer au sort
+  const el = document.getElementById('bubble');
+  if (el) el.textContent = pool[0]; // toujours la même phrase la nuit
+  return;
+}
   else if (ha <= 1)                                  pool = src.triste  || src.sad;
   else if (en <= 1)                                  pool = src.fatigue || src.tired;
   else if ((D.log[today()]||[]).length === 6)        pool = src.max     || src.full;
@@ -310,16 +318,28 @@ function updBubbleNow() {
   else if (h < 18)                                   pool = src.aprem   || src.afternoon;
   else                                               pool = src.soir    || src.evening;
 
-  // Mélange idle + phrases apprises par Claude
-  if (Math.random() < 0.15) {
-    const cb = Array.isArray(D.g.customBubbles) ? D.g.customBubbles : [];
-const extras = (src.idle || []).concat(cb);
-    if (extras.length) pool = extras;
-  }
+// Injection notes du jour dans le contexte (pour usage futur dans pool enrichi)
+const notesAujourdhui = (D.journal || [])
+  .filter(j => j.date.startsWith(today()))
+  .map(j => j.text)
+  .join(' ');
+// notesAujourdhui est disponible ici si tu veux l'utiliser dans les pools
 
-  if (!pool || !pool.length) pool = ["✿"];
-  const el = document.getElementById('bubble');
-  if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+  // Mélange idle + phrases apprises par Claude (customBubbles est un OBJET par état)
+if (Math.random() < 0.15) {
+  const cb = D.g.customBubbles;
+  // On détermine l'état courant pour piocher dans le bon pool custom
+  let etatKey = 'idle';
+  if (h >= 22 || h < 7) etatKey = 'nuit';
+  else if (ha <= 1) etatKey = 'triste';
+  else if (en <= 1) etatKey = 'fatigue';
+  // ... tu peux étendre selon les états que tu utilises
+
+  const customPool = (cb && typeof cb === 'object' && !Array.isArray(cb))
+    ? (cb[etatKey] || cb['idle'] || [])
+    : [];
+  const extras = (src.idle || []).concat(customPool);
+  if (extras.length) pool = extras;
 }
 
 /* ============================================================

@@ -19,6 +19,44 @@
     [0,0,0,1,0,0,0]
   ]
 },
+{
+  "id": "meduse_lumineuse",
+  "nom": "Méduse Lumineuse",
+  "type": "decor",
+  "emoji": "🪼",
+  "categorie": "ocean",
+  "cout": 0,
+  "slot": "A",
+  "palette": ["transparent", "#FF6B9D", "#A78BFA", "#60EFFF", "#FBBF24"],
+  "pixels": [
+    [0,0,2,2,2,0,0],
+    [0,2,3,4,3,2,0],
+    [2,3,3,4,3,3,2],
+    [0,2,3,3,3,2,0],
+    [0,1,0,1,0,1,0],
+    [1,0,1,0,1,0,1],
+    [0,1,0,1,0,1,0]
+  ]
+},
+{
+  "id": "lucioles_forestieres",
+  "nom": "Lucioles Forestières",
+  "type": "ambiance",
+  "emoji": "✨",
+  "categorie": "nature",
+  "cout": 0,
+  "motion": "float",
+  "palette": ["transparent", "#FFF4A3", "#FFE66D", "#B8E986"],
+  "pixels": [
+    [0,0,0,1,0,0,0],
+    [0,1,0,0,0,0,0],
+    [0,0,0,0,0,2,0],
+    [0,0,3,0,0,0,0],
+    [1,0,0,0,2,0,0],
+    [0,0,0,1,0,0,0],
+    [0,0,0,0,0,0,3]
+  ]
+}
     {
       "id": "plante01",
       "nom": "Plante Grasse",

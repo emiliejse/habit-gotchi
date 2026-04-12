@@ -70,49 +70,49 @@ function drawActiveEnv(p, env, n, h) {
     p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
     p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
     p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
-    p.fill(tc(n, theme.windowSill);
+    p.fill(tc(n, theme.windowSill));
     p.rect(16, 108, 50, PX);
 
     // 3. RIDEAUX + TRINGLE
-    p.fill(tc(n, theme.curtain);
+    p.fill(tc(n, theme.curtain));
     p.rect(10, 63, 12, 52); p.rect(62, 63, 12, 52);
-    p.fill(tc(n, theme.curtainDk);
+    p.fill(tc(n, theme.curtainDk));
     p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52);
     p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52);
-    p.fill(tc(n, theme.curtainRod);
+    p.fill(tc(n, theme.curtainRod));
     p.rect(8, 62, 68, 3);
 
     // 4. PLINTHE
-    p.fill(tc(n, theme.baseboard);
+    p.fill(tc(n, theme.baseboard));
     p.rect(0, 118, CS, PX);
 
     // 5. CADRE MURAL
-    p.fill(tc(n, theme.frameOuter);
+    p.fill(tc(n, theme.frameOuter));
     p.rect(88, 68, 28, 28);
-    p.fill(tc(n, theme.frameBg);
+    p.fill(tc(n, theme.frameBg));
     p.rect(91, 71, 22, 22);
     drawFrameMotif(p, theme, n);
 
     // 6. SOL PARQUET
-    p.fill(tc(n, theme.floor);
+    p.fill(tc(n, theme.floor));
     p.rect(0, 120, CS, 80);
-    p.fill(tc(n, theme.floorLine);
+    p.fill(tc(n, theme.floorLine));
     for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); }
 
     // 7. TAPIS
-    p.fill(tc(n, theme.rug);
+    p.fill(tc(n, theme.rug));
     p.rect(18, 138, 164, 62);
-    p.fill(tc(n, theme.rugCenter);
+    p.fill(tc(n, theme.rugCenter));
     p.rect(22, 141, 156, 59);
 
     // 8. BUREAU
-    p.fill(tc(n, theme.desk);
+    p.fill(tc(n, theme.desk));
     p.rect(bx+4, 108, PX, 18); p.rect(bx+46, 108, PX, 18);
-    p.fill(tc(n, theme.deskTop);
+    p.fill(tc(n, theme.deskTop));
     p.rect(bx, 100, 58, PX*2);
-    p.fill(tc(n, theme.deskShadow);
+    p.fill(tc(n, theme.deskShadow));
     p.rect(bx, 108, 58, PX);
-    p.fill(tc(n, theme.lamp);
+    p.fill(tc(n, theme.lamp));
     px(p, bx+38, 90, PX, PX*2);
     p.fill(tc(n, theme.lampShade));
     px(p, bx+33, 88, PX*3, PX);
@@ -120,10 +120,10 @@ function drawActiveEnv(p, env, n, h) {
 
   // ── MONTAGNE ────────────────────────────────────────────
   else if (env === 'montagne') {
-    p.fill(tc(n, theme.mntGnd)   : theme.mntGnd);   p.rect(0, 120, CS, 80);
-    p.fill(tc(n, theme.mntGndDk); p.rect(0, 120, CS, PX*2);
-    p.fill(tc(n, theme.mntPeak);  p.triangle(40, 120, 100, 50, 160, 120);
-    p.fill(tc(n, theme.mntSnow);  p.triangle(100, 50, 83, 70, 117, 70);
+   p.fill(tc(n, theme.mntGnd));   p.rect(0, 120, CS, 80);
+    p.fill(tc(n, theme.mntGndDk)); p.rect(0, 120, CS, PX*2);
+    p.fill(tc(n, theme.mntPeak));  p.triangle(40, 120, 100, 50, 160, 120);
+    p.fill(tc(n, theme.mntSnow));  p.triangle(100, 50, 83, 70, 117, 70);
 
     // Désert : dune supplémentaire + stries
     if (theme.id === 'desert') {
@@ -137,33 +137,33 @@ function drawActiveEnv(p, env, n, h) {
 // ── MOTIFS CADRE MURAL (unique par thème) ───────────────────
 function drawFrameMotif(p, theme, n) {
   if (theme.id === 'automne') {
-    p.fill(tc(n, theme.frameAccent1);
+    p.fill(tc(n, theme.frameAccent1));
     px(p, 94, 73, PX*3, PX*5);
-    p.fill(tc(n, theme.frameAccent2);
+    p.fill(tc(n, theme.frameAccent2));
     px(p, 99, 71, PX*3, PX*5);
     p.fill('#c86028');
     px(p, 100, 76, PX, PX*4);
   }
   else if (theme.id === 'hiver') {
-    p.fill(tc(n, theme.frameAccent1);
+    p.fill(tc(n, theme.frameAccent1));
     px(p, 100, 72, PX, PX*8);
     px(p, 95, 77, PX*11, PX);
     px(p, 96, 73, PX, PX); px(p, 104, 73, PX, PX);
     px(p, 96, 79, PX, PX); px(p, 104, 79, PX, PX);
   }
   else if (theme.id === 'desert') {
-    p.fill(tc(n, theme.frameAccent1);
+    p.fill(tc(n, theme.frameAccent1));
     px(p, 100, 72, PX, PX); px(p, 98, 74, PX*3, PX);
     px(p, 96, 76, PX*5, PX); px(p, 98, 78, PX*3, PX);
     px(p, 100, 80, PX, PX);
-    p.fill(tc(n, theme.frameAccent2);
+    p.fill(tc(n, theme.frameAccent2));
     px(p, 100, 74, PX, PX); px(p, 100, 78, PX, PX);
   }
   else {
     // pastel
-    p.fill(tc(n, theme.frameAccent1);
+    p.fill(tc(n, theme.frameAccent1));
     px(p, 96, 76, PX*2, PX*2); px(p, 104, 84, PX*2, PX*2);
-    p.fill(tc(n, theme.frameAccent2);
+    p.fill(tc(n, theme.frameAccent2));
     px(p, 104, 76, PX, PX*3); px(p, 96, 84, PX*3, PX);
   }
 }

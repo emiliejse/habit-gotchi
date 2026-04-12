@@ -335,48 +335,39 @@ if (window.touchReaction.active) {
       bounceT = Math.PI * 1.5;
     }
 
-  // --- HUD ---
+// --- HUD ---
     p.noStroke();
     p.textStyle(p.NORMAL);
 
-    function hudIcon(emoji, x, y) {
-      p.fill(255, 255, 255, 60);
-      p.rect(x - 14, y - 2, 28, 22, 6);
-      p.textSize(16);
-      p.textAlign(p.CENTER, p.TOP);
-      p.text(emoji, x, y);
-    }
+    // Bande semi-transparente sur toute la largeur
+    p.fill(0, 0, 0, 50);
+    p.rect(0, 0, CS, 26);
 
     // Pétales (gauche)
-    p.fill(255, 255, 255, 60);
-    p.rect(2, 2, 52, 22, 6);
-    p.fill(50);
+    p.fill(255);
     p.textSize(11);
-    p.textStyle(p.NORMAL);
     p.textAlign(p.LEFT, p.TOP);
     p.text('🌸 ' + (g.petales || 0), 6, 6);
 
-    // Balai
-    const hasPoops = (window.D.g.poops || []).length > 0;
-    p.fill(255, 255, 255, hasPoops ? 180 : 60);
-    p.rect(90 - 14, 2, 28, 22, 6);
-    p.textSize(16);
-    p.textAlign(p.CENTER, p.TOP);
-    p.text('🧹', 90, 4);
-
-    // Assiette
-    hudIcon('🍽️', 122, 4);
-
     // Température (droite)
     if (window.meteoData?.temperature) {
-      p.fill(255, 255, 255, 60);
-      p.rect(CS - 54, 2, 52, 22, 6);
-      p.fill(50);
-      p.textSize(11);
-      p.textStyle(p.NORMAL);
       p.textAlign(p.RIGHT, p.TOP);
       p.text(Math.round(window.meteoData.temperature) + '°C', CS - 6, 6);
     }
+
+    // Balai — opaque si cacas, sinon discret
+    const hasPoops = (window.D.g.poops || []).length > 0;
+    p.textSize(16);
+    p.textAlign(p.CENTER, p.TOP);
+    p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.3;
+    p.text('🧹', 90, 3);
+
+    // Assiette — toujours actif pour l'instant
+    p.drawingContext.globalAlpha = 1.0;
+    p.text('🍽️', 122, 3);
+
+    // Remet l'alpha à 1 pour le reste
+    p.drawingContext.globalAlpha = 1.0;
 
   }; // ← fin p.draw()
 

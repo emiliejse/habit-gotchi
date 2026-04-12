@@ -112,7 +112,8 @@ const p5s = (p) => {
   };
 
   p.draw = function() {
-    const g = window.D.g, h = hr(), sleeping = (h >= 22 || h < 7);
+    if (!window.D) return;
+const g = window.D.g, h = hr(), sleeping = (h >= 22 || h < 7);
 
     // Applique les couleurs personnalisées
     const gc = getGotchiC();

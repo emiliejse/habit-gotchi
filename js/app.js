@@ -143,7 +143,7 @@ function forceUpdate() {
   if ('caches' in window) {
     caches.keys().then(names => { names.forEach(name => caches.delete(name)); });
   }
-  toast(`Mise à jour en cours... ✿');
+  toast(`Mise à jour en cours... ✿`);
   setTimeout(() => window.location.reload(true), 500);
 }
 

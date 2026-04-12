@@ -444,7 +444,7 @@ function toggleMasquerAcquis() {
 function acheterProp(propId) {
   const prop = (window.PROPS_LIB || []).find(p => p.id === propId);
   if (!prop) return;
-  if ((D.g.petales || 0) < prop.cout) { toast(`Pas assez de pétales 🌸'); return; }
+  if ((D.g.petales || 0) < prop.cout) { toast(`Pas assez de pétales 🌸`); return; }
   
   D.g.petales = (D.g.petales || 0) - prop.cout;
   if (!D.g.props) D.g.props = [];

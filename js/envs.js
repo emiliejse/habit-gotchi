@@ -181,7 +181,7 @@ function drawActiveEnv(p, env, n, h) {
       px(p, 96, 108, PX*2, PX*3);
       // Stries horizontales
       p.fill(tc(n, theme.mntSnow));
-      px(p, 68, 88, 22, PX); px(p, 62, 102, 34, PX);
+      px(p, 62, 102, 34, PX);
     }
   }
 }

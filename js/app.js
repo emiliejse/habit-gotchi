@@ -166,7 +166,7 @@ function addXp(n) {
   if (ancienStade !== nouveauStade) {
     addEvent('xp', window.D.g.totalXp, `⭐ Nouveau stade : ${nouveauStade}`);
   }
-  save(); updUI();
+  save(); if (typeof updUI === 'function') updUI();
 }
 function addEvent(type, valeur, label) {
   if (!window.D.eventLog) window.D.eventLog = [];
@@ -334,7 +334,7 @@ else if (meteoData && meteoData.temperature <= 10)  pool = src.froid   || src.co
    ============================================================ */
 (function() {
   const td = today();
-  if (window.D.lastActive && window.D.lastActive !== td) {
+  if (window.D.lastActive && window.D.lastActive.split('T')[0] !== td) {
     const hier = new Date();
     hier.setDate(hier.getDate() - 1);
     const hierStr = hier.toISOString().split('T')[0];

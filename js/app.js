@@ -321,7 +321,9 @@ function initBaseProps() {
    ============================================================ */
 async function fetchMeteo() {
   try {
-    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=43.6047&longitude=1.4442&current_weather=true&timezone=Europe/Paris');
+    const METEO_LAT = 43.6047;  // Toulouse
+    const METEO_LON = 1.4442;
+    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${METEO_LAT}&longitude=${METEO_LON}&current_weather=true&timezone=Europe/Paris`);
     const d = await r.json();
     window.meteoData = d.current_weather;
     window.D.meteo   = window.meteoData;

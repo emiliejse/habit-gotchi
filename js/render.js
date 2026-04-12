@@ -274,7 +274,7 @@ if (g.props) {
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(16);
       // Opacité : plein pendant 70% du trajet, puis s'estompe
-      p.drawingContext.globalAlpha = 1.0 - (progress * 0.7);
+      p.drawingContext.globalAlpha = 1.0;
 
       if      (tr.type === 'heart')   p.text('💜', fx, fy);
       else if (tr.type === 'sparkle') p.text('✨', fx, fy);

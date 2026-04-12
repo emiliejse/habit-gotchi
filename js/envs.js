@@ -168,6 +168,12 @@ function drawThemeAccents(p, theme, n) {
     p.fill(theme.accent);
     px(p, 70, 136, PX*2, PX); px(p, 110, 130, PX, PX); px(p, 150, 138, PX*2, PX);
   }
+  else if (theme.id === 'pastel') {
+  drawFl(p, 30,  138, theme.accent);
+  drawFl(p, 80,  142, theme.leaf1);
+  drawFl(p, 140, 138, theme.accent);
+  drawFl(p, 175, 140, theme.leaf2);
+}
 }
 
 // ── HELPERS ──────────────────────────────────────────────────

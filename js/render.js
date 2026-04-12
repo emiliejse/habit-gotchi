@@ -262,7 +262,11 @@ function drawWind(p) {
   } 
 }
   function drawRainbow(p)  { C.rainbow.forEach((c,i)=>{p.fill(c);px(p,CS/2-PX*(7-i),10+i*PX,PX*(14-i*2),PX);}); }
-  function drawFl(p,x,y,c) { p.fill('#58a058');px(p,x,y,PX,PX*2);p.fill(c);px(p,x-PX,y-PX,PX,PX);px(p,x+PX,y-PX,PX,PX);px(p,x,y-PX*2,PX,PX);p.fill('#f0d878');px(p,x,y-PX,PX,PX); }
+  function drawFl(p, x, y, c) {
+  p.fill('#58a058'); px(p,x,y,PX,PX*2);
+  p.fill(c); px(p,x-PX,y-PX,PX,PX); px(p,x+PX,y-PX,PX,PX); px(p,x,y-PX*2,PX,PX);
+  p.fill('#f0d878'); px(p,x,y-PX,PX,PX);
+}
   function drawTree(p,x,y,n) { p.fill(C.trunk);px(p,x+PX*2,y+PX*4,PX*2,PX*5);p.fill(n?C.leafN:C.leaf);px(p,x,y+PX,PX*6,PX*3);px(p,x+PX,y-PX,PX*4,PX*2);px(p,x+PX*2,y-PX*2,PX*2,PX); }
 
   function drawEgg(p, cx, cy) {

@@ -273,7 +273,7 @@ if (g.props) {
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(16);
       // Opacité : plein pendant 70% du trajet, puis s'estompe
-      p.drawingContext.globalAlpha = progress < 0.7 ? 1.0 : 1.0 - ((progress - 0.7) / 0.3);
+      p.drawingContext.globalAlpha = 1.0 - (progress * 0.7);
 
       if      (tr.type === 'heart')   p.text('💜', fx, fy);
       else if (tr.type === 'sparkle') p.text('✨', fx, fy);
@@ -436,7 +436,6 @@ function updateParts(p) {
   }
 
   p.touchStarted = function() {
-    console.log('touchStarted déclenché');
     const now = Date.now();
     if (now - (window._lastTapTime || 0) < 200) return false;
     window._lastTapTime = now;
@@ -451,13 +450,9 @@ function updateParts(p) {
     const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
              : window.D.g.stage==='teen'?98 : 85;
     const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
-    console.log('mx', mx, 'my', my, 'walkX', walkX, 'by', by, 'hit', hit);
     if (hit) {
-      console.log('avant triggerTouchReaction');
       window._lastTapX = walkX + (Math.random() - 0.5) * 20;
-      console.log('_lastTapX set', window._lastTapX);
       triggerTouchReaction(h >= 22 || h < 7);
-      console.log('après triggerTouchReaction', window.touchReactions.length);
       return false;
     }
   };

@@ -1241,7 +1241,7 @@ function checkWelcome() {
 
   // Mise à jour lastActive
   if (!D.firstLaunch) D.firstLaunch = new Date().toISOString();
-  D.lastActive = td;
+  D.lastActive = new Date().toISOString(); // heure complète
   save();
 
   // Contenu selon contexte

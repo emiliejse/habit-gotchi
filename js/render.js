@@ -451,6 +451,7 @@ function updateParts(p) {
     const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
              : window.D.g.stage==='teen'?98 : 85;
     const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
+    console.log('mx', mx, 'my', my, 'walkX', walkX, 'by', by, 'hit', hit);
     if (hit) {
       window._lastTapX = walkX + (Math.random() - 0.5) * 20;
       triggerTouchReaction(h >= 22 || h < 7);

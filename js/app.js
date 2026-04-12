@@ -88,7 +88,7 @@ const MSG = {
 function defs() {
   return {
     g: {
-      name:'Petit·e Gotchi', totalXp:0, stage:'egg', energy:3, happiness:3,
+      name:'Petit·e Gotchi', userName: 'Émilie', totalXp:0, stage:'egg', energy:3, happiness:3,
       envLv:0, moodDay:null, activeEnv:'parc', petales:0,
       props:[], customBubbles:[]
     },
@@ -311,7 +311,7 @@ function updBubbleNow() {
   const el = document.getElementById('bubble');
   if (el) {
     let bulle = pool[Math.floor(Math.random() * pool.length)];
-    bulle = bulle.replace('{{nom}}', D.g.name || 'toi');
+    bulle = bulle.replace('{{nom}}', D.userName || 'toi');
     el.textContent = bulle;
   }
 }

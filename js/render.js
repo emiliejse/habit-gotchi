@@ -234,12 +234,6 @@ const accY = baseY - def.pixels.length * PX + offsetY;
     }
   };
 
-  /* ---- Helpers internes p5s ---- */
-
-  function px(x, y, w, h) {
-    p.rect(Math.floor(x/PX)*PX, Math.floor(y/PX)*PX, Math.max(PX,Math.floor(w/PX)*PX), Math.max(PX,Math.floor(h/PX)*PX));
-  }
-
   function drawSky(p, h, ha) {
     p.noStroke(); let c1, c2;
     if(ha<=20&&h>=7&&h<21)     { c1=C.skyGray1; c2=C.skyGray2; }
@@ -248,12 +242,12 @@ const accY = baseY - def.pixels.length * PX + offsetY;
     else if(h>=20||h<5)        { c1=C.skyN1;    c2=C.skyN2;    }
     else                       { c1=C.skyA1;    c2=C.skyA2;    }
     for(let y=0;y<120;y+=PX) { p.fill(p.lerpColor(p.color(c1),p.color(c2),y/120)); p.rect(0,y,CS,PX); }
-    if(h>=20||h<6) { p.fill(C.star); [[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s=>{if((p.frameCount+s[0])%35<25)px(s[0],s[1],PX,PX)}); }
+    if(h>=20||h<6) { p.fill(C.star); [[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s=>{if((p.frameCount+s[0])%35<25)px(p,s[0],s[1],PX,PX)}); }
     if(h>=6&&h<21&&ha>20) { drawCl(p,40+Math.sin(p.frameCount*.014)*8,20); drawCl(p,150+Math.cos(p.frameCount*.011)*6,35); }
-    if(ha<=20&&h>=7&&h<21) { p.fill('#8888a0'); for(let i=0;i<5;i++){const rx=((p.frameCount*3+i*40)%CS);const ry=((p.frameCount*4+i*30)%80)+40;px(rx,ry,PX,PX*2);} }
+    if(ha<=20&&h>=7&&h<21) { p.fill('#8888a0'); for(let i=0;i<5;i++){const rx=((p.frameCount*3+i*40)%CS);const ry=((p.frameCount*4+i*30)%80)+40;px(p,rx,ry,PX,PX*2);} }
   }
 
-  function drawCl(p,x,y)  { p.fill(C.cloud); px(x,y,PX*5,PX*2); px(x+PX,y-PX,PX*3,PX); }
+  function drawCl(p,x,y)  { p.fill(C.cloud); px(p,x,y,PX*5,PX*2); px(p,x+PX,y-PX,PX*3,PX); }
 function drawWind(p) {
   p.noStroke();
   for (let i = 0; i < 8; i++) {
@@ -263,66 +257,66 @@ function drawWind(p) {
     const len = 20 + (i % 3) * 10;
     p.fill('#d8d8e8');
     for (let d = 0; d < len; d += PX) {
-      px(x + d, y, PX, PX);
+      px(p,x + d, y, PX, PX);
     }
   } 
 }
-  function drawRainbow(p)  { C.rainbow.forEach((c,i)=>{p.fill(c);px(CS/2-PX*(7-i),10+i*PX,PX*(14-i*2),PX);}); }
-  function drawFl(p,x,y,c) { p.fill('#58a058');px(x,y,PX,PX*2);p.fill(c);px(x-PX,y-PX,PX,PX);px(x+PX,y-PX,PX,PX);px(x,y-PX*2,PX,PX);p.fill('#f0d878');px(x,y-PX,PX,PX); }
-  function drawTree(p,x,y,n) { p.fill(C.trunk);px(x+PX*2,y+PX*4,PX*2,PX*5);p.fill(n?C.leafN:C.leaf);px(x,y+PX,PX*6,PX*3);px(x+PX,y-PX,PX*4,PX*2);px(x+PX*2,y-PX*2,PX*2,PX); }
+  function drawRainbow(p)  { C.rainbow.forEach((c,i)=>{p.fill(c);px(p,CS/2-PX*(7-i),10+i*PX,PX*(14-i*2),PX);}); }
+  function drawFl(p,x,y,c) { p.fill('#58a058');px(p,x,y,PX,PX*2);p.fill(c);px(p,x-PX,y-PX,PX,PX);px(p,x+PX,y-PX,PX,PX);px(p,x,y-PX*2,PX,PX);p.fill('#f0d878');px(p,x,y-PX,PX,PX); }
+  function drawTree(p,x,y,n) { p.fill(C.trunk);px(p,x+PX*2,y+PX*4,PX*2,PX*5);p.fill(n?C.leafN:C.leaf);px(p,x,y+PX,PX*6,PX*3);px(p,x+PX,y-PX,PX*4,PX*2);px(p,x+PX*2,y-PX*2,PX*2,PX); }
 
   function drawEgg(p, cx, cy) {
     const x=cx-PX*3, y=cy; p.noStroke();
-    p.fill(C.egg); px(x+PX*2,y,PX*3,PX); px(x+PX,y+PX,PX*5,PX); px(x,y+PX*2,PX*7,PX*3); px(x+PX,y+PX*5,PX*5,PX); px(x+PX*2,y+PX*6,PX*3,PX);
-    p.fill(C.eggSp); px(x+PX*2,y+PX*2,PX,PX); px(x+PX*4,y+PX*3,PX*2,PX); px(x+PX*3,y+PX*5,PX,PX);
-    if(window.D.g.totalXp>30) { p.fill(C.eggCr); px(x+PX*3,y+PX,PX,PX); px(x+PX*4,y+PX*2,PX,PX); px(x+PX*3,y+PX*3,PX,PX); }
+    p.fill(C.egg); px(p,x+PX*2,y,PX*3,PX); px(p,x+PX,y+PX,PX*5,PX); px(p,x,y+PX*2,PX*7,PX*3); px(p,x+PX,y+PX*5,PX*5,PX); px(p,x+PX*2,y+PX*6,PX*3,PX);
+    p.fill(C.eggSp); px(p,x+PX*2,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); px(p,x+PX*3,y+PX*5,PX,PX);
+    if(window.D.g.totalXp>30) { p.fill(C.eggCr); px(p,x+PX*3,y+PX,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); px(p,x+PX*3,y+PX*3,PX,PX); }
   }
 
   function drawBaby(p, cx, cy, sl, en, ha) {
     const x=cx-PX*3, y=cy; p.noStroke();
-    p.fill(C.body); px(x+PX,y,PX*4,PX); px(x,y+PX,PX*6,PX*3); px(x+PX,y+PX*4,PX*4,PX);
-    p.fill(C.bodyLt); px(x+PX,y+PX,PX,PX); px(x+PX*2,y,PX,PX);
-    if(sl||blink) { p.fill(C.eye); px(x+PX,y+PX*2,PX*2,PX); px(x+PX*3,y+PX*2,PX*2,PX); }
-    else { p.fill(C.eye); px(x+PX,y+PX*2,PX,PX); px(x+PX*4,y+PX*2,PX,PX); p.fill('#fff'); p.rect(x+PX,y+PX*2,2,2); p.rect(x+PX*4,y+PX*2,2,2); }
-    p.fill(C.cheek); px(x,y+PX*3,PX,PX); px(x+PX*5,y+PX*3,PX,PX);
+    p.fill(C.body); px(p,x+PX,y,PX*4,PX); px(p,x,y+PX,PX*6,PX*3); px(p,x+PX,y+PX*4,PX*4,PX);
+    p.fill(C.bodyLt); px(p,x+PX,y+PX,PX,PX); px(p,x+PX*2,y,PX,PX);
+    if(sl||blink) { p.fill(C.eye); px(p,x+PX,y+PX*2,PX*2,PX); px(p,x+PX*3,y+PX*2,PX*2,PX); }
+    else { p.fill(C.eye); px(p,x+PX,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); p.fill('#fff'); p.rect(x+PX,y+PX*2,2,2); p.rect(x+PX*4,y+PX*2,2,2); }
+    p.fill(C.cheek); px(p,x,y+PX*3,PX,PX); px(p,x+PX*5,y+PX*3,PX,PX);
     p.fill(C.mouth);
-    if(!sl) { if(ha>60)px(x+PX*2,y+PX*3,PX*2,PX); else if(ha<25)px(x+PX*2,y+PX*3+2,PX*2,PX); else px(x+PX*2,y+PX*3,PX,PX); }
-    p.fill(C.bodyDk); px(x+PX,y+PX*5,PX,PX); px(x+PX*4,y+PX*5,PX,PX);
-    if(en<25&&!sl) { px(x+PX*2,y+PX*5,PX*2,PX); }
+    if(!sl) { if(ha>60)px(p,x+PX*2,y+PX*3,PX*2,PX); else if(ha<25)px(p,x+PX*2,y+PX*3+2,PX*2,PX); else px(p,x+PX*2,y+PX*3,PX,PX); }
+    p.fill(C.bodyDk); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*4,y+PX*5,PX,PX);
+    if(en<25&&!sl) { px(p,x+PX*2,y+PX*5,PX*2,PX); }
      return { topY: y, eyeY: y+PX*2, neckY: y+PX*4 };
   }
 
   function drawTeen(p, cx, cy, sl, en, ha) {
     const x=cx-PX*4, y=cy; p.noStroke();
-    p.fill(C.body); px(x+PX*2,y,PX*4,PX); px(x+PX,y+PX,PX*6,PX); px(x,y+PX*2,PX*8,PX*4); px(x+PX,y+PX*6,PX*6,PX*2); px(x+PX*2,y+PX*8,PX*4,PX);
-    p.fill(C.bodyLt); px(x+PX*2,y+PX,PX*2,PX); px(x+PX,y+PX*2,PX*2,PX);
-    if(sl||blink) { p.fill(C.eye); px(x+PX*2,y+PX*3,PX*2,PX); px(x+PX*4,y+PX*3,PX*2,PX); }
-    else { p.fill(C.eye); px(x+PX*2,y+PX*3,PX,PX*2); px(x+PX*5,y+PX*3,PX,PX*2); p.fill('#fff'); p.rect(x+PX*2,y+PX*3,2,2); p.rect(x+PX*5,y+PX*3,2,2); }
-    p.fill(C.cheek); px(x+PX,y+PX*5,PX,PX); px(x+PX*6,y+PX*5,PX,PX);
+    p.fill(C.body); px(p,x+PX*2,y,PX*4,PX); px(p,x+PX,y+PX,PX*6,PX); px(p,x,y+PX*2,PX*8,PX*4); px(p,x+PX,y+PX*6,PX*6,PX*2); px(p,x+PX*2,y+PX*8,PX*4,PX);
+    p.fill(C.bodyLt); px(p,x+PX*2,y+PX,PX*2,PX); px(p,x+PX,y+PX*2,PX*2,PX);
+    if(sl||blink) { p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX*2,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); }
+    else { p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX,PX*2); px(p,x+PX*5,y+PX*3,PX,PX*2); p.fill('#fff'); p.rect(x+PX*2,y+PX*3,2,2); p.rect(x+PX*5,y+PX*3,2,2); }
+    p.fill(C.cheek); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*6,y+PX*5,PX,PX);
     p.fill(C.mouth);
-    if(!sl) { if(ha>70){px(x+PX*3,y+PX*5,PX*2,PX);px(x+PX*2,y+PX*5,PX,PX);px(x+PX*5,y+PX*5,PX,PX);} else if(ha>40)px(x+PX*3,y+PX*5,PX*2,PX); else if(ha<20)px(x+PX*3,y+PX*6,PX*2,PX); else px(x+PX*3,y+PX*5,PX,PX); }
+    if(!sl) { if(ha>70){px(p,x+PX*3,y+PX*5,PX*2,PX);px(p,x+PX*2,y+PX*5,PX,PX);px(p,x+PX*5,y+PX*5,PX,PX);} else if(ha>40)px(p,x+PX*3,y+PX*5,PX*2,PX); else if(ha<20)px(p,x+PX*3,y+PX*6,PX*2,PX); else px(p,x+PX*3,y+PX*5,PX,PX); }
     p.fill(C.bodyDk);
-    if(en<25&&!sl){px(x-PX,y+PX*4,PX,PX);px(x+PX*8,y+PX*4,PX,PX);}else{px(x-PX,y+PX*3,PX,PX*2);px(x+PX*8,y+PX*3,PX,PX*2);}
-    px(x+PX*2,y+PX*9,PX*2,PX); px(x+PX*5,y+PX*9,PX*2,PX);
+    if(en<25&&!sl){px(p,x-PX,y+PX*4,PX,PX);px(p,x+PX*8,y+PX*4,PX,PX);}else{px(p,x-PX,y+PX*3,PX,PX*2);px(p,x+PX*8,y+PX*3,PX,PX*2);}
+    px(p,x+PX*2,y+PX*9,PX*2,PX); px(p,x+PX*5,y+PX*9,PX*2,PX);
      return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
   }
 
   function drawAdult(p, cx, cy, sl, en, ha) {
     const x=cx-PX*5, y=cy; p.noStroke();
-    p.fill(C.body); px(x+PX*3,y,PX*4,PX); px(x+PX*2,y+PX,PX*6,PX); px(x+PX,y+PX*2,PX*8,PX);
-    px(x,y+PX*3,PX*10,PX*4); px(x+PX,y+PX*7,PX*8,PX*2); px(x+PX*2,y+PX*9,PX*6,PX); px(x+PX*3,y+PX*10,PX*4,PX);
-    p.fill(C.bodyLt); px(x+PX*3,y+PX,PX*2,PX); px(x+PX*2,y+PX*2,PX*2,PX); px(x+PX,y+PX*3,PX*2,PX);
-    if(sl||blink) { p.fill(C.eye); px(x+PX*2,y+PX*5,PX*2,PX); px(x+PX*6,y+PX*5,PX*2,PX); }
-    else { p.fill(C.eye); px(x+PX*2,y+PX*4,PX*2,PX*2); px(x+PX*6,y+PX*4,PX*2,PX*2); p.fill('#fff'); px(x+PX*2,y+PX*4,PX,PX); px(x+PX*6,y+PX*4,PX,PX); }
-    p.fill(C.cheek); px(x+PX,y+PX*6,PX,PX); px(x+PX*8,y+PX*6,PX,PX);
+    p.fill(C.body); px(p,x+PX*3,y,PX*4,PX); px(p,x+PX*2,y+PX,PX*6,PX); px(p,x+PX,y+PX*2,PX*8,PX);
+    px(p,x,y+PX*3,PX*10,PX*4); px(p,x+PX,y+PX*7,PX*8,PX*2); px(p,x+PX*2,y+PX*9,PX*6,PX); px(p,x+PX*3,y+PX*10,PX*4,PX);
+    p.fill(C.bodyLt); px(p,x+PX*3,y+PX,PX*2,PX); px(p,x+PX*2,y+PX*2,PX*2,PX); px(p,x+PX,y+PX*3,PX*2,PX);
+    if(sl||blink) { p.fill(C.eye); px(p,x+PX*2,y+PX*5,PX*2,PX); px(p,x+PX*6,y+PX*5,PX*2,PX); }
+    else { p.fill(C.eye); px(p,x+PX*2,y+PX*4,PX*2,PX*2); px(p,x+PX*6,y+PX*4,PX*2,PX*2); p.fill('#fff'); px(p,x+PX*2,y+PX*4,PX,PX); px(p,x+PX*6,y+PX*4,PX,PX); }
+    p.fill(C.cheek); px(p,x+PX,y+PX*6,PX,PX); px(p,x+PX*8,y+PX*6,PX,PX);
     p.fill(C.mouth);
-    if(!sl) { if(ha>80){px(x+PX*3,y+PX*7,PX*4,PX);px(x+PX*3,y+PX*6,PX,PX);px(x+PX*6,y+PX*6,PX,PX);} else if(ha>50)px(x+PX*4,y+PX*7,PX*2,PX); else if(ha<20){px(x+PX*4,y+PX*8,PX*2,PX);px(x+PX*3,y+PX*7,PX,PX);} else px(x+PX*4,y+PX*7,PX,PX); }
+    if(!sl) { if(ha>80){px(p,x+PX*3,y+PX*7,PX*4,PX);px(p,x+PX*3,y+PX*6,PX,PX);px(p,x+PX*6,y+PX*6,PX,PX);} else if(ha>50)px(p,x+PX*4,y+PX*7,PX*2,PX); else if(ha<20){px(p,x+PX*4,y+PX*8,PX*2,PX);px(p,x+PX*3,y+PX*7,PX,PX);} else px(p,x+PX*4,y+PX*7,PX,PX); }
     p.fill(C.bodyDk);
-    if(en<20&&!sl){px(x-PX,y+PX*5,PX,PX*3);px(x+PX*10,y+PX*5,PX,PX*3);}
-    else if(ha>85&&!sl){px(x-PX,y+PX*2,PX,PX*2);px(x+PX*10,y+PX*2,PX,PX*2);px(x-PX*2,y+PX,PX,PX);px(x+PX*11,y+PX,PX,PX);}
-    else{px(x-PX,y+PX*4,PX,PX*3);px(x+PX*10,y+PX*4,PX,PX*3);}
-    px(x+PX*2,y+PX*11,PX*2,PX); px(x+PX*6,y+PX*11,PX*2,PX);
-    if(en<25&&!sl) px(x+PX*3,y+PX*11,PX,PX);
+    if(en<20&&!sl){px(p,x-PX,y+PX*5,PX,PX*3);px(p,x+PX*10,y+PX*5,PX,PX*3);}
+    else if(ha>85&&!sl){px(p,x-PX,y+PX*2,PX,PX*2);px(p,x+PX*10,y+PX*2,PX,PX*2);px(p,x-PX*2,y+PX,PX,PX);px(p,x+PX*11,y+PX,PX,PX);}
+    else{px(p,x-PX,y+PX*4,PX,PX*3);px(p,x+PX*10,y+PX*4,PX,PX*3);}
+    px(p,x+PX*2,y+PX*11,PX*2,PX); px(p,x+PX*6,y+PX*11,PX*2,PX);
+    if(en<25&&!sl) px(p,x+PX*3,y+PX*11,PX,PX);
      return { topY: y, eyeY: y+PX*4, neckY: y+PX*7 };
   }
 
@@ -332,10 +326,10 @@ function drawWind(p) {
       const fx = x + i*10 + Math.sin(p.frameCount*.1+i)*3;
       const sz = PX;
       p.fill(p.color(176, 144, 208, 200-i*50));
-      px(fx, fy, sz*4, sz);
-      px(fx+sz*2, fy+sz, sz, sz);
-      px(fx+sz, fy+sz*2, sz, sz);
-      px(fx, fy+sz*3, sz*4, sz);
+      px(p,fx, fy, sz*4, sz);
+      px(p,fx+sz*2, fy+sz, sz, sz);
+      px(p,fx+sz, fy+sz*2, sz, sz);
+      px(p,fx, fy+sz*3, sz*4, sz);
     }
   }
 
@@ -347,7 +341,7 @@ function drawWind(p) {
         const ci = prop.pixels[row][col];
         if(ci === 0) continue;
         p.fill(prop.palette[ci]);
-        px(offsetX + col*PX, offsetY + row*PX, PX, PX);
+        px(p,offsetX + col*PX, offsetY + row*PX, PX, PX);
       }
     }
   }
@@ -365,7 +359,7 @@ function drawWind(p) {
 const col = p.color(pt.c);
 col.setAlpha(a);
 p.fill(col);
-      px(pt.x, pt.y, PX, PX);
+      px(p,pt.x, pt.y, PX, PX);
       return pt.life > 0;
     });
   }

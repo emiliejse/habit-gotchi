@@ -587,7 +587,7 @@ if (tc) tc.textContent = `(${window.D.thoughtCount}/3)`;
   const CTX = window.AI_CONTEXTS?.askClaude;
 
   // --- Remplacement des variables dans le prompt base ---
-  const notesRecentes = D.journal
+const notesRecentes = D.journal
   .slice(-3)
   .map(j => {
     const d = j.date ? j.date.split('T')[0] : 'date inconnue';
@@ -607,8 +607,8 @@ if (tc) tc.textContent = `(${window.D.thoughtCount}/3)`;
     existingNames: (D.g.props || []).map(p => p.nom).join(', ') || 'aucun',
     timestamp:    Date.now(),
     notesRecentes: notesRecentes
-    ? `Aujourd'hui : ${today()}. Ambiance récente (extrait journal) : ${notesRecentes}`
-    : `Aujourd'hui : ${today()}.`,
+  ? `Aujourd'hui : ${today()}. Ambiance récente : ${notesRecentes}`
+  : `Aujourd'hui : ${today()}.`,
   };
 
   function fillVars(template) {

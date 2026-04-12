@@ -505,7 +505,7 @@ function confirmerSuppressionIA(propId) {
   save();
   clModal();
   renderProps();
-  toast(`🗑️ Objet supprimé');
+  toast(`🗑️ Objet supprimé`);
 }
 
 function makeSlotBtn(propIndex, slotId, label, arrow, occupied) {

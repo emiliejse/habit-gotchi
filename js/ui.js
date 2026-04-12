@@ -719,7 +719,7 @@ async function acheterPropClaude() {
   const el = document.getElementById('boutique-contenu');
   if (el) el.innerHTML = `<p style="text-align:center;font-size:11px;padding:20px">L'IA crée ton objet... 💭</p>`;
 
-  const nomsExistants = (D.g.props || []).map(p => p.nom).join(', ') || 'aucun';
+  const nomsExistants = (D.g.props || []).map(p => `${p.nom} (${p.type})`).join(', ') || 'aucun';
   const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
   const theme = themes[Math.floor(Math.random() * themes.length)];
   const ctx = window.AI_CONTEXTS;
@@ -738,7 +738,7 @@ if (!prompt) return;
     const match = data.content[0].text.match(/\{[\s\S]*\}/);
     if (match) {
       const obj = JSON.parse(match[0]);
-      D.g.props.push({ id:obj.id, nom:obj.nom, type:obj.type, emoji:obj.emoji||'🎁', actif:false });
+      D.g.props.push({ id:obj.id, nom:obj.nom, type:obj.type, emoji:obj.emoji||'🎁', actif:false, slot:obj.slot||'A', motion:obj.motion||'drift', ancrage:obj.ancrage||null });
       D.propsPixels = D.propsPixels || {};
 D.propsPixels[obj.id] = obj;
 window.PROPS_LOCAL = Object.values(D.propsPixels);

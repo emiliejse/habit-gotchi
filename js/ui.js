@@ -120,6 +120,8 @@ if (document.getElementById('env-sel'))  document.getElementById('env-sel').valu
   if (document.getElementById('api-inp'))  document.getElementById('api-inp').value = D.apiKey || '';
   const petalesDisplay = document.getElementById('petales-wallet');
   if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0}`;
+  const tc = document.getElementById('thought-count');
+if (tc) tc.textContent = `(${window.D.thoughtCount || 0}/3)`;
   updBadgeBoutique();
 }
 
@@ -485,6 +487,8 @@ async function askClaude() {
   }
   window.D.thoughtCount++;
   save();
+  const tc = document.getElementById('thought-count');
+if (tc) tc.textContent = `(${window.D.thoughtCount}/3)`;
 
   const P = window.PERSONALITY; 
   const CTX = window.AI_CONTEXTS?.askClaude;
@@ -626,7 +630,11 @@ if (!prompt) return;
 /* ============================================================
    API CLAUDE — SOUTIEN
    ============================================================ */
-function genSoutien() {
+function toastInfo() {
+  toastModal("✍️ Si tu écris des notes dans ton journal, le Gotchi pourra te faire des réponses personnalisées selon ton humeur du jour 💜");
+}
+
+   function genSoutien() {
   const D = window.D, td = today();
   const habsDuJour  = D.habits.map(h => ({ label:h.label, faite:(D.log[td]||[]).includes(h.catId) }));
   const notesDuJour = D.journal.filter(j => j.date.startsWith(td)).map(j => ({ humeur:j.mood, texte:j.text }));

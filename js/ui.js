@@ -229,7 +229,6 @@ function renderProps() {
   if (wallet)   wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
 }
 function ouvrirBoutique() {
-  haptic();
   const onglet = window._boutiqueOnglet || 'catalogue';
   
   document.getElementById('modal').style.display = 'flex';
@@ -310,7 +309,6 @@ ouvrirBoutique();
 function setPropsFilter(cat) { propsFilterActive = cat; renderProps(); }
 
 function toggleProp(index) {
-  haptic();
   const prop = D.g.props[index];
 
   // --- Désactiver si déjà actif ---
@@ -617,7 +615,6 @@ if (!prompt) return;
    API CLAUDE — SOUTIEN
    ============================================================ */
 function genSoutien() {
-  haptic();
   const D = window.D, td = today();
   const habsDuJour  = D.habits.map(h => ({ label:h.label, faite:(D.log[td]||[]).includes(h.catId) }));
   const notesDuJour = D.journal.filter(j => j.date.startsWith(td)).map(j => ({ humeur:j.mood, texte:j.text }));
@@ -719,7 +716,6 @@ function navW(d) { wOff += d; renderProg(); }
 function navM(d) { mOff += d; renderProg(); }
 
 async function genBilanSemaine() {
-  haptic();
   const D = window.D, key = D.apiKey;
   const summaryEl = document.getElementById('claude-summary');
   const wd = getWkDates(wOff);
@@ -774,7 +770,6 @@ function copyBilanSemaine() {
 function resetBilan() {
   if (confirm('Effacer le bilan IA ?')) {
     if (document.getElementById('claude-summary')) document.getElementById('claude-summary').textContent = 'Ton bilan apparaîtra ici...';
-    haptic();
   }
 }
 
@@ -844,9 +839,9 @@ function renderPin() {
   dots.innerHTML = '';
   for (let i = 0; i < 4; i++) { const d = document.createElement('div'); d.className = 'pin-dot' + (i < pinBuf.length ? ' f' : ''); dots.appendChild(d); }
   const pad = document.getElementById('pin-pad'); pad.innerHTML = '';
-  for (let n = 1; n <= 9; n++) { const b = document.createElement('button'); b.className = 'pin-k'; b.textContent = n; b.onclick = () => { haptic(); pinBuf += n; renderPin(); if (pinBuf.length === 4) pinSubmit(); }; pad.appendChild(b); }
+  for (let n = 1; n <= 9; n++) { const b = document.createElement('button'); b.className = 'pin-k'; b.textContent = n; b.onclick = () => { pinBuf += n; renderPin(); if (pinBuf.length === 4) pinSubmit(); };
   let bd = document.createElement('button'); bd.className = 'pin-k'; bd.textContent = '←'; bd.onclick = () => { pinBuf = pinBuf.slice(0,-1); renderPin(); }; pad.appendChild(bd);
-  let b0 = document.createElement('button'); b0.className = 'pin-k'; b0.textContent = '0'; b0.onclick = () => { haptic(); pinBuf += '0'; renderPin(); if (pinBuf.length === 4) pinSubmit(); }; pad.appendChild(b0);
+  let b0 = document.createElement('button'); b0.className = 'pin-k'; b0.textContent = '0'; b0.onclick = () => { pinBuf += '0'; renderPin(); if (pinBuf.length === 4) pinSubmit(); };
   let bc = document.createElement('button'); bc.className = 'pin-k'; bc.textContent = '✕'; bc.style.color = 'var(--coral)'; bc.onclick = () => { pinBuf = ''; renderPin(); }; pad.appendChild(bc);
 }
 function pinSubmit() {
@@ -878,14 +873,14 @@ function initMoodPicker() {
   if (mp) mp.innerHTML = MOODS.map(m => `<button class="mood-b" data-m="${m.id}" onclick="pickM('${m.id}')">${m.e}</button>`).join('');
 }
 function pickM(id) {
-  selMood = id; haptic();
+  selMood = id;
   document.querySelectorAll('.mood-b').forEach(b => b.classList.toggle('sel', b.dataset.m === id));
 }
 function saveJ() {
   const t = document.getElementById('j-text').value.trim();
   if (!t && !selMood) return;
   window.D.journal.push({ date:new Date().toISOString(), mood:selMood||'ok', text:t });
-  addXp(15); save(); haptic();
+  addXp(15); save();
   document.getElementById('j-text').value = '';
   selMood = null;
   document.querySelectorAll('.mood-b').forEach(b => b.classList.remove('sel'));

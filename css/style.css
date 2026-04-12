@@ -11,10 +11,7 @@
   padding: 4px;
   margin-top: 2px;
 }
-/* Cache les icônes quand c'est réduit pour faire de la place */
-.shrunk .icon-row {
-  display: none; 
-}
+
 /* --- Suppression définitive de la barre d'onglets du bas --- */
 .tabs-bottom { display: none !important; }
 
@@ -228,7 +225,6 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .btn-s{background:#fff;color:var(--text);border:2px solid var(--border)}
 .btn-d{background:var(--coral);color:#fff}
 .btn-m{background:var(--mint);color:var(--text)}
-.btn-sos{background:linear-gradient(135deg,var(--coral),var(--pink));color:#fff;font-size:11px;padding:8px 12px;border-radius:10px}
 
 /* --- Habitudes & Animation Rebond --- */
 .hab {
@@ -309,35 +305,6 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .mood-b{width:42px;height:42px;border-radius:10px;border:3px solid var(--border);background:#fff;
   font-size:20px;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center}
 .mood-b.sel{border-color:var(--lilac);background:rgba(176,144,208,.1);transform:scale(1.1)}
-
-/* Focus mode */
-.focus-overlay{
-  position:fixed;inset:0;z-index:250;background:rgba(40,32,60,.92);
-  display:none;flex-direction:column;align-items:center;justify-content:center;
-  color:#e0d8f0;font-family:'Courier New',monospace;
-}
-.focus-overlay.open{display:flex}
-.focus-timer{font-size:48px;font-weight:bold;letter-spacing:4px;margin-bottom:12px}
-.focus-msg{font-size:13px;text-align:center;max-width:280px;margin-bottom:20px;line-height:1.5;color:#b8b0d0}
-.breath-circle{
-  width:80px;height:80px;border-radius:50%;
-  border:3px solid var(--lilac);opacity:.6;
-  transition:transform 3s ease-in-out;
-}
-.breath-circle.expand{transform:scale(1.5);opacity:1}
-
-/* SOS */
-.sos-float{position:fixed;bottom:calc(58px + var(--sab));right:10px;z-index:99}
-
-/* Tab bar */
-.tbar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--solid);
-  border-top:2px solid var(--border);display:flex;justify-content:space-around;
-  padding:3px 4px;padding-bottom:calc(3px + var(--sab));box-shadow:0 -2px 10px var(--shadow)}
-.tb{display:flex;flex-direction:column;align-items:center;gap:0;padding:3px 5px;
-  border:none;background:transparent;color:var(--text2);
-  font:bold 8px/1 'Courier New',monospace;cursor:pointer;border-radius:8px;transition:.2s}
-.tb.on{color:var(--lilac);background:rgba(176,144,208,.1)}
-.tb i{font-size:17px;font-style:normal}
 
 /* Panels */
 .pnl{display:none;animation:fu .2s ease}

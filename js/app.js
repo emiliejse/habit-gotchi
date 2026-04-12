@@ -161,10 +161,6 @@ const today  = () => new Date().toISOString().split('T')[0];
 const hr     = () => new Date().getHours();
 const clamp  = (v,a,b) => Math.max(a, Math.min(b, v));
 
-function haptic() {
-  try { if (navigator.vibrate) navigator.vibrate([50]); } catch(e) {}
-}
-
 function forceUpdate() {
   if ('caches' in window) {
     caches.keys().then(names => { names.forEach(name => caches.delete(name)); });
@@ -208,7 +204,6 @@ function calcStr() {
    LOGIQUE HABITUDES
    ============================================================ */
 function toggleHab(catId) {
-  haptic();
   const td = today();
   if (!window.D.log[td]) window.D.log[td] = [];
   const idx = window.D.log[td].indexOf(catId);
@@ -243,7 +238,7 @@ function setHappy(v) {
   document.getElementById('sv-happy').textContent = v;
   save(); updBubbleNow();
 }
-function changeEnv(v) { window.D.g.activeEnv = v; save(); haptic(); }
+function changeEnv(v) { window.D.g.activeEnv = v; save(); }
 
 /* ============================================================
    INIT PROPS DE BASE

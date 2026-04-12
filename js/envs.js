@@ -199,6 +199,12 @@ function drawCactus(p, x, y) {
   px(p, x+PX*3, y+PX*3, PX,   PX);
 }
 
+function drawFl(p, x, y, c) {
+  p.fill('#58a058'); px(p,x,y,PX,PX*2);
+  p.fill(c); px(p,x-PX,y-PX,PX,PX); px(p,x+PX,y-PX,PX,PX); px(p,x,y-PX*2,PX,PX);
+  p.fill('#f0d878'); px(p,x,y-PX,PX,PX);
+}
+
 // Assombrit une couleur hex pour le mode nuit
 function shadeN(hex) {
   const r = parseInt(hex.slice(1,3),16);

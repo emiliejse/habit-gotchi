@@ -125,6 +125,8 @@ if (document.getElementById('env-sel'))  document.getElementById('env-sel').valu
 if (tc) tc.textContent = `(${window.D.thoughtCount || 0}/3)`;
 const btnAsk = document.getElementById('btn-ask-claude');
 if (btnAsk) btnAsk.childNodes[0].textContent = `Interroger ${window.D.g.name || 'le Gotchi'} `;
+const canvasBoutique = document.getElementById('canvas-boutique');
+if (canvasBoutique) drawShopIcon(canvasBoutique);
   updBadgeBoutique();
 }
 
@@ -235,6 +237,58 @@ function renderProps() {
   });
   const wallet   = document.getElementById('xp-wallet');
   if (wallet)   wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
+}
+function drawShopIcon(canvas) {
+  const style = getComputedStyle(document.documentElement);
+  const lilac = style.getPropertyValue('--lilac').trim() || '#b090d0';
+  const pink  = style.getPropertyValue('--pink').trim()  || '#e8a0bf';
+  const mint  = style.getPropertyValue('--mint').trim()  || '#80d0a8';
+
+  function hexToRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]}
+  function darken(h,f){return'#'+hexToRgb(h).map(v=>Math.round(v*f).toString(16).padStart(2,'0')).join('')}
+  function mix(h,w){return'#'+hexToRgb(h).map(v=>Math.round(v*(1-w)+255*w).toString(16).padStart(2,'0')).join('')}
+
+  const BK=darken(lilac,.45), WL=mix(lilac,.55), RF=darken(pink,.8), RL=mix(pink,.4);
+  const AW1=mix(pink,.3), AW2='#ffffff', VT=mix(mint,.45), VL=mix(mint,.7);
+  const DR=mix(lilac,.8), FL=darken(lilac,.6), SO=darken(lilac,.5);
+  const _=null;
+
+  const grid = [
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,_,_],
+    [_,BK,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,BK,_],
+    [_,BK,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,BK,_],
+    [_,BK,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,BK,_],
+    [_,_,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,_,_],
+    [_,_,BK,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,BK,_,_],
+    [_,_,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,WL,BK,_,_],
+    [_,_,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,WL,BK,_,_],
+    [_,_,BK,WL,BK,VL,BK,WL,BK,VL,BK,WL,BK,VL,BK,WL,BK,VL,BK,WL,BK,VL,BK,WL,WL,BK,_,_],
+    [_,_,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,WL,BK,_,_],
+    [_,_,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,WL,BK,_,_],
+    [_,_,BK,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,BK,_,_],
+    [_,_,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,_,_],
+    [_,_,BK,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,BK,_,_],
+    [_,_,BK,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,BK,_,_],
+    [_,_,_,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,_,_,_],
+    [_,_,BK,WL,BK,BK,BK,BK,BK,WL,WL,BK,BK,BK,BK,WL,WL,BK,BK,BK,BK,BK,BK,BK,WL,BK,_,_],
+    [_,_,BK,WL,BK,VT,VT,VT,BK,WL,WL,BK,DR,DR,BK,WL,WL,BK,VT,VT,VT,VT,BK,BK,WL,BK,_,_],
+    [_,_,BK,WL,BK,VT,VL,VT,BK,WL,WL,BK,DR,VL,BK,WL,WL,BK,VT,VL,VL,VT,BK,BK,WL,BK,_,_],
+    [_,_,BK,WL,BK,VT,VT,VT,BK,WL,WL,BK,DR,DR,BK,WL,WL,BK,VT,VT,VT,VT,BK,BK,WL,BK,_,_],
+    [_,_,BK,WL,BK,BK,BK,BK,BK,WL,WL,BK,DR,DR,BK,WL,WL,BK,BK,BK,BK,BK,BK,BK,WL,BK,_,_],
+    [_,_,BK,WL,WL,WL,WL,WL,WL,WL,WL,WL,DR,DR,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,BK,_,_],
+    [_,_,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,_,_],
+    [_,_,_,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,_,_,_],
+    [_,_,_,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+  ];
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,28,28);
+  for(let y=0;y<28;y++)
+    for(let x=0;x<28;x++)
+      if(grid[y][x]){ctx.fillStyle=grid[y][x];ctx.fillRect(x,y,1,1);}
 }
 function ouvrirBoutique() {
   const onglet = window._boutiqueOnglet || 'catalogue';

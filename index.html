@@ -202,9 +202,27 @@
     <div id="props-list" style="margin-top:6px"></div>
   </div>
 <div style="text-align:center;margin-top:8px">
-<button class="btn btn-boutique" onclick="ouvrirBoutique()">
-  🛍️ Boutique &nbsp;<span id="petales-wallet" style="opacity:.85"></span>
-</button>
+<div style="text-align:center;margin-top:8px">
+  <button onclick="ouvrirBoutique()" id="btn-boutique-main" style="
+    width:100%;padding:14px 16px;border:none;border-radius:14px;
+    border-bottom:4px solid rgba(0,0,0,0.15);
+    background:linear-gradient(135deg,var(--lilac),var(--pink));
+    color:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    font-family:'Courier New',monospace;">
+    <div style="display:flex;align-items:center;gap:10px">
+      <canvas id="canvas-boutique" width="28" height="28"
+        style="image-rendering:pixelated;width:56px;height:56px;flex-shrink:0"></canvas>
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">
+        <span style="font-size:13px;font-weight:bold;letter-spacing:.5px">Boutique</span>
+        <span style="font-size:10px;opacity:.8">Découvrir les objets</span>
+      </div>
+    </div>
+    <span style="background:rgba(255,255,255,0.25);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:bold;white-space:nowrap">
+      🌸 <span id="petales-wallet"></span>
+    </span>
+  </button>
+</div>
 </div>
 </div><!-- fin p-props -->
 

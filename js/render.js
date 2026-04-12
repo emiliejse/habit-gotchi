@@ -565,6 +565,7 @@ if (window._gotchiNearPoop && !sl) {
 
 function triggerTouchReaction(sleeping) {
     // Anti-doublon : ignore si dernier tap < 100ms
+    console.log('triggerTouchReaction appelé', sleeping);
   const now = Date.now();
   if (now - (window._lastTapTime || 0) < 100) return;
   window._lastTapTime = now;

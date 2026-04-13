@@ -330,11 +330,7 @@ async function fetchMeteo() {
     let badge = `${Math.round(temp)}°C`;
     if (wind > 40) badge += ` · 🌬️ Vent d'Autan !`;
     else if (wind > 20) badge += ` · 💨 Venteux`;
-    const el = document.getElementById('meteo-badge');
-if (el) {
-  el.textContent = badge;
-  el.style.display = 'block';
-}
+    if (document.getElementById('meteo-badge')) document.getElementById('meteo-badge').textContent = badge;
   } catch(e) {}
 }
 

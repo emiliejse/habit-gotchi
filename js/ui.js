@@ -464,10 +464,12 @@ function acheterProp(propId) {
   addEvent('cadeau', prop.cout, `${prop.emoji || '🎁'} ${prop.nom}`);
   save();
   toast(`🎁 ${prop.nom} ajouté à ton inventaire !`);
-renderProps();
-updUI();
-updBadgeBoutique();
-ouvrirBoutique();
+  const buyMsgs = ["Oh un cadeau ! 🎁", "*yeux brillants* ✨", `${prop.emoji} Pour moi ?! 💜`, "J'adore ! 🌸", "*saute de joie* ✿"];
+  flashBubble(buyMsgs[Math.floor(Math.random() * buyMsgs.length)], 2500);
+  renderProps();
+  updUI();
+  updBadgeBoutique();
+  ouvrirBoutique();
 }
 function setPropsFilter(cat) { propsFilterActive = cat; renderProps(); }
 
@@ -902,7 +904,7 @@ window.PROPS_LOCAL = Object.values(D.propsPixels);
         D.lastGiftDate = td;
         const poolCadeau = src.cadeau || ["Oh ! Un cadeau ! 🎁"];
 const bulleCadeau = poolCadeau[Math.floor(Math.random() * poolCadeau.length)];
-document.getElementById('bubble').textContent = bulleCadeau.replace('{{nom}}', D.g.name || 'toi');
+flashBubble(bulleCadeau.replace('{{nom}}', D.g.name || 'toi'), 3000);
         toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
         addEvent('cadeau', 0, `🎁 ${data.cadeau.nom} reçu en cadeau !`);
         updBadgeBoutique();
@@ -955,6 +957,8 @@ D.propsPixels[obj.id] = obj;
 window.PROPS_LOCAL = Object.values(D.propsPixels);
       save(); renderProps(); updUI();
       toast(`🎁 ${obj.nom} ajouté à ton inventaire !`);
+      const iaMsgs = ["*yeux brillants* ✨", `${obj.emoji} J'adore ! 💜`, "Je l'ai fait moi-même ! 🌸", "*fière* ✿"];
+flashBubble(iaMsgs[Math.floor(Math.random() * iaMsgs.length)], 2500);
       ouvrirBoutique();
     }
   } catch(e) {
@@ -1487,6 +1491,7 @@ if (joursAbsence >= 3) {
     corps = `Tu as perdu <strong>15 XP</strong> hier — pas d'habitudes cochées.`;
     addXp(-15);
     addEvent('xp', -15, `😴 Pas d'habitudes hier — -15 XP`);
+    flashBubble("Tu m'avais oubliée... 💜", 3000);
   } else if (h >= 22 || h < 7) {
     titre = `*chuchote* 🌙`;
     corps = getNightMsg();

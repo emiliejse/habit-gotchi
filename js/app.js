@@ -168,6 +168,8 @@ function addXp(n) {
   if (ancienStade !== nouveauStade) {
     addEvent('xp', window.D.g.totalXp, `⭐ Nouveau stade : ${nouveauStade}`);
     animEl(document.querySelector('#p-gotchi .card'), 'flipInX', 800);
+    const stageMsgs = ["Je grandis ! ⭐", "*transformation* ✨", "Je suis plus forte ! 💜", "Nouveau stade ! 🌸", "*brillante* ✿"];
+    flashBubble(stageMsgs[Math.floor(Math.random() * stageMsgs.length)], 3000);
   }
   save(); if (typeof updUI === 'function') updUI();
 }

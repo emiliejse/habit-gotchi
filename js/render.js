@@ -463,11 +463,25 @@ function updateParts(p) {
   }
 
   p.touchStarted = function() {
-  // ── GARDE : ne pas intercepter les taps si un panel HTML est ouvert ──
-  // Quand l'utilisateur est dans Réglages/Props/etc, le canvas ne doit
-  // PAS capturer les événements tactiles → on les laisse passer au DOM.
-  const activePanel = document.querySelector('.pnl.on');
-  if (activePanel) return true; // true = "je ne gère pas, laisse passer"
+    // ── GARDE : laisser passer les taps qui sont HORS du canvas ──
+  // Le canvas fait 200×200 dans #cbox. Si le tap tombe en dehors
+  // (= sur un input HTML), on ne bloque pas l'événement.
+  const rect = p.canvas.getBoundingClientRect();
+  const touch = p.touches[0] || { x: p.mouseX, y: p.mouseY };
+  const clientX = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent)
+    ? window.event.touches[0]?.clientX 
+    : null;
+  const clientY = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent)
+    ? window.event.touches[0]?.clientY 
+    : null;
+
+  // Si on a les coordonnées écran et qu'elles sont hors du canvas → laisser passer
+  if (clientX !== null && clientY !== null) {
+    if (clientX < rect.left || clientX > rect.right || 
+        clientY < rect.top  || clientY > rect.bottom) {
+      return true;
+    }
+  }
     const now = Date.now();
     if (now - (window._lastTapTime || 0) < 200) return false;
     window._lastTapTime = now;

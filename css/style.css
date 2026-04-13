@@ -182,7 +182,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .menu-circle .mc-icon{font-size:40px;line-height:1}
 .menu-circle .mc-label{font-size:8px;font-weight:bold;color:#6a5a40;letter-spacing:.5px;text-align:center;text-transform:uppercase}
 .menu-soutien{
-  display:flex;align-items:center;justify-content:center;gap:12px;
+  display:flex;align-items:center;justify-content:center;gap:20px;
   padding:8px 20px;
   width:auto;         /* ← plus de 100% */
   margin:6px auto 0; /* ← centré */

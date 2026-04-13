@@ -48,6 +48,18 @@ function drawRainbow(p) {
   }
 }
 
+function drawRain(p) {
+  p.noStroke();
+  for (let i = 0; i < 60; i++) {
+    const speed = 7 + (i % 3) * 2;
+    const x = (i * 31 + p.frameCount) % CS;
+    const y = (p.frameCount * speed + i * 19) % (CS + 20) - 10;
+    // Goutte fine et verticale
+    p.fill(p.color(140, 170, 210, 180));
+    p.rect(x, y, 1, 4);
+  }
+}
+
 // ── drawActiveEnv() : dessine l'environnement actif ─────────
 // `env`   → string : 'parc' | 'chambre' | 'montagne' (vient de D.g.activeEnv)
 // `n`     → booléen : true = mode nuit (h≥21 ou h<6)

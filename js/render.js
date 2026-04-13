@@ -310,13 +310,10 @@ if (g.props) {
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(20);
       p.drawingContext.globalAlpha = 1.0;
-      p.drawingContext.globalAlpha = 1.0;
-      p.text(ea.emoji, fx, fy);
-      p.drawingContext.globalAlpha = 1.0;
-      p.drawingContext.globalAlpha = 1.0;
+p.text(ea.emoji, fx, fy);
       ea.timer--;
             // Saut quand la friandise arrive près de la bouche
-      if (progress > 0.85 && !ea.jumped) {
+      if (progress > 0.7 && !ea.jumped) {
         bounceT = Math.PI * 1.5;
         triggerTouchReaction(false);
         ea.jumped = true;
@@ -367,8 +364,10 @@ if (g.props) {
     p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.3;
     p.text('🧹', 72, 3);
 
-    p.drawingContext.globalAlpha = 1.0;
-    p.text('🍽️', 128, 3);
+    const snackDone = window.D.g.snackDone === today();
+p.drawingContext.globalAlpha = snackDone ? 0.35 : 1.0;
+p.text('🍽️', 128, 3);
+p.drawingContext.globalAlpha = 1.0;
 
     // Remet l'alpha à 1 pour le reste
     p.drawingContext.globalAlpha = 1.0;

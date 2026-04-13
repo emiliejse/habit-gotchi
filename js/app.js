@@ -34,7 +34,7 @@ async function loadDataFiles() {
     if (results[0].status === 'fulfilled') {
       window.PROPS_LIB = results[0].value.catalogue || [];
       window.PROPS_LIB.forEach(prop => {
-        if (prop.cout === 0 && !D.g.props.find(p => p.id === prop.id)) {
+        if (prop.cout === 0 && window.D && !window.D.g.props.find(p => p.id === prop.id)) {
           D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
         }
       });
@@ -217,7 +217,7 @@ function giveSnack() {
   window.D.g.petales = (window.D.g.petales || 0) + 2;
   save();
   // Déclenche l'animation
-  window.eatAnim = { active: true, timer: 50, emoji: window.D.g.snackEmoji };
+  window.eatAnim = { active: true, timer: 50, emoji: window.D.g.snackEmoji, jumped: false };
   if (typeof updUI === 'function') updUI();
 }
 
@@ -242,8 +242,8 @@ function addEvent(type, valeur, label) {
     valeur,
     label
   });
-  // FIFO : max 50 entrées
-  if (window.D.eventLog.length > 20) window.D.eventLog.length = 20;
+  // FIFO : max 30 entrées
+  if (window.D.eventLog.length > 30) window.D.eventLog.length = 30;
   if (typeof updTabletBadge === 'function') updTabletBadge();
 }
 function calcStr() {
@@ -271,13 +271,11 @@ function toggleHab(catId) {
     window.D.log[td].splice(idx, 1);
     addXp(-15);
     window.D.g.petales = Math.max(0, (window.D.g.petales || 0) - 2);
-    save();
   } else {
     window.D.log[td].push(catId);
     addXp(15);
-    addEvent('habitude', 15, hab?.label || catId); // ← déplacé ici
+    addEvent('habitude', 15, hab?.label || catId);
     window.D.g.petales = (window.D.g.petales || 0) + 2;
-    save();
     window.celebQueue.push(catId);
     window.shakeTimer = 8;
   }
@@ -332,7 +330,11 @@ async function fetchMeteo() {
     let badge = `${Math.round(temp)}°C`;
     if (wind > 40) badge += ` · 🌬️ Vent d'Autan !`;
     else if (wind > 20) badge += ` · 💨 Venteux`;
-    if (document.getElementById('meteo-badge')) document.getElementById('meteo-badge').textContent = badge;
+    const el = document.getElementById('meteo-badge');
+if (el) {
+  el.textContent = badge;
+  el.style.display = 'block';
+}
   } catch(e) {}
 }
 

@@ -148,10 +148,11 @@ const g = window.D.g, h = hr(), sleeping = (h >= 22 || h < 7);
     if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
 
     let envActif = g.activeEnv || 'parc';
-    if (!sleeping) {
-  if (ha < 40)       drawRain(p, ha);
-  else if (ha < 60)  drawSun(p);
-  else if (ha >= 100) drawRainbow(p);
+if (!sleeping) {
+  if (ha < 40)        drawRain(p, ha);      // happiness 0-1 : pluie forte
+  else if (ha === 40) drawRain(p, 35);      // happiness 2 : pluie légère fixe
+  else if (ha === 80) drawSun(p);           // happiness 4 : soleil
+  else if (ha >= 100) drawRainbow(p);       // happiness 5 : arc-en-ciel
 }
     drawActiveEnv(p, envActif, n, h);
 
@@ -399,18 +400,18 @@ p.drawingContext.globalAlpha = 1.0;
     }
   }; // ← fin p.draw()
 
-  function drawSky(p, h, ha) {
+function drawSky(p, h, ha) {
     p.noStroke(); let c1, c2;
-    if(ha<=20&&h>=7&&h<21)     { c1=C.skyGray1; c2=C.skyGray2; }
+    if(ha<=40&&h>=7&&h<21)     { c1=C.skyGray1; c2=C.skyGray2; }
     else if(h>=7&&h<17)        { c1=C.skyD1;    c2=C.skyD2;    }
     else if(h>=17&&h<20)       { c1=C.skyK1;    c2=C.skyK2;    }
     else if(h>=20||h<5)        { c1=C.skyN1;    c2=C.skyN2;    }
     else                       { c1=C.skyA1;    c2=C.skyA2;    }
     for(let y=0;y<120;y+=PX) { p.fill(p.lerpColor(p.color(c1),p.color(c2),y/120)); p.rect(0,y,CS,PX); }
     if(h>=20||h<6) { p.fill(C.star); [[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s=>{if((p.frameCount+s[0])%35<25)px(p,s[0],s[1],PX,PX)}); }
-    if(h>=6&&h<21&&ha>20) { drawCl(p,40+Math.sin(p.frameCount*.014)*8,20); drawCl(p,150+Math.cos(p.frameCount*.011)*6,35); }
-    if(ha<=20&&h>=7&&h<21) { p.fill('#8888a0'); for(let i=0;i<5;i++){const rx=((p.frameCount*3+i*40)%CS);const ry=((p.frameCount*4+i*30)%80)+40;px(p,rx,ry,PX,PX*2);} }
-  }
+    if(h>=6&&h<21&&ha>40) { drawCl(p,40+Math.sin(p.frameCount*.014)*8,20); drawCl(p,150+Math.cos(p.frameCount*.011)*6,35); }
+    if(ha<=40&&h>=7&&h<21) { p.fill('#8888a0'); for(let i=0;i<5;i++){const rx=((p.frameCount*3+i*40)%CS);const ry=((p.frameCount*4+i*30)%80)+40;px(p,rx,ry,PX,PX*2);} }
+}
 
   function drawCl(p,x,y) { p.fill(C.cloud); p.rect(x,y,PX*5,PX*2); p.rect(x+PX,y-PX,PX*3,PX); }
 

@@ -636,6 +636,11 @@ function triggerTouchReaction(sleeping) {
   });
   if (window.touchReactions.length > 8) window.touchReactions.shift();
   window.shakeTimer = 8;
+
+  const touchMsgs = sleeping
+    ? ['*grogne* 😤', 'Laisse-moi dormir ! 🌙', '...zzz... 💤']
+    : ['*hehe* ✿', 'Coucou ! 💜', '*giggle* 🌸', 'Encore ! ✿'];
+  flashBubble(touchMsgs[Math.floor(Math.random() * touchMsgs.length)], 2000);
 }
 
 

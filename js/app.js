@@ -275,17 +275,20 @@ function toggleHab(catId) {
   const td = today();
   if (!window.D.log[td]) window.D.log[td] = [];
   const idx = window.D.log[td].indexOf(catId);
-  const hab = window.D.habits.find(h => h.catId === catId); // ← définir hab ici
+  const hab = window.D.habits.find(h => h.catId === catId);
   if (idx >= 0) {
     window.D.log[td].splice(idx, 1);
     addXp(-15);
     window.D.g.petales = Math.max(0, (window.D.g.petales || 0) - 2);
+    flashBubble("Oh... pas grave 💜", 2000);
   } else {
     window.D.log[td].push(catId);
     addXp(15);
     window.D.g.petales = (window.D.g.petales || 0) + 2;
     addEvent('habitude', `${hab?.label || catId} ✓  +15 XP, +2 🌸`);
     window.celebQueue.push(catId);
+    const habMsgs = ["Trop bien ! 🌸", "Tu gères ! ✿", "Fière de toi 💜", "*applaudit* 🎉", "Continue comme ça ✿"];
+    flashBubble(habMsgs[Math.floor(Math.random() * habMsgs.length)], 2000);
     window.shakeTimer = 8;
   }
   save(); renderHabs(); updUI(); updBubbleNow(); updBadgeBoutique();

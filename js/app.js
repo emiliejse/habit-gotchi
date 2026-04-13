@@ -334,6 +334,9 @@ async function fetchMeteo() {
     if (wind > 40) badge += ` · 🌬️ Vent d'Autan !`;
     else if (wind > 20) badge += ` · 💨 Venteux`;
     if (document.getElementById('meteo-badge')) document.getElementById('meteo-badge').textContent = badge;
+    if (wind > 20) {
+      animEl(document.querySelector('.tama-screen'), wind > 40 ? 'shakeX' : 'headShake', 600);
+    }
   } catch(e) {}
 }
 

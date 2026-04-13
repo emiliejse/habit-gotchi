@@ -149,9 +149,9 @@ const g = window.D.g, h = hr(), sleeping = (h >= 22 || h < 7);
 
     let envActif = g.activeEnv || 'parc';
     if (!sleeping) {
-  if (ha < 3)      drawRain(p, ha);
-  else if (ha === 4) drawSun(p);
-  else if (ha >= 5)  drawRainbow(p);
+  if (ha < 40)       drawRain(p, ha);
+  else if (ha < 60)  drawSun(p);
+  else if (ha >= 100) drawRainbow(p);
 }
     drawActiveEnv(p, envActif, n, h);
 

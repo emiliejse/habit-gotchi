@@ -12,9 +12,6 @@
   margin-top: 2px;
 }
 
-/* --- Suppression définitive de la barre d'onglets du bas --- */
-.tabs-bottom { display: none !important; }
-
    /* --- Languette Menu Discrète --- */
 .menu-languette {
   position: fixed;
@@ -116,7 +113,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   width: 100%;
   box-sizing: border-box;
   z-index:10;   /* ← était 55, on garde juste un z-index > 1 du shell */
-  margin-top: 6px;; /* ← déjà à 0, on vérifie */
+  margin-top: 6px; /* ← déjà à 0, on vérifie */
 }
 /* Queue pointant VERS LE HAUT (vers l'écran) */
 .bubble::before {

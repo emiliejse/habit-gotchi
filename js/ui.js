@@ -4,7 +4,7 @@
                getSt, nxtTh, calcStr, toggleHab, editH, updBubbleNow,
                CATS, STG, UI_PALETTES, GOTCHI_COLORS, ENV_THEMES, SK)
    ============================================================ */
-   
+
 // ── animEl() : applique une animation Animate.css sur un élément ──
 // Pense à ça comme une télécommande d'animation :
 //   el  → l'élément DOM à animer (ex: document.getElementById('modal'))
@@ -90,6 +90,7 @@ function toast(m) {
 function toastModal(m) {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `<p style="text-align:center;font-size:12px">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`;
+  animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
 function toastSnack(msg) {
@@ -118,16 +119,17 @@ function clModal(e) {
 function ouvrirSnack() {
   const h = hr();
   if (h >= 22 || h < 7) {
-    document.getElementById('modal').style.display = 'flex';
-    document.getElementById('mbox').innerHTML = `
-      <div style="text-align:center;padding:10px">
-        <div style="font-size:48px;margin-bottom:8px">🌙</div>
-        <p style="font-size:12px;margin-bottom:12px">
-          ${window.D.g.name} dort... reviens demain 💜
-        </p>
-        <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
-      </div>`;
-    return;
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <div style="text-align:center;padding:10px">
+      <div style="font-size:48px;margin-bottom:8px">🌙</div>
+      <p style="font-size:12px;margin-bottom:12px">
+        ${window.D.g.name} dort... reviens demain 💜
+      </p>
+      <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
+    </div>`;
+  animEl(document.getElementById('mbox'), 'bounceIn');
+  return;
   }
   const td = today();
   const emoji = getSnackOfDay();
@@ -153,6 +155,7 @@ function ouvrirSnack() {
           <button class="btn btn-p" onclick="giveSnack();clModal();" style="flex:1">Donner !</button>
         </div>
       </div>`;
+  animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
 /* ============================================================
@@ -429,6 +432,7 @@ function ouvrirBoutique() {
 
     <div id="boutique-contenu"></div>
   `;
+  animEl(document.getElementById('mbox'), 'bounceIn');
 
   const mbox = document.getElementById('mbox');
   mbox.classList.remove('shop-open');
@@ -550,6 +554,7 @@ function supprimerObjetIA(propId) {
     <button class="btn btn-d" onclick="confirmerSuppressionIA('${propId}')" style="width:100%;margin-bottom:6px;font-size:10px">🗑️ Supprimer</button>
     <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:10px">Annuler</button>
   `;
+  animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
 function confirmerSuppressionIA(propId) {
@@ -631,6 +636,7 @@ document.getElementById('mbox').innerHTML = `
 
   <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:10px">Annuler</button>
 `;
+animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
 function confirmSlot(propIndex, slotId) {
@@ -683,6 +689,7 @@ function openSlotPickerAvecRangement(propIndex) {
     </button>
     <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:10px">Annuler</button>
   `;
+  animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
 function rangerProp(propIndex) {
@@ -759,6 +766,7 @@ function rangerProp(propIndex) {
       🗑️ Vider les objets IA
     </button>
   `;
+  animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
 function cleanProps() {
@@ -783,6 +791,7 @@ function cleanProps() {
       <button class="btn btn-d" onclick="confirmCleanProps()" style="flex:1">Supprimer</button>
     </div>
   `;
+  animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
 function confirmCleanProps() {
@@ -1035,6 +1044,7 @@ function toastInfo() {
     </div>
     <p style="font-size:8px;color:var(--text2);text-align:center;margin-top:4px">6 messages max · conversation non sauvegardée</p>
 `;
+animEl(document.getElementById('mbox'), 'bounceIn');
   sendSoutienMsg(promptInit, true);
 }
 
@@ -1340,11 +1350,13 @@ function editJEntry(i) {
   const e = window.D.journal[i]; if (!e) return;
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `<h3>Modifier</h3><textarea id="edit-j-txt" class="inp" rows="3">${e.text||''}</textarea><div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button><button class="btn btn-p" onclick="saveEditJ(${i})" style="flex:1">OK</button></div>`;
+  animEl(document.getElementById('mbox'), 'bounceIn');
 }
 function saveEditJ(i) { window.D.journal[i].text = document.getElementById('edit-j-txt').value.trim(); save(); clModal(); renderJEntries(); }
 function delJEntry(i) {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `<p>Supprimer ?</p><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="confirmDelJ(${i})" style="flex:1">Oui</button></div>`;
+  animEl(document.getElementById('mbox'), 'bounceIn');
 }
 function confirmDelJ(i) { window.D.journal.splice(i, 1); save(); clModal(); renderJEntries(); updUI(); }
 
@@ -1419,6 +1431,7 @@ function importD(event) {
 function confirmReset() {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`;
+animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
 /* ============================================================
@@ -1538,6 +1551,7 @@ if (joursAbsence >= 3) {
       <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="clModal()">C'est parti ✿</button>
     </div>
   `;
+  animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
 function getMorningMsg() {
@@ -1583,6 +1597,7 @@ function showWelcomeModal() {
     <input id="welcome-name" class="inp" placeholder="Petit·e Gotchi" maxlength="20" style="text-align:center" autocomplete="off">
     <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="confirmWelcome()">C'est parti 🌟</button>
   `;
+  animEl(document.getElementById('mbox'), 'bounceIn');
   setTimeout(() => document.getElementById('welcome-name')?.focus(), 100);
 }
 

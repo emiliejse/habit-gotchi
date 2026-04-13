@@ -233,6 +233,12 @@ function cleanPoops() {
   window.D.g.poops = [];
   window.D.g.petales = (window.D.g.petales || 0) + (count * 2);
   if (typeof toast === 'function') toast(`Propre ! +${count * 2} 🌸`);
+  const poopMsgs = count >= 4
+  ? ['*horreur* C'était quoi ce carnage 💩💩💩', 'Je vais avoir besoin d'un bain après ça...', 'ON APPELLE LES SECOURS 🚨💩']
+  : count >= 2
+  ? ['Ahh beaucoup mieux ! ✿', '*respire* Enfin propre 🌸', 'Tu aurais pu venir plus tôt hein 👀']
+  : ['Merci ! ✿', 'Oh une crotte, ça arrive 💜', '*soupir de soulagement* ✿'];
+flashBubble(poopMsgs[Math.floor(Math.random() * poopMsgs.length)], 3000);
   save();
   addEvent('note', `Crotte ramassée 💩  +${count * 2} 🌸`);
   if (typeof updUI === 'function') updUI();
@@ -360,7 +366,28 @@ async function fetchMeteo() {
 /* ============================================================
    BULLE DE DIALOGUE
    ============================================================ */
-function updBubbleNow() {
+function flashBubble(msg, duree = 2500) {
+  const el = document.getElementById('bubble');
+  if (el) el.textContent = msg;
+  clearTimeout(window._bubbleTimer);
+  window._bubbleTimer = setTimeout(() => updBubbleNow(), duree);
+}
+
+   function updBubbleNow() {
+  // Trop de crottes : gotchi se plaint en priorité
+  const poopCount = (D.g.poops || []).length;
+  if (poopCount >= 3) {
+    const poopRage = [
+      'C\'est quoi cette porcherie 💩',
+      '*bouche le nez* 🤢',
+      'Tu vas nettoyer ou pas ??',
+      'Je vis dans une décharge 💩💩',
+      '*regard noir* 😤'
+    ];
+    const el = document.getElementById('bubble');
+    if (el) el.textContent = poopRage[Math.floor(Math.random() * poopRage.length)];
+    return;
+  }  
   const h = hr(), ha = D.g.happiness, en = D.g.energy;
   const src = window.PERSONALITY ? window.PERSONALITY.bulles : MSG;
   const done = (D.log[today()] || []).length;

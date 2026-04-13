@@ -4,7 +4,22 @@
                getSt, nxtTh, calcStr, toggleHab, editH, updBubbleNow,
                CATS, STG, UI_PALETTES, GOTCHI_COLORS, ENV_THEMES, SK)
    ============================================================ */
-
+   
+// ── animEl() : applique une animation Animate.css sur un élément ──
+// Pense à ça comme une télécommande d'animation :
+//   el  → l'élément DOM à animer (ex: document.getElementById('modal'))
+//   anim → le nom de l'animation sans préfixe (ex: 'bounceIn', 'tada')
+//   dur  → durée en ms (optionnel, défaut 600)
+// ⚠️ La classe est retirée automatiquement après l'animation
+//    pour pouvoir rejouer l'animation plus tard.
+function animEl(el, anim, dur = 600) {
+  if (!el) return;
+  el.style.setProperty('--animate-duration', dur + 'ms');
+  el.classList.add('animate__animated', 'animate__' + anim);
+  el.addEventListener('animationend', () => {
+    el.classList.remove('animate__animated', 'animate__' + anim);
+  }, { once: true });
+}
 /* ============================================================
    NAVIGATION
    ============================================================ */

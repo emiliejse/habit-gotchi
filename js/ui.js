@@ -1478,10 +1478,12 @@ if (joursAbsence >= 3) {
     const xpPerdu = joursAbsence * 15;
     titre = `Ça fait ${joursAbsence} jours... 💜`;
     corps = `${D.g.name} t'a attendue. Tu as perdu <strong>${xpPerdu} XP</strong> pendant ton absence.`;
+    addXp(-xpPerdu);
     addEvent('xp', -xpPerdu, `😴 ${joursAbsence} jours d'absence — -${xpPerdu} XP`);
   } else if (joursAbsence === 1 && !(D.log[td] || []).length) {
     titre = `Bienvenue 🌸`;
     corps = `Tu as perdu <strong>15 XP</strong> hier — pas d'habitudes cochées.`;
+    addXp(-15);
     addEvent('xp', -15, `😴 Pas d'habitudes hier — -15 XP`);
   } else if (h >= 22 || h < 7) {
     titre = `*chuchote* 🌙`;

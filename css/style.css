@@ -47,7 +47,7 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
-  min-height:100dvh;overflow-x:hidden;
+  min-height:100dvh;
   padding-top:var(--sat);padding-left:var(--sal);padding-right:var(--sar);
   display:flex;flex-direction:column}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}

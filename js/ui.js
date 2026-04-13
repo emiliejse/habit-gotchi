@@ -83,6 +83,7 @@ function toast(m) {
   if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
   el.textContent = m;
   el.classList.add('show');
+  animEl(el, 'slideInUp', 400);
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
 }
@@ -179,16 +180,19 @@ function updUI() {
   if (document.getElementById('name-inp')) document.getElementById('name-inp').value = g.name;
 if (document.getElementById('env-sel'))  document.getElementById('env-sel').value = g.activeEnv || 'parc';
   if (document.getElementById('api-inp'))  document.getElementById('api-inp').value = D.apiKey || '';
-  const petalesDisplay = document.getElementById('petales-wallet');
+const petalesDisplay = document.getElementById('petales-wallet');
   if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0}`;
   const petalesBoutique = document.getElementById('petales-wallet-boutique');
-if (petalesBoutique) petalesBoutique.textContent = `${D.g.petales || 0}`;
+  if (petalesBoutique) petalesBoutique.textContent = `${D.g.petales || 0}`;
   const tc = document.getElementById('thought-count');
-if (tc) tc.textContent = `(${window.D.thoughtCount || 0}/3)`;
-const btnAsk = document.getElementById('btn-ask-claude');
-if (btnAsk) btnAsk.childNodes[0].textContent = `Interroger ${window.D.g.name || 'le Gotchi'} `;
-const canvasBoutique = document.getElementById('canvas-boutique');
-if (canvasBoutique) drawShopIcon(canvasBoutique);
+  if (tc) tc.textContent = `(${window.D.thoughtCount || 0}/3)`;
+  const btnAsk = document.getElementById('btn-ask-claude');
+  if (btnAsk) {
+    btnAsk.childNodes[0].textContent = `Interroger ${window.D.g.name || 'le Gotchi'} `;
+    if ((window.D.thoughtCount || 0) < 3) animEl(btnAsk, 'pulse', 1000);
+  }
+  const canvasBoutique = document.getElementById('canvas-boutique');
+  if (canvasBoutique) drawShopIcon(canvasBoutique);
   updBadgeBoutique();
 }
 

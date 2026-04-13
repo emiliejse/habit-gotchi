@@ -893,7 +893,7 @@ const notesRecentes = D.journal
     if (giveGift && data.cadeau) {
       if (!D.g.props) D.g.props = [];
       if (!D.g.props.find(p => p.id === data.cadeau.id)) {
-        D.g.props.push({ id: data.cadeau.id, nom: data.cadeau.nom, type: data.cadeau.type, actif: false });
+        D.g.props.push({ id: data.cadeau.id, nom: data.cadeau.nom, type: data.cadeau.type, actif: false, seen: false });
         if (!D.propsPixels) D.propsPixels = {};
 D.propsPixels[data.cadeau.id] = data.cadeau;
 window.PROPS_LOCAL = Object.values(D.propsPixels);
@@ -902,6 +902,8 @@ window.PROPS_LOCAL = Object.values(D.propsPixels);
 const bulleCadeau = poolCadeau[Math.floor(Math.random() * poolCadeau.length)];
 document.getElementById('bubble').textContent = bulleCadeau.replace('{{nom}}', D.g.name || 'toi');
         toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
+        addEvent('cadeau', 0, `🎁 ${data.cadeau.nom} reçu en cadeau !`);
+        updBadgeBoutique();
       }
     }
 

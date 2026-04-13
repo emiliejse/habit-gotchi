@@ -461,5 +461,5 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 }
 
 /* TEST TEMPORAIRE — à retirer après diagnostic */
-#p-perso, #p-settings { outline: 3px solid red; }
-#dynamic-zone { outline: 3px solid blue; }
+/* TEST 2 — colorer le fond de dynamic-zone */
+#dynamic-zone { background: red !important; }

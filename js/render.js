@@ -148,8 +148,11 @@ const g = window.D.g, h = hr(), sleeping = (h >= 22 || h < 7);
     if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
 
     let envActif = g.activeEnv || 'parc';
-    if (ha >= 100 && !sleeping) drawRainbow(p);
-    if (ha < 3 && !sleeping) drawRain(p, ha);
+    if (!sleeping) {
+  if (ha < 3)      drawRain(p, ha);
+  else if (ha === 4) drawSun(p);
+  else if (ha >= 5)  drawRainbow(p);
+}
     drawActiveEnv(p, envActif, n, h);
 
 

@@ -61,6 +61,22 @@ function drawRain(p, ha) {
   }
 }
 
+function drawSun(p) {
+  const cx = CS - 30, cy = 25;
+  // Rayons
+  p.fill('#f0e070');
+  for (let a = 0; a < 8; a++) {
+    const angle = (a / 8) * Math.PI * 2 + p.frameCount * 0.01;
+    const rx = cx + Math.cos(angle) * 14;
+    const ry = cy + Math.sin(angle) * 14;
+    px(p, rx, ry, PX, PX);
+  }
+  // Corps
+  p.fill('#f8d840');
+  px(p, cx - 8, cy - 8, 16, 16);
+  p.fill('#fce860');
+  px(p, cx - 5, cy - 5, 10, 10);
+}
 // ── drawActiveEnv() : dessine l'environnement actif ─────────
 // `env`   → string : 'parc' | 'chambre' | 'montagne' (vient de D.g.activeEnv)
 // `n`     → booléen : true = mode nuit (h≥21 ou h<6)

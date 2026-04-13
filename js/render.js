@@ -311,13 +311,13 @@ if (g.props) {
       p.textSize(20);
       p.drawingContext.globalAlpha = 1.0;
 p.text(ea.emoji, fx, fy);
-      ea.timer--;
             // Saut quand la friandise arrive près de la bouche
       if (progress > 0.7 && !ea.jumped) {
         bounceT = Math.PI * 1.5;
         triggerTouchReaction(false);
         ea.jumped = true;
       }
+      ea.timer--;
       if (ea.timer <= 0) ea.active = false;
     }
 

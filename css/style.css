@@ -71,7 +71,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 /* ---- Header ---- */
 .hdr{text-align:center;padding:2px 0;display:flex;justify-content:space-between;align-items:center}
-.hdr h1{font-size:16px;color:var(--lilac);letter-spacing:2px;flex:1}
+.hdr h1{font-size:12px;color:var(--lilac);letter-spacing:2px;flex:1}
 .hdr sub{font-size:8px;color:var(--text2)}
 .hdr .menu-btn{
   width:36px;height:36px;border-radius:10px;border:2px solid var(--border);

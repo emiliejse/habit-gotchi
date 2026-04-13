@@ -337,6 +337,12 @@ async function fetchMeteo() {
       document.getElementById('meteo-badge').textContent = badge;
       document.getElementById('meteo-badge').style.display = 'block';
     }
+    // Icônes vent dans la date
+    const windLeft = document.getElementById('wind-left');
+    const windRight = document.getElementById('wind-right');
+    if (windLeft) windLeft.style.display = wind > 20 ? 'inline' : 'none';
+    if (windRight) windRight.style.display = wind > 20 ? 'inline' : 'none';
+
     const shell = document.querySelector('.tama-shell');
     if (wind > 40) {
       shell.classList.add('tama-wind-strong');

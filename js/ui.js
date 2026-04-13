@@ -70,7 +70,7 @@ function updDate() {
   const d = new Date();
   const days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   const mos  = ['jan','fév','mars','avr','mai','juin','juil','août','sep','oct','nov','déc'];
-  document.getElementById('date-d').textContent = `${days[d.getDay()]} ${d.getDate()} ${mos[d.getMonth()]}`;
+  document.getElementById('date-txt').textContent = `${days[d.getDay()]} ${d.getDate()} ${mos[d.getMonth()]}`;
 }
 updDate();
 

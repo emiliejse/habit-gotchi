@@ -33,23 +33,19 @@
   <!-- Header -->
   <div class="hdr">
     <button id="btn-boutique-hdr" onclick="ouvrirBoutique()" class="menu-btn" style="position:relative">
-  🛍️
-  <span id="badge-boutique-hdr" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--pink);color:#fff;font-size:8px;border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
-</button>
-    <h1>✿ Habit-Gotchi ✿</h1>
+      🛍️
+      <span id="badge-boutique-hdr" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--pink);color:#fff;font-size:8px;border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
+    </button>
+    <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+      <h1>✿ Habit-Gotchi ✿</h1>
+      <sub id="date-d" style="font-size:10px;color:var(--text2)">
+        <span id="wind-left" style="display:none">🌬️ </span><span id="date-txt"></span><span id="wind-right" style="display:none"> 🌬️</span>
+      </sub>
+    </div>
     <button id="btn-tablet" onclick="openTablet()" class="menu-btn" style="position:relative">
       📟
       <span id="tablet-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--coral);color:#fff;font-size:8px;border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
     </button>
-  </div>
-
-  <!-- Date -->
-  <sub id="date-d" style="display:block;text-align:center;font-size:10px;color:var(--text2)"></sub>
-
-  <!-- Shell -->
-  <div class="tama-shell">
-    <div class="tama-screen" id="cbox"></div>
-
   </div>
 
   <!-- Bulle -->

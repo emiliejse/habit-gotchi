@@ -234,10 +234,10 @@ function cleanPoops() {
   window.D.g.petales = (window.D.g.petales || 0) + (count * 2);
   if (typeof toast === 'function') toast(`Propre ! +${count * 2} 🌸`);
   const poopMsgs = count >= 4
-  ? ['*horreur* C\'etait quoi ce carnage 💩💩💩', 'Je vais avoir besoin d\'un bain après ça...', 'ON APPELLE LES SECOURS 🚨💩']
+  ? ["*horreur* C'était quoi ce carnage 💩💩💩", "Je vais avoir besoin d'un bain après ça...", "ON APPELLE LES SECOURS 🚨💩"]
   : count >= 2
-  ? ['Ahh beaucoup mieux ! ✿', '*respire* Enfin propre 🌸', 'Tu aurais pu venir plus tôt hein 👀']
-  : ['Merci ! ✿', 'Oh une crotte, ça arrive 💜', '*soupir de soulagement* ✿'];
+  ? ["Ahh beaucoup mieux ! ✿", "*respire* Enfin propre 🌸", "Tu aurais pu venir plus tôt hein 👀"]
+  : ["Merci ! ✿", "Oh une crotte, ça arrive 💜", "*soupir de soulagement* ✿"];
 flashBubble(poopMsgs[Math.floor(Math.random() * poopMsgs.length)], 3000);
   save();
   addEvent('note', `Crotte ramassée 💩  +${count * 2} 🌸`);

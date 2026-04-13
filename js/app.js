@@ -338,11 +338,16 @@ async function fetchMeteo() {
       document.getElementById('meteo-badge').style.display = 'block';
     }
     const shell = document.querySelector('.tama-shell');
-    if (wind > 20) {
-      shell.classList.add('tama-wind');
-      animEl(document.querySelector('.tama-screen'), wind > 40 ? 'shakeX' : 'headShake', 600);
-    } else {
+    if (wind > 40) {
+      shell.classList.add('tama-wind-strong');
       shell.classList.remove('tama-wind');
+      animEl(document.querySelector('.tama-screen'), 'shakeX', 600);
+    } else if (wind > 20) {
+      shell.classList.add('tama-wind');
+      shell.classList.remove('tama-wind-strong');
+      animEl(document.querySelector('.tama-screen'), 'headShake', 600);
+    } else {
+      shell.classList.remove('tama-wind', 'tama-wind-strong');
     }
   } catch(e) {}
 }

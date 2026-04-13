@@ -442,10 +442,19 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 @keyframes tamaSway {
   0%   { transform: rotate(0deg); }
-  25%  { transform: rotate(0.8deg); }
-  75%  { transform: rotate(-0.8deg); }
+  25%  { transform: rotate(0.5deg); }
+  75%  { transform: rotate(-0.5deg); }
+  100% { transform: rotate(0deg); }
+}
+@keyframes tamaSwayStrong {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(1.5deg); }
+  75%  { transform: rotate(-1.5deg); }
   100% { transform: rotate(0deg); }
 }
 .tama-wind {
-  animation: tamaSway 1.2s ease-in-out infinite;
+  animation: tamaSway 1.4s ease-in-out infinite;
+}
+.tama-wind-strong {
+  animation: tamaSwayStrong 0.9s ease-in-out infinite;
 }

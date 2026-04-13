@@ -231,7 +231,7 @@ function renderHabs() {
   if (habHome) {
     habHome.innerHTML = D.habits.map(h => {
       const c = CATS.find(c => c.id === h.catId), d = log.includes(h.catId);
-      return `<div class="hab ${d?'done':''}" onclick="toggleHab('${h.catId}')"><div class="ck">${d?'✓':''}</div><span style="flex:1;font-size:12px">${h.label}</span><span style="font-size:16px">${c.icon}</span></div>`;
+      return `<div class="hab ${d?'done':''}" onclick="toggleHab('${h.catId}')"><div class="ck">${d?'✓':''}</div><span style="flex:1;font-size:12px">${CATS.find(c => c.id === h.catId)?.def || h.label}</span><span style="font-size:16px">${c.icon}</span></div>`;
     }).join('');
   }
   const hc = document.getElementById('hab-count');

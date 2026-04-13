@@ -174,6 +174,42 @@ if (canvasBoutique) drawShopIcon(canvasBoutique);
   updBadgeBoutique();
 }
 
+async function testApiKey() {
+  const statusEl = document.getElementById('api-status');
+  if (!statusEl) return;
+  
+  const key = D.apiKey;
+  if (!key) { statusEl.innerHTML = '❌ <span style="color:#e57373">Aucune clé saisie</span>'; return; }
+  
+  statusEl.innerHTML = '⏳ Test en cours...';
+  
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 10,
+        messages: [{ role: 'user', content: 'Réponds juste OK' }]
+      })
+    });
+    const d = await r.json();
+    
+    if (d.error) {
+      statusEl.innerHTML = `❌ <span style="color:#e57373">${d.error.message}</span>`;
+    } else if (d.content) {
+      statusEl.innerHTML = '✅ <span style="color:#81c784">Connecté</span>';
+    }
+  } catch(e) {
+    statusEl.innerHTML = `❌ <span style="color:#e57373">${e.message}</span>`;
+  }
+}
+
 function updBadgeBoutique() {
   const badge = document.getElementById('badge-boutique');
   if (!badge) return;

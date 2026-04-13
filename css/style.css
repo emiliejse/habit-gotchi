@@ -94,6 +94,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 /* Screen */
 .tama-screen{
+  touch-action: manipulation;
   background:var(--tama);border:3px solid var(--lilac);border-radius:8px;
   overflow:hidden;aspect-ratio:1/1;width:100%;margin:0 auto;
 }

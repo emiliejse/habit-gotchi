@@ -463,6 +463,11 @@ function updateParts(p) {
   }
 
   p.touchStarted = function() {
+  // ── GARDE : ne pas intercepter les taps si un panel HTML est ouvert ──
+  // Quand l'utilisateur est dans Réglages/Props/etc, le canvas ne doit
+  // PAS capturer les événements tactiles → on les laisse passer au DOM.
+  const activePanel = document.querySelector('.pnl.on');
+  if (activePanel) return true; // true = "je ne gère pas, laisse passer"
     const now = Date.now();
     if (now - (window._lastTapTime || 0) < 200) return false;
     window._lastTapTime = now;

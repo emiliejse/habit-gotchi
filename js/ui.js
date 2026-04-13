@@ -1591,6 +1591,10 @@ function applyCheatCode() {
     'happy1':     () => { D.g.happiness = 1; toast('😔 Bonheur → 1'); },
     'energy5':    () => { D.g.energy = 5;    toast('⚡ Énergie → 5'); },
     'reset3':     () => { D.thoughtCount = 0; toast('💭 Compteur pensées → 0'); },
+    'caca3':    () => { D.g.poops = [...(D.g.poops || []), {x:80,y:120}, {x:110,y:130}, {x:140,y:115}]; toast('💩 +3 cacas !'); },
+'resetfood':() => { D.g.snackDone = ''; D.g.snackEmoji = ''; toast('🍎 Nourriture remise à zéro'); },
+'resetmsg': () => { D.thoughtCount = 0; D.lastThoughtDate = null; toast('💬 Quota messages → 0/3'); },
+'resetcaca':() => { D.g.poopCount = 0; D.g.poopDay = ''; D.g.poops = []; toast('💩 Quota caca remis à zéro'); },
   };
 
   if (codes[code]) {

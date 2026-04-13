@@ -101,7 +101,6 @@ window.touchReactions = []; // tableau de réactions simultanées
 window.eatAnim = { active: false, timer: 0, emoji: '' };
 let walkX = 100;        // Position X courante
 let walkDir = 1;        // Direction : 1 = droite, -1 = gauche
-let walkSpeed = 0.4;    // Vitesse de base (pixels par frame)
 let walkStep = 0;       // Compteur pour l'animation de pas
 
 const p5s = (p) => {

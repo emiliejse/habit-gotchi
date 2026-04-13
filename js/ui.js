@@ -485,6 +485,7 @@ if (prop.actif) {
     save();
     renderProps();
     toast(`📦 ${prop.nom} rangé`);
+    flashBubble(`*au revoir ${prop.nom}* 👋`, 2500);
   }
   return;
 }
@@ -495,6 +496,7 @@ if (prop.actif) {
     save();
     renderProps();
     toast(`✨ ${prop.nom} activé !`);
+    flashBubble(`Oh ! ${prop.nom} ! 💜`, 2500);
     return;
   }
 

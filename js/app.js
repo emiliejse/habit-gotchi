@@ -234,7 +234,7 @@ function cleanPoops() {
   window.D.g.petales = (window.D.g.petales || 0) + (count * 2);
   if (typeof toast === 'function') toast(`Propre ! +${count * 2} 🌸`);
   const poopMsgs = count >= 4
-  ? ['*horreur* C'était quoi ce carnage 💩💩💩', 'Je vais avoir besoin d'un bain après ça...', 'ON APPELLE LES SECOURS 🚨💩']
+  ? ['*horreur* C\'etait quoi ce carnage 💩💩💩', 'Je vais avoir besoin d\'un bain après ça...', 'ON APPELLE LES SECOURS 🚨💩']
   : count >= 2
   ? ['Ahh beaucoup mieux ! ✿', '*respire* Enfin propre 🌸', 'Tu aurais pu venir plus tôt hein 👀']
   : ['Merci ! ✿', 'Oh une crotte, ça arrive 💜', '*soupir de soulagement* ✿'];
@@ -385,7 +385,7 @@ function flashBubble(msg, duree = 2500) {
       'C\'est quoi cette porcherie 💩',
       '*bouche le nez* 🤢',
       'Tu vas nettoyer ou pas ??',
-      'Je vis dans une décharge 💩💩',
+      'Je vis dans une décharge 💩💩'
       '*regard noir* 😤'
     ];
     const el = document.getElementById('bubble');

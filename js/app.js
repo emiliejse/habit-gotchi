@@ -218,7 +218,8 @@ function giveSnack() {
   window.D.g.petales = (window.D.g.petales || 0) + 2;
   save();
   addEvent('note', `${window.D.g.snackEmoji} donné à ${window.D.g.name} 🍽️  +2 🌸`);
-  flashBubble('Miam ! 💜');
+  const snackMsgs = ["Miam ! 💜", "Délicieux ! ✿", "*mange goulûment* 😋", "Encore ! 🌸", "C'était bon ça ! 💜"];
+flashBubble(snackMsgs[Math.floor(Math.random() * snackMsgs.length)], 2500);
   window.eatAnim = { active: true, timer: 50, emoji: window.D.g.snackEmoji, jumped: false };
   if (typeof updUI === 'function') updUI();
 }

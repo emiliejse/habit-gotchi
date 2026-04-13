@@ -382,8 +382,7 @@ function ouvrirBoutique() {
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h3 style="font-size:13px;color:var(--lilac);">🛍️ Boutique</h3>
-      <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button>
-    </div>
+<button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>    </div>
 
     <div style="text-align:center;margin-bottom:16px">
       <p style="font-size:11px;color:var(--text2);text-align:center">

@@ -207,6 +207,17 @@ if (g.props) {
     // --- Locomotion ---
     bounceT += sleeping ? 0.04 : 0.12;
     let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
+    // Saut snack : appliqué directement sur bobY
+if (window.eatAnim?.active) {
+  const progress = 1 - (window.eatAnim.timer / 50);
+  if (progress > 0.7 && !window.eatAnim.jumped) {
+    window.eatAnim.jumped = true;
+  }
+  if (window.eatAnim.jumped) {
+    const t = 1 - (window.eatAnim.timer / (50 * 0.15)); // 0→1 sur les 15 derniers %
+    bobY -= Math.sin(t * Math.PI) * 18; // arc de saut
+  }
+}
     let amplitude = 15, vitesse = 0.02;
     if (!sleeping && ha >= 80 && en >= 80) {
       amplitude = 40; vitesse = 0.06;
@@ -313,7 +324,6 @@ if (g.props) {
 p.text(ea.emoji, fx, fy);
             // Saut quand la friandise arrive près de la bouche
       if (progress > 0.7 && !ea.jumped) {
-        bounceT = Math.PI * 1.5;
         triggerTouchReaction(false);
         ea.jumped = true;
       }

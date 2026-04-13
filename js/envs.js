@@ -48,13 +48,14 @@ function drawRainbow(p) {
   }
 }
 
-function drawRain(p) {
+function drawRain(p, ha) {
   p.noStroke();
-  for (let i = 0; i < 60; i++) {
+  // Plus ha est bas, plus il y a de gouttes (20 à 80)
+  const count = Math.floor(80 - ha * 30);
+  for (let i = 0; i < count; i++) {
     const speed = 7 + (i % 3) * 2;
     const x = (i * 31 + p.frameCount) % CS;
     const y = (p.frameCount * speed + i * 19) % (CS + 20) - 10;
-    // Goutte fine et verticale
     p.fill(p.color(140, 170, 210, 180));
     p.rect(x, y, 1, 4);
   }

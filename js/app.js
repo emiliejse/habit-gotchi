@@ -374,6 +374,10 @@ function flashBubble(msg, duree = 2500) {
 }
 
    function updBubbleNow() {
+  const h = hr(), ha = D.g.happiness, en = D.g.energy;
+  const src = window.PERSONALITY ? window.PERSONALITY.bulles : MSG;
+  const done = (D.log[today()] || []).length;
+
   // Trop de crottes : gotchi se plaint en priorité
   const poopCount = (D.g.poops || []).length;
   if (poopCount >= 3) {
@@ -388,9 +392,6 @@ function flashBubble(msg, duree = 2500) {
     if (el) el.textContent = poopRage[Math.floor(Math.random() * poopRage.length)];
     return;
   }  
-  const h = hr(), ha = D.g.happiness, en = D.g.energy;
-  const src = window.PERSONALITY ? window.PERSONALITY.bulles : MSG;
-  const done = (D.log[today()] || []).length;
 
   // Nuit : état exclusif, phrase fixe
   if (h >= 22 || h < 7) {

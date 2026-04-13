@@ -154,6 +154,9 @@ if (!sleeping) {
   else if (ha === 80) drawSun(p);           // happiness 4 : soleil
   else if (ha >= 100) drawRainbow(p);       // happiness 5 : arc-en-ciel
 }
+// Pluie aussi la nuit
+if (ha < 40) drawRain(p, ha);
+else if (ha === 40) drawRain(p, 35);
     drawActiveEnv(p, envActif, n, h);
 
 

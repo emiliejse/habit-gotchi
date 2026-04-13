@@ -182,10 +182,10 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .menu-circle .mc-icon{font-size:40px;line-height:1}
 .menu-circle .mc-label{font-size:8px;font-weight:bold;color:#6a5a40;letter-spacing:.5px;text-align:center;text-transform:uppercase}
 .menu-soutien{
-  display:flex;align-items:center;justify-content:center;gap:20px;
+  display:flex;align-items:center;justify-content:center;gap:12px;
   padding:8px 20px;
   width:auto;         /* ← plus de 100% */
-  margin:6px auto 0; /* ← centré */
+  margin:16px auto 0; /* ← centré */
   background:#e8d8f0;
   border:2px solid #b090d0;
   border-bottom:3px solid #8060b0;

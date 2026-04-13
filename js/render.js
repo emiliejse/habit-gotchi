@@ -631,7 +631,7 @@ function triggerTouchReaction(sleeping) {
     cx: (window._lastTapX || 100) + (Math.random() - 0.5) * 40,
   });
   if (window.touchReactions.length > 8) window.touchReactions.shift();
-  animEl(document.querySelector('.tama-screen'), sleeping ? 'shakeX' : 'rubberBand', 400);
+  window.shakeTimer = 8;
 }
 
 

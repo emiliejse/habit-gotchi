@@ -276,8 +276,8 @@ function toggleHab(catId) {
   } else {
     window.D.log[td].push(catId);
     addXp(15);
-    addEvent('habitude', `${h.label} ✓  +${xpGain} XP, +${petalesGain} 🌸`);
     window.D.g.petales = (window.D.g.petales || 0) + 2;
+    addEvent('habitude', `${hab?.label || catId} ✓  +15 XP, +2 🌸`);
     window.celebQueue.push(catId);
     window.shakeTimer = 8;
   }

@@ -32,12 +32,11 @@ function go(t) {
   if (targetPanel) targetPanel.classList.add('on');
 
   const shell = document.querySelector('.tama-shell');
-if (t === 'gotchi') {
-  shell.classList.remove('shrunk');
-  const h = hr();
-  window.D.g.activeEnv = (h >= 22 || h < 7) ? 'chambre' : 'parc';
-} 
-else {
+  if (t === 'gotchi') {
+    shell.classList.remove('shrunk');
+    const h = hr();
+    window.D.g.activeEnv = (h >= 22 || h < 7) ? 'chambre' : 'parc';
+  } else {
     shell.classList.add('shrunk');
     if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
     else if (t === 'perso')    window.D.g.activeEnv = 'parc';
@@ -49,7 +48,12 @@ else {
 
   if (t === 'gotchi' || t === 'settings') renderHabs();
   if (t === 'progress') renderProg();
-  if (t === 'props')    renderProps();
+  if (t === 'props') {
+    (window.D.g.props || []).forEach(p => p.seen = true);
+    save();
+    renderProps();
+    updBadgeBoutique();
+  }
   if (t === 'perso')    renderPerso();
   if (t === 'journal')  { journalLocked = true; renderJ(); }
 
@@ -189,8 +193,6 @@ const petalesDisplay = document.getElementById('petales-wallet');
   if (btnAsk) {
     btnAsk.childNodes[0].textContent = `Interroger ${window.D.g.name || 'le Gotchi'} `;
   }
-  const canvasBoutique = document.getElementById('canvas-boutique');
-  if (canvasBoutique) drawShopIcon(canvasBoutique);
   updBadgeBoutique();
 }
 
@@ -231,17 +233,20 @@ async function testApiKey() {
 }
 
 function updBadgeBoutique() {
-  const badge = document.getElementById('badge-boutique');
-  const b2 = document.getElementById('badge-boutique-hdr');
+  const badgeHdr = document.getElementById('badge-boutique-hdr');
+  const badgeInv = document.getElementById('badge-boutique');
   
+  // Boutique header : objet disponible à acheter
   const lib = window.PROPS_LIB || [];
   const petales = window.D.g.petales || 0;
   const aDisponible = lib.some(p => 
     !(window.D.g.props || []).find(inv => inv.id === p.id) && petales >= p.cout
   );
+  if (badgeHdr) badgeHdr.style.display = aDisponible ? 'block' : 'none';
 
-  if (badge) badge.style.display = aDisponible ? 'block' : 'none';
-  if (b2) b2.style.display = aDisponible ? 'block' : 'none';
+  // Inventaire menu : nouvel objet non vu
+  const hasNew = (window.D.g.props || []).some(p => !p.seen);
+  if (badgeInv) badgeInv.style.display = hasNew ? 'block' : 'none';
 }
 
 /* ============================================================
@@ -345,58 +350,6 @@ function renderProps() {
   });
   const wallet   = document.getElementById('xp-wallet');
   if (wallet)   wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
-}
-function drawShopIcon(canvas) {
-  const style = getComputedStyle(document.documentElement);
-  const lilac = style.getPropertyValue('--lilac').trim() || '#b090d0';
-  const pink  = style.getPropertyValue('--pink').trim()  || '#e8a0bf';
-  const mint  = style.getPropertyValue('--mint').trim()  || '#80d0a8';
-
-  function hexToRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]}
-  function darken(h,f){return'#'+hexToRgb(h).map(v=>Math.round(v*f).toString(16).padStart(2,'0')).join('')}
-  function mix(h,w){return'#'+hexToRgb(h).map(v=>Math.round(v*(1-w)+255*w).toString(16).padStart(2,'0')).join('')}
-
-  const BK=darken(lilac,.45), WL=mix(lilac,.55), RF=darken(pink,.8), RL=mix(pink,.4);
-  const AW1=mix(pink,.3), AW2='#ffffff', VT=mix(mint,.45), VL=mix(mint,.7);
-  const DR=mix(lilac,.8), FL=darken(lilac,.6), SO=darken(lilac,.5);
-  const _=null;
-
-  const grid = [
-    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
-    [_,_,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,_,_],
-    [_,BK,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,BK,_],
-    [_,BK,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,RL,BK,_],
-    [_,BK,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,RF,BK,_],
-    [_,_,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,_,_],
-    [_,_,BK,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,BK,_,_],
-    [_,_,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,WL,BK,_,_],
-    [_,_,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,WL,BK,_,_],
-    [_,_,BK,WL,BK,VL,BK,WL,BK,VL,BK,WL,BK,VL,BK,WL,BK,VL,BK,WL,BK,VL,BK,WL,WL,BK,_,_],
-    [_,_,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,BK,VT,BK,WL,WL,BK,_,_],
-    [_,_,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,BK,BK,BK,WL,WL,BK,_,_],
-    [_,_,BK,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,BK,_,_],
-    [_,_,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,_,_],
-    [_,_,BK,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,BK,_,_],
-    [_,_,BK,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,AW2,AW1,BK,_,_],
-    [_,_,_,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,_,_,_],
-    [_,_,BK,WL,BK,BK,BK,BK,BK,WL,WL,BK,BK,BK,BK,WL,WL,BK,BK,BK,BK,BK,BK,BK,WL,BK,_,_],
-    [_,_,BK,WL,BK,VT,VT,VT,BK,WL,WL,BK,DR,DR,BK,WL,WL,BK,VT,VT,VT,VT,BK,BK,WL,BK,_,_],
-    [_,_,BK,WL,BK,VT,VL,VT,BK,WL,WL,BK,DR,VL,BK,WL,WL,BK,VT,VL,VL,VT,BK,BK,WL,BK,_,_],
-    [_,_,BK,WL,BK,VT,VT,VT,BK,WL,WL,BK,DR,DR,BK,WL,WL,BK,VT,VT,VT,VT,BK,BK,WL,BK,_,_],
-    [_,_,BK,WL,BK,BK,BK,BK,BK,WL,WL,BK,DR,DR,BK,WL,WL,BK,BK,BK,BK,BK,BK,BK,WL,BK,_,_],
-    [_,_,BK,WL,WL,WL,WL,WL,WL,WL,WL,WL,DR,DR,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,WL,BK,_,_],
-    [_,_,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,BK,_,_],
-    [_,_,_,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,_,_,_],
-    [_,_,_,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,SO,_,_,_],
-    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
-    [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
-  ];
-
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,28,28);
-  for(let y=0;y<28;y++)
-    for(let x=0;x<28;x++)
-      if(grid[y][x]){ctx.fillStyle=grid[y][x];ctx.fillRect(x,y,1,1);}
 }
 function ouvrirBoutique() {
   const onglet = window._boutiqueOnglet || 'catalogue';
@@ -507,7 +460,7 @@ function acheterProp(propId) {
   
   D.g.petales = (D.g.petales || 0) - prop.cout;
   if (!D.g.props) D.g.props = [];
-  D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
+  D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false, seen: false });
   addEvent('cadeau', prop.cout, `${prop.emoji || '🎁'} ${prop.nom}`);
   save();
   toast(`🎁 ${prop.nom} ajouté à ton inventaire !`);
@@ -992,7 +945,7 @@ if (!prompt) return;
     const match = data.content[0].text.match(/\{[\s\S]*\}/);
     if (match) {
       const obj = JSON.parse(match[0]);
-      D.g.props.push({ id:obj.id, nom:obj.nom, type:obj.type, emoji:obj.emoji||'🎁', actif:false, slot:obj.slot||'A', motion:obj.motion||'drift', ancrage:obj.ancrage||null });
+      D.g.props.push({ id:obj.id, nom:obj.nom, type:obj.type, emoji:obj.emoji||'🎁', actif:false, slot:obj.slot||'A', motion:obj.motion||'drift', ancrage:obj.ancrage||null, seen: false });
       D.propsPixels = D.propsPixels || {};
 D.propsPixels[obj.id] = obj;
 window.PROPS_LOCAL = Object.values(D.propsPixels);

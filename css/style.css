@@ -179,7 +179,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
   transition:transform .15s,background .15s;
 }
 .menu-circle:active{transform:scale(.92);background:#ede4d0}
-.menu-circle .mc-icon{font-size:24px;line-height:1}
+.menu-circle .mc-icon{font-size:30px;line-height:1}
 .menu-circle .mc-label{font-size:8px;font-weight:bold;color:#6a5a40;letter-spacing:.5px;text-align:center;text-transform:uppercase}
 .menu-soutien{
   display:flex;align-items:center;justify-content:center;gap:8px;

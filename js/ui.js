@@ -212,13 +212,16 @@ async function testApiKey() {
 
 function updBadgeBoutique() {
   const badge = document.getElementById('badge-boutique');
-  if (!badge) return;
+  const b2 = document.getElementById('badge-boutique-hdr');
+  
   const lib = window.PROPS_LIB || [];
-  const petales = D.g.petales || 0;
+  const petales = window.D.g.petales || 0;
   const aDisponible = lib.some(p => 
-    !(D.g.props || []).find(inv => inv.id === p.id) && petales >= p.cout
+    !(window.D.g.props || []).find(inv => inv.id === p.id) && petales >= p.cout
   );
-  badge.style.display = aDisponible ? 'block' : 'none';
+
+  if (badge) badge.style.display = aDisponible ? 'block' : 'none';
+  if (b2) b2.style.display = aDisponible ? 'block' : 'none';
 }
 
 /* ============================================================

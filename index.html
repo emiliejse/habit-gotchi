@@ -279,7 +279,16 @@
   🔌 Tester la connexion
 </button>
 <div id="api-status" style="font-size:10px;margin-top:6px;text-align:center"></div>
-      <div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
+  <label style="font-size:10px;color:var(--text2)">🔮 Code spécial</label>
+  <div style="display:flex;gap:6px;margin-top:4px">
+    <input id="cheat-input" type="text" placeholder="Entrer un code..."
+      style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:'Courier New',monospace">
+    <button class="btn btn-s" onclick="applyCheatCode()" 
+      style="font-size:10px;white-space:nowrap">Activer</button>
+  </div>
+</div>
+<div>
         <label class="slbl">Code PIN</label>
         <div style="display:flex;gap:5px">
           <input type="password" id="pin-inp" class="inp" maxlength="4" autocomplete="new-password">

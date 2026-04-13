@@ -823,11 +823,6 @@ if (hr() >= 22 || hr() < 7) {
     toast("Le Gotchi a besoin de calme… Reviens demain 🌙");
     return;
   }
-  window.D.thoughtCount++;
-  save();
-  const tc = document.getElementById('thought-count');
-if (tc) tc.textContent = `(${window.D.thoughtCount}/3)`;
-
   const P = window.PERSONALITY; 
   const CTX = window.AI_CONTEXTS?.askClaude;
 
@@ -924,6 +919,10 @@ document.getElementById('bubble').textContent = bulleCadeau.replace('{{nom}}', D
       }
     }
 
+    window.D.thoughtCount++;
+  const tc = document.getElementById('thought-count');
+  if (tc) tc.textContent = `(${window.D.thoughtCount}/3)`;
+    
     save(); renderProps(); updBubbleNow();
 
   } catch(e) {
@@ -1571,6 +1570,35 @@ function confirmWelcome() {
   save();
   updUI();
   clModal();
+}
+
+function applyCheatCode() {
+  const input = document.getElementById('cheat-input');
+  if (!input) return;
+  const code = input.value.trim().toLowerCase();
+  input.value = '';
+
+  const codes = {
+    'petales50':  () => { D.g.petales = (D.g.petales || 0) + 50; toast('🌸 +50 pétales !'); },
+    'petales200': () => { D.g.petales = (D.g.petales || 0) + 200; toast('🌸 +200 pétales !'); },
+    'egg':        () => { D.g.totalXp = 0;   D.g.stage = 'egg';   toast('🥚 Stade → Œuf'); },
+    'baby':       () => { D.g.totalXp = 90;  D.g.stage = 'baby';  toast('🌱 Stade → Pousse'); },
+    'teen':       () => { D.g.totalXp = 240; D.g.stage = 'teen';  toast('🌿 Stade → Bouton'); },
+    'adult':      () => { D.g.totalXp = 500; D.g.stage = 'adult'; toast('🌸 Stade → Fleur'); },
+    'vent':       () => { window.meteoData = { windspeed: 50 }; toast('🌬️ Vent activé !'); },
+    'calme':      () => { window.meteoData = { windspeed: 5 };  toast('☀️ Vent désactivé'); },
+    'happy5':     () => { D.g.happiness = 5; toast('😊 Bonheur → 5'); },
+    'happy1':     () => { D.g.happiness = 1; toast('😔 Bonheur → 1'); },
+    'energy5':    () => { D.g.energy = 5;    toast('⚡ Énergie → 5'); },
+    'reset3':     () => { D.thoughtCount = 0; toast('💭 Compteur pensées → 0'); },
+  };
+
+  if (codes[code]) {
+    codes[code]();
+    save(); updUI();
+  } else {
+    toast('❓ Code inconnu');
+  }
 }
 
 /* ============================================================

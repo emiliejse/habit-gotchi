@@ -459,3 +459,7 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .tama-wind-strong {
   animation: tamaSwayStrong 0.9s ease-in-out infinite;
 }
+
+/* TEST TEMPORAIRE — à retirer après diagnostic */
+#p-perso, #p-settings { outline: 3px solid red; }
+#dynamic-zone { outline: 3px solid blue; }

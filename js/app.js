@@ -216,6 +216,7 @@ function giveSnack() {
   window.D.g.snackDone = td;
   window.D.g.petales = (window.D.g.petales || 0) + 2;
   save();
+  addEvent('note', `${emoji} donné à ${window.D.g.name} 🍽️  +2 🌸`);
   // Déclenche l'animation
   window.eatAnim = { active: true, timer: 50, emoji: window.D.g.snackEmoji, jumped: false };
   if (typeof updUI === 'function') updUI();
@@ -232,6 +233,7 @@ function cleanPoops() {
   window.D.g.petales = (window.D.g.petales || 0) + (count * 2);
   if (typeof toast === 'function') toast(`Propre ! +${count * 2} 🌸`);
   save();
+  addEvent('note', `Crotte ramassée 💩  +${count * 2} 🌸`);
   if (typeof updUI === 'function') updUI();
 }
 function addEvent(type, valeur, label) {
@@ -274,7 +276,7 @@ function toggleHab(catId) {
   } else {
     window.D.log[td].push(catId);
     addXp(15);
-    addEvent('habitude', 15, hab?.label || catId);
+    addEvent('habitude', `${h.label} ✓  +${xpGain} XP, +${petalesGain} 🌸`);
     window.D.g.petales = (window.D.g.petales || 0) + 2;
     window.celebQueue.push(catId);
     window.shakeTimer = 8;

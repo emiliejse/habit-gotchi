@@ -717,6 +717,11 @@ function rangerProp(propIndex) {
   r += (window.AI_CONTEXTS ? '✅' : '❌') + ' ai_contexts.json\n';
   r += (window.AI_SYSTEM ? '✅' : '❌') + ' ai_system.json\n\n';
 
+    r += `🗺️ Météo\n`;
+  r += `LAT: ${D.meteoLat || '—'} | LON: ${D.meteoLon || '—'}\n\n`;
+
+  r += `💩 Crottes: ${(g.poops||[]).length}\n\n`;
+
   r += `💾 LocalStorage: ${lsKo} Ko`;
 
   document.getElementById('modal').style.display = 'flex';

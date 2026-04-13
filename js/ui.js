@@ -1411,7 +1411,7 @@ function openTablet() {
       const jour  = d.toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
       return `<div class="tablet-line">
         <span class="tl-time">${jour} à ${heure}</span>
-        <span class="tl-icon">${icons[ev.type] || '•'}</span>${ev.label}
+        <span class="tl-icon">${icons[ev.type] || '•'}</span>${ev.label || ev.valeur}
       </div>`;
     }).join('');
   }

@@ -188,7 +188,6 @@ const petalesDisplay = document.getElementById('petales-wallet');
   const btnAsk = document.getElementById('btn-ask-claude');
   if (btnAsk) {
     btnAsk.childNodes[0].textContent = `Interroger ${window.D.g.name || 'le Gotchi'} `;
-    if ((window.D.thoughtCount || 0) < 3) animEl(btnAsk, 'pulse', 1000);
   }
   const canvasBoutique = document.getElementById('canvas-boutique');
   if (canvasBoutique) drawShopIcon(canvasBoutique);

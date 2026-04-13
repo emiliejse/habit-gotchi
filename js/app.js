@@ -167,8 +167,7 @@ function addXp(n) {
   const nouveauStade = getSt(window.D.g.totalXp).l; // ← stade après
   if (ancienStade !== nouveauStade) {
     addEvent('xp', window.D.g.totalXp, `⭐ Nouveau stade : ${nouveauStade}`);
-    animEl(document.getElementById('g-stage'), 'tada', 800);
-    animEl(document.getElementById('g-name'), 'heartBeat', 800);
+    animEl(document.querySelector('#p-gotchi .card'), 'flipInX', 800);
   }
   save(); if (typeof updUI === 'function') updUI();
 }

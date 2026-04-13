@@ -83,7 +83,6 @@ function toast(m) {
   if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
   el.textContent = m;
   el.classList.add('show');
-  animEl(el, 'slideInUp', 400);
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
 }

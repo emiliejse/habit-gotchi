@@ -229,9 +229,13 @@ if (window.eatAnim?.active) {
     } else if (!sleeping && ha >= 60 && en >= 60) {
       amplitude = 25; vitesse = 0.04;
     }
+
     if (!sleeping) {
       walkStep++;
-      const speed = (ha >= 80 && en >= 80) ? 1.2 : (ha >= 50) ? 0.6 : 0.3;
+      const speed = (ha >= 80 && en >= 80) ? 1.2 
+                  : (ha >= 50 && en >= 60) ? 0.6 
+                  : (en >= 40) ? 0.3 
+                  : 0.1; // très fatigué → quasi immobile
       walkX += walkDir * speed;
       if (walkX > CS - 25) { walkX = CS - 25; walkDir = -1; }
       if (walkX < 25)       { walkX = 25;      walkDir = 1;  }
@@ -239,28 +243,23 @@ if (window.eatAnim?.active) {
       walkX += walkDir * 0.05;
       if (walkX > CS - 30 || walkX < 30) walkDir *= -1;
     }
+
     const cx = walkX;
     const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
-    
-    // --- Props DÉCOR devant (C, D, SOL) ---
-    if (D.g.props) {
-      D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot !== 'A' && pr.slot !== 'B').forEach(prop => {
-        const def = getPropDef(prop.id);
-        if (def && def.pixels) {
-          const slot = PROP_SLOTS[prop.slot];
-          if (!slot) return;
-          drawProp(p, def, slot.x, slot.y);
-        }
-      });
-    }
+
+    // Énergie basse : gotchi penche légèrement
+    const tilt = (!sleeping && en < 40) ? Math.sin(p.frameCount * 0.05) * 2 : 0;
 
     // --- Dessin Gotchi ---
     let gotchiInfo;
+    p.push();
+    if (tilt) p.rotate(p.radians(tilt));
     if      (g.stage === 'egg')   gotchiInfo = drawEgg(p, cx, by + bobY);
     else if (g.stage === 'baby')  gotchiInfo = drawBaby(p, cx, by + bobY, sleeping, en, ha);
     else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, cx, by + bobY, sleeping, en, ha);
     else                          gotchiInfo = drawAdult(p, cx, by + bobY, sleeping, en, ha);
     if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
+    p.pop();
 
     // --- Props ACCESSOIRE ---
     if (D.g.props) {

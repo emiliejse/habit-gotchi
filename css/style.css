@@ -82,11 +82,12 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 
 /* ---- Tama shell ---- */
 .tama-shell{
-  background:linear-gradient(145deg,#e0d8ec,#c8c0d4);
-  border:3px solid #b8b0c8;border-radius:16px;padding:6px;
-  box-shadow:0 3px 12px rgba(56,48,74,.12),inset 0 1px 0 rgba(255,255,255,.4);
+  background: none;
+  border: none;
+  padding: 2px;
+  box-shadow: none;
   margin:4px auto 0;max-width:340px;
-  position:relative; z-index:1;  /* ← ajout */
+  position:relative; z-index:1;
 }
 
 /* Screen */

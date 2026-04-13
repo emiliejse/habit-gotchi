@@ -382,12 +382,12 @@ function flashBubble(msg, duree = 2500) {
   const poopCount = (D.g.poops || []).length;
   if (poopCount >= 3) {
     const poopRage = [
-      'C\'est quoi cette porcherie 💩',
-      '*bouche le nez* 🤢',
-      'Tu vas nettoyer ou pas ??',
-      'Je vis dans une décharge 💩💩'
-      '*regard noir* 😤'
-    ];
+  "C'est quoi cette porcherie 💩",
+  "*bouche le nez* 🤢",
+  "Tu vas nettoyer ou pas ??",
+  "Je vis dans une décharge 💩💩",
+  "*regard noir* 😤"
+];
     const el = document.getElementById('bubble');
     if (el) el.textContent = poopRage[Math.floor(Math.random() * poopRage.length)];
     return;

@@ -333,13 +333,19 @@ async function fetchMeteo() {
     let badge = `${Math.round(temp)}°C`;
     if (wind > 40) badge += ` · 🌬️ Vent d'Autan !`;
     else if (wind > 20) badge += ` · 💨 Venteux`;
-    if (document.getElementById('meteo-badge')) document.getElementById('meteo-badge').textContent = badge;
+    if (document.getElementById('meteo-badge')) {
+      document.getElementById('meteo-badge').textContent = badge;
+      document.getElementById('meteo-badge').style.display = 'block';
+    }
+    const shell = document.querySelector('.tama-shell');
     if (wind > 20) {
+      shell.classList.add('tama-wind');
       animEl(document.querySelector('.tama-screen'), wind > 40 ? 'shakeX' : 'headShake', 600);
+    } else {
+      shell.classList.remove('tama-wind');
     }
   } catch(e) {}
 }
-
 /* ============================================================
    BULLE DE DIALOGUE
    ============================================================ */

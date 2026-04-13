@@ -439,3 +439,13 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 .modal-box.shop-open {
   animation: shopOpen 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+@keyframes tamaSway {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(0.8deg); }
+  75%  { transform: rotate(-0.8deg); }
+  100% { transform: rotate(0deg); }
+}
+.tama-wind {
+  animation: tamaSway 1.2s ease-in-out infinite;
+}

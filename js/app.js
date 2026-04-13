@@ -242,8 +242,8 @@ function addEvent(type, valeur, label) {
     valeur,
     label
   });
-  // FIFO : max 30 entrées
-  if (window.D.eventLog.length > 30) window.D.eventLog.length = 30;
+  // FIFO : max 40 entrées
+  if (window.D.eventLog.length > 40) window.D.eventLog.length = 40;
   if (typeof updTabletBadge === 'function') updTabletBadge();
 }
 function calcStr() {

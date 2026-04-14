@@ -211,6 +211,18 @@ if (g.props) {
       });
     }
 
+    // --- Props DÉCOR premier plan (C, D, SOL) ---
+    if (D.g.props) {
+      D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'C' || pr.slot === 'D' || pr.slot === 'SOL')).forEach(prop => {
+        const def = getPropDef(prop.id);
+        if (def && def.pixels) {
+          const slot = PROP_SLOTS[prop.slot];
+          if (!slot) return;
+          drawProp(p, def, slot.x, slot.y);
+        }
+      });
+    }
+
     // --- Locomotion ---
     bounceT += sleeping ? 0.04 : 0.12;
     let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;

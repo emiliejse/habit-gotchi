@@ -56,7 +56,7 @@ function drawRain(p, ha) {
     const speed = 7 + (i % 3) * 2;
     const x = (i * 31 + p.frameCount) % CS;
     const y = (p.frameCount * speed + i * 19) % (CS + 20) - 10;
-    p.fill(p.color(140, 170, 210, 180));
+    p.fill(p.color(220, 225, 235, 200));
     p.rect(x, y, 1, 4);
   }
 }

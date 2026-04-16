@@ -1565,9 +1565,13 @@ function checkWelcome() {
 ).length;
 
   // Mise à jour lastActive
-  if (!D.firstLaunch) D.firstLaunch = new Date().toISOString();
-  D.lastActive = new Date().toISOString(); // heure complète
-  save();
+// ✅ Garde anti-répétition : popup une seule fois par jour
+if (D.lastWelcomeDate === td) return;
+D.lastWelcomeDate = td;
+
+if (!D.firstLaunch) D.firstLaunch = new Date().toISOString();
+D.lastActive = new Date().toISOString();
+save();
 
   // Contenu selon contexte
   let titre, corps, extra = '';

@@ -362,14 +362,14 @@ function toggleHab(catId) {
 
     // Réaction Gotchi liée à la catégorie
     const habReactions = {
-      sport:   { msg: "Tu bouges… je sens l'énergie monter ! 💪",  anim: 'spin'    },
-      nutri:   { msg: "Miam ! Tu te nourris bien, moi aussi 🍎",   anim: 'heart'   },
-      hydra:   { msg: "Merci pour l'eau ! Je grandis grâce à toi 🌱", anim: 'jump' },
-      hygiene: { msg: "Tu prends soin de toi… ça me rend joyeux·se ✨", anim: 'sparkle' },
-      intel:   { msg: "Tu apprends… je sens mon monde s'agrandir 📚", anim: 'flower' },
-      serene:  { msg: "Tu as médité… je me sens plus calme aussi 💜", anim: 'sparkle' },
-    };
-    const reaction = habReactions[catId] || { msg: "Trop bien ! 🌸", anim: 'heart' };
+  sport:   { msg: "Tu bouges… je sens l'énergie monter ! 💪",       anim: 'spin',    body: 'shake'  },
+  nutri:   { msg: "Miam ! Tu te nourris bien, moi aussi 🍎",        anim: 'heart',   body: 'bounce' },
+  hydra:   { msg: "Merci pour l'eau ! Je grandis grâce à toi 🌱",   anim: 'jump',    body: 'bounce' },
+  hygiene: { msg: "Tu prends soin de toi… ça me rend joyeux·se ✨", anim: 'sparkle', body: 'bounce' },
+  intel:   { msg: "Tu apprends… je sens mon monde s'agrandir 📚",   anim: 'flower',  body: 'shake'  },
+  serene:  { msg: "Tu as médité… je me sens plus calme aussi 💜",   anim: 'sparkle', body: 'bounce' },
+};
+        const reaction = habReactions[catId] || { msg: "Trop bien ! 🌸", anim: 'heart', body: 'bounce' };
 
     flashBubble(reaction.msg, 3000);
     window.touchReactions = window.touchReactions || [];
@@ -378,6 +378,8 @@ function toggleHab(catId) {
       type: reaction.anim,
       cx: (window._gotchiX || 100) + (Math.random() - 0.5) * 40,
     });
+    if (reaction.body === 'bounce') window.triggerGotchiBounce?.();
+    if (reaction.body === 'shake')  window.triggerGotchiShake?.();
   }
  // ✅ UN SEUL save() ici, après toutes les mutations d'état
   save();

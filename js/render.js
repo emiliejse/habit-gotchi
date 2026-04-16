@@ -31,6 +31,7 @@ const C = {
 const PX = 5, CS = 200;
 const GOTCHI_OFFSET_Y = 20;
 let bounceT = 0, blinkT = 0, blink = false;
+window._bounceT = 0;
 let particles = [];
 window.touchReactions = []; 
 window.eatAnim = { active: false, timer: 0, emoji: '' };
@@ -38,7 +39,9 @@ let walkX = 100;
 let walkDir = 1;        
 let walkStep = 0; 
 let walkTarget = 100;   // destination en X
-let walkPause  = 0;     // frames d'attente avant le prochain déplacement      
+let walkPause  = 0;     // frames d'attente avant le prochain déplacement  
+window.triggerGotchiBounce = function() { window._jumpTimer = 20; };
+window.triggerGotchiShake  = function() { window.shakeTimer = 12; };    
 
 function getGotchiC() {
   const id = window.D.g.gotchiColor || 'vert';
@@ -416,7 +419,7 @@ if (D.g.props) {
   });
 }
 
-    // 6. Locomotion Gotchi
+// 6. Locomotion Gotchi
 bounceT += sleeping ? 0.04 : 0.12;
 let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3 + GOTCHI_OFFSET_Y;
 
@@ -429,6 +432,13 @@ if (window.eatAnim?.active) {
     const t = 1 - (window.eatAnim.timer / (50 * 0.15)); 
     bobY -= Math.sin(t * Math.PI) * 18; 
   }
+}
+
+// Saut déclenché depuis app.js (habitudes, réactions)
+if (window._jumpTimer > 0) {
+  const t = window._jumpTimer / 20;
+  bobY -= Math.sin(t * Math.PI) * 22;
+  window._jumpTimer--;
 }
 
 let amplitude = 15, vitesse = 0.02;

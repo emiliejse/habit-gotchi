@@ -342,14 +342,18 @@ Ton bilan de la semaine apparaîtra ici...
         </div>
       </div>
 
-      <!-- Code PIN (SYSTEM 7: Ingénierie/Layout) -->
-      <div>
-        <label class="slbl">Code PIN</label>
-        <div style="display:flex;gap:5px">
-          <input type="password" id="pin-inp" class="inp" maxlength="4" autocomplete="new-password">
-          <button class="btn btn-p" onclick="savePin()">OK</button>
-        </div>
-      </div>
+<div>
+  <label class="slbl">Code PIN</label>
+  <div style="display:flex;flex-direction:column;gap:5px">
+    <input type="password" id="pin-ancien" class="inp" maxlength="4" 
+      inputmode="numeric" placeholder="PIN actuel" autocomplete="current-password">
+    <div style="display:flex;gap:5px">
+      <input type="password" id="pin-inp" class="inp" maxlength="4" 
+        inputmode="numeric" placeholder="Nouveau PIN" autocomplete="new-password">
+      <button class="btn btn-p" onclick="savePin()">OK</button>
+    </div>
+  </div>
+</div>
     </div>
 
 <!-- Mes données -->

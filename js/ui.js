@@ -1570,9 +1570,24 @@ function saveApi() {
   if (v) toast(`Je me souviens de ta clé, promis 🔑 ✿`); else toast(`Clé oubliée... *soupir* ✿`);
 }
 function savePin() {
-  const v = document.getElementById('pin-inp').value.trim();
-  if (v.length === 4 && /^\d+$/.test(v)) { window.D.pin = v; save(); document.getElementById('pin-inp').value = ''; toast(`PIN mis à jour ✿`); }
-  else toast(`4 chiffres requis`);
+  const ancien = document.getElementById('pin-ancien').value.trim();
+  const nouveau = document.getElementById('pin-inp').value.trim();
+
+  if (!window.D.pin && nouveau.length === 4 && /^\d+$/.test(nouveau)) {
+    // Cas : pas encore de PIN défini
+    window.D.pin = nouveau; save();
+    document.getElementById('pin-ancien').value = '';
+    document.getElementById('pin-inp').value = '';
+    toast('PIN créé ✿'); return;
+  }
+
+  if (ancien !== window.D.pin) { toast('Ancien PIN incorrect ✕'); return; }
+  if (nouveau.length !== 4 || !/^\d+$/.test(nouveau)) { toast('4 chiffres requis'); return; }
+
+  window.D.pin = nouveau; save();
+  document.getElementById('pin-ancien').value = '';
+  document.getElementById('pin-inp').value = '';
+  toast('PIN mis à jour ✿');
 }
 function exportD() {
   const b = new Blob([JSON.stringify(window.D, null, 2)], {type:'application/json'});

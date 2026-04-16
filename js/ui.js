@@ -29,13 +29,17 @@ let masquerAcquis = true;
  * Moteur de Routage interne (Single Page Application)
  * Affiche l'onglet ciblé et adapte l'environnement du Gotchi en fond.
  */
+function syncConsoleHeight() {
+  const top  = document.getElementById('console-top');
+  const zone = document.getElementById('dynamic-zone');
+  if (top && zone) zone.style.paddingTop = (top.offsetHeight + 8) + 'px';
+}
 function go(t) {
   document.querySelectorAll('.pnl').forEach(p => p.classList.remove('on'));
   const targetPanel = document.getElementById('p-' + t);
   if (targetPanel) targetPanel.classList.add('on');
 
   const shell = document.querySelector('.tama-shell');
-  // Logique de Biomes (Le Tama Shell grandit ou rétrécit)
   if (t === 'gotchi') {
     shell.classList.remove('shrunk');
     const h = hr();
@@ -50,19 +54,21 @@ function go(t) {
   }
   save();
 
-  // Déclencheurs de rendu spécifiques à chaque vue
   if (t === 'gotchi' || t === 'settings') renderHabs();
   if (t === 'progress') renderProg();
   if (t === 'props') {
-    (window.D.g.props || []).forEach(p => p.seen = true); // Retire le badge 'Nouveau'
+    (window.D.g.props || []).forEach(p => p.seen = true);
     save();
     renderProps();
     updBadgeBoutique();
   }
-  if (t === 'perso')    renderPerso();
-  if (t === 'journal')  { journalLocked = true; renderJ(); }
+  if (t === 'perso')   renderPerso();
+  if (t === 'journal') { journalLocked = true; renderJ(); }
 
   document.getElementById('dynamic-zone').scrollTop = 0;
+
+  // Sync hauteur après la transition du shell (.shrunk = 0.4s)
+  setTimeout(syncConsoleHeight, 450);
 }
 
 function toggleMenu() {
@@ -1778,6 +1784,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
 
   updUI();
+  syncConsoleHeight();
   renderHabs();
   renderProps();
   restorePerso();

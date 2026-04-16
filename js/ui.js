@@ -1569,7 +1569,7 @@ animEl(document.getElementById('mbox'), 'bounceIn');
 /* ============================================================
    TABLETTE RÉTRO
    ============================================================ */
-let tabletSeen = 0; // nb d'entrées vues à la dernière ouverture
+let tabletLastSeenDate = null; // ISO date du dernier événement vu à la dernière ouverture
 
 function openTablet() {
   const D = window.D;
@@ -1606,8 +1606,8 @@ function openTablet() {
     }).join('');
   }
 
-  // Masquer le badge
-  tabletSeen = log.length;
+  // Masquer le badge + mémoriser la date du plus récent événement
+  tabletLastSeenDate = log.length ? log[0].date : null;
   document.getElementById('tablet-badge').style.display = 'none';
 
   document.getElementById('tablet-overlay').classList.add('open');
@@ -1624,7 +1624,10 @@ function updTabletBadge() {
   const log = (window.D?.eventLog || []);
   const badge = document.getElementById('tablet-badge');
   if (!badge) return;
-  if (log.length > tabletSeen) {
+  
+  // Badge visible si un événement est plus récent que la dernière ouverture
+  const plusRecent = log[0]?.date;
+  if (plusRecent && plusRecent !== tabletLastSeenDate) {
     badge.style.display = 'block';
   }
 }

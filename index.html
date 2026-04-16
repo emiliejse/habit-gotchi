@@ -1,62 +1,86 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
-<title>Habit-Gotchi</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Habit-Gotchi">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#ddd6e8">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
-<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+  <meta charset="UTF-8">
+  <!--
+    META PWA : Configuration obligatoire pour une PWA (Progressive Web App)
+    - viewport-fit=cover : s'adapte à l'écran des appareils mobiles
+    - theme-color : couleur de la barre de statut (mobile)
+    - apple-mobile-web-app-* : intégration native sur iOS
+  -->
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
+  <title>Habit-Gotchi</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Habit-Gotchi">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#ddd6e8">
+  <!-- Lien vers le manifest.json pour la PWA (icônes, nom, thème) -->
+  <link rel="manifest" href="manifest.json">
+  <!-- Icônes pour Android/iOS -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
 
-<!-- Styles -->
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/animate.min.css">
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animate.min.css">
 
-<!-- p5.js AVANT app.js (obligatoire) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <!--
+    p5.js : Bibliothèques graphiques pour les animations et le rendu visuel.
+    IMPORTANT : doit être chargé AVANT app.js (dépendances graphiques)
+  -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 </head>
 <body>
 
-<!-- ============================================================
-     CONSOLE FIXE (top) : shell + icônes + bulle
-     ============================================================ -->
+<!--
+  ============================================================
+  SYSTEM 5: UI/Design — CONSOLE TOP (Header + Shell + Bulle + Sliders)
+  ============================================================
+  Structure centrale de l'interface utilisateur.
+  - Contient le header (boutons + titre + date)
+  - Le shell (écran du Tamagotchi)
+  - La bulle de dialogue (texte dynamique)
+  - Les sliders d'énergie et de bonheur (contrôlent les stats du Gotchi)
+-->
 <div id="console-top">
 
-  <!-- Header -->
+  <!-- HEADER : Boutons (boutique, menu), titre et date -->
   <div class="hdr">
+    <!-- Bouton Boutique (SYSTEM 4: Habitudes) -->
     <button id="btn-boutique-hdr" onclick="ouvrirBoutique()" class="menu-btn" style="position:relative">
       🛍️
+      <!-- Badge pour indiquer des notifications (ex: achats disponibles) -->
       <span id="badge-boutique-hdr" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--pink);color:#fff;font-size:8px;border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
     </button>
+    <!-- Titre central (SYSTEM 5: UI/Design) -->
     <div style="display:flex;flex-direction:column;align-items:center;flex:1">
       <h1>✿ Habit-Gotchi ✿</h1>
       <sub id="date-d" style="font-size:10px;color:var(--text2)">
+        <!-- Icônes de vent (SYSTEM 2: Écosystème) -->
         <span id="wind-left" style="display:none">🌬️ </span><span id="date-txt"></span><span id="wind-right" style="display:none"> 🌬️</span>
       </sub>
     </div>
+    <!-- Bouton Tablette (SYSTEM 3: IA & Cognition) -->
     <button id="btn-tablet" onclick="openTablet()" class="menu-btn" style="position:relative">
       📟
+      <!-- Badge pour notifications (ex: messages de l'IA) -->
       <span id="tablet-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--coral);color:#fff;font-size:8px;border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
     </button>
   </div>
 
-    <!-- Shell -->
+  <!-- SHELL : Cadre du Tamagotchi (SYSTEM 3: IA & Cognition) -->
   <div class="tama-shell">
     <div class="tama-screen" id="cbox"></div>
   </div>
 
-  <!-- Bulle -->
+  <!-- BULLE : Zone de dialogue dynamique (SYSTEM 3: IA & Cognition) -->
   <div class="bubble" id="bubble">...</div>
 
-  <!-- Sliders énergie / bonheur -->
+  <!-- SLIDERS : Contrôlent les stats d'énergie et de bonheur (SYSTEM 1: Métabolisme) -->
   <div style="max-width:340px;margin:6px auto 4px;padding:0 4px">
     <div class="slider-row">
       <label>Énergie</label>
@@ -72,14 +96,21 @@
 
 </div>
 
-<!-- ============================================================
-     ZONE DYNAMIQUE (bottom, scrollable)
-     ============================================================ -->
+<!--
+  ============================================================
+  DYNAMIC ZONE (Bottom, scrollable)
+  Contient tous les panneaux dynamiques (Gotchi, Journal, Progrès, etc.)
+  Chaque panneau est un "Système" indépendant (SYSTEM 1 à SYSTEM 6)
+  ============================================================
+-->
 <div id="dynamic-zone">
 
-  <!-- GOTCHI (habitudes + XP) -->
+  <!--
+    SYSTEM 4: Habitudes — PANNEAU GOTCHI (État du personnage + habitudes du jour)
+  -->
   <div id="p-gotchi" class="pnl on">
 
+    <!-- Carte d'état du Gotchi (SYSTEM 1: Métabolisme + SYSTEM 4: Habitudes) -->
     <div class="card" style="background:linear-gradient(135deg,rgba(176,144,208,0.15),rgba(232,160,191,0.15));border:2px solid var(--lilac);text-align:center;padding:15px;">
       <div style="font-size:16px;font-weight:bold;color:var(--text);">
         <span id="g-name">Petit·e Gotchi</span>
@@ -91,23 +122,28 @@
         <span class="slbl" id="xp-l" style="color:var(--text);">0/150 XP</span>
       </div>
       <div class="pbar" style="height:10px;margin-top:5px;background:rgba(0,0,0,0.06);border-radius:5px;">
+        <!-- Barre de progression XP (SYSTEM 4: Habitudes) -->
         <div class="pfill" id="xp-b" style="width:0%;background:linear-gradient(90deg,var(--lilac),var(--pink));border-radius:5px;"></div>
       </div>
     </div>
 
+    <!-- Carte "Interroger le Gotchi" (SYSTEM 3: IA & Cognition) -->
     <div class="card" id="claude-card">
-  <div style="display:flex;gap:6px;align-items:center">
-    <button class="btn btn-p" onclick="askClaude()" id="btn-ask-claude" style="flex:1;font-size:10px;">
-      Interroger le Gotchi <span id="thought-count">(0/3)</span>
-    </button>
-    <button onclick="toastInfo()" style="background:none;border:none;font-size:14px;cursor:pointer;">ℹ️</button>
-  </div>
-  <div id="claude-msg" style="font-size:11px;color:var(--text2);line-height:1.4;margin-top:6px;"></div>
-</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-p" onclick="askClaude()" id="btn-ask-claude" style="flex:1;font-size:10px;">
+          Interroger le Gotchi <span id="thought-count">(0/3)</span>
+        </button>
+        <button onclick="toastInfo()" style="background:none;border:none;font-size:14px;cursor:pointer;">ℹ️</button>
+      </div>
+      <!-- Zone de réponse de l'IA (SYSTEM 3: IA & Cognition) -->
+      <div id="claude-msg" style="font-size:11px;color:var(--text2);line-height:1.4;margin-top:6px;"></div>
+    </div>
 
+    <!-- Panneau des habitudes du jour (SYSTEM 4: Habitudes) -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <h2 style="margin:0">Aujourd'hui</h2>
+        <!-- Badge de progression des habitudes (SYSTEM 4: Habitudes) -->
         <span id="hab-count" style="font-size:11px;background:var(--mint);color:#fff;padding:2px 8px;border-radius:10px;font-weight:bold">0/6</span>
       </div>
       <div id="hab-home"></div>
@@ -115,26 +151,37 @@
 
   </div><!-- fin p-gotchi -->
 
-  <!-- JOURNAL -->
+  <!--
+    SYSTEM 6: Mémoire/Journal — PANNEAU JOURNAL
+    - Verrouillage par PIN (SYSTEM 6: Mémoire/Journal)
+    - Saisie de texte + mood picker (SYSTEM 6: Mémoire/Journal)
+    - Navigation par semaine (SYSTEM 2: Écosystème)
+  -->
   <div id="p-journal" class="pnl">
+    <!-- Porte d'entrée du journal (SYSTEM 6: Mémoire/Journal) -->
     <div id="pin-gate">
       <div class="j90" style="text-align:center">
         <h2>🔒 Journal Intime 🔒</h2>
         <p style="font-size:10px;color:#a09880;margin-bottom:4px" id="pin-msg">Code secret (4 chiffres)</p>
         <div class="pin-dots" id="pin-dots"></div>
+        <!-- Clavier PIN (SYSTEM 6: Mémoire/Journal) -->
         <div class="pin-pad" id="pin-pad"></div>
       </div>
     </div>
+    <!-- Contenu du journal (affiché après saisie du PIN) -->
     <div id="j-inner" style="display:none">
       <div class="j90">
         <h2>📓 Mon Journal 📓</h2>
+        <!-- Mood picker (SYSTEM 6: Mémoire/Journal) -->
         <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px" id="mood-pick"></div>
+        <!-- Zone de texte (SYSTEM 6: Mémoire/Journal) -->
         <textarea id="j-text" class="inp" rows="3" placeholder="Écris ici..." style="background:#faf6f0;border-color:#c8b8a0;font-size:12px"></textarea>
         <div style="margin-top:6px">
           <button class="btn btn-p" onclick="saveJ()" style="width:100%;font-size:10px">✿ Sauver</button>
         </div>
         <p id="v-status" style="font-size:9px;color:#a09880;text-align:center;margin-top:3px"></p>
       </div>
+      <!-- Navigation par semaine (SYSTEM 2: Écosystème) -->
       <div class="j90" style="margin-top:8px">
         <div class="nav-r">
           <button class="nav-a" onclick="navJWeek(-1)">◀</button>
@@ -146,9 +193,16 @@
     </div>
   </div><!-- fin p-journal -->
 
-  <!-- PROGRESS -->
+  <!--
+    SYSTEM 1: Métabolisme + SYSTEM 4: Habitudes — PANNEAU PROGRESS
+    - Stats (série, XP total, journal)
+    - Calendrier hebdomadaire (SYSTEM 2: Écosystème)
+    - Calendrier mensuel (SYSTEM 2: Écosystème)
+    - Bilan hebdomadaire généré par IA (SYSTEM 3: IA & Cognition)
+  -->
   <div id="p-progress" class="pnl">
-        <div class="card">
+    <!-- Stats globales (SYSTEM 1: Métabolisme + SYSTEM 4: Habitudes) -->
+    <div class="card">
       <h2>Stats</h2>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
         <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
@@ -165,6 +219,8 @@
         </div>
       </div>
     </div>
+
+    <!-- Calendrier hebdomadaire (SYSTEM 2: Écosystème) -->
     <div class="card">
       <div class="nav-r">
         <button class="nav-a" onclick="navW(-1)">◀</button>
@@ -183,6 +239,7 @@
       </div>
     </div>
 
+    <!-- Calendrier mensuel (SYSTEM 2: Écosystème) -->
     <div class="card">
       <div class="nav-r">
         <button class="nav-a" onclick="navM(-1)">◀</button>
@@ -192,15 +249,18 @@
       <div id="m-view" class="cal"></div>
     </div>
 
+    <!-- Bilan hebdomadaire généré par IA (SYSTEM 3: IA & Cognition) -->
     <div class="card">
       <h2 style="display:flex;justify-content:space-between;align-items:center;">
         <span>🧠 Bilan Hebdo</span>
         <button onclick="resetBilan()" style="background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;" title="Réinitialiser">🔄</button>
       </h2>
+      <!-- Zone de rendu du bilan (SYSTEM 3: IA & Cognition) -->
       <div id="claude-summary" style="background:rgba(255,255,255,0.5);padding:12px;border-radius:8px;font-size:11px;border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);">
 Ton bilan de la semaine apparaîtra ici...
       </div>
       <textarea id="bil-txt-hidden" style="display:none"></textarea>
+      <!-- Bouton pour générer le bilan (SYSTEM 3: IA & Cognition) -->
       <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%;font-size:10px;margin-bottom:6px;">
         ✿ Générer le bilan avec Claude
       </button>
@@ -210,33 +270,47 @@ Ton bilan de la semaine apparaîtra ici...
     </div>
   </div><!-- fin p-progress -->
 
-<!-- PROPS / INVENTAIRE -->
-<div id="p-props" class="pnl">
-  <div class="card">
-    <h2>🎒 Mon Inventaire</h2>
-    <div id="props-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
-    <div id="props-list" style="margin-top:6px"></div>
-  </div>
-</div><!-- fin p-props -->
+  <!--
+    SYSTEM 4: Habitudes — PANNEAU PROPS (Inventaire des objets)
+    - Filtres et liste des objets collectés (SYSTEM 4: Habitudes)
+  -->
+  <div id="p-props" class="pnl">
+    <div class="card">
+      <h2>🎒 Mon Inventaire</h2>
+      <div id="props-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
+      <div id="props-list" style="margin-top:6px"></div>
+    </div>
+  </div><!-- fin p-props -->
 
-  <!-- PERSO -->
+  <!--
+    SYSTEM 5: UI/Design — PANNEAU PERSO (Personnalisation interface/couleurs)
+  -->
   <div id="p-perso" class="pnl">
+    <!-- Palette de couleurs de l'interface (SYSTEM 5: UI/Design) -->
     <div class="card">
       <h2>🎨 Couleurs de l'interface</h2>
       <div id="palette-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px"></div>
     </div>
+    <!-- Palette de couleurs du Gotchi (SYSTEM 5: UI/Design) -->
     <div class="card">
       <h2>🐣 Couleur du Gotchi</h2>
       <div id="gotchi-colors" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
     </div>
+    <!-- Ambiance des univers (SYSTEM 2: Écosystème) -->
     <div class="card">
       <h2>🌍 Ambiance des univers</h2>
       <div id="env-themes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div>
     </div>
   </div><!-- fin p-perso -->
 
-  <!-- SETTINGS -->
+  <!--
+    SYSTEM 7: Ingénierie/Layout — PANNEAU SETTINGS (Réglages, sauvegarde, debug)
+    - Nom du Gotchi, clé API, code PIN
+    - Gestion des habitudes
+    - Export/import, réinitialisation, outils debug
+  -->
   <div id="p-settings" class="pnl">
+    <!-- Réglages de base (SYSTEM 7: Ingénierie/Layout) -->
     <div class="card" style="margin-bottom:12px;">
       <h2>⚙️ Réglages</h2>
       <div style="margin-bottom:10px">
@@ -253,21 +327,24 @@ Ton bilan de la semaine apparaîtra ici...
           <button class="btn btn-p" onclick="saveApi()">OK</button>
         </div>
       </div>
-      <button class="btn btn-s" onclick="testApiKey()" 
-  style="font-size:10px;margin-top:6px;width:100%">
-  🔌 Tester la connexion
-</button>
-<div id="api-status" style="font-size:10px;margin-top:6px;text-align:center"></div>
+      <!-- Bouton de test de la clé API (SYSTEM 3: IA & Cognition) -->
+      <button class="btn btn-s" onclick="testApiKey()" style="font-size:10px;margin-top:6px;width:100%">
+        🔌 Tester la connexion
+      </button>
+      <div id="api-status" style="font-size:10px;margin-top:6px;text-align:center"></div>
+
+      <!-- Code spécial (cheat code) (SYSTEM 7: Ingénierie/Layout) -->
       <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
-  <label style="font-size:10px;color:var(--text2)">🔮 Code spécial</label>
-  <div style="display:flex;gap:6px;margin-top:4px">
-    <input id="cheat-input" type="text" placeholder="Entrer un code..."
-      style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:'Courier New',monospace">
-    <button class="btn btn-s" onclick="applyCheatCode()" 
-      style="font-size:10px;white-space:nowrap">Activer</button>
-  </div>
-</div>
-<div>
+        <label style="font-size:10px;color:var(--text2)">🔮 Code spécial</label>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <input id="cheat-input" type="text" placeholder="Entrer un code..."
+            style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:'Courier New',monospace">
+          <button class="btn btn-s" onclick="applyCheatCode()" style="font-size:10px;white-space:nowrap">Activer</button>
+        </div>
+      </div>
+
+      <!-- Code PIN (SYSTEM 7: Ingénierie/Layout) -->
+      <div>
         <label class="slbl">Code PIN</label>
         <div style="display:flex;gap:5px">
           <input type="password" id="pin-inp" class="inp" maxlength="4" autocomplete="new-password">
@@ -276,22 +353,27 @@ Ton bilan de la semaine apparaîtra ici...
       </div>
     </div>
 
+    <!-- Gestion des habitudes (SYSTEM 4: Habitudes) -->
     <div class="card" style="margin-bottom:12px;">
       <h2>✏️ Mes Habitudes</h2>
       <div id="hab-edit"></div>
     </div>
 
+    <!-- Sauvegarde/Chargement (SYSTEM 7: Ingénierie/Layout) -->
     <div class="card" style="margin-top:15px;">
       <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:8px;font-size:10px">📦 Exporter ma sauvegarde (JSON)</button>
       <input type="file" id="import-file" style="display:none" accept=".json" onchange="importD(event)">
       <button class="btn btn-s" onclick="document.getElementById('import-file').click()" style="width:100%;margin-bottom:15px;font-size:10px;background:var(--mint);color:#fff;border:none;">📥 Importer JSON</button>
+      <!-- Bouton debug (SYSTEM 7: Ingénierie/Layout) -->
       <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-bottom:8px;font-size:10px">🔍 État système</button>
+      <!-- Bouton réinitialisation (SYSTEM 7: Ingénierie/Layout) -->
       <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
     </div>
 
+    <!-- Version de l'app (SYSTEM 7: Ingénierie/Layout) -->
     <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
 
-    <!-- Accordéon debug -->
+    <!-- Outils développeur (SYSTEM 7: Ingénierie/Layout) -->
     <div style="margin-top:12px;border:1px dashed var(--border);border-radius:10px;overflow:hidden">
       <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
         style="width:100%;background:none;border:none;padding:8px;font-size:9px;color:var(--text2);cursor:pointer;text-align:left">
@@ -306,25 +388,35 @@ Ton bilan de la semaine apparaîtra ici...
 
 </div><!-- fin dynamic-zone -->
 
-<!-- Languette menu -->
+<!--
+  ============================================================
+  SYSTEM 5: UI/Design — MENU & OVERLAYS
+  - Languette pour ouvrir/fermer le menu
+  - Menu overlay (SYSTEM 5: UI/Design)
+  - Modal générique (SYSTEM 5: UI/Design)
+  - Toast non-bloquant (SYSTEM 5: UI/Design)
+  - Tablette rétro (SYSTEM 3: IA & Cognition)
+  ============================================================
+-->
+<!-- Languette du menu (SYSTEM 5: UI/Design) -->
 <button class="menu-languette" onclick="toggleMenu()">☰</button>
 
-<!-- Menu overlay -->
+<!-- Menu overlay (SYSTEM 5: UI/Design) -->
 <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()">
   <div class="menu-book" onclick="event.stopPropagation()">
     <h2>✿ <span id="menu-gotchi-name">Gotchi</span> ✿</h2>
     <div class="menu-grid" id="menu-grid">
-
+      <!-- Navigation vers les différents panneaux (SYSTEM 5: UI/Design) -->
       <div class="menu-circle" onclick="goMenu('gotchi')">
         <span class="mc-icon">🏠</span><span class="mc-label">Gotchi</span>
       </div>
       <div class="menu-circle" onclick="goMenu('journal')">
         <span class="mc-icon">📓</span><span class="mc-label">Journal</span>
       </div>
-
       <div class="menu-circle" onclick="goMenu('props')" style="position:relative">
         <span class="mc-icon">🎒</span>
         <span class="mc-label">Inventaire</span>
+        <!-- Badge pour notifications (SYSTEM 4: Habitudes) -->
         <span id="badge-boutique" style="display:none;position:absolute;top:-4px;right:-4px;
           background:var(--pink);color:#fff;border-radius:50%;
           width:14px;height:14px;font-size:8px;line-height:14px;text-align:center">!</span>
@@ -332,28 +424,27 @@ Ton bilan de la semaine apparaîtra ici...
       <div class="menu-circle" onclick="goMenu('progress')">
         <span class="mc-icon">📊</span><span class="mc-label">Progrès</span>
       </div>
-
       <div class="menu-circle" onclick="goMenu('perso')">
         <span class="mc-icon">🎨</span><span class="mc-label">Perso</span>
       </div>
       <div class="menu-circle" onclick="goMenu('settings')">
         <span class="mc-icon">⚙️</span><span class="mc-label">Réglages</span>
       </div>
-
     </div>
+    <!-- Bouton de soutien (SYSTEM 3: IA & Cognition) -->
     <button class="menu-soutien" onclick="genSoutien();toggleMenu()">💜 Besoin de soutien</button>
   </div>
 </div>
 
-<!-- Modal générique -->
+<!-- Modal générique (SYSTEM 5: UI/Design) -->
 <div id="modal" class="modal" style="display:none" onclick="clModal(event)">
   <div class="modal-box" id="mbox" onclick="event.stopPropagation()"></div>
 </div>
 
-<!-- Toast non-bloquant -->
+<!-- Toast non-bloquant (SYSTEM 5: UI/Design) -->
 <div id="toast"></div>
 
-<!-- Tablette rétro -->
+<!-- Tablette rétro (SYSTEM 3: IA & Cognition) -->
 <div id="tablet-overlay" onclick="closeTablet(event)">
   <div id="tablet-box">
     <div id="tablet-header">
@@ -366,9 +457,16 @@ Ton bilan de la semaine apparaîtra ici...
   </div>
 </div>
 
-<!-- ============================================================
-     SCRIPTS — ordre impératif
-     ============================================================ -->
+<!--
+  ============================================================
+  SCRIPTS — Ordre impératif (SYSTEM 7: Ingénierie/Layout)
+  - config.js : Configuration globale (SYSTEM 7: Ingénierie/Layout)
+  - app.js : Logique métier principale (SYSTEM 1 à SYSTEM 7)
+  - render.js : Rendu graphique (SYSTEM 3: IA & Cognition + SYSTEM 5: UI/Design)
+  - envs.js : Gestion des environnements (SYSTEM 2: Écosystème)
+  - ui.js : Gestion de l'interface (SYSTEM 5: UI/Design)
+  ============================================================
+-->
 <script src="data/config.js"></script>
 <script src="js/app.js"></script>
 <script src="js/render.js"></script>

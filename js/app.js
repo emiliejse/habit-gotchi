@@ -335,17 +335,19 @@ function toggleHab(catId) {
     flashBubble("Oh... pas grave 💜", 2000);
   } 
   // COCHAGE : Ajoute 15 XP et 2 pétales
-  else {
+else {
     window.D.log[td].push(catId);
     addXp(15);
     window.D.g.petales = (window.D.g.petales || 0) + 2;
     addEvent('habitude', `${hab?.label || catId} ✓  +15 XP, +2 🌸`);
     window.celebQueue.push(catId);
-    const habMsgs = ["Trop bien ! 🌸", "Tu gères ! ✿", "Fière de toi 💜", "*applaudit* 🎉", "Continue comme ça ✿"];
+    const habMsgs = ["Trop bien ! 🌸", "Tu gères !", "Fière de toi ✿"];
     flashBubble(habMsgs[Math.floor(Math.random() * habMsgs.length)], 2000);
-    window.shakeTimer = 8;
   }
-  save(); renderHabs(); updUI(); updBubbleNow(); updBadgeBoutique();
+ // ✅ UN SEUL save() ici, après toutes les mutations d'état
+  save();
+  if (typeof updUI === 'function') updUI();
+  if (typeof renderHabs === 'function') renderHabs();
 }
 
 function editH(i, v) {

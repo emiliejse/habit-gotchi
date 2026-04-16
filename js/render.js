@@ -397,29 +397,21 @@ const p5s = (p) => {
     });
     window._gotchiNearPoop = gotchiNearPoop;
 
-    // 4. Props Décor (Fond)
-    if (D.g.props) {
-      D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
-        const def = getPropDef(prop.id);
-        if (def && def.pixels) {
-          const slot = PROP_SLOTS[prop.slot];
-          if (!slot) return;
-          drawProp(p, def, slot.x, slot.y);
-        }
-      });
-    }
+    // 4. Props Décor — Fond (A, B)
+if (D.g.props) {
+  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
+    const def = getPropDef(prop.id);
+    if (def?.pixels) { const slot = PROP_SLOTS[prop.slot]; if (slot) drawProp(p, def, slot.x, slot.y); }
+  });
+}
 
-    // 5. Props Décor (Premier plan)
-    if (D.g.props) {
-      D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'C' || pr.slot === 'D' || pr.slot === 'SOL')).forEach(prop => {
-        const def = getPropDef(prop.id);
-        if (def && def.pixels) {
-          const slot = PROP_SLOTS[prop.slot];
-          if (!slot) return;
-          drawProp(p, def, slot.x, slot.y);
-        }
-      });
-    }
+// 5. Props Décor — SOL (devant le décor, DERRIÈRE le Gotchi)
+if (D.g.props) {
+  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot === 'SOL').forEach(prop => {
+    const def = getPropDef(prop.id);
+    if (def?.pixels) { const slot = PROP_SLOTS['SOL']; if (slot) drawProp(p, def, slot.x, slot.y); }
+  });
+}
 
     // 6. Locomotion Gotchi
     bounceT += sleeping ? 0.04 : 0.12;
@@ -491,7 +483,15 @@ const p5s = (p) => {
       });
     }
 
-    // 9. Réactions et Particules
+    // 9. Props Décor — Premier plan (C, D) — DEVANT le Gotchi
+if (D.g.props) {
+  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'C' || pr.slot === 'D')).forEach(prop => {
+    const def = getPropDef(prop.id);
+    if (def?.pixels) { const slot = PROP_SLOTS[prop.slot]; if (slot) drawProp(p, def, slot.x, slot.y); }
+  });
+}
+
+    // 10. Réactions et Particules
     p.drawingContext.globalAlpha = 1.0; 
     window.touchReactions = (window.touchReactions || []).filter(tr => tr.timer > 0);
     window.touchReactions.forEach(tr => {
@@ -525,7 +525,7 @@ const p5s = (p) => {
 
     updateParts(p);
 
-    // 10. Animations spécifiques (Snack, Clignement, Célébration)
+    // 11. Animations spécifiques (Snack, Clignement, Célébration)
     if (window.eatAnim?.active) {
       const ea = window.eatAnim;
       const progress = 1 - (ea.timer / 50); 
@@ -558,7 +558,7 @@ const p5s = (p) => {
       bounceT = Math.PI * 1.5;
     }
 
-    // 11. HUD (Bandeau supérieur)
+    // 12. HUD (Bandeau supérieur)
     p.noStroke();
     p.textStyle(p.NORMAL);
     p.fill(0, 0, 0, 50);
@@ -596,7 +596,7 @@ const p5s = (p) => {
     }
   }; // ← fin p.draw()
 
-  // 12. Gestionnaire d'événements tactiles (Garde l'accès à "p.")
+  // 13. Gestionnaire d'événements tactiles (Garde l'accès à "p.")
   p.touchStarted = function() {
     const rect = p.canvas.getBoundingClientRect();
     const touch = p.touches[0] || { x: p.mouseX, y: p.mouseY };

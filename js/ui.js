@@ -619,14 +619,6 @@ if (prop.actif) {
     return;
   }
 
-    // Confettis à l'équipement d'un décor aussi
-  const gx = window._gotchiX || 100;
-  const gy = window._gotchiY || 100;
-  for (let i = 0; i < 15; i++) {
-    window.spawnP?.(gx + (Math.random() - 0.5) * 40, gy - 10,
-      ['#c8a0e8','#f0c0d8','#fff8b0','#88c8f0','#b0e8b0'][Math.floor(Math.random()*5)]);
-  }
-  window.triggerGotchiBounce?.();
   // --- Objet décor : ouvrir le picker de slot ---
   openSlotPicker(index);
 }
@@ -745,6 +737,15 @@ function confirmSlot(propIndex, slotId) {
   clModal();
   renderProps();
   toast(`✨ ${prop.nom} placé (${slotId}) !`);
+  flashBubble(`Oh ! ${prop.nom} ! J'adore ! 💜`, 2500);
+  // Confettis au moment du choix du slot
+  const gx = window._gotchiX || 100;
+  const gy = window._gotchiY || 100;
+  for (let i = 0; i < 15; i++) {
+    window.spawnP?.(gx + (Math.random() - 0.5) * 40, gy - 10,
+      ['#c8a0e8','#f0c0d8','#fff8b0','#88c8f0','#b0e8b0'][Math.floor(Math.random()*5)]);
+  }
+  window.triggerGotchiBounce?.();
 }
 
 function openSlotPickerAvecRangement(propIndex) {

@@ -644,12 +644,20 @@ if (D.g.props) {
     }
 
     const h = hr();
-const by = window.D.g.stage === 'egg' ? 115 + GOTCHI_OFFSET_Y
-         : window.D.g.stage === 'baby' ? 108 + GOTCHI_OFFSET_Y
-         : window.D.g.stage === 'teen' ? 98  + GOTCHI_OFFSET_Y
-         :                               85  + GOTCHI_OFFSET_Y;
+    // Position du Gotchi à l'écran = by + bobY (le bobY contient déjà GOTCHI_OFFSET_Y)
+    // On recalcule donc by seul, SANS ajouter OFFSET_Y (il est déjà dans bobY côté rendu).
+    // Puis on centre la hitbox sur le CORPS entier du Gotchi, pas juste la tête.
+    const by = window.D.g.stage === 'egg'  ? 115
+             : window.D.g.stage === 'baby' ? 108
+             : window.D.g.stage === 'teen' ? 98
+             :                               85;
     
-    const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
+    // Centre du corps = by + OFFSET_Y (pour compenser le bobY) + ~30px (milieu du corps)
+    // Hitbox : ±26 en X (largeur corps) et ±35 en Y (tête + corps, PAS au-dessus)
+    const gotchiCenterY = by + GOTCHI_OFFSET_Y + 30;
+    const hit = Math.abs(mx - walkX) < 26 && Math.abs(my - gotchiCenterY) < 35;
+
+    
     if (hit) {
       window._lastTapX = walkX + (Math.random() - 0.5) * 20;
       triggerTouchReaction(h >= 22 || h < 7);

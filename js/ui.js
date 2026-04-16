@@ -293,12 +293,12 @@ habHome.innerHTML = D.habits.map((h, i) => {
   return `
     <div class="hab ${d ? 'done' : ''}" style="position:relative">
       <div class="ck" onclick="toggleHab('${h.catId}')">${d ? '✓' : ''}</div>
-      <span style="flex:1;font-size:12px;cursor:pointer"
-        onclick="toggleHab('${h.catId}')">${libelle}</span>
+      <span id="hab-label-${h.catId}" style="flex:1;font-size:12px;cursor:pointer"
+  onclick="toggleHab('${h.catId}')">${libelle}</span>
       <span style="font-size:16px">${c.icon}</span>
       <span style="width:1px;background:var(--border);height:14px;margin:0 4px"></span>
       <span style="font-size:11px;color:var(--text2);cursor:pointer;padding:0 2px"
-        onclick="editHabInline('${h.catId}', ${i})">›</span>
+        onclick="editHabInline('${h.catId}', ${i})">✏️</span>
     </div>`;
 }).join('');
   }

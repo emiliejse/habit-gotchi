@@ -794,6 +794,10 @@ r += `🌡️ ${meteo ? `${meteo.temperature}°C · vent ${meteo.windspeed} km/h
       style="width:100%;padding:8px;border-radius:12px;border:2px solid var(--border);font-size:10px;cursor:pointer;background:transparent;color:var(--text2);margin-bottom:6px">
       📋 Copier
     </button>
+    <button onclick="clModal();setTimeout(voirBulles,150)"
+  style="width:100%;padding:8px;border-radius:12px;border:2px solid var(--border);font-size:10px;cursor:pointer;background:transparent;color:var(--text2);margin-bottom:6px">
+  💬 Voir les bulles perso
+</button>
     <button onclick="viderJournal()"
       style="width:100%;padding:8px;border-radius:12px;border:none;font-size:10px;cursor:pointer;background:transparent;color:#e57373;border:2px solid #e57373;margin-bottom:6px">
       🗑️ Vider le journal
@@ -802,6 +806,32 @@ r += `🌡️ ${meteo ? `${meteo.temperature}°C · vent ${meteo.windspeed} km/h
       style="width:100%;padding:8px;border-radius:12px;border:none;font-size:10px;cursor:pointer;background:transparent;color:#e57373;border:2px solid #e57373">
       🗑️ Vider les objets IA
     </button>
+  `;
+  animEl(document.getElementById('mbox'), 'bounceIn');
+}
+
+function voirBulles() {
+  const cb = window.D.g.customBubbles || {};
+  const etats = Object.keys(cb);
+  
+  if (!etats.length) {
+    toast('Aucune bulle personnalisée pour l\'instant ✿');
+    return;
+  }
+
+  const contenu = etats.map(etat => {
+    const phrases = cb[etat].map(p => `  • ${p}`).join('\n');
+    return `${etat}\n${phrases}`;
+  }).join('\n\n');
+
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h3 style="font-size:13px;color:var(--lilac);">💬 Bulles personnalisées</h3>
+      <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button>
+    </div>
+    <pre style="font-size:10px;line-height:1.8;white-space:pre-wrap;color:var(--text2);margin:0 0 10px;max-height:60vh;overflow-y:auto">${contenu}</pre>
+    <button onclick="clModal()" class="btn btn-s" style="width:100%;font-size:10px">Fermer</button>
   `;
   animEl(document.getElementById('mbox'), 'bounceIn');
 }

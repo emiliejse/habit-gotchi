@@ -607,10 +607,26 @@ if (prop.actif) {
     save();
     renderProps();
     toast(`✨ ${prop.nom} activé !`);
-    flashBubble(`Oh ! ${prop.nom} ! 💜`, 2500);
+    flashBubble(`Oh ! ${prop.nom} ! J'adore ! 💜`, 2500);
+    // Confettis à l'équipement
+    const gx = window._gotchiX || 100;
+    const gy = window._gotchiY || 100;
+    for (let i = 0; i < 15; i++) {
+      window.spawnP?.(gx + (Math.random() - 0.5) * 40, gy - 10, 
+        ['#c8a0e8','#f0c0d8','#fff8b0','#88c8f0','#b0e8b0'][Math.floor(Math.random()*5)]);
+    }
+    window.triggerGotchiBounce?.();
     return;
   }
 
+    // Confettis à l'équipement d'un décor aussi
+  const gx = window._gotchiX || 100;
+  const gy = window._gotchiY || 100;
+  for (let i = 0; i < 15; i++) {
+    window.spawnP?.(gx + (Math.random() - 0.5) * 40, gy - 10,
+      ['#c8a0e8','#f0c0d8','#fff8b0','#88c8f0','#b0e8b0'][Math.floor(Math.random()*5)]);
+  }
+  window.triggerGotchiBounce?.();
   // --- Objet décor : ouvrir le picker de slot ---
   openSlotPicker(index);
 }

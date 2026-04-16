@@ -377,7 +377,6 @@ intel: { msg: "Tu apprends… je sens mon monde s'agrandir 📚", anim: 'flower'
 serene: { msg: "Tu as médité… je me sens plus calme aussi 💜", anim: 'sparkle', body: 'bounce',
   spawn: () => { for (let i=0;i<14;i++) window.particles?.push({x:gx+Math.sin(i*.6)*20,y:gy+i*2,vx:Math.sin(i)*.3,vy:-0.5-i*.06,life:45,c:i%3===0?'#c8a0e8':i%3===1?'#f0c0d8':'#e8d8ff'}); }
 },
-},
     };
 
     // ← la ligne manquante !

@@ -33,10 +33,38 @@ function syncConsoleHeight() {
   const top  = document.getElementById('console-top');
   const zone = document.getElementById('dynamic-zone');
   if (!top || !zone) return;
-  const sat = parseInt(getComputedStyle(document.documentElement)
-    .getPropertyValue('--sat')) || 0;
-  zone.style.paddingTop = (top.offsetHeight - sat + 8) + 'px';
+  
+  requestAnimationFrame(() => {
+    const sat = parseInt(getComputedStyle(document.documentElement)
+      .getPropertyValue('--sat')) || 0;
+    zone.style.paddingTop = (top.offsetHeight - sat + 8) + 'px';
+  });
 }
+
+function syncDuringTransition(shell) {
+  let running = true;
+  
+  // boucle : sync à chaque frame tant que la transition tourne
+  const tick = () => {
+    if (!running) return;
+    syncConsoleHeight();
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  
+  // stop quand la transition CSS de .shrunk se termine
+  const stop = () => { 
+    running = false; 
+    syncConsoleHeight(); // un dernier sync propre
+    shell.removeEventListener('transitionend', stop);
+  };
+  shell.addEventListener('transitionend', stop);
+  
+  // filet de sécurité : stop après 600ms max (au cas où transitionend ne se déclenche pas)
+  setTimeout(stop, 600);
+}
+
+
 function go(t) {
   document.querySelectorAll('.pnl').forEach(p => p.classList.remove('on'));
   const targetPanel = document.getElementById('p-' + t);
@@ -68,11 +96,8 @@ function go(t) {
   if (t === 'perso')   renderPerso();
   if (t === 'journal') { journalLocked = true; renderJ(); }
 
-  document.getElementById('dynamic-zone').scrollTop = 0;
-
-  // Sync hauteur après la transition du shell (.shrunk = 0.4s)
-  syncConsoleHeight(); // immédiat pour éviter le flash
-setTimeout(syncConsoleHeight, 450); // affinage après animation
+    document.getElementById('dynamic-zone').scrollTop = 0;
+  syncDuringTransition(shell);
 }
 
 function toggleMenu() {

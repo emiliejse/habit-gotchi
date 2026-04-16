@@ -1560,7 +1560,10 @@ if (!D.firstLaunch || D.g.name === 'Petit·e Gotchi') {
 }
 
 // 2. Garde anti-répétition : une seule fois par jour
-if (D.lastWelcomeDate === td) return;
+const créneau = h < 12 ? 'matin' : h < 18 ? 'aprem' : h < 21 ? 'soir' : 'nuit';
+const done = (D.log[td] || []).length;
+const etatActuel = `${td}-${créneau}-${done}`;
+if (D.lastWelcomeState === etatActuel) return;
 
 // 3. Calcul jours d'absence (avant de mettre à jour lastActive)
 let joursAbsence = 0;
@@ -1576,7 +1579,7 @@ const nouveauxCadeaux = (D.eventLog || []).filter(ev =>
 ).length;
 
 // 5. Mise à jour de la session
-D.lastWelcomeDate = td;
+D.lastWelcomeState = etatActuel;
 D.lastActive = new Date().toISOString();
 save();
 

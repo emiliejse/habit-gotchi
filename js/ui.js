@@ -32,7 +32,10 @@ let masquerAcquis = true;
 function syncConsoleHeight() {
   const top  = document.getElementById('console-top');
   const zone = document.getElementById('dynamic-zone');
-  if (top && zone) zone.style.paddingTop = (top.offsetHeight + 8) + 'px';
+  if (!top || !zone) return;
+  const sat = parseInt(getComputedStyle(document.documentElement)
+    .getPropertyValue('--sat')) || 0;
+  zone.style.paddingTop = (top.offsetHeight - sat + 8) + 'px';
 }
 function go(t) {
   document.querySelectorAll('.pnl').forEach(p => p.classList.remove('on'));
@@ -366,10 +369,10 @@ function renderProps() {
   const allDefs = [...(window.PROPS_LIB || []), ...(window.PROPS_LOCAL || [])];
   const cats = {
     'tous':       { label: '✿ Tous' },
-    'decor':      { label: '🌿 Décor' },
-    'accessoire': { label: '👒 Accessoires' },
-    'ambiance':   { label: '✨ Ambiances' },
-    'claude':     { label: '✦ Créations' },
+    'decor':      { label: '🪑 Décor' },
+    'accessoire': { label: '🎀 Accessoires' },
+    'ambiance':   { label: '🌈 Ambiances' },
+    'claude':     { label: '✨ Créations' },
   };
   const filterEl = document.getElementById('props-filters');
   if (filterEl) {

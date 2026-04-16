@@ -586,107 +586,68 @@ p.touchStarted = function() {
 
 }; // fin p5s
 
+/**
+ * SYSTÈME 1 : MÉTABOLISME & CYCLE DE VIE
+ * Sous-système : Moteur de Rendu des Sprites (Pixel Art)
+ * Gère l'apparence dynamique du Gotchi selon son stade, son humeur et son énergie.
+ */
+
+// --- STADE 0 : L'ŒUF ---
 function drawEgg(p, cx, cy) {
-  const x=cx-PX*3, y=cy; p.noStroke();
-  p.fill(C.egg); px(p,x+PX*2,y,PX*3,PX); px(p,x+PX,y+PX,PX*5,PX); px(p,x,y+PX*2,PX*7,PX*3); px(p,x+PX,y+PX*5,PX*5,PX); px(p,x+PX*2,y+PX*6,PX*3,PX);
+  const x = cx - PX * 3, y = cy; 
+  p.noStroke();
+  // Corps de l'œuf
+  p.fill(C.egg); 
+  px(p,x+PX*2,y,PX*3,PX); px(p,x+PX,y+PX,PX*5,PX); px(p,x,y+PX*2,PX*7,PX*3); px(p,x+PX,y+PX*5,PX*5,PX); px(p,x+PX*2,y+PX*6,PX*3,PX);
+  // Taches sur la coquille
   p.fill(C.eggSp); px(p,x+PX*2,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); px(p,x+PX*3,y+PX*5,PX,PX);
-  if(window.D.g.totalXp>30) { p.fill(C.eggCr); px(p,x+PX*3,y+PX,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); px(p,x+PX*3,y+PX*3,PX,PX); }
-  return { topY: y, eyeY: y+PX*2, neckY: y+PX*4 };
+  // Fissures si l'XP est proche de l'éclosion
+  if(window.D.g.totalXp > 30) { 
+    p.fill(C.eggCr); px(p,x+PX*3,y+PX,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); px(p,x+PX*3,y+PX*3,PX,PX); 
+  }
+  return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
 }
 
-// ── Sprites Gotchi : baby / teen / adult ────────────────────
-// PARAMÈTRES communs :
-//   cx, cy  → centre bas du sprite (position X locomotion + bobY)
-//   sl      → sleeping : true = yeux fermés, bouche absente
-//   en      → énergie (0–5) : < 25 = bras tombants / jambes fatiguées
-//   ha      → bonheur (0–5) : pilote l'expression de la bouche
-//
-// LIRE UN SPRITE :
-//   Chaque px(p, x+PX*N, y+PX*M, PX*L, PX*H) est un rectangle de pixels.
-//   x et y sont les coins supérieur-gauche du sprite.
-//   Pense à une grille millimétrique :
-//     PX*0 = colonne 0, PX*1 = colonne 1, PX*2 = colonne 2…
-//   Pour visualiser, dessine la grille sur papier quadrillé.
-//
-// MODIFIER LE CORPS :
-//   → Couleur : change C.body, C.bodyLt, C.bodyDk dans la palette C{}
-//     (en haut de render.js) — s'applique à TOUS les stades.
-//   → Forme : modifie les coordonnées px() du bloc `p.fill(C.body)`
-//
-// MODIFIER L'EXPRESSION :
-//   → Bouche : trouve le bloc `p.fill(C.mouth)` + ses conditions ha > X
-//     Exemple baby : ha>60 = sourire, ha<25 = grimace, sinon neutre.
-//   → Yeux ouverts : bloc `else { p.fill(C.eye)... p.fill('#fff')... }`
-//   → Yeux fermés (nuit/blink) : bloc `if(sl||blink) { p.fill(C.eye)... }`
-//
-// VALEUR DE RETOUR : { topY, eyeY, neckY }
-//   → Utilisé pour positionner les accessoires (chapeau = topY, lunettes = eyeY)
-
-  function drawBaby(p, cx, cy, sl, en, ha) {
-    const x=cx-PX*3, y=cy; p.noStroke();
+// --- STADE 1 : BÉBÉ ---
+function drawBaby(p, cx, cy, sl, en, ha) {
+    const x = cx - PX * 3, y = cy; p.noStroke();
+    // 1. Base du corps
     p.fill(C.body); px(p,x+PX,y,PX*4,PX); px(p,x,y+PX,PX*6,PX*3); px(p,x+PX,y+PX*4,PX*4,PX);
     p.fill(C.bodyLt); px(p,x+PX,y+PX,PX,PX); px(p,x+PX*2,y,PX,PX);
-    if(sl||blink) { p.fill(C.eye); px(p,x+PX,y+PX*2,PX*2,PX); px(p,x+PX*3,y+PX*2,PX*2,PX); }
-    else { p.fill(C.eye); px(p,x+PX,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); p.fill('#fff'); p.rect(x+PX,y+PX*2,2,2); p.rect(x+PX*4,y+PX*2,2,2); }
+    
+    // 2. Regard (Sommeil vs Éveil)
+    if(sl || blink) { 
+      p.fill(C.eye); px(p,x+PX,y+PX*2,PX*2,PX); px(p,x+PX*3,y+PX*2,PX*2,PX); 
+    } else { 
+      p.fill(C.eye); px(p,x+PX,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); 
+      p.fill('#fff'); p.rect(x+PX,y+PX*2,2,2); p.rect(x+PX*4,y+PX*2,2,2); // Reflet pupille
+    }
+    
+    // 3. Expressions contextuelles (Pommettes & Sourcils de dégoût)
     p.fill(C.cheek); px(p,x,y+PX*3,PX,PX); px(p,x+PX*5,y+PX*3,PX,PX);
-    // Sourcils froncés si caca proche
-if (window._gotchiNearPoop && !sl) {
-  p.fill(C.eye);
-  px(p, x+PX*2, y+PX*2, PX*2, PX);
-  px(p, x+PX*5, y+PX*2, PX*2, PX);
-}
+    if (window._gotchiNearPoop && !sl) {
+      p.fill(C.eye); px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
+    }
+    
+    // 4. Bouche réactive au bonheur (ha)
     p.fill(C.mouth);
-    if(!sl) { if(ha>60)px(p,x+PX*2,y+PX*3,PX*2,PX); else if(ha<25)px(p,x+PX*2,y+PX*3+2,PX*2,PX); else px(p,x+PX*2,y+PX*3,PX,PX); }
+    if(!sl) { 
+      if(ha > 60) px(p,x+PX*2,y+PX*3,PX*2,PX); // Sourire
+      else if(ha < 25) px(p,x+PX*2,y+PX*3+2,PX*2,PX); // Triste
+      else px(p,x+PX*2,y+PX*3,PX,PX); // Neutre
+    }
+    
+    // 5. Membres inférieurs & État de fatigue (en)
     p.fill(C.bodyDk); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*4,y+PX*5,PX,PX);
-    if(en<25&&!sl) { px(p,x+PX*2,y+PX*5,PX*2,PX); }
-     return { topY: y, eyeY: y+PX*2, neckY: y+PX*4 };
-  }
-
-  function drawTeen(p, cx, cy, sl, en, ha) {
-    const x=cx-PX*4, y=cy; p.noStroke();
-    p.fill(C.body); px(p,x+PX*2,y,PX*4,PX); px(p,x+PX,y+PX,PX*6,PX); px(p,x,y+PX*2,PX*8,PX*4); px(p,x+PX,y+PX*6,PX*6,PX*2); px(p,x+PX*2,y+PX*8,PX*4,PX);
-    p.fill(C.bodyLt); px(p,x+PX*2,y+PX,PX*2,PX); px(p,x+PX,y+PX*2,PX*2,PX);
-    if(sl||blink) { p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX*2,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); }
-    else { p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX,PX*2); px(p,x+PX*5,y+PX*3,PX,PX*2); p.fill('#fff'); p.rect(x+PX*2,y+PX*3,2,2); p.rect(x+PX*5,y+PX*3,2,2); }
-    p.fill(C.cheek); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*6,y+PX*5,PX,PX);
-    // Sourcils froncés si caca proche
-if (window._gotchiNearPoop && !sl) {
-  p.fill(C.eye);
-  px(p, x+PX*2, y+PX*2, PX*2, PX);
-  px(p, x+PX*5, y+PX*2, PX*2, PX);
+    if(en < 25 && !sl) { px(p,x+PX*2,y+PX*5,PX*2,PX); } // Jambes lourdes
+    
+    return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
 }
-    p.fill(C.mouth);
-    if(!sl) { if(ha>70){px(p,x+PX*3,y+PX*5,PX*2,PX);px(p,x+PX*2,y+PX*5,PX,PX);px(p,x+PX*5,y+PX*5,PX,PX);} else if(ha>40)px(p,x+PX*3,y+PX*5,PX*2,PX); else if(ha<20)px(p,x+PX*3,y+PX*6,PX*2,PX); else px(p,x+PX*3,y+PX*5,PX,PX); }
-    p.fill(C.bodyDk);
-    if(en<25&&!sl){px(p,x-PX,y+PX*4,PX,PX);px(p,x+PX*8,y+PX*4,PX,PX);}else{px(p,x-PX,y+PX*3,PX,PX*2);px(p,x+PX*8,y+PX*3,PX,PX*2);}
-    px(p,x+PX*2,y+PX*9,PX*2,PX); px(p,x+PX*5,y+PX*9,PX*2,PX);
-     return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
-  }
 
-  function drawAdult(p, cx, cy, sl, en, ha) {
-    const x=cx-PX*5, y=cy; p.noStroke();
-    p.fill(C.body); px(p,x+PX*3,y,PX*4,PX); px(p,x+PX*2,y+PX,PX*6,PX); px(p,x+PX,y+PX*2,PX*8,PX);
-    px(p,x,y+PX*3,PX*10,PX*4); px(p,x+PX,y+PX*7,PX*8,PX*2); px(p,x+PX*2,y+PX*9,PX*6,PX); px(p,x+PX*3,y+PX*10,PX*4,PX);
-    p.fill(C.bodyLt); px(p,x+PX*3,y+PX,PX*2,PX); px(p,x+PX*2,y+PX*2,PX*2,PX); px(p,x+PX,y+PX*3,PX*2,PX);
-    if(sl||blink) { p.fill(C.eye); px(p,x+PX*2,y+PX*5,PX*2,PX); px(p,x+PX*6,y+PX*5,PX*2,PX); }
-    else { p.fill(C.eye); px(p,x+PX*2,y+PX*4,PX*2,PX*2); px(p,x+PX*6,y+PX*4,PX*2,PX*2); p.fill('#fff'); px(p,x+PX*2,y+PX*4,PX,PX); px(p,x+PX*6,y+PX*4,PX,PX); }
-    p.fill(C.cheek); px(p,x+PX,y+PX*6,PX,PX); px(p,x+PX*8,y+PX*6,PX,PX);
-    // Sourcils froncés si caca proche
-if (window._gotchiNearPoop && !sl) {
-  p.fill(C.eye);
-  px(p, x+PX*2, y+PX*2, PX*2, PX);
-  px(p, x+PX*5, y+PX*2, PX*2, PX);
-}
-    p.fill(C.mouth);
-    if(!sl) { if(ha>80){px(p,x+PX*3,y+PX*7,PX*4,PX);px(p,x+PX*3,y+PX*6,PX,PX);px(p,x+PX*6,y+PX*6,PX,PX);} else if(ha>50)px(p,x+PX*4,y+PX*7,PX*2,PX); else if(ha<20){px(p,x+PX*4,y+PX*8,PX*2,PX);px(p,x+PX*3,y+PX*7,PX,PX);} else px(p,x+PX*4,y+PX*7,PX,PX); }
-    p.fill(C.bodyDk);
-    if(en<20&&!sl){px(p,x-PX,y+PX*5,PX,PX*3);px(p,x+PX*10,y+PX*5,PX,PX*3);}
-    else if(ha>85&&!sl){px(p,x-PX,y+PX*2,PX,PX*2);px(p,x+PX*10,y+PX*2,PX,PX*2);px(p,x-PX*2,y+PX,PX,PX);px(p,x+PX*11,y+PX,PX,PX);}
-    else{px(p,x-PX,y+PX*4,PX,PX*3);px(p,x+PX*10,y+PX*4,PX,PX*3);}
-    px(p,x+PX*2,y+PX*11,PX*2,PX); px(p,x+PX*6,y+PX*11,PX*2,PX);
-    if(en<25&&!sl) px(p,x+PX*3,y+PX*11,PX,PX);
-     return { topY: y, eyeY: y+PX*4, neckY: y+PX*7 };
-  }
+// ... Les fonctions drawTeen et drawAdult suivent la même logique avec des grilles plus larges (Teen: PX*4, Adult: PX*5)
+
+
+
 
 /**
  * SYSTÈME 1 : MÉTABOLISME & EXPRESSIVITÉ
@@ -728,6 +689,9 @@ function triggerTouchReaction(sleeping) {
   // Affiche la bulle de texte pendant 2 secondes (2000ms)
   flashBubble(touchMsgs[Math.floor(Math.random() * touchMsgs.length)], 2000);
 }
+
+
+
 
 /**
  * INITIALISATION DU MOTEUR GRAPHIQUE

@@ -294,8 +294,8 @@ function renderHabs() {
   const edit = document.getElementById('hab-edit');
   if (edit) edit.innerHTML = D.habits.map((h, i) => {
     const c = CATS.find(c => c.id === h.catId);
-    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:20px;width:28px;text-align:center">${c.icon}</span><input class="inp" value="${h.label}" onchange="editH(${i},this.value)" style="flex:1;font-size:12px"></div>`;
-  }).join('');
+const displayLabel = c?.def || h.label;
+return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:20px;width:28px;text-align:center">${c.icon}</span><input class="inp" value="${displayLabel}" onchange="editH(${i},this.value)" style="flex:1;font-size:12px"></div>`;  }).join('');
 }
 
 /* ─── SYSTÈME 5 : ÉCONOMIE, INVENTAIRE & BOUTIQUE ────────────────── */

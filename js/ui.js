@@ -1315,10 +1315,12 @@ function renderPerso() {
 
 function applyUIPalette(id, silent = false) {
   const p = UI_PALETTES.find(x => x.id === id); if (!p) return;
-  document.documentElement.style.setProperty('--bg', p.bg);
+  document.documentElement.style.setProperty('--bg',    p.bg);
   document.documentElement.style.setProperty('--lilac', p.lilac);
-  document.documentElement.style.setProperty('--mint', p.mint);
-  document.documentElement.style.setProperty('--pink', p.pink);
+  document.documentElement.style.setProperty('--mint',  p.mint);
+  document.documentElement.style.setProperty('--pink',  p.pink);
+  document.documentElement.style.setProperty('--text',  p.text  || '#38304a');
+  document.documentElement.style.setProperty('--text2', p.text2 || '#887ea0');
   window.D.g.uiPalette = id; save(); renderPerso();
   if (!silent) toast(`Palette ${p.label} appliquée ✿`);
 }

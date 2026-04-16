@@ -13,12 +13,12 @@
  * les variables CSS globales (--bg, --lilac, --mint, --pink).
  */
 const UI_PALETTES = [
-  { id:'lavande', label:'Lavande', bg:'#ddd6e8', lilac:'#b090d0', mint:'#80d0a8', pink:'#e8a0bf' },
-  { id:'rose',    label:'Rose',    bg:'#f0dde8', lilac:'#d080a8', mint:'#a0d8b0', pink:'#e890c0' },
-  { id:'ocean',   label:'Océan',   bg:'#d0e8f0', lilac:'#6090c0', mint:'#70d0c0', pink:'#a0c8e8' },
-  { id:'foret',   label:'Forêt',   bg:'#d8e8d0', lilac:'#70a870', mint:'#90d890', pink:'#c8e0a0' },
-  { id:'nuit',    label:'Nuit',    bg:'#2a2438', lilac:'#9070c0', mint:'#50c890', pink:'#c07090' },
-  { id:'peche',   label:'Pêche',   bg:'#f0e0d0', lilac:'#c09070', mint:'#90d0a8', pink:'#e8b090' },
+  { id:'lavande', label:'Lavande', bg:'#ddd6e8', lilac:'#b090d0', mint:'#80d0a8', pink:'#e8a0bf', text:'#38304a', text2:'#887ea0' },
+  { id:'rose',    label:'Rose',    bg:'#f0dde8', lilac:'#d080a8', mint:'#a0d8b0', pink:'#e890c0', text:'#4a3040', text2:'#a07888' },
+  { id:'ocean',   label:'Océan',   bg:'#d0e8f0', lilac:'#6090c0', mint:'#70d0c0', pink:'#a0c8e8', text:'#203848', text2:'#607888' },
+  { id:'foret',   label:'Forêt',   bg:'#d8e8d0', lilac:'#70a870', mint:'#90d890', pink:'#c8e0a0', text:'#283820', text2:'#607858' },
+  { id:'nuit',    label:'Nuit',    bg:'#2a2438', lilac:'#9070c0', mint:'#50c890', pink:'#c07090', text:'#e8e0f0', text2:'#a090c0' },
+  { id:'peche',   label:'Pêche',   bg:'#f0e0d0', lilac:'#c09070', mint:'#90d0a8', pink:'#e8b090', text:'#483020', text2:'#907060' },
 ];
 
 /* ─── SYSTÈME 5 : PERSONNALISATION (Sprite) ──────────────────────── */

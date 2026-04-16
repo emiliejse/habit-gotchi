@@ -1092,7 +1092,7 @@ function toastInfo() {
         onkeydown="if(event.key==='Enter')sendSoutienMsg()">
       <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:8px 12px">→</button>
     </div>
-    <p style="font-size:8px;color:var(--text2);text-align:center;margin-top:4px">6 messages max · conversation non sauvegardée</p>
+    <p id="soutien-count" style="font-size:8px;color:var(--text2);text-align:center;margin-top:4px">6 messages restants · conversation non sauvegardée</p>
 `;
 animEl(document.getElementById('mbox'), 'bounceIn');
   sendSoutienMsg(promptInit, true);
@@ -1110,6 +1110,9 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
     return;
   }
   window._soutienCount++;
+const restants = 6 - window._soutienCount;
+const countEl = document.getElementById('soutien-count');
+if (countEl) countEl.textContent = `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''} · conversation non sauvegardée`;
 }
   if (!key) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
   const inp  = document.getElementById('soutien-inp');

@@ -42,7 +42,8 @@ let walkTarget = 100;   // destination en X
 let walkPause  = 0;     // frames d'attente avant le prochain déplacement  
 window.triggerGotchiBounce = function() { window._jumpTimer = 20; };
 window.triggerGotchiShake  = function() { window.shakeTimer = 12; }; 
-window.spawnP = spawnP;  
+window.spawnP = spawnP;
+window.particles = particles;  
 
 function getGotchiC() {
   const id = window.D.g.gotchiColor || 'vert';

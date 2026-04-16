@@ -345,7 +345,7 @@ const p5s = (p) => {
 
     if (window.shakeTimer > 0) { 
       window.shakeTimer--; 
-      p.translate(Math.sin(p.frameCount * 2) * 2, 0); 
+      p.translate(Math.sin(p.frameCount * 3) * 5, Math.sin(p.frameCount * 2) * 3); 
     }
 
     // 1. Fond et Météo

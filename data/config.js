@@ -1,5 +1,17 @@
-// data/config.js — Toutes les constantes de personnalisation
+/* ============================================================
+   config.js — Toutes les constantes de personnalisation
+   RÔLE : C'est le "Pot de Peinture" global de l'application. 
+   Il centralise toutes les couleurs pour que tu n'aies jamais 
+   à chercher des codes hexadécimaux éparpillés dans ton code.
+   ============================================================ */
 
+/* ─── SYSTÈME 5 : PERSONNALISATION (UI) ──────────────────────────── */
+
+/**
+ * UI_PALETTES : Les couleurs de l'interface utilisateur.
+ * Quand une palette est choisie (via ui.js), l'app modifie dynamiquement
+ * les variables CSS globales (--bg, --lilac, --mint, --pink).
+ */
 const UI_PALETTES = [
   { id:'lavande', label:'Lavande', bg:'#ddd6e8', lilac:'#b090d0', mint:'#80d0a8', pink:'#e8a0bf' },
   { id:'rose',    label:'Rose',    bg:'#f0dde8', lilac:'#d080a8', mint:'#a0d8b0', pink:'#e890c0' },
@@ -9,6 +21,13 @@ const UI_PALETTES = [
   { id:'peche',   label:'Pêche',   bg:'#f0e0d0', lilac:'#c09070', mint:'#90d0a8', pink:'#e8b090' },
 ];
 
+/* ─── SYSTÈME 5 : PERSONNALISATION (Sprite) ──────────────────────── */
+
+/**
+ * GOTCHI_COLORS : La "peau" du Gotchi.
+ * Utilisé par `render.js` pour colorier la matrice de pixels du personnage.
+ * Nécessite 3 tons pour donner du volume : base (body), lumière (bodyLt), ombre (bodyDk).
+ */
 const GOTCHI_COLORS = [
   { id:'vert',   label:'Vert',   body:'#c8d8c0', bodyLt:'#e0ece0', bodyDk:'#a0b898' },
   { id:'lilas',  label:'Lilas',  body:'#d0c0e0', bodyLt:'#e8e0f0', bodyDk:'#a898c0' },
@@ -18,6 +37,14 @@ const GOTCHI_COLORS = [
   { id:'jaune',  label:'Jaune',  body:'#e8e0a8', bodyLt:'#f4ecc8', bodyDk:'#c0b878' },
 ];
 
+/* ─── SYSTÈME 2 : ÉCOSYSTÈME (Décors & Biomes) ───────────────────── */
+
+/**
+ * ENV_THEMES : Dictionnaire massif des environnements.
+ * Utilisé par `envs.js` pour dessiner les décors (Parc, Chambre, Montagne).
+ * Chaque thème doit impérativement posséder TOUTES ces clés pour que
+ * le moteur de rendu ne plante pas ("Cannot read properties of undefined").
+ */
 const ENV_THEMES = [
   { id:'pastel', label:'Pastel ✿',
     // parc

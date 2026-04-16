@@ -282,20 +282,51 @@ function updBadgeBoutique() {
 function renderHabs() {
   const D = window.D;
   const td = today(), log = D.log[td] || [], done = log.length;
+
+  // --- Page d'accueil : liste des habitudes ---
   const habHome = document.getElementById('hab-home');
   if (habHome) {
-    habHome.innerHTML = D.habits.map(h => {
-      const c = CATS.find(c => c.id === h.catId), d = log.includes(h.catId);
-      return `<div class="hab ${d?'done':''}" onclick="toggleHab('${h.catId}')"><div class="ck">${d?'✓':''}</div><span style="flex:1;font-size:12px">${CATS.find(c => c.id === h.catId)?.def || h.label}</span><span style="font-size:16px">${c.icon}</span></div>`;
-    }).join('');
+habHome.innerHTML = D.habits.map((h, i) => {
+  const c = CATS.find(c => c.id === h.catId), d = log.includes(h.catId);
+  const libelle = h.label !== c?.label ? h.label : c?.def || h.label;
+  return `
+    <div class="hab ${d?'done':''}" style="position:relative">
+      <div class="ck" onclick="toggleHab('${h.catId}')">${d?'✓':''}</div>
+      <span id="hab-label-${h.catId}" 
+        style="flex:1;font-size:12px;cursor:pointer" 
+        onclick="toggleHab('${h.catId}')">${libelle}</span>
+      <span style="font-size:10px;opacity:.35;cursor:pointer;padding:0 4px" 
+        onclick="editHabInline('${h.catId}', ${i})">✏️</span>
+      <span style="font-size:16px">${c.icon}</span>
+    </div>`;
+}).join('');
   }
+
+  // --- Compteur d'habitudes ---
   const hc = document.getElementById('hab-count');
   if (hc) hc.textContent = `${done}/6`;
-  const edit = document.getElementById('hab-edit');
-  if (edit) edit.innerHTML = D.habits.map((h, i) => {
-    const c = CATS.find(c => c.id === h.catId);
-const displayLabel = c?.def || h.label;
-return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:20px;width:28px;text-align:center">${c.icon}</span><input class="inp" value="${displayLabel}" onchange="editH(${i},this.value)" style="flex:1;font-size:12px"></div>`;  }).join('');
+}
+
+function editHabInline(catId, i) {
+  const span = document.getElementById('hab-label-' + catId);
+  if (!span) return;
+  const current = span.textContent;
+  span.outerHTML = `
+    <input id="hab-input-${catId}"
+      class="inp" value="${current}"
+      style="flex:1;font-size:12px;padding:2px 6px"
+      onblur="saveHabInline('${catId}', ${i}, this.value)"
+      onkeydown="if(event.key==='Enter') this.blur()">`;
+  document.getElementById('hab-input-' + catId)?.focus();
+}
+
+function saveHabInline(catId, i, value) {
+  const trimmed = value.trim();
+  if (trimmed) {
+    window.D.habits[i].label = trimmed;
+    save();
+  }
+  renderHabs();
 }
 
 /* ─── SYSTÈME 5 : ÉCONOMIE, INVENTAIRE & BOUTIQUE ────────────────── */

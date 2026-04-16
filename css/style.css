@@ -63,23 +63,27 @@ body {
 /* CONSOLE FIXE (En haut) */
 #console-top {
   flex-shrink: 0;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
   background: var(--bg);
   padding: calc(var(--sat) + 6px) 10px 0;
   border-bottom: 2px solid var(--border);
   box-shadow: 0 2px 10px var(--shadow);
-  overflow: hidden;
 }
 
 /* ZONE DYNAMIQUE (Contenu défilant en bas) */
 #dynamic-zone{
-  flex:1;overflow-y:auto;padding:8px 10px;
-  padding-bottom:calc(64px + var(--sab));
-  width:100%;max-width:460px;
-  align-self:center;
-  height:0; /* ← force le flex à contraindre cette zone */
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px;
+  padding-top: calc(var(--console-height, 320px) + 8px);
+  padding-bottom: calc(64px + var(--sab));
+  width: 100%;
+  max-width: 460px;
+  align-self: center;
 }
 
 /* Header (Date et Bouton Menu) */

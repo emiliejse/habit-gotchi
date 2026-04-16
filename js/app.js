@@ -358,7 +358,6 @@ function toggleHab(catId) {
     addXp(15);
     window.D.g.petales = (window.D.g.petales || 0) + 2;
     addEvent('habitude', `${hab?.label || catId} ✓  +15 XP, +2 🌸`);
-    window.celebQueue.push(catId);
 
     const gx = window._gotchiX || 100;
     const gy = window._gotchiY || 100;
@@ -366,17 +365,18 @@ function toggleHab(catId) {
     const habReactions = {
       sport:   { msg: "Tu bouges… je sens l'énergie monter ! 💪",       anim: 'spin',    body: 'shake'  },
       nutri:   { msg: "Miam ! Tu te nourris bien, moi aussi 🍎",        anim: 'heart',   body: 'bounce' },
-      hydra:   { msg: "Merci pour l'eau ! Je grandis grâce à toi 🌱",   anim: 'jump',    body: 'bounce',
-        spawn: () => { for (let i=0;i<6;i++) window.spawnP?.(gx+(Math.random()-.5)*20, 10+Math.random()*20, '#88c8f0'); }
-      },
-      hygiene: { msg: "Tu prends soin de toi… ça me rend joyeux·se ✨", anim: 'sparkle', body: 'bounce',
-        spawn: () => { for (let i=0;i<8;i++) { const a=(i/8)*Math.PI*2; window.spawnP?.(gx+Math.cos(a)*20, gy+Math.sin(a)*20, i%2===0?'#fff8b0':'#ffffff'); } }
-      },
-      intel:   { msg: "Tu apprends… je sens mon monde s'agrandir 📚",   anim: 'flower',  body: 'shake',
-        spawn: () => { for (let i=0;i<5;i++) window.particles?.push({x:gx+(Math.random()-.5)*30,y:gy,vx:(Math.random()-.5)*.5,vy:-.8-Math.random()*.5,life:28,c:'#e8d088'}); }
-      },
-      serene: { msg: "Tu as médité… je me sens plus calme aussi 💜", anim: 'sparkle', body: 'bounce',
-  spawn: () => { window.spawnP?.(100, 100, '#ff0000'); }
+      hydra: { msg: "Merci pour l'eau ! Je grandis grâce à toi 🌱", anim: 'jump', body: 'bounce',
+  spawn: () => { for (let i=0;i<12;i++) window.spawnP?.(gx+(Math.random()-.5)*30, 5+Math.random()*15, i%3===0?'#4ab0f0':'#88c8f0'); }
+},
+hygiene: { msg: "Tu prends soin de toi… ça me rend joyeux·se ✨", anim: 'sparkle', body: 'bounce',
+  spawn: () => { for (let i=0;i<12;i++) { const a=(i/12)*Math.PI*2; window.spawnP?.(gx+Math.cos(a)*25, gy+Math.sin(a)*25, i%2===0?'#fff8b0':'#ffe0f0'); } }
+},
+intel: { msg: "Tu apprends… je sens mon monde s'agrandir 📚", anim: 'flower', body: 'shake',
+  spawn: () => { for (let i=0;i<10;i++) window.particles?.push({x:gx+(Math.random()-.5)*40,y:gy,vx:(Math.random()-.5)*.4,vy:-1.2-Math.random()*.8,life:40,c:i%2===0?'#e8d088':'#fff8b0'}); }
+},
+serene: { msg: "Tu as médité… je me sens plus calme aussi 💜", anim: 'sparkle', body: 'bounce',
+  spawn: () => { for (let i=0;i<14;i++) window.particles?.push({x:gx+Math.sin(i*.6)*20,y:gy+i*2,vx:Math.sin(i)*.3,vy:-0.5-i*.06,life:45,c:i%3===0?'#c8a0e8':i%3===1?'#f0c0d8':'#e8d8ff'}); }
+},
 },
     };
 
@@ -392,7 +392,6 @@ function toggleHab(catId) {
     });
     if (reaction.body === 'bounce') window.triggerGotchiBounce?.();
     if (reaction.body === 'shake')  window.triggerGotchiShake?.();
-    console.log('spawn:', catId, reaction.spawn, window.particles, window.spawnP);
     reaction.spawn?.(); //
   }
  // ✅ UN SEUL save() ici, après toutes les mutations d'état

@@ -1574,7 +1574,16 @@ let tabletSeen = 0; // nb d'entrées vues à la dernière ouverture
 function openTablet() {
   const D = window.D;
   const log = D.eventLog || [];
-  const icons = { xp:'⭐', cadeau:'🎁', note:'📓', habitude:'✅' };
+  
+  // Icône choisie selon le type + signe de la valeur (gain/perte XP)
+  const getIcon = (ev) => {
+    if (ev.type === 'xp')       return (ev.valeur < 0) ? '💤' : '⭐';
+    if (ev.type === 'cadeau')   return '🎁';
+    if (ev.type === 'habitude') return '✅';
+    if (ev.type === 'note')     return '📓';
+    return '•';
+  };
+  
   const lines = document.getElementById('tablet-lines');
 
   if (!log.length) {
@@ -1586,7 +1595,7 @@ function openTablet() {
       const jour  = d.toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
       return `<div class="tablet-line">
         <span class="tl-time">${jour} à ${heure}</span>
-        <span class="tl-icon">${icons[ev.type] || '•'}</span>${ev.label || ev.valeur}
+        <span class="tl-icon">${getIcon(ev)}</span>${ev.label || ev.valeur}
       </div>`;
     }).join('');
   }

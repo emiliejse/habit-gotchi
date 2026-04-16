@@ -258,7 +258,7 @@ function giveSnack() {
   window.D.g.petales = (window.D.g.petales || 0) + 2; // Récompense : 2 pétales
   save();
   
-  addEvent('note', `${window.D.g.snackEmoji} donné à ${window.D.g.name} 🍽️  +2 🌸`);
+  addEvent('note', `${window.D.g.snackEmoji} ${window.D.g.snackEmoji} donné à ${window.D.g.name}  +2 🌸`);
   const snackMsgs = ["Miam ! 💜", "Délicieux ! ✿", "*mange goulûment* 😋", "Encore ! 🌸", "C'était bon ça ! 💜"];
   flashBubble(snackMsgs[Math.floor(Math.random() * snackMsgs.length)], 2500);
   
@@ -286,7 +286,7 @@ function cleanPoops() {
   flashBubble(poopMsgs[Math.floor(Math.random() * poopMsgs.length)], 3000);
   
   save();
-  addEvent('note', `Crotte ramassée 💩  +${count * 2} 🌸`);
+  addEvent('note', `💩 Crotte ramassée  +${count * 2} 🌸`);
   if (typeof updUI === 'function') updUI();
 }
 

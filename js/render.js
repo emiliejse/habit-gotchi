@@ -446,39 +446,61 @@ function drawSky(p, h, ha) {
     }
   }
 
-  // ── drawProp() : dessine un objet pixel art depuis ses données JSON ──
-// Un prop = un objet avec deux tableaux :
-//   prop.pixels  → grille 2D d'indices : [[0,1,2,1,0], [0,2,2,2,0], ...]
-//                  0 = transparent (skippé), 1/2/3... = index dans palette
-//   prop.palette → tableau de couleurs hex : ['', '#e8a0a0', '#c87060', ...]
-//                  index 0 est toujours vide (= transparent)
-//
-// EXEMPLE : si pixels[2][3] = 2, on dessine prop.palette[2] en position
-//   x = offsetX + 3*PX, y = offsetY + 2*PX
-//
-// POUR MODIFIER UN PROP EXISTANT :
-//   → Couleur : change la valeur hex dans prop.palette[N] dans props.json
-//   → Forme : change un indice dans prop.pixels (0 = efface, N = recolore)
-//
-// offsetX, offsetY → coin supérieur gauche où commence le dessin
-//   (pour les décors : vient de PROP_SLOTS ; pour les ambiances : calculé dynamiquement)
+/**
+ * SYSTÈME 5 : INVENTAIRE & PERSONNALISATION
+ * Sous-système : Moteur de rendu d'objets (Prop Engine)
+ * Ce moteur traduit des grilles de données JSON en objets Pixel Art 
+ * placés dynamiquement dans l'environnement ou sur le Gotchi.
+ */
 
-  function drawProp(p, prop, offsetX, offsetY) {
-    if (!prop.pixels || !prop.palette) return;
-    p.noStroke();
-    for(let row=0; row<prop.pixels.length; row++) {
-      for(let col=0; col<prop.pixels[row].length; col++) {
-        const ci = prop.pixels[row][col];
-        if(ci === 0) continue;
-        p.fill(prop.palette[ci]);
-        px(p,offsetX + col*PX, offsetY + row*PX, PX, PX);
-      }
+/**
+ * Affiche un objet basé sur une matrice de pixels et une palette indexée.
+ * @param {Object} p - Instance p5
+ * @param {Object} prop - Données de l'objet (pixels: int[][], palette: string[])
+ * @param {number} offsetX - Position X d'ancrage
+ * @param {number} offsetY - Position Y d'ancrage
+ */
+function drawProp(p, prop, offsetX, offsetY) {
+  // Sécurité : évite de crash si les données JSON sont mal formées ou absentes
+  if (!prop.pixels || !prop.palette) return;
+  
+  p.noStroke();
+  
+  // Parcours de la grille 2D (Lignes x Colonnes)
+  for(let row=0; row<prop.pixels.length; row++) {
+    for(let col=0; col<prop.pixels[row].length; col++) {
+      
+      const ci = prop.pixels[row][col]; // Récupère l'index de couleur du pixel
+      
+      // Gestion de la transparence : l'index 0 n'est pas dessiné
+      if(ci === 0) continue;
+      
+      // Application de la couleur correspondante dans la palette de l'objet
+      p.fill(prop.palette[ci]);
+      
+      // Dessin du rectangle élémentaire (PX)
+      px(p, offsetX + col*PX, offsetY + row*PX, PX, PX);
     }
   }
+}
 
-  function spawnP(x, y, c) {
-    particles.push({x, y, vx:(Math.random()-.5)*4, vy:-Math.random()*3-1.5, life:16, c});
-  }
+/**
+ * Génère une nouvelle particule dans le système.
+ * Utilisé pour les effets de feedback (nettoyage, nourriture, joie).
+ * @param {number} x - Origine X
+ * @param {number} y - Origine Y
+ * @param {string} c - Couleur de la particule
+ */
+function spawnP(x, y, c) {
+  particles.push({
+    x, 
+    y, 
+    vx: (Math.random() - 0.5) * 4, // Vélocité horizontale aléatoire
+    vy: -Math.random() * 3 - 1.5,  // Impulsion initiale vers le haut (saut)
+    life: 16,                      // Durée de vie en frames
+    c                              // Couleur
+  });
+}
 
 /**
  * SYSTÈME 2 : ÉCOSYSTÈME & INTERACTIONS (TAMA SHELL)

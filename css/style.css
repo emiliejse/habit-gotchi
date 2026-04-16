@@ -543,3 +543,7 @@ body {
 }
 .tama-wind { animation: tamaSway 1.4s ease-in-out infinite; }
 .tama-wind-strong { animation: tamaSwayStrong 0.9s ease-in-out infinite; }
+
+/* Dans style.css, sur #mbox ou .mbox */
+word-break: keep-all;
+overflow-wrap: break-word;

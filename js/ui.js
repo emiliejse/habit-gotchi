@@ -1648,7 +1648,8 @@ function getEveningMsg() {
   const ha = D.g.happiness;
   if (done === 6) return `6/6 !! Tu as tout fait aujourd'hui, je suis aux anges 🎉`;
   if (ha <= 2) return `*câlin pixel* Tu sembles fatiguée ce soir. Prends soin de toi 💜`;
-  return `${done} habitude${done > 1 ? 's' : ''} aujourd'hui. C'est bien ✿ Pose-toi maintenant.`;
+  if (done === 0) return `*te regarde doucement* Pas d'habitudes aujourd'hui... c'est ok. Demain ✿`;
+  return `${done}/6 aujourd'hui. Pose-toi maintenant 💜`;
 }
 
 function getNightMsg() {

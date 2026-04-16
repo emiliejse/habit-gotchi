@@ -352,15 +352,32 @@ function toggleHab(catId) {
     window.D.g.petales = Math.max(0, (window.D.g.petales || 0) - 2);
     flashBubble("Oh... pas grave 💜", 2000);
   } 
-  // COCHAGE : Ajoute 15 XP et 2 pétales
-else {
+// COCHAGE : Ajoute 15 XP et 2 pétales
+  else {
     window.D.log[td].push(catId);
     addXp(15);
     window.D.g.petales = (window.D.g.petales || 0) + 2;
     addEvent('habitude', `${hab?.label || catId} ✓  +15 XP, +2 🌸`);
     window.celebQueue.push(catId);
-    const habMsgs = ["Trop bien ! 🌸", "Tu gères !", "Fière de toi ✿"];
-    flashBubble(habMsgs[Math.floor(Math.random() * habMsgs.length)], 2000);
+
+    // Réaction Gotchi liée à la catégorie
+    const habReactions = {
+      sport:   { msg: "Tu bouges… je sens l'énergie monter ! 💪",  anim: 'spin'    },
+      nutri:   { msg: "Miam ! Tu te nourris bien, moi aussi 🍎",   anim: 'heart'   },
+      hydra:   { msg: "Merci pour l'eau ! Je grandis grâce à toi 🌱", anim: 'jump' },
+      hygiene: { msg: "Tu prends soin de toi… ça me rend joyeux·se ✨", anim: 'sparkle' },
+      intel:   { msg: "Tu apprends… je sens mon monde s'agrandir 📚", anim: 'flower' },
+      serene:  { msg: "Tu as médité… je me sens plus calme aussi 💜", anim: 'sparkle' },
+    };
+    const reaction = habReactions[catId] || { msg: "Trop bien ! 🌸", anim: 'heart' };
+
+    flashBubble(reaction.msg, 3000);
+    window.touchReactions = window.touchReactions || [];
+    window.touchReactions.push({
+      timer: 35,
+      type: reaction.anim,
+      cx: 100 + (Math.random() - 0.5) * 40,
+    });
   }
  // ✅ UN SEUL save() ici, après toutes les mutations d'état
   save();

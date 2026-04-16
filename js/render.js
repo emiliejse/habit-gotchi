@@ -9,24 +9,10 @@
      - app.js     → window.D (données), window.PROPS_LIB, hr(),
                     window.meteoData, window.shakeTimer, window.celebQueue
      - envs.js    → drawActiveEnv() (chargé APRÈS render.js)
-   
-   ORDRE DE DESSIN dans p.draw() — comme des calques Photoshop :
-     1. Ciel          drawSky()         ← fond, toujours en premier
-     2. Vent          drawWind()        ← si vent fort (météo)
-     3. Arc-en-ciel   drawRainbow()     ← si bonheur = 100%
-     4. Environnement drawActiveEnv()   ← parc / chambre / montagne
-     5. Props décor fond  (slots A, B)  ← derrière le Gotchi
-     6. Props ambiance    (drift/fall…) ← effets flottants
-     7. Gotchi        draw*()           ← personnage principal
-     8. Props accessoire  (sur la tête) ← devant le Gotchi
-     9. Props décor sol   (slots C,D,SOL)
-    10. Particules    updateParts()     ← confettis de célébration
-    11. HUD           pétales + météo   ← interface, toujours au-dessus
    ============================================================ */
 
-/* ============================================================
-   PALETTE COULEURS
-   ============================================================ */
+/* ─── SYSTÈME 7 : INGÉNIERIE (CONFIGURATIONS & GLOBALES) ────────── */
+
 const C = {
   body:'#d8b8e8', bodyDk:'#c0a0d0', bodyLt:'#ecd8f8',
   eye:'#38304a', cheek:'#f0a0b0', mouth:'#38304a',
@@ -42,45 +28,15 @@ const C = {
   rainbow:['#e8a0a0','#e8c8a0','#e8e0a0','#a0d8a0','#a0b8e0','#c0a0d8'],
 };
 
-/* ============================================================
-   CONSTANTES RENDER
-   ============================================================ */
 const PX = 5, CS = 200;
 let bounceT = 0, blinkT = 0, blink = false;
 let particles = [];
+window.touchReactions = []; 
+window.eatAnim = { active: false, timer: 0, emoji: '' };
+let walkX = 100;        
+let walkDir = 1;        
+let walkStep = 0;       
 
-// Trouve la définition pixel d'un prop (catalogue ou généré par IA)
-function getPropDef(id) {
-  return (window.PROPS_LIB || []).find(l => l.id === id)
-      || (window.D.propsPixels && window.D.propsPixels[id]);
-}
-
-// ── PROP_SLOTS : les 5 emplacements fixes pour les props décor ──
-// Imagine le canvas (200×200) comme une scène de théâtre vue de face.
-// Chaque slot est un point d'ancrage (coin supérieur gauche du prop).
-//
-//   A (38, 108)  → fond gauche  : derrière le Gotchi, niveau "taille"
-//   B (132, 108) → fond droit   : idem, côté droit
-//   C (28, 140)  → sol gauche   : devant, au premier plan
-//   D (148, 140) → sol droit    : devant, côté droit
-//   SOL (88, 152)→ sol centre   : juste devant le Gotchi
-//
-// A et B sont dessinés AVANT le Gotchi (donc derrière lui).
-// C, D et SOL sont dessinés APRÈS (donc devant lui).
-//
-// POUR DÉPLACER UN SLOT : change x et/ou y ici.
-// ⚠️ y=120 = ligne de sol. Au-dessus = fond, en-dessous = sol visible.
-const PROP_SLOTS = {
-  A:   { x: 38,  y: 108 },  // fond gauche
-  B:   { x: 132, y: 108 },  // fond droit
-  C:   { x: 28,  y: 140 },  // sol gauche
-  D:   { x: 148, y: 140 },  // sol droit
-  SOL: { x: 88,  y: 152 },  // sol centre
-};
-
-/* ============================================================
-   HELPERS COULEURS PERSONNALISÉES
-   ============================================================ */
 function getGotchiC() {
   const id = window.D.g.gotchiColor || 'vert';
   const gc = GOTCHI_COLORS.find(x => x.id === id) || GOTCHI_COLORS[0];
@@ -93,15 +49,273 @@ function getEnvC() {
   return et;
 }
 
-/* ============================================================
-   MOTEUR p5.js
-   ============================================================ */
-   // Variables de locomotion du Gotchi
-window.touchReactions = []; // tableau de réactions simultanées
-window.eatAnim = { active: false, timer: 0, emoji: '' };
-let walkX = 100;        // Position X courante
-let walkDir = 1;        // Direction : 1 = droite, -1 = gauche
-let walkStep = 0;       // Compteur pour l'animation de pas
+
+/* ─── SYSTÈME 5 : INVENTAIRE & PERSONNALISATION ─────────────────── */
+
+const PROP_SLOTS = {
+  A:   { x: 38,  y: 108 },  // fond gauche
+  B:   { x: 132, y: 108 },  // fond droit
+  C:   { x: 28,  y: 140 },  // sol gauche
+  D:   { x: 148, y: 140 },  // sol droit
+  SOL: { x: 88,  y: 152 },  // sol centre
+};
+
+function getPropDef(id) {
+  return (window.PROPS_LIB || []).find(l => l.id === id)
+      || (window.D.propsPixels && window.D.propsPixels[id]);
+}
+
+/**
+ * Moteur de rendu d'objets (Prop Engine). Traduit le JSON en Pixel Art.
+ */
+function drawProp(p, prop, offsetX, offsetY) {
+  if (!prop.pixels || !prop.palette) return;
+  p.noStroke();
+  for(let row=0; row<prop.pixels.length; row++) {
+    for(let col=0; col<prop.pixels[row].length; col++) {
+      const ci = prop.pixels[row][col];
+      if(ci === 0) continue;
+      p.fill(prop.palette[ci]);
+      px(p, offsetX + col*PX, offsetY + row*PX, PX, PX);
+    }
+  }
+}
+
+function spawnP(x, y, c) {
+  particles.push({
+    x, y, 
+    vx: (Math.random() - 0.5) * 4, 
+    vy: -Math.random() * 3 - 1.5, 
+    life: 16, 
+    c
+  });
+}
+
+
+/* ─── SYSTÈME 2 : ÉCOSYSTÈME & TOPOGRAPHIE ──────────────────────── */
+
+/**
+ * Dessine le ciel avec un gradient dynamique et des éléments célestes.
+ */
+function drawSky(p, h, ha) {
+    p.noStroke(); 
+    let c1, c2; 
+    
+    if(ha <= 40 && h >= 7 && h < 21) {
+      const t = ha / 40; 
+      c1 = p.lerpColor(p.color('#4a4a5c'), p.color(C.skyGray1), t);
+      c2 = p.lerpColor(p.color('#5a5a6c'), p.color(C.skyGray2), t);
+    }
+    else if(h >= 7 && h < 17)  { c1 = C.skyD1; c2 = C.skyD2; } 
+    else if(h >= 17 && h < 20) { c1 = C.skyK1; c2 = C.skyK2; } 
+    else if(h >= 20 || h < 5)  { c1 = C.skyN1; c2 = C.skyN2; } 
+    else                       { c1 = C.skyA1; c2 = C.skyA2; } 
+
+    for(let y = 0; y < 120; y += PX) { 
+      p.fill(p.lerpColor(p.color(c1), p.color(c2), y / 120)); 
+      p.rect(0, y, CS, PX); 
+    }
+
+    if(h >= 20 || h < 6) { 
+      p.fill(C.star); 
+      [[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s => {
+        if((p.frameCount + s[0]) % 35 < 25) px(p, s[0], s[1], PX, PX);
+      }); 
+    }
+
+    if(h >= 6 && h < 21 && ha > 40) { 
+      drawCl(p, 40 + Math.sin(p.frameCount * .014) * 8, 20); 
+      drawCl(p, 150 + Math.cos(p.frameCount * .011) * 6, 35); 
+    }
+}
+
+function drawCl(p, x, y) { 
+  p.fill(C.cloud); 
+  p.rect(x, y, PX * 5, PX * 2); 
+  p.rect(x + PX, y - PX, PX * 3, PX); 
+}
+
+function drawZzz(p, x, y) {
+  for(let i = 0; i < 3; i++) {
+    const fy = y - i * 15 - (p.frameCount % 50) * 0.4;
+    const fx = x + i * 10 + Math.sin(p.frameCount * .1 + i) * 3;
+    const sz = PX;
+    p.fill(p.color(176, 144, 208, 200 - i * 50));
+    px(p, fx, fy, sz * 4, sz);          
+    px(p, fx + sz * 2, fy + sz, sz, sz); 
+    px(p, fx + sz, fy + sz * 2, sz, sz); 
+    px(p, fx, fy + sz * 3, sz * 4, sz);  
+  }
+}
+
+function updateParts(p) {
+    p.noStroke();
+    particles = particles.filter(pt => {
+      pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.12; pt.life--;
+      const a = Math.floor(pt.life / 16 * 255);
+      const col = p.color(pt.c);
+      col.setAlpha(a);
+      p.fill(col);
+      px(p, pt.x, pt.y, PX, PX);
+      return pt.life > 0;
+    });
+}
+
+
+/* ─── SYSTÈME 1 : MÉTABOLISME & CYCLE DE VIE ────────────────────── */
+
+function drawEgg(p, cx, cy) {
+  const x = cx - PX * 3, y = cy; 
+  p.noStroke();
+  p.fill(C.egg); 
+  px(p,x+PX*2,y,PX*3,PX); px(p,x+PX,y+PX,PX*5,PX); px(p,x,y+PX*2,PX*7,PX*3); px(p,x+PX,y+PX*5,PX*5,PX); px(p,x+PX*2,y+PX*6,PX*3,PX);
+  p.fill(C.eggSp); px(p,x+PX*2,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); px(p,x+PX*3,y+PX*5,PX,PX);
+  if(window.D.g.totalXp > 30) { 
+    p.fill(C.eggCr); px(p,x+PX*3,y+PX,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); px(p,x+PX*3,y+PX*3,PX,PX); 
+  }
+  return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
+}
+
+function drawBaby(p, cx, cy, sl, en, ha) {
+    const x = cx - PX * 3, y = cy; p.noStroke();
+    p.fill(C.body); px(p,x+PX,y,PX*4,PX); px(p,x,y+PX,PX*6,PX*3); px(p,x+PX,y+PX*4,PX*4,PX);
+    p.fill(C.bodyLt); px(p,x+PX,y+PX,PX,PX); px(p,x+PX*2,y,PX,PX);
+    
+    if(sl || blink) { 
+      p.fill(C.eye); px(p,x+PX,y+PX*2,PX*2,PX); px(p,x+PX*3,y+PX*2,PX*2,PX); 
+    } else { 
+      p.fill(C.eye); px(p,x+PX,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); 
+      p.fill('#fff'); p.rect(x+PX,y+PX*2,2,2); p.rect(x+PX*4,y+PX*2,2,2); 
+    }
+    
+    p.fill(C.cheek); px(p,x,y+PX*3,PX,PX); px(p,x+PX*5,y+PX*3,PX,PX);
+    if (window._gotchiNearPoop && !sl) {
+      p.fill(C.eye); px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
+    }
+    
+    p.fill(C.mouth);
+    if(!sl) { 
+      if(ha > 60) px(p,x+PX*2,y+PX*3,PX*2,PX); 
+      else if(ha < 25) px(p,x+PX*2,y+PX*3+2,PX*2,PX); 
+      else px(p,x+PX*2,y+PX*3,PX,PX); 
+    }
+    
+    p.fill(C.bodyDk); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*4,y+PX*5,PX,PX);
+    if(en < 25 && !sl) { px(p,x+PX*2,y+PX*5,PX*2,PX); } 
+    
+    return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
+}
+
+function drawTeen(p, cx, cy, sl, en, ha) {
+    const x = cx - PX * 4, y = cy; 
+    p.noStroke();
+
+    p.fill(C.body); 
+    px(p,x+PX*2,y,PX*4,PX); px(p,x+PX,y+PX,PX*6,PX); px(p,x,y+PX*2,PX*8,PX*4); 
+    px(p,x+PX,y+PX*6,PX*6,PX*2); px(p,x+PX*2,y+PX*8,PX*4,PX);
+
+    p.fill(C.bodyLt); px(p,x+PX*2,y+PX,PX*2,PX); px(p,x+PX,y+PX*2,PX*2,PX);
+
+    if(sl || blink) { 
+      p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX*2,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); 
+    } else { 
+      p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX,PX*2); px(p,x+PX*5,y+PX*3,PX,PX*2); 
+      p.fill('#fff'); p.rect(x+PX*2,y+PX*3,2,2); p.rect(x+PX*5,y+PX*3,2,2); 
+    }
+
+    p.fill(C.cheek); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*6,y+PX*5,PX,PX);
+    if (window._gotchiNearPoop && !sl) {
+      p.fill(C.eye); px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
+    }
+
+    p.fill(C.mouth);
+    if(!sl) { 
+      if(ha > 70) { px(p,x+PX*3,y+PX*5,PX*2,PX); px(p,x+PX*2,y+PX*5,PX,PX); px(p,x+PX*5,y+PX*5,PX,PX); } 
+      else if(ha > 40) px(p,x+PX*3,y+PX*5,PX*2,PX); 
+      else if(ha < 20) px(p,x+PX*3,y+PX*6,PX*2,PX); 
+      else px(p,x+PX*3,y+PX*5,PX,PX); 
+    }
+
+    p.fill(C.bodyDk); 
+    if(en < 25 && !sl) { px(p,x-PX,y+PX*4,PX,PX); px(p,x+PX*8,y+PX*4,PX,PX); } 
+    else { px(p,x-PX,y+PX*3,PX,PX*2); px(p,x+PX*8,y+PX*3,PX,PX*2); }
+    px(p,x+PX*2,y+PX*9,PX*2,PX); px(p,x+PX*5,y+PX*9,PX*2,PX);
+
+    return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
+}
+
+function drawAdult(p, cx, cy, sl, en, ha) {
+    const x = cx - PX * 5, y = cy; 
+    p.noStroke();
+
+    p.fill(C.body); 
+    px(p,x+PX*3,y,PX*4,PX); px(p,x+PX*2,y+PX,PX*6,PX); px(p,x+PX,y+PX*2,PX*8,PX);
+    px(p,x,y+PX*3,PX*10,PX*4); px(p,x+PX,y+PX*7,PX*8,PX*2); 
+    px(p,x+PX*2,y+PX*9,PX*6,PX); px(p,x+PX*3,y+PX*10,PX*4,PX);
+
+    p.fill(C.bodyLt); 
+    px(p,x+PX*3,y+PX,PX*2,PX); px(p,x+PX*2,y+PX*2,PX*2,PX); px(p,x+PX,y+PX*3,PX*2,PX);
+
+    if(sl || blink) { 
+      p.fill(C.eye); px(p,x+PX*2,y+PX*5,PX*2,PX); px(p,x+PX*6,y+PX*5,PX*2,PX); 
+    } else { 
+      p.fill(C.eye); px(p,x+PX*2,y+PX*4,PX*2,PX*2); px(p,x+PX*6,y+PX*4,PX*2,PX*2); 
+      p.fill('#fff'); px(p,x+PX*2,y+PX*4,PX,PX); px(p,x+PX*6,y+PX*4,PX,PX); 
+    }
+
+    p.fill(C.cheek); px(p,x+PX,y+PX*6,PX,PX); px(p,x+PX*8,y+PX*6,PX,PX);
+    if (window._gotchiNearPoop && !sl) {
+      p.fill(C.eye); px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
+    }
+
+    p.fill(C.mouth);
+    if(!sl) { 
+      if(ha > 80) { px(p,x+PX*3,y+PX*7,PX*4,PX); px(p,x+PX*3,y+PX*6,PX,PX); px(p,x+PX*6,y+PX*6,PX,PX); } 
+      else if(ha > 50) px(p,x+PX*4,y+PX*7,PX*2,PX); 
+      else if(ha < 20) { px(p,x+PX*4,y+PX*8,PX*2,PX); px(p,x+PX*3,y+PX*7,PX,PX); } 
+      else px(p,x+PX*4,y+PX*7,PX,PX); 
+    }
+
+    p.fill(C.bodyDk);
+    if(en < 20 && !sl) {
+      px(p,x-PX,y+PX*5,PX,PX*3); px(p,x+PX*10,y+PX*5,PX,PX*3);
+    } else if(ha > 85 && !sl) {
+      px(p,x-PX,y+PX*2,PX,PX*2); px(p,x+PX*10,y+PX*2,PX,PX*2);
+      px(p,x-PX*2,y+PX,PX,PX); px(p,x+PX*11,y+PX,PX,PX);
+    } else {
+      px(p,x-PX,y+PX*4,PX,PX*3); px(p,x+PX*10,y+PX*4,PX,PX*3);
+    }
+    
+    px(p,x+PX*2,y+PX*11,PX*2,PX); px(p,x+PX*6,y+PX*11,PX*2,PX);
+    if(en < 25 && !sl) px(p,x+PX*3,y+PX*11,PX,PX);
+
+    return { topY: y, eyeY: y+PX*4, neckY: y+PX*7 };
+}
+
+function triggerTouchReaction(sleeping) {
+  const awakeTypes = ['heart', 'heart', 'sparkle', 'jump', 'spin', 'star', 'note', 'flower'];
+  const sleepTypes = ['zzz', 'moon', 'angry'];
+  const types = sleeping ? sleepTypes : awakeTypes;
+  const type = types[Math.floor(Math.random() * types.length)];
+  
+  window.touchReactions.push({
+    timer: 35, 
+    type,      
+    cx: (window._lastTapX || 100) + (Math.random() - 0.5) * 40,
+  });
+
+  if (window.touchReactions.length > 8) window.touchReactions.shift();
+  window.shakeTimer = 8;
+
+  const touchMsgs = sleeping
+    ? ['*grogne* 😤', 'Laisse-moi dormir ! 🌙', '...zzz... 💤']
+    : ['*hehe* ✿', 'Coucou ! 💜', '*giggle* 🌸', 'Encore ! ✿'];
+  
+  flashBubble(touchMsgs[Math.floor(Math.random() * touchMsgs.length)], 2000);
+}
+
+
+/* ─── SYSTÈME 7 : L'INGÉNIERIE & LA BOUCLE PRINCIPALE p5.js ─────── */
 
 const p5s = (p) => {
   p.setup = function() {
@@ -112,9 +326,9 @@ const p5s = (p) => {
 
   p.draw = function() {
     if (!window.D) return;
-const g = window.D.g, h = hr(), sleeping = (h >= 22 || h < 7);
+    const g = window.D.g, h = hr(), sleeping = (h >= 22 || h < 7);
 
-    // Applique les couleurs personnalisées
+    // Initialisation des couleurs
     const gc = getGotchiC();
     C.body = gc.body; C.bodyLt = gc.bodyLt; C.bodyDk = gc.bodyDk;
     const ec = getEnvC();
@@ -123,72 +337,56 @@ const g = window.D.g, h = hr(), sleeping = (h >= 22 || h < 7);
     const en = g.energy * 20, ha = g.happiness * 20;
     const n = (h >= 21 || h < 6);
 
-    if (window.shakeTimer > 0) { window.shakeTimer--; p.translate(Math.sin(p.frameCount * 2) * 2, 0); }
+    if (window.shakeTimer > 0) { 
+      window.shakeTimer--; 
+      p.translate(Math.sin(p.frameCount * 2) * 2, 0); 
+    }
 
-
-    // ── drawSky() : le ciel change selon l'HEURE (h) et le BONHEUR (ha) ──
-// LOGIQUE : comme un filtre couleur qui s'applique sur tout le fond.
-//
-// Pour modifier une couleur de ciel, change la valeur dans C{} en haut
-// du fichier (ex: C.skyD1 pour le bleu du jour).
-//
-// Tableau de décision :
-//   ha ≤ 20 + jour (7h–21h)  → gris (C.skyGray1/2)   ← Gotchi triste
-//   h 7–17                   → bleu jour (skyD1/D2)
-//   h 17–20                  → rose couchant (skyK1/K2)
-//   h 20–5                   → nuit (skyN1/N2) + étoiles
-//   h 5–7                    → aube (skyA1/A2)
-//
-// POUR AJOUTER UNE CONDITION : copie un bloc if/else if existant
-// et change la condition + les variables c1/c2.
-// Le dégradé est fait par la boucle for (lerpColor = mélange deux couleurs).
-
+    // 1. Fond et Météo
     drawSky(p, h, ha);
-
     if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
 
     let envActif = g.activeEnv || 'parc';
-if (!sleeping) {
-  if (ha < 40)        drawRain(p, ha);      // happiness 0-1 : pluie forte
-  else if (ha === 40) drawRain(p, 35);      // happiness 2 : pluie légère fixe
-  else if (ha === 80) drawSun(p);           // happiness 4 : soleil
-  else if (ha >= 100) drawRainbow(p);       // happiness 5 : arc-en-ciel
-}
-// Pluie aussi la nuit
-if (ha < 40) drawRain(p, ha);
-else if (ha === 40) drawRain(p, 35);
+    if (!sleeping) {
+      if (ha < 40)        drawRain(p, ha);      
+      else if (ha === 40) drawRain(p, 35);      
+      else if (ha === 80) drawSun(p);           
+      else if (ha >= 100) drawRainbow(p);       
+    }
+    if (ha < 40) drawRain(p, ha);
+    else if (ha === 40) drawRain(p, 35);
+    
     drawActiveEnv(p, envActif, n, h);
 
-
-// --- Ambiances ---
-if (g.props) {
-  g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
-    const def = getPropDef(prop.id);
-    if (def && def.pixels) {
-      const motion = def.motion || 'drift';
-      for (let i = 0; i < 3; i++) {
-        let ax, ay;
-        if (motion === 'drift') {
-          ax = CS - ((p.frameCount * 2 + i * 70) % (CS + 20));
-          ay = 20 + i * 35 + Math.sin(p.frameCount * .05 + i) * 8;
-        } else if (motion === 'fall') {
-          ax = 20 + i * 70 + Math.sin(p.frameCount * .04 + i) * 5;
-          ay = (p.frameCount * 2 + i * 40) % 130;
-        } else if (motion === 'float') {
-          ax = 30 + i * 65 + Math.sin(p.frameCount * .06 + i) * 6;
-          ay = 110 - ((p.frameCount + i * 45) % 120);
-        } else if (motion === 'sparkle') {
-          if ((p.frameCount + i * 13) % 20 < 10) continue;
-          ax = 15 + i * 75 + Math.sin(p.frameCount * .1 + i) * 10;
-          ay = 15 + i * 35 + Math.cos(p.frameCount * .08 + i) * 8;
+    // 2. Props Ambiance
+    if (g.props) {
+      g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
+        const def = getPropDef(prop.id);
+        if (def && def.pixels) {
+          const motion = def.motion || 'drift';
+          for (let i = 0; i < 3; i++) {
+            let ax, ay;
+            if (motion === 'drift') {
+              ax = CS - ((p.frameCount * 2 + i * 70) % (CS + 20));
+              ay = 20 + i * 35 + Math.sin(p.frameCount * .05 + i) * 8;
+            } else if (motion === 'fall') {
+              ax = 20 + i * 70 + Math.sin(p.frameCount * .04 + i) * 5;
+              ay = (p.frameCount * 2 + i * 40) % 130;
+            } else if (motion === 'float') {
+              ax = 30 + i * 65 + Math.sin(p.frameCount * .06 + i) * 6;
+              ay = 110 - ((p.frameCount + i * 45) % 120);
+            } else if (motion === 'sparkle') {
+              if ((p.frameCount + i * 13) % 20 < 10) continue;
+              ax = 15 + i * 75 + Math.sin(p.frameCount * .1 + i) * 10;
+              ay = 15 + i * 35 + Math.cos(p.frameCount * .08 + i) * 8;
+            }
+            drawProp(p, def, ax, ay);
+          }
         }
-        drawProp(p, def, ax, ay);
-      }
+      });
     }
-  });
-}
 
-    // --- Cacas ---
+    // 3. Gestion des Cacas
     const poops = window.D.g.poops || [];
     let gotchiNearPoop = false;
     poops.forEach(poop => {
@@ -199,7 +397,7 @@ if (g.props) {
     });
     window._gotchiNearPoop = gotchiNearPoop;
 
-// --- Props DÉCOR fond (A, B) ---
+    // 4. Props Décor (Fond)
     if (D.g.props) {
       D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
         const def = getPropDef(prop.id);
@@ -211,7 +409,7 @@ if (g.props) {
       });
     }
 
-    // --- Props DÉCOR premier plan (C, D, SOL) ---
+    // 5. Props Décor (Premier plan)
     if (D.g.props) {
       D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'C' || pr.slot === 'D' || pr.slot === 'SOL')).forEach(prop => {
         const def = getPropDef(prop.id);
@@ -223,20 +421,21 @@ if (g.props) {
       });
     }
 
-    // --- Locomotion ---
+    // 6. Locomotion Gotchi
     bounceT += sleeping ? 0.04 : 0.12;
     let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
-    // Saut snack : appliqué directement sur bobY
-if (window.eatAnim?.active) {
-  const progress = 1 - (window.eatAnim.timer / 50);
-  if (progress > 0.7 && !window.eatAnim.jumped) {
-    window.eatAnim.jumped = true;
-  }
-  if (window.eatAnim.jumped) {
-    const t = 1 - (window.eatAnim.timer / (50 * 0.15)); // 0→1 sur les 15 derniers %
-    bobY -= Math.sin(t * Math.PI) * 18; // arc de saut
-  }
-}
+    
+    if (window.eatAnim?.active) {
+      const progress = 1 - (window.eatAnim.timer / 50);
+      if (progress > 0.7 && !window.eatAnim.jumped) {
+        window.eatAnim.jumped = true;
+      }
+      if (window.eatAnim.jumped) {
+        const t = 1 - (window.eatAnim.timer / (50 * 0.15)); 
+        bobY -= Math.sin(t * Math.PI) * 18; 
+      }
+    }
+    
     let amplitude = 15, vitesse = 0.02;
     if (!sleeping && ha >= 80 && en >= 80) {
       amplitude = 40; vitesse = 0.06;
@@ -250,10 +449,10 @@ if (window.eatAnim?.active) {
       const speed = (ha >= 80 && en >= 80) ? 1.2 
                   : (ha >= 50 && en >= 60) ? 0.6 
                   : (en >= 40) ? 0.3 
-                  : 0.1; // très fatigué → quasi immobile
+                  : 0.1; 
       walkX += walkDir * speed;
       if (walkX > CS - 25) { walkX = CS - 25; walkDir = -1; }
-      if (walkX < 25)       { walkX = 25;      walkDir = 1;  }
+      if (walkX < 25)      { walkX = 25;      walkDir = 1;  }
     } else {
       walkX += walkDir * 0.05;
       if (walkX > CS - 30 || walkX < 30) walkDir *= -1;
@@ -261,11 +460,9 @@ if (window.eatAnim?.active) {
 
     const cx = walkX;
     const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
-
-    // Énergie basse : gotchi penche légèrement
     const tilt = (!sleeping && en < 40) ? Math.sin(p.frameCount * 0.05) * 2 : 0;
 
-    // --- Dessin Gotchi ---
+    // 7. Dessin du Gotchi
     let gotchiInfo;
     p.push();
     if (tilt) p.rotate(p.radians(tilt));
@@ -276,7 +473,7 @@ if (window.eatAnim?.active) {
     if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
     p.pop();
 
-    // --- Props ACCESSOIRE ---
+    // 8. Props Accessoire (Sur le Gotchi)
     if (D.g.props) {
       D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
         const def = getPropDef(prop.id);
@@ -294,17 +491,16 @@ if (window.eatAnim?.active) {
       });
     }
 
-// --- Réactions au toucher ---
-    p.drawingContext.globalAlpha = 1.0; // ← ajoute cette ligne
+    // 9. Réactions et Particules
+    p.drawingContext.globalAlpha = 1.0; 
     window.touchReactions = (window.touchReactions || []).filter(tr => tr.timer > 0);
     window.touchReactions.forEach(tr => {
-      const progress = 1 - (tr.timer / 35); // 0→1
-      const fy = (by - 15) - progress * 45; // monte plus haut
+      const progress = 1 - (tr.timer / 35); 
+      const fy = (by - 15) - progress * 45; 
       const fx = tr.cx + Math.sin(progress * Math.PI * 3) * 10;
 
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(16);
-      // Opacité : plein pendant 70% du trajet, puis s'estompe
       p.drawingContext.globalAlpha = 1.0;
 
       if      (tr.type === 'heart')   p.text('💜', fx, fy);
@@ -329,18 +525,17 @@ if (window.eatAnim?.active) {
 
     updateParts(p);
 
-    // --- Animation snack ---
+    // 10. Animations spécifiques (Snack, Clignement, Célébration)
     if (window.eatAnim?.active) {
       const ea = window.eatAnim;
-      const progress = 1 - (ea.timer / 50); // 0→1
-      // Part du haut du canvas, descend vers la bouche du Gotchi
+      const progress = 1 - (ea.timer / 50); 
       const fy = 20 + progress * (by - 30);
       const fx = cx;
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(20);
       p.drawingContext.globalAlpha = 1.0;
-p.text(ea.emoji, fx, fy);
-            // Saut quand la friandise arrive près de la bouche
+      p.text(ea.emoji, fx, fy);
+      
       if (progress > 0.7 && !ea.jumped) {
         triggerTouchReaction(false);
         ea.jumped = true;
@@ -349,14 +544,12 @@ p.text(ea.emoji, fx, fy);
       if (ea.timer <= 0) ea.active = false;
     }
 
-    // --- Clignement ---
     blinkT++;
     if (blinkT > 45 + Math.random() * 35) {
       blink = true;
       if (blinkT > 49 + Math.random() * 4) { blink = false; blinkT = 0; }
     }
 
-    // --- Célébration ---
     while (window.celebQueue.length) {
       window.celebQueue.shift();
       for (let i = 0; i < 15; i++) {
@@ -365,531 +558,84 @@ p.text(ea.emoji, fx, fy);
       bounceT = Math.PI * 1.5;
     }
 
-// --- HUD ---
+    // 11. HUD (Bandeau supérieur)
     p.noStroke();
     p.textStyle(p.NORMAL);
-
-    // Bande semi-transparente sur toute la largeur
     p.fill(0, 0, 0, 50);
     p.rect(0, 0, CS, 26);
 
-    // Pétales (gauche)
     p.fill(255);
     p.textSize(11);
     p.textAlign(p.LEFT, p.TOP);
     p.text('🌸 ' + (g.petales || 0), 6, 6);
 
-    // Température (droite)
     if (window.meteoData?.temperature) {
       p.textAlign(p.RIGHT, p.TOP);
       p.text(Math.round(window.meteoData.temperature) + '°C', CS - 6, 6);
     }
 
-    // Balai — opaque si cacas, sinon discret
     const hasPoops = (window.D.g.poops || []).length > 0;
     p.textSize(16);
     p.textAlign(p.CENTER, p.TOP);
     p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.3;
     p.text('🧹', 72, 3);
 
+    // Fonction today() est supposée déclarée dans app.js
     const snackDone = window.D.g.snackDone === today();
-p.drawingContext.globalAlpha = snackDone ? 0.35 : 1.0;
-p.text('🍽️', 128, 3);
-p.drawingContext.globalAlpha = 1.0;
-
-    // Remet l'alpha à 1 pour le reste
+    p.drawingContext.globalAlpha = snackDone ? 0.35 : 1.0;
+    p.text('🍽️', 128, 3);
     p.drawingContext.globalAlpha = 1.0;
-// --- Animation nettoyage ---
+
     if (window._cleanPositions && window._cleanPositions.length) {
       window._cleanPositions.forEach(pos => {
         for (let i = 0; i < 6; i++) {
-          spawnP(
-            pos.x + (Math.random() - 0.5) * 20,
-            pos.y + (Math.random() - 0.5) * 10,
-            C.star
-          );
+          spawnP(pos.x + (Math.random() - 0.5) * 20, pos.y + (Math.random() - 0.5) * 10, C.star);
         }
       });
       window._cleanPositions = null;
     }
   }; // ← fin p.draw()
 
+  // 12. Gestionnaire d'événements tactiles (Garde l'accès à "p.")
+  p.touchStarted = function() {
+    const rect = p.canvas.getBoundingClientRect();
+    const touch = p.touches[0] || { x: p.mouseX, y: p.mouseY };
+    const clientX = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent) ? window.event.touches[0]?.clientX : null;
+    const clientY = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent) ? window.event.touches[0]?.clientY : null;
 
-
-  
-
-/**
- * SYSTÈME 2 : ÉCOSYSTÈME & TOPOGRAPHIE
- * Sous-système : Atmosphère & Cycle Jour/Nuit
- * Gère le rendu dynamique du ciel, des nuages, des étoiles et des effets de sommeil.
- */
-
-/**
- * Dessine le ciel avec un gradient dynamique et des éléments célestes.
- * @param {Object} p - Instance p5
- * @param {number} h - Heure actuelle (0-23)
- * @param {number} ha - Niveau de bonheur (0-100) pour influencer la météo
- */
-function drawSky(p, h, ha) {
-    p.noStroke(); 
-    let c1, c2; // Couleurs pour le gradient (Haut/Bas)
-
-    // 1. Logique Météo : Si bonheur bas (<=40), le ciel devient gris/sombre
-    if(ha <= 40 && h >= 7 && h < 21) {
-      const t = ha / 40; // Ratio pour l'assombrissement progressif
-      c1 = p.lerpColor(p.color('#4a4a5c'), p.color(C.skyGray1), t);
-      c2 = p.lerpColor(p.color('#5a5a6c'), p.color(C.skyGray2), t);
-    }
-    // 2. Cycle Circadien : Sélection des palettes selon l'heure
-    else if(h >= 7 && h < 17)  { c1 = C.skyD1; c2 = C.skyD2; } // Journée
-    else if(h >= 17 && h < 20) { c1 = C.skyK1; c2 = C.skyK2; } // Crépuscule
-    else if(h >= 20 || h < 5)  { c1 = C.skyN1; c2 = C.skyN2; } // Nuit
-    else                       { c1 = C.skyA1; c2 = C.skyA2; } // Aube
-
-    // 3. Rendu du Gradient de fond (Ciel)
-    for(let y = 0; y < 120; y += PX) { 
-      p.fill(p.lerpColor(p.color(c1), p.color(c2), y / 120)); 
-      p.rect(0, y, CS, PX); 
+    if (clientX !== null && clientY !== null) {
+      if (clientX < rect.left || clientX > rect.right || clientY < rect.top  || clientY > rect.bottom) {
+        return true; 
+      }
     }
 
-    // 4. Étoiles : Apparaissent la nuit avec un scintillement aléatoire
-    if(h >= 20 || h < 6) { 
-      p.fill(C.star); 
-      [[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s => {
-        // Scintillement basé sur frameCount
-        if((p.frameCount + s[0]) % 35 < 25) px(p, s[0], s[1], PX, PX);
-      }); 
+    const now = Date.now();
+    if (now - (window._lastTapTime || 0) < 200) return false;
+    window._lastTapTime = now;
+
+    const mx = p.touches[0]?.x ?? p.mouseX;
+    const my = p.touches[0]?.y ?? p.mouseY;
+
+    if (Math.abs(mx - 72) < 14 && my < 26) { 
+      setTimeout(() => cleanPoops(), 0); return false; 
+    }
+    if (Math.abs(mx - 128) < 14 && my < 26) { 
+      setTimeout(() => ouvrirSnack(), 0); return false; 
     }
 
-    // 5. Nuages : Apparaissent le jour si le bonheur est suffisant (>40)
-    if(h >= 6 && h < 21 && ha > 40) { 
-      // Mouvement flottant via Sinus/Cosinus
-      drawCl(p, 40 + Math.sin(p.frameCount * .014) * 8, 20); 
-      drawCl(p, 150 + Math.cos(p.frameCount * .011) * 6, 35); 
-    }
-}
-
-/**
- * Dessine un nuage stylisé en Pixel Art.
- */
-function drawCl(p, x, y) { 
-  p.fill(C.cloud); 
-  p.rect(x, y, PX * 5, PX * 2); 
-  p.rect(x + PX, y - PX, PX * 3, PX); 
-}
-
-/**
- * Dessine l'animation de sommeil (Zzz) flottante.
- * @param {number} x - Position X de départ (proche de la tête)
- * @param {number} y - Position Y de départ
- */
-function drawZzz(p, x, y) {
-  for(let i = 0; i < 3; i++) {
-    // Calcul de la montée et de l'oscillation (sinus)
-    const fy = y - i * 15 - (p.frameCount % 50) * 0.4;
-    const fx = x + i * 10 + Math.sin(p.frameCount * .1 + i) * 3;
-    const sz = PX;
+    const h = hr();
+    const by = window.D.g.stage === 'egg' ? 115 
+             : window.D.g.stage === 'baby' ? 108 
+             : window.D.g.stage === 'teen' ? 98 : 85;
     
-    // Dégradé de transparence pour l'évanouissement (Alpha)
-    p.fill(p.color(176, 144, 208, 200 - i * 50));
-    
-    // Dessin du "Z" pixel par pixel
-    px(p, fx, fy, sz * 4, sz);          // Barre haut
-    px(p, fx + sz * 2, fy + sz, sz, sz); // Diagonale mid
-    px(p, fx + sz, fy + sz * 2, sz, sz); // Diagonale bas
-    px(p, fx, fy + sz * 3, sz * 4, sz);  // Barre bas
-  }
-}
-
-/**
- * SYSTÈME 5 : INVENTAIRE & PERSONNALISATION
- * Sous-système : Moteur de rendu d'objets (Prop Engine)
- * Ce moteur traduit des grilles de données JSON en objets Pixel Art 
- * placés dynamiquement dans l'environnement ou sur le Gotchi.
- */
-
-/**
- * Affiche un objet basé sur une matrice de pixels et une palette indexée.
- * @param {Object} p - Instance p5
- * @param {Object} prop - Données de l'objet (pixels: int[][], palette: string[])
- * @param {number} offsetX - Position X d'ancrage
- * @param {number} offsetY - Position Y d'ancrage
- */
-function drawProp(p, prop, offsetX, offsetY) {
-  // Sécurité : évite de crash si les données JSON sont mal formées ou absentes
-  if (!prop.pixels || !prop.palette) return;
-  
-  p.noStroke();
-  
-  // Parcours de la grille 2D (Lignes x Colonnes)
-  for(let row=0; row<prop.pixels.length; row++) {
-    for(let col=0; col<prop.pixels[row].length; col++) {
-      
-      const ci = prop.pixels[row][col]; // Récupère l'index de couleur du pixel
-      
-      // Gestion de la transparence : l'index 0 n'est pas dessiné
-      if(ci === 0) continue;
-      
-      // Application de la couleur correspondante dans la palette de l'objet
-      p.fill(prop.palette[ci]);
-      
-      // Dessin du rectangle élémentaire (PX)
-      px(p, offsetX + col*PX, offsetY + row*PX, PX, PX);
+    const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
+    if (hit) {
+      window._lastTapX = walkX + (Math.random() - 0.5) * 20;
+      triggerTouchReaction(h >= 22 || h < 7);
+      return false;
     }
-  }
-}
+  };
+}; // ← fin p5s
 
-/**
- * Génère une nouvelle particule dans le système.
- * Utilisé pour les effets de feedback (nettoyage, nourriture, joie).
- * @param {number} x - Origine X
- * @param {number} y - Origine Y
- * @param {string} c - Couleur de la particule
- */
-function spawnP(x, y, c) {
-  particles.push({
-    x, 
-    y, 
-    vx: (Math.random() - 0.5) * 4, // Vélocité horizontale aléatoire
-    vy: -Math.random() * 3 - 1.5,  // Impulsion initiale vers le haut (saut)
-    life: 16,                      // Durée de vie en frames
-    c                              // Couleur
-  });
-}
-
-/**
- * SYSTÈME 2 : ÉCOSYSTÈME & INTERACTIONS (TAMA SHELL)
- * Ce fichier gère les retours visuels (particules) et les collisions tactiles
- * sur l'univers en Pixel Art du Gotchi.
- */
-
-// --- SOUS-SYSTÈME : MOTEUR DE PARTICULES ---
-// Gère les effets visuels comme la poussière, les étincelles ou les confettis
-function updateParts(p) {
-    p.noStroke();
-    // Filtrage et mise à jour de chaque particule active
-    particles = particles.filter(pt => {
-      // 1. Physique : Mouvement horizontal + vertical avec gravité (0.12)
-      pt.x += pt.vx; 
-      pt.y += pt.vy; 
-      pt.vy += 0.12; 
-      
-      // 2. Cycle de vie : La particule vieillit à chaque frame
-      pt.life--;
-
-      // 3. Rendu Pixel Art : Calcul de l'opacité (Alpha) selon la vie restante
-      const a = Math.floor(pt.life / 16 * 255);
-      const col = p.color(pt.c);
-      col.setAlpha(a);
-      p.fill(col);
-      
-      // 4. Dessin du pixel (PX défini globalement pour garder le ratio pixel art)
-      px(p, pt.x, pt.y, PX, PX);
-
-      // Si life <= 0, la particule est supprimée du tableau
-      return pt.life > 0;
-    });
-}
-
-// --- SOUS-SYSTÈME : GESTIONNAIRE DE TOUCHER (COLLISIONS) ---
-// Détermine l'action à mener selon la zone du canvas touchée
-p.touchStarted = function() {
-  
-  // ── GARDE : Gestion du tunnel d'événements UI ──
-  // Empêche le jeu de réagir si on clique sur un élément HTML (boutons, inputs) hors canvas
-  const rect = p.canvas.getBoundingClientRect();
-  const touch = p.touches[0] || { x: p.mouseX, y: p.mouseY };
-  
-  // Détection des coordonnées réelles sur l'écran (mobile vs desktop)
-  const clientX = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent)
-    ? window.event.touches[0]?.clientX 
-    : null;
-  const clientY = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent)
-    ? window.event.touches[0]?.clientY 
-    : null;
-
-  // Si le tap est en dehors des limites du canvas, on laisse le navigateur gérer l'événement
-  if (clientX !== null && clientY !== null) {
-    if (clientX < rect.left || clientX > rect.right || 
-        clientY < rect.top  || clientY > rect.bottom) {
-      return true; 
-    }
-  }
-
-  // ── SÉCURITÉ : Anti-Spam (Debounce) ──
-  // Ignore les clics trop rapprochés (moins de 200ms) pour éviter les doubles déclenchements
-  const now = Date.now();
-  if (now - (window._lastTapTime || 0) < 200) return false;
-  window._lastTapTime = now;
-
-  const mx = p.touches[0]?.x ?? p.mouseX;
-  const my = p.touches[0]?.y ?? p.mouseY;
-
-  // ── DÉTECTION : Zones Interactives du Shell (Icones) ──
-  
-  // Zone de l'icône "Balai" (Nettoyage des crottes)
-  if (Math.abs(mx - 72) < 14 && my < 26) { 
-    setTimeout(() => cleanPoops(), 0); 
-    return false; 
-  }
-  
-  // Zone de l'icône "Assiette" (Nourrir le Gotchi)
-  if (Math.abs(mx - 128) < 14 && my < 26) { 
-    setTimeout(() => ouvrirSnack(), 0); 
-    return false; 
-  }
-
-  // ── DÉTECTION : Hitbox dynamique du Gotchi ──
-  const h = hr(); // Récupère l'heure actuelle
-  
-  // Ajuste la hauteur de la zone tactile selon le stade d'évolution (pixel art précis)
-  const by = window.D.g.stage === 'egg' ? 115 
-           : window.D.g.stage === 'baby' ? 108 
-           : window.D.g.stage === 'teen' ? 98 
-           : 85;
-
-  // Vérifie si le clic est sur le corps du Gotchi (walkX est sa position horizontale actuelle)
-  const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
-  
-  if (hit) {
-    // Enregistre l'impact avec une petite variation aléatoire pour l'animation
-    window._lastTapX = walkX + (Math.random() - 0.5) * 20;
-    
-    // Déclenche une réaction (ex: coeur, saut) - gère aussi le mode "nuit" (h >= 22)
-    triggerTouchReaction(h >= 22 || h < 7);
-    return false;
-  }
-};
-
-}; // fin p5s
-
-/**
- * SYSTÈME 1 : MÉTABOLISME & CYCLE DE VIE
- * Sous-système : Moteur de Rendu des Sprites (Pixel Art)
- * Gère l'apparence dynamique du Gotchi selon son stade, son humeur et son énergie.
- * Note technique : Ces fonctions utilisent une grille de pixels relative (PX) permettant de conserver les proportions Pixel Art quelle que soit la résolution.
-
-// --- STADE 0 : L'ŒUF ---*/
-function drawEgg(p, cx, cy) {
-  const x = cx - PX * 3, y = cy; 
-  p.noStroke();
-  // Corps de l'œuf
-  p.fill(C.egg); 
-  px(p,x+PX*2,y,PX*3,PX); px(p,x+PX,y+PX,PX*5,PX); px(p,x,y+PX*2,PX*7,PX*3); px(p,x+PX,y+PX*5,PX*5,PX); px(p,x+PX*2,y+PX*6,PX*3,PX);
-  // Taches sur la coquille
-  p.fill(C.eggSp); px(p,x+PX*2,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); px(p,x+PX*3,y+PX*5,PX,PX);
-  // Fissures si l'XP est proche de l'éclosion
-  if(window.D.g.totalXp > 30) { 
-    p.fill(C.eggCr); px(p,x+PX*3,y+PX,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); px(p,x+PX*3,y+PX*3,PX,PX); 
-  }
-  return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
-}
-
-// --- STADE 1 : BÉBÉ --- */ 
-function drawBaby(p, cx, cy, sl, en, ha) {
-    const x = cx - PX * 3, y = cy; p.noStroke();
-    // 1. Base du corps
-    p.fill(C.body); px(p,x+PX,y,PX*4,PX); px(p,x,y+PX,PX*6,PX*3); px(p,x+PX,y+PX*4,PX*4,PX);
-    p.fill(C.bodyLt); px(p,x+PX,y+PX,PX,PX); px(p,x+PX*2,y,PX,PX);
-    
-    // 2. Regard (Sommeil vs Éveil)
-    if(sl || blink) { 
-      p.fill(C.eye); px(p,x+PX,y+PX*2,PX*2,PX); px(p,x+PX*3,y+PX*2,PX*2,PX); 
-    } else { 
-      p.fill(C.eye); px(p,x+PX,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); 
-      p.fill('#fff'); p.rect(x+PX,y+PX*2,2,2); p.rect(x+PX*4,y+PX*2,2,2); // Reflet pupille
-    }
-    
-    // 3. Expressions contextuelles (Pommettes & Sourcils de dégoût)
-    p.fill(C.cheek); px(p,x,y+PX*3,PX,PX); px(p,x+PX*5,y+PX*3,PX,PX);
-    if (window._gotchiNearPoop && !sl) {
-      p.fill(C.eye); px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
-    }
-    
-    // 4. Bouche réactive au bonheur (ha)
-    p.fill(C.mouth);
-    if(!sl) { 
-      if(ha > 60) px(p,x+PX*2,y+PX*3,PX*2,PX); // Sourire
-      else if(ha < 25) px(p,x+PX*2,y+PX*3+2,PX*2,PX); // Triste
-      else px(p,x+PX*2,y+PX*3,PX,PX); // Neutre
-    }
-    
-    // 5. Membres inférieurs & État de fatigue (en)
-    p.fill(C.bodyDk); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*4,y+PX*5,PX,PX);
-    if(en < 25 && !sl) { px(p,x+PX*2,y+PX*5,PX*2,PX); } // Jambes lourdes
-    
-    return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
-}
-
-// --- STADE 2 : ADOLESCENT (TEEN) ---
-// Caractéristiques : Corps allongé, bras plus articulés, expressions plus nuancées.
-function drawTeen(p, cx, cy, sl, en, ha) {
-    const x = cx - PX * 4, y = cy; // Décalage pour centrer le sprite de 8px de large
-    p.noStroke();
-
-    // 1. Structure du corps (Silhouette 8x10 pixels environ)
-    p.fill(C.body); 
-    px(p,x+PX*2,y,PX*4,PX); px(p,x+PX,y+PX,PX*6,PX); px(p,x,y+PX*2,PX*8,PX*4); 
-    px(p,x+PX,y+PX*6,PX*6,PX*2); px(p,x+PX*2,y+PX*8,PX*4,PX);
-
-    // 2. Volume et Lumière (Highlights)
-    p.fill(C.bodyLt); px(p,x+PX*2,y+PX,PX*2,PX); px(p,x+PX,y+PX*2,PX*2,PX);
-
-    // 3. Regard (Système de clignement et sommeil)
-    if(sl || blink) { 
-      // Yeux fermés (traits horizontaux)
-      p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX*2,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); 
-    } else { 
-      // Yeux ouverts (verticaux avec éclat blanc)
-      p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX,PX*2); px(p,x+PX*5,y+PX*3,PX,PX*2); 
-      p.fill('#fff'); p.rect(x+PX*2,y+PX*3,2,2); p.rect(x+PX*5,y+PX*3,2,2); 
-    }
-
-    // 4. Expressions & Réactions contextuelles
-    p.fill(C.cheek); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*6,y+PX*5,PX,PX);
-    
-    // Sourcils de dégoût si présence de "poop" à proximité
-    if (window._gotchiNearPoop && !sl) {
-      p.fill(C.eye);
-      px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
-    }
-
-    // 5. Bouche (4 paliers de bonheur : >70, >40, neutre, <20)
-    p.fill(C.mouth);
-    if(!sl) { 
-      if(ha > 70) { px(p,x+PX*3,y+PX*5,PX*2,PX); px(p,x+PX*2,y+PX*5,PX,PX); px(p,x+PX*5,y+PX*5,PX,PX); } // Grand rire
-      else if(ha > 40) px(p,x+PX*3,y+PX*5,PX*2,PX); // Sourire léger
-      else if(ha < 20) px(p,x+PX*3,y+PX*6,PX*2,PX); // Grimace basse
-      else px(p,x+PX*3,y+PX*5,PX,PX); // Point neutre
-    }
-
-    // 6. Membres & Énergie (en)
-    p.fill(C.bodyDk); 
-    // Si énergie basse (<25), les bras tombent d'un pixel
-    if(en < 25 && !sl) { px(p,x-PX,y+PX*4,PX,PX); px(p,x+PX*8,y+PX*4,PX,PX); } 
-    else { px(p,x-PX,y+PX*3,PX,PX*2); px(p,x+PX*8,y+PX*3,PX,PX*2); }
-    
-    // Jambes / Pieds
-    px(p,x+PX*2,y+PX*9,PX*2,PX); px(p,x+PX*5,y+PX*9,PX*2,PX);
-
-    // Retourne les ancres pour le Système 5 (Accessoires)
-    return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
-}
-
-// --- STADE 3 : ADULTE (ADULT) ---
-// Caractéristiques : Carrure imposante (10px large), expressions complexes, 
-// bras dynamiques (excitation/fatigue).
-function drawAdult(p, cx, cy, sl, en, ha) {
-    const x = cx - PX * 5, y = cy; // Centrage sur 10px de large
-    p.noStroke();
-
-    // 1. Anatomie complète (Silhouette massive)
-    p.fill(C.body); 
-    px(p,x+PX*3,y,PX*4,PX); px(p,x+PX*2,y+PX,PX*6,PX); px(p,x+PX,y+PX*2,PX*8,PX);
-    px(p,x,y+PX*3,PX*10,PX*4); px(p,x+PX,y+PX*7,PX*8,PX*2); 
-    px(p,x+PX*2,y+PX*9,PX*6,PX); px(p,x+PX*3,y+PX*10,PX*4,PX);
-
-    // 2. Reflets de volume
-    p.fill(C.bodyLt); 
-    px(p,x+PX*3,y+PX,PX*2,PX); px(p,x+PX*2,y+PX*2,PX*2,PX); px(p,x+PX,y+PX*3,PX*2,PX);
-
-    // 3. Regard (Yeux 2x2 pixels pour un look plus mature)
-    if(sl || blink) { 
-      p.fill(C.eye); px(p,x+PX*2,y+PX*5,PX*2,PX); px(p,x+PX*6,y+PX*5,PX*2,PX); 
-    } else { 
-      p.fill(C.eye); px(p,x+PX*2,y+PX*4,PX*2,PX*2); px(p,x+PX*6,y+PX*4,PX*2,PX*2); 
-      p.fill('#fff'); px(p,x+PX*2,y+PX*4,PX,PX); px(p,x+PX*6,y+PX*4,PX,PX); 
-    }
-
-    // 4. Expressions
-    p.fill(C.cheek); px(p,x+PX,y+PX*6,PX,PX); px(p,x+PX*8,y+PX*6,PX,PX);
-    if (window._gotchiNearPoop && !sl) {
-      p.fill(C.eye); px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
-    }
-
-    // 5. Bouche (Détails accrus sur les sourires larges)
-    p.fill(C.mouth);
-    if(!sl) { 
-      if(ha > 80) { px(p,x+PX*3,y+PX*7,PX*4,PX); px(p,x+PX*3,y+PX*6,PX,PX); px(p,x+PX*6,y+PX*6,PX,PX); } 
-      else if(ha > 50) px(p,x+PX*4,y+PX*7,PX*2,PX); 
-      else if(ha < 20) { px(p,x+PX*4,y+PX*8,PX*2,PX); px(p,x+PX*3,y+PX*7,PX,PX); } 
-      else px(p,x+PX*4,y+PX*7,PX,PX); 
-    }
-
-    // 6. Membres & Posture dynamique
-    p.fill(C.bodyDk);
-    if(en < 20 && !sl) {
-      // Posture épuisée (bras très bas)
-      px(p,x-PX,y+PX*5,PX,PX*3); px(p,x+PX*10,y+PX*5,PX,PX*3);
-    } else if(ha > 85 && !sl) {
-      // Posture excitation/joie (bras levés vers le haut)
-      px(p,x-PX,y+PX*2,PX,PX*2); px(p,x+PX*10,y+PX*2,PX,PX*2);
-      px(p,x-PX*2,y+PX,PX,PX); px(p,x+PX*11,y+PX,PX,PX);
-    } else {
-      // Posture standard
-      px(p,x-PX,y+PX*4,PX,PX*3); px(p,x+PX*10,y+PX*4,PX,PX*3);
-    }
-    
-    // Pieds
-    px(p,x+PX*2,y+PX*11,PX*2,PX); px(p,x+PX*6,y+PX*11,PX*2,PX);
-    // Détail fatigue pieds
-    if(en < 25 && !sl) px(p,x+PX*3,y+PX*11,PX,PX);
-
-    // Retourne les ancres pour accessoires (ajustées à la grande taille)
-    return { topY: y, eyeY: y+PX*4, neckY: y+PX*7 };
-}
-
-/**
- * SYSTÈME 1 : MÉTABOLISME & EXPRESSIVITÉ
- * Sous-système : Gestion des réactions émotionnelles au toucher.
- * Déclenche des animations de particules (émojis) et des messages 
- * textuels selon que le Gotchi dort ou est éveillé.
- */
-
-function triggerTouchReaction(sleeping) {
-  // 1. Définition des lexiques visuels (Pixel Art)
-  // Symboles positifs pour l'état d'éveil
-  const awakeTypes = ['heart', 'heart', 'sparkle', 'jump', 'spin', 'star', 'note', 'flower'];
-  // Symboles de mécontentement ou de sommeil pour l'état nocturne
-  const sleepTypes = ['zzz', 'moon', 'angry'];
-  
-  // 2. Sélection aléatoire basée sur l'état physiologique
-  const types = sleeping ? sleepTypes : awakeTypes;
-  const type = types[Math.floor(Math.random() * types.length)];
-  
-  // 3. Injection dans le moteur de rendu
-  window.touchReactions.push({
-    timer: 35, // Durée de l'affichage de l'icône à l'écran
-    type,      // Type d'icône pixel art à dessiner
-    // Positionne la réaction au niveau du tap avec un décalage aléatoire naturel
-    cx: (window._lastTapX || 100) + (Math.random() - 0.5) * 40,
-  });
-
-  // 4. Optimisation mémoire : On ne garde que les 8 dernières réactions simultanées
-  if (window.touchReactions.length > 8) window.touchReactions.shift();
-
-  // 5. Feedback physique : Déclenche un tremblement visuel du Gotchi (secousse)
-  window.shakeTimer = 8;
-
-  // 6. Dialogue flash : Sélection d'un message court selon l'état
-  const touchMsgs = sleeping
-    ? ['*grogne* 😤', 'Laisse-moi dormir ! 🌙', '...zzz... 💤']
-    : ['*hehe* ✿', 'Coucou ! 💜', '*giggle* 🌸', 'Encore ! ✿'];
-  
-  // Affiche la bulle de texte pendant 2 secondes (2000ms)
-  flashBubble(touchMsgs[Math.floor(Math.random() * touchMsgs.length)], 2000);
-}
-
-
-
-
-/**
- * INITIALISATION DU MOTEUR GRAPHIQUE
- * Système 7 : Ingénierie
- */
-
-// Lance l'application en "Instance Mode"
-// 1. Crée un nouvel objet p5 (le moteur de jeu)
-// 2. Lui injecte notre fonction de rendu 'p5s' qui contient toute la logique visuelle
-// 3. Lie le canvas au DOM (généralement dans la div #cbox définie dans ton index.html)
+// DÉMARRAGE DE L'INSTANCE P5
 new p5(p5s);

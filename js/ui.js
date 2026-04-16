@@ -1309,7 +1309,17 @@ function renderPerso() {
   if (et) {
     const current = D.g.envTheme || 'pastel';
     et.innerHTML = ENV_THEMES.map(t => `
-      <div onclick="applyEnvTheme('${t.id}')" style="padding:8px 12px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,${t.sky1},${t.gnd});border:3px solid ${current===t.id?'#b090d0':'transparent'};font-size:10px;font-weight:bold;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.3);transition:.2s;">${t.label}</div>`).join('');
+  <div onclick="applyEnvTheme('${t.id}')" style="
+    padding:10px 8px;border-radius:10px;cursor:pointer;
+    background:linear-gradient(135deg,${t.sky1},${t.gnd});
+    border:3px solid ${current===t.id?'#b090d0':'transparent'};
+    font-size:10px;font-weight:bold;color:#fff;
+    text-shadow:0 1px 3px rgba(0,0,0,.3);
+    text-align:center;line-height:1.4;
+    transition:.2s;">
+    <div style="font-size:18px;margin-bottom:4px">${t.icon || '🌍'}</div>
+    <div>${t.label}</div>
+  </div>`).join('');
   }
 }
 

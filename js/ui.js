@@ -360,7 +360,7 @@ function renderProps() {
     'decor':      { label: '🌿 Décor' },
     'accessoire': { label: '👒 Accessoires' },
     'ambiance':   { label: '✨ Ambiances' },
-    'claude':     { label: '✦ IA' },
+    'claude':     { label: '✦ Créations' },
   };
   const filterEl = document.getElementById('props-filters');
   if (filterEl) {
@@ -1718,6 +1718,8 @@ function applyCheatCode() {
    INIT AU CHARGEMENT
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
+  const h = hr();
+  window.D.g.activeEnv = (h >= 22 || h < 7) ? 'chambre' : 'parc'; // ← reset env au démarrage
   updUI();
   renderHabs();
   renderProps();

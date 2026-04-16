@@ -764,7 +764,10 @@ function rangerProp(propIndex) {
   r += `Objets IA: ${Object.keys(D.propsPixels || {}).length}\n\n`;
 
   r += `📓 Journal\n`;
-  r += `${(D.journal||[]).length} entrées · ${(g.customBubbles||[]).length} bulles perso\n\n`;
+  const nbBulles = Array.isArray(g.customBubbles)
+  ? g.customBubbles.length
+  : Object.values(g.customBubbles || {}).reduce((acc, arr) => acc + arr.length, 0);
+r += `${(D.journal||[]).length} entrées · ${nbBulles} bulles perso\n\n`;
 
   r += `📁 Fichiers data\n`;
   r += (lib.length > 0 ? '✅' : '❌') + ' props.json\n';
@@ -773,7 +776,8 @@ function rangerProp(propIndex) {
   r += (window.AI_SYSTEM ? '✅' : '❌') + ' ai_system.json\n\n';
 
     r += `🗺️ Météo\n`;
-  r += `LAT: ${D.meteoLat || '—'} | LON: ${D.meteoLon || '—'}\n\n`;
+  const meteo = window.meteoData || D.meteo;
+r += `🌡️ ${meteo ? `${meteo.temperature}°C · vent ${meteo.windspeed} km/h` : 'aucune donnée'}\n\n`;
 
   r += `💩 Crottes: ${(g.poops||[]).length}\n\n`;
 

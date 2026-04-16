@@ -414,37 +414,92 @@ p.drawingContext.globalAlpha = 1.0;
     }
   }; // ← fin p.draw()
 
+
+
+  
+
+/**
+ * SYSTÈME 2 : ÉCOSYSTÈME & TOPOGRAPHIE
+ * Sous-système : Atmosphère & Cycle Jour/Nuit
+ * Gère le rendu dynamique du ciel, des nuages, des étoiles et des effets de sommeil.
+ */
+
+/**
+ * Dessine le ciel avec un gradient dynamique et des éléments célestes.
+ * @param {Object} p - Instance p5
+ * @param {number} h - Heure actuelle (0-23)
+ * @param {number} ha - Niveau de bonheur (0-100) pour influencer la météo
+ */
 function drawSky(p, h, ha) {
-    p.noStroke(); let c1, c2;
-    if(ha<=40&&h>=7&&h<21) {
-  // ha=0 → très sombre, ha=40 → gris léger
-  const t = ha / 40; // 0.0 (sombre) → 1.0 (léger)
-  c1 = p.lerpColor(p.color('#4a4a5c'), p.color(C.skyGray1), t);
-  c2 = p.lerpColor(p.color('#5a5a6c'), p.color(C.skyGray2), t);
-}
-    else if(h>=7&&h<17)        { c1=C.skyD1;    c2=C.skyD2;    }
-    else if(h>=17&&h<20)       { c1=C.skyK1;    c2=C.skyK2;    }
-    else if(h>=20||h<5)        { c1=C.skyN1;    c2=C.skyN2;    }
-    else                       { c1=C.skyA1;    c2=C.skyA2;    }
-    for(let y=0;y<120;y+=PX) { p.fill(p.lerpColor(p.color(c1),p.color(c2),y/120)); p.rect(0,y,CS,PX); }
-    if(h>=20||h<6) { p.fill(C.star); [[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s=>{if((p.frameCount+s[0])%35<25)px(p,s[0],s[1],PX,PX)}); }
-    if(h>=6&&h<21&&ha>40) { drawCl(p,40+Math.sin(p.frameCount*.014)*8,20); drawCl(p,150+Math.cos(p.frameCount*.011)*6,35); }
-}
+    p.noStroke(); 
+    let c1, c2; // Couleurs pour le gradient (Haut/Bas)
 
-  function drawCl(p,x,y) { p.fill(C.cloud); p.rect(x,y,PX*5,PX*2); p.rect(x+PX,y-PX,PX*3,PX); }
-
-  function drawZzz(p, x, y) {
-    for(let i=0; i<3; i++) {
-      const fy = y - i*15 - (p.frameCount%50)*0.4;
-      const fx = x + i*10 + Math.sin(p.frameCount*.1+i)*3;
-      const sz = PX;
-      p.fill(p.color(176, 144, 208, 200-i*50));
-      px(p,fx, fy, sz*4, sz);
-      px(p,fx+sz*2, fy+sz, sz, sz);
-      px(p,fx+sz, fy+sz*2, sz, sz);
-      px(p,fx, fy+sz*3, sz*4, sz);
+    // 1. Logique Météo : Si bonheur bas (<=40), le ciel devient gris/sombre
+    if(ha <= 40 && h >= 7 && h < 21) {
+      const t = ha / 40; // Ratio pour l'assombrissement progressif
+      c1 = p.lerpColor(p.color('#4a4a5c'), p.color(C.skyGray1), t);
+      c2 = p.lerpColor(p.color('#5a5a6c'), p.color(C.skyGray2), t);
     }
+    // 2. Cycle Circadien : Sélection des palettes selon l'heure
+    else if(h >= 7 && h < 17)  { c1 = C.skyD1; c2 = C.skyD2; } // Journée
+    else if(h >= 17 && h < 20) { c1 = C.skyK1; c2 = C.skyK2; } // Crépuscule
+    else if(h >= 20 || h < 5)  { c1 = C.skyN1; c2 = C.skyN2; } // Nuit
+    else                       { c1 = C.skyA1; c2 = C.skyA2; } // Aube
+
+    // 3. Rendu du Gradient de fond (Ciel)
+    for(let y = 0; y < 120; y += PX) { 
+      p.fill(p.lerpColor(p.color(c1), p.color(c2), y / 120)); 
+      p.rect(0, y, CS, PX); 
+    }
+
+    // 4. Étoiles : Apparaissent la nuit avec un scintillement aléatoire
+    if(h >= 20 || h < 6) { 
+      p.fill(C.star); 
+      [[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s => {
+        // Scintillement basé sur frameCount
+        if((p.frameCount + s[0]) % 35 < 25) px(p, s[0], s[1], PX, PX);
+      }); 
+    }
+
+    // 5. Nuages : Apparaissent le jour si le bonheur est suffisant (>40)
+    if(h >= 6 && h < 21 && ha > 40) { 
+      // Mouvement flottant via Sinus/Cosinus
+      drawCl(p, 40 + Math.sin(p.frameCount * .014) * 8, 20); 
+      drawCl(p, 150 + Math.cos(p.frameCount * .011) * 6, 35); 
+    }
+}
+
+/**
+ * Dessine un nuage stylisé en Pixel Art.
+ */
+function drawCl(p, x, y) { 
+  p.fill(C.cloud); 
+  p.rect(x, y, PX * 5, PX * 2); 
+  p.rect(x + PX, y - PX, PX * 3, PX); 
+}
+
+/**
+ * Dessine l'animation de sommeil (Zzz) flottante.
+ * @param {number} x - Position X de départ (proche de la tête)
+ * @param {number} y - Position Y de départ
+ */
+function drawZzz(p, x, y) {
+  for(let i = 0; i < 3; i++) {
+    // Calcul de la montée et de l'oscillation (sinus)
+    const fy = y - i * 15 - (p.frameCount % 50) * 0.4;
+    const fx = x + i * 10 + Math.sin(p.frameCount * .1 + i) * 3;
+    const sz = PX;
+    
+    // Dégradé de transparence pour l'évanouissement (Alpha)
+    p.fill(p.color(176, 144, 208, 200 - i * 50));
+    
+    // Dessin du "Z" pixel par pixel
+    px(p, fx, fy, sz * 4, sz);          // Barre haut
+    px(p, fx + sz * 2, fy + sz, sz, sz); // Diagonale mid
+    px(p, fx + sz, fy + sz * 2, sz, sz); // Diagonale bas
+    px(p, fx, fy + sz * 3, sz * 4, sz);  // Barre bas
   }
+}
 
 /**
  * SYSTÈME 5 : INVENTAIRE & PERSONNALISATION

@@ -61,12 +61,16 @@ body {
 /* ─── SYSTÈME 7 : INGÉNIERIE & LAYOUT GLOBAL ─────────────────────── */
 
 /* CONSOLE FIXE (En haut) */
-#console-top{
-  flex-shrink:0;position:sticky;top:0;z-index:50;
-  background:var(--bg);padding:6px 10px 0;
-  border-bottom:2px solid var(--border);
-  box-shadow:0 2px 10px var(--shadow);
-  overflow:hidden; /* ← empêche tout débordement */
+#console-top {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg);
+  padding: calc(var(--sat) + 6px) 10px 0;
+  border-bottom: 2px solid var(--border);
+  box-shadow: 0 2px 10px var(--shadow);
+  overflow: hidden;
 }
 
 /* ZONE DYNAMIQUE (Contenu défilant en bas) */

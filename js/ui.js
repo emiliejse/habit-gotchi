@@ -1303,7 +1303,16 @@ function renderPerso() {
   if (gc) {
     const current = D.g.gotchiColor || 'vert';
     gc.innerHTML = GOTCHI_COLORS.map(c => `
-      <div onclick="applyGotchiColor('${c.id}')" style="width:48px;height:48px;border-radius:12px;cursor:pointer;background:${c.body};border:3px solid ${current===c.id?'#b090d0':'transparent'};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:bold;color:${c.bodyDk};transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1);">${c.label}</div>`).join('');
+  <div onclick="applyGotchiColor('${c.id}')" style="
+    border-radius:10px;cursor:pointer;
+    background:${c.body};
+    border:3px solid ${current===c.id ? 'var(--lilac)' : 'transparent'};
+    padding:6px 4px;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1);">
+    <div style="width:20px;height:20px;border-radius:50%;background:${c.bodyLt};border:2px solid ${c.bodyDk}"></div>
+    <div style="font-size:8px;font-weight:bold;color:${c.bodyDk};text-align:center">${c.label}</div>
+  </div>`).join('');
   }
   const et = document.getElementById('env-themes');
   if (et) {

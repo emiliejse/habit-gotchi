@@ -41,7 +41,9 @@ let walkStep = 0;
 let walkTarget = 100;   // destination en X
 let walkPause  = 0;     // frames d'attente avant le prochain déplacement  
 window.triggerGotchiBounce = function() { window._jumpTimer = 20; };
-window.triggerGotchiShake  = function() { window.shakeTimer = 12; };    
+window.triggerGotchiShake  = function() { window.shakeTimer = 12; }; 
+reaction.spawn?.(); 
+window.spawnP = spawnP;  
 
 function getGotchiC() {
   const id = window.D.g.gotchiColor || 'vert';
@@ -477,6 +479,7 @@ window._gotchiX = walkX; // ← exposition de la position réelle
 
 const cx = walkX;
 const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
+window._gotchiY = by + (bobY || 0);
 const tilt = (!sleeping && en < 40) ? Math.sin(p.frameCount * 0.05) * 2 : 0;
 
 if (window.shakeTimer > 0) window.shakeTimer--;

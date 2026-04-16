@@ -360,26 +360,39 @@ function toggleHab(catId) {
     addEvent('habitude', `${hab?.label || catId} ✓  +15 XP, +2 🌸`);
     window.celebQueue.push(catId);
 
-    // Réaction Gotchi liée à la catégorie
+    const gx = window._gotchiX || 100;
+    const gy = window._gotchiY || 100;
+
     const habReactions = {
-  sport:   { msg: "Tu bouges… je sens l'énergie monter ! 💪",       anim: 'spin',    body: 'shake'  },
-  nutri:   { msg: "Miam ! Tu te nourris bien, moi aussi 🍎",        anim: 'heart',   body: 'bounce' },
-  hydra:   { msg: "Merci pour l'eau ! Je grandis grâce à toi 🌱",   anim: 'jump',    body: 'bounce' },
-  hygiene: { msg: "Tu prends soin de toi… ça me rend joyeux·se ✨", anim: 'sparkle', body: 'bounce' },
-  intel:   { msg: "Tu apprends… je sens mon monde s'agrandir 📚",   anim: 'flower',  body: 'shake'  },
-  serene:  { msg: "Tu as médité… je me sens plus calme aussi 💜",   anim: 'sparkle', body: 'bounce' },
-};
-        const reaction = habReactions[catId] || { msg: "Trop bien ! 🌸", anim: 'heart', body: 'bounce' };
+      sport:   { msg: "Tu bouges… je sens l'énergie monter ! 💪",       anim: 'spin',    body: 'shake'  },
+      nutri:   { msg: "Miam ! Tu te nourris bien, moi aussi 🍎",        anim: 'heart',   body: 'bounce' },
+      hydra:   { msg: "Merci pour l'eau ! Je grandis grâce à toi 🌱",   anim: 'jump',    body: 'bounce',
+        spawn: () => { for (let i=0;i<6;i++) window.spawnP?.(gx+(Math.random()-.5)*20, 10+Math.random()*20, '#88c8f0'); }
+      },
+      hygiene: { msg: "Tu prends soin de toi… ça me rend joyeux·se ✨", anim: 'sparkle', body: 'bounce',
+        spawn: () => { for (let i=0;i<8;i++) { const a=(i/8)*Math.PI*2; window.spawnP?.(gx+Math.cos(a)*20, gy+Math.sin(a)*20, i%2===0?'#fff8b0':'#ffffff'); } }
+      },
+      intel:   { msg: "Tu apprends… je sens mon monde s'agrandir 📚",   anim: 'flower',  body: 'shake',
+        spawn: () => { for (let i=0;i<5;i++) window.particles?.push({x:gx+(Math.random()-.5)*30,y:gy,vx:(Math.random()-.5)*.5,vy:-.8-Math.random()*.5,life:28,c:'#e8d088'}); }
+      },
+      serene:  { msg: "Tu as médité… je me sens plus calme aussi 💜",   anim: 'sparkle', body: 'bounce',
+        spawn: () => { for (let i=0;i<10;i++) window.particles?.push({x:gx+Math.sin(i*.8)*15,y:gy+i*3,vx:Math.sin(i)*.4,vy:-.6-i*.08,life:35,c:i%2===0?'#c8a0e8':'#f0c0d8'}); }
+      },
+    };
+
+    // ← la ligne manquante !
+    const reaction = habReactions[catId] || { msg: "Trop bien ! 🌸", anim: 'heart', body: 'bounce' };
 
     flashBubble(reaction.msg, 3000);
     window.touchReactions = window.touchReactions || [];
     window.touchReactions.push({
       timer: 35,
       type: reaction.anim,
-      cx: (window._gotchiX || 100) + (Math.random() - 0.5) * 40,
+      cx: gx + (Math.random() - 0.5) * 40,
     });
     if (reaction.body === 'bounce') window.triggerGotchiBounce?.();
     if (reaction.body === 'shake')  window.triggerGotchiShake?.();
+    reaction.spawn?.(); // ← l'appel manquant !
   }
  // ✅ UN SEUL save() ici, après toutes les mutations d'état
   save();

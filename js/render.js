@@ -32,7 +32,7 @@ const PX = 5, CS = 200;
 const GOTCHI_OFFSET_Y = 20;
 let bounceT = 0, blinkT = 0, blink = false;
 window._bounceT = 0;
-let particles = [];
+window.particles = [];
 window.touchReactions = []; 
 window.eatAnim = { active: false, timer: 0, emoji: '' };
 let walkX = 100;      
@@ -43,7 +43,6 @@ let walkPause  = 0;     // frames d'attente avant le prochain déplacement
 window.triggerGotchiBounce = function() { window._jumpTimer = 20; };
 window.triggerGotchiShake  = function() { window.shakeTimer = 12; }; 
 window.spawnP = spawnP;
-window.particles = particles;  
 
 function getGotchiC() {
   const id = window.D.g.gotchiColor || 'vert';
@@ -90,7 +89,7 @@ function drawProp(p, prop, offsetX, offsetY) {
 }
 
 function spawnP(x, y, c) {
-  particles.push({
+  window.particles.push({
     x, y, 
     vx: (Math.random() - 0.5) * 4, 
     vy: -Math.random() * 3 - 1.5, 
@@ -158,7 +157,7 @@ function drawZzz(p, x, y) {
 
 function updateParts(p) {
     p.noStroke();
-    particles = particles.filter(pt => {
+    window.particles = window.particles.filter(pt => {
       pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.12; pt.life--;
       const a = Math.floor(pt.life / 16 * 255);
       const col = p.color(pt.c);

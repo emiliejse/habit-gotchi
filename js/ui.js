@@ -1296,14 +1296,14 @@ function renderPerso() {
           <div style="width:14px;height:14px;border-radius:50%;background:${p.mint}"></div>
           <div style="width:14px;height:14px;border-radius:50%;background:${p.pink}"></div>
         </div>
-        <div style="font-size:9px;font-weight:bold;color:#38304a">${p.label}</div>
+        <div style="font-size:9px;font-weight:bold;color:${p.text || '#38304a'}">${p.label}</div>
       </div>`).join('');
   }
   const gc = document.getElementById('gotchi-colors');
   if (gc) {
     const current = D.g.gotchiColor || 'vert';
     gc.innerHTML = GOTCHI_COLORS.map(c => `
-      <div onclick="applyGotchiColor('${c.id}')" style="width:48px;height:48px;border-radius:12px;cursor:pointer;background:${c.body};border:3px solid ${current===c.id?'#b090d0':'transparent'};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:bold;color:#38304a;transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1);">${c.label}</div>`).join('');
+      <div onclick="applyGotchiColor('${c.id}')" style="width:48px;height:48px;border-radius:12px;cursor:pointer;background:${c.body};border:3px solid ${current===c.id?'#b090d0':'transparent'};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:bold;color:${c.bodyDk};transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1);">${c.label}</div>`).join('');
   }
   const et = document.getElementById('env-themes');
   if (et) {

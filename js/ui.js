@@ -39,7 +39,7 @@ function go(t) {
   if (t === 'gotchi') {
     shell.classList.remove('shrunk');
     const h = hr();
-    window.D.g.activeEnv = (h >= 22 || h < 7) ? 'chambre' : 'parc';
+    window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
   } else {
     shell.classList.add('shrunk');
     if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
@@ -1719,7 +1719,7 @@ function applyCheatCode() {
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const h = hr();
-  window.D.g.activeEnv = (h >= 22 || h < 7) ? 'chambre' : 'parc'; // ← reset env au démarrage
+  window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc'; // ← reset env au démarrage
   updUI();
   renderHabs();
   renderProps();

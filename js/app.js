@@ -376,7 +376,7 @@ function toggleHab(catId) {
     window.touchReactions.push({
       timer: 35,
       type: reaction.anim,
-      cx: 100 + (Math.random() - 0.5) * 40,
+      cx: (window._gotchiX || 100) + (Math.random() - 0.5) * 40,
     });
   }
  // ✅ UN SEUL save() ici, après toutes les mutations d'état

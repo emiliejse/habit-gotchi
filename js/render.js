@@ -34,7 +34,7 @@ let bounceT = 0, blinkT = 0, blink = false;
 let particles = [];
 window.touchReactions = []; 
 window.eatAnim = { active: false, timer: 0, emoji: '' };
-let walkX = 100;        
+let walkX = 100;      
 let walkDir = 1;        
 let walkStep = 0; 
 let walkTarget = 100;   // destination en X
@@ -468,6 +468,7 @@ if (!sleeping) {
   walkX += walkDir * 0.04;
   if (walkX > XMAX || walkX < XMIN) walkDir *= -1;
 }
+window._gotchiX = walkX; // ← exposition de la position réelle
 
 const cx = walkX;
 const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;

@@ -590,9 +590,9 @@ p.touchStarted = function() {
  * SYSTÈME 1 : MÉTABOLISME & CYCLE DE VIE
  * Sous-système : Moteur de Rendu des Sprites (Pixel Art)
  * Gère l'apparence dynamique du Gotchi selon son stade, son humeur et son énergie.
- */
+ * Note technique : Ces fonctions utilisent une grille de pixels relative (PX) permettant de conserver les proportions Pixel Art quelle que soit la résolution.
 
-// --- STADE 0 : L'ŒUF ---
+// --- STADE 0 : L'ŒUF ---*/
 function drawEgg(p, cx, cy) {
   const x = cx - PX * 3, y = cy; 
   p.noStroke();
@@ -608,7 +608,7 @@ function drawEgg(p, cx, cy) {
   return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
 }
 
-// --- STADE 1 : BÉBÉ ---
+// --- STADE 1 : BÉBÉ --- */ 
 function drawBaby(p, cx, cy, sl, en, ha) {
     const x = cx - PX * 3, y = cy; p.noStroke();
     // 1. Base du corps
@@ -644,10 +644,123 @@ function drawBaby(p, cx, cy, sl, en, ha) {
     return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
 }
 
-// ... Les fonctions drawTeen et drawAdult suivent la même logique avec des grilles plus larges (Teen: PX*4, Adult: PX*5)
+// --- STADE 2 : ADOLESCENT (TEEN) ---
+// Caractéristiques : Corps allongé, bras plus articulés, expressions plus nuancées.
+function drawTeen(p, cx, cy, sl, en, ha) {
+    const x = cx - PX * 4, y = cy; // Décalage pour centrer le sprite de 8px de large
+    p.noStroke();
 
+    // 1. Structure du corps (Silhouette 8x10 pixels environ)
+    p.fill(C.body); 
+    px(p,x+PX*2,y,PX*4,PX); px(p,x+PX,y+PX,PX*6,PX); px(p,x,y+PX*2,PX*8,PX*4); 
+    px(p,x+PX,y+PX*6,PX*6,PX*2); px(p,x+PX*2,y+PX*8,PX*4,PX);
 
+    // 2. Volume et Lumière (Highlights)
+    p.fill(C.bodyLt); px(p,x+PX*2,y+PX,PX*2,PX); px(p,x+PX,y+PX*2,PX*2,PX);
 
+    // 3. Regard (Système de clignement et sommeil)
+    if(sl || blink) { 
+      // Yeux fermés (traits horizontaux)
+      p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX*2,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); 
+    } else { 
+      // Yeux ouverts (verticaux avec éclat blanc)
+      p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX,PX*2); px(p,x+PX*5,y+PX*3,PX,PX*2); 
+      p.fill('#fff'); p.rect(x+PX*2,y+PX*3,2,2); p.rect(x+PX*5,y+PX*3,2,2); 
+    }
+
+    // 4. Expressions & Réactions contextuelles
+    p.fill(C.cheek); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*6,y+PX*5,PX,PX);
+    
+    // Sourcils de dégoût si présence de "poop" à proximité
+    if (window._gotchiNearPoop && !sl) {
+      p.fill(C.eye);
+      px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
+    }
+
+    // 5. Bouche (4 paliers de bonheur : >70, >40, neutre, <20)
+    p.fill(C.mouth);
+    if(!sl) { 
+      if(ha > 70) { px(p,x+PX*3,y+PX*5,PX*2,PX); px(p,x+PX*2,y+PX*5,PX,PX); px(p,x+PX*5,y+PX*5,PX,PX); } // Grand rire
+      else if(ha > 40) px(p,x+PX*3,y+PX*5,PX*2,PX); // Sourire léger
+      else if(ha < 20) px(p,x+PX*3,y+PX*6,PX*2,PX); // Grimace basse
+      else px(p,x+PX*3,y+PX*5,PX,PX); // Point neutre
+    }
+
+    // 6. Membres & Énergie (en)
+    p.fill(C.bodyDk); 
+    // Si énergie basse (<25), les bras tombent d'un pixel
+    if(en < 25 && !sl) { px(p,x-PX,y+PX*4,PX,PX); px(p,x+PX*8,y+PX*4,PX,PX); } 
+    else { px(p,x-PX,y+PX*3,PX,PX*2); px(p,x+PX*8,y+PX*3,PX,PX*2); }
+    
+    // Jambes / Pieds
+    px(p,x+PX*2,y+PX*9,PX*2,PX); px(p,x+PX*5,y+PX*9,PX*2,PX);
+
+    // Retourne les ancres pour le Système 5 (Accessoires)
+    return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
+}
+
+// --- STADE 3 : ADULTE (ADULT) ---
+// Caractéristiques : Carrure imposante (10px large), expressions complexes, 
+// bras dynamiques (excitation/fatigue).
+function drawAdult(p, cx, cy, sl, en, ha) {
+    const x = cx - PX * 5, y = cy; // Centrage sur 10px de large
+    p.noStroke();
+
+    // 1. Anatomie complète (Silhouette massive)
+    p.fill(C.body); 
+    px(p,x+PX*3,y,PX*4,PX); px(p,x+PX*2,y+PX,PX*6,PX); px(p,x+PX,y+PX*2,PX*8,PX);
+    px(p,x,y+PX*3,PX*10,PX*4); px(p,x+PX,y+PX*7,PX*8,PX*2); 
+    px(p,x+PX*2,y+PX*9,PX*6,PX); px(p,x+PX*3,y+PX*10,PX*4,PX);
+
+    // 2. Reflets de volume
+    p.fill(C.bodyLt); 
+    px(p,x+PX*3,y+PX,PX*2,PX); px(p,x+PX*2,y+PX*2,PX*2,PX); px(p,x+PX,y+PX*3,PX*2,PX);
+
+    // 3. Regard (Yeux 2x2 pixels pour un look plus mature)
+    if(sl || blink) { 
+      p.fill(C.eye); px(p,x+PX*2,y+PX*5,PX*2,PX); px(p,x+PX*6,y+PX*5,PX*2,PX); 
+    } else { 
+      p.fill(C.eye); px(p,x+PX*2,y+PX*4,PX*2,PX*2); px(p,x+PX*6,y+PX*4,PX*2,PX*2); 
+      p.fill('#fff'); px(p,x+PX*2,y+PX*4,PX,PX); px(p,x+PX*6,y+PX*4,PX,PX); 
+    }
+
+    // 4. Expressions
+    p.fill(C.cheek); px(p,x+PX,y+PX*6,PX,PX); px(p,x+PX*8,y+PX*6,PX,PX);
+    if (window._gotchiNearPoop && !sl) {
+      p.fill(C.eye); px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
+    }
+
+    // 5. Bouche (Détails accrus sur les sourires larges)
+    p.fill(C.mouth);
+    if(!sl) { 
+      if(ha > 80) { px(p,x+PX*3,y+PX*7,PX*4,PX); px(p,x+PX*3,y+PX*6,PX,PX); px(p,x+PX*6,y+PX*6,PX,PX); } 
+      else if(ha > 50) px(p,x+PX*4,y+PX*7,PX*2,PX); 
+      else if(ha < 20) { px(p,x+PX*4,y+PX*8,PX*2,PX); px(p,x+PX*3,y+PX*7,PX,PX); } 
+      else px(p,x+PX*4,y+PX*7,PX,PX); 
+    }
+
+    // 6. Membres & Posture dynamique
+    p.fill(C.bodyDk);
+    if(en < 20 && !sl) {
+      // Posture épuisée (bras très bas)
+      px(p,x-PX,y+PX*5,PX,PX*3); px(p,x+PX*10,y+PX*5,PX,PX*3);
+    } else if(ha > 85 && !sl) {
+      // Posture excitation/joie (bras levés vers le haut)
+      px(p,x-PX,y+PX*2,PX,PX*2); px(p,x+PX*10,y+PX*2,PX,PX*2);
+      px(p,x-PX*2,y+PX,PX,PX); px(p,x+PX*11,y+PX,PX,PX);
+    } else {
+      // Posture standard
+      px(p,x-PX,y+PX*4,PX,PX*3); px(p,x+PX*10,y+PX*4,PX,PX*3);
+    }
+    
+    // Pieds
+    px(p,x+PX*2,y+PX*11,PX*2,PX); px(p,x+PX*6,y+PX*11,PX*2,PX);
+    // Détail fatigue pieds
+    if(en < 25 && !sl) px(p,x+PX*3,y+PX*11,PX,PX);
+
+    // Retourne les ancres pour accessoires (ajustées à la grande taille)
+    return { topY: y, eyeY: y+PX*4, neckY: y+PX*7 };
+}
 
 /**
  * SYSTÈME 1 : MÉTABOLISME & EXPRESSIVITÉ

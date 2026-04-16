@@ -1327,7 +1327,8 @@ et.innerHTML = ENV_THEMES.map(t => `
     <div style="font-size:24px;line-height:1">${t.icon}</div>
     <div style="font-size:10px;font-weight:bold;color:#fff;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.4)">${t.label}</div>
   </div>`).join('');
-}
+  }
+} // ← ferme renderPerso()
 
 function applyUIPalette(id, silent = false) {
   const p = UI_PALETTES.find(x => x.id === id); if (!p) return;

@@ -71,7 +71,8 @@ function go(t) {
   document.getElementById('dynamic-zone').scrollTop = 0;
 
   // Sync hauteur après la transition du shell (.shrunk = 0.4s)
-  setTimeout(syncConsoleHeight, 450);
+  syncConsoleHeight(); // immédiat pour éviter le flash
+setTimeout(syncConsoleHeight, 450); // affinage après animation
 }
 
 function toggleMenu() {

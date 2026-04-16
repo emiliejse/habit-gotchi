@@ -536,7 +536,7 @@ function acheterProp(propId) {
   D.g.petales = (D.g.petales || 0) - prop.cout;
   if (!D.g.props) D.g.props = [];
   D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false, seen: false });
-  addEvent('cadeau', prop.cout, `${prop.emoji || '🎁'} ${prop.nom}`);
+  addEvent('cadeau', prop.cout, `${prop.emoji || ''} ${prop.nom}`.trim());
   save();
   toast(`🎁 ${prop.nom} ajouté à ton inventaire !`);
   const buyMsgs = ["Oh un cadeau ! 🎁", "*yeux brillants* ✨", `${prop.emoji} Pour moi ?! 💜`, "J'adore ! 🌸", "*saute de joie* ✿"];
@@ -1029,7 +1029,7 @@ window.PROPS_LOCAL = Object.values(D.propsPixels);
 const bulleCadeau = poolCadeau[Math.floor(Math.random() * poolCadeau.length)];
 flashBubble(bulleCadeau.replace('{{nom}}', D.g.name || 'toi'), 3000);
         toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
-        addEvent('cadeau', 0, `🎁 ${data.cadeau.nom} reçu en cadeau !`);
+        addEvent('cadeau', 0, `${data.cadeau.nom} reçu en cadeau !`);
         updBadgeBoutique();
       }
     }
@@ -1577,12 +1577,18 @@ function openTablet() {
   
   // Icône choisie selon le type + signe de la valeur (gain/perte XP)
   const getIcon = (ev) => {
-    if (ev.type === 'xp')       return (ev.valeur < 0) ? '💤' : '⭐';
-    if (ev.type === 'cadeau')   return '🎁';
-    if (ev.type === 'habitude') return '✅';
-    if (ev.type === 'note')     return '📓';
-    return '•';
-  };
+  // Le subtype prime sur le type s'il existe
+  if (ev.subtype === 'snack') return '🍽️';
+  if (ev.subtype === 'poop')  return '💩';
+  if (ev.subtype === 'stade') return '🌱';
+  
+  // Sinon, fallback sur le type
+  if (ev.type === 'xp')       return (ev.valeur < 0) ? '💤' : '⭐';
+  if (ev.type === 'cadeau')   return '🎁';
+  if (ev.type === 'habitude') return '✅';
+  if (ev.type === 'note')     return '📓';
+  return '•';
+};
   
   const lines = document.getElementById('tablet-lines');
 
@@ -1679,12 +1685,12 @@ if (joursAbsence >= 3) {
     titre = `Ça fait ${joursAbsence} jours... 💜`;
     corps = `${D.g.name} t'a attendue. Tu as perdu <strong>${xpPerdu} XP</strong> pendant ton absence.`;
     addXp(-xpPerdu);
-    addEvent('xp', -xpPerdu, `😴 ${joursAbsence} jours d'absence — -${xpPerdu} XP`);
+    addEvent('xp', -xpPerdu, `${joursAbsence} jours d'absence — -${xpPerdu} XP`);
   } else if (joursAbsence === 1 && !(D.log[td] || []).length) {
     titre = `Bienvenue 🌸`;
     corps = `Tu as perdu <strong>15 XP</strong> hier — pas d'habitudes cochées.`;
     addXp(-15);
-    addEvent('xp', -15, `😴 Pas d'habitudes hier — -15 XP`);
+    addEvent('xp', -15, `Pas d'habitudes hier — -15 XP`);
     flashBubble("Tu m'avais oubliée... 💜", 3000);
   } else if (h >= 22 || h < 7) {
     titre = `*chuchote* 🌙`;

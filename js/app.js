@@ -195,7 +195,12 @@ function addXp(n) {
   const nouveauStade = getSt(window.D.g.totalXp).l; // ← stade après
   
   if (ancienStade !== nouveauStade) {
-    addEvent('xp', window.D.g.totalXp, `⭐ Nouveau stade : ${nouveauStade}`);
+    addEvent({
+  type: 'xp',
+  subtype: 'stade',
+  valeur: window.D.g.totalXp,
+  label: `Nouveau stade : ${nouveauStade}`
+});
     animEl(document.querySelector('#p-gotchi .card'), 'flipInX', 800);
     const stageMsgs = ["Je grandis ! ⭐", "*transformation* ✨", "Je suis plus forte ! 💜", "Nouveau stade ! 🌸", "*brillante* ✿"];
     flashBubble(stageMsgs[Math.floor(Math.random() * stageMsgs.length)], 3000);
@@ -258,7 +263,11 @@ function giveSnack() {
   window.D.g.petales = (window.D.g.petales || 0) + 2; // Récompense : 2 pétales
   save();
   
-  addEvent('note', `${window.D.g.snackEmoji} ${window.D.g.snackEmoji} donné à ${window.D.g.name}  +2 🌸`);
+  addEvent({
+  type: 'note',
+  subtype: 'snack',
+  label: `${window.D.g.snackEmoji} donné à ${window.D.g.name}  +2 🌸`
+});
   const snackMsgs = ["Miam ! 💜", "Délicieux ! ✿", "*mange goulûment* 😋", "Encore ! 🌸", "C'était bon ça ! 💜"];
   flashBubble(snackMsgs[Math.floor(Math.random() * snackMsgs.length)], 2500);
   
@@ -286,7 +295,11 @@ function cleanPoops() {
   flashBubble(poopMsgs[Math.floor(Math.random() * poopMsgs.length)], 3000);
   
   save();
-  addEvent('note', `💩 Crotte ramassée  +${count * 2} 🌸`);
+  addEvent({
+  type: 'note',
+  subtype: 'poop',
+  label: `Crotte ramassée  +${count * 2} 🌸`
+});
   if (typeof updUI === 'function') updUI();
 }
 
@@ -295,13 +308,14 @@ function cleanPoops() {
 // Journal des événements (Terminal) avec file FIFO (max 40)
 function addEvent(type, valeur, label) {
   if (!window.D.eventLog) window.D.eventLog = [];
-  window.D.eventLog.unshift({
-    date: new Date().toISOString(),
-    type,   // 'xp' | 'cadeau' | 'note' | 'habitude'
-    valeur,
-    label
-  });
-  // FIFO : max 40 entrées
+  
+  // Si le premier argument est un objet, on l'utilise tel quel (nouvelle API)
+  // Sinon, on construit l'event à partir des arguments classiques (ancienne API)
+  const ev = (typeof type === 'object' && type !== null)
+    ? { date: new Date().toISOString(), ...type }
+    : { date: new Date().toISOString(), type, valeur, label };
+  
+  window.D.eventLog.unshift(ev);
   if (window.D.eventLog.length > 40) window.D.eventLog.length = 40;
   if (typeof updTabletBadge === 'function') updTabletBadge();
 }

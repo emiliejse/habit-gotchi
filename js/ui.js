@@ -227,7 +227,7 @@ function updUI() {
   if (tc) tc.textContent = `(${window.D.thoughtCount || 0}/3)`;
   const btnAsk = document.getElementById('btn-ask-claude');
   if (btnAsk) {
-    btnAsk.childNodes[0].textContent = `Interroger ${window.D.g.name || 'le Gotchi'} `;
+    btnAsk.childNodes[0].textContent = `Une pensée de ${window.D.g.name || 'le Gotchi'} `;
   }
   updBadgeBoutique();
 }

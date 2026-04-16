@@ -343,11 +343,6 @@ const p5s = (p) => {
     const en = g.energy * 20, ha = g.happiness * 20;
     const n = (h >= 21 || h < 6);
 
-    if (window.shakeTimer > 0) { 
-      window.shakeTimer--; 
-      p.translate(Math.sin(p.frameCount * 3) * 5, Math.sin(p.frameCount * 2) * 3); 
-    }
-
     // 1. Fond et Météo
     drawSky(p, h, ha);
     if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
@@ -484,16 +479,23 @@ const cx = walkX;
 const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
 const tilt = (!sleeping && en < 40) ? Math.sin(p.frameCount * 0.05) * 2 : 0;
 
-
-    // 7. Dessin du Gotchi
+if (window.shakeTimer > 0) window.shakeTimer--;
+// 7. Dessin du Gotchi
     let gotchiInfo;
     p.push();
     if (tilt) p.rotate(p.radians(tilt));
-    if      (g.stage === 'egg')   gotchiInfo = drawEgg(p, cx, by + bobY);
-    else if (g.stage === 'baby')  gotchiInfo = drawBaby(p, cx, by + bobY, sleeping, en, ha);
-    else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, cx, by + bobY, sleeping, en, ha);
-    else                          gotchiInfo = drawAdult(p, cx, by + bobY, sleeping, en, ha);
-    if (sleeping && g.stage !== 'egg') drawZzz(p, cx + 16, by - 10);
+    
+    // Shake local : décale uniquement le Gotchi (pas tout le canvas)
+    const shakeOffsetX = (window.shakeTimer > 0) ? Math.sin(p.frameCount * 3) * 5 : 0;
+    const shakeOffsetY = (window.shakeTimer > 0) ? Math.sin(p.frameCount * 2) * 3 : 0;
+    const drawX = cx + shakeOffsetX;
+    const drawY = by + bobY + shakeOffsetY;
+
+    if      (g.stage === 'egg')   gotchiInfo = drawEgg(p, drawX, drawY);
+    else if (g.stage === 'baby')  gotchiInfo = drawBaby(p, drawX, drawY, sleeping, en, ha);
+    else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, drawX, drawY, sleeping, en, ha);
+    else                          gotchiInfo = drawAdult(p, drawX, drawY, sleeping, en, ha);
+    if (sleeping && g.stage !== 'egg') drawZzz(p, drawX + 16, drawY - 10);
     p.pop();
 
     // 8. Props Accessoire (Sur le Gotchi)

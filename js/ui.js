@@ -1775,7 +1775,8 @@ function applyCheatCode() {
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   const h = hr();
-  window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc'; // ← reset env au démarrage
+  window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
+
   updUI();
   renderHabs();
   renderProps();
@@ -1783,4 +1784,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initMoodPicker();
   checkWelcome();
   updBubbleNow();
+
+  // Version
+  const vEl = document.getElementById('app-version');
+  if (vEl) vEl.textContent = window.APP_VERSION || '';
 });

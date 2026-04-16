@@ -448,16 +448,14 @@ function flashBubble(msg, duree = 2500) {
   window._bubbleTimer = setTimeout(() => updBubbleNow(), duree);
 }
 
-// Moteur de décision contextuelle du discours
 function updBubbleNow() {
   const h = hr(), ha = D.g.happiness, en = D.g.energy;
   const src = window.PERSONALITY ? window.PERSONALITY.bulles : MSG;
   const done = (D.log[today()] || []).length;
 
-  // Priorité absolue 1 : Cacas
-  const poopCount = (D.g.poops || []).length;
-  if (poopCount >= 3) {
-    const poopRage = [
+  // ── Priorité 1 : Cacas (urgence visuelle) ──────────────────────
+  if ((D.g.poops || []).length >= 3) {
+    const pool = [
       "C'est quoi cette porcherie 💩",
       "*bouche le nez* 🤢",
       "Tu vas nettoyer ou pas ??",
@@ -465,46 +463,80 @@ function updBubbleNow() {
       "*regard noir* 😤"
     ];
     const el = document.getElementById('bubble');
-    if (el) el.textContent = poopRage[Math.floor(Math.random() * poopRage.length)];
-    return;
-  }  
-
-  // Priorité absolue 2 : Nuit
-  if (h >= 22 || h < 7) {
-    const pool = src.nuit || ["Zzz... 🌙", "*ronfle* 💤", "...zzZZ... 🌛", "Dors bien ✿"];
-    const el = document.getElementById('bubble');
-    if (el) el.textContent = pool[0];
+    if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
     return;
   }
 
-  // Priorité 3 : Mix contextuel (Heure + Humeur + Météo + Objectifs)
-  let pool = [];
-  if (h < 12)                                    pool.push(...(src.matin   || []));
-  if (h >= 12 && h < 18)                         pool.push(...(src.aprem   || []));
-  if (h >= 18)                                   pool.push(...(src.soir    || []));
-  if (ha <= 1)                                   pool.push(...(src.triste  || []));
-  if (en <= 1)                                   pool.push(...(src.fatigue || []));
-  if (done === 6)                                pool.push(...(src.max     || []));
-  if (done >= 4 && done < 6)                     pool.push(...(src.fierte  || []));
-  if (done === 0)                                pool.push(...(src.peu     || []));
-  if (meteoData?.windspeed > 40)                 pool.push(...(src.vent    || []));
-  if (meteoData?.temperature >= 30)             pool.push(...(src.chaud   || []));
-  if (meteoData?.temperature <= 10)             pool.push(...(src.froid   || []));
+  // ── Priorité 2 : Nuit ──────────────────────────────────────────
+  if (h >= 22 || h < 7) {
+    const pool = src.nuit || ["Zzz... 🌙", "*ronfle* 💤", "...zzZZ... 🌛", "Dors bien ✿"];
+    const el = document.getElementById('bubble');
+    if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+    return;
+  }
 
-  // Ajout des bulles inactives (idle) et des bulles générées par l'IA
-  pool.push(...(src.idle || []));
+  // ── Priorité 3 : Pool pondéré ──────────────────────────────────
+  // Chaque état a un poids : plus le poids est élevé, plus ses phrases
+  // ont de chances d'être choisies. On ajoute les phrases N fois selon le poids.
+
+  const ajouter = (phrases, poids = 1) => {
+    if (!phrases?.length) return;
+    for (let i = 0; i < poids; i++) pool.push(...phrases);
+  };
+
+  let pool = [];
+
+  // Heure (poids 2 — contexte dominant)
+  if (h < 12)           ajouter(src.matin,   2);
+  else if (h < 18)      ajouter(src.aprem,   2);
+  else                  ajouter(src.soir,    2);
+
+  // Objectifs du jour (poids 3 — très pertinent)
+  if (done === 6)                 ajouter(src.max,    3);
+  else if (done >= 4)             ajouter(src.fierte, 3);
+  else if (done === 0)            ajouter(src.peu,    2);
+
+  // États émotionnels (poids 3 — priorité si détresse)
+  if (ha <= 1)                    ajouter(src.triste,  3);
+  if (en <= 1)                    ajouter(src.fatigue, 3);
+
+  // Météo (poids 1 — contexte secondaire)
+  if (meteoData?.windspeed > 40)        ajouter(src.vent,   1);
+  if (meteoData?.temperature >= 30)     ajouter(src.chaud,  1);
+  if (meteoData?.temperature <= 10)     ajouter(src.froid,  1);
+
+  // Idle en fallback seulement si pool trop petit
+  if (pool.length < 5)            ajouter(src.idle, 1);
+
+  // ── Bulles IA : 30% max du pool contextuel ────────────────────
   const cb = D.g.customBubbles;
   if (cb && typeof cb === 'object' && !Array.isArray(cb)) {
-    Object.values(cb).forEach(phrases => pool.push(...phrases));
+    const bullesIA = [];
+    Object.values(cb).forEach(phrases => bullesIA.push(...phrases));
+    if (bullesIA.length) {
+      const maxIA = Math.max(1, Math.floor(pool.length * 0.3));
+      const selection = bullesIA
+        .sort(() => Math.random() - 0.5)
+        .slice(0, maxIA);
+      pool.push(...selection);
+    }
   }
 
   if (!pool.length) pool = ["✿"];
 
+  // ── Anti-répétition ───────────────────────────────────────────
+  // Retire la dernière phrase affichée du pool si d'autres options existent
+  const derniere = window._derniereBulle;
+  const poolFiltre = pool.filter(b => b !== derniere);
+  const poolFinal = poolFiltre.length > 0 ? poolFiltre : pool;
+
+  // ── Affichage ─────────────────────────────────────────────────
   const el = document.getElementById('bubble');
   if (el) {
-    let bulle = pool[Math.floor(Math.random() * pool.length)];
-    bulle = bulle.replace('{{nom}}', D.userName || 'toi'); // Remplacement de variable
+    let bulle = poolFinal[Math.floor(Math.random() * poolFinal.length)];
+    bulle = bulle.replace('{{nom}}', D.userName || 'toi');
     el.textContent = bulle;
+    window._derniereBulle = bulle; // mémorise pour anti-répétition
   }
 }
 

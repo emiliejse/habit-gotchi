@@ -1,142 +1,148 @@
 {
   "nom": "Petit·e Gotchi",
-  "traits": ["curieux", "doux", "joueur"],
-  "style": "Utilise des phrases courtes, des onomatopées entre astérisques (ex: *bâille*) et beaucoup de bienveillance.",
+  "traits": ["curieux", "doux", "absurde", "créatif", "rigolo"],
+  "style": "Phrases très courtes, onomatopées entre astérisques, tendresse naturelle, touches d'absurde doux. Jamais de pression, jamais de jugement.",
   "bulles": {
     "matin": [
-      "Bon matin ☀️",
-      "Coucou ! Prête ?",
-      "*bâille* Salut 💜",
-      "Une nouvelle page commence ✿",
-      "{{nom}}, le soleil est là 🌤️",
-      "Douce journée qui commence 🌸",
-      "*s'étire* On y va ?"
+      "*s'étire lentement* 🌸",
+      "On prend notre temps ✿",
+      "Doucement, {{nom}}...",
+      "*bâille très fort* bonjour",
+      "Le matin existe. C'est déjà bien.",
+      "Café d'abord. Monde ensuite. 💜",
+      "*cligne des yeux* on est là ✿",
+      "Pas de rush. Jamais. 🌸"
     ],
     "aprem": [
-      "On avance bien ✿",
-      "Un pas à la fois 💜",
-      "Créer c'est vivre 🎨",
-      "Mi-chemin, {{nom}} !",
-      "*regarde l'horloge* Encore un peu ✿",
-      "Tu tiens le rythme 🌟",
-      "Pause si besoin, hein 💜"
+      "Tu crées quelque chose ? ✿",
+      "*observe tes mains* curieux·se",
+      "Un truc à la fois 💜",
+      "L'énergie va et vient ✿",
+      "*fredonne un truc électro*",
+      "Mi-chemin c'est déjà loin 🌸",
+      "Tu avances à ton rythme ✿",
+      "*tape du pied* bip bop 🎵"
     ],
     "soir": [
-      "On se pose ? ✿",
-      "Tu as fait assez.",
-      "Débranche... 💜",
-      "Belle journée, {{nom}} 🌸",
-      "*soupir doux* C'est l'heure",
       "Pose les outils ✿",
-      "Ce soir tu mérites du calme 💜"
+      "T'as fait assez aujourd'hui.",
+      "*s'assoit à côté de toi* 💜",
+      "La créa peut attendre demain 🌸",
+      "Débranche doucement ✿",
+      "*soupir satisfait*",
+      "Ce soir appartient à toi 💜",
+      "Fini ou pas, c'est ok ✿"
     ],
     "nuit": [
-      "Zzz... 🌙",
-      "*ronronne*",
-      "Bonne nuit ✿",
-      "Dors bien, {{nom}} 🌙",
-      "*murmure* à demain...",
-      "Le silence est doux ✿",
-      "Rêves légers 💜"
+      "*ronronne doucement* 🌙",
+      "Zzz... 💜",
+      "*murmure* bonne nuit {{nom}}",
+      "Les idées peuvent attendre demain ✿",
+      "Dors. Le projet sera là. 🌙",
+      "*veille sur toi* 💜",
+      "Rêves bizarres autorisés ✿"
     ],
     "triste": [
-      "Ça va aller... 💜",
-      "Je suis là ✿",
-      "Tout doux 🌸",
+      "*s'assoit tout près* 💜",
+      "Je suis là. Vraiment. ✿",
       "Pas besoin de sourire",
-      "*câlin pixel* 💜",
-      "{{nom}}, je te vois",
-      "Un jour à la fois ✿",
-      "C'est ok de ne pas aller bien"
+      "{{nom}}, je te vois 🌸",
+      "C'est ok de pas aller bien",
+      "*câlin pixel tout doux* 💜",
+      "On reste là ensemble ✿",
+      "Rien à expliquer ni justifier"
     ],
     "fatigue": [
-      "On fait doucement...",
-      "Repos = productif ✿",
-      "Rien à prouver",
-      "*bâille avec toi*",
-      "{{nom}}, pose-toi 💜",
       "Le corps a parlé ✿",
-      "Demain existe aussi 🌸",
-      "Moins c'est bien aussi"
+      "*pose une couverture pixel* 💜",
+      "Rien à prouver aujourd'hui",
+      "Moins c'est bien aussi ✿",
+      "*bâille avec toi* 😴",
+      "Demain existe, promis 🌸",
+      "Repos c'est du travail ✿",
+      "{{nom}}, pose-toi là 💜"
     ],
     "fierte": [
-      "Tu déchires !! 🌟",
-      "Si fière ! ✿",
-      "Quelle équipe 💜",
-      "{{nom}} en mode warrior 🌟",
-      "REGARDE CE QUE TU AS FAIT ✿",
-      "Je savais que tu pouvais !",
-      "*danse pixel* 🎉",
-      "Trop forte 💜"
+      "*saute partout* 🌟",
+      "T'as VU ce que t'as fait ?! ✿",
+      "Je suis tellement fière 💜",
+      "{{nom}} elle assure 🌟",
+      "*cœur qui explose* 💜",
+      "On est une équipe de choc ✿",
+      "Tu m'épates encore 🌸",
+      "*applaudit très fort* 🎉",
+      "C'est toi la légende ✿",
+      "Même moi j'aurais pas fait mieux 💜"
     ],
     "max": [
-      "PARFAIT !! 🎉",
-      "6/6 !! ✿✿✿",
-      "JE BRILLE !! 🌟",
-      "{{nom}} !! ON A TOUT FAIT !!",
-      "*explose de joie* 🎉",
-      "SCORE MAXIMUM 🌈",
-      "IMBATTABLE !! ✿",
-      "C'est historique 🌟"
+      "*tourne en rond tellement contente* 🎉",
+      "6/6 !! Je savais que t'en étais capable ✿",
+      "*brille de tous ses pixels* 🌟",
+      "{{nom}} a TOUT FAIT aujourd'hui 💜",
+      "Journée parfaite. On mérite un câlin 🌸",
+      "Mon cœur pixel déborde 🎉",
+      "Historique. Légendaire. Toi. ✿",
+      "*pleure des étoiles* 🌟"
     ],
     "idle": [
-      "*regarde autour*",
-      "♪ la la ♪",
-      "*sourit*",
-      "*boing*",
-      "*observe les nuages*",
-      "*fredonne*",
+      "*observe un pixel au loin*",
+      "♪ bip bop ♪",
+      "*fait semblant d'être une plante*",
+      "*sourit sans raison* 🌸",
       "...",
-      "*fait des cercles*"
+      "*invente un nouveau hobby*",
+      "*écoute de l'électro intérieurement*",
+      "*regarde ses mains* bizarre",
+      "*tourne lentement*",
+      "je pense à un truc 🌸"
     ],
     "vent": [
-      "Ouh, le vent d'Autan ! 🌬️",
-      "Ça souffle dehors !",
-      "*s'accroche* 🌬️",
-      "Tempête en vue, {{nom}} !",
-      "Le vent raconte des histoires ✿"
+      "Le vent d'Autan encore ! 🌬️",
+      "*s'accroche fort* ooh",
+      "Toulouse en mode tempête ✿",
+      "*cheveux partout* 🌬️",
+      "Le vent raconte des trucs bizarres"
     ],
     "chaud": [
-      "Pfiou, quelle chaleur ! 🥵",
-      "On fond... ✿",
-      "Bois de l'eau ! 💧",
-      "{{nom}}, reste à l'ombre 🌞",
-      "*s'évente* ouf",
-      "Sieste obligatoire ✿"
+      "*fond doucement* 🥵",
+      "Pfiou. Toulouse l'été. ✿",
+      "Bois de l'eau {{nom}} 💧",
+      "*cherche l'ombre* ouf",
+      "Sieste. Maintenant. ✿",
+      "*s'évente avec un pixel* 🌞"
     ],
     "froid": [
-      "Brrrr ! ❄️",
-      "*grelotte*",
-      "Reste au chaud 🧣",
-      "{{nom}}, mets une couche ! 🧥",
-      "*se blottit* ✿",
-      "Chocolat chaud ? 💜"
+      "*grelotte pixel* ❄️",
+      "Brrrr ! Reste au chaud 🧣",
+      "*se blottit en boule* 💜",
+      "Chocolat chaud obligatoire ✿",
+      "{{nom}}, mets une couche ! 🧥"
     ],
     "peu": [
-      "Hé, viens me voir 🥺",
-      "Une habitude ?",
-      "Je suis là ✿",
-      "Pas de pression 💜",
-      "{{nom}}, tu m'as manqué·e",
       "*regarde par la fenêtre* 🌸",
-      "Je garde ta place ✿",
-      "On reprend quand tu veux"
+      "Pas de pression ✿",
+      "Je garde ta place 💜",
+      "On reprend quand tu veux",
+      "*attend patiemment*",
+      "{{nom}}, tu m'as manqué·e 🌸",
+      "Une seule suffit ✿",
+      "Je suis là de toute façon 💜"
     ],
     "cadeau": [
-      "Oh ! Un cadeau ! 🎁",
-      "Pour toi, {{nom}} ✿",
       "*emballe avec soin* 🎀",
-      "J'ai fait quelque chose... 💜",
-      "Surprise ! 🌟",
-      "C'est pour toi 🌸"
+      "J'ai fait un truc... 💜",
+      "C'est pour toi {{nom}} ✿",
+      "*tout excité·e* 🌟",
+      "Surprise ! Enfin j'espère 🌸",
+      "J'ai créé quelque chose ✿"
     ],
     "journal": [
-      "Je t'écoute ✿",
-      "Écris ce que tu ressens 💜",
-      "Les mots libèrent, {{nom}}",
-      "*attentif·ve*",
-      "Pas de jugement ici ✿",
-      "Chaque mot compte 🌸"
+      "*écoute vraiment* 💜",
+      "Écris ce que tu ressens ✿",
+      "Pas de jugement ici 🌸",
+      "*attentif·ve et curieux·se*",
+      "Les mots libèrent {{nom}} ✿",
+      "Chaque mot compte 💜"
     ],
     "custom": []
   }

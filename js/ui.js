@@ -642,17 +642,21 @@ function confirmerSuppressionIA(propId) {
   toast(`🗑️ Objet supprimé`);
 }
 
-function makeSlotBtn(propIndex, slotId, label, arrow, occupied) {
+function makeSlotBtn(propIndex, slotId, label, arrow, occupied, currentSlot) {
   const taken = occupied[slotId];
+  const isCurrent = currentSlot === slotId;
   return `<div onclick="confirmSlot(${propIndex},'${slotId}')" style="
-    border:2px solid var(--border); border-radius:8px; padding:8px 4px;
+    border:2px solid ${isCurrent ? 'var(--lilac)' : 'var(--border)'}; 
+    border-radius:8px; padding:8px 4px;
     cursor:pointer; text-align:center; font-size:10px; font-weight:bold;
-    background:${taken ? '#fff8f0' : '#fff'}; transition:.15s;"
+    background:${isCurrent ? 'rgba(176,144,208,.15)' : taken ? '#fff8f0' : '#fff'}; 
+    transition:.15s;"
     onmouseover="this.style.borderColor='var(--mint)'"
-    onmouseout="this.style.borderColor='var(--border)'">
+    onmouseout="this.style.borderColor='${isCurrent ? 'var(--lilac)' : 'var(--border)'}'">
     <div style="font-size:14px">${arrow}</div>
     <div>${label}</div>
-    ${taken ? `<div style="font-size:8px;color:var(--lilac)">⚠ ${taken}</div>` : ''}
+    ${isCurrent ? `<div style="font-size:8px;color:var(--lilac);font-weight:bold">● ici</div>` : ''}
+    ${taken && !isCurrent ? `<div style="font-size:8px;color:var(--coral)">⚠ ${taken}</div>` : ''}
   </div>`;
 }
 
@@ -760,18 +764,16 @@ function openSlotPickerAvecRangement(propIndex) {
       📍 ${prop.emoji || '🎁'} ${prop.nom}
     </h3>
     <p style="font-size:10px;opacity:.6;margin-bottom:10px">
-      Actuellement en slot <b>${prop.slot}</b> — changer d'emplacement ?
+      Changer d'emplacement ?
     </p>
-    <div style="font-size:9px;opacity:.5;margin-bottom:4px;text-transform:uppercase">Fond</div>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px">
-      ${makeSlotBtn(propIndex, 'A', 'Gauche', '↖', occupied)}
-      ${makeSlotBtn(propIndex, 'B', 'Droite', '↗', occupied)}
+      ${makeSlotBtn(propIndex, 'A',   'Gauche', '↖', occupied, prop.slot)}
+      ${makeSlotBtn(propIndex, 'B',   'Droite', '↗', occupied, prop.slot)}
     </div>
-    <div style="font-size:9px;opacity:.5;margin-bottom:4px;text-transform:uppercase">Devant</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
-      ${makeSlotBtn(propIndex, 'C',   'Gauche', '↙', occupied)}
-      ${makeSlotBtn(propIndex, 'SOL', 'Centre', '⬇', occupied)}
-      ${makeSlotBtn(propIndex, 'D',   'Droite', '↘', occupied)}
+      ${makeSlotBtn(propIndex, 'C',   'Gauche', '↙', occupied, prop.slot)}
+      ${makeSlotBtn(propIndex, 'SOL', 'Centre', '⬇', occupied, prop.slot)}
+      ${makeSlotBtn(propIndex, 'D',   'Droite', '↘', occupied, prop.slot)}
     </div>
     <button class="btn btn-d" onclick="rangerProp(${propIndex})" style="width:100%;font-size:10px;margin-bottom:6px">
       📦 Ranger

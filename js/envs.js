@@ -1,19 +1,37 @@
-// ── px() : LA brique élémentaire de tout le pixel art ───────
-// Pense à px() comme à un tampon encreur : chaque appel pose
-// un rectangle de taille PX×PX (5×5 pixels réels à l'écran).
-// Le Math.floor(x/PX)*PX arrondit la position à la grille PX,
-// pour qu'aucun objet ne soit jamais "entre deux pixels".
-//   p  → l'instance p5.js (toujours passer `p`)
-//   x,y → coin supérieur gauche (coordonnées canvas 0–200)
-//   w,h → largeur/hauteur SOUHAITÉE — arrondies au PX supérieur
-// ⚠️ Toujours appeler p.fill() AVANT px() — px() ne set pas la couleur.
+/* ============================================================
+   envs.js — Décors, Météo et Moteur de Pixel
+   RÔLE : Ce fichier est le "Chef Décorateur". Il dessine le fond
+   de la scène (Parc, Chambre, Montagne) et les effets climatiques.
+   ============================================================ */
+
+/* ─── SYSTÈME 7 : INGÉNIERIE (Moteur de Rendu) ───────────────────── */
+
+/**
+ * px() : LA brique élémentaire de tout le pixel art
+ * Pense à px() comme à un tampon encreur : chaque appel pose
+ * un rectangle de taille PX×PX (5×5 pixels réels à l'écran).
+ * Le Math.floor(x/PX)*PX arrondit la position à la grille PX,
+ * pour qu'aucun objet ne soit jamais "entre deux pixels".
+ * * @param {Object} p - L'instance p5.js
+ * @param {number} x, y - Coin supérieur gauche (coordonnées canvas 0–200)
+ * @param {number} w, h - Largeur/hauteur SOUHAITÉE (arrondies au PX supérieur)
+ * ⚠️ Toujours appeler p.fill() AVANT px() — px() ne set pas la couleur.
+ */
 function px(p, x, y, w, h) {
   p.rect(Math.floor(x/PX)*PX, Math.floor(y/PX)*PX, Math.max(PX,Math.floor(w/PX)*PX), Math.max(PX,Math.floor(h/PX)*PX));
 }
-// Raccourci nuit : retourne la couleur assombrie si n=true, sinon la couleur normale
-// "tc" = "theme color"
+
+/* ─── SYSTÈME 2 : ÉCOSYSTÈME & TOPOGRAPHIE (Météo & Nuit) ────────── */
+
+/**
+ * Raccourci Thème Color (tc) : Gère le mode Nuit
+ * Retourne la couleur assombrie si n=true (nuit), sinon la couleur normale
+ */
 function tc(n, col) { return n ? shadeN(col) : col; }
 
+/**
+ * Dessine des bourrasques de vent (Lignes horizontales mouvantes)
+ */
 function drawWind(p) {
   p.noStroke();
   for (let i = 0; i < 8; i++) {
@@ -27,6 +45,10 @@ function drawWind(p) {
     }
   } 
 }
+
+/**
+ * Dessine un arc-en-ciel géométrique (Bonheur Max)
+ */
 function drawRainbow(p) {
   const cx = CS / 2, cy = 125; // ← centre au niveau du sol
   const bands = C.rainbow;
@@ -48,6 +70,9 @@ function drawRainbow(p) {
   }
 }
 
+/**
+ * Dessine la pluie (Intensité inversement proportionnelle au bonheur)
+ */
 function drawRain(p, ha) {
   p.noStroke();
   // Plus ha est bas, plus il y a de gouttes (20 à 80)
@@ -61,9 +86,12 @@ function drawRain(p, ha) {
   }
 }
 
+/**
+ * Dessine un soleil tournoyant
+ */
 function drawSun(p) {
   const cx = CS - 30, cy = 25;
-  // Rayons
+  // Rayons (Rotation basée sur frameCount)
   p.fill('#f0e070');
   for (let a = 0; a < 8; a++) {
     const angle = (a / 8) * Math.PI * 2 + p.frameCount * 0.01;
@@ -77,28 +105,25 @@ function drawSun(p) {
   p.fill('#fce860');
   px(p, cx - 5, cy - 5, 10, 10);
 }
-// ── drawActiveEnv() : dessine l'environnement actif ─────────
-// `env`   → string : 'parc' | 'chambre' | 'montagne' (vient de D.g.activeEnv)
-// `n`     → booléen : true = mode nuit (h≥21 ou h<6)
-// `h`     → heure (0–23), utilisé pour la vitre de la fenêtre chambre
-// `theme` → objet de couleurs issu de getEnvC() → config.js/ENV_THEMES
-//
-// POUR AJOUTER UN ENVIRONNEMENT :
-//   1. Ajoute un objet { id:'monenv', ... } dans ENV_THEMES (config.js)
-//      avec toutes les clés de couleur dont tu auras besoin.
-//   2. Ajoute un bloc `else if (env === 'monenv') { ... }` ici.
-//   3. Pour le mode nuit : wrape chaque fill() avec `tc(n, theme..X) : theme.X`
-//      (shadeN assombrit de 35% — voir en bas du fichier)
-//
-// POUR MODIFIER UNE COULEUR D'UN ENV EXISTANT :
-//   → Va dans config.js, trouve l'objet du thème, change la valeur hex.
-//   → Ne modifie RIEN dans ce fichier sauf si tu changes la structure.
 
+/* ─── SYSTÈME 2 : ÉCOSYSTÈME & TOPOGRAPHIE (Les Biomes) ──────────── */
+
+/**
+ * drawActiveEnv() : dessine l'environnement actif (Le Fond)
+ * @param {Object} p - Instance p5
+ * @param {string} env - 'parc' | 'chambre' | 'montagne' (vient de D.g.activeEnv)
+ * @param {boolean} n - true = mode nuit (h≥21 ou h<6)
+ * @param {number} h - heure (0–23), utilisé pour la vitre de la fenêtre
+ * * POUR AJOUTER UN ENVIRONNEMENT :
+ * 1. Ajoute un objet { id:'monenv', ... } dans ENV_THEMES (config.js)
+ * 2. Ajoute un bloc `else if (env === 'monenv') { ... }` ici.
+ * 3. Wrap chaque couleur avec `tc(n, theme.X)` pour le mode nuit.
+ */
 function drawActiveEnv(p, env, n, h) {
   const theme = getEnvC();
   p.noStroke();
 
-  // ── PARC ────────────────────────────────────────────────
+  // ── 1. BIOME : PARC ────────────────────────────────────────────────
   if (env === 'parc') {
     p.fill(theme.gnd);   p.rect(0, 120, CS, 80);
     p.fill(theme.gndDk); p.rect(0, 120, CS, PX*2);
@@ -111,9 +136,8 @@ function drawActiveEnv(p, env, n, h) {
     drawThemeAccents(p, theme, n);
   }
 
-  // ── CHAMBRE ─────────────────────────────────────────────
-  // Structure : 1.Mur 2.Fenêtre 3.Rideaux+tringle 4.Plinthe
-  //             5.Cadre mural 6.Sol 7.Tapis 8.Bureau+lampe
+  // ── 2. BIOME : CHAMBRE ─────────────────────────────────────────────
+  // Structure : 1.Mur 2.Fenêtre 3.Rideaux 4.Plinthe 5.Cadre 6.Sol 7.Tapis 8.Bureau
   else if (env === 'chambre') {
     const bx = 138; // position x du bureau
 
@@ -145,12 +169,12 @@ function drawActiveEnv(p, env, n, h) {
     p.fill(tc(n, theme.baseboard));
     p.rect(0, 118, CS, PX);
 
-// 5. CADRE MURAL — agrandi 36×36
-p.fill(tc(n, theme.frameOuter));
-p.rect(85, 65, 36, 36);
-p.fill(tc(n, theme.frameBg));
-p.rect(88, 68, 30, 30);
-drawFrameMotif(p, theme, n);
+    // 5. CADRE MURAL — agrandi 36×36
+    p.fill(tc(n, theme.frameOuter));
+    p.rect(85, 65, 36, 36);
+    p.fill(tc(n, theme.frameBg));
+    p.rect(88, 68, 30, 30);
+    drawFrameMotif(p, theme, n);
 
     // 6. SOL PARQUET
     p.fill(tc(n, theme.floor));
@@ -177,27 +201,27 @@ drawFrameMotif(p, theme, n);
     px(p, bx+33, 88, PX*3, PX);
   }
 
-  // ── MONTAGNE ────────────────────────────────────────────
+  // ── 3. BIOME : MONTAGNE / DÉSERT ─────────────────────────────────────────
   else if (env === 'montagne') {
    p.fill(tc(n, theme.mntGnd));   p.rect(0, 120, CS, 80);
     p.fill(tc(n, theme.mntGndDk)); p.rect(0, 120, CS, PX*2);
     p.fill(tc(n, theme.mntPeak));  p.triangle(40, 120, 100, 50, 160, 120);
     
     if (theme.id !== 'desert') {
-  p.fill(tc(n, theme.mntPeak));  p.triangle(40, 120, 100, 50, 160, 120);
-  p.fill(tc(n, theme.mntSnow));  p.triangle(100, 50, 83, 70, 117, 70);
-}
+      p.fill(tc(n, theme.mntPeak));  p.triangle(40, 120, 100, 50, 160, 120);
+      p.fill(tc(n, theme.mntSnow));  p.triangle(100, 50, 83, 70, 117, 70);
+    }
 
     if (theme.id === 'pastel') {
-  // buissons sur la ligne du sol
-  p.fill('#78c488');
-  px(p, 10,  115, PX*4, PX*2);
-  px(p, 50,  116, PX*3, PX*2);
-  px(p, 140, 115, PX*4, PX*2);
-  px(p, 175, 116, PX*3, PX);
-}
+      // buissons sur la ligne du sol
+      p.fill('#78c488');
+      px(p, 10,  115, PX*4, PX*2);
+      px(p, 50,  116, PX*3, PX*2);
+      px(p, 140, 115, PX*4, PX*2);
+      px(p, 175, 116, PX*3, PX);
+    }
     
-    // Désert : pyramide
+    // Sous-biome : Désert (remplace la montagne par une pyramide)
     if (theme.id === 'desert') {
       // Face claire (gauche)
       p.fill(tc(n, theme.mntPeak));
@@ -215,7 +239,10 @@ drawFrameMotif(p, theme, n);
   }
 }
 
-// ── MOTIFS CADRE MURAL (unique par thème) ───────────────────
+/**
+ * MOTIFS CADRE MURAL (Chambre)
+ * Modifie l'art abstrait dans le cadre selon la palette active
+ */
 function drawFrameMotif(p, theme, n) {
   if (theme.id === 'automne') {
     p.fill(tc(n, theme.frameAccent1));
@@ -244,7 +271,10 @@ function drawFrameMotif(p, theme, n) {
   }
 }
 
-// ── ACCENTS ANIMÉS PAR THÈME (parc) ─────────────────────────
+/**
+ * ACCENTS ANIMÉS PAR THÈME (Parc)
+ * Gère les particules spécifiques à l'ambiance (neige, feuilles, etc.)
+ */
 function drawThemeAccents(p, theme, n) {
   const ft = p.frameCount;
 
@@ -287,11 +317,12 @@ else if (theme.id === 'pastel') {
 }
 }
 
-// ── HELPERS ──────────────────────────────────────────────────
+/* ─── SYSTÈME 2 : ÉCOSYSTÈME (Helpers de Dessin) ─────────────────── */
+
 function drawTreeTheme(p, x, y, n, colLeaf, colLeaf2, colTrunk) {
   p.fill(colTrunk);
   px(p, x+PX*2, y+PX*4, PX*2, PX*5);
-  p.fill(n ? '#304028' : colLeaf);
+  p.fill(n ? '#304028' : colLeaf); // Force une couleur sombre si nuit
   px(p, x, y+PX, PX*6, PX*3);
   px(p, x+PX, y-PX, PX*4, PX*2);
   p.fill(n ? '#304028' : colLeaf2);
@@ -311,16 +342,22 @@ function drawCactus(p, x, y) {
 }
 
 function drawFl(p, x, y, c) {
-  p.fill('#58a058'); px(p,x,y,PX,PX*2);
-  p.fill(c); px(p,x-PX,y-PX,PX,PX); px(p,x+PX,y-PX,PX,PX); px(p,x,y-PX*2,PX,PX);
-  p.fill('#f0d878'); px(p,x,y-PX,PX,PX);
+  p.fill('#58a058'); px(p,x,y,PX,PX*2); // Tige
+  p.fill(c); px(p,x-PX,y-PX,PX,PX); px(p,x+PX,y-PX,PX,PX); px(p,x,y-PX*2,PX,PX); // Pétales
+  p.fill('#f0d878'); px(p,x,y-PX,PX,PX); // Cœur
 }
 
-// Assombrit une couleur hex pour le mode nuit
+/* ─── SYSTÈME 7 : INGÉNIERIE (Helpers Mathématiques) ─────────────── */
+
+/**
+ * Assombrit une couleur hex pour générer le mode nuit dynamiquement.
+ * @param {string} hex - Couleur au format "#RRGGBB"
+ * @returns {string} - Couleur assombrie
+ */
 function shadeN(hex) {
   const r = parseInt(hex.slice(1,3),16);
   const g = parseInt(hex.slice(3,5),16);
   const b = parseInt(hex.slice(5,7),16);
-  const f = 0.65;
+  const f = 0.65; // Facteur d'assombrissement (Garde 65% de la luminosité)
   return '#' + [r,g,b].map(v => Math.round(v*f).toString(16).padStart(2,'0')).join('');
 }

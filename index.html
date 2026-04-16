@@ -353,32 +353,35 @@ Ton bilan de la semaine apparaîtra ici...
       </div>
     </div>
 
-    <!-- Sauvegarde/Chargement (SYSTEM 7: Ingénierie/Layout) -->
-    <div class="card" style="margin-top:15px;">
-      <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:8px;font-size:10px">📦 Exporter ma sauvegarde (JSON)</button>
-      <input type="file" id="import-file" style="display:none" accept=".json" onchange="importD(event)">
-      <button class="btn btn-s" onclick="document.getElementById('import-file').click()" style="width:100%;margin-bottom:15px;font-size:10px;background:var(--mint);color:#fff;border:none;">📥 Importer JSON</button>
-      <!-- Bouton debug (SYSTEM 7: Ingénierie/Layout) -->
-      <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-bottom:8px;font-size:10px">🔍 État système</button>
-      <!-- Bouton réinitialisation (SYSTEM 7: Ingénierie/Layout) -->
-      <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
-    </div>
+<!-- Mes données -->
+<div class="card" style="margin-top:15px;">
+  <h2>💾 Mes données</h2>
+  <p style="font-size:10px;color:var(--text2);margin-bottom:10px">Sauvegarde tes progrès avant une mise à jour.</p>
+  <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:8px;font-size:10px">📦 Exporter ma sauvegarde</button>
+  <input type="file" id="import-file" style="display:none" accept=".json" onchange="importD(event)">
+  <button class="btn btn-s" onclick="document.getElementById('import-file').click()" style="width:100%;margin-bottom:8px;font-size:10px;background:var(--mint);color:#fff;border:none;">📥 Restaurer une sauvegarde</button>
+  <button class="btn btn-s" onclick="forceUpdate()" style="width:100%;font-size:10px">🔄 Mettre à jour l'app</button>
+</div>
 
-    <!-- Version de l'app (SYSTEM 7: Ingénierie/Layout) -->
-    <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
+<!-- Danger zone -->
+<div class="card" style="margin-top:12px;border-color:#e57373">
+  <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
+</div>
 
-    <!-- Outils développeur (SYSTEM 7: Ingénierie/Layout) -->
-    <div style="margin-top:12px;border:1px dashed var(--border);border-radius:10px;overflow:hidden">
-      <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
-        style="width:100%;background:none;border:none;padding:8px;font-size:9px;color:var(--text2);cursor:pointer;text-align:left">
-             🛠️ Outils développeur ▾
-      </button>
-      <div style="display:none;padding:0 8px 8px">
-        <button class="btn btn-s" onclick="cleanProps()" style="width:100%;margin-top:4px;font-size:9px">🧹 Nettoyer inventaire</button>
-        <button class="btn btn-m" onclick="forceUpdate()" style="width:100%;margin-top:4px;font-size:9px">🔄 Mettre à jour l'app</button>
-      </div>
-    </div>
-  </div><!-- fin p-settings -->
+<!-- Version -->
+<div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">Habit-Gotchi v0.8 ✿</div>
+
+<!-- Outils développeur (caché) -->
+<div style="margin-top:12px;border:1px dashed var(--border);border-radius:10px;overflow:hidden">
+  <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
+    style="width:100%;background:none;border:none;padding:8px;font-size:9px;color:var(--text2);cursor:pointer;text-align:left">
+    🛠️ Outils développeur ▾
+  </button>
+  <div style="display:none;padding:0 8px 8px">
+    <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:4px;font-size:9px">🔍 État système</button>
+    <button class="btn btn-s" onclick="cleanProps()" style="width:100%;margin-top:4px;font-size:9px">🧹 Nettoyer inventaire</button>
+  </div>
+</div>
 
 </div><!-- fin dynamic-zone -->
 

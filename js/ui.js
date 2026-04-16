@@ -1321,6 +1321,8 @@ function applyUIPalette(id, silent = false) {
   document.documentElement.style.setProperty('--pink',  p.pink);
   document.documentElement.style.setProperty('--text',  p.text  || '#38304a');
   document.documentElement.style.setProperty('--text2', p.text2 || '#887ea0');
+  document.documentElement.style.setProperty('--card',   p.card   || 'rgba(255,255,255,.88)');
+document.documentElement.style.setProperty('--border', p.border || '#ccc4d8');
   window.D.g.uiPalette = id; save(); renderPerso();
   if (!silent) toast(`Palette ${p.label} appliquée ✿`);
 }

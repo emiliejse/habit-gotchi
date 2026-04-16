@@ -480,25 +480,50 @@ function drawSky(p, h, ha) {
     particles.push({x, y, vx:(Math.random()-.5)*4, vy:-Math.random()*3-1.5, life:16, c});
   }
 
+/**
+ * SYSTÈME 2 : ÉCOSYSTÈME & INTERACTIONS (TAMA SHELL)
+ * Ce fichier gère les retours visuels (particules) et les collisions tactiles
+ * sur l'univers en Pixel Art du Gotchi.
+ */
+
+// --- SOUS-SYSTÈME : MOTEUR DE PARTICULES ---
+// Gère les effets visuels comme la poussière, les étincelles ou les confettis
 function updateParts(p) {
     p.noStroke();
+    // Filtrage et mise à jour de chaque particule active
     particles = particles.filter(pt => {
-      pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=.12; pt.life--;
+      // 1. Physique : Mouvement horizontal + vertical avec gravité (0.12)
+      pt.x += pt.vx; 
+      pt.y += pt.vy; 
+      pt.vy += 0.12; 
+      
+      // 2. Cycle de vie : La particule vieillit à chaque frame
+      pt.life--;
+
+      // 3. Rendu Pixel Art : Calcul de l'opacité (Alpha) selon la vie restante
       const a = Math.floor(pt.life / 16 * 255);
       const col = p.color(pt.c);
       col.setAlpha(a);
       p.fill(col);
-      px(p,pt.x, pt.y, PX, PX);
+      
+      // 4. Dessin du pixel (PX défini globalement pour garder le ratio pixel art)
+      px(p, pt.x, pt.y, PX, PX);
+
+      // Si life <= 0, la particule est supprimée du tableau
       return pt.life > 0;
     });
-  }
+}
 
-  p.touchStarted = function() {
-    // ── GARDE : laisser passer les taps qui sont HORS du canvas ──
-  // Le canvas fait 200×200 dans #cbox. Si le tap tombe en dehors
-  // (= sur un input HTML), on ne bloque pas l'événement.
+// --- SOUS-SYSTÈME : GESTIONNAIRE DE TOUCHER (COLLISIONS) ---
+// Détermine l'action à mener selon la zone du canvas touchée
+p.touchStarted = function() {
+  
+  // ── GARDE : Gestion du tunnel d'événements UI ──
+  // Empêche le jeu de réagir si on clique sur un élément HTML (boutons, inputs) hors canvas
   const rect = p.canvas.getBoundingClientRect();
   const touch = p.touches[0] || { x: p.mouseX, y: p.mouseY };
+  
+  // Détection des coordonnées réelles sur l'écran (mobile vs desktop)
   const clientX = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent)
     ? window.event.touches[0]?.clientX 
     : null;
@@ -506,37 +531,58 @@ function updateParts(p) {
     ? window.event.touches[0]?.clientY 
     : null;
 
-  // Si on a les coordonnées écran et qu'elles sont hors du canvas → laisser passer
+  // Si le tap est en dehors des limites du canvas, on laisse le navigateur gérer l'événement
   if (clientX !== null && clientY !== null) {
     if (clientX < rect.left || clientX > rect.right || 
         clientY < rect.top  || clientY > rect.bottom) {
-      return true;
+      return true; 
     }
   }
-    const now = Date.now();
-    if (now - (window._lastTapTime || 0) < 200) return false;
-    window._lastTapTime = now;
 
-    const mx = p.touches[0]?.x ?? p.mouseX;
-    const my = p.touches[0]?.y ?? p.mouseY;
+  // ── SÉCURITÉ : Anti-Spam (Debounce) ──
+  // Ignore les clics trop rapprochés (moins de 200ms) pour éviter les doubles déclenchements
+  const now = Date.now();
+  if (now - (window._lastTapTime || 0) < 200) return false;
+  window._lastTapTime = now;
 
-if (Math.abs(mx - 72) < 14 && my < 26) { 
-  setTimeout(() => cleanPoops(), 0); return false; 
-}
-if (Math.abs(mx - 128) < 14 && my < 26) { 
-  setTimeout(() => ouvrirSnack(), 0); return false; 
-}
+  const mx = p.touches[0]?.x ?? p.mouseX;
+  const my = p.touches[0]?.y ?? p.mouseY;
 
-    const h = hr();
-    const by = window.D.g.stage==='egg'?115 : window.D.g.stage==='baby'?108 
-             : window.D.g.stage==='teen'?98 : 85;
-    const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
-    if (hit) {
-      window._lastTapX = walkX + (Math.random() - 0.5) * 20;
-      triggerTouchReaction(h >= 22 || h < 7);
-      return false;
-    }
-  };
+  // ── DÉTECTION : Zones Interactives du Shell (Icones) ──
+  
+  // Zone de l'icône "Balai" (Nettoyage des crottes)
+  if (Math.abs(mx - 72) < 14 && my < 26) { 
+    setTimeout(() => cleanPoops(), 0); 
+    return false; 
+  }
+  
+  // Zone de l'icône "Assiette" (Nourrir le Gotchi)
+  if (Math.abs(mx - 128) < 14 && my < 26) { 
+    setTimeout(() => ouvrirSnack(), 0); 
+    return false; 
+  }
+
+  // ── DÉTECTION : Hitbox dynamique du Gotchi ──
+  const h = hr(); // Récupère l'heure actuelle
+  
+  // Ajuste la hauteur de la zone tactile selon le stade d'évolution (pixel art précis)
+  const by = window.D.g.stage === 'egg' ? 115 
+           : window.D.g.stage === 'baby' ? 108 
+           : window.D.g.stage === 'teen' ? 98 
+           : 85;
+
+  // Vérifie si le clic est sur le corps du Gotchi (walkX est sa position horizontale actuelle)
+  const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
+  
+  if (hit) {
+    // Enregistre l'impact avec une petite variation aléatoire pour l'animation
+    window._lastTapX = walkX + (Math.random() - 0.5) * 20;
+    
+    // Déclenche une réaction (ex: coeur, saut) - gère aussi le mode "nuit" (h >= 22)
+    triggerTouchReaction(h >= 22 || h < 7);
+    return false;
+  }
+};
 
 }; // fin p5s
 
@@ -642,25 +688,45 @@ if (window._gotchiNearPoop && !sl) {
      return { topY: y, eyeY: y+PX*4, neckY: y+PX*7 };
   }
 
+/**
+ * SYSTÈME 1 : MÉTABOLISME & EXPRESSIVITÉ
+ * Sous-système : Gestion des réactions émotionnelles au toucher.
+ * Déclenche des animations de particules (émojis) et des messages 
+ * textuels selon que le Gotchi dort ou est éveillé.
+ */
+
 function triggerTouchReaction(sleeping) {
+  // 1. Définition des lexiques visuels (Pixel Art)
+  // Symboles positifs pour l'état d'éveil
   const awakeTypes = ['heart', 'heart', 'sparkle', 'jump', 'spin', 'star', 'note', 'flower'];
+  // Symboles de mécontentement ou de sommeil pour l'état nocturne
   const sleepTypes = ['zzz', 'moon', 'angry'];
+  
+  // 2. Sélection aléatoire basée sur l'état physiologique
   const types = sleeping ? sleepTypes : awakeTypes;
   const type = types[Math.floor(Math.random() * types.length)];
   
+  // 3. Injection dans le moteur de rendu
   window.touchReactions.push({
-    timer: 35,
-    type,
+    timer: 35, // Durée de l'affichage de l'icône à l'écran
+    type,      // Type d'icône pixel art à dessiner
+    // Positionne la réaction au niveau du tap avec un décalage aléatoire naturel
     cx: (window._lastTapX || 100) + (Math.random() - 0.5) * 40,
   });
+
+  // 4. Optimisation mémoire : On ne garde que les 8 dernières réactions simultanées
   if (window.touchReactions.length > 8) window.touchReactions.shift();
+
+  // 5. Feedback physique : Déclenche un tremblement visuel du Gotchi (secousse)
   window.shakeTimer = 8;
 
+  // 6. Dialogue flash : Sélection d'un message court selon l'état
   const touchMsgs = sleeping
     ? ['*grogne* 😤', 'Laisse-moi dormir ! 🌙', '...zzz... 💤']
     : ['*hehe* ✿', 'Coucou ! 💜', '*giggle* 🌸', 'Encore ! ✿'];
+  
+  // Affiche la bulle de texte pendant 2 secondes (2000ms)
   flashBubble(touchMsgs[Math.floor(Math.random() * touchMsgs.length)], 2000);
 }
-
 
 new p5(p5s);

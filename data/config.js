@@ -46,7 +46,7 @@ const GOTCHI_COLORS = [
  * le moteur de rendu ne plante pas ("Cannot read properties of undefined").
  */
 const ENV_THEMES = [
-  { id:'pastel', label:'Pastel', icon:'🌸'
+  { id:'pastel', label:'Pastel', icon:'🌸',
     // parc
     sky1:'#b8d4f0', sky2:'#d8e8f8',
     gnd:'#a8d898',  gndDk:'#90c480',
@@ -66,7 +66,7 @@ const ENV_THEMES = [
     mntGnd:'#88b870', mntGndDk:'#6a9858', mntPeak:'#a0c888', mntSnow:'#e8f0e0',
   },
 
-  { id:'automne', label:'Automne', icon:'🍂'
+  { id:'automne', label:'Automne', icon:'🍂',
     sky1:'#e8c068', sky2:'#f0d898',
     gnd:'#c89858',  gndDk:'#a87838',
     leaf1:'#c04818', leaf2:'#e06028', trunk:'#8b4513',
@@ -83,7 +83,7 @@ const ENV_THEMES = [
     mntGnd:'#b07840', mntGndDk:'#906028', mntPeak:'#c09050', mntSnow:'#e8c878',
   },
 
-  { id:'hiver', label:'Hiver', icon:'❄️'
+  { id:'hiver', label:'Hiver', icon:'❄️',
     sky1:'#c8d8e8', sky2:'#e8f0f8',
     gnd:'#e8f0f8',  gndDk:'#c8d8e8',
     leaf1:'#e8f0f8', leaf2:'#d8e8f0', trunk:'#806050',
@@ -100,7 +100,7 @@ const ENV_THEMES = [
     mntGnd:'#c8d8e8', mntGndDk:'#a8b8c8', mntPeak:'#d8e0e8', mntSnow:'#f0f8ff',
   },
 
-  { id:'desert', label:'Désert', icon:'🏜️'
+  { id:'desert', label:'Désert', icon:'🏜️',
     sky1:'#f0c878', sky2:'#f8e0a8',
     gnd:'#e8d098',  gndDk:'#c8a858',
     leaf1:'#70a858', leaf2:'#508840', trunk:'#c8a858',

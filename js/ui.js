@@ -1317,19 +1317,16 @@ function renderPerso() {
   const et = document.getElementById('env-themes');
   if (et) {
     const current = D.g.envTheme || 'pastel';
-    et.innerHTML = ENV_THEMES.map(t => `
+et.innerHTML = ENV_THEMES.map(t => `
   <div onclick="applyEnvTheme('${t.id}')" style="
-    padding:10px 8px;border-radius:10px;cursor:pointer;
+    padding:12px 8px;border-radius:10px;cursor:pointer;
     background:linear-gradient(135deg,${t.sky1},${t.gnd});
-    border:3px solid ${current===t.id?'#b090d0':'transparent'};
-    font-size:10px;font-weight:bold;color:#fff;
-    text-shadow:0 1px 3px rgba(0,0,0,.3);
-    text-align:center;line-height:1.4;
-    transition:.2s;">
-    <div style="font-size:18px;margin-bottom:4px">${t.icon || '🌍'}</div>
-    <div>${t.label}</div>
+    border:3px solid ${current===t.id?'var(--lilac)':'transparent'};
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;transition:.2s;">
+    <div style="font-size:24px;line-height:1">${t.icon}</div>
+    <div style="font-size:10px;font-weight:bold;color:#fff;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.4)">${t.label}</div>
   </div>`).join('');
-  }
 }
 
 function applyUIPalette(id, silent = false) {

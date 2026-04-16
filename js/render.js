@@ -35,7 +35,9 @@ window.touchReactions = [];
 window.eatAnim = { active: false, timer: 0, emoji: '' };
 let walkX = 100;        
 let walkDir = 1;        
-let walkStep = 0;       
+let walkStep = 0; 
+let walkTarget = 100;   // destination en X
+let walkPause  = 0;     // frames d'attente avant le prochain déplacement      
 
 function getGotchiC() {
   const id = window.D.g.gotchiColor || 'vert';
@@ -414,45 +416,62 @@ if (D.g.props) {
 }
 
     // 6. Locomotion Gotchi
-    bounceT += sleeping ? 0.04 : 0.12;
-    let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
-    
-    if (window.eatAnim?.active) {
-      const progress = 1 - (window.eatAnim.timer / 50);
-      if (progress > 0.7 && !window.eatAnim.jumped) {
-        window.eatAnim.jumped = true;
-      }
-      if (window.eatAnim.jumped) {
-        const t = 1 - (window.eatAnim.timer / (50 * 0.15)); 
-        bobY -= Math.sin(t * Math.PI) * 18; 
-      }
-    }
-    
-    let amplitude = 15, vitesse = 0.02;
-    if (!sleeping && ha >= 80 && en >= 80) {
-      amplitude = 40; vitesse = 0.06;
-      if (p.frameCount % 20 < 10) bobY -= PX;
-    } else if (!sleeping && ha >= 60 && en >= 60) {
-      amplitude = 25; vitesse = 0.04;
-    }
+bounceT += sleeping ? 0.04 : 0.12;
+let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3;
 
-    if (!sleeping) {
-      walkStep++;
-      const speed = (ha >= 80 && en >= 80) ? 1.2 
-                  : (ha >= 50 && en >= 60) ? 0.6 
-                  : (en >= 40) ? 0.3 
-                  : 0.1; 
-      walkX += walkDir * speed;
-      if (walkX > CS - 25) { walkX = CS - 25; walkDir = -1; }
-      if (walkX < 25)      { walkX = 25;      walkDir = 1;  }
+if (window.eatAnim?.active) {
+  const progress = 1 - (window.eatAnim.timer / 50);
+  if (progress > 0.7 && !window.eatAnim.jumped) {
+    window.eatAnim.jumped = true;
+  }
+  if (window.eatAnim.jumped) {
+    const t = 1 - (window.eatAnim.timer / (50 * 0.15)); 
+    bobY -= Math.sin(t * Math.PI) * 18; 
+  }
+}
+
+let amplitude = 15, vitesse = 0.02;
+if (!sleeping && ha >= 80 && en >= 80) {
+  amplitude = 40; vitesse = 0.06;
+  if (p.frameCount % 20 < 10) bobY -= PX;
+} else if (!sleeping && ha >= 60 && en >= 60) {
+  amplitude = 25; vitesse = 0.04;
+}
+
+const XMIN = 35, XMAX = CS - 35;
+
+if (!sleeping) {
+  walkStep++;
+  const speed = (ha >= 80 && en >= 80) ? 1.4
+              : (ha >= 50 && en >= 60) ? 0.7
+              : (en >= 40) ? 0.35
+              : 0.12;
+
+  if (walkPause > 0) {
+    walkPause--;
+    if (walkPause === 0) {
+      walkTarget = XMIN + Math.random() * (XMAX - XMIN);
+    }
+  } else {
+    const dist = walkTarget - walkX;
+    walkDir = dist > 0 ? 1 : -1;
+    if (Math.abs(dist) < speed + 1) {
+      walkX = walkTarget;
+      walkPause = 30 + Math.floor(Math.random() * 90);
     } else {
-      walkX += walkDir * 0.05;
-      if (walkX > CS - 30 || walkX < 30) walkDir *= -1;
+      walkX += walkDir * speed;
     }
+  }
 
-    const cx = walkX;
-    const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
-    const tilt = (!sleeping && en < 40) ? Math.sin(p.frameCount * 0.05) * 2 : 0;
+} else {
+  walkX += walkDir * 0.04;
+  if (walkX > XMAX || walkX < XMIN) walkDir *= -1;
+}
+
+const cx = walkX;
+const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
+const tilt = (!sleeping && en < 40) ? Math.sin(p.frameCount * 0.05) * 2 : 0;
+
 
     // 7. Dessin du Gotchi
     let gotchiInfo;

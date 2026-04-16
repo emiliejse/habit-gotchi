@@ -729,4 +729,13 @@ function triggerTouchReaction(sleeping) {
   flashBubble(touchMsgs[Math.floor(Math.random() * touchMsgs.length)], 2000);
 }
 
+/**
+ * INITIALISATION DU MOTEUR GRAPHIQUE
+ * Système 7 : Ingénierie
+ */
+
+// Lance l'application en "Instance Mode"
+// 1. Crée un nouvel objet p5 (le moteur de jeu)
+// 2. Lui injecte notre fonction de rendu 'p5s' qui contient toute la logique visuelle
+// 3. Lie le canvas au DOM (généralement dans la div #cbox définie dans ton index.html)
 new p5(p5s);

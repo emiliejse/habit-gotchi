@@ -127,7 +127,10 @@ function toastSnack(msg) {
 }
 
 /* ─── SYSTÈME 1 : MÉTABOLISME (Interactions) ─────────────────── */
+let modalLocked = false; // ← true pendant le soutien
+
 function clModal(e) {
+  if (modalLocked) return; // ← bloque le tap extérieur
   if (!e || e.target.id === 'modal') document.getElementById('modal').style.display = 'none';
 }
 
@@ -1074,6 +1077,7 @@ function toastInfo() {
 
   window._soutienHistory = [];
   window._soutienCount = 0;
+  modalLocked = true;
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">

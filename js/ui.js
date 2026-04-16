@@ -536,7 +536,12 @@ function acheterProp(propId) {
   D.g.petales = (D.g.petales || 0) - prop.cout;
   if (!D.g.props) D.g.props = [];
   D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false, seen: false });
-  addEvent('cadeau', prop.cout, `${prop.emoji || ''} ${prop.nom}`.trim());
+  addEvent({
+  type: 'cadeau',
+  subtype: 'achat',
+  valeur: prop.cout,
+  label: `${prop.emoji || ''} ${prop.nom}`.trim()
+});
   save();
   toast(`🎁 ${prop.nom} ajouté à ton inventaire !`);
   const buyMsgs = ["Oh un cadeau ! 🎁", "*yeux brillants* ✨", `${prop.emoji} Pour moi ?! 💜`, "J'adore ! 🌸", "*saute de joie* ✿"];
@@ -1029,7 +1034,12 @@ window.PROPS_LOCAL = Object.values(D.propsPixels);
 const bulleCadeau = poolCadeau[Math.floor(Math.random() * poolCadeau.length)];
 flashBubble(bulleCadeau.replace('{{nom}}', D.g.name || 'toi'), 3000);
         toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
-        addEvent('cadeau', 0, `${data.cadeau.nom} reçu en cadeau !`);
+        addEvent({
+  type: 'cadeau',
+  subtype: 'ia',
+  valeur: 0,
+  label: `${data.cadeau.nom} reçu en cadeau !`
+});
         updBadgeBoutique();
       }
     }
@@ -1663,10 +1673,12 @@ if (D.lastActive) {
   joursAbsence = Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-// 4. Cadeaux reçus depuis la dernière visite
+// 4. Cadeaux-IA reçus depuis la dernière visite (les achats boutique ne comptent pas)
 const derniereVisite = D.lastActive || td;
 const nouveauxCadeaux = (D.eventLog || []).filter(ev =>
-  ev.type === 'cadeau' && new Date(ev.date) > new Date(derniereVisite)
+  ev.type === 'cadeau' &&
+  ev.subtype === 'ia' &&
+  new Date(ev.date) > new Date(derniereVisite)
 ).length;
 
 // 5. Mise à jour de la session

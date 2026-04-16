@@ -555,3 +555,8 @@ body {
 /* Dans style.css, sur #mbox ou .mbox */
 word-break: keep-all;
 overflow-wrap: break-word;
+
+.menu-overlay.open ~ * .tama-screen canvas,
+.menu-overlay.open ~ * .tama-screen {
+  pointer-events: none;
+}

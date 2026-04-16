@@ -618,6 +618,9 @@ if (D.g.props) {
 
   // 13. Gestionnaire d'événements tactiles (Garde l'accès à "p.")
   p.touchStarted = function() {
+      // 🔒 GARDE : si le menu est ouvert, on ignore le clic sur le Gotchi
+  const menuOverlay = document.getElementById('menu-overlay');
+  if (menuOverlay && menuOverlay.classList.contains('open')) return false;
     const rect = p.canvas.getBoundingClientRect();
     const touch = p.touches[0] || { x: p.mouseX, y: p.mouseY };
     const clientX = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent) ? window.event.touches[0]?.clientX : null;
@@ -657,7 +660,7 @@ if (D.g.props) {
     const gotchiCenterY = by + GOTCHI_OFFSET_Y + 30;
     const hit = Math.abs(mx - walkX) < 26 && Math.abs(my - gotchiCenterY) < 35;
 
-    
+
     if (hit) {
       window._lastTapX = walkX + (Math.random() - 0.5) * 20;
       triggerTouchReaction(h >= 22 || h < 7);

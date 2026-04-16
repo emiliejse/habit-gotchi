@@ -916,9 +916,9 @@ const notesRecentes = D.journal
         messages: [{ role: 'user', content: prompt }]
       })
     });
-    const d = await r.json();
-    const match = d.content[0].text.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('JSON introuvable');
+    const rawText = d.content[0].text;
+    const match = rawText.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('JSON introuvable dans la réponse IA');
     const data = JSON.parse(match[0]);
 
     // --- Message affiché ---
@@ -1037,6 +1037,7 @@ function toastInfo() {
         .replace('{{habitsDone}}',  habsDuJour.filter(h=>h.faite).map(h=>h.label).join(', ')||'aucune')
         .replace('{{habitsUndone}}',habsDuJour.filter(h=>!h.faite).map(h=>h.label).join(', ')||'toutes faites !')
         .replace('{{notes}}',       notesDuJour.length ? notesDuJour.map(n=>`[${n.humeur}] ${n.texte}`).join(' | ') : 'aucune note')
+        .replace('{{userName}}', D.g.userName || D.userName || 'ton utilisatrice')
     : `Tu es le Gotchi, un compagnon bienveillant pour le bien-être mental et le TDAH.\nL'utilisateur a besoin de soutien. Énergie: ${D.g.energy}/5, Bonheur: ${D.g.happiness}/5.\nCommence par une phrase douce. Pose UNE question ouverte. Ton doux, jamais de jugement.`;
 
   window._soutienHistory = [];
@@ -1158,6 +1159,7 @@ async function genBilanSemaine() {
         .replace('{{weekStart}}',   wd[0])
         .replace('{{weekEnd}}',     wd[6])
         .replace('{{name}}',        g.name)
+        .replace('{{userName}}', D.g.userName || D.userName || 'ton utilisatrice')
         .replace('{{stage}}',       s.l)
         .replace('{{energy}}',      g.energy)
         .replace('{{happiness}}',   g.happiness)

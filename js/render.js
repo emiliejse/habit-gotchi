@@ -620,7 +620,7 @@ if (D.g.props) {
   p.touchStarted = function() {
       // 🔒 GARDE : si le menu est ouvert, on ignore le clic sur le Gotchi
   const menuOverlay = document.getElementById('menu-overlay');
-  if (menuOverlay && menuOverlay.classList.contains('open')) return false;
+  if (menuOverlay && menuOverlay.classList.contains('open')) return true;
     const rect = p.canvas.getBoundingClientRect();
     const touch = p.touches[0] || { x: p.mouseX, y: p.mouseY };
     const clientX = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent) ? window.event.touches[0]?.clientX : null;

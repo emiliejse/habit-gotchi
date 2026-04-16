@@ -17,7 +17,7 @@ const UI_PALETTES = [
   { id:'rose',    label:'Rose',    bg:'#f0dde8', lilac:'#d080a8', mint:'#a0d8b0', pink:'#e890c0', text:'#4a3040', text2:'#a07888', card:'rgba(255,255,255,.88)', border:'#e0c8d0' },
   { id:'ocean',   label:'Océan',   bg:'#d0e8f0', lilac:'#6090c0', mint:'#70d0c0', pink:'#a0c8e8', text:'#203848', text2:'#607888', card:'rgba(255,255,255,.88)', border:'#b0c8d8' },
   { id:'foret',   label:'Forêt',   bg:'#d8e8d0', lilac:'#70a870', mint:'#90d890', pink:'#c8e0a0', text:'#283820', text2:'#607858', card:'rgba(255,255,255,.88)', border:'#b0c8a0' },
-  { id:'ardoise', label:'Ardoise', bg:'#d8d4e0', lilac:'#7878a8', mint:'#78b8a0', pink:'#c898a8', text:'#303040', text2:'#707088', card:'rgba(255,255,255,.88)', border:'#c0bcd0' },
+  { id:'corail', label:'Corail', bg:'#f8ddd0', lilac:'#d06050', mint:'#70c0a8', pink:'#f0a080', text:'#3a1810', text2:'#906858', card:'rgba(255,255,255,.88)', border:'#e0b8a8' },
   { id:'peche',   label:'Pêche',   bg:'#f0e0d0', lilac:'#c09070', mint:'#90d0a8', pink:'#e8b090', text:'#483020', text2:'#907060', card:'rgba(255,255,255,.88)', border:'#d8c0a8' },
 ];
 

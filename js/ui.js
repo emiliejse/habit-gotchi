@@ -1,17 +1,17 @@
 /* ============================================================
    ui.js — Interactions, panneaux, modales, appels API Claude
+   RÔLE : Ce fichier correspond aux "Mains" et à la "Bouche" de l'app.
+   Il gère tout ce que l'utilisateur clique, lit et ouvre.
    Dépend de : app.js (window.D, save, today, hr, haptic, addXp,
                getSt, nxtTh, calcStr, toggleHab, editH, updBubbleNow,
                CATS, STG, UI_PALETTES, GOTCHI_COLORS, ENV_THEMES, SK)
    ============================================================ */
 
-// ── animEl() : applique une animation Animate.css sur un élément ──
-// Pense à ça comme une télécommande d'animation :
-//   el  → l'élément DOM à animer (ex: document.getElementById('modal'))
-//   anim → le nom de l'animation sans préfixe (ex: 'bounceIn', 'tada')
-//   dur  → durée en ms (optionnel, défaut 600)
-// ⚠️ La classe est retirée automatiquement après l'animation
-//    pour pouvoir rejouer l'animation plus tard.
+/**
+ * UTILITAIRE GLOBAL (Système 7 : Ingénierie)
+ * animEl() : applique une animation Animate.css sur un élément.
+ * La classe est retirée automatiquement après l'animation pour pouvoir rejouer.
+ */
 function animEl(el, anim, dur = 600) {
   if (!el) return;
   el.style.setProperty('--animate-duration', dur + 'ms');
@@ -20,18 +20,22 @@ function animEl(el, anim, dur = 600) {
     el.classList.remove('animate__animated', 'animate__' + anim);
   }, { once: true });
 }
-/* ============================================================
-   NAVIGATION
-   ============================================================ */
+
+/* ─── SYSTÈME 2 : ÉCOSYSTÈME & NAVIGATION ────────────────────── */
 let journalLocked = true;
 let masquerAcquis = true;
 
+/**
+ * Moteur de Routage interne (Single Page Application)
+ * Affiche l'onglet ciblé et adapte l'environnement du Gotchi en fond.
+ */
 function go(t) {
   document.querySelectorAll('.pnl').forEach(p => p.classList.remove('on'));
   const targetPanel = document.getElementById('p-' + t);
   if (targetPanel) targetPanel.classList.add('on');
 
   const shell = document.querySelector('.tama-shell');
+  // Logique de Biomes (Le Tama Shell grandit ou rétrécit)
   if (t === 'gotchi') {
     shell.classList.remove('shrunk');
     const h = hr();
@@ -46,10 +50,11 @@ function go(t) {
   }
   save();
 
+  // Déclencheurs de rendu spécifiques à chaque vue
   if (t === 'gotchi' || t === 'settings') renderHabs();
   if (t === 'progress') renderProg();
   if (t === 'props') {
-    (window.D.g.props || []).forEach(p => p.seen = true);
+    (window.D.g.props || []).forEach(p => p.seen = true); // Retire le badge 'Nouveau'
     save();
     renderProps();
     updBadgeBoutique();
@@ -78,10 +83,12 @@ function updDate() {
 }
 updDate();
 
-/* ============================================================
-   TOAST & FEEDBACK
-   ============================================================ */
+/* ─── SYSTÈME 7 : INGÉNIERIE (UI & FEEDBACK) ─────────────────── */
 let _toastTimer;
+
+/**
+ * Toast : Notification éphémère douce en bas de l'écran (non-bloquante)
+ */
 function toast(m) {
   let el = document.getElementById('toast');
   if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
@@ -91,12 +98,18 @@ function toast(m) {
   _toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
 }
 
+/**
+ * Modale standard avec bouton OK (bloquante)
+ */
 function toastModal(m) {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `<p style="text-align:center;font-size:12px">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`;
   animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
+/**
+ * Mini-toast contextuel (ex: utilisé par l'animation du Snack)
+ */
 function toastSnack(msg) {
   let el = document.getElementById('snack');
   if (!el) {
@@ -113,13 +126,15 @@ function toastSnack(msg) {
   el._t = setTimeout(() => el.style.opacity = '0', 1800);
 }
 
-/* ============================================================
-   MODAL
-   ============================================================ */
+/* ─── SYSTÈME 1 : MÉTABOLISME (Interactions) ─────────────────── */
 function clModal(e) {
   if (!e || e.target.id === 'modal') document.getElementById('modal').style.display = 'none';
 }
 
+/**
+ * Ouvre la popup de nourriture. 
+ * Vérifie si c'est la nuit (bloqué) ou si déjà mangé.
+ */
 function ouvrirSnack() {
   const h = hr();
   if (h >= 22 || h < 7) {
@@ -162,15 +177,21 @@ function ouvrirSnack() {
   animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
-/* ============================================================
-   UI PRINCIPALE
-   ============================================================ */
+/* ─── SYSTÈME 7 : INGÉNIERIE (Mise à jour des Data dans le DOM) ── */
+
+/**
+ * Fonction centrale de mise à jour de l'interface (HUD, jauges, XP, noms).
+ * Appelée dès qu'une donnée change dans app.js.
+ */
 function updUI() {
   const D = window.D;
   if (document.getElementById('petales-l'))
     document.getElementById('petales-l').textContent = `🌸 ${D.g.petales || 0}`;
   const g = D.g, s = getSt(g.totalXp), nt = nxtTh(g.totalXp), pt = s.th;
+  
+  // Calcul du % pour la barre de progression XP
   const pct = nt > pt ? ((g.totalXp - pt) / (nt - pt)) * 100 : 100;
+  
   if (document.getElementById('g-name'))   document.getElementById('g-name').textContent = g.name;
   if (document.getElementById('g-stage'))  document.getElementById('g-stage').textContent = s.l;
   if (document.getElementById('xp-l'))     document.getElementById('xp-l').textContent = nt > pt ? `${g.totalXp - pt}/${nt - pt} XP` : `MAX ✿`;
@@ -181,12 +202,14 @@ function updUI() {
   if (document.getElementById('s-str'))   document.getElementById('s-str').textContent = calcStr();
   if (document.getElementById('s-jrn'))   document.getElementById('s-jrn').textContent = D.journal.length;
   if (document.getElementById('name-inp')) document.getElementById('name-inp').value = g.name;
-if (document.getElementById('env-sel'))  document.getElementById('env-sel').value = g.activeEnv || 'parc';
+  if (document.getElementById('env-sel'))  document.getElementById('env-sel').value = g.activeEnv || 'parc';
   if (document.getElementById('api-inp'))  document.getElementById('api-inp').value = D.apiKey || '';
-const petalesDisplay = document.getElementById('petales-wallet');
+  
+  const petalesDisplay = document.getElementById('petales-wallet');
   if (petalesDisplay) petalesDisplay.textContent = `🌸 ${D.g.petales || 0}`;
   const petalesBoutique = document.getElementById('petales-wallet-boutique');
   if (petalesBoutique) petalesBoutique.textContent = `${D.g.petales || 0}`;
+  
   const tc = document.getElementById('thought-count');
   if (tc) tc.textContent = `(${window.D.thoughtCount || 0}/3)`;
   const btnAsk = document.getElementById('btn-ask-claude');
@@ -196,6 +219,9 @@ const petalesDisplay = document.getElementById('petales-wallet');
   updBadgeBoutique();
 }
 
+/**
+ * Module d'API : Teste la validité de la clé Anthropic.
+ */
 async function testApiKey() {
   const statusEl = document.getElementById('api-status');
   if (!statusEl) return;
@@ -232,6 +258,9 @@ async function testApiKey() {
   }
 }
 
+/**
+ * Gère l'affichage du point rouge sur le menu si de nouveaux objets sont dispos
+ */
 function updBadgeBoutique() {
   const badgeHdr = document.getElementById('badge-boutique-hdr');
   const badgeInv = document.getElementById('badge-boutique');
@@ -249,9 +278,7 @@ function updBadgeBoutique() {
   if (badgeInv) badgeInv.style.display = hasNew ? 'block' : 'none';
 }
 
-/* ============================================================
-   HABITUDES
-   ============================================================ */
+/* ─── SYSTÈME 4 : MOTEUR DE ROUTINE & HABITUDES ──────────────────── */
 function renderHabs() {
   const D = window.D;
   const td = today(), log = D.log[td] || [], done = log.length;
@@ -271,11 +298,12 @@ function renderHabs() {
   }).join('');
 }
 
-/* ============================================================
-   PROPS & INVENTAIRE
-   ============================================================ */
+/* ─── SYSTÈME 5 : ÉCONOMIE, INVENTAIRE & BOUTIQUE ────────────────── */
 let propsFilterActive = 'tous';
 
+/**
+ * Dessine un aperçu d'un prop Pixel Art sur un élément Canvas (Boutique/Inventaire)
+ */
 function renderPropMini(canvas, def) {
   if (!canvas || !def || !def.pixels) return;
   const ctx = canvas.getContext('2d');
@@ -338,8 +366,8 @@ function renderProps() {
           <div style="font-size:8px;text-transform:uppercase;opacity:.7;font-weight:normal;">${p.type}</div>
           ${p.actif
   ? `<div style="font-size:8px;background:var(--mint);border-radius:6px;padding:2px 4px;margin-top:2px;color:#fff;font-weight:bold">
-       ✓ actif${p.slot ? ' · ' + p.slot : ''}
-     </div>`
+        ✓ actif${p.slot ? ' · ' + p.slot : ''}
+      </div>`
   : `<div style="font-size:8px;opacity:.4;margin-top:2px">inactif</div>`
 }
         </div>
@@ -349,8 +377,9 @@ function renderProps() {
     if (def && def.pixels) renderPropMini(document.getElementById(`mini-${p.id}`), def);
   });
   const wallet   = document.getElementById('xp-wallet');
-  if (wallet)   wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
+  if (wallet)  wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
 }
+
 function ouvrirBoutique() {
   const onglet = window._boutiqueOnglet || 'catalogue';
 
@@ -428,6 +457,7 @@ function renderBoutiqueOnglet(onglet) {
     }).join('');
 
   } else {
+    // Onglet IA
     const peutGenerer = (D.g.petales || 0) >= 16;
     el.innerHTML = `
       <p style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:16px;line-height:1.6">
@@ -473,6 +503,10 @@ function acheterProp(propId) {
 }
 function setPropsFilter(cat) { propsFilterActive = cat; renderProps(); }
 
+/**
+ * Gère le clic sur un objet dans l'inventaire.
+ * Active les accessoires directs, ou ouvre le sélecteur de position (Slots) pour les décors.
+ */
 function toggleProp(index) {
   const prop = D.g.props[index];
 
@@ -538,6 +572,10 @@ function makeSlotBtn(propIndex, slotId, label, arrow, occupied) {
     ${taken ? `<div style="font-size:8px;color:var(--lilac)">⚠ ${taken}</div>` : ''}
   </div>`;
 }
+
+/**
+ * Modale permettant de choisir visuellement la couche (Z-index) et la position du décor.
+ */
 function openSlotPicker(propIndex) {
   const prop = D.g.props[propIndex];
 
@@ -661,6 +699,7 @@ function rangerProp(propIndex) {
   toast(`📦 ${prop.nom} rangé`);
 }
 
+/* ─── SYSTÈME 7 : INGÉNIERIE (Salle des Machines / Debug) ────────── */
  function debugProps() {
   const D = window.D, lib = window.PROPS_LIB || [];
   const actifs = (D.g.props || []).filter(p => p.actif);
@@ -784,9 +823,14 @@ function viderObjetsIA() {
   debugProps();
 }
 
+/* ─── SYSTÈME 3 : COGNITION & IA (Interaction avec Claude) ───────── */
+
 /* ============================================================
    API CLAUDE — CADEAU / BULLE
    ============================================================ */
+/**
+ * Demande à Claude une pensée personnalisée (Limité à 3x par jour).
+ */
 async function askClaude() {
   const key = D.apiKey;
   if (!key) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
@@ -923,6 +967,9 @@ flashBubble(bulleCadeau.replace('{{nom}}', D.g.name || 'toi'), 3000);
   }
 }
 
+/**
+ * Demande à Claude de générer un Pixel Art via la Boutique.
+ */
 async function acheterPropClaude() {
   if ((D.g.petales || 0) < 16) { toast(`Pas assez de pétales 🌸`); return; }
   if (!D.apiKey) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
@@ -975,6 +1022,9 @@ function toastInfo() {
   toastModal("💬 Le Gotchi peut te partager une pensée jusqu'à 3 fois par jour.\n\n✍️ Si tu écris des notes dans ton journal, ses réponses seront personnalisées selon ton humeur du jour 💜");
 }
 
+/**
+ * Lance le chat d'urgence (limité à 6 messages non sauvegardés)
+ */
    function genSoutien() {
   const D = window.D, td = today();
   const habsDuJour  = D.habits.map(h => ({ label:h.label, faite:(D.log[td]||[]).includes(h.catId) }));
@@ -1077,6 +1127,8 @@ const sysPrompt = `${window.AI_SYSTEM?.soutien || ''} ${contexte}`.trim();
   }
 }
 
+/* ─── SYSTÈME 6 : INTROSPECTION & MÉMOIRE (Bilan IA) ─────────────── */
+
 /* ============================================================
    API CLAUDE — BILAN SEMAINE
    ============================================================ */
@@ -1099,7 +1151,7 @@ async function genBilanSemaine() {
     document.getElementById('bil-txt-hidden').value = summaryEl.textContent;
     return;
   }
-  summaryEl.textContent = '💭 ${window.D.g.name} réfléchit à ta semaine...';
+  summaryEl.textContent = `💭 ${window.D.g.name} réfléchit à ta semaine...`;
   const ctx = window.AI_CONTEXTS;
   const prompt = ctx
     ? ctx.genBilanSemaine
@@ -1141,6 +1193,8 @@ function resetBilan() {
     if (document.getElementById('claude-summary')) document.getElementById('claude-summary').textContent = 'Ton bilan apparaîtra ici...';
   }
 }
+
+/* ─── SYSTÈME 5 : INVENTAIRE & PERSONNALISATION (Esthétique) ────── */
 
 /* ============================================================
    PERSONNALISATION
@@ -1197,6 +1251,8 @@ function restorePerso() {
   if (window.D.g.uiPalette)   applyUIPalette(window.D.g.uiPalette, true);
   if (window.D.g.gotchiColor) applyGotchiColor(window.D.g.gotchiColor, true);
 }
+
+/* ─── SYSTÈME 6 : INTROSPECTION & MÉMOIRE (Le Journal Intime) ────── */
 
 /* ============================================================
    PIN & JOURNAL
@@ -1323,6 +1379,8 @@ function delJEntry(i) {
 }
 function confirmDelJ(i) { window.D.journal.splice(i, 1); save(); clModal(); renderJEntries(); updUI(); }
 
+/* ─── SYSTÈME 6 : INTROSPECTION & MÉMOIRE (Calendrier) ───────────── */
+
 /* ============================================================
    PROGRESS
    ============================================================ */
@@ -1354,6 +1412,8 @@ function renderProg() {
   document.getElementById('m-view').innerHTML = cells;
   updUI();
 }
+
+/* ─── SYSTÈME 7 : INGÉNIERIE (Paramètres et Sauvegardes) ─────────── */
 
 /* ============================================================
    RÉGLAGES
@@ -1396,6 +1456,8 @@ function confirmReset() {
   document.getElementById('mbox').innerHTML = `<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`;
 animEl(document.getElementById('mbox'), 'bounceIn');
 }
+
+/* ─── SYSTÈME 6 : INTROSPECTION & MÉMOIRE (Le Terminal) ──────────── */
 
 /* ============================================================
    TABLETTE RÉTRO
@@ -1444,6 +1506,8 @@ function updTabletBadge() {
     badge.style.display = 'block';
   }
 }
+
+/* ─── SYSTÈME 7 : INGÉNIERIE (Déclencheurs d'Ouverture / Cheats) ─── */
 
 /* ============================================================
    MODALE DE BIENVENUE
@@ -1577,6 +1641,9 @@ function confirmWelcome() {
   clModal();
 }
 
+/**
+ * Console Développeur cachée : "Cheat Codes" pour tester l'application
+ */
 function applyCheatCode() {
   const input = document.getElementById('cheat-input');
   if (!input) return;

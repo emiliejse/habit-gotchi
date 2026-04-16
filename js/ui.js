@@ -1547,29 +1547,36 @@ function updTabletBadge() {
    MODALE DE BIENVENUE
    ============================================================ */
 function checkWelcome() {
-  const D = window.D;
-  const td = today();
-  const h = hr();
+const D = window.D;
+const td = today();
+const h  = hr();
 
-  // Calcul jours d'absence
-  let joursAbsence = 0;
-  if (D.lastActive && D.lastActive !== td) {
-    const diff = Date.now() - new Date(D.lastActive);
-    joursAbsence = Math.floor(diff / (1000 * 60 * 60 * 24));
-  }
+// 1. Premier lancement — priorité absolue
+if (!D.firstLaunch || D.g.name === 'Petit·e Gotchi') {
+  D.firstLaunch = D.firstLaunch || new Date().toISOString();
+  save();
+  showWelcomeModal();
+  return;
+}
 
-  // Cadeaux reçus depuis dernière visite
-  const derniereVisite = D.lastActive || td;
-  const nouveauxCadeaux = (D.eventLog || []).filter(ev =>
+// 2. Garde anti-répétition : une seule fois par jour
+if (D.lastWelcomeDate === td) return;
+
+// 3. Calcul jours d'absence (avant de mettre à jour lastActive)
+let joursAbsence = 0;
+if (D.lastActive) {
+  const diff = Date.now() - new Date(D.lastActive);
+  joursAbsence = Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+// 4. Cadeaux reçus depuis la dernière visite
+const derniereVisite = D.lastActive || td;
+const nouveauxCadeaux = (D.eventLog || []).filter(ev =>
   ev.type === 'cadeau' && new Date(ev.date) > new Date(derniereVisite)
 ).length;
 
-  // Mise à jour lastActive
-// ✅ Garde anti-répétition : popup une seule fois par jour
-if (D.lastWelcomeDate === td) return;
+// 5. Mise à jour de la session
 D.lastWelcomeDate = td;
-
-if (!D.firstLaunch) D.firstLaunch = new Date().toISOString();
 D.lastActive = new Date().toISOString();
 save();
 

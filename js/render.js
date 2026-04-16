@@ -29,6 +29,7 @@ const C = {
 };
 
 const PX = 5, CS = 200;
+const GOTCHI_OFFSET_Y = 20;
 let bounceT = 0, blinkT = 0, blink = false;
 let particles = [];
 window.touchReactions = []; 
@@ -417,7 +418,7 @@ if (D.g.props) {
 
     // 6. Locomotion Gotchi
 bounceT += sleeping ? 0.04 : 0.12;
-let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3 + 20;
+let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3 + GOTCHI_OFFSET_Y;
 
 if (window.eatAnim?.active) {
   const progress = 1 - (window.eatAnim.timer / 50);
@@ -643,11 +644,12 @@ if (D.g.props) {
     }
 
     const h = hr();
-    const by = window.D.g.stage === 'egg' ? 115 
-             : window.D.g.stage === 'baby' ? 108 
-             : window.D.g.stage === 'teen' ? 98 : 85;
+const by = window.D.g.stage === 'egg' ? 115 + GOTCHI_OFFSET_Y
+         : window.D.g.stage === 'baby' ? 108 + GOTCHI_OFFSET_Y
+         : window.D.g.stage === 'teen' ? 98  + GOTCHI_OFFSET_Y
+         :                               85  + GOTCHI_OFFSET_Y;
     
-    const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10 + 20)) < 28;
+    const hit = Math.abs(mx - walkX) < 22 && Math.abs(my - (by - 10)) < 28;
     if (hit) {
       window._lastTapX = walkX + (Math.random() - 0.5) * 20;
       triggerTouchReaction(h >= 22 || h < 7);

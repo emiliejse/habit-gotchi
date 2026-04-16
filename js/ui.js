@@ -586,33 +586,62 @@ function toggleProp(index) {
   const prop = D.g.props[index];
 
   // --- Désactiver si déjà actif ---
-if (prop.actif) {
-  if (prop.type === 'decor') {
-    // Décor actif → proposer de déplacer ou ranger
-    openSlotPickerAvecRangement(index);
-  } else {
-    prop.actif = false;
-    prop.slot = null;
-    save();
-    renderProps();
-    toast(`📦 ${prop.nom} rangé`);
-    flashBubble(`*au revoir ${prop.nom}* 👋`, 2500);
+  if (prop.actif) {
+    if (prop.type === 'decor') {
+      openSlotPickerAvecRangement(index);
+    } else {
+      prop.actif = false;
+      prop.slot = null;
+      save();
+      renderProps();
+      toast(`📦 ${prop.nom} rangé`);
+      flashBubble(`*au revoir ${prop.nom}* 👋`, 2500);
+    }
+    return;
   }
-  return;
-}
 
-  // --- Objets non-décor : activer direct (pas de slot à choisir) ---
+  // --- Objets non-décor : activer direct ---
   if (prop.type !== 'decor') {
+
+    // Désactiver ambiance avec même motion
+    if (prop.type === 'ambiance') {
+      const def = getPropDef(prop.id);
+      const motion = def?.motion || 'drift';
+      D.g.props.forEach(p => {
+        if (p !== prop && p.actif && p.type === 'ambiance') {
+          const pDef = getPropDef(p.id);
+          if ((pDef?.motion || 'drift') === motion) {
+            p.actif = false;
+            toast(`↩ ${p.nom} remplacé`);
+          }
+        }
+      });
+    }
+
+    // Désactiver accessoire avec même ancrage
+    if (prop.type === 'accessoire') {
+      const def = getPropDef(prop.id);
+      const ancrage = def?.ancrage || 'top';
+      D.g.props.forEach(p => {
+        if (p !== prop && p.actif && p.type === 'accessoire') {
+          const pDef = getPropDef(p.id);
+          if ((pDef?.ancrage || 'top') === ancrage) {
+            p.actif = false;
+            toast(`↩ ${p.nom} remplacé`);
+          }
+        }
+      });
+    }
+
     prop.actif = true;
     save();
     renderProps();
     toast(`✨ ${prop.nom} activé !`);
     flashBubble(`Oh ! ${prop.nom} ! J'adore ! 💜`, 2500);
-    // Confettis à l'équipement
     const gx = window._gotchiX || 100;
     const gy = window._gotchiY || 100;
     for (let i = 0; i < 15; i++) {
-      window.spawnP?.(gx + (Math.random() - 0.5) * 40, gy - 10, 
+      window.spawnP?.(gx + (Math.random() - 0.5) * 40, gy - 10,
         ['#c8a0e8','#f0c0d8','#fff8b0','#88c8f0','#b0e8b0'][Math.floor(Math.random()*5)]);
     }
     window.triggerGotchiBounce?.();

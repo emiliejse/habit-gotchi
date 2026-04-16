@@ -375,9 +375,9 @@ function toggleHab(catId) {
       intel:   { msg: "Tu apprends… je sens mon monde s'agrandir 📚",   anim: 'flower',  body: 'shake',
         spawn: () => { for (let i=0;i<5;i++) window.particles?.push({x:gx+(Math.random()-.5)*30,y:gy,vx:(Math.random()-.5)*.5,vy:-.8-Math.random()*.5,life:28,c:'#e8d088'}); }
       },
-      serene:  { msg: "Tu as médité… je me sens plus calme aussi 💜",   anim: 'sparkle', body: 'bounce',
-        spawn: () => { for (let i=0;i<10;i++) window.particles?.push({x:gx+Math.sin(i*.8)*15,y:gy+i*3,vx:Math.sin(i)*.4,vy:-.6-i*.08,life:35,c:i%2===0?'#c8a0e8':'#f0c0d8'}); }
-      },
+      serene: { msg: "Tu as médité… je me sens plus calme aussi 💜", anim: 'sparkle', body: 'bounce',
+  spawn: () => { window.spawnP?.(100, 100, '#ff0000'); }
+},
     };
 
     // ← la ligne manquante !
@@ -392,7 +392,8 @@ function toggleHab(catId) {
     });
     if (reaction.body === 'bounce') window.triggerGotchiBounce?.();
     if (reaction.body === 'shake')  window.triggerGotchiShake?.();
-    reaction.spawn?.(); // ← l'appel manquant !
+    console.log('spawn:', catId, reaction.spawn, window.particles, window.spawnP);
+    reaction.spawn?.(); //
   }
  // ✅ UN SEUL save() ici, après toutes les mutations d'état
   save();

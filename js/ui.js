@@ -779,7 +779,7 @@ r += `${(D.journal||[]).length} entrées · ${nbBulles} bulles perso\n\n`;
   const meteo = window.meteoData || D.meteo;
 r += `🌡️ ${meteo ? `${meteo.temperature}°C · vent ${meteo.windspeed} km/h` : 'aucune donnée'}\n\n`;
 
-  r += `💩 Crottes: ${(g.poops||[]).length}\n\n`;
+  r += `💩 Crottes ramassées aujourd'hui: ${g.poopCount || 0}/5\n\n`;
 
   r += `💾 LocalStorage: ${lsKo} Ko`;
 

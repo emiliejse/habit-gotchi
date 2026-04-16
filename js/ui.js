@@ -32,7 +32,7 @@ let masquerAcquis = true;
 function syncConsoleHeight() {
   const top  = document.getElementById('console-top');
   const zone = document.getElementById('dynamic-zone');
-  if (top && zone) zone.style.paddingTop = (top.offsetHeight + 8) + 'px';
+  if (top && zone) zone.style.paddingTop = top.offsetHeight + 'px';
 }
 function go(t) {
   document.querySelectorAll('.pnl').forEach(p => p.classList.remove('on'));

@@ -1339,6 +1339,7 @@ function applyEnvTheme(id, silent = false) {
 function restorePerso() {
   if (window.D.g.uiPalette)   applyUIPalette(window.D.g.uiPalette, true);
   if (window.D.g.gotchiColor) applyGotchiColor(window.D.g.gotchiColor, true);
+  if (window.D.g.envTheme)    applyEnvTheme(window.D.g.envTheme, true);
 }
 
 /* ─── SYSTÈME 6 : INTROSPECTION & MÉMOIRE (Le Journal Intime) ────── */

@@ -1682,8 +1682,9 @@ function renderProg() {
   const last  = new Date(y, m + 1, 0);
   const off   = (first.getDay() + 6) % 7; // décalage lundi = 0
 
-  document.getElementById('m-title').textContent =
-    now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const moisLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+document.getElementById('m-title').textContent =
+  moisLabel.charAt(0).toUpperCase() + moisLabel.slice(1);
 
   let cells = '';
 

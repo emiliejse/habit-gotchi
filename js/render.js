@@ -774,33 +774,6 @@ if (window.shakeTimer > 0) window.shakeTimer--;
       });
     }
 
-    function drawFog(p) {
-  p.noStroke();
-  
-  // Nappes au sol
-  for (let i = 0; i < 5; i++) {
-    const speed = 0.3 + i * 0.15;
-    const xOffset = (p.frameCount * speed + i * 45) % (CS + 60) - 30;
-    const y = 108 + i * 8;
-    const w = 60 + i * 20;
-    p.fill(p.color(255, 255, 255, 120 - i * 20));
-    for (let dx = 0; dx < w; dx += PX) {
-      px(p, xOffset + dx, y, PX, PX * 2);
-    }
-  }
-  // Nuages flottants par-dessus le Gotchi et les objets
-  for (let i = 0; i < 4; i++) {
-    const speed = 0.2 + i * 0.1;
-    const xOffset = (p.frameCount * speed + i * 55) % (CS + 80) - 40;
-    const y = 70 + i * 15;
-    const w = 40 + i * 15;
-    p.fill(p.color(255, 255, 255, 35 - i * 6));
-    for (let dx = 0; dx < w; dx += PX) {
-      px(p, xOffset + dx, y, PX, PX * 3);
-    }
-  }
-}
-
     // 9. Props Décor — Premier plan (C, D) — DEVANT le Gotchi
 if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'C' || pr.slot === 'D')).forEach(prop => {

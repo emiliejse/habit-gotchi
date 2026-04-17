@@ -841,7 +841,6 @@ function rangerProp(propIndex) {
   r += `👾 ${g.name} — ${s.l} (${g.totalXp} XP)\n`;
   r += `⚡ Énergie: ${g.energy}/5 · 💜 Bonheur: ${g.happiness}/5\n`;
   r += `🌸 Pétales: ${g.petales || 0}\n`;
-  r += `😶 Humeur du jour: ${g.mood}\n`;
   r += `🌍 Thème: ${g.envTheme || 'pastel'}\n\n`;
 
   r += `📋 Habitudes\n`;

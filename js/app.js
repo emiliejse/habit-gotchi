@@ -110,7 +110,7 @@ function defs() {
   return {
     g: {
       name:'Petit·e Gotchi', userName: 'Émilie', totalXp:0, stage:'egg', energy:3, happiness:3,
-      envLv:0, moodDay:null, activeEnv:'parc', petales:0,poops: [], poopDay: '',    // date du dernier comptage
+envLv:0, activeEnv:'parc', petales:0,poops: [], poopDay: '',    // date du dernier comptage
 poopCount: 0,  // nb de cacas spawné aujourd'hui
 snackDone: '', snackEmoji: '',
       props:[], customBubbles:[]
@@ -630,23 +630,7 @@ function updBubbleNow() {
       window.D.g.petales = Math.max(0, (window.D.g.petales || 0) - 4);
     }
   }
-
-  // 2. Calcul de l'humeur du jour basée sur l'énergie/bonheur (pour l'API IA)
-  if (window.D.g.moodDay !== td) {
-    const e = window.D.g.energy;
-    const h = window.D.g.happiness;
-    let mood;
-
-    if (e >= 4 && h >= 4)      mood = Math.random() < 0.5 ? 'happy' : 'playful';
-    else if (e <= 2)            mood = 'sleepy';
-    else if (h <= 2)            mood = Math.random() < 0.5 ? 'chill' : 'curious';
-    else                        mood = Math.random() < 0.5 ? 'chill' : 'playful';
-
-    window.D.g.mood    = mood;
-    window.D.g.moodDay = td;
-    save();
-  }
-})();
+});
 
 // Refait le calcul si l'utilisateur met l'app en pause puis revient
 document.addEventListener('visibilitychange', () => {
@@ -655,20 +639,6 @@ document.addEventListener('visibilitychange', () => {
       location.reload(); // Recharge proprement si le jour a changé
     }
     const td = today();
-    if (window.D.g.moodDay !== td) {
-      const e = window.D.g.energy;
-      const h = window.D.g.happiness;
-      let mood;
-
-      if (e >= 4 && h >= 4)      mood = Math.random() < 0.5 ? 'happy' : 'playful';
-      else if (e <= 2)            mood = 'sleepy';
-      else if (h <= 2)            mood = Math.random() < 0.5 ? 'chill' : 'curious';
-      else                        mood = Math.random() < 0.5 ? 'chill' : 'playful';
-
-      window.D.g.mood    = mood;
-      window.D.g.moodDay = td;
-      save();
-    }
   }
 });
 

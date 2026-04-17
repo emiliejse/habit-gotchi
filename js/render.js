@@ -216,8 +216,8 @@ function drawEgg(p, cx, cy) {
   px(p,x+PX*2,y,PX*3,PX); px(p,x+PX,y+PX,PX*5,PX); px(p,x,y+PX*2,PX*7,PX*3); px(p,x+PX,y+PX*5,PX*5,PX); px(p,x+PX*2,y+PX*6,PX*3,PX);
   p.fill(C.eggSp); px(p,x+PX*2,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); px(p,x+PX*3,y+PX*5,PX,PX);
   const totalXp = window.D.g.totalXp;
-if (totalXp > 25) {
-  const intensity = totalXp >= 28 ? 2 : 1;
+if (totalXp > 80) {
+  const intensity = totalXp >= 85 ? 2 : 1;
   const wobble = Math.sin(Date.now() * 0.015) * intensity;
   p.fill(C.eggCr);
   px(p, x + PX*3 + wobble, y + PX,   PX, PX);

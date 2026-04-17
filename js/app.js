@@ -642,8 +642,8 @@ if (dernierJournal?.date?.startsWith(today())) {
 // Refait le calcul si l'utilisateur met l'app en pause puis revient
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    if (window.D.lastActive?.split('T')[0] !== today()) {
-      location.reload(); // Recharge proprement si le jour a changé
+    if (window.D.lastActive && window.D.lastActive.split('T')[0] !== today()) {
+      location.reload();
     }
     const td = today();
   }

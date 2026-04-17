@@ -280,7 +280,7 @@ function drawBaby(p, cx, cy, sl, en, ha) {
     
     p.fill(C.bodyDk); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*4,y+PX*5,PX,PX);
     if(en < 25 && !sl) { px(p,x+PX*2,y+PX*5,PX*2,PX); } 
-    if (en < 10 && !sl) drawDither(p, x, y + PX * 4, PX * 8, PX * 5, C.bodyDk);
+    if (en < 10 && !sl) drawDither(p, x + PX, y + PX * 3, PX * 4, PX * 3, C.bodyDk);
     return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
 }
 

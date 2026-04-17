@@ -651,6 +651,9 @@ function updBubbleNow() {
 // Refait le calcul si l'utilisateur met l'app en pause puis revient
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
+    if (window.D.lastActive?.split('T')[0] !== today()) {
+      location.reload(); // Recharge proprement si le jour a changé
+    }
     const td = today();
     if (window.D.g.moodDay !== td) {
       const e = window.D.g.energy;

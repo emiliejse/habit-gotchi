@@ -188,12 +188,12 @@ function updateParts(p) {
     p.noStroke();
     window.particles = window.particles.filter(pt => {
       pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.12; pt.life--;
-      const a = Math.floor(pt.life / 16 * 255);
-      const col = p.color(pt.c);
-      col.setAlpha(a);
-      p.fill(col);
-      px(p, pt.x, pt.y, PX, PX);
-      return pt.life > 0;
+      if (pt.life <= 0) return false;
+      // Taille shrink : 3PX → 2PX → 1PX selon la vie restante
+      const sz = pt.life > 10 ? PX * 2 : pt.life > 5 ? PX : Math.max(1, PX - 2);
+      p.fill(pt.c);
+      px(p, pt.x, pt.y, sz, sz);
+      return true;
     });
 }
 

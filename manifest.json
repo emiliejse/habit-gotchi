@@ -2,7 +2,7 @@
   "name": "Habit-Gotchi",
   "short_name": "HabitGotchi",
   "description": "Ton compagnon pixel art qui grandit avec tes habitudes",
-  "start_url": "./index.html",
+  "start_url": "./index.html?source=pwa"
   "display": "standalone",
   "background_color": "#ddd6e8",
   "theme_color": "#ddd6e8",

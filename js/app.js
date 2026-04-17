@@ -156,7 +156,8 @@ if (window.D.propsPixels && Object.keys(window.D.propsPixels).length) {
 }
 
 const isPWA = window.matchMedia('(display-mode: standalone)').matches
-           || window.navigator.standalone === true;
+           || window.navigator.standalone === true
+           || new URLSearchParams(window.location.search).get('source') === 'pwa';
 
 if (!window.D.g.hasSeenWelcome && isPWA) {
   showWelcomeModal();

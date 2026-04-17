@@ -1618,32 +1618,81 @@ function confirmDelJ(i) { window.D.journal.splice(i, 1); save(); clModal(); rend
 /* ============================================================
    PROGRESS
    ============================================================ */
+/* Helper couleur — utilisé par hebdo ET mensuel */
+function calColor(count, total, isToday) {
+  const r = total > 0 ? count / total : 0;
+  let bg, border = 'none';
+
+  if      (count === 0) { bg = 'rgba(204,196,216,.15)'; }
+  else if (r <= 0.33)   { bg = 'rgba(232,196,160,.75)'; }  // pêche  — 1-2 hab
+  else if (r <= 0.66)   { bg = 'rgba(136,190,232,.80)'; }  // sky    — 3-4 hab
+  else if (r <  1)      { bg = 'rgba(128,208,168,.80)'; }  // mint   — 5 hab
+  else                  { bg = 'var(--mint)'; border = '2px solid var(--lilac)'; } // 6/6 ✨
+
+  if (isToday && count === 0) border = '2px solid var(--lilac)';
+
+  return { bg, border };
+}
+
 function renderProg() {
-  const D = window.D;
-  const wd = getWkDates(wOff), wt = document.getElementById('w-title');
+  const D  = window.D;
+  const wd = getWkDates(wOff);
+  const wt = document.getElementById('w-title');
   if (!wt) return;
-  if (wOff === 0) wt.textContent = 'Cette semaine';
-  else { const a=new Date(wd[0]),b=new Date(wd[6]); wt.textContent=`${a.getDate()}/${a.getMonth()+1} — ${b.getDate()}/${b.getMonth()+1}`; }
-  document.getElementById('w-view').innerHTML = wd.map(ds => {
-    const l=D.log[ds]||[],r=l.length/6,isT=ds===today();
-    let bg='var(--border)';
-    if(r>.8)bg='var(--mint)';else if(r>.5)bg='var(--sky)';else if(r>0)bg='var(--peach)';
-    return `<div class="cal-c" style="background:${bg};${isT?'border:2px solid var(--lilac)':''}">${new Date(ds+'T12:00').getDate()}</div>`;
-  }).join('');
-  const now = new Date(); now.setMonth(now.getMonth() + mOff);
-  const y = now.getFullYear(), m = now.getMonth();
-  document.getElementById('m-title').textContent = now.toLocaleDateString('fr-FR', {month:'long',year:'numeric'});
-  const first=new Date(y,m,1), last=new Date(y,m+1,0), off=(first.getDay()+6)%7;
-  let cells = '';
-  for (let i=0;i<off;i++) cells += '<div class="cal-c"></div>';
-  for (let d=1;d<=last.getDate();d++) {
-    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const l=D.log[ds]||[],r=l.length/6,isT=ds===today();
-    let bg='rgba(204,196,216,.15)';
-    if(r>.8)bg='var(--mint)';else if(r>.5)bg='var(--sky)';else if(r>0)bg='rgba(232,196,160,.3)';
-    cells += `<div class="cal-c" style="background:${bg};${isT?'border:2px solid var(--lilac);font-weight:bold':''}">${d}</div>`;
+
+  /* ── Titre semaine ── */
+  if (wOff === 0) {
+    wt.textContent = 'Cette semaine';
+  } else {
+    const a = new Date(wd[0]), b = new Date(wd[6]);
+    wt.textContent = `${a.getDate()}/${a.getMonth()+1} — ${b.getDate()}/${b.getMonth()+1}`;
   }
+
+  /* ── Calendrier hebdomadaire ── */
+  const total = D.habits.length || 6;
+
+  document.getElementById('w-view').innerHTML = wd.map(ds => {
+    const log   = D.log[ds] || [];
+    const isT   = ds === today();
+    const { bg, border } = calColor(log.length, total, isT);
+    const day   = new Date(ds + 'T12:00').getDate();
+
+    return `<div class="cal-c" style="background:${bg};border:${border}">${day}</div>`;
+  }).join('');
+
+  /* ── Calendrier mensuel ── */
+  const now = new Date();
+  now.setMonth(now.getMonth() + mOff);
+
+  const y     = now.getFullYear();
+  const m     = now.getMonth();
+  const first = new Date(y, m, 1);
+  const last  = new Date(y, m + 1, 0);
+  const off   = (first.getDay() + 6) % 7; // décalage lundi = 0
+
+  document.getElementById('m-title').textContent =
+    now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+  let cells = '';
+
+  // Cases vides pour aligner le 1er jour
+  for (let i = 0; i < off; i++) {
+    cells += '<div class="cal-c"></div>';
+  }
+
+  // Jours du mois
+  for (let d = 1; d <= last.getDate(); d++) {
+    const ds  = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const log = D.log[ds] || [];
+    const isT = ds === today();
+    const { bg, border } = calColor(log.length, total, isT);
+    const weight = isT ? 'font-weight:bold;' : '';
+
+    cells += `<div class="cal-c" style="background:${bg};border:${border};${weight}">${d}</div>`;
+  }
+
   document.getElementById('m-view').innerHTML = cells;
+
   updUI();
 }
 

@@ -2059,6 +2059,24 @@ function updTabletBadge() {
    ============================================================ */
 function checkWelcome() {
 const D = window.D;
+
+  // 🎂 Anniversaire — priorité absolue avant tout
+  if (window.USER_CONFIG?.birthdayMonth) {
+    const now = new Date();
+    if (now.getMonth() + 1 === window.USER_CONFIG.birthdayMonth &&
+        now.getDate()      === window.USER_CONFIG.birthdayDay) {
+      document.getElementById('modal').style.display = 'flex';
+      document.getElementById('mbox').innerHTML = `
+        <div style="text-align:center;padding:8px">
+          <div style="font-size:40px">🎂</div>
+          <p style="font-size:12px;color:var(--text);margin:12px 0;line-height:1.6;white-space:pre-line">${window.USER_CONFIG.birthdayMessage}</p>
+          <button class="btn btn-p" onclick="clModal()" style="margin-top:8px;width:100%">Merci 💜</button>
+        </div>
+      `;
+      animEl(document.getElementById('mbox'), 'bounceIn');
+      return; // ← on s'arrête là, pas de message normal aujourd'hui
+    }
+  }
 const td = today();
 const h  = hr();
 

@@ -115,7 +115,7 @@ const MSG = {
 function defs() {
   return {
     g: {
-      name:'Petit·e Gotchi', userName: 'Émilie', totalXp:0, stage:'egg', energy:3, happiness:3,
+      name: window.USER_CONFIG?.gotchiName ?? 'Petit Gotchi', userName: window.USER_CONFIG?.userName ?? 'Alexia', totalXp:0, stage:'egg', energy:3, happiness:3,
 envLv:0, activeEnv:'parc', petales:0,poops: [], poopDay: '',    // date du dernier comptage
 poopCount: 0,  // nb de cacas spawné aujourd'hui
 snackDone: '', snackEmoji: '',
@@ -535,8 +535,8 @@ function initBaseProps() {
    ============================================================ */
 async function fetchMeteo() {
   try {
-    const METEO_LAT = 43.6047;  // Toulouse
-    const METEO_LON = 1.4442;
+    const METEO_LAT = window.USER_CONFIG?.meteoLat ?? 43.6047;
+    const METEO_LON = window.USER_CONFIG?.meteoLon ?? 1.4442;
     const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${METEO_LAT}&longitude=${METEO_LON}&current_weather=true&timezone=Europe/Paris`);
     const d = await r.json();
     window.meteoData = d.current_weather;
@@ -753,17 +753,25 @@ function initApp() {
     if (typeof renderProg === 'function') renderProg();
   }
 }
-
+async function loadUserConfig() {
+  try {
+    const r = await fetch('data/user_config.json');
+    if (r.ok) window.USER_CONFIG = await r.json();
+  } catch(e) {
+    window.USER_CONFIG = null;
+  }
+}
 /**
  * Point d'entrée principal : charge les données PUIS initialise.
  * L'ordre est critique : pas d'UI avant que D soit prêt.
  */
-function bootstrap() {
+async function bootstrap() {
   if (_appInitialized) {
-    // Déjà init → on fait juste le refresh (retour foreground)
     initApp();
     return;
   }
+
+  await loadUserConfig(); // ← charge le config d'Alexia en premier
 
   loadDataFiles().then(() => {
     initBaseProps();

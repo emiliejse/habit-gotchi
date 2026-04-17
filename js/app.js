@@ -455,9 +455,15 @@ if (totalDone === window.D.habits.length) {
       C.rainbow[Math.floor(Math.random() * C.rainbow.length)]
     );
   }
-  flashBubble("Tu as tout fait ! Je suis trop heureuse 🎉", 3000);
+    flashBubble("Tu as tout fait ! Je suis trop heureuse 🎉", 3000);
   window.triggerGotchiBounce?.();
 }
+
+ // ✅ UN SEUL save() ici
+  save();
+  if (typeof updUI === 'function') updUI();
+  if (typeof renderHabs === 'function') renderHabs();
+} // ← fermeture toggleHab
 
 function editH(i, v) {
   window.D.habits[i].label = v.trim() || window.D.habits[i].label;

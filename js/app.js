@@ -23,7 +23,7 @@ window.meteoData  = null;
 
 
 // VERSION À CHANGER
-const APP_VERSION = 'v1.0';
+window.APP_VERSION = 'v1.0';
 
 /* ============================================================
    CHARGEMENT FICHIERS DATA + PROMPTS

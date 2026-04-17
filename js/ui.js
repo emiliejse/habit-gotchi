@@ -981,6 +981,33 @@ function viderObjetsIA() {
 
 /* ─── SYSTÈME 3 : COGNITION & IA (Interaction avec Claude) ───────── */
 
+/* ── Animation de chargement IA (réutilisable) ── */
+function startThinkingAnim(elementId, nomGotchi) {
+  const el = document.getElementById(elementId);
+  if (!el) return null;
+
+  const phrases = [
+    `💭 ${nomGotchi} réfléchit`,
+    `✨ ${nomGotchi} cherche les mots`,
+    `🌱 ${nomGotchi} prépare quelque chose`,
+    `💜 ${nomGotchi} est là`,
+  ];
+  let frame = 0, dots = 0;
+  el.textContent = phrases[0] + '...';
+
+  const interval = setInterval(() => {
+    dots = (dots + 1) % 4;
+    if (dots === 0) frame = (frame + 1) % phrases.length;
+    el.textContent = phrases[frame] + '.'.repeat(dots || 3);
+  }, 400);
+
+  return interval; // stocker pour pouvoir l'arrêter
+}
+
+function stopThinkingAnim(interval) {
+  if (interval) clearInterval(interval);
+}
+
 /* ============================================================
    API CLAUDE — CADEAU / BULLE
    ============================================================ */
@@ -992,61 +1019,68 @@ async function askClaude() {
   if (!key) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
 
   const g = D.g, td = today();
-if (hr() >= 22 || hr() < 7) {
-  const msgs = [
-    "Zzz... je dors 🌙",
-    "Chut ! Il est tard... 😴",
-    "Laisse-moi tranquille, vas dormir ! 🌛",
-    "...zzzZZZ... 💤",
-    "Le Gotchi ronfle doucement. Reviens demain ✿"
-  ];
-  const el = document.getElementById('claude-msg');
-  if (el) el.textContent = msgs[Math.floor(Math.random() * msgs.length)];
-  return;
-}
-    // ✦ LIMITE 3 PENSÉES PAR JOUR
+  const msgEl = document.getElementById('claude-msg');
+
+  /* ── Mode nuit ── */
+  if (hr() >= 22 || hr() < 7) {
+    const msgs = [
+      "Zzz... je dors 🌙",
+      "Chut ! Il est tard... 😴",
+      "Laisse-moi tranquille, vas dormir ! 🌛",
+      "...zzzZZZ... 💤",
+      "Le Gotchi ronfle doucement. Reviens demain ✿"
+    ];
+    if (msgEl) msgEl.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+    return;
+  }
+
+  /* ── Limite 3 pensées par jour ── */
   if (window.D.lastThoughtDate !== td) {
     window.D.lastThoughtDate = td;
-    window.D.thoughtCount = 0;
+    window.D.thoughtCount    = 0;
   }
   if (window.D.thoughtCount >= 3) {
     toast("Le Gotchi a besoin de calme… Reviens demain 🌙");
     return;
   }
-  const P = window.PERSONALITY; 
+
+  /* ── Animation de chargement ── */
+  const animThought = startThinkingAnim('claude-msg', g.name);
+
+  /* ── Construction du prompt ── */
+  const P   = window.PERSONALITY;
   const CTX = window.AI_CONTEXTS?.askClaude;
 
-  // --- Remplacement des variables dans le prompt base ---
-const notesRecentes = D.journal
-  .slice(-3)
-  .map(j => {
-    const d = j.date ? j.date.split('T')[0] : 'date inconnue';
-    return `[${d}] ${j.text.slice(0, 40)}`;
-  })
-  .filter(t => t.length > 0)
-  .join(' / ');
+  const notesRecentes = D.journal
+    .slice(-3)
+    .map(j => {
+      const d = j.date ? j.date.split('T')[0] : 'date inconnue';
+      return `[${d}] ${j.text.slice(0, 40)}`;
+    })
+    .filter(t => t.length > 0)
+    .join(' / ');
 
   const vars = {
-  nom: D.g.name || P?.nom || 'Petit·e Gotchi',
-  userName: D.userName || 'ton utilisatrice',
-  style:         P?.style || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
-  traits:        P?.traits?.join(', ') || 'doux, joueur, curieux',
-  energy:        g.energy,
-  happiness:     g.happiness,
-  heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-  notesRecentes: notesRecentes
-    ? `Aujourd'hui : ${today()}. Ambiance récente : ${notesRecentes}`
-    : `Aujourd'hui : ${today()}.`,
-  exemples:      (P?.bulles?.idle || []).slice(0, 3).join(', ') || '*bâille*, *sourit*',
-  existingNames: (D.g.props || []).map(p => p.nom).join(', ') || 'aucun',
-  timestamp:     Date.now(),
-};
+    nom:           D.g.name      || P?.nom    || 'Petit·e Gotchi',
+    userName:      D.g.userName  || D.userName || 'ton utilisatrice',
+    style:         P?.style      || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
+    traits:        P?.traits?.join(', ') || 'doux, joueur, curieux',
+    energy:        g.energy,
+    happiness:     g.happiness,
+    heure:         new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    notesRecentes: notesRecentes
+      ? `Aujourd'hui : ${today()}. Ambiance récente : ${notesRecentes}`
+      : `Aujourd'hui : ${today()}.`,
+    exemples:      (P?.bulles?.idle || []).slice(0, 3).join(', ') || '*bâille*, *sourit*',
+    existingNames: (D.g.props || []).map(p => p.nom).join(', ') || 'aucun',
+    timestamp:     Date.now(),
+  };
 
   function fillVars(template) {
     return template.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? '');
   }
 
-  // --- Règle cadeau : 1 tous les 3 jours ---
+  /* ── Règle cadeau : 1 tous les 3 jours ── */
   const giveGift = !D.lastGiftDate ||
     Math.floor((new Date() - new Date(D.lastGiftDate)) / 86400000) >= 3;
 
@@ -1054,9 +1088,7 @@ const notesRecentes = D.journal
     ? fillVars(CTX.base) + '\n\n' + fillVars(giveGift ? CTX.withGift : CTX.withoutGift)
     : `Fallback : réponds en JSON {"message":"...","bulles":{"idle":"..."}}`;
 
-  if (document.getElementById('claude-msg'))
-    document.getElementById('claude-msg').textContent = 'Je réfléchis... 💭';
-
+  /* ── Appel API ── */
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -1066,22 +1098,20 @@ const notesRecentes = D.journal
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 400,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:400, messages:[{ role:'user', content:prompt }] })
     });
+    const d       = await r.json();
     const rawText = d.content[0].text;
-    const match = rawText.match(/\{[\s\S]*\}/);
+    const match   = rawText.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('JSON introuvable dans la réponse IA');
     const data = JSON.parse(match[0]);
 
-    // --- Message affiché ---
-    if (document.getElementById('claude-msg'))
-      document.getElementById('claude-msg').textContent = data.message;
+    stopThinkingAnim(animThought);
 
-    // --- Bulles enrichies par état (pool glissant 4 max) ---
+    /* ── Message affiché ── */
+    if (msgEl) msgEl.textContent = data.message;
+
+    /* ── Bulles enrichies (pool glissant 4 max) ── */
     if (data.bulles && typeof data.bulles === 'object') {
       if (!D.g.customBubbles || Array.isArray(D.g.customBubbles))
         D.g.customBubbles = {};
@@ -1093,38 +1123,36 @@ const notesRecentes = D.journal
       });
     }
 
-    // --- Cadeau ---
+    /* ── Cadeau ── */
     if (giveGift && data.cadeau) {
       if (!D.g.props) D.g.props = [];
       if (!D.g.props.find(p => p.id === data.cadeau.id)) {
-        D.g.props.push({ id: data.cadeau.id, nom: data.cadeau.nom, type: data.cadeau.type, actif: false, seen: false });
-        if (!D.propsPixels) D.propsPixels = {};
-D.propsPixels[data.cadeau.id] = data.cadeau;
-window.PROPS_LOCAL = Object.values(D.propsPixels);
-        D.lastGiftDate = td;
+        D.g.props.push({ id:data.cadeau.id, nom:data.cadeau.nom, type:data.cadeau.type, actif:false, seen:false });
+        D.propsPixels                = D.propsPixels || {};
+        D.propsPixels[data.cadeau.id] = data.cadeau;
+        window.PROPS_LOCAL           = Object.values(D.propsPixels);
+        D.lastGiftDate               = td;
+
         const poolCadeau = src.cadeau || ["Oh ! Un cadeau ! 🎁"];
-const bulleCadeau = poolCadeau[Math.floor(Math.random() * poolCadeau.length)];
-flashBubble(bulleCadeau.replace('{{nom}}', D.g.name || 'toi'), 3000);
+        const bulleCadeau = poolCadeau[Math.floor(Math.random() * poolCadeau.length)];
+        flashBubble(bulleCadeau.replace('{{nom}}', D.g.name || 'toi'), 3000);
         toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
-        addEvent({
-  type: 'cadeau',
-  subtype: 'ia',
-  valeur: 0,
-  label: `${data.cadeau.nom} reçu en cadeau !`
-});
+        addEvent({ type:'cadeau', subtype:'ia', valeur:0, label:`${data.cadeau.nom} reçu en cadeau !` });
         updBadgeBoutique();
       }
     }
 
+    /* ── Compteur ── */
     window.D.thoughtCount++;
-  const tc = document.getElementById('thought-count');
-  if (tc) tc.textContent = `(${window.D.thoughtCount}/3)`;
-    
+    const tc = document.getElementById('thought-count');
+    if (tc) tc.textContent = `(${window.D.thoughtCount}/3)`;
+
     save(); renderProps(); updBubbleNow();
 
   } catch(e) {
-    if (document.getElementById('claude-msg'))
-      document.getElementById('claude-msg').textContent = '*soupir* Je n\'arrive pas à me connecter... ✿';
+    stopThinkingAnim(animThought);
+    if (msgEl) msgEl.textContent = '*soupir* Je n\'arrive pas à me connecter... ✿';
+    console.error('Erreur askClaude :', e);
   }
 }
 
@@ -1135,43 +1163,76 @@ async function acheterPropClaude() {
   if ((D.g.petales || 0) < 16) { toast(`Pas assez de pétales 🌸`); return; }
   if (!D.apiKey) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
 
-  D.g.petales -= 16; save();
+  D.g.petales -= 16;
+  save();
 
+  /* ── Animation de chargement ── */
   const el = document.getElementById('boutique-contenu');
-  if (el) el.innerHTML = `<p style="text-align:center;font-size:11px;padding:20px">${window.D.g.name} crée ton objet... 💭</p>`;
+  if (el) el.innerHTML = `<p style="text-align:center;font-size:11px;padding:20px" id="prop-loading">💭</p>`;
+  const animProp = startThinkingAnim('prop-loading', window.D.g.name);
 
+  /* ── Construction du prompt ── */
   const nomsExistants = (D.g.props || []).map(p => `${p.nom} (${p.type})`).join(', ') || 'aucun';
   const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
-  const theme = themes[Math.floor(Math.random() * themes.length)];
-  const ctx = window.AI_CONTEXTS;
+  const theme  = themes[Math.floor(Math.random() * themes.length)];
+  const ctx    = window.AI_CONTEXTS;
+
   const prompt = ctx
-    ? ctx.buyProp.replace('{{theme}}', theme).replace('{{existingNames}}', nomsExistants).replace('{{timestamp}}', Date.now())
+    ? ctx.buyProp
+        .replace('{{theme}}',         theme)
+        .replace('{{existingNames}}', nomsExistants)
+        .replace('{{timestamp}}',     Date.now())
     : (() => { toast(`*inquiet* Mes fichiers de mémoire sont manquants... 💜`); return null; })();
-  
-if (!prompt) return;
+
+  if (!prompt) { stopThinkingAnim(animProp); return; }
+
+  /* ── Appel API ── */
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json','x-api-key':D.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
-      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:300, temperature:1, messages:[{role:'user',content:prompt}] })
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': D.apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:300, temperature:1, messages:[{ role:'user', content:prompt }] })
     });
-    const data = await r.json();
+    const data  = await r.json();
     const match = data.content[0].text.match(/\{[\s\S]*\}/);
+
+    stopThinkingAnim(animProp);
+
     if (match) {
       const obj = JSON.parse(match[0]);
-      D.g.props.push({ id:obj.id, nom:obj.nom, type:obj.type, emoji:obj.emoji||'🎁', actif:false, slot:obj.slot||'A', motion:obj.motion||'drift', ancrage:obj.ancrage||null, seen: false });
-      D.propsPixels = D.propsPixels || {};
-D.propsPixels[obj.id] = obj;
-window.PROPS_LOCAL = Object.values(D.propsPixels);
+      D.g.props.push({
+        id:      obj.id,
+        nom:     obj.nom,
+        type:    obj.type,
+        emoji:   obj.emoji  || '🎁',
+        actif:   false,
+        slot:    obj.slot   || 'A',
+        motion:  obj.motion || 'drift',
+        ancrage: obj.ancrage || null,
+        seen:    false
+      });
+      D.propsPixels         = D.propsPixels || {};
+      D.propsPixels[obj.id] = obj;
+      window.PROPS_LOCAL    = Object.values(D.propsPixels);
       save(); renderProps(); updUI();
+
       toast(`🎁 ${obj.nom} ajouté à ton inventaire !`);
       const iaMsgs = ["*yeux brillants* ✨", `${obj.emoji} J'adore ! 💜`, "Je l'ai fait moi-même ! 🌸", "*fière* ✿"];
-flashBubble(iaMsgs[Math.floor(Math.random() * iaMsgs.length)], 2500);
+      flashBubble(iaMsgs[Math.floor(Math.random() * iaMsgs.length)], 2500);
       ouvrirBoutique();
     }
+
   } catch(e) {
-    D.g.petales = (D.g.petales || 0) + 16; save();
+    stopThinkingAnim(animProp);
+    D.g.petales = (D.g.petales || 0) + 16;
+    save();
     toast(`*soupir* Je n'ai pas pu créer l'objet... pétales remboursés 🌸`);
+    console.error('Erreur création prop IA :', e);
     ouvrirBoutique();
   }
 }
@@ -1270,71 +1331,95 @@ animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
 async function sendSoutienMsg(systemPrompt, isInit = false) {
-  const key = window.D.apiKey;
+  const key  = window.D.apiKey;
   const chat = document.getElementById('soutien-chat');
+
+  /* ── Limite 6 messages par session ── */
   if (!isInit) {
-  if (window._soutienCount >= 6) {
-    chat.innerHTML += `<div class="chat-bubble-system">Tu as atteint la limite de 6 messages pour cette session. Prends soin de toi 💜</div>`;
-    chat.scrollTop = chat.scrollHeight;
-    document.getElementById('soutien-inp').disabled = true;
-    document.querySelector('#mbox .btn-p').disabled = true;
-    return;
+    if (window._soutienCount >= 6) {
+      chat.innerHTML += `<div class="chat-bubble-system">Tu as atteint la limite de 6 messages pour cette session. Prends soin de toi 💜</div>`;
+      chat.scrollTop = chat.scrollHeight;
+      document.getElementById('soutien-inp').disabled = true;
+      document.querySelector('#mbox .btn-p').disabled  = true;
+      return;
+    }
+    window._soutienCount++;
+    const restants = 6 - window._soutienCount;
+    const countEl  = document.getElementById('soutien-count');
+    if (countEl) countEl.textContent = `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''} · conversation non sauvegardée`;
   }
-  window._soutienCount++;
-const restants = 6 - window._soutienCount;
-const countEl = document.getElementById('soutien-count');
-if (countEl) countEl.textContent = `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''} · conversation non sauvegardée`;
-}
+
   if (!key) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
-  const inp  = document.getElementById('soutien-inp');
-  let userText = '';
+
+  /* ── Message utilisatrice ── */
   if (!isInit) {
-    userText = inp ? inp.value.trim() : ''; if (!userText) return;
+    const inp      = document.getElementById('soutien-inp');
+    const userText = inp ? inp.value.trim() : '';
+    if (!userText) return;
     chat.innerHTML += `<div class="chat-bubble-user">${userText}</div>`;
     inp.value = '';
     window._soutienHistory.push({ role:'user', content:userText });
   }
-  const typingId = 'typing-' + Date.now();
-  chat.innerHTML += `<div class="chat-bubble-system" id="${typingId}">Gotchi réfléchit... 💭</div>`;
-  chat.scrollTop = chat.scrollHeight;
-  const messages = isInit ? [{ role:'user', content:systemPrompt }] : [...window._soutienHistory.slice(-6)];
-const notesJour = window.D.journal
-  .filter(j => j.date.startsWith(today()))
-  .slice(-3)
-  .map(j => `[${j.mood}] ${j.text}`)
-  .join(' | ') || 'aucune note';
 
-const habsDone = (window.D.log[today()] || [])
-  .map(catId => {
-    const h = window.D.habits.find(h => h.catId === catId);
-    return h ? h.label : catId;
-  })
-  .join(', ') || 'aucune';
+  /* ── Animation de chargement ── */
+  const bubbleId   = 'typing-' + Date.now();
+  chat.innerHTML  += `<div class="chat-bubble-system" id="${bubbleId}">💭</div>`;
+  const animSoutien = startThinkingAnim(bubbleId, window.D.g.name);
+  chat.scrollTop   = chat.scrollHeight;
 
-const contexte = (window.AI_SYSTEM?.soutien_contexte || '')
-  .replace('{energie}', window.D.g.energy)
-  .replace('{bonheur}', window.D.g.happiness)
-  .replace('{habitesDone}', habsDone)
-  .replace('{notes}', notesJour)
-  .replace('{messages_restants}', 6 - window._soutienCount);
+  /* ── Construction du contexte ── */
+  const messages  = isInit ? [{ role:'user', content:systemPrompt }] : [...window._soutienHistory.slice(-6)];
 
-const sysPrompt = `${window.AI_SYSTEM?.soutien || ''} ${contexte}`.trim();
+  const notesJour = window.D.journal
+    .filter(j => j.date.startsWith(today()))
+    .slice(-3)
+    .map(j => `[${j.mood}] ${j.text}`)
+    .join(' | ') || 'aucune note';
+
+  const habsDone  = (window.D.log[today()] || [])
+    .map(catId => {
+      const h = window.D.habits.find(h => h.catId === catId);
+      return h ? h.label : catId;
+    })
+    .join(', ') || 'aucune';
+
+  const contexte  = (window.AI_SYSTEM?.soutien_contexte || '')
+    .replace('{energie}',           window.D.g.energy)
+    .replace('{bonheur}',           window.D.g.happiness)
+    .replace('{habitesDone}',       habsDone)
+    .replace('{notes}',             notesJour)
+    .replace('{messages_restants}', 6 - window._soutienCount);
+
+  const sysPrompt = `${window.AI_SYSTEM?.soutien || ''} ${contexte}`.trim();
+
+  /* ── Appel API ── */
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:300, system:sysPrompt, messages })
     });
-    const d = await r.json();
+    const d     = await r.json();
     const reply = d.content?.[0]?.text || 'Je suis là. 💜';
-    document.getElementById(typingId)?.remove();
+
+    stopThinkingAnim(animSoutien);
+    document.getElementById(bubbleId)?.remove();
     chat.innerHTML += `<div class="chat-bubble-claude">${reply}</div>`;
-    chat.scrollTop = chat.scrollHeight;
+    chat.scrollTop  = chat.scrollHeight;
+
     if (isInit) window._soutienHistory.push({ role:'user', content:systemPrompt });
     window._soutienHistory.push({ role:'assistant', content:reply });
+
   } catch(e) {
-    document.getElementById(typingId)?.remove();
+    stopThinkingAnim(animSoutien);
+    document.getElementById(bubbleId)?.remove();
     chat.innerHTML += `<div class="chat-bubble-system">*soupir* Je n'arrive plus à te répondre... Vérifie ta clé API 💜</div>`;
+    console.error('Erreur soutien IA :', e);
   }
 }
 
@@ -1411,7 +1496,7 @@ if (semaineEnCours) {
     return;
   }
 
-  summaryEl.textContent = `💭 ${g.name} réfléchit à ta semaine...`;
+  const animBilan = startThinkingAnim('claude-summary', g.name);
 
   /* ── Construction du prompt ── */
   const ctx = window.AI_CONTEXTS;
@@ -1431,7 +1516,7 @@ if (semaineEnCours) {
         .replace('{{bilanNote}}',    noteIA)
     : `Tu es le Gotchi. Bilan semaine ${wd[0]}→${wd[6]} pour ${g.name} (${s.l}). Énergie ${g.energy}/5, Bonheur ${g.happiness}/5. ${totalHabDays} habitudes cochées. ${notes.length} notes. Bilan chaleureux en 3 paragraphes courts. Ton doux, pas de bullet points. ${noteIA}`;
 
-  /* ── Appel API ── */
+/* ── Appel API ── */
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -1445,14 +1530,19 @@ if (semaineEnCours) {
     });
     const d = await r.json();
     const bilan = d.content?.[0]?.text || 'Je n\'ai pas pu générer le bilan.';
+
+    stopThinkingAnim(animBilan);
     summaryEl.textContent = bilan;
     document.getElementById('bil-txt-hidden').value = bilan;
     document.getElementById('btn-copy-bilan').style.display = 'block';
     window.D.g.bilanCount = (window.D.g.bilanCount || 0) + 1;
     save();
     renderProg(); // rafraîchit l'état du bouton
+
   } catch(e) {
-    summaryEl.textContent = 'Erreur : ' + (e.message || JSON.stringify(e));
+    stopThinkingAnim(animBilan);
+    summaryEl.textContent = '❌ Une erreur est survenue, réessaie plus tard 💜';
+    console.error('Erreur bilan IA :', e);
   }
 }
 

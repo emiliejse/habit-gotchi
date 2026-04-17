@@ -444,6 +444,8 @@ if (typeof window.triggerExpr === 'function') {
   }
 
   // Confettis si toutes les habitudes sont cochées
+const gx = window._gotchiX || 100;
+const gy = window._gotchiY || 100;
 const totalDone = (window.D.log[td] || []).length;
 if (totalDone === window.D.habits.length) {
   for (let i = 0; i < 30; i++) {
@@ -455,11 +457,6 @@ if (totalDone === window.D.habits.length) {
   }
   flashBubble("Tu as tout fait ! Je suis trop heureuse 🎉", 3000);
   window.triggerGotchiBounce?.();
-}
- // ✅ UN SEUL save() ici, après toutes les mutations d'état
-  save();
-  if (typeof updUI === 'function') updUI();
-  if (typeof renderHabs === 'function') renderHabs();
 }
 
 function editH(i, v) {

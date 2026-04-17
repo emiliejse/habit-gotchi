@@ -216,107 +216,165 @@ function drawBaby(p, cx, cy, sl, en, ha) {
 }
 
 function drawTeen(p, cx, cy, sl, en, ha) {
-    const x = cx - PX * 4, y = cy; 
+    const x = cx - PX * 4, y = cy;
     p.noStroke();
 
-    p.fill(C.body); 
-    px(p,x+PX*2,y,PX*4,PX); px(p,x+PX,y+PX,PX*6,PX); px(p,x,y+PX*2,PX*8,PX*4); 
-    px(p,x+PX,y+PX*6,PX*6,PX*2); px(p,x+PX*2,y+PX*8,PX*4,PX);
+    /* ─── TÊTE (ronde, large) ─── rangées y 0 → 4 ─── */
+    p.fill(C.body);
+    px(p, x+PX*2, y,        PX*4, PX);      // sommet
+    px(p, x+PX,   y+PX,     PX*6, PX);      // front
+    px(p, x,      y+PX*2,   PX*8, PX*2);    // visage large (yeux)
+    px(p, x+PX,   y+PX*4,   PX*6, PX);      // mâchoire
 
-    p.fill(C.bodyLt); px(p,x+PX*2,y+PX,PX*2,PX); px(p,x+PX,y+PX*2,PX*2,PX);
+    /* ─── COU & CORPS (rétréci) ─── rangées y 5 → 9 ─── */
+    px(p, x+PX*2, y+PX*5,   PX*4, PX);      // cou étroit
+    px(p, x+PX*2, y+PX*6,   PX*4, PX*3);    // torse compact
+    px(p, x+PX*2, y+PX*9,   PX*4, PX);      // bas
 
-    if(sl || blink) { 
-  p.fill(C.eye); 
-  px(p,x+PX*1,y+PX*3,PX*2,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); // fermés
-} else { 
-  p.fill(C.eye); 
-  // œil gauche : large en haut, étroit en bas
-  px(p,x+PX*1,y+PX*2,PX*3,PX);   // rangée haute — large
-  px(p,x+PX*1,y+PX*3,PX*2,PX);   // rangée basse — étroite
-  // œil droit
-  px(p,x+PX*5,y+PX*2,PX*3,PX);
-  px(p,x+PX*5,y+PX*3,PX*2,PX);
-  p.fill('#fff'); 
-  p.rect(x+PX*1+1, y+PX*2+1, 4, 4); p.rect(x+PX*5+1, y+PX*2+1, 4, 4);
-}
+    /* ─── HIGHLIGHTS ─── */
+    p.fill(C.bodyLt);
+    px(p, x+PX*2, y+PX,   PX*2, PX);        // front brillant
+    px(p, x+PX,   y+PX*2, PX*2, PX);        // joue gauche claire
 
-    p.fill(C.cheek); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*6,y+PX*5,PX,PX);
+    /* ─── YEUX (grands, amande, mignons) ─── */
+    if (sl || blink) {
+      p.fill(C.eye);
+      px(p, x+PX*2, y+PX*3, PX*2, PX);
+      px(p, x+PX*4, y+PX*3, PX*2, PX);
+    } else {
+      p.fill(C.eye);
+      // œil gauche (rangée 2 large, rangée 3 étroite)
+      px(p, x+PX,   y+PX*2, PX*2, PX);      // rangée haute — large
+      px(p, x+PX*2, y+PX*3, PX,   PX);      // rangée basse — étroite
+      // œil droit (miroir)
+      px(p, x+PX*5, y+PX*2, PX*2, PX);
+      px(p, x+PX*5, y+PX*3, PX,   PX);
+      // reflets sub-pixel
+      p.fill('#fff');
+      p.rect(x+PX+1,   y+PX*2+1, 4, 4);
+      p.rect(x+PX*5+1, y+PX*2+1, 4, 4);
+    }
+
+    /* ─── POOP DISGUST (yeux noirs sur large zone) ─── */
     if (window._gotchiNearPoop && !sl) {
-      p.fill(C.eye); px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
+      p.fill(C.eye);
+      px(p, x+PX,   y+PX*2, PX*2, PX);
+      px(p, x+PX*5, y+PX*2, PX*2, PX);
     }
 
+    /* ─── JOUES ROSES (en bas de la tête) ─── */
+    p.fill(C.cheek);
+    px(p, x,      y+PX*3, PX, PX);
+    px(p, x+PX*7, y+PX*3, PX, PX);
+
+    /* ─── BOUCHE ─── */
     p.fill(C.mouth);
-    if(!sl) { 
-      if(ha > 70) { px(p,x+PX*3,y+PX*5,PX*2,PX); px(p,x+PX*2,y+PX*5,PX,PX); px(p,x+PX*5,y+PX*5,PX,PX); } 
-      else if(ha > 40) px(p,x+PX*3,y+PX*5,PX*2,PX); 
-      else if(ha < 20) px(p,x+PX*3,y+PX*6,PX*2,PX); 
-      else px(p,x+PX*3,y+PX*5,PX,PX); 
+    if (!sl) {
+      if      (ha > 70) { px(p,x+PX*3,y+PX*4,PX*2,PX); px(p,x+PX*2,y+PX*4,PX,PX); px(p,x+PX*5,y+PX*4,PX,PX); }
+      else if (ha > 40)   px(p,x+PX*3,y+PX*4,PX*2,PX);
+      else if (ha < 20)   px(p,x+PX*3,y+PX*4+2,PX*2,PX);
+      else                px(p,x+PX*3,y+PX*4,PX,PX);
     }
 
-    p.fill(C.bodyDk); 
-    if(en < 25 && !sl) { px(p,x-PX,y+PX*4,PX,PX); px(p,x+PX*8,y+PX*4,PX,PX); } 
-    else { px(p,x-PX,y+PX*3,PX,PX*2); px(p,x+PX*8,y+PX*3,PX,PX*2); }
-    px(p,x+PX*2,y+PX*9,PX*2,PX); px(p,x+PX*5,y+PX*9,PX*2,PX);
+    /* ─── BRAS ─── */
+    p.fill(C.bodyDk);
+    if (en < 25 && !sl) {
+      px(p, x+PX,   y+PX*7, PX, PX);        // bras tombés
+      px(p, x+PX*6, y+PX*7, PX, PX);
+    } else {
+      px(p, x+PX,   y+PX*6, PX, PX*2);      // bras normaux
+      px(p, x+PX*6, y+PX*6, PX, PX*2);
+    }
 
-    return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
+    /* ─── PIEDS ─── */
+    px(p, x+PX*2, y+PX*10, PX, PX);
+    px(p, x+PX*5, y+PX*10, PX, PX);
+
+    return { topY: y, eyeY: y+PX*2, neckY: y+PX*5 };
 }
 
 function drawAdult(p, cx, cy, sl, en, ha) {
-    const x = cx - PX * 5, y = cy; 
+    const x = cx - PX * 5, y = cy;
     p.noStroke();
 
-    p.fill(C.body); 
-    px(p,x+PX*3,y,PX*4,PX); px(p,x+PX*2,y+PX,PX*6,PX); px(p,x+PX,y+PX*2,PX*8,PX);
-    px(p,x,y+PX*3,PX*10,PX*4); px(p,x+PX,y+PX*7,PX*8,PX*2); 
-    px(p,x+PX*2,y+PX*9,PX*6,PX); px(p,x+PX*3,y+PX*10,PX*4,PX);
+    /* ─── TÊTE (très ronde, large) ─── rangées y 0 → 5 ─── */
+    p.fill(C.body);
+    px(p, x+PX*3, y,        PX*4, PX);      // sommet
+    px(p, x+PX*2, y+PX,     PX*6, PX);      // front
+    px(p, x+PX,   y+PX*2,   PX*8, PX*3);    // visage large (yeux + joues)
+    px(p, x+PX*2, y+PX*5,   PX*6, PX);      // mâchoire
 
-    p.fill(C.bodyLt); 
-    px(p,x+PX*3,y+PX,PX*2,PX); px(p,x+PX*2,y+PX*2,PX*2,PX); px(p,x+PX,y+PX*3,PX*2,PX);
+    /* ─── COU ─── */
+    px(p, x+PX*3, y+PX*6,   PX*4, PX);
 
-    if(sl || blink) { 
-  p.fill(C.eye); 
-  px(p,x+PX*2,y+PX*5,PX*3,PX); px(p,x+PX*6,y+PX*5,PX*3,PX); // fermés
-} else { 
-  p.fill(C.eye); 
-  // œil gauche
-  px(p,x+PX*2,y+PX*3,PX*4,PX);   // haut — très large
-  px(p,x+PX*2,y+PX*4,PX*3,PX);   // milieu
-  px(p,x+PX*2,y+PX*5,PX*2,PX);   // bas — étroit
-  // œil droit
-  px(p,x+PX*6,y+PX*3,PX*4,PX);
-  px(p,x+PX*6,y+PX*4,PX*3,PX);
-  px(p,x+PX*6,y+PX*5,PX*2,PX);
-  p.fill('#fff'); 
-  p.rect(x+PX*2+1, y+PX*3+1, 4, 4); p.rect(x+PX*6+1, y+PX*3+1, 4, 4);
-}
+    /* ─── CORPS (plus étroit que la tête) ─── rangées y 7 → 10 ─── */
+    px(p, x+PX*2, y+PX*7,   PX*6, PX*3);    // torse
+    px(p, x+PX*3, y+PX*10,  PX*4, PX);      // bas du corps
 
-    p.fill(C.cheek); px(p,x+PX,y+PX*6,PX,PX); px(p,x+PX*8,y+PX*6,PX,PX);
-    if (window._gotchiNearPoop && !sl) {
-      p.fill(C.eye); px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
-    }
+    /* ─── HIGHLIGHTS ─── */
+    p.fill(C.bodyLt);
+    px(p, x+PX*3, y+PX,   PX*2, PX);
+    px(p, x+PX*2, y+PX*2, PX*2, PX);
+    px(p, x+PX,   y+PX*3, PX*2, PX);
 
-    p.fill(C.mouth);
-    if(!sl) { 
-      if(ha > 80) { px(p,x+PX*3,y+PX*7,PX*4,PX); px(p,x+PX*3,y+PX*6,PX,PX); px(p,x+PX*6,y+PX*6,PX,PX); } 
-      else if(ha > 50) px(p,x+PX*4,y+PX*7,PX*2,PX); 
-      else if(ha < 20) { px(p,x+PX*4,y+PX*8,PX*2,PX); px(p,x+PX*3,y+PX*7,PX,PX); } 
-      else px(p,x+PX*4,y+PX*7,PX,PX); 
-    }
-
-    p.fill(C.bodyDk);
-    if(en < 20 && !sl) {
-      px(p,x-PX,y+PX*5,PX,PX*3); px(p,x+PX*10,y+PX*5,PX,PX*3);
-    } else if(ha > 85 && !sl) {
-      px(p,x-PX,y+PX*2,PX,PX*2); px(p,x+PX*10,y+PX*2,PX,PX*2);
-      px(p,x-PX*2,y+PX,PX,PX); px(p,x+PX*11,y+PX,PX,PX);
+    /* ─── YEUX (grands, amande) ─── */
+    if (sl || blink) {
+      p.fill(C.eye);
+      px(p, x+PX*3, y+PX*4, PX*2, PX);
+      px(p, x+PX*6, y+PX*4, PX*2, PX);
     } else {
-      px(p,x-PX,y+PX*4,PX,PX*3); px(p,x+PX*10,y+PX*4,PX,PX*3);
+      p.fill(C.eye);
+      // œil gauche : 2 rangées, haut large, bas étroit
+      px(p, x+PX*2, y+PX*3, PX*3, PX);      // rangée haute — large
+      px(p, x+PX*3, y+PX*4, PX*2, PX);      // rangée basse — étroite
+      // œil droit (miroir)
+      px(p, x+PX*6, y+PX*3, PX*3, PX);
+      px(p, x+PX*6, y+PX*4, PX*2, PX);
+      // reflets sub-pixel
+      p.fill('#fff');
+      p.rect(x+PX*2+1, y+PX*3+1, 4, 4);
+      p.rect(x+PX*6+1, y+PX*3+1, 4, 4);
     }
-    
-    px(p,x+PX*2,y+PX*11,PX*2,PX); px(p,x+PX*6,y+PX*11,PX*2,PX);
-    if(en < 25 && !sl) px(p,x+PX*3,y+PX*11,PX,PX);
 
-    return { topY: y, eyeY: y+PX*4, neckY: y+PX*7 };
+    /* ─── POOP DISGUST ─── */
+    if (window._gotchiNearPoop && !sl) {
+      p.fill(C.eye);
+      px(p, x+PX*2, y+PX*3, PX*3, PX);
+      px(p, x+PX*6, y+PX*3, PX*3, PX);
+    }
+
+    /* ─── JOUES ROSES ─── */
+    p.fill(C.cheek);
+    px(p, x+PX,   y+PX*4, PX, PX);
+    px(p, x+PX*8, y+PX*4, PX, PX);
+
+    /* ─── BOUCHE ─── */
+    p.fill(C.mouth);
+    if (!sl) {
+      if      (ha > 80) { px(p,x+PX*4,y+PX*5,PX*2,PX); px(p,x+PX*3,y+PX*5,PX,PX); px(p,x+PX*6,y+PX*5,PX,PX); }
+      else if (ha > 50)   px(p,x+PX*4,y+PX*5,PX*2,PX);
+      else if (ha < 20) { px(p,x+PX*4,y+PX*5+2,PX*2,PX); px(p,x+PX*3,y+PX*5,PX,PX); }
+      else                px(p,x+PX*4,y+PX*5,PX,PX);
+    }
+
+    /* ─── BRAS (collés au corps étroit) ─── */
+    p.fill(C.bodyDk);
+    if (en < 20 && !sl) {
+      px(p, x+PX,   y+PX*8, PX, PX*2);      // bras tombés, épuisement
+      px(p, x+PX*8, y+PX*8, PX, PX*2);
+    } else if (ha > 85 && !sl) {
+      px(p, x+PX,   y+PX*6, PX, PX*2);      // bras levés, joie
+      px(p, x+PX*8, y+PX*6, PX, PX*2);
+    } else {
+      px(p, x+PX,   y+PX*7, PX, PX*2);      // bras au repos
+      px(p, x+PX*8, y+PX*7, PX, PX*2);
+    }
+
+    /* ─── PIEDS ─── */
+    px(p, x+PX*3, y+PX*11, PX*2, PX);
+    px(p, x+PX*6, y+PX*11, PX*2, PX);
+
+    return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
 }
 
 function triggerTouchReaction(sleeping) {

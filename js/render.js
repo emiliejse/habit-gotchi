@@ -294,14 +294,14 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     /* ─── JOUES ROSES (pulsantes, centrées) ─── */
     const pulse = getCheekPulse(p);
     p.fill(p.lerpColor(p.color(C.cheek), p.color('#e88098'), pulse));
-    px(p, x+PX*2, y+PX*5, PX, PX);
-    px(p, x+PX*5, y+PX*5, PX, PX);
+    px(p, x+PX,   y+PX*4, PX, PX);
+    px(p, x+PX*6, y+PX*4, PX, PX);
 
     // Joues débordantes si joie active
     if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
       p.drawingContext.globalAlpha = 0.7;
-      px(p, x+PX,   y+PX*5, PX, PX);
-      px(p, x+PX*6, y+PX*5, PX, PX);
+      px(p, x,      y+PX*4, PX, PX);
+      px(p, x+PX*7, y+PX*4, PX, PX);
       p.drawingContext.globalAlpha = 1.0;
     }
 

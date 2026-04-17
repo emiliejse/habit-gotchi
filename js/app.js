@@ -444,20 +444,23 @@ if (typeof window.triggerExpr === 'function') {
   }
 
   // Confettis si toutes les habitudes sont cochées
-const gx = window._gotchiX || 100;
-const gy = window._gotchiY || 100;
 const totalDone = (window.D.log[td] || []).length;
 if (totalDone === window.D.habits.length) {
-  for (let i = 0; i < 30; i++) {
-    window.spawnP?.(
-      gx + (Math.random() - 0.5) * 80,
-      gy - 10,
-      C.rainbow[Math.floor(Math.random() * C.rainbow.length)]
-    );
-  }
-    flashBubble("Tu as tout fait ! Je suis trop heureuse 🎉", 3000);
+  const vague = () => {
+    for (let i = 0; i < 40; i++) {
+      window.spawnP?.(
+        Math.random() * 200,
+        Math.random() * 80,
+        C.rainbow[Math.floor(Math.random() * C.rainbow.length)]
+      );
+    }
+  };
+  vague();
+  setTimeout(vague, 400);
+  setTimeout(vague, 800);
+  flashBubble("Tu as tout fait ! Je suis trop heureuse 🎉", 3000);
   window.triggerGotchiBounce?.();
-}
+} 
 
  // ✅ UN SEUL save() ici
   save();

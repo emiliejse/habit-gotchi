@@ -153,11 +153,29 @@ function drawSky(p, h, ha) {
     }
 
     if(h >= 20 || h < 6) { 
-      p.fill(C.star); 
-      [[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s => {
-        if((p.frameCount + s[0]) % 35 < 25) px(p, s[0], s[1], PX, PX);
-      }); 
+  p.fill(C.star); 
+  [[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s => {
+    if((p.frameCount + s[0]) % 35 < 25) px(p, s[0], s[1], PX, PX);
+  });
+
+  // Étoile filante — une toutes les ~5s (60 frames à frameRate 12)
+  const cycle = 60;
+  const phase = p.frameCount % cycle;
+  if (phase < 20) {
+    const seed = Math.floor(p.frameCount / cycle);
+    const startX = ((seed * 73) % 120) + 10;
+    const progress = phase / 20;
+    const sx = startX + progress * 50;
+    const sy = 5 + progress * 25;
+    for (let t = 0; t < 3; t++) {
+      const tx = sx - t * PX * 2;
+      const ty = sy - t * PX;
+      const alpha = t === 0 ? 230 : 120 - t * 40;
+      p.fill(p.color(255, 255, 200, alpha));
+      px(p, tx, ty, PX, PX);
     }
+  }
+}
 
     if(h >= 6 && h < 21 && ha > 40) { 
       drawCl(p, 40 + Math.sin(p.frameCount * .014) * 8, 20); 

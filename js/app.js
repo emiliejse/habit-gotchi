@@ -442,6 +442,20 @@ if (typeof window.triggerExpr === 'function') {
   window.triggerExpr(mood, 90);  // ~1.5s de réaction
 }
   }
+
+  // Confettis si toutes les habitudes sont cochées
+const totalDone = (window.D.log[td] || []).length;
+if (totalDone === window.D.habits.length) {
+  for (let i = 0; i < 30; i++) {
+    window.spawnP?.(
+      gx + (Math.random() - 0.5) * 80,
+      gy - 10,
+      C.rainbow[Math.floor(Math.random() * C.rainbow.length)]
+    );
+  }
+  flashBubble("Tu as tout fait ! Je suis trop heureuse 🎉", 3000);
+  window.triggerGotchiBounce?.();
+}
  // ✅ UN SEUL save() ici, après toutes les mutations d'état
   save();
   if (typeof updUI === 'function') updUI();

@@ -357,10 +357,9 @@ function toggleHab(catId) {
     const soldeAuCochage = window.D.petalesSnapshot[td][catId];
     if (soldeAuCochage !== undefined) {
       const soldeActuel = window.D.g.petales || 0;
-      const aEtéDepensé = soldeActuel < soldeAuCochage;
-      if (!aEtéDepensé) {
-        window.D.g.petales = Math.max(0, soldeActuel - 2);
-      }
+      if (soldeActuel >= soldeAuCochage) {
+  window.D.g.petales = Math.max(0, soldeActuel - 2);
+}
       delete window.D.petalesSnapshot[td][catId]; // Remet à zéro pour un éventuel re-cochage
     }
 

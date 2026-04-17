@@ -728,20 +728,18 @@ if (window.shakeTimer > 0) window.shakeTimer--;
   const t = window._evoAnim.timer;
 
   if (t > 20) {
-    // Flash blanc qui monte
     const alpha = p.map(t, 45, 20, 0, 255);
     p.fill(255, 255, 255, alpha);
     p.noStroke();
-    p.rect(0, 0, CS, CS);
+    px(p, drawX - PX*5, drawY, PX*10, PX*9);
   } else {
-    // Nouveau stade qui apparaît
     if      (g.stage === 'baby')  gotchiInfo = drawBaby(p, drawX, drawY, sleeping, en, ha);
     else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, drawX, drawY, sleeping, en, ha);
     else                          gotchiInfo = drawAdult(p, drawX, drawY, sleeping, en, ha);
     const alpha2 = p.map(t, 20, 0, 255, 0);
     p.fill(255, 255, 255, alpha2);
     p.noStroke();
-    p.rect(0, 0, CS, CS);
+    px(p, drawX - PX*5, drawY, PX*10, PX*9);
   }
 
   window._evoAnim.timer--;

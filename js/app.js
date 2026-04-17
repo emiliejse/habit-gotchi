@@ -622,10 +622,10 @@ if (dernierJournal?.date?.startsWith(today())) {
    INIT QUOTIDIENNE (IIFE)
    S'exécute automatiquement au chargement du fichier
    ============================================================ */
-(function() {
+function handleDailyReset() {
   const td = today();
-  
-  // 1. Pénalité d'inactivité (Si aucune habitude faite la veille)
+
+  // Pénalité d'inactivité : si aucune habitude faite la veille
   if (window.D.lastActive && window.D.lastActive.split('T')[0] !== td) {
     const hier = new Date();
     hier.setDate(hier.getDate() - 1);
@@ -637,15 +637,22 @@ if (dernierJournal?.date?.startsWith(today())) {
       window.D.g.petales = Math.max(0, (window.D.g.petales || 0) - 4);
     }
   }
-});
 
-// Refait le calcul si l'utilisateur met l'app en pause puis revient
+  // Mise à jour lastActive
+  window.D.lastActive = new Date().toISOString();
+  save();
+}
+
+// Appel au démarrage
+handleDailyReset();
+
+// Retour en foreground (PWA / changement d'onglet)
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    if (window.D.lastActive && window.D.lastActive.split('T')[0] !== today()) {
-      location.reload();
-    }
-    const td = today();
+    handleDailyReset();
+    if (typeof updUI === 'function')       updUI();
+    if (typeof renderHabs === 'function')  renderHabs();
+    if (typeof renderProg === 'function')  renderProg();
   }
 });
 

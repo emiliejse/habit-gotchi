@@ -46,19 +46,6 @@ function drawWind(p) {
   } 
 }
 
-function drawFog(p) {
-  p.noStroke();
-  for (let i = 0; i < 5; i++) {
-    const speed = 0.3 + i * 0.15;
-    const xOffset = (p.frameCount * speed + i * 45) % (CS + 60) - 30;
-    const y = 108 + i * 8;
-    const w = 60 + i * 20;
-    p.fill(p.color(220, 220, 230, 80 - i * 10));
-    for (let dx = 0; dx < w; dx += PX) {
-      px(p, xOffset + dx, y, PX, PX * 2);
-    }
-  }
-}
 
 /**
  * Dessine un arc-en-ciel géométrique (Bonheur Max)
@@ -118,6 +105,20 @@ function drawSun(p) {
   px(p, cx - 8, cy - 8, 16, 16);
   p.fill('#fce860');
   px(p, cx - 5, cy - 5, 10, 10);
+}
+
+function drawFog(p) {
+  p.noStroke();
+  for (let i = 0; i < 5; i++) {
+    const speed = 0.3 + i * 0.15;
+    const xOffset = (p.frameCount * speed + i * 45) % (CS + 60) - 30;
+    const y = 108 + i * 8;
+    const w = 60 + i * 20;
+    p.fill(p.color(220, 220, 230, 80 - i * 10));
+    for (let dx = 0; dx < w; dx += PX) {
+      px(p, xOffset + dx, y, PX, PX * 2);
+    }
+  }
 }
 
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME & TOPOGRAPHIE (Les Biomes) ──────────── */

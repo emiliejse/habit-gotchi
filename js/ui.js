@@ -1361,30 +1361,6 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
     window._soutienHistory.push({ role:'user', content:userText });
   }
 
-  function floatXP(el, text = '+15 XP') {
-  const rect = el.getBoundingClientRect();
-  const div = document.createElement('div');
-  div.textContent = text;
-  div.style.cssText = `
-    position:fixed;
-    left:${rect.left + rect.width / 2}px;
-    top:${rect.top}px;
-    transform:translateX(-50%);
-    font:bold 11px 'Courier New',monospace;
-    color:var(--lilac);
-    pointer-events:none;
-    z-index:9999;
-    transition:transform 0.8s ease, opacity 0.8s ease;
-  `;
-  document.body.appendChild(div);
-  requestAnimationFrame(() => {
-    div.style.transform = 'translateX(-50%) translateY(-30px)';
-    div.style.opacity = '0';
-  });
-  setTimeout(() => div.remove(), 800);
-}
-
-
   /* ── Animation de chargement ── */
   const bubbleId   = 'typing-' + Date.now();
   chat.innerHTML  += `<div class="chat-bubble-system" id="${bubbleId}">💭</div>`;

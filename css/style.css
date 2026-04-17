@@ -426,10 +426,9 @@ body {
   justify-content: center; font-size: 9px; font-weight: bold;
 }
 .cal-c-mini {
-  width: 10px;
-  height: 10px;
+  aspect-ratio: 1;
   border-radius: 3px;
-  font-size: 0;        /* cache les chiffres */
+  font-size: 0;
 }
 .nav-r { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .nav-a {

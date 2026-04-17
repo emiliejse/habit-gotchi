@@ -638,7 +638,8 @@ if (D.g.props) {
     if (menuOverlay && menuOverlay.classList.contains('open')) return true;
 
     // 🔒 GARDE 2 : une modale est présente dans le DOM (alertes, boutique, etc.)
-    if (document.querySelector('.modal')) return true;
+    const modalEl = document.getElementById('modal');
+if (modalEl && modalEl.style.display !== 'none') return true;
 
     // 🔒 GARDE 3 : l'utilisateur est focus sur un champ de saisie
     const active = document.activeElement;

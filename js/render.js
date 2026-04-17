@@ -47,6 +47,9 @@ window._nextBlinkAt = 60;
 window._blinkDuration = 4;
 // Animation d'évolution (chrysalide)
 window._evoAnim = { active: false, timer: 0, fromStage: '', toStage: '' };
+window.triggerEvoAnim = function(from, to) {
+  window._evoAnim = { active: true, timer: 90, fromStage: from, toStage: to };
+};
 // ─── Animation : variables d'expressivité ───
 window._expr = {
   lastMood: null,      // 'faim', 'surprise', 'joie', null
@@ -716,17 +719,47 @@ if (window.shakeTimer > 0) window.shakeTimer--;
     p.push();
     if (tilt) p.rotate(p.radians(tilt));
     
-    // Shake local : décale uniquement le Gotchi (pas tout le canvas)
     const shakeOffsetX = (window.shakeTimer > 0) ? Math.sin(p.frameCount * 3) * 5 : 0;
     const shakeOffsetY = (window.shakeTimer > 0) ? Math.sin(p.frameCount * 2) * 3 : 0;
     const drawX = cx + shakeOffsetX;
     const drawY = by + bobY + shakeOffsetY;
 
-    if      (g.stage === 'egg')   gotchiInfo = drawEgg(p, drawX, drawY);
-    else if (g.stage === 'baby')  gotchiInfo = drawBaby(p, drawX, drawY, sleeping, en, ha);
-    else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, drawX, drawY, sleeping, en, ha);
-    else                          gotchiInfo = drawAdult(p, drawX, drawY, sleeping, en, ha);
-    if (sleeping && g.stage !== 'egg') drawZzz(p, drawX + 16, drawY - 10);
+    if (window._evoAnim && window._evoAnim.active) {
+      const t = window._evoAnim.timer;
+
+      if (t > 60) {
+        const alpha = p.map(t, 90, 60, 0, 220);
+        p.fill(255, 255, 255, alpha);
+        p.noStroke();
+        px(p, drawX - PX*5, drawY, PX*10, PX*9);
+      } else if (t > 30) {
+        const pulse = Math.sin(Date.now() * 0.02) * PX;
+        p.fill(C.bodyDk);
+        p.noStroke();
+        p.ellipse(drawX, drawY + PX*4, PX*8 + pulse, PX*12 + pulse);
+        p.fill(C.bodyLt);
+        p.ellipse(drawX, drawY + PX*3, PX*4, PX*6);
+      } else {
+        const alpha2 = p.map(t, 30, 0, 200, 0);
+        if      (g.stage === 'baby')  gotchiInfo = drawBaby(p, drawX, drawY, sleeping, en, ha);
+        else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, drawX, drawY, sleeping, en, ha);
+        else                          gotchiInfo = drawAdult(p, drawX, drawY, sleeping, en, ha);
+        p.fill(255, 255, 255, alpha2);
+        p.noStroke();
+        px(p, drawX - PX*5, drawY, PX*10, PX*9);
+      }
+
+      window._evoAnim.timer--;
+      if (window._evoAnim.timer <= 0) window._evoAnim.active = false;
+
+    } else {
+      if      (g.stage === 'egg')   gotchiInfo = drawEgg(p, drawX, drawY);
+      else if (g.stage === 'baby')  gotchiInfo = drawBaby(p, drawX, drawY, sleeping, en, ha);
+      else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, drawX, drawY, sleeping, en, ha);
+      else                          gotchiInfo = drawAdult(p, drawX, drawY, sleeping, en, ha);
+      if (sleeping && g.stage !== 'egg') drawZzz(p, drawX + 16, drawY - 10);
+    }
+
     p.pop();
 
     // 8. Props Accessoire (Sur le Gotchi)

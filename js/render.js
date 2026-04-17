@@ -549,7 +549,7 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
     /* ─── PETITS PIEDS ─── */
     px(p, x+PX*3, y+PX*10, PX*2, PX);
     px(p, x+PX*6, y+PX*10, PX*2, PX);
-    if (en < 10 && !sl) drawDither(p, x, y + PX * 4, PX * 10, PX * 6, C.bodyDk);
+    if (en < 10 && !sl) drawDither(p, x + PX, y + PX * 5, PX * 8, PX * 5, C.bodyDk);
     return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
 }
 

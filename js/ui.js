@@ -1190,6 +1190,18 @@ function genSoutien() {
   const D = window.D, td = today();
 
   // ✦ LIMITE 3 SESSIONS DE SOUTIEN PAR JOUR
+  if (D.lastSoutienDate !== td) {
+    D.lastSoutienDate = td;
+    D.soutienCount = 0;
+  }
+  if (D.soutienCount >= 3) {
+    toast("Le Gotchi a besoin de se reposer… Reviens demain 🌙");
+    return;
+  }
+  D.soutienCount++;
+  save();
+
+  // ✦ LIMITE 3 SESSIONS DE SOUTIEN PAR JOUR
   if (D.lastThoughtDate !== td) {
     D.lastThoughtDate = td;
     D.thoughtCount = 0;
@@ -1230,7 +1242,7 @@ function genSoutien() {
         onkeydown="if(event.key==='Enter')sendSoutienMsg()">
       <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:8px 12px">→</button>
     </div>
-    <p id="soutien-count" style="...">6 messages restants · session ${D.thoughtCount}/3 aujourd'hui</p>
+    <p id="soutien-count" ...>6 messages restants · session ${D.soutienCount}/3 aujourd'hui</p>
 `;
 animEl(document.getElementById('mbox'), 'bounceIn');
   sendSoutienMsg(promptInit, true);
@@ -1916,7 +1928,8 @@ function applyCheatCode() {
     'reset3':     () => { D.thoughtCount = 0; toast('💭 Compteur pensées → 0'); },
     'caca3':    () => { D.g.poops = [...(D.g.poops || []), {x:80,y:120}, {x:110,y:130}, {x:140,y:115}]; toast('💩 +3 cacas !'); },
     'resetfood':() => { D.g.snackDone = ''; D.g.snackEmoji = ''; toast('🍎 Nourriture remise à zéro'); },
-    'resetmsg': () => { D.thoughtCount = 0; D.lastThoughtDate = null; toast('💬 Quota messages → 0/3'); },
+    'resetmsg':    () => { D.thoughtCount = 0; D.lastThoughtDate = null; toast('💬 Quota pensées → 0/3'); },
+    'resetsoutien':() => { D.soutienCount = 0; D.lastSoutienDate = null; toast('💜 Quota soutien → 0/3'); },
     'resetcaca':() => { D.g.poopCount = 0; D.g.poopDay = ''; D.g.poops = []; toast('💩 Quota caca remis à zéro'); },
     'nuit':   () => { window._forceHour = 23; toast('🌙 Heure forcée → 23h'); },
     'jour':   () => { window._forceHour = null; toast('☀️ Heure réelle restaurée'); },

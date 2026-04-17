@@ -119,6 +119,8 @@ snackDone: '', snackEmoji: '',
     log:{}, journal:[], pin:null, apiKey:null,
     lastThoughtDate: null,
 thoughtCount: 0,
+lastSoutienDate: null,
+soutienCount: 0,
 eventLog: [],        // historique (max 50)
 firstLaunch: null,   // sera rempli au 1er lancement
 lastActive: null,    // mis à jour à chaque ouverture

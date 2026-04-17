@@ -1186,8 +1186,20 @@ function toastInfo() {
 /**
  * Lance le chat d'urgence (limité à 6 messages non sauvegardés)
  */
-   function genSoutien() {
+function genSoutien() {
   const D = window.D, td = today();
+
+  // ✦ LIMITE 3 SESSIONS DE SOUTIEN PAR JOUR
+  if (D.lastThoughtDate !== td) {
+    D.lastThoughtDate = td;
+    D.thoughtCount = 0;
+  }
+  if (D.thoughtCount >= 3) {
+    toast("Le Gotchi a besoin de se reposer… Reviens demain 🌙");
+    return;
+  }
+  D.thoughtCount++;
+  save();
   const habsDuJour  = D.habits.map(h => ({ label:h.label, faite:(D.log[td]||[]).includes(h.catId) }));
   const notesDuJour = D.journal.filter(j => j.date.startsWith(td)).map(j => ({ humeur:j.mood, texte:j.text }));
   const ctx = window.AI_CONTEXTS;
@@ -1218,7 +1230,7 @@ function toastInfo() {
         onkeydown="if(event.key==='Enter')sendSoutienMsg()">
       <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:8px 12px">→</button>
     </div>
-    <p id="soutien-count" style="font-size:8px;color:var(--text2);text-align:center;margin-top:4px">6 messages restants · conversation non sauvegardée</p>
+    <p id="soutien-count" style="...">6 messages restants · session ${D.thoughtCount}/3 aujourd'hui</p>
 `;
 animEl(document.getElementById('mbox'), 'bounceIn');
   sendSoutienMsg(promptInit, true);

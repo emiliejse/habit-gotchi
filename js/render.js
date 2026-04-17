@@ -158,32 +158,20 @@ function drawSky(p, h, ha) {
     if((p.frameCount + s[0]) % 35 < 25) px(p, s[0], s[1], PX, PX);
   });
 
-  // Étoile filante — une toutes les ~5s (60 frames à frameRate 12)
   const cycle = 60;
-const phase = p.frameCount % cycle;
-
-// Génère de nouveaux paramètres à chaque nouveau cycle
-if (phase === 0) {
-  window._starTrail = {
-    startX: Math.random() * 80 + 5,
-    startY: Math.random() * 20 + 3,
-    lenX: 60 + Math.random() * 80,
-    lenY: 25 + Math.random() * 45,
-  };
-}
-
-if (phase < 12 && window._starTrail) {
-  const progress = phase / 12;
-  const sx = window._starTrail.startX + progress * window._starTrail.lenX;
-  const sy = window._starTrail.startY + progress * window._starTrail.lenY;
-  for (let t = 0; t < 3; t++) {
-    const tx = sx - t * PX * 2;
-    const ty = sy - t * PX;
-    const alpha = t === 0 ? 230 : 120 - t * 40;
-    p.fill(p.color(255, 255, 200, alpha));
-    px(p, tx, ty, PX, PX);
+  const phase = p.frameCount % cycle;
+  if (phase === 0) {
+    window._starTrail = {
+      startX: Math.random() * 80 + 5,
+      startY: Math.random() * 20 + 3,
+      lenX: 60 + Math.random() * 80,
+      lenY: 25 + Math.random() * 45,
+    };
   }
-}
+  if (phase < 12 && window._starTrail) {
+    const progress = phase / 12;
+    const sx = window._starTrail.startX + progress * window._starTrail.lenX;
+    const sy = window._starTrail.startY + progress * window._starTrail.lenY;
     for (let t = 0; t < 3; t++) {
       const tx = sx - t * PX * 2;
       const ty = sy - t * PX;

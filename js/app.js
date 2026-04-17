@@ -164,13 +164,6 @@ if (window.D.propsPixels && Object.keys(window.D.propsPixels).length) {
   window.PROPS_LOCAL = Object.values(window.D.propsPixels);
 }
 
-const isPWA = window.matchMedia('(display-mode: standalone)').matches
-           || window.navigator.standalone === true
-           || new URLSearchParams(window.location.search).get('source') === 'pwa';
-
-if (!window.D.g.hasSeenWelcome && isPWA) {
-  showWelcomeModal();
-}
 
 /* ============================================================
    UTILITAIRES

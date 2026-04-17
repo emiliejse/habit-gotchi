@@ -226,10 +226,18 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     p.fill(C.bodyLt); px(p,x+PX*2,y+PX,PX*2,PX); px(p,x+PX,y+PX*2,PX*2,PX);
 
     if(sl || blink) { 
-  p.fill(C.eye); px(p,x+PX*2,y+PX*2+3,PX*2,PX*2); px(p,x+PX*4,y+PX*2+3,PX*2,PX*2); 
+  p.fill(C.eye); 
+  px(p,x+PX*1,y+PX*3,PX*2,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); // fermés
 } else { 
-  p.fill(C.eye); px(p,x+PX*2,y+PX*2+3,PX*2,PX*3); px(p,x+PX*4,y+PX*2+3,PX*2,PX*3); 
-  p.fill('#fff'); p.rect(x+PX*2+1, y+PX*2+4, 4, 4); p.rect(x+PX*4+1, y+PX*2+4, 4, 4);
+  p.fill(C.eye); 
+  // œil gauche : large en haut, étroit en bas
+  px(p,x+PX*1,y+PX*2,PX*3,PX);   // rangée haute — large
+  px(p,x+PX*1,y+PX*3,PX*2,PX);   // rangée basse — étroite
+  // œil droit
+  px(p,x+PX*5,y+PX*2,PX*3,PX);
+  px(p,x+PX*5,y+PX*3,PX*2,PX);
+  p.fill('#fff'); 
+  p.rect(x+PX*1+1, y+PX*2+1, 4, 4); p.rect(x+PX*5+1, y+PX*2+1, 4, 4);
 }
 
     p.fill(C.cheek); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*6,y+PX*5,PX,PX);
@@ -266,11 +274,21 @@ function drawAdult(p, cx, cy, sl, en, ha) {
     px(p,x+PX*3,y+PX,PX*2,PX); px(p,x+PX*2,y+PX*2,PX*2,PX); px(p,x+PX,y+PX*3,PX*2,PX);
 
     if(sl || blink) { 
-      p.fill(C.eye); px(p,x+PX*2,y+PX*5,PX*2,PX*2); px(p,x+PX*6,y+PX*5,PX*2,PX*2); 
-    } else { 
-      p.fill(C.eye); px(p,x+PX*2,y+PX*3+3,PX*2,PX*3); px(p,x+PX*6,y+PX*3+3,PX*2,PX*3);
-      p.fill('#fff'); p.rect(x+PX*2+1, y+PX*3+4, 4, 4); p.rect(x+PX*6+1, y+PX*3+4, 4, 4);
-    }
+  p.fill(C.eye); 
+  px(p,x+PX*2,y+PX*5,PX*3,PX); px(p,x+PX*6,y+PX*5,PX*3,PX); // fermés
+} else { 
+  p.fill(C.eye); 
+  // œil gauche
+  px(p,x+PX*2,y+PX*3,PX*4,PX);   // haut — très large
+  px(p,x+PX*2,y+PX*4,PX*3,PX);   // milieu
+  px(p,x+PX*2,y+PX*5,PX*2,PX);   // bas — étroit
+  // œil droit
+  px(p,x+PX*6,y+PX*3,PX*4,PX);
+  px(p,x+PX*6,y+PX*4,PX*3,PX);
+  px(p,x+PX*6,y+PX*5,PX*2,PX);
+  p.fill('#fff'); 
+  p.rect(x+PX*2+1, y+PX*3+1, 4, 4); p.rect(x+PX*6+1, y+PX*3+1, 4, 4);
+}
 
     p.fill(C.cheek); px(p,x+PX,y+PX*6,PX,PX); px(p,x+PX*8,y+PX*6,PX,PX);
     if (window._gotchiNearPoop && !sl) {

@@ -1555,9 +1555,7 @@ function copyBilanSemaine() {
 }
 function resetBilan() {
   if (confirm('Effacer le bilan ?')) {
-    window.D.g.bilanCount = 0;
-    window.D.g.bilanWeek  = '';
-    save();
+// On garde le compteur intact — juste le texte est effacé
     const el = document.getElementById('claude-summary');
     if (el) el.textContent = 'Ton bilan de la semaine apparaîtra ici...';
     document.getElementById('btn-copy-bilan').style.display = 'none';

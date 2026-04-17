@@ -1657,7 +1657,7 @@ function renderProg() {
     const { bg, border } = calColor(log.length, total, isT);
     const day   = new Date(ds + 'T12:00').getDate();
 
-    return `<div class="cal-c" style="background:${bg};border:${border}">${day}</div>`;
+    return `<div class="cal-c" style="background:${bg};border:${border};cursor:pointer" onclick="showDayDetail('${ds}')">${day}</div>`;
   }).join('');
 
   /* ── Calendrier mensuel ── */
@@ -1694,6 +1694,41 @@ function renderProg() {
   document.getElementById('m-view').innerHTML = cells;
 
   updUI();
+}
+
+function showDayDetail(ds) {
+  const D      = window.D;
+  const log    = D.log[ds] || [];
+  const date   = new Date(ds + 'T12:00');
+  const labels = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const jours  = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+
+  // Titre lisible : "Lundi 14 avril"
+  const titre = `${jours[date.getDay()]} ${date.getDate()} ${date.toLocaleDateString('fr-FR', { month: 'long' })}`;
+
+  // Retrouve le label de chaque habitude cochée ce jour
+  const faites = log.map(catId => {
+    const hab = D.habits.find(h => h.catId === catId);
+    return hab ? `<li style="padding:4px 0;border-bottom:1px solid var(--border)">${hab.label}</li>` : null;
+  }).filter(Boolean).join('');
+
+  const contenu = faites
+    ? `<ul style="list-style:none;padding:0;margin:0">${faites}</ul>`
+    : `<p style="color:var(--text2);text-align:center;font-size:11px">Rien de coché ce jour-là 🌿</p>`;
+
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+      <h3 style="font-size:12px;color:var(--lilac);text-transform:capitalize">${titre}</h3>
+      <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
+    </div>
+    <div style="font-size:11px;color:var(--text)">${contenu}</div>
+    <div style="margin-top:12px;text-align:center;font-size:10px;color:var(--text2)">
+      ${log.length} / ${D.habits.length || 6} habitudes
+    </div>
+    <button class="btn btn-s" onclick="clModal()" style="width:100%;margin-top:12px;font-size:10px">Fermer</button>
+  `;
+  animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
 /* ─── SYSTÈME 7 : INGÉNIERIE (Paramètres et Sauvegardes) ─────────── */

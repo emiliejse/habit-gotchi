@@ -385,6 +385,8 @@ function toggleHab(catId) {
   // COCHAGE
   else {
     window.D.log[td].push(catId);
+    const habEl = document.querySelector(`[onclick="toggleHab('${catId}')"]`);
+if (habEl) floatXP(habEl.closest('.hab'));
     addXp(15);
     const dejaGagne = window.D.petalesEarned[td].includes(catId);
     if (!dejaGagne) {

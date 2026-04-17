@@ -257,6 +257,22 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     px(p, x+PX*2, y+PX,   PX*2, PX);
     px(p, x+PX,   y+PX*2, PX*2, PX);
 
+    /* ─── OREILLES D'OURSON (demi-cercles) ─── */
+p.fill(C.body);
+// oreille gauche
+px(p, x+PX,   y-PX,   PX*2, PX);   // base large
+px(p, x+PX,   y-PX*2, PX*2, PX);   // milieu
+px(p, x+PX*1+2, y-PX*3, PX, PX);   // sommet arrondi
+// oreille droite (miroir)
+px(p, x+PX*5, y-PX,   PX*2, PX);
+px(p, x+PX*5, y-PX*2, PX*2, PX);
+px(p, x+PX*5+2, y-PX*3, PX, PX);
+
+// Intérieur d'oreille rose (creux)
+p.fill(C.cheek);
+px(p, x+PX+2,   y-PX,   PX, PX);
+px(p, x+PX*5+2, y-PX,   PX, PX);
+
     /* ─── YEUX (grands, amande) ─── */
     const expr = window._expr;
     const isSurprise = expr.moodTimer > 0 && expr.lastMood === 'surprise';
@@ -373,6 +389,22 @@ function drawAdult(p, cx, cy, sl, en, ha) {
     px(p, x+PX*3, y+PX,   PX*2, PX);
     px(p, x+PX*2, y+PX*2, PX*2, PX);
     px(p, x+PX,   y+PX*3, PX*2, PX);
+
+    /* ─── OREILLES D'OURSON (demi-cercles) ─── */
+p.fill(C.body);
+// oreille gauche
+px(p, x+PX*2, y-PX,   PX*2, PX);   // base large
+px(p, x+PX*2, y-PX*2, PX*2, PX);   // milieu
+px(p, x+PX*2+2, y-PX*3, PX, PX);   // sommet arrondi
+// oreille droite
+px(p, x+PX*6, y-PX,   PX*2, PX);
+px(p, x+PX*6, y-PX*2, PX*2, PX);
+px(p, x+PX*6+2, y-PX*3, PX, PX);
+
+// Intérieur d'oreille rose
+p.fill(C.cheek);
+px(p, x+PX*2+2, y-PX,   PX, PX);
+px(p, x+PX*6+2, y-PX,   PX, PX);
 
     /* ─── YEUX (grands, amande) ─── */
     const expr = window._expr;

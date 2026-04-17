@@ -189,10 +189,9 @@ function updateParts(p) {
     window.particles = window.particles.filter(pt => {
       pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.12; pt.life--;
       if (pt.life <= 0) return false;
-      // Taille shrink : 3PX → 2PX → 1PX selon la vie restante
-      const sz = pt.life > 10 ? PX * 2 : pt.life > 5 ? PX : Math.max(1, PX - 2);
-      p.fill(pt.c);
-      px(p, pt.x, pt.y, sz, sz);
+      const a = pt.life / 16;
+      p.fill(p.color(...p.color(pt.c)._array.slice(0,3).map(x=>x*255), a * 255));
+      px(p, pt.x, pt.y, PX, PX);
       return true;
     });
 }

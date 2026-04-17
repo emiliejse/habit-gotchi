@@ -1189,7 +1189,26 @@ function toastInfo() {
 function genSoutien() {
   const D = window.D, td = today();
 
-  // ✦ LIMITE 3 SESSIONS DE SOUTIEN PAR JOUR
+  // ✦ PAS DE CLÉ API : popup simplifié
+  if (!D.apiKey) {
+    document.getElementById('modal').style.display = 'flex';
+    document.getElementById('mbox').innerHTML = `
+      <div style="text-align:center;padding:10px">
+        <div style="font-size:40px;margin-bottom:8px">🔑</div>
+        <p style="font-size:12px;margin-bottom:4px;color:var(--lilac);font-weight:bold">
+          Clé API manquante
+        </p>
+        <p style="font-size:11px;color:var(--text2);margin-bottom:12px">
+          Pour accéder au soutien du Gotchi,<br>ajoute ta clé API dans les Réglages.
+        </p>
+        <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
+      </div>
+    `;
+    animEl(document.getElementById('mbox'), 'bounceIn');
+    return;
+  }
+
+  // ✦ LIMITE 3 SESSIONS PAR JOUR
   if (D.lastSoutienDate !== td) {
     D.lastSoutienDate = td;
     D.soutienCount = 0;

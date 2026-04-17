@@ -345,34 +345,26 @@ function toggleHab(catId) {
   const idx = window.D.log[td].indexOf(catId);
   const hab = window.D.habits.find(h => h.catId === catId);
 
-  if (!window.D.petalesSnapshot) window.D.petalesSnapshot = {};
-  if (!window.D.petalesSnapshot[td]) window.D.petalesSnapshot[td] = {};
+  if (!window.D.petalesEarned) window.D.petalesEarned = {};
+  if (!window.D.petalesEarned[td]) window.D.petalesEarned[td] = [];
 
   // DÉCOCHAGE
   if (idx >= 0) {
     window.D.log[td].splice(idx, 1);
     addXp(-15);
-
-    // Rembourse les pétales seulement s'ils n'ont pas été dépensés
-    const soldeAuCochage = window.D.petalesSnapshot[td][catId];
-    if (soldeAuCochage !== undefined) {
-      const soldeActuel = window.D.g.petales || 0;
-      if (soldeActuel >= soldeAuCochage) {
-  window.D.g.petales = Math.max(0, soldeActuel - 2);
-}
-      delete window.D.petalesSnapshot[td][catId]; // Remet à zéro pour un éventuel re-cochage
-    }
-
+    // Pétales acquis définitivement, on ne les retire pas
     flashBubble("Oh... pas grave 💜", 2000);
   }
   // COCHAGE
   else {
     window.D.log[td].push(catId);
     addXp(15);
-    window.D.g.petales = (window.D.g.petales || 0) + 2;
-    // Mémorise le solde APRÈS avoir ajouté les pétales
-    window.D.petalesSnapshot[td][catId] = window.D.g.petales;
-    addEvent('habitude', `${hab?.label || catId} ✓  +15 XP, +2 🌸`);
+    const dejaGagne = window.D.petalesEarned[td].includes(catId);
+    if (!dejaGagne) {
+      window.D.g.petales = (window.D.g.petales || 0) + 2;
+      window.D.petalesEarned[td].push(catId);
+    }
+    addEvent('habitude', `${hab?.label || catId} ✓  +15 XP${dejaGagne ? '' : ', +2 🌸'}`);
 
     const gx = window._gotchiX || 100;
     const gy = window._gotchiY || 100;

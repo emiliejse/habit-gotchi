@@ -4,6 +4,13 @@
    les mathématiques (XP, pétales), le temps, et l'humeur.
    ============================================================ */
 
+   /* ============================================================
+   UTILITAIRES (déclarés en premier — utilisés partout)
+   ============================================================ */
+const today  = () => new Date().toISOString().split('T')[0];
+const hr     = () => new Date().getHours();
+const clamp  = (v,a,b) => Math.max(a, Math.min(b, v));
+
 /* ─── SYSTÈME 7 : INGÉNIERIE & ARCHITECTURE GLOBALE ────────────── */
 
 /* ============================================================
@@ -168,10 +175,6 @@ if (!window.D.g.hasSeenWelcome && isPWA) {
 /* ============================================================
    UTILITAIRES
    ============================================================ */
-const today  = () => new Date().toISOString().split('T')[0];
-const hr     = () => new Date().getHours();
-const clamp  = (v,a,b) => Math.max(a, Math.min(b, v));
-
 // Hard reset : vide le cache du navigateur pour forcer les updates PWA
 function forceUpdate() {
   if ('caches' in window) {

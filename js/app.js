@@ -73,14 +73,13 @@ async function loadDataFiles() {
    ============================================================ */
 const SK = 'hg4'; // Clé du LocalStorage (HabitGotchi v4)
 
-// Les 6 piliers de la routine
 const CATS = [
-  {id:'sport',   icon:'🏋️', label:'Sport',        def:'30 min mouvement'},
-  {id:'nutri',   icon:'🍎', label:'Nutrition',     def:'Repas fait maison'},
-  {id:'hydra',   icon:'💧', label:'Hydratation',   def:'1,5L d\'eau'},
-  {id:'hygiene', icon:'🪞', label:'Hygiène',       def:'Routine soin'},
-  {id:'intel',   icon:'📚', label:'Intellectuel',  def:'20 min lecture'},
-  {id:'serene',  icon:'🕯️', label:'Sérénité',      def:'10 min calme'},
+  {id:'sport',   icon:'🏋️', label:'Sport',       def:'Bouger → énergie pour nous deux'},
+  {id:'nutri',   icon:'🍎', label:'Nutrition',    def:'Bien manger → je grandis avec toi'},
+  {id:'hydra',   icon:'💧', label:'Hydratation',  def:'S\'hydrater → je reste en forme'},
+  {id:'hygiene', icon:'🪞', label:'Hygiène',      def:'Prendre soin de toi → je rayonne'},
+  {id:'intel',   icon:'📚', label:'Intellectuel', def:'Apprendre → mon monde s\'agrandit'},
+  {id:'serene',  icon:'🕯️', label:'Sérénité',     def:'Souffler → on se calme ensemble'},
 ];
 
 // Paliers d'évolution (Xp -> Stade visuel -> Titre)

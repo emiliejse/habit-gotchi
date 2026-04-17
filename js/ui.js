@@ -1201,8 +1201,8 @@ function genSoutien() {
         <p style="font-size:11px;color:var(--text2);margin-bottom:12px">
           Pour accéder au soutien du Gotchi,<br>ajoute ta clé API dans les Réglages.
         </p>
-        <button class="btn btn-p" onclick="clModal(); goTo('p-settings')" style="width:100%">
-        Aller dans les Réglages
+        <button class="btn btn-p" onclick="clModal(); go('settings')" style="width:100%">
+        Aller dans les Réglages ⚙️
         </button>
       </div>
     `;

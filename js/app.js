@@ -638,21 +638,22 @@ function handleDailyReset() {
     }
   }
 
-  // Mise à jour lastActive
   window.D.lastActive = new Date().toISOString();
   save();
 }
 
-// Appel au démarrage
-handleDailyReset();
+// Appel au démarrage — dans DOMContentLoaded pour attendre ui.js
+document.addEventListener('DOMContentLoaded', () => {
+  handleDailyReset();
+});
 
 // Retour en foreground (PWA / changement d'onglet)
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     handleDailyReset();
-    if (typeof updUI === 'function')       updUI();
-    if (typeof renderHabs === 'function')  renderHabs();
-    if (typeof renderProg === 'function')  renderProg();
+    if (typeof updUI === 'function')      updUI();
+    if (typeof renderHabs === 'function') renderHabs();
+    if (typeof renderProg === 'function') renderProg();
   }
 });
 

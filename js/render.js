@@ -48,7 +48,7 @@ window._blinkDuration = 4;
 // Animation d'évolution (chrysalide)
 window._evoAnim = { active: false, timer: 0, fromStage: '', toStage: '' };
 window.triggerEvoAnim = function(from, to) {
-  window._evoAnim = { active: true, timer: 90, fromStage: from, toStage: to };
+  window._evoAnim = { active: true, timer: 45, fromStage: from, toStage: to };
 };
 // ─── Animation : variables d'expressivité ───
 window._expr = {
@@ -725,34 +725,29 @@ if (window.shakeTimer > 0) window.shakeTimer--;
     const drawY = by + bobY + shakeOffsetY;
 
     if (window._evoAnim && window._evoAnim.active) {
-      const t = window._evoAnim.timer;
+  const t = window._evoAnim.timer;
 
-      if (t > 60) {
-        const alpha = p.map(t, 90, 60, 0, 220);
-        p.fill(255, 255, 255, alpha);
-        p.noStroke();
-        px(p, drawX - PX*5, drawY, PX*10, PX*9);
-      } else if (t > 30) {
-        const pulse = Math.sin(Date.now() * 0.02) * PX;
-        p.fill(C.bodyDk);
-        p.noStroke();
-        p.ellipse(drawX, drawY + PX*4, PX*8 + pulse, PX*12 + pulse);
-        p.fill(C.bodyLt);
-        p.ellipse(drawX, drawY + PX*3, PX*4, PX*6);
-      } else {
-        const alpha2 = p.map(t, 30, 0, 200, 0);
-        if      (g.stage === 'baby')  gotchiInfo = drawBaby(p, drawX, drawY, sleeping, en, ha);
-        else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, drawX, drawY, sleeping, en, ha);
-        else                          gotchiInfo = drawAdult(p, drawX, drawY, sleeping, en, ha);
-        p.fill(255, 255, 255, alpha2);
-        p.noStroke();
-        px(p, drawX - PX*5, drawY, PX*10, PX*9);
-      }
+  if (t > 20) {
+    // Flash blanc qui monte
+    const alpha = p.map(t, 45, 20, 0, 255);
+    p.fill(255, 255, 255, alpha);
+    p.noStroke();
+    p.rect(0, 0, CS, CS);
+  } else {
+    // Nouveau stade qui apparaît
+    if      (g.stage === 'baby')  gotchiInfo = drawBaby(p, drawX, drawY, sleeping, en, ha);
+    else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, drawX, drawY, sleeping, en, ha);
+    else                          gotchiInfo = drawAdult(p, drawX, drawY, sleeping, en, ha);
+    const alpha2 = p.map(t, 20, 0, 255, 0);
+    p.fill(255, 255, 255, alpha2);
+    p.noStroke();
+    p.rect(0, 0, CS, CS);
+  }
 
-      window._evoAnim.timer--;
-      if (window._evoAnim.timer <= 0) window._evoAnim.active = false;
+  window._evoAnim.timer--;
+  if (window._evoAnim.timer <= 0) window._evoAnim.active = false;
 
-    } else {
+} else {
       if      (g.stage === 'egg')   gotchiInfo = drawEgg(p, drawX, drawY);
       else if (g.stage === 'baby')  gotchiInfo = drawBaby(p, drawX, drawY, sleeping, en, ha);
       else if (g.stage === 'teen')  gotchiInfo = drawTeen(p, drawX, drawY, sleeping, en, ha);

@@ -622,6 +622,10 @@ if (dernierJournal?.date?.startsWith(today())) {
    INIT QUOTIDIENNE (IIFE)
    S'exécute automatiquement au chargement du fichier
    ============================================================ */
+/* ============================================================
+   RESET QUOTIDIEN + CYCLE DE VIE PWA
+   ============================================================ */
+
 function handleDailyReset() {
   const td = today();
 
@@ -642,42 +646,81 @@ function handleDailyReset() {
   save();
 }
 
-// Appel au démarrage
-document.addEventListener('DOMContentLoaded', () => {
+// Flag pour éviter les doubles inits
+let _appInitialized = false;
+
+/**
+ * Init unique : tourne au 1er lancement ET au retour foreground.
+ * Idempotente = on peut l'appeler 10 fois, elle fait le bon truc.
+ */
+function initApp() {
+  // 1. Reset quotidien (toujours sûr à appeler)
   handleDailyReset();
-});
 
-// Retour en foreground — pageshow est plus fiable qu'visibilitychange sur iOS
-window.addEventListener('pageshow', (e) => {
-  if (e.persisted) { // ← true uniquement si la page vient du cache (retour PWA)
-    handleDailyReset();
-    if (typeof updUI === 'function')      updUI();
-    if (typeof renderHabs === 'function') renderHabs();
-    if (typeof renderProg === 'function') renderProg();
-  }
-});
-
-// Triggers au chargement (DOM Load)
-window.addEventListener('load', () => {
-  // Env selon l'heure (Nuit -> Chambre auto)
+  // 2. Env selon l'heure (nuit → chambre)
   const h = hr();
   if (h >= 22 || h < 7) window.D.g.activeEnv = 'chambre';
 
-  // Spawn caca avec timer de 30 minutes
+  // 3. Spawn caca si 30 min écoulées
   const lastSpawn = window.D.g.lastPoopSpawn || 0;
-  const now = Date.now();
-  if (now - lastSpawn > 30 * 60 * 1000) {
+  if (Date.now() - lastSpawn > 30 * 60 * 1000) {
     maybeSpawnPoop();
   }
+
+  // 4. Refresh UI (fonctions de ui.js — peut ne pas être chargé au 1er tick)
+  if (typeof updUI === 'function')      updUI();
+  if (typeof renderHabs === 'function') renderHabs();
+  if (typeof renderProg === 'function') renderProg();
+}
+
+/**
+ * Point d'entrée principal : charge les données PUIS initialise.
+ * L'ordre est critique : pas d'UI avant que D soit prêt.
+ */
+function bootstrap() {
+  if (_appInitialized) {
+    // Déjà init → on fait juste le refresh (retour foreground)
+    initApp();
+    return;
+  }
+
+  loadDataFiles().then(() => {
+    initBaseProps();
+    if (typeof updBadgeBoutique === 'function') updBadgeBoutique();
+    initApp();
+    _appInitialized = true;
+  });
+
+  fetchMeteo();
+  setInterval(fetchMeteo, 1800000);
   setInterval(maybeSpawnPoop, 30 * 60 * 1000);
+}
+
+/* ---------- Déclencheurs ---------- */
+
+// 1er lancement : `load` se déclenche partout (desktop + PWA iOS + Android)
+// On utilise `load` et pas `DOMContentLoaded` car `load` attend que tous
+// les scripts (ui.js en dernier) soient parsés.
+if (document.readyState === 'complete') {
+  // Cas rare : script chargé après `load` → on boot direct
+  bootstrap();
+} else {
+  window.addEventListener('load', bootstrap);
+}
+
+// Retour foreground : `pageshow` se déclenche au 1er load ET aux retours bfcache.
+// On NE filtre PAS sur `e.persisted` : bootstrap() gère lui-même le cas déjà-init.
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) {
+    // Retour depuis bfcache (iOS typique) → refresh sans re-bootstrap
+    initApp();
+  }
 });
 
-/* ============================================================
-   LANCEMENT
-   ============================================================ */
-loadDataFiles().then(() => {
-  initBaseProps();
-  if (typeof updBadgeBoutique === 'function') updBadgeBoutique();
+// Filet de sécurité Android : visibilitychange attrape les cas où
+// pageshow ne se redéclenche pas (switch d'app sans unload complet)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && _appInitialized) {
+    initApp();
+  }
 });
-fetchMeteo();
-setInterval(fetchMeteo, 1800000); // Update météo toutes les 30 min

@@ -303,12 +303,12 @@ if (!sl) {
   const expr = window._expr;
   
   // Réaction ponctuelle prioritaire
-  if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
-    // Sourire large, oreilles
-    px(p, x+PX*2, mouthY, PX*4, PX);
-    px(p, x+PX*2, mouthY-PX, PX, PX);
-    px(p, x+PX*5, mouthY-PX, PX, PX);
-  } else if (expr.moodTimer > 0 && expr.lastMood === 'faim') {
+if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
+  // Sourire large sur 1 rangée + coins relevés vers le BAS
+  px(p, x+PX*2, mouthY+PX, PX*4, PX);       // ligne principale
+  px(p, x+PX,   mouthY,    PX, PX);         // coin gauche relevé
+  px(p, x+PX*6, mouthY,    PX, PX);         // coin droit relevé
+} else if (expr.moodTimer > 0 && expr.lastMood === 'faim') {
     // Bouche baveuse (ouverte + goutte)
     px(p, x+PX*3, mouthY, PX*2, PX*2);
     p.fill('#88c0e0');

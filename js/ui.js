@@ -2058,13 +2058,45 @@ function updTabletBadge() {
    MODALE DE BIENVENUE
    ============================================================ */
 function checkWelcome() {
-const D = window.D;
+  const D = window.D;
+  const td = today();
+  const h  = hr();
 
-  // 🎂 Anniversaire — priorité absolue avant tout
-  if (window.USER_CONFIG?.birthdayMonth) {
+  // 1. Premier lancement — priorité absolue
+  if (!D.g.welcomeDone) {
+    // 🎂 Anniversaire d'abord si c'est le bon jour
+    if (!D.g.birthdayShown && window.USER_CONFIG?.birthdayMonth) {
+      const now = new Date();
+      if (now.getMonth() + 1 === window.USER_CONFIG.birthdayMonth &&
+          now.getDate()      === window.USER_CONFIG.birthdayDay) {
+        D.g.birthdayShown = true;
+        save();
+        document.getElementById('modal').style.display = 'flex';
+        document.getElementById('mbox').innerHTML = `
+          <div style="text-align:center;padding:8px">
+            <div style="font-size:40px">🎂</div>
+            <p style="font-size:12px;color:var(--text);margin:12px 0;line-height:1.6;white-space:pre-line">${window.USER_CONFIG.birthdayMessage}</p>
+            <button class="btn btn-p" onclick="clModal();setTimeout(showWelcomeModal,400)" style="margin-top:8px;width:100%">Merci 💜</button>
+          </div>
+        `;
+        animEl(document.getElementById('mbox'), 'bounceIn');
+        return;
+      }
+    }
+    // Pas d'anniversaire → bienvenue direct
+    D.firstLaunch = D.firstLaunch || new Date().toISOString();
+    save();
+    showWelcomeModal();
+    return;
+  }
+
+  // 2. Anniversaire après onboarding — si pas encore montré
+  if (!D.g.birthdayShown && window.USER_CONFIG?.birthdayMonth) {
     const now = new Date();
     if (now.getMonth() + 1 === window.USER_CONFIG.birthdayMonth &&
         now.getDate()      === window.USER_CONFIG.birthdayDay) {
+      D.g.birthdayShown = true;
+      save();
       document.getElementById('modal').style.display = 'flex';
       document.getElementById('mbox').innerHTML = `
         <div style="text-align:center;padding:8px">
@@ -2074,19 +2106,9 @@ const D = window.D;
         </div>
       `;
       animEl(document.getElementById('mbox'), 'bounceIn');
-      return; // ← on s'arrête là, pas de message normal aujourd'hui
+      return;
     }
   }
-const td = today();
-const h  = hr();
-
-// 1. Premier lancement — priorité absolue
-if (!D.firstLaunch || D.g.name === 'Petit·e Gotchi') {
-  D.firstLaunch = D.firstLaunch || new Date().toISOString();
-  save();
-  showWelcomeModal();
-  return;
-}
 
 // 2. Garde anti-répétition : une seule fois par jour
 const créneau = h < 12 ? 'matin' : h < 18 ? 'aprem' : h < 21 ? 'soir' : 'nuit';
@@ -2216,9 +2238,29 @@ function showWelcomeModal() {
 function confirmWelcome() {
   const val = document.getElementById('welcome-name')?.value.trim();
   if (val) window.D.g.name = val;
+  window.D.g.welcomeDone = true;
   save();
   updUI();
   clModal();
+
+  // 🎂 Ouvre l'anniversaire juste après si c'est le bon jour
+  if (window.USER_CONFIG?.birthdayMonth) {
+    const now = new Date();
+    if (now.getMonth() + 1 === window.USER_CONFIG.birthdayMonth &&
+        now.getDate()      === window.USER_CONFIG.birthdayDay) {
+      setTimeout(() => {
+        document.getElementById('modal').style.display = 'flex';
+        document.getElementById('mbox').innerHTML = `
+          <div style="text-align:center;padding:8px">
+            <div style="font-size:40px">🎂</div>
+            <p style="font-size:12px;color:var(--text);margin:12px 0;line-height:1.6;white-space:pre-line">${window.USER_CONFIG.birthdayMessage}</p>
+            <button class="btn btn-p" onclick="clModal()" style="margin-top:8px;width:100%">Merci 💜</button>
+          </div>
+        `;
+        animEl(document.getElementById('mbox'), 'bounceIn');
+      }, 400); // ← petit délai pour laisser le bienvenue se fermer
+    }
+  }
 }
 
 /**

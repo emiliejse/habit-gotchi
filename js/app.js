@@ -115,7 +115,7 @@ const MSG = {
 function defs() {
   return {
     g: {
-      name: window.USER_CONFIG?.gotchiName ?? 'Petit Gotchi', userName: window.USER_CONFIG?.userName ?? 'Alexia', totalXp:0, stage:'egg', energy:3, happiness:3,
+      name: window.USER_CONFIG?.gotchiName ?? 'Petit Gotchi', userName: window.USER_CONFIG?.userName ?? 'Alexia', welcomeDone: false, birthdayShown: false, totalXp:0, stage:'egg', energy:3, happiness:3,
 envLv:0, activeEnv:'parc', petales:0,poops: [], poopDay: '',    // date du dernier comptage
 poopCount: 0,  // nb de cacas spawné aujourd'hui
 snackDone: '', snackEmoji: '',

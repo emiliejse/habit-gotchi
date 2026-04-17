@@ -534,7 +534,19 @@ async function fetchMeteo() {
     } else {
       shell.classList.remove('tama-wind', 'tama-wind-strong');
     }
+    updMeteoIcons();
   } catch(e) {}
+}
+
+function updMeteoIcons() {
+  const wind = window.meteoData?.windspeed || 0;
+  const wc = window.meteoData?.weathercode;
+  const windLeft = document.getElementById('wind-left');
+  const windRight = document.getElementById('wind-right');
+  const fogIcon = document.getElementById('fog-icon');
+  if (windLeft) windLeft.style.display = wind > 20 ? 'inline' : 'none';
+  if (windRight) windRight.style.display = wind > 20 ? 'inline' : 'none';
+  if (fogIcon) fogIcon.style.display = (wc === 45 || wc === 48) ? 'inline' : 'none';
 }
 
 /* ─── SYSTÈME 3 : COGNITION & IA (Suite) ───────────────────────── */

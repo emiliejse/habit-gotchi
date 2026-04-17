@@ -254,7 +254,31 @@ function updUI() {
   if (btnAsk) {
     btnAsk.childNodes[0].textContent = `Une pensée de ${window.D.g.name || 'le Gotchi'} `;
   }
-  updBadgeBoutique();
+updBadgeBoutique();
+
+  // 🎂 Icône anniversaire
+  const bdgEl = document.getElementById('birthday-badge');
+  if (bdgEl) {
+    const nowB = new Date();
+    const showBd = !!(
+      window.USER_CONFIG?.birthdayMonth &&
+      nowB.getMonth() + 1 === window.USER_CONFIG.birthdayMonth &&
+      nowB.getDate()      === window.USER_CONFIG.birthdayDay
+    );
+    bdgEl.style.display = showBd ? 'inline' : 'none';
+    const bdHandler = () => {
+      document.getElementById('modal').style.display = 'flex';
+      document.getElementById('mbox').innerHTML = `
+        <div style="text-align:center;padding:8px">
+          <div style="font-size:40px">🎂</div>
+          <p style="font-size:12px;color:var(--text);margin:12px 0;line-height:1.6;white-space:pre-line">${window.USER_CONFIG?.birthdayMessage||''}</p>
+          <button class="btn btn-p" onclick="document.getElementById('modal').style.display='none'" style="margin-top:8px;width:100%">Merci 💜</button>
+        </div>
+      `;
+      animEl(document.getElementById('mbox'), 'bounceIn');
+    };
+    bdgEl.onclick    = showBd ? bdHandler : null;
+  }
 }
 
 /**

@@ -929,14 +929,28 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
   }; // ← fin p.draw()
 
   // 13. Gestionnaire d'événements tactiles (Garde l'accès à "p.")
-    p.touchStarted = function() {
+    p.touchStarted = function(event) {
+    // 🎂 GARDE 0 : badge anniversaire (hors canvas)
+    const bdg = document.getElementById('birthday-badge');
+    if (bdg && bdg.style.display !== 'none') {
+      const t = event?.touches?.[0] || event?.changedTouches?.[0] || event;
+      const cx = t?.clientX;
+      const cy = t?.clientY;
+      if (cx != null && cy != null) {
+        const r = bdg.getBoundingClientRect();
+        if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) {
+          bdg.onclick?.();
+          return true; // laisse p5 tranquille, on a déjà géré
+        }
+      }
+    }
     // 🔒 GARDE 1 : menu principal ouvert
     const menuOverlay = document.getElementById('menu-overlay');
     if (menuOverlay && menuOverlay.classList.contains('open')) return true;
 
     // 🔒 GARDE 2 : une modale est présente dans le DOM (alertes, boutique, etc.)
     const modalEl = document.getElementById('modal');
-if (modalEl && modalEl.style.display !== 'none') return true;
+if (modalEl && getComputedStyle(modalEl).display !== 'none') return true;
 
     // 🔒 GARDE 3 : l'utilisateur est focus sur un champ de saisie
     const active = document.activeElement;

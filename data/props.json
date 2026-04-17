@@ -242,11 +242,11 @@
   "id": "iris01",
   "nom": "Iris la Chatte",
   "type": "decor",
-  "emoji": "🐱",
+  "emoji": "🐈‍⬛",
   "categorie": "nature",
   "cout": 0,
   "slot": "B",
-  "palette": ["transparent", "#d4b896", "#b89870", "#f0e0c8", "#404040", "#ff9999"],
+  "palette": ["transparent", "#1a1a1a", "#2d2d2d", "#4a7c4a", "#ffffff", "#ff9999"],
   "pixels": [
     [1,1,0,0,0,1,1],
     [1,2,1,0,1,2,1],

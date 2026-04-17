@@ -121,6 +121,8 @@ envLv:0, activeEnv:'parc', petales:0,poops: [], poopDay: '',    // date du derni
 poopCount: 0,  // nb de cacas spawné aujourd'hui
 snackDone: '', snackEmoji: '',
       props:[], customBubbles:[]
+      bilanCount: 0,
+      bilanWeek: ''
     },
     habits: CATS.map(c => ({catId:c.id, label:c.label})),
     log:{}, journal:[], pin:null, apiKey:null,

@@ -1359,6 +1359,24 @@ function navW(d) {
 }
 function navM(d) { mOff += d; renderProg(); }
 
+/* ── Utilitaire : identifiant semaine (ex: "2026-W15") ── */
+function getWeekId() {
+  const now = new Date();
+  const jan4 = new Date(now.getFullYear(), 0, 4);
+  const week = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  return `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+/* ── Reset du compteur si nouvelle semaine ── */
+function checkBilanReset() {
+  const currentWeek = getWeekId();
+  if (window.D.g.bilanWeek !== currentWeek) {
+    window.D.g.bilanWeek  = currentWeek;
+    window.D.g.bilanCount = 0;
+    save();
+  }
+}
+
 async function genBilanSemaine() {
   const D = window.D, key = D.apiKey;
   const summaryEl = document.getElementById('claude-summary');
@@ -1367,33 +1385,61 @@ async function genBilanSemaine() {
   const habitudes = D.habits.map(h => ({ habitude:h.label, jours_faits:wd.filter(d=>(D.log[d]||[]).includes(h.catId)).length, sur:7 }));
   const notes = D.journal.filter(j=>wd.includes(j.date.split('T')[0])).map(j=>({humeur:j.mood,texte:j.text,date:j.date.split('T')[0]}));
   const totalHabDays = wd.reduce((acc,d)=>acc+(D.log[d]||[]).length, 0);
+
+  /* ── Vérification quota ── */
+  checkBilanReset();
+  if ((window.D.g.bilanCount || 0) >= 3) {
+    summaryEl.textContent = 'Tu as déjà généré 3 bilans cette semaine 💜 Reviens vendredi prochain !';
+    return;
+  }
+
+  /* ── Semaine en cours ou passée ? ── */
+  const semaineEnCours  = wOff === 0;
+  const jourSemaine     = new Date().getDay();
+  const semainePasFinie = semaineEnCours && jourSemaine !== 0 && jourSemaine < 5;
+  const noteIA          = semainePasFinie
+    ? 'Note : la semaine n\'est pas encore terminée, génère un bilan d\'étape bienveillant et encourageant.'
+    : '';
+
+  /* ── Sans clé API ── */
   if (!key) {
     const lignes = habitudes.map(h=>`• ${h.habitude} : ${h.jours_faits}/7 jours`).join('\n');
-    summaryEl.textContent = `Semaine du ${wd[0]} au ${wd[6]}\n\n${lignes}\n\n${notes.length} note(s) de journal.\n\nAjoute ta clé API pour un bilan personnalisé par ton Gotchi ✿`;
+    summaryEl.textContent = `Semaine du ${wd[0]} au ${wd[6]}\n\n${lignes}\n\n${notes.length} note(s) de journal.\n\nAjoute ta clé API pour un bilan personnalisé ✿`;
     document.getElementById('btn-copy-bilan').style.display = 'block';
     document.getElementById('bil-txt-hidden').value = summaryEl.textContent;
     return;
   }
-  summaryEl.textContent = `💭 ${window.D.g.name} réfléchit à ta semaine...`;
+
+  summaryEl.textContent = `💭 ${g.name} réfléchit à ta semaine...`;
+
+  /* ── Construction du prompt ── */
   const ctx = window.AI_CONTEXTS;
   const prompt = ctx
     ? ctx.genBilanSemaine
-        .replace('{{weekStart}}',   wd[0])
-        .replace('{{weekEnd}}',     wd[6])
-        .replace('{{name}}',        g.name)
-        .replace('{{userName}}', D.g.userName || D.userName || 'ton utilisatrice')
-        .replace('{{stage}}',       s.l)
-        .replace('{{energy}}',      g.energy)
-        .replace('{{happiness}}',   g.happiness)
-        .replace('{{habitudes}}',   habitudes.map(h=>`- ${h.habitude} : ${h.jours_faits}/7 jours`).join('\n'))
-        .replace('{{totalHabDays}}',totalHabDays)
-        .replace('{{notesCount}}',  notes.length)
-        .replace('{{notes}}',       notes.length ? notes.map(n=>`[${n.date}/${n.humeur}] ${n.texte}`).join('\n') : 'aucune note cette semaine')
-    : `Tu es le Gotchi. Bilan semaine ${wd[0]}→${wd[6]} pour ${g.name} (${s.l}). Énergie ${g.energy}/5, Bonheur ${g.happiness}/5. ${totalHabDays} habitudes cochées. ${notes.length} notes. Bilan chaleureux en 3 paragraphes courts. Ton doux, pas de bullet points.`;
+        .replace('{{weekStart}}',    wd[0])
+        .replace('{{weekEnd}}',      wd[6])
+        .replace('{{name}}',         g.name)
+        .replace('{{userName}}',     D.g.userName || D.userName || 'ton utilisatrice')
+        .replace('{{stage}}',        s.l)
+        .replace('{{energy}}',       g.energy)
+        .replace('{{happiness}}',    g.happiness)
+        .replace('{{habitudes}}',    habitudes.map(h=>`- ${h.habitude} : ${h.jours_faits}/7 jours`).join('\n'))
+        .replace('{{totalHabDays}}', totalHabDays)
+        .replace('{{notesCount}}',   notes.length)
+        .replace('{{notes}}',        notes.length ? notes.map(n=>`[${n.date}/${n.humeur}] ${n.texte}`).join('\n') : 'aucune note cette semaine')
+        .replace('{{bilanNote}}',    noteIA)
+    : `Tu es le Gotchi. Bilan semaine ${wd[0]}→${wd[6]} pour ${g.name} (${s.l}). Énergie ${g.energy}/5, Bonheur ${g.happiness}/5. ${totalHabDays} habitudes cochées. ${notes.length} notes. Bilan chaleureux en 3 paragraphes courts. Ton doux, pas de bullet points. ${noteIA}`;
+
+  /* ── Appel API ── */
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:400, messages:[{role:'user',content:prompt}] })
     });
     const d = await r.json();
@@ -1401,8 +1447,12 @@ async function genBilanSemaine() {
     summaryEl.textContent = bilan;
     document.getElementById('bil-txt-hidden').value = bilan;
     document.getElementById('btn-copy-bilan').style.display = 'block';
+    window.D.g.bilanCount = (window.D.g.bilanCount || 0) + 1;
     save();
-  } catch(e) { summaryEl.textContent = 'Erreur : ' + (e.message || JSON.stringify(e)); }
+    renderProg(); // rafraîchit l'état du bouton
+  } catch(e) {
+    summaryEl.textContent = 'Erreur : ' + (e.message || JSON.stringify(e));
+  }
 }
 
 function copyBilanSemaine() {
@@ -1715,6 +1765,29 @@ document.getElementById('m-title').textContent =
     const prenom = D.g.userName || D.userName || 'toi';
     bilanTitre.textContent = `🧠 Bilan de ${prenom} — semaine du ${fmt(debut)} au ${fmt(fin)}`;
   }
+
+  /* ── État bouton bilan ── */
+checkBilanReset();
+const btnBilan  = document.querySelector('[onclick="genBilanSemaine()"]');
+if (btnBilan) {
+  const jourSemaine = new Date().getDay(); // 0=dim, 5=ven, 6=sam
+  const estFinSemaine = wOff < 0 || jourSemaine === 0 || jourSemaine === 5 || jourSemaine === 6;
+  const quotaOk = (window.D.g.bilanCount || 0) < 3;
+
+  if (!estFinSemaine) {
+    btnBilan.disabled = true;
+    btnBilan.textContent = '⏳ Disponible vendredi';
+    btnBilan.style.opacity = '0.5';
+  } else if (!quotaOk) {
+    btnBilan.disabled = true;
+    btnBilan.textContent = '✓ 3 bilans générés cette semaine';
+    btnBilan.style.opacity = '0.5';
+  } else {
+    btnBilan.disabled = false;
+    btnBilan.textContent = `✿ Générer le bilan (${window.D.g.bilanCount}/3)`;
+    btnBilan.style.opacity = '1';
+  }
+}
 
   updUI();
 }

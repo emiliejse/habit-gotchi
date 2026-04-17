@@ -1555,7 +1555,14 @@ function copyBilanSemaine() {
 }
 function resetBilan() {
   if (confirm('Effacer le bilan ?')) {
-    if (document.getElementById('claude-summary')) document.getElementById('claude-summary').textContent = 'Ton bilan apparaîtra ici...';
+    window.D.g.bilanCount = 0;
+    window.D.g.bilanWeek  = '';
+    save();
+    const el = document.getElementById('claude-summary');
+    if (el) el.textContent = 'Ton bilan de la semaine apparaîtra ici...';
+    document.getElementById('btn-copy-bilan').style.display = 'none';
+    renderProg();
+    toast('Bilan réinitialisé 🌸');
   }
 }
 

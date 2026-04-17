@@ -1936,6 +1936,6 @@ document.addEventListener('DOMContentLoaded', () => {
   updBubbleNow();
 
   // Version
-  const vEl = document.getElementById('app-version');
+  const vEl = document.getElementById('APP_VERSION');
   if (vEl) vEl.textContent = window.APP_VERSION || '';
 });

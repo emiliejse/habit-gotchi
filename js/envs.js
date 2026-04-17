@@ -107,20 +107,6 @@ function drawSun(p) {
   px(p, cx - 5, cy - 5, 10, 10);
 }
 
-function drawFog(p) {
-  p.noStroke();
-  for (let i = 0; i < 5; i++) {
-    const speed = 0.3 + i * 0.15;
-    const xOffset = (p.frameCount * speed + i * 45) % (CS + 60) - 30;
-    const y = 108 + i * 8;
-    const w = 60 + i * 20;
-    p.fill(p.color(255, 0, 0, 200)); // ← rouge bien visible
-    for (let dx = 0; dx < w; dx += PX) {
-      px(p, xOffset + dx, y, PX, PX * 2);
-    }
-  }
-}
-
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME & TOPOGRAPHIE (Les Biomes) ──────────── */
 
 /**

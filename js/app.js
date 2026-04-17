@@ -526,6 +526,16 @@ function initBaseProps() {
       window.D.g.props.push({ id:b.id, nom:b.nom, type:b.type, emoji:b.emoji||'🎁', actif:false });
     }
   });
+
+  // 🎁 Objets débloqués spécialement (user_config)
+  const extra = window.USER_CONFIG?.unlockedProps || [];
+  extra.forEach(id => {
+    const prop = (window.PROPS_LIB || []).find(p => p.id === id);
+    if (prop && !window.D.g.props.find(p => p.id === id)) {
+      window.D.g.props.push({ id:prop.id, nom:prop.nom, type:prop.type, emoji:prop.emoji||'🎁', actif:false });
+    }
+  });
+
   window.D.propsInitialized = true;
   save();
 }

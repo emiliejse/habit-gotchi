@@ -642,14 +642,14 @@ function handleDailyReset() {
   save();
 }
 
-// Appel au démarrage — dans DOMContentLoaded pour attendre ui.js
+// Appel au démarrage
 document.addEventListener('DOMContentLoaded', () => {
   handleDailyReset();
 });
 
-// Retour en foreground (PWA / changement d'onglet)
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
+// Retour en foreground — pageshow est plus fiable qu'visibilitychange sur iOS
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) { // ← true uniquement si la page vient du cache (retour PWA)
     handleDailyReset();
     if (typeof updUI === 'function')      updUI();
     if (typeof renderHabs === 'function') renderHabs();

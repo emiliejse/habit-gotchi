@@ -45,6 +45,8 @@ window.triggerGotchiShake  = function() { window.shakeTimer = 12; };
 window.spawnP = spawnP;
 window._nextBlinkAt = 60;
 window._blinkDuration = 4;
+// Animation d'évolution (chrysalide)
+window._evoAnim = { active: false, timer: 0, fromStage: '', toStage: '' };
 // ─── Animation : variables d'expressivité ───
 window._expr = {
   lastMood: null,      // 'faim', 'surprise', 'joie', null
@@ -216,8 +218,8 @@ function drawEgg(p, cx, cy) {
   px(p,x+PX*2,y,PX*3,PX); px(p,x+PX,y+PX,PX*5,PX); px(p,x,y+PX*2,PX*7,PX*3); px(p,x+PX,y+PX*5,PX*5,PX); px(p,x+PX*2,y+PX*6,PX*3,PX);
   p.fill(C.eggSp); px(p,x+PX*2,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); px(p,x+PX*3,y+PX*5,PX,PX);
   const totalXp = window.D.g.totalXp;
-if (totalXp > 80) {
-  const intensity = totalXp >= 60 ? 2 : 1;
+if (totalXp > 45) {
+  const intensity = totalXp >= 75 ? 2 : 1;
   const wobble = Math.sin(Date.now() * 0.015) * intensity;
   p.fill(C.eggCr);
   px(p, x + PX*3 + wobble, y + PX,   PX, PX);

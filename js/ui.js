@@ -1307,7 +1307,7 @@ function genSoutien() {
         .replace('{{habitsUndone}}',habsDuJour.filter(h=>!h.faite).map(h=>h.label).join(', ')||'toutes faites !')
         .replace('{{notes}}',       notesDuJour.length ? notesDuJour.map(n=>`[${n.humeur}] ${n.texte}`).join(' | ') : 'aucune note')
         .replace('{{userName}}', D.g.userName || D.userName || 'ton utilisatrice')
-    : `Tu es le Gotchi, un compagnon bienveillant pour le bien-être mental et le TDAH.\nL'utilisateur a besoin de soutien. Énergie: ${D.g.energy}/5, Bonheur: ${D.g.happiness}/5.\nCommence par une phrase douce. Pose UNE question ouverte. Ton doux, jamais de jugement.`;
+    : `Tu es le Gotchi, un compagnon bienveillant pour le bien-être mental.\nL'utilisateur a besoin de soutien. Énergie: ${D.g.energy}/5, Bonheur: ${D.g.happiness}/5.\nCommence par une phrase douce. Pose UNE question ouverte. Ton doux, jamais de jugement.`;
 
   window._soutienHistory = [];
   window._soutienCount = 0;

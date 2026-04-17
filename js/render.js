@@ -195,15 +195,35 @@ function updateParts(p) {
 
 /* ─── SYSTÈME 1 : MÉTABOLISME & CYCLE DE VIE ────────────────────── */
 
+
+// DITHERING : damier semi-transparent "état critique" style Gameboy
+function drawDither(p, x, y, w, h, color) {
+  const col = p.color(color);
+  col.setAlpha(100);
+  p.fill(col);
+  p.noStroke();
+  for (let row = 0; row < h; row += PX * 2) {
+    for (let col2 = (row / PX % 2 === 0 ? 0 : PX); col2 < w; col2 += PX * 2) {
+      px(p, x + col2, y + row, PX, PX);
+    }
+  }
+}
+
 function drawEgg(p, cx, cy) {
   const x = cx - PX * 3, y = cy; 
   p.noStroke();
   p.fill(C.egg); 
   px(p,x+PX*2,y,PX*3,PX); px(p,x+PX,y+PX,PX*5,PX); px(p,x,y+PX*2,PX*7,PX*3); px(p,x+PX,y+PX*5,PX*5,PX); px(p,x+PX*2,y+PX*6,PX*3,PX);
   p.fill(C.eggSp); px(p,x+PX*2,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); px(p,x+PX*3,y+PX*5,PX,PX);
-  if(window.D.g.totalXp > 30) { 
-    p.fill(C.eggCr); px(p,x+PX*3,y+PX,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX); px(p,x+PX*3,y+PX*3,PX,PX); 
-  }
+  const totalXp = window.D.g.totalXp;
+if (totalXp > 25) {
+  const intensity = totalXp >= 28 ? 2 : 1;
+  const wobble = Math.sin(Date.now() * 0.015) * intensity;
+  p.fill(C.eggCr);
+  px(p, x + PX*3 + wobble, y + PX,   PX, PX);
+  px(p, x + PX*4 + wobble, y + PX*2, PX, PX);
+  px(p, x + PX*3 + wobble, y + PX*3, PX, PX);
+}
   return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
 }
 
@@ -233,7 +253,7 @@ function drawBaby(p, cx, cy, sl, en, ha) {
     
     p.fill(C.bodyDk); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*4,y+PX*5,PX,PX);
     if(en < 25 && !sl) { px(p,x+PX*2,y+PX*5,PX*2,PX); } 
-    
+    if (en < 10 && !sl) drawDither(p, x, y + PX * 4, PX * 8, PX * 5, C.bodyDk);
     return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
 }
 
@@ -363,7 +383,8 @@ px(p, x+PX*5+2, y-PX,   PX, PX);
     /* ─── PETITS PIEDS ─── */
     px(p, x+PX*2, y+PX*8, PX, PX);
     px(p, x+PX*5, y+PX*8, PX, PX);
-
+    
+    if (en < 10 && !sl) drawDither(p, x, y + PX * 4, PX * 8, PX * 5, C.bodyDk);
     return { topY: y, eyeY: y+PX*2, neckY: y+PX*5 };
 }
 
@@ -501,7 +522,7 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
     /* ─── PETITS PIEDS ─── */
     px(p, x+PX*3, y+PX*10, PX*2, PX);
     px(p, x+PX*6, y+PX*10, PX*2, PX);
-
+    if (en < 10 && !sl) drawDither(p, x, y + PX * 4, PX * 10, PX * 6, C.bodyDk);
     return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
 }
 

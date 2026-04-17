@@ -1496,7 +1496,7 @@ function renderJ() {
   renderPin();
 }
 
-const MOODS = [{id:'super',e:'🌟'},{id:'bien',e:'😊'},{id:'ok',e:'😐'},{id:'bof',e:'😔'},{id:'dur',e:'🌧️'}];
+const MOODS = [{id:'dur',e:'🌧️'},{id:'bof',e:'😔'},{id:'ok',e:'😐'},{id:'bien',e:'😊'},{id:'super',e:'🌟'}];
 let selMood = null;
 
 function initMoodPicker() {

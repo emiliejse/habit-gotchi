@@ -590,7 +590,14 @@ function updBubbleNow() {
       pool.push(...selection);
     }
   }
-
+  // Humeur du journal du jour
+const dernierJournal = D.journal[D.journal.length - 1];
+if (dernierJournal?.date?.startsWith(today())) {
+  const m = dernierJournal.mood;
+  if (m === 'dur')              ajouter(src.triste,  2);
+  if (m === 'bof')              ajouter(src.fatigue, 1);
+  if (m === 'super' || m === 'bien') ajouter(src.fierte, 1);
+}
   if (!pool.length) pool = ["✿"];
 
   // ── Anti-répétition ───────────────────────────────────────────

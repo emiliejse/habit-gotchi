@@ -773,7 +773,8 @@ if (window.shakeTimer > 0) window.shakeTimer--;
       });
     }
 
-    drawFog(p); // ← force toujours
+    const wc = window.meteoData?.weathercode;
+    if (wc === 45 || wc === 48) drawFog(p);
 
     // 9. Props Décor — Premier plan (C, D) — DEVANT le Gotchi
 if (D.g.props) {

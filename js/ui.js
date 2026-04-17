@@ -1763,7 +1763,7 @@ document.getElementById('m-title').textContent =
     const fin   = new Date(wd[6] + 'T12:00');
     const fmt   = d => `${d.getDate()} ${d.toLocaleDateString('fr-FR', { month: 'short' })}`;
     const prenom = D.g.userName || D.userName || 'toi';
-    bilanTitre.textContent = `🧠 Bilan de ${prenom} — semaine du ${fmt(debut)} au ${fmt(fin)}`;
+    bilanTitre.innerHTML = `🧠 Bilan de ${prenom}<br><span style="font-size:9px;font-weight:normal;color:var(--text2)">semaine du ${fmt(debut)} au ${fmt(fin)}</span>`;
   }
 
   /* ── État bouton bilan ── */

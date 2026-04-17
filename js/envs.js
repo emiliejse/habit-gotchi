@@ -108,6 +108,7 @@ function drawSun(p) {
 }
 
 function drawFog(p) {
+  console.log('drawFog appelé', p.frameCount);
   p.noStroke();
   for (let i = 0; i < 5; i++) {
     const speed = 0.3 + i * 0.15;

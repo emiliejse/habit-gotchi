@@ -579,7 +579,6 @@ const p5s = (p) => {
     // 1. Fond et Météo
     drawSky(p, h, ha);
     if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
-    drawFog(p); // ← force toujours
 
     let envActif = g.activeEnv || 'parc';
     if (!sleeping) {
@@ -773,6 +772,8 @@ if (window.shakeTimer > 0) window.shakeTimer--;
         }
       });
     }
+
+    drawFog(p); // ← force toujours
 
     // 9. Props Décor — Premier plan (C, D) — DEVANT le Gotchi
 if (D.g.props) {

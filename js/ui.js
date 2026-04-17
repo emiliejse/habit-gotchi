@@ -338,7 +338,6 @@ habHome.innerHTML = D.habits.map((h, i) => {
       <span style="font-size:11px;color:var(--text2);cursor:pointer;padding:0 2px"
         onclick="editHabInline('${h.catId}', ${i})">✏️</span>
     </div>`;
-}).join('');
 }).join('') + `<p style="font-size:10px;color:var(--text2);text-align:center;margin-top:6px;opacity:0.7">
   ✏️ Appuie sur le crayon pour personnaliser tes habitudes
 </p>`;

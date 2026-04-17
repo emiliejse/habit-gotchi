@@ -632,10 +632,19 @@ if (D.g.props) {
   }; // ← fin p.draw()
 
   // 13. Gestionnaire d'événements tactiles (Garde l'accès à "p.")
-  p.touchStarted = function() {
-      // 🔒 GARDE : si le menu est ouvert, on ignore le clic sur le Gotchi
-  const menuOverlay = document.getElementById('menu-overlay');
-  if (menuOverlay && menuOverlay.classList.contains('open')) return true;
+    p.touchStarted = function() {
+    // 🔒 GARDE 1 : menu principal ouvert
+    const menuOverlay = document.getElementById('menu-overlay');
+    if (menuOverlay && menuOverlay.classList.contains('open')) return true;
+
+    // 🔒 GARDE 2 : une modale est présente dans le DOM (alertes, boutique, etc.)
+    if (document.querySelector('.modal')) return true;
+
+    // 🔒 GARDE 3 : l'utilisateur est focus sur un champ de saisie
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+      return true;
+    }
     const rect = p.canvas.getBoundingClientRect();
     const touch = p.touches[0] || { x: p.mouseX, y: p.mouseY };
     const clientX = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent) ? window.event.touches[0]?.clientX : null;

@@ -45,6 +45,28 @@ window.triggerGotchiShake  = function() { window.shakeTimer = 12; };
 window.spawnP = spawnP;
 window._nextBlinkAt = 60;
 window._blinkDuration = 4;
+// ─── Animation : variables d'expressivité ───
+window._expr = {
+  lastMood: null,      // 'faim', 'surprise', 'joie', null
+  moodTimer: 0,        // frames restantes de la réaction
+  breathPhase: 0
+};
+
+// Helper : calcule la phase de respiration (0 → 1 → 0 → 1…)
+function getBreath(p, speed = 0.025) {
+  return (Math.sin(p.frameCount * speed) + 1) / 2; // 0 à 1
+}
+
+// Helper : pulsation joues (décalée pour pas synchro avec respiration)
+function getCheekPulse(p) {
+  return (Math.sin(p.frameCount * 0.04 + Math.PI/3) + 1) / 2;
+}
+
+// Déclenche une micro-réaction (à appeler depuis app.js ou render)
+window.triggerExpr = function(mood, duration = 60) {
+  window._expr.lastMood = mood;
+  window._expr.moodTimer = duration;
+};
 
 function getGotchiC() {
   const id = window.D.g.gotchiColor || 'vert';
@@ -216,7 +238,10 @@ function drawBaby(p, cx, cy, sl, en, ha) {
 }
 
 function drawTeen(p, cx, cy, sl, en, ha) {
-    const x = cx - PX * 4, y = cy;
+    // Respiration : étire légèrement la largeur (±1 pixel)
+    const breath = getBreath(p);
+    const breathX = sl ? 0 : Math.round(breath * 2 - 1); // -1 à +1 pixel
+    const x = cx - PX * 4 - breathX, y = cy;
     p.noStroke();
 
     /* ─── CORPS ROND FUSIONNÉ (8×8 PX) ─── */
@@ -256,18 +281,50 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     }
 
     /* ─── JOUES ROSES ─── */
-    p.fill(C.cheek);
-    px(p, x,      y+PX*4, PX, PX);
-    px(p, x+PX*7, y+PX*4, PX, PX);
+    const pulse = getCheekPulse(p);
+// Interpole la teinte : plus saturée quand pulse haut
+p.fill(p.lerpColor(p.color(C.cheek), p.color('#e88098'), pulse));
+px(p, x,      y+PX*4, PX, PX);
+px(p, x+PX*7, y+PX*4, PX, PX);
+
+// Pulse supplémentaire si joie active
+if (window._expr.moodTimer > 0 && window._expr.lastMood === 'joie') {
+  p.drawingContext.globalAlpha = 0.7;
+  px(p, x-PX,   y+PX*4, PX, PX);    // joues débordent
+  px(p, x+PX*8, y+PX*4, PX, PX);
+  p.drawingContext.globalAlpha = 1.0;
+}
 
     /* ─── BOUCHE ─── */
     p.fill(C.mouth);
-    if (!sl) {
-      if      (ha > 70) { px(p,x+PX*3,y+PX*4,PX*2,PX); px(p,x+PX*2,y+PX*4,PX,PX); px(p,x+PX*5,y+PX*4,PX,PX); }
-      else if (ha > 40)   px(p,x+PX*3,y+PX*4,PX*2,PX);
-      else if (ha < 20)   px(p,x+PX*3,y+PX*4+2,PX*2,PX);
-      else                px(p,x+PX*3,y+PX*4,PX,PX);
-    }
+if (!sl) {
+  // Respiration bouche : descend de 1-2 px sur le cycle
+  const mouthY = y + PX*4 + Math.round(breath * 2);
+  const expr = window._expr;
+  
+  // Réaction ponctuelle prioritaire
+  if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
+    // Sourire large, oreilles
+    px(p, x+PX*2, mouthY, PX*4, PX);
+    px(p, x+PX*2, mouthY-PX, PX, PX);
+    px(p, x+PX*5, mouthY-PX, PX, PX);
+  } else if (expr.moodTimer > 0 && expr.lastMood === 'faim') {
+    // Bouche baveuse (ouverte + goutte)
+    px(p, x+PX*3, mouthY, PX*2, PX*2);
+    p.fill('#88c0e0');
+    px(p, x+PX*3, mouthY+PX*2, PX, PX); // goutte
+    p.fill(C.mouth);
+  } else if (expr.moodTimer > 0 && expr.lastMood === 'surprise') {
+    // Petit "o" de surprise
+    px(p, x+PX*3, mouthY, PX*2, PX*2);
+  } else {
+    // Humeurs normales (existantes)
+    if      (ha > 70) { px(p,x+PX*3,mouthY,PX*2,PX); px(p,x+PX*2,mouthY,PX,PX); px(p,x+PX*5,mouthY,PX,PX); }
+    else if (ha > 40)   px(p,x+PX*3,mouthY,PX*2,PX);
+    else if (ha < 20)   px(p,x+PX*3,mouthY+2,PX*2,PX);
+    else                px(p,x+PX*3,mouthY,PX,PX);
+  }
+}
 
     /* ─── PETITS BRAS SUR LES CÔTÉS ─── */
     p.fill(C.bodyDk);
@@ -283,6 +340,7 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     px(p, x+PX*2, y+PX*8, PX, PX);
     px(p, x+PX*5, y+PX*8, PX, PX);
 
+    if (window._expr.moodTimer > 0) window._expr.moodTimer--;
     return { topY: y, eyeY: y+PX*2, neckY: y+PX*5 };
 }
 
@@ -761,10 +819,36 @@ if (modalEl && modalEl.style.display !== 'none') return true;
 
 
     if (hit) {
-      window._lastTapX = walkX + (Math.random() - 0.5) * 20;
-      triggerTouchReaction(h >= 22 || h < 7);
-      return false;
+  window._lastTapX = walkX + (Math.random() - 0.5) * 20;
+  triggerTouchReaction(h >= 22 || h < 7);
+  
+  // ✨ Expression faciale selon contexte
+  if (typeof window.triggerExpr === 'function') {
+    const isNight = h >= 22 || h < 7;
+    
+    if (isNight) {
+      // La nuit, on le réveille : surprise ensommeillée
+      window.triggerExpr('surprise', 50);
+    } else {
+      // Le jour : compteur de caresses rapprochées
+      window._petCount = (window._petCount || 0) + 1;
+      window._lastPetTime = Date.now();
+      
+      // Reset du compteur après 2s sans caresse
+      clearTimeout(window._petResetTimer);
+      window._petResetTimer = setTimeout(() => { window._petCount = 0; }, 2000);
+      
+      // 1-2 taps : surprise douce | 3+ taps rapprochés : joie
+      if (window._petCount >= 3) {
+        window.triggerExpr('joie', 80);
+      } else {
+        window.triggerExpr('surprise', 35);
+      }
     }
+  }
+  
+  return false;
+}
   };
 }; // ← fin p5s
 

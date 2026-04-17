@@ -267,20 +267,36 @@ function getSnackOfDay() {
 function giveSnack() {
   const td = today();
   if (window.D.g.snackDone === td) return;
+  
+  // ✨ Réaction gourmande : déclenchée AVANT l'animation
+  // pour que le Gotchi bave en voyant la nourriture descendre
+  if (typeof window.triggerExpr === 'function') {
+    window.triggerExpr('faim', 60);  // bave pendant toute la descente
+  }
+  
   window.D.g.snackDone = td;
-  window.D.g.petales = (window.D.g.petales || 0) + 2; // Récompense : 2 pétales
+  window.D.g.petales = (window.D.g.petales || 0) + 2;
   save();
   
   addEvent({
-  type: 'note',
-  subtype: 'snack',
-  label: `${window.D.g.snackEmoji} donné à ${window.D.g.name}  +2 🌸`
-});
+    type: 'note',
+    subtype: 'snack',
+    label: `${window.D.g.snackEmoji} donné à ${window.D.g.name}  +2 🌸`
+  });
+  
   const snackMsgs = ["Miam ! 💜", "Délicieux ! ✿", "*mange goulûment* 😋", "Encore ! 🌸", "C'était bon ça ! 💜"];
   flashBubble(snackMsgs[Math.floor(Math.random() * snackMsgs.length)], 2500);
   
-  // Envoie l'info à render.js pour l'animation
   window.eatAnim = { active: true, timer: 50, emoji: window.D.g.snackEmoji, jumped: false };
+  
+  // ✨ Réaction joie : déclenchée APRÈS la dégustation
+  // Le délai laisse le temps à la bave de disparaître avant la joie
+  setTimeout(() => {
+    if (typeof window.triggerExpr === 'function') {
+      window.triggerExpr('joie', 80);
+    }
+  }, 1500);
+  
   if (typeof updUI === 'function') updUI();
 }
 
@@ -416,6 +432,12 @@ serene: { msg: "Tu as médité… je me sens plus calme aussi 💜", anim: 'spar
     if (reaction.body === 'bounce') window.triggerGotchiBounce?.();
     if (reaction.body === 'shake')  window.triggerGotchiShake?.();
     reaction.spawn?.(); //
+    // ✨ Réaction d'expression : sourire large + joues rouges
+if (typeof window.triggerExpr === 'function') {
+  // Le mood dépend du bonheur actuel : si déjà heureux, grande joie
+  const mood = window.D.g.happiness > 60 ? 'joie' : 'surprise';
+  window.triggerExpr(mood, 90);  // ~1.5s de réaction
+}
   }
  // ✅ UN SEUL save() ici, après toutes les mutations d'état
   save();

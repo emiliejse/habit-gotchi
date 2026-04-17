@@ -238,9 +238,9 @@ function drawBaby(p, cx, cy, sl, en, ha) {
 }
 
 function drawTeen(p, cx, cy, sl, en, ha) {
-    // Respiration : étire légèrement la largeur (±1 pixel)
+    // ─── Respiration : étire légèrement la largeur (±1 pixel) ───
     const breath = getBreath(p);
-    const breathX = sl ? 0 : Math.round(breath * 2 - 1); // -1 à +1 pixel
+    const breathX = sl ? 0 : Math.round(breath * 2 - 1);
     const x = cx - PX * 4 - breathX, y = cy;
     p.noStroke();
 
@@ -258,10 +258,21 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     px(p, x+PX,   y+PX*2, PX*2, PX);
 
     /* ─── YEUX (grands, amande) ─── */
+    const expr = window._expr;
+    const isSurprise = expr.moodTimer > 0 && expr.lastMood === 'surprise';
+
     if (sl || blink) {
       p.fill(C.eye);
       px(p, x+PX,   y+PX*3, PX*2, PX);
       px(p, x+PX*5, y+PX*3, PX*2, PX);
+    } else if (isSurprise) {
+      // Yeux grands ouverts : carrés pleins
+      p.fill(C.eye);
+      px(p, x+PX,   y+PX*2, PX*2, PX*2);
+      px(p, x+PX*5, y+PX*2, PX*2, PX*2);
+      p.fill('#fff');
+      p.rect(x+PX+1,   y+PX*2+1, 4, 4);
+      p.rect(x+PX*5+1, y+PX*2+1, 4, 4);
     } else {
       p.fill(C.eye);
       px(p, x+PX,   y+PX*2, PX*2, PX);      // œil gauche haut large
@@ -280,51 +291,48 @@ function drawTeen(p, cx, cy, sl, en, ha) {
       px(p, x+PX*5, y+PX*2, PX*2, PX);
     }
 
-    /* ─── JOUES ROSES ─── */
+    /* ─── JOUES ROSES (pulsantes, centrées) ─── */
     const pulse = getCheekPulse(p);
-// Interpole la teinte : plus saturée quand pulse haut
-p.fill(p.lerpColor(p.color(C.cheek), p.color('#e88098'), pulse));
-px(p, x,      y+PX*4, PX, PX);
-px(p, x+PX*7, y+PX*4, PX, PX);
+    p.fill(p.lerpColor(p.color(C.cheek), p.color('#e88098'), pulse));
+    px(p, x+PX*2, y+PX*5, PX, PX);
+    px(p, x+PX*5, y+PX*5, PX, PX);
 
-// Pulse supplémentaire si joie active
-if (window._expr.moodTimer > 0 && window._expr.lastMood === 'joie') {
-  p.drawingContext.globalAlpha = 0.7;
-  px(p, x-PX,   y+PX*4, PX, PX);    // joues débordent
-  px(p, x+PX*8, y+PX*4, PX, PX);
-  p.drawingContext.globalAlpha = 1.0;
-}
+    // Joues débordantes si joie active
+    if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
+      p.drawingContext.globalAlpha = 0.7;
+      px(p, x+PX,   y+PX*5, PX, PX);
+      px(p, x+PX*6, y+PX*5, PX, PX);
+      p.drawingContext.globalAlpha = 1.0;
+    }
 
     /* ─── BOUCHE ─── */
     p.fill(C.mouth);
-if (!sl) {
-  // Respiration bouche : descend de 1-2 px sur le cycle
-  const mouthY = y + PX*4 + Math.round(breath * 2);
-  const expr = window._expr;
-  
-  // Réaction ponctuelle prioritaire
-if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
-  // Sourire large sur 1 rangée + coins relevés vers le BAS
-  px(p, x+PX*2, mouthY+PX, PX*4, PX);       // ligne principale
-  px(p, x+PX,   mouthY,    PX, PX);         // coin gauche relevé
-  px(p, x+PX*6, mouthY,    PX, PX);         // coin droit relevé
-} else if (expr.moodTimer > 0 && expr.lastMood === 'faim') {
-    // Bouche baveuse (ouverte + goutte)
-    px(p, x+PX*3, mouthY, PX*2, PX*2);
-    p.fill('#88c0e0');
-    px(p, x+PX*3, mouthY+PX*2, PX, PX); // goutte
-    p.fill(C.mouth);
-  } else if (expr.moodTimer > 0 && expr.lastMood === 'surprise') {
-    // Petit "o" de surprise
-    px(p, x+PX*3, mouthY, PX*2, PX*2);
-  } else {
-    // Humeurs normales (existantes)
-    if      (ha > 70) { px(p,x+PX*3,mouthY,PX*2,PX); px(p,x+PX*2,mouthY,PX,PX); px(p,x+PX*5,mouthY,PX,PX); }
-    else if (ha > 40)   px(p,x+PX*3,mouthY,PX*2,PX);
-    else if (ha < 20)   px(p,x+PX*3,mouthY+2,PX*2,PX);
-    else                px(p,x+PX*3,mouthY,PX,PX);
-  }
-}
+    if (!sl) {
+      // Respiration bouche : descend de 0-2 px sur le cycle
+      const mouthY = y + PX*5 + Math.round(breath * 2);
+
+      if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
+        // Grand sourire : barre principale en bas, coins relevés
+        px(p, x+PX*2, mouthY+PX, PX*4, PX);   // ligne principale
+        px(p, x+PX,   mouthY,    PX,   PX);   // coin gauche relevé
+        px(p, x+PX*6, mouthY,    PX,   PX);   // coin droit relevé
+      } else if (expr.moodTimer > 0 && expr.lastMood === 'faim') {
+        // Bouche baveuse (ouverte + goutte bleue)
+        px(p, x+PX*3, mouthY, PX*2, PX*2);
+        p.fill('#88c0e0');
+        px(p, x+PX*3, mouthY+PX*2, PX, PX);
+        p.fill(C.mouth);
+      } else if (expr.moodTimer > 0 && expr.lastMood === 'surprise') {
+        // Petit "o" de surprise
+        px(p, x+PX*3, mouthY, PX*2, PX*2);
+      } else {
+        // Humeurs normales
+        if      (ha > 70) { px(p,x+PX*3,mouthY,PX*2,PX); px(p,x+PX*2,mouthY,PX,PX); px(p,x+PX*5,mouthY,PX,PX); }
+        else if (ha > 40)   px(p,x+PX*3,mouthY,PX*2,PX);
+        else if (ha < 20)   px(p,x+PX*3,mouthY+2,PX*2,PX);
+        else                px(p,x+PX*3,mouthY,PX,PX);
+      }
+    }
 
     /* ─── PETITS BRAS SUR LES CÔTÉS ─── */
     p.fill(C.bodyDk);

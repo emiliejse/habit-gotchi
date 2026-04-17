@@ -509,18 +509,6 @@ async function fetchMeteo() {
       document.getElementById('meteo-badge').textContent = badge;
       document.getElementById('meteo-badge').style.display = 'block';
     }
-    // Icônes vent dans la date
-    const windLeft = document.getElementById('wind-left');
-    const windRight = document.getElementById('wind-right');
-    if (windLeft) windLeft.style.display = wind > 20 ? 'inline' : 'none';
-    if (windRight) windRight.style.display = wind > 20 ? 'inline' : 'none';
-
-    // Icône brouillard
-    const fogIcon = document.getElementById('fog-icon');
-    if (fogIcon) {
-    const wc = window.meteoData?.weathercode;
-    fogIcon.style.display = (wc === 45 || wc === 48) ? 'inline' : 'none';
-    }
 
     const shell = document.querySelector('.tama-shell');
     if (wind > 40) {

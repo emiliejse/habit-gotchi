@@ -43,6 +43,8 @@ let walkPause  = 0;     // frames d'attente avant le prochain déplacement
 window.triggerGotchiBounce = function() { window._jumpTimer = 20; };
 window.triggerGotchiShake  = function() { window.shakeTimer = 12; }; 
 window.spawnP = spawnP;
+window._nextBlinkAt = 60;
+window._blinkDuration = 4;
 
 function getGotchiC() {
   const id = window.D.g.gotchiColor || 'vert';
@@ -580,10 +582,18 @@ if (D.g.props) {
     }
 
     blinkT++;
-    if (blinkT > 45 + Math.random() * 35) {
-      blink = true;
-      if (blinkT > 49 + Math.random() * 4) { blink = false; blinkT = 0; }
-    }
+if (!blink && blinkT > window._nextBlinkAt) {
+  blink = true;
+  window._blinkDuration = 3 + Math.floor(Math.random() * 4); // 3-6 frames
+}
+if (blink) {
+  window._blinkDuration--;
+  if (window._blinkDuration <= 0) {
+    blink = false;
+    blinkT = 0;
+    window._nextBlinkAt = 40 + Math.floor(Math.random() * 80); // 40-120 frames entre clignements
+  }
+}
 
     while (window.celebQueue.length) {
       window.celebQueue.shift();

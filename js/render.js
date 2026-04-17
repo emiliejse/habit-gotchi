@@ -229,7 +229,7 @@ function drawTeen(p, cx, cy, sl, en, ha) {
       p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX*2,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); 
     } else { 
       p.fill(C.eye); px(p,x+PX*2,y+PX*3,PX,PX*2); px(p,x+PX*5,y+PX*3,PX,PX*2); 
-      p.fill('#fff'); p.rect(x+PX*2,y+PX*3,2,2); p.rect(x+PX*5,y+PX*3,2,2); 
+      p.fill('#fff'); p.rect(x+PX*2,y+PX*3,4,4); p.rect(x+PX*5,y+PX*3,4,4);
     }
 
     p.fill(C.cheek); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*6,y+PX*5,PX,PX);

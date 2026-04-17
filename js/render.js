@@ -879,7 +879,7 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
   let hudMeteo = Math.round(window.meteoData.temperature) + '°C';
   if (wc === 45 || wc === 48) hudMeteo += ' 😶‍🌫️';
   if (wind > 20) hudMeteo += ' 🌬️';
-  p.textSize(hudMeteo.length > 5 ? 9 : 11); // ← réduit si texte long
+  p.textSize(hudMeteo.length > 9 ? 9 : 11); // ← réduit si texte long
   p.textAlign(p.RIGHT, p.TOP);
   p.text(hudMeteo, CS - 6, 6);
   p.textSize(11); // ← remet la taille normale

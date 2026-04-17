@@ -8,7 +8,7 @@
    UTILITAIRES (déclarés en premier — utilisés partout)
    ============================================================ */
 const today  = () => new Date().toISOString().split('T')[0];
-const hr     = () => new Date().getHours();
+const hr = () => window._forceHour ?? new Date().getHours();
 const clamp  = (v,a,b) => Math.max(a, Math.min(b, v));
 
 /* ─── SYSTÈME 7 : INGÉNIERIE & ARCHITECTURE GLOBALE ────────────── */

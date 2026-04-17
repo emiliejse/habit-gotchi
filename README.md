@@ -1,41 +1,18 @@
-# 🌟 Habit-Gotchi - Santé Mentale TDAH-Friendly
+# 🌟 Habit-Gotchi d'Alexia
 
-Une application web pour aider à gérer ses habitudes et sa santé mentale, conçue pour les personnes avec TDAH.
+Ton compagnon pixel art personnel qui grandit avec tes habitudes 💜
 
 ## 🚀 Fonctionnalités
-- **Console Tama-Shell** : Interface pixel art avec un personnage interactif.
+
+- **Console Tama-Shell** : Interface pixel art avec ton Gotchi interactif.
 - **Environnements dynamiques** : Parc, chambre, montagne selon l'onglet.
-- **Mode Focus** : Timer Pomodoro (25/5 min) avec guide respiratoire.
-- **API Météo** : Météo de Toulouse (vent >20km/h = effet visuel).
-- **API Claude** : Analyse de texte pour l'humeur et les accessoires.
-- **Haptique et animations** : Vibration et animations de succès.
+- **API Météo** : Météo de Bourg-en-Bresse en temps réel.
+- **Compagnon IA** : Ton Gotchi te répond, t'encourage et crée des objets pour toi.
+- **Journal intime** : Protégé par code PIN.
 
-## 📁 Structure du Projet
-```
-habit-gotchi/
-├── index.html
-├── assets/
-│   ├── css/
-│   │   └── style.css
-│   ├── js/
-│   │   ├── main.js
-│   │   ├── meteo.js
-│   │   ├── claude.js
-│   │   └── focus.js
-│   └── img/
-└── README.md
-```
+## 🌐 Accès
 
-## 🛠️ Développement Local
-1. Clonez le dépôt :
-   ```bash
-   git clone https://github.com/votre-username/habit-gotchi.git
-   ```
-2. Ouvrez `index.html` dans un navigateur ou utilisez un serveur local (ex: Live Server pour VS Code).
-
-## 🌐 Déploiement
-Le projet est déployé sur GitHub Pages :
-👉 [https://votre-username.github.io/habit-gotchi/](https://votre-username.github.io/habit-gotchi/)
+👉 [emiliejse.github.io/habit-gotchi-alexia/](https://emiliejse.github.io/habit-gotchi-alexia/)
 
 ## 📜 Licence
 Copyright (c) 2026 Émilie Josse

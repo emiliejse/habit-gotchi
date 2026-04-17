@@ -874,10 +874,14 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     p.text('🌸 ' + (g.petales || 0), 6, 6);
 
     if (window.meteoData?.temperature) {
-      p.textAlign(p.RIGHT, p.TOP);
-      p.text(Math.round(window.meteoData.temperature) + '°C', CS - 6, 6);
-    }
-
+  const wc = window.meteoData?.weathercode;
+  const wind = window.meteoData?.windspeed || 0;
+  let hudMeteo = Math.round(window.meteoData.temperature) + '°C';
+  if (wc === 45 || wc === 48) hudMeteo += ' 🌫️';
+  if (wind > 20) hudMeteo += ' 🌬️';
+  p.textAlign(p.RIGHT, p.TOP);
+  p.text(hudMeteo, CS - 6, 6);
+}
     const hasPoops = (window.D.g.poops || []).length > 0;
     p.textSize(16);
     p.textAlign(p.CENTER, p.TOP);

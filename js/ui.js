@@ -1706,6 +1706,16 @@ document.getElementById('m-title').textContent =
 
   document.getElementById('m-view').innerHTML = cells;
 
+    /* ── Titre bilan ── */
+  const bilanTitre = document.getElementById('bilan-titre');
+  if (bilanTitre) {
+    const debut = new Date(wd[0] + 'T12:00');
+    const fin   = new Date(wd[6] + 'T12:00');
+    const fmt   = d => `${d.getDate()} ${d.toLocaleDateString('fr-FR', { month: 'short' })}`;
+    const prenom = D.g.userName || D.userName || 'toi';
+    bilanTitre.textContent = `🧠 Bilan de ${prenom} — semaine du ${fmt(debut)} au ${fmt(fin)}`;
+  }
+
   updUI();
 }
 

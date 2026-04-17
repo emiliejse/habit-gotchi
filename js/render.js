@@ -161,12 +161,15 @@ function drawSky(p, h, ha) {
   // Étoile filante — une toutes les ~5s (60 frames à frameRate 12)
   const cycle = 60;
 const phase = p.frameCount % cycle;
-if (phase < 12) {  // ← plus court = plus rapide
+if (phase < 12) {
   const seed = Math.floor(p.frameCount / cycle);
-  const startX = ((seed * 73) % 80) + 10;  // ← départ plus à gauche
+  const startX = ((seed * 73) % 80) + 5;
+  const startY = ((seed * 37) % 20) + 3;   // ← Y de départ variable
+  const lenX = 70 + (seed % 3) * 20;       // ← longueur variable (70, 90 ou 110)
+  const lenY = 30 + (seed % 4) * 10;       // ← pente variable (30, 40, 50 ou 60)
   const progress = phase / 12;
-  const sx = startX + progress * 90;   // ← traverse tout le ciel
-  const sy = 5 + progress * 45;        // ← diagonale plus prononcée
+  const sx = startX + progress * lenX;
+  const sy = startY + progress * lenY;
     for (let t = 0; t < 3; t++) {
       const tx = sx - t * PX * 2;
       const ty = sy - t * PX;

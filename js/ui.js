@@ -1317,14 +1317,14 @@ function genSoutien() {
 <button onclick="modalLocked=false;clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
     </div>
     <div class="soutien-chat" id="soutien-chat">
-      <div class="chat-bubble-system">Je consulte ton état du jour...</div>
+      <div class="soutien-chat" id="soutien-chat"></div>
     </div>
     <div style="display:flex;gap:6px;margin-top:8px">
       <input type="text" id="soutien-inp" class="inp" placeholder="Réponds ici..." style="font-size:11px"
         onkeydown="if(event.key==='Enter')sendSoutienMsg()">
       <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:8px 12px">→</button>
     </div>
-    <p id="soutien-count" ...>6 messages restants · session ${D.soutienCount}/3 aujourd'hui</p>
+    <p id="soutien-count" style="font-size:9px;opacity:0.6;text-align:center;margin-top:4px">6 messages restants · session ${D.soutienCount}/3 aujourd'hui</p>
 `;
 animEl(document.getElementById('mbox'), 'bounceIn');
   sendSoutienMsg(promptInit, true);

@@ -2239,30 +2239,11 @@ function confirmWelcome() {
   const val = document.getElementById('welcome-name')?.value.trim();
   if (val) {
     window.D.g.name = val;
-    window.D.g.welcomeDone = true; // ← seulement si elle a entré un nom
+    window.D.g.welcomeDone = true;
   }
   save();
   updUI();
   clModal();
-
-  // 🎂 Ouvre l'anniversaire juste après si c'est le bon jour
-  if (window.USER_CONFIG?.birthdayMonth) {
-    const now = new Date();
-    if (now.getMonth() + 1 === window.USER_CONFIG.birthdayMonth &&
-        now.getDate()      === window.USER_CONFIG.birthdayDay) {
-      setTimeout(() => {
-        document.getElementById('modal').style.display = 'flex';
-        document.getElementById('mbox').innerHTML = `
-          <div style="text-align:center;padding:8px">
-            <div style="font-size:40px">🎂</div>
-            <p style="font-size:12px;color:var(--text);margin:12px 0;line-height:1.6;white-space:pre-line">${window.USER_CONFIG.birthdayMessage}</p>
-            <button class="btn btn-p" onclick="clModal()" style="margin-top:8px;width:100%">Merci 💜</button>
-          </div>
-        `;
-        animEl(document.getElementById('mbox'), 'bounceIn');
-      }, 400); // ← petit délai pour laisser le bienvenue se fermer
-    }
-  }
 }
 
 /**

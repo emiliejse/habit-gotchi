@@ -203,6 +203,7 @@ function addXp(n) {
   const nouveauStade = getSt(window.D.g.totalXp).l; // ← stade après
   
   if (ancienStade !== nouveauStade) {
+    if (window.triggerEvoAnim) window.triggerEvoAnim(ancienStade, nouveauStade);
     addEvent({
   type: 'xp',
   subtype: 'stade',

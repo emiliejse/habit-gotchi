@@ -311,11 +311,9 @@ function clearDebugLogs() {
 
     <!-- Calendrier hebdomadaire (SYSTEM 2: Écosystème) -->
     <div class="card">
-      <div class="nav-r">
-        <button class="nav-a" onclick="navW(-1)">◀</button>
-        <h2 style="margin:0" id="w-title">Cette semaine</h2>
-        <button class="nav-a" onclick="navW(1)">▶</button>
-      </div>
+  <h2 id="m-title">Ce mois</h2>
+  <div id="m-view" class="cal"></div>
+</div>
       <div id="w-view" class="cal"></div>
       <div style="display:flex;justify-content:space-between;margin-top:3px">
         <span style="font-size:8px;color:var(--text2)">L</span>

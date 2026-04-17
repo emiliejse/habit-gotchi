@@ -425,6 +425,12 @@ body {
   aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center;
   justify-content: center; font-size: 9px; font-weight: bold;
 }
+.cal-c-mini {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  font-size: 0;        /* cache les chiffres */
+}
 .nav-r { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .nav-a {
   width: 28px; height: 28px; border-radius: 8px; border: 2px solid var(--border); background: #fff;

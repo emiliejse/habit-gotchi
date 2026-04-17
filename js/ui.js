@@ -1344,7 +1344,19 @@ const sysPrompt = `${window.AI_SYSTEM?.soutien || ''} ${contexte}`.trim();
    API CLAUDE — BILAN SEMAINE
    ============================================================ */
 let wOff = 0, mOff = 0;
-function navW(d) { wOff += d; renderProg(); }
+function navW(d) {
+  wOff += d;
+  // Calcule le mois majoritaire de la semaine affichée
+  const wd = getWkDates(wOff);
+  const mois = wd.map(ds => new Date(ds + 'T12:00').getMonth());
+  const majoritaire = mois.sort((a,b) =>
+    mois.filter(m => m===b).length - mois.filter(m => m===a).length
+  )[0];
+  const annee = new Date(wd[3] + 'T12:00').getFullYear(); // mercredi = pivot fiable
+  const now = new Date();
+  mOff = (annee - now.getFullYear()) * 12 + (majoritaire - now.getMonth());
+  renderProg();
+}
 function navM(d) { mOff += d; renderProg(); }
 
 async function genBilanSemaine() {
@@ -1688,7 +1700,7 @@ function renderProg() {
     const { bg, border } = calColor(log.length, total, isT);
     const weight = isT ? 'font-weight:bold;' : '';
 
-    cells += `<div class="cal-c" style="background:${bg};border:${border};${weight}">${d}</div>`;
+    cells += `<div class="cal-c cal-c-mini" style="background:${bg};border:${border}"></div>`;
   }
 
   document.getElementById('m-view').innerHTML = cells;

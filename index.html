@@ -10,6 +10,32 @@
   -->
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no">
   <title>Habit-Gotchi</title>
+  <!-- DEBUG PWA : capteur d'erreurs visible (à retirer après résolution) -->
+<script>
+(function() {
+  function showDebug(msg, color) {
+    var d = document.getElementById('debug-pwa');
+    if (!d) {
+      d = document.createElement('div');
+      d.id = 'debug-pwa';
+      d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:' + (color || '#ff3366') + ';color:#fff;padding:8px;font:11px monospace;white-space:pre-wrap;max-height:50vh;overflow:auto;border-bottom:2px solid #000';
+      (document.body || document.documentElement).appendChild(d);
+    }
+    d.textContent += msg + '\n';
+  }
+  window.showDebug = showDebug;
+
+  window.addEventListener('error', function(e) {
+    showDebug('❌ ERR: ' + e.message + ' @ ' + (e.filename || '?') + ':' + (e.lineno || '?'));
+  });
+  window.addEventListener('unhandledrejection', function(e) {
+    showDebug('❌ PROMISE: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+  });
+
+  // Trace des étapes clés
+  showDebug('✓ HTML parsed | standalone=' + (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches), '#0066cc');
+})();
+</script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Habit-Gotchi">

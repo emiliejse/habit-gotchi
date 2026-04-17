@@ -1396,10 +1396,11 @@ async function genBilanSemaine() {
   /* ── Semaine en cours ou passée ? ── */
   const semaineEnCours  = wOff === 0;
   const jourSemaine     = new Date().getDay();
-  const semainePasFinie = semaineEnCours && jourSemaine !== 0 && jourSemaine < 5;
-  const noteIA          = semainePasFinie
-    ? 'Note : la semaine n\'est pas encore terminée, génère un bilan d\'étape bienveillant et encourageant.'
-    : '';
+  let noteIA = '';
+if (semaineEnCours) {
+  if (jourSemaine === 5)      noteIA = 'Note : il reste encore 2 jours à cette semaine (samedi et dimanche). Génère un bilan d\'étape encourageant.';
+  else if (jourSemaine === 6) noteIA = 'Note : il reste encore 1 jour à cette semaine (dimanche). Génère un bilan d\'étape encourageant.';
+}
 
   /* ── Sans clé API ── */
   if (!key) {

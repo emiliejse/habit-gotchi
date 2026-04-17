@@ -1689,7 +1689,7 @@ function renderProg() {
 
   // Cases vides pour aligner le 1er jour
   for (let i = 0; i < off; i++) {
-    cells += '<div class="cal-c"></div>';
+    cells += '<div class="cal-c cal-c-mini"></div>';
   }
 
   // Jours du mois

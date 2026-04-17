@@ -403,14 +403,14 @@ function drawAdult(p, cx, cy, sl, en, ha) {
     /* ─── JOUES ROSES (pulsantes) ─── */
     const pulse = getCheekPulse(p);
     p.fill(p.lerpColor(p.color(C.cheek), p.color('#e88098'), pulse));
-    px(p, x,       y+PX*5, PX, PX);
-    px(p, x+PX*9,  y+PX*5, PX, PX);
+    px(p, x,       y+PX*6, PX, PX);
+    px(p, x+PX*9,  y+PX*6, PX, PX);
     
     // Joues débordantes si joie active
     if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
       p.drawingContext.globalAlpha = 0.7;
-      px(p, x-PX,    y+PX*5, PX, PX);
-      px(p, x+PX*10, y+PX*5, PX, PX);
+      px(p, x-PX,    y+PX*6, PX, PX);
+      px(p, x+PX*10, y+PX*6, PX, PX);
       p.drawingContext.globalAlpha = 1.0;
     }
 
@@ -418,7 +418,7 @@ function drawAdult(p, cx, cy, sl, en, ha) {
     p.fill(C.mouth);
     if (!sl) {
       // Respiration bouche : descend de 0-2 px sur le cycle
-      const mouthY = y + PX*5 + Math.round(breath * 2);
+      const mouthY = y + PX*6 + Math.round(breath * 2);
       
       if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
         // Grand sourire : barre principale en bas, coins relevés

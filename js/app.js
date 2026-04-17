@@ -120,7 +120,7 @@ function defs() {
 envLv:0, activeEnv:'parc', petales:0,poops: [], poopDay: '',    // date du dernier comptage
 poopCount: 0,  // nb de cacas spawné aujourd'hui
 snackDone: '', snackEmoji: '',
-      props:[], customBubbles:[]
+      props:[], customBubbles:[],
       bilanCount: 0,
       bilanWeek: ''
     },

@@ -1966,9 +1966,16 @@ function applyCheatCode() {
 }
 
 /* ============================================================
-   INIT AU CHARGEMENT
+   INIT UI — Appelée par bootstrap() dans app.js
+   (plus de DOMContentLoaded : incompatible PWA iOS standalone)
    ============================================================ */
-document.addEventListener('DOMContentLoaded', () => {
+window.initUI = function() {
+  // Garde-fou : D doit exister (bootstrap charge D en async)
+  if (!window.D || !window.D.g) {
+    console.warn('initUI appelée avant que D soit prêt');
+    return;
+  }
+
   const h = hr();
   window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
 
@@ -1981,7 +1988,6 @@ document.addEventListener('DOMContentLoaded', () => {
   checkWelcome();
   updBubbleNow();
 
-  // Version
   const vEl = document.getElementById('APP_VERSION');
   if (vEl) vEl.textContent = window.APP_VERSION || '';
-});
+};

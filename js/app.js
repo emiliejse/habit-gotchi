@@ -669,10 +669,15 @@ function initApp() {
     maybeSpawnPoop();
   }
 
-  // 4. Refresh UI (fonctions de ui.js — peut ne pas être chargé au 1er tick)
-  if (typeof updUI === 'function')      updUI();
-  if (typeof renderHabs === 'function') renderHabs();
-  if (typeof renderProg === 'function') renderProg();
+  // 4. Init UI complète (remplace l'ancien DOMContentLoaded de ui.js)
+  if (typeof window.initUI === 'function') {
+    window.initUI();
+  } else {
+    // Fallback : ui.js pas encore parsé (ne devrait pas arriver en prod)
+    if (typeof updUI === 'function')      updUI();
+    if (typeof renderHabs === 'function') renderHabs();
+    if (typeof renderProg === 'function') renderProg();
+  }
 }
 
 /**

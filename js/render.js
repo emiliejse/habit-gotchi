@@ -579,6 +579,8 @@ const p5s = (p) => {
     // 1. Fond et Météo
     drawSky(p, h, ha);
     if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
+    const wc = window.meteoData?.weathercode;
+    if (wc === 45 || wc === 48) drawFog(p);
 
     let envActif = g.activeEnv || 'parc';
     if (!sleeping) {

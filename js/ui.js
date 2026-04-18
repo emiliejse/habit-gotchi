@@ -1285,17 +1285,6 @@ function genSoutien() {
   D.soutienCount++;
   save();
 
-  // ✦ LIMITE 3 SESSIONS DE SOUTIEN PAR JOUR
-  if (D.lastThoughtDate !== td) {
-    D.lastThoughtDate = td;
-    D.thoughtCount = 0;
-  }
-  if (D.thoughtCount >= 3) {
-    toast("Le Gotchi a besoin de se reposer… Reviens demain 🌙");
-    return;
-  }
-  D.thoughtCount++;
-  save();
   const habsDuJour  = D.habits.map(h => ({ label:h.label, faite:(D.log[td]||[]).includes(h.catId) }));
   const notesDuJour = D.journal.filter(j => j.date.startsWith(td)).map(j => ({ humeur:j.mood, texte:j.text }));
   const ctx = window.AI_CONTEXTS;

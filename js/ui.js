@@ -2222,7 +2222,7 @@ function applyCheatCode() {
     'resetpin': () => { D.pin = null; toast('🔓 Code PIN supprimé'); },
     'resetbilan':   () => { D.g.bilanCount = 0; D.g.bilanWeek = ''; toast('📊 Quota bilan → 0/3'); },
     'resetsoutien': () => { D.soutienCount = 0; D.lastSoutienDate = null; toast('💜 Quota soutien → 0/3'); },
-    'resetmsg':     () => { D.thoughtCount = 0; D.lastThoughtDate = null; toast('💬 Quota pensées → 0/3'); },
+    'resetmsg3':     () => { D.thoughtCount = 0; D.lastThoughtDate = null; toast('💬 Quota pensées → 0/3'); },
   };
 
   if (codes[code]) {

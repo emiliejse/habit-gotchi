@@ -705,6 +705,16 @@ if (dernierJournal?.date?.startsWith(today())) {
 function handleDailyReset() {
   const td = today();
 
+    // ── Reset compteurs quotidiens ──
+  if (window.D.lastThoughtDate !== td) {
+    window.D.lastThoughtDate = td;
+    window.D.thoughtCount    = 0;
+  }
+  if (window.D.lastSoutienDate !== td) {
+    window.D.lastSoutienDate = td;
+    window.D.soutienCount    = 0;
+  }
+
   // Pénalité d'inactivité : si aucune habitude faite la veille
   if (window.D.lastActive && window.D.lastActive.split('T')[0] !== td) {
     const hier = new Date();

@@ -936,7 +936,7 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
 
     // 🔒 GARDE 2 : une modale est présente dans le DOM (alertes, boutique, etc.)
     const modalEl = document.getElementById('modal');
-if (modalEl && modalEl.style.display !== 'none') return true;
+    if (modalEl && getComputedStyle(modalEl).display !== 'none') return true;
 
     // 🔒 GARDE 3 : l'utilisateur est focus sur un champ de saisie
     const active = document.activeElement;

@@ -715,18 +715,6 @@ function handleDailyReset() {
     window.D.soutienCount    = 0;
   }
 
-  // Pénalité d'inactivité : si aucune habitude faite la veille
-  if (window.D.lastActive && window.D.lastActive.split('T')[0] !== td) {
-    const hier = new Date();
-    hier.setDate(hier.getDate() - 1);
-    const hierStr = hier.toISOString().split('T')[0];
-    const hierLog = window.D.log[hierStr] || [];
-
-    if (hierLog.length === 0) {
-      addXp(-15);
-    }
-  }
-
   window.D.lastActive = new Date().toISOString();
   save();
 }

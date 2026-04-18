@@ -2047,65 +2047,64 @@ function updTabletBadge() {
    MODALE DE BIENVENUE
    ============================================================ */
 function checkWelcome() {
-const D = window.D;
-const td = today();
-const h  = hr();
+  const D  = window.D;
+  const td = today();
+  const h  = hr();
 
-// 1. Premier lancement — priorité absolue
-if (!D.firstLaunch || D.g.name === 'Petit·e Gotchi') {
-  D.firstLaunch = D.firstLaunch || new Date().toISOString();
-  save();
-  showWelcomeModal();
-  return;
-}
-
-// 2. Garde anti-répétition : une seule fois par jour
-const créneau = h < 12 ? 'matin' : h < 18 ? 'aprem' : h < 21 ? 'soir' : 'nuit';
-const done = (D.log[td] || []).length;
-const etatActuel = `${td}-${créneau}-${done}`;
-if (D.lastWelcomeState === etatActuel) return;
-
-// 3. Calcul jours d'absence (avant de mettre à jour lastActive)
-let joursAbsence = 0;
-if (D.lastActive) {
-  const diff = Date.now() - new Date(D.lastActive);
-  joursAbsence = Math.floor(diff / (1000 * 60 * 60 * 24));
-}
-
-// 4. Cadeaux-IA reçus depuis la dernière visite (les achats boutique ne comptent pas)
-const derniereVisite = D.lastActive || td;
-const nouveauxCadeaux = (D.eventLog || []).filter(ev =>
-  ev.type === 'cadeau' &&
-  ev.subtype === 'ia' &&
-  new Date(ev.date) > new Date(derniereVisite)
-).length;
-
-// 5. Mise à jour de la session
-D.lastWelcomeState = etatActuel;
-D.lastActive = new Date().toISOString();
-save();
-
-  // Contenu selon contexte
-  let titre, corps, extra = '';
-
+  // 1. Premier lancement — priorité absolue
   if (!D.firstLaunch || D.g.name === 'Petit·e Gotchi') {
-    // Premier lancement
+    D.firstLaunch = D.firstLaunch || new Date().toISOString();
+    save();
     showWelcomeModal();
     return;
   }
 
-if (joursAbsence >= 3) {
+  // 2. Garde anti-répétition : une seule fois par créneau
+  const créneau = h < 12 ? 'matin' : h < 18 ? 'aprem' : h < 21 ? 'soir' : 'nuit';
+  const done = (D.log[td] || []).length;
+  const etatActuel = `${td}-${créneau}-${done}`;
+  if (D.lastWelcomeState === etatActuel) return;
+
+  // 3. Calcul jours d'absence (avant de mettre à jour lastActive)
+  let joursAbsence = 0;
+  if (D.lastActive) {
+    const diff = Date.now() - new Date(D.lastActive);
+    joursAbsence = Math.floor(diff / (1000 * 60 * 60 * 24));
+  }
+
+  // 4. Cadeaux-IA reçus depuis la dernière visite (achats boutique exclus)
+  const derniereVisite = D.lastActive || td;
+  const nouveauxCadeaux = (D.eventLog || []).filter(ev =>
+    ev.type === 'cadeau' &&
+    ev.subtype === 'ia' &&
+    new Date(ev.date) > new Date(derniereVisite)
+  ).length;
+
+  // 5. Mise à jour de la session
+  D.lastWelcomeState = etatActuel;
+  D.lastActive = new Date().toISOString();
+  save();
+
+  // ❌ SUPPRIMÉ : ancien `if (!D.firstLaunch…)` dupliqué — code mort
+
+  // 6. Contenu selon contexte
+  let titre, corps, extra = '';
+
+  // ✏️ UNIFIÉ : pénalité unique pour toute absence ≥ 1 jour (-15 XP × jours)
+  if (joursAbsence >= 1) {
     const xpPerdu = joursAbsence * 15;
-    titre = `Ça fait ${joursAbsence} jours... 💜`;
-    corps = `${D.g.name} t'a attendue. Tu as perdu <strong>${xpPerdu} XP</strong> pendant ton absence.`;
     addXp(-xpPerdu);
-    addEvent('xp', -xpPerdu, `${joursAbsence} jours d'absence — -${xpPerdu} XP`);
-  } else if (joursAbsence === 1 && !(D.log[td] || []).length) {
-    titre = `Bienvenue 🌸`;
-    corps = `Tu as perdu <strong>15 XP</strong> hier — pas d'habitudes cochées.`;
-    addXp(-15);
-    addEvent('xp', -15, `Pas d'habitudes hier — -15 XP`);
-    flashBubble("Tu m'avais oubliée... 💜", 3000);
+    addEvent('xp', -xpPerdu, `${joursAbsence} jour${joursAbsence > 1 ? 's' : ''} d'absence — -${xpPerdu} XP`);
+
+    // Message doux pour 1 jour, plus marqué au-delà
+    if (joursAbsence === 1) {
+      titre = `Bienvenue 🌸`;
+      corps = `Tu as perdu <strong>15 XP</strong> hier — pas d'habitudes cochées.`;
+      flashBubble("Tu m'avais oubliée... 💜", 3000);
+    } else {
+      titre = `Ça fait ${joursAbsence} jours... 💜`;
+      corps = `${D.g.name} t'a attendue. Tu as perdu <strong>${xpPerdu} XP</strong> pendant ton absence.`;
+    }
   } else if (h >= 22 || h < 7) {
     titre = `*chuchote* 🌙`;
     corps = getNightMsg();

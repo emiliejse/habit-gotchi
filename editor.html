@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HabitGotchi — Pixel Editor v2</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   THÈME — dark lilas / pixel rétro
+   Modifier ici pour changer l'apparence globale de l'éditeur
+═══════════════════════════════════════════════════════════════════ */
+:root {
+  --bg:#1a1625; --s1:#231e30; --s2:#2d2640; --s3:#3a3255;
+  --b1:#3d3555; --b2:#5a5080; --b3:#7a70a8;
+  --lilac:#c8b8f0; --lilac2:#a090d8; --lilac3:#7860b8;
+  --pink:#f0a8c0; --green:#88d898; --amber:#f0c860; --red:#e08090;
+  --text:#e8e0f8; --t2:#9888c0; --t3:#6858a0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none;-webkit-user-select:none}
+
+/* ─── Topbar ─── */
+#topbar{background:var(--s1);border-bottom:1px solid var(--b1);padding:0 10px;height:42px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+#topbar h1{font-size:10px;letter-spacing:2px;color:var(--lilac);text-transform:uppercase;white-space:nowrap}
+.mode-tabs{display:flex;gap:3px;margin-left:auto;flex-wrap:nowrap}
+.mtab{padding:5px 10px;font:10px 'Courier New',monospace;letter-spacing:1px;border:1px solid var(--b2);background:transparent;color:var(--t2);cursor:pointer;border-radius:3px;transition:all .15s;white-space:nowrap}
+.mtab:hover{color:var(--text);border-color:var(--b3)}
+.mtab.active{background:var(--lilac3);border-color:var(--lilac2);color:#fff}
+.mtab[data-mode="env"].active{background:#3a6040;border-color:#6a9870}
+.mtab[data-mode="gotchi"].active{background:#7a3860;border-color:#c070a0}
+.mtab[data-mode="libre"].active{background:#3a4870;border-color:#6878b8}
+#btn-fullscreen{padding:5px 8px;font:10px 'Courier New',monospace;border:1px solid var(--b2);background:transparent;color:var(--t2);cursor:pointer;border-radius:3px}
+#btn-fullscreen:hover{color:var(--amber);border-color:var(--amber)}
+
+/* ─── Workspace ─── */
+#workspace{display:flex;flex:1;overflow:hidden}
+body.fullscreen #left,body.fullscreen #right{display:none}
+
+/* ─── Panneau gauche avec onglets ─── */
+#left{width:220px;min-width:220px;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
+.left-tabs{display:flex;border-bottom:1px solid var(--b1);flex-shrink:0;background:var(--s2)}
+.ltab{flex:1;padding:9px 4px;font:9px 'Courier New',monospace;letter-spacing:1px;border:none;background:transparent;color:var(--t2);cursor:pointer;transition:all .15s;border-bottom:2px solid transparent}
+.ltab:hover{color:var(--text)}
+.ltab.active{color:var(--lilac);border-bottom-color:var(--lilac2);background:var(--s1)}
+.left-body{flex:1;overflow-y:auto;overflow-x:hidden}
+.lpane{display:none;padding:0}
+.lpane.active{display:block}
+
+.psec{padding:10px;border-bottom:1px solid var(--b1)}
+.plabel{font-size:9px;letter-spacing:2px;color:var(--t2);text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between}
+.plabel .hint{color:var(--t3);font-size:8px;letter-spacing:1px}
+
+/* ─── Outils ─── */
+.tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.tbtn{padding:7px 3px;font:10px 'Courier New',monospace;border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;border-radius:3px;transition:all .1s;text-align:center;user-select:none}
+.tbtn:hover{color:var(--text);border-color:var(--b3)}
+.tbtn.active{background:var(--lilac3);border-color:var(--lilac2);color:#fff}
+.tbtn.toggle.on{background:#3a6040;border-color:#6a9870;color:#fff}
+
+/* ─── Palette ─── */
+.pal-wrap{display:flex;flex-direction:column;gap:6px}
+.pal-grid{display:flex;flex-wrap:wrap;gap:3px}
+.swatch{width:22px;height:22px;border-radius:3px;cursor:pointer;border:2px solid transparent;transition:transform .1s;flex-shrink:0;position:relative}
+.swatch:hover{transform:scale(1.18)}
+.swatch.on{border-color:#fff;transform:scale(1.1);box-shadow:0 0 0 1px var(--lilac)}
+.swatch.transp{background:repeating-conic-gradient(#555 0% 25%,#333 0% 50%) 0 0/8px 8px}
+.swatch.del-mode::after{content:'✕';position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;width:12px;height:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1}
+.add-sw{width:22px;height:22px;border:1px dashed var(--b2);background:transparent;color:var(--t2);font-size:14px;cursor:pointer;border-radius:3px;display:flex;align-items:center;justify-content:center}
+.add-sw:hover{border-color:var(--lilac2);color:var(--lilac)}
+.color-picker-row{display:flex;gap:4px;align-items:center}
+input.cpick{width:32px;height:28px;border:1px solid var(--b2);background:var(--s2);cursor:pointer;border-radius:3px;padding:2px;flex-shrink:0}
+input.cpick::-webkit-color-swatch{border-radius:2px;border:none}
+input.hex{flex:1;padding:5px 6px;font:10px 'Courier New',monospace;background:var(--s2);border:1px solid var(--b2);color:var(--text);border-radius:3px}
+input.hex:focus{outline:none;border-color:var(--lilac2)}
+.col-name{font-size:9px;color:var(--t2);margin-top:3px;letter-spacing:.5px}
+
+/* ─── Groupes palettes du jeu ─── */
+.palgroup{margin-top:8px}
+.palgroup-title{font-size:8px;letter-spacing:1px;color:var(--t3);text-transform:uppercase;margin-bottom:4px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.palgroup-title:hover{color:var(--lilac)}
+.palgroup-title::before{content:'▸';font-size:8px;transition:transform .15s}
+.palgroup.open .palgroup-title::before{transform:rotate(90deg)}
+.palgroup-body{display:none;flex-wrap:wrap;gap:2px}
+.palgroup.open .palgroup-body{display:flex}
+.mini-sw{width:16px;height:16px;border-radius:2px;cursor:pointer;border:1px solid rgba(0,0,0,.3)}
+.mini-sw:hover{transform:scale(1.3);z-index:2;position:relative;box-shadow:0 0 0 1px var(--lilac)}
+
+/* ─── Harmonies ─── */
+.harmo-row{display:flex;gap:3px;margin-top:6px;flex-wrap:wrap}
+.harmo{width:18px;height:18px;border-radius:3px;cursor:pointer;border:1px solid var(--b2)}
+.harmo:hover{transform:scale(1.2)}
+
+/* ─── Boutons génériques ─── */
+.szbtn-row{display:flex;flex-wrap:wrap;gap:3px}
+.szbtn{padding:5px 7px;font:9px 'Courier New',monospace;border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;border-radius:3px;transition:all .1s}
+.szbtn:hover{color:var(--text)}
+.szbtn.on{color:var(--green);border-color:var(--green)}
+.act-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.abtn{padding:7px;font:9px 'Courier New',monospace;border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;border-radius:3px;text-align:center;transition:all .1s}
+.abtn:hover{color:var(--text);border-color:var(--b3)}
+.abtn.danger:hover{color:var(--red);border-color:var(--red)}
+input.inp,select.inp{width:100%;padding:5px 7px;font:10px 'Courier New',monospace;background:var(--s2);border:1px solid var(--b2);color:var(--text);border-radius:3px;margin-top:4px}
+input.inp:focus,select.inp:focus{outline:none;border-color:var(--lilac2)}
+
+/* ─── Sous-onglets / slots ─── */
+.sub-tabs{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.stab{padding:4px 7px;font:9px 'Courier New',monospace;border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;border-radius:3px;transition:all .1s}
+.stab:hover{color:var(--text)}
+.stab.on{color:var(--green);border-color:var(--green)}
+.stab.on-pk{color:var(--pink);border-color:var(--pink)}
+.slots-row{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+.slbtn{padding:5px 9px;font:9px 'Courier New',monospace;border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;border-radius:3px;transition:all .1s}
+.slbtn:hover{color:var(--text)}
+.slbtn.on{color:var(--amber);border-color:var(--amber);background:rgba(240,200,96,.08)}
+
+.tipbox{background:var(--s2);border:1px solid var(--b1);border-radius:3px;padding:7px;font-size:9px;color:var(--t2);line-height:1.5;margin-top:6px}
+.tipbox b{color:var(--lilac);font-weight:normal}
+
+/* ─── Catalogue props avec miniatures ─── */
+.prop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px;max-height:240px;overflow-y:auto;padding-right:2px}
+.prop-card{background:var(--s2);border:1px solid var(--b2);border-radius:3px;padding:4px;cursor:pointer;text-align:center;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.prop-card:hover{border-color:var(--lilac2);transform:translateY(-1px)}
+.prop-card.on{border-color:var(--amber);background:rgba(240,200,96,.1)}
+.prop-mini{width:44px;height:44px;image-rendering:pixelated;background:#1e1a30;border-radius:2px}
+.prop-card .pc-name{font-size:8px;color:var(--t2);letter-spacing:.3px;line-height:1.2;word-break:break-word}
+.prop-card .pc-meta{font-size:7px;color:var(--t3);letter-spacing:.5px}
+
+/* ─── Thèmes ENV : liste de clés couleur ─── */
+.theme-keys{display:grid;grid-template-columns:repeat(2,1fr);gap:3px;margin-top:6px;max-height:320px;overflow-y:auto;padding-right:2px}
+.tkey{display:flex;align-items:center;gap:5px;padding:4px 5px;background:var(--s2);border:1px solid var(--b2);border-radius:3px;cursor:pointer;transition:all .1s}
+.tkey:hover{border-color:var(--lilac2)}
+.tkey.on{border-color:var(--amber);background:rgba(240,200,96,.1)}
+.tkey-sw{width:14px;height:14px;border-radius:2px;border:1px solid rgba(0,0,0,.3);flex-shrink:0}
+.tkey-lbl{font-size:8px;color:var(--t2);letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ─── Gotchi body editor ─── */
+.gtone{display:flex;align-items:center;gap:6px;margin-top:5px}
+.gtone-lbl{font-size:9px;color:var(--t2);letter-spacing:1px;width:34px}
+.gtone input[type=color]{width:28px;height:24px;border:1px solid var(--b2);background:var(--s2);cursor:pointer;border-radius:3px;padding:1px}
+.gtone input[type=text]{flex:1;padding:4px 5px;font:9px 'Courier New',monospace;background:var(--s2);border:1px solid var(--b2);color:var(--text);border-radius:3px}
+
+/* ─── Canvas central ─── */
+#center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px;gap:8px;overflow:auto;min-width:0}
+.cwrap{position:relative;display:inline-block;max-width:100%}
+#ec{display:block;image-rendering:pixelated;cursor:crosshair;border:1px solid var(--b2);max-width:100%;touch-action:none}
+#oc{position:absolute;top:0;left:0;pointer-events:none;image-rendering:pixelated}
+#cinfo{font-size:9px;color:var(--t2);letter-spacing:1px;text-align:center}
+#cinfo b{color:var(--lilac)}
+.zoom-row{display:flex;gap:4px;align-items:center;margin-top:2px}
+.zbtn{padding:4px 8px;font:10px 'Courier New',monospace;border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;border-radius:3px;transition:all .1s}
+.zbtn:hover{color:var(--amber);border-color:var(--amber)}
+.zlabel{font-size:9px;color:var(--t2);min-width:40px;text-align:center}
+
+/* ─── Panneau droit ─── */
+#right{width:216px;min-width:216px;background:var(--s1);border-left:1px solid var(--b1);display:flex;flex-direction:column;overflow-y:auto}
+.prev-main{padding:10px;border-bottom:1px solid var(--b1)}
+.prev-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:4px;flex-wrap:wrap}
+.plabel0{font-size:9px;letter-spacing:2px;color:var(--t2);text-transform:uppercase}
+#env-picker{display:flex;gap:3px}
+.epbtn{padding:3px 7px;font:9px 'Courier New',monospace;border:1px solid var(--b2);background:var(--s2);color:var(--t2);cursor:pointer;border-radius:3px;transition:all .1s}
+.epbtn:hover{color:var(--text)}
+.epbtn.on{color:var(--green);border-color:var(--green)}
+#gp{display:block;image-rendering:pixelated;border:1px solid var(--b2);width:192px;height:192px;max-width:100%}
+.prev-iso{padding:8px 10px;border-bottom:1px solid var(--b1)}
+#pp-wrap{height:60px;background:var(--s2);border:1px solid var(--b1);border-radius:3px;display:flex;align-items:center;justify-content:center}
+#pp{image-rendering:pixelated}
+
+/* ─── Historique visuel ─── */
+.hist-sec{padding:10px;border-bottom:1px solid var(--b1)}
+.hist-row{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+.hist-item{background:var(--s2);border:1px solid var(--b2);border-radius:2px;cursor:pointer;aspect-ratio:1;position:relative;overflow:hidden;transition:all .15s}
+.hist-item:hover{border-color:var(--amber);transform:scale(1.08);z-index:2}
+.hist-item canvas{width:100%;height:100%;image-rendering:pixelated;display:block}
+.hist-empty{font-size:8px;color:var(--t3);text-align:center;padding:6px 0;letter-spacing:1px}
+
+/* ─── Export ─── */
+.export-wrap{padding:10px;flex:1}
+textarea.jout{width:100%;height:110px;font:8.5px 'Courier New',monospace;background:var(--s2);border:1px solid var(--b1);color:var(--green);padding:5px;resize:vertical;border-radius:3px;margin-bottom:5px;line-height:1.4}
+.xbtn{width:100%;padding:8px;font:10px 'Courier New',monospace;border:1px solid var(--lilac2);background:transparent;color:var(--lilac);cursor:pointer;border-radius:3px;letter-spacing:1px;transition:all .15s;margin-bottom:4px}
+.xbtn:hover{background:var(--lilac2);color:#fff}
+.xbtn.amber{border-color:var(--amber);color:var(--amber)}
+.xbtn.amber:hover{background:var(--amber);color:var(--bg)}
+.ibtn{width:100%;padding:6px;font:9px 'Courier New',monospace;border:1px solid var(--b2);background:transparent;color:var(--t2);cursor:pointer;border-radius:3px;transition:all .15s}
+.ibtn:hover{color:var(--amber);border-color:var(--amber)}
+
+/* ─── Toast ─── */
+#toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--green);color:#1a1625;padding:7px 16px;border-radius:3px;font:10px 'Courier New',monospace;letter-spacing:1px;transition:transform .25s cubic-bezier(.4,1.6,.5,1);pointer-events:none;z-index:999;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.warn{background:var(--amber)}
+#toast.err{background:var(--red);color:#fff}
+
+/* ─── Scrollbars ─── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+::-webkit-scrollbar-track{background:var(--s2)}
+
+/* ─── Responsive mobile ─── */
+@media(max-width:820px){
+  #topbar{padding:0 6px;height:38px;gap:4px}
+  #topbar h1{font-size:9px;letter-spacing:1px}
+  .mtab{padding:4px 6px;font-size:9px;letter-spacing:0}
+  #workspace{flex-direction:column}
+  #left{width:100%;min-width:0;max-height:48vh;border-right:none;border-bottom:1px solid var(--b1)}
+  #right{width:100%;min-width:0;max-height:42vh;border-left:none;border-top:1px solid var(--b1);flex-direction:row;overflow-x:auto;overflow-y:hidden}
+  #right>*{flex-shrink:0;width:200px;border-bottom:none!important;border-right:1px solid var(--b1)}
+  #center{padding:8px;min-height:30vh}
+  #gp{width:160px;height:160px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ TOPBAR ═══════════════════════ -->
+<div id="topbar">
+  <h1>✦ HabitGotchi Editor</h1>
+  <div class="mode-tabs">
+    <button class="mtab active" data-mode="props"  onclick="switchMode('props')">🪴 Props</button>
+    <button class="mtab"        data-mode="env"    onclick="switchMode('env')">🌿 Envs</button>
+    <button class="mtab"        data-mode="gotchi" onclick="switchMode('gotchi')">🐣 Gotchi</button>
+    <button class="mtab"        data-mode="libre"  onclick="switchMode('libre')">✏ Libre</button>
+  </div>
+  <button id="btn-fullscreen" onclick="toggleFullscreen()" title="Masquer les panneaux">⛶</button>
+</div>
+
+<div id="workspace">
+
+<!-- ═══════════════════════ PANNEAU GAUCHE ═══════════════════════ -->
+<div id="left">
+  <!-- Onglets du panneau gauche -->
+  <div class="left-tabs">
+    <button class="ltab active" data-pane="tool"  onclick="switchLeftPane('tool')">OUTILS</button>
+    <button class="ltab"        data-pane="meta"  onclick="switchLeftPane('meta')">META</button>
+    <button class="ltab"        data-pane="cat"   onclick="switchLeftPane('cat')">CATAL.</button>
+  </div>
+
+  <div class="left-body">
+
+  <!-- ─── PANE 1 : OUTILS (toujours visible selon mode) ─── -->
+  <div class="lpane active" data-pane="tool">
+
+    <div class="psec">
+      <div class="plabel">Outil</div>
+      <div class="tool-grid">
+        <button class="tbtn active" id="t-draw"  onclick="setTool('draw')">✏ Peindre</button>
+        <button class="tbtn"        id="t-erase" onclick="setTool('erase')">⌫ Effacer</button>
+        <button class="tbtn"        id="t-fill"  onclick="setTool('fill')">◈ Remplir</button>
+        <button class="tbtn"        id="t-pick"  onclick="setTool('pick')">⊕ Pipette</button>
+      </div>
+      <div class="tool-grid" style="margin-top:4px">
+        <button class="tbtn toggle" id="t-symH" onclick="toggleSym('H')">↔ Sym H</button>
+        <button class="tbtn toggle" id="t-snap" onclick="toggleSnap()">⌗ Snap</button>
+      </div>
+    </div>
+
+    <div class="psec">
+      <div class="plabel">Palette <span class="hint" id="pal-count">0</span></div>
+      <div class="pal-wrap">
+        <div class="pal-grid" id="pal"></div>
+        <div class="color-picker-row">
+          <input class="cpick" id="cpick" type="color" value="#c8b8f0" oninput="onCpick(this.value)">
+          <input class="hex" id="hexin" type="text" placeholder="#a0b8d0" maxlength="7" oninput="onHex(this.value)">
+        </div>
+        <div class="col-name" id="col-name">—</div>
+        <div id="harmo-wrap" style="display:none">
+          <div class="plabel" style="margin:6px 0 3px 0;font-size:8px">Harmonies</div>
+          <div class="harmo-row" id="harmo-row"></div>
+        </div>
+        <!-- Groupes de palettes du jeu (pré-chargés) -->
+        <div id="palgroups"></div>
+      </div>
+    </div>
+
+    <div class="psec">
+      <div class="plabel">Taille grille <span class="hint" id="grid-size-hint"></span></div>
+      <div class="szbtn-row">
+        <button class="szbtn"    onclick="rz(6,6,this)">6×6</button>
+        <button class="szbtn on" onclick="rz(8,8,this)">8×8</button>
+        <button class="szbtn"    onclick="rz(10,10,this)">10×10</button>
+        <button class="szbtn"    onclick="rz(12,12,this)">12×12</button>
+        <button class="szbtn"    onclick="rz(16,16,this)">16×16</button>
+      </div>
+    </div>
+
+    <div class="psec">
+      <div class="plabel">Actions</div>
+      <div class="act-grid">
+        <button class="abtn" onclick="doUndo()" title="Ctrl+Z">↩ Undo</button>
+        <button class="abtn" onclick="doRedo()" title="Ctrl+Y">↪ Redo</button>
+        <button class="abtn" onclick="doFlipH()">↔ Flip H</button>
+        <button class="abtn" onclick="doFlipV()">↕ Flip V</button>
+        <button class="abtn danger" onclick="doClear()" style="grid-column:span 2">✕ Vider la grille</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PANE 2 : META (métadonnées spécifiques au mode) ─── -->
+  <div class="lpane" data-pane="meta">
+
+    <!-- ─ Mode Props ─ -->
+    <div class="psec mode-box" data-mode="props">
+      <div class="plabel">Props — Métadonnées</div>
+      <input class="inp" id="p-id"    type="text" placeholder="id  ex: lampe02">
+      <input class="inp" id="p-nom"   type="text" placeholder="nom  ex: Lampe LED">
+      <input class="inp" id="p-emoji" type="text" placeholder="emoji  ex: 💡">
+      <select class="inp" id="p-type" onchange="updatePropMeta()">
+        <option value="decor">decor</option>
+        <option value="accessoire">accessoire</option>
+        <option value="ambiance">ambiance</option>
+      </select>
+      <input class="inp" id="p-cout" type="number" placeholder="coût en pétales (0)" min="0" value="0">
+
+      <!-- Slot (decor) -->
+      <div id="p-slot-wrap">
+        <div class="plabel" style="margin-top:9px">Slot de placement</div>
+        <div class="slots-row">
+          <button class="slbtn on" onclick="setSlot(this,'A')" onmouseenter="hoverSlot('A')" onmouseleave="hoverSlot(null)">A</button>
+          <button class="slbtn"    onclick="setSlot(this,'B')" onmouseenter="hoverSlot('B')" onmouseleave="hoverSlot(null)">B</button>
+          <button class="slbtn"    onclick="setSlot(this,'C')" onmouseenter="hoverSlot('C')" onmouseleave="hoverSlot(null)">C</button>
+          <button class="slbtn"    onclick="setSlot(this,'D')" onmouseenter="hoverSlot('D')" onmouseleave="hoverSlot(null)">D</button>
+          <button class="slbtn"    onclick="setSlot(this,'SOL')" onmouseenter="hoverSlot('SOL')" onmouseleave="hoverSlot(null)">SOL</button>
+        </div>
+        <div class="tipbox"><b>A</b> fond G · <b>B</b> fond D · <b>C</b> sol G · <b>D</b> sol D · <b>SOL</b> centre</div>
+      </div>
+
+      <!-- Accessoire -->
+      <div id="p-acc-wrap" style="display:none">
+        <div class="plabel" style="margin-top:9px">Ancrage accessoire</div>
+        <div class="sub-tabs" id="p-ancrage-tabs">
+          <button class="stab on" onclick="setAncrage(this,'tete')">🎩 Tête</button>
+          <button class="stab"    onclick="setAncrage(this,'yeux')">👓 Yeux</button>
+          <button class="stab"    onclick="setAncrage(this,'cou')">🎀 Cou</button>
+        </div>
+        <div class="tipbox"><b>tete</b> se pose sur le crâne · <b>yeux</b> au niveau oculaire · <b>cou</b> sous le menton</div>
+      </div>
+
+      <!-- Ambiance -->
+      <div id="p-amb-wrap" style="display:none">
+        <div class="plabel" style="margin-top:9px">Animation ambiance</div>
+        <div class="sub-tabs" id="p-motion-tabs">
+          <button class="stab on" onclick="setMotion(this,'drift')">drift</button>
+          <button class="stab"    onclick="setMotion(this,'fall')">fall</button>
+          <button class="stab"    onclick="setMotion(this,'float')">float</button>
+          <button class="stab"    onclick="setMotion(this,'sparkle')">sparkle</button>
+        </div>
+        <div class="tipbox" id="motion-tip"><b>drift</b> : dérive horizontale douce (nuages, brume)</div>
+      </div>
+    </div>
+
+    <!-- ─ Mode ENV ─ -->
+    <div class="psec mode-box" data-mode="env" style="display:none">
+      <div class="plabel">Environnement — Sous-mode</div>
+      <div class="sub-tabs">
+        <button class="stab on" id="env-sub-draw" onclick="setEnvSub('draw')">🎨 Dessin zone</button>
+        <button class="stab"    id="env-sub-theme" onclick="setEnvSub('theme')">🎨 Thème couleur</button>
+      </div>
+
+      <div class="plabel" style="margin-top:9px">Biome</div>
+      <div class="sub-tabs" id="env-biome-tabs">
+        <button class="stab on" onclick="setEnvBiome(this,'parc')">🌳 Parc</button>
+        <button class="stab"    onclick="setEnvBiome(this,'chambre')">🛋 Chambre</button>
+        <button class="stab"    onclick="setEnvBiome(this,'montagne')">⛰ Mnt</button>
+      </div>
+
+      <div class="plabel" style="margin-top:9px">Thème couleur</div>
+      <div class="sub-tabs" id="env-theme-tabs">
+        <button class="stab on" onclick="setEnvTheme(this,'pastel')">🌸 Pastel</button>
+        <button class="stab"    onclick="setEnvTheme(this,'automne')">🍂 Aut.</button>
+        <button class="stab"    onclick="setEnvTheme(this,'hiver')">❄ Hiv.</button>
+        <button class="stab"    onclick="setEnvTheme(this,'desert')">🏜 Dés.</button>
+      </div>
+
+      <!-- Sous-mode DRAW : zone à modifier -->
+      <div id="env-draw-wrap">
+        <div class="plabel" style="margin-top:9px">Zone à modifier</div>
+        <div class="sub-tabs" id="env-zone-tabs"></div>
+        <div class="tipbox" id="env-tip">Sélectionne un biome et une zone.</div>
+      </div>
+
+      <!-- Sous-mode THEME : éditer les clés couleur -->
+      <div id="env-theme-wrap" style="display:none">
+        <div class="plabel" style="margin-top:9px">Clés du thème <span class="hint" id="theme-key-count"></span></div>
+        <div class="theme-keys" id="theme-keys"></div>
+        <div class="tipbox">Clique une clé pour l'éditer. Le color picker applique la couleur sélectionnée. Export = bloc JS à coller dans <b>config.js</b>.</div>
+      </div>
+    </div>
+
+    <!-- ─ Mode Gotchi ─ -->
+    <div class="psec mode-box" data-mode="gotchi" style="display:none">
+      <div class="plabel">Gotchi — Stade</div>
+      <div class="sub-tabs" id="stage-tabs">
+        <button class="stab"       onclick="setStage(this,'egg')">🥚 Œuf</button>
+        <button class="stab on-pk" onclick="setStage(this,'baby')">🐣 Baby</button>
+        <button class="stab"       onclick="setStage(this,'teen')">🌱 Teen</button>
+        <button class="stab"       onclick="setStage(this,'adult')">🌸 Adult</button>
+      </div>
+
+      <div class="plabel" style="margin-top:9px">Variante couleur</div>
+      <div class="sub-tabs" id="gcolor-tabs">
+        <button class="stab on-pk" onclick="setGC(this,'lilas')">Lilas</button>
+        <button class="stab"       onclick="setGC(this,'vert')">Vert</button>
+        <button class="stab"       onclick="setGC(this,'rose')">Rose</button>
+        <button class="stab"       onclick="setGC(this,'bleu')">Bleu</button>
+        <button class="stab"       onclick="setGC(this,'peche')">Pêche</button>
+        <button class="stab"       onclick="setGC(this,'jaune')">Jaune</button>
+      </div>
+
+      <div class="plabel" style="margin-top:9px">Retouche tons (live)</div>
+      <div class="gtone"><span class="gtone-lbl">body</span><input type="color" id="gcol-body" oninput="onGColorChange('body',this.value)"><input type="text" id="gcol-body-hex" maxlength="7"></div>
+      <div class="gtone"><span class="gtone-lbl">lt</span><input type="color" id="gcol-lt" oninput="onGColorChange('lt',this.value)"><input type="text" id="gcol-lt-hex" maxlength="7"></div>
+      <div class="gtone"><span class="gtone-lbl">dk</span><input type="color" id="gcol-dk" oninput="onGColorChange('dk',this.value)"><input type="text" id="gcol-dk-hex" maxlength="7"></div>
+      <button class="abtn" onclick="resetGColor()" style="margin-top:6px;width:100%">↻ Réinitialiser cette variante</button>
+
+      <input class="inp" id="g-id"    type="text" placeholder="id variante  ex: menthe" style="margin-top:8px">
+      <input class="inp" id="g-label" type="text" placeholder="label  ex: Menthe" >
+
+      <div class="tipbox">La silhouette exacte s'affiche en semi-transparent sur la grille. Dessine par-dessus pour visualiser tes modifs. L'export te donne le bloc JS pour <b>GOTCHI_COLORS</b>.</div>
+    </div>
+
+    <!-- ─ Mode Libre ─ -->
+    <div class="psec mode-box" data-mode="libre" style="display:none">
+      <div class="plabel">Mode libre</div>
+      <input class="inp" id="l-id"  type="text" placeholder="id  ex: deco_custom">
+      <input class="inp" id="l-nom" type="text" placeholder="nom  ex: Ma création">
+      <div class="tipbox">Canvas vierge. Crée n'importe quel pixel art. Export JSON générique utilisable partout.</div>
+    </div>
+  </div>
+
+  <!-- ─── PANE 3 : CATALOGUE (props existants) ─── -->
+  <div class="lpane" data-pane="cat">
+    <div class="psec">
+      <div class="plabel">Charger un prop existant</div>
+      <input class="inp" id="cat-search" type="text" placeholder="🔍 rechercher…" oninput="filterCatalog(this.value)">
+      <div class="prop-grid" id="prop-cards"></div>
+      <div class="tipbox" style="margin-top:8px">Clique sur un prop pour charger sa grille, sa palette et ses métadonnées. Tu repars avec son contenu, modifie ce que tu veux, puis exporte.</div>
+    </div>
+  </div>
+
+  </div><!-- /left-body -->
+</div>
+
+<!-- ═══════════════════════ ZONE CENTRALE (canvas) ═══════════════════════ -->
+<div id="center">
+  <div class="cwrap">
+    <canvas id="ec"></canvas>
+    <canvas id="oc"></canvas>
+  </div>
+  <div id="cinfo">grille 8×8</div>
+  <div class="zoom-row">
+    <button class="zbtn" onclick="zoomStep(-1)">−</button>
+    <span class="zlabel" id="zoom-label">30px</span>
+    <button class="zbtn" onclick="zoomStep(+1)">+</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PANNEAU DROIT ═══════════════════════ -->
+<div id="right">
+  <div class="prev-main">
+    <div class="prev-row">
+      <span class="plabel0">Scène</span>
+      <div id="env-picker">
+        <button class="epbtn on" onclick="setPrevEnv(this,'parc')">Parc</button>
+        <button class="epbtn"    onclick="setPrevEnv(this,'chambre')">Ch.</button>
+        <button class="epbtn"    onclick="setPrevEnv(this,'montagne')">Mnt</button>
+      </div>
+    </div>
+    <canvas id="gp" width="200" height="200"></canvas>
+  </div>
+  <div class="prev-iso" id="sec-iso">
+    <div class="plabel">Prop isolé ×4</div>
+    <div id="pp-wrap"><canvas id="pp"></canvas></div>
+  </div>
+  <div class="hist-sec">
+    <div class="plabel">Historique exports <span class="hint">(8 max)</span></div>
+    <div class="hist-row" id="hist-row"><div class="hist-empty">— aucun export pour le moment —</div></div>
+  </div>
+  <div class="export-wrap">
+    <div class="plabel">Export</div>
+    <textarea class="jout" id="jout" readonly></textarea>
+    <button class="xbtn amber" id="btn-copy" onclick="doCopy()">⊕ Copier l'export</button>
+    <button class="ibtn" onclick="doImport()">↓ Importer JSON</button>
+  </div>
+</div>
+
+</div><!-- /workspace -->
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   HabitGotchi — Pixel Editor v2
+   Fichier standalone (zéro dépendance). À déposer à la racine du repo.
+   URL : emiliejse.github.io/habit-gotchi/editor.html
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ⚙ CONSTANTES MODIFIABLES EN TÊTE
+   ─────────────────────────────────────────────────────────────────────────
+   RÉSOLUTION DU TAMA :
+   - Canvas p5.js du jeu : CS = 200 × 200 px logiques
+   - 1 cellule pixel art = PX = 5 px logiques
+   - Grille effective max : 40 × 40 cellules
+   - Affiché sur mobile : scalé en CSS pour tenir dans l'écran
+   POUR AUGMENTER LA RÉSOLUTION :
+   - Changer CS / PX ci-dessous (doit rester un multiple entier)
+   - Répercuter dans render.js + envs.js (mêmes constantes)
+   - Toutes les coords (PROP_SLOTS, biomes, Gotchi…) sont en px logiques
+     donc elles se réadaptent automatiquement via PX.
+   CELL = taille d'une cellule AFFICHÉE dans l'éditeur (zoom). Modifiable via + / −.
+───────────────────────────────────────────────────────────────────────── */
+const CS = 200;            // taille du canvas de scène (px logiques)
+const PX = 5;              // taille d'un pixel pixel-art (px logiques)
+let   CELL = 30;           // taille d'une cellule AFFICHÉE dans la grille éditeur
+const CELL_STEPS = [20, 25, 30, 40, 50];  // zooms possibles
+const SC = 192 / CS;       // facteur de mise à l'échelle de la preview scène
+
+/* Slots de placement des props (coords en px logiques, identiques à render.js) */
+const PROP_SLOTS = {
+  A:   { x:38,  y:108 },   // fond gauche
+  B:   { x:132, y:108 },   // fond droit
+  C:   { x:28,  y:140 },   // sol gauche
+  D:   { x:148, y:140 },   // sol droit
+  SOL: { x:88,  y:152 },   // sol centre
+};
+
+/* Constantes C de render.js (couleurs de base partagées) */
+const GC = {
+  body:'#d8b8e8', lt:'#ecd8f8', dk:'#c0a0d0',
+  eye:'#38304a', cheek:'#f0a0b0', mouth:'#38304a',
+  egg:'#f4e6d0', eggSp:'#e4d2b8',
+  cloud:'#ece8f4',
+  skyD1:'#b8d4f0', skyN1:'#28203c', skyK1:'#d0a8c0', skyA1:'#d8c0d0',
+};
+
+/* GOTCHI_COLORS de config.js (6 variantes officielles) */
+const GOTCHI_COLORS = {
+  vert:  { body:'#c8d8c0', lt:'#e0ece0', dk:'#a0b898' },
+  lilas: { body:'#d0c0e0', lt:'#e8e0f0', dk:'#a898c0' },
+  peche: { body:'#e8d0b8', lt:'#f0e4d0', dk:'#c0a888' },
+  bleu:  { body:'#b8d0e8', lt:'#d0e4f4', dk:'#90a8c8' },
+  rose:  { body:'#e8c0d0', lt:'#f4d8e4', dk:'#c098a8' },
+  jaune: { body:'#e8e0a8', lt:'#f4ecc8', dk:'#c0b878' },
+};
+
+/* ENV_THEMES de config.js (miroir exact — 4 thèmes × ~30 clés) */
+const ENV_THEMES = {
+  pastel: {id:'pastel',sky1:'#b8d4f0',sky2:'#d8e8f8',gnd:'#a8d898',gndDk:'#90c480',leaf1:'#78c488',leaf2:'#90d870',trunk:'#b09068',accent:'#e878a8',wall:'#e0d8c8',windowFrame:'#c8baa8',windowSill:'#d8c8b8',curtain:'#c8a8d8',curtainDk:'#a888c0',curtainRod:'#b8a090',baseboard:'#d0c0b0',frameOuter:'#c8a880',frameBg:'#f0ece4',frameAccent1:'#c8a8d0',frameAccent2:'#a8c8d0',floor:'#c8b8a8',floorLine:'#b8a898',rug:'#d8c0f0',rugCenter:'#c8aee8',desk:'#b89870',deskTop:'#c8a880',deskShadow:'#a88860',lamp:'#f0e898',lampShade:'#f8d858',mntGnd:'#88b870',mntGndDk:'#6a9858',mntPeak:'#a0c888',mntSnow:'#e8f0e0'},
+  automne:{id:'automne',sky1:'#e8c068',sky2:'#f0d898',gnd:'#c89858',gndDk:'#a87838',leaf1:'#c04818',leaf2:'#e06028',trunk:'#8b4513',accent:'#e07828',wall:'#c0956a',windowFrame:'#a07848',windowSill:'#b08858',curtain:'#c86828',curtainDk:'#a05020',curtainRod:'#906040',baseboard:'#a07848',frameOuter:'#a07848',frameBg:'#f0e8d8',frameAccent1:'#e08830',frameAccent2:'#d07020',floor:'#a07848',floorLine:'#886030',rug:'#7a3020',rugCenter:'#9a4830',desk:'#906040',deskTop:'#d8b880',deskShadow:'#a07040',lamp:'#f4e090',lampShade:'#e8c050',mntGnd:'#b07840',mntGndDk:'#906028',mntPeak:'#c09050',mntSnow:'#e8c878'},
+  hiver:  {id:'hiver',sky1:'#c8d8e8',sky2:'#e8f0f8',gnd:'#e8f0f8',gndDk:'#c8d8e8',leaf1:'#e8f0f8',leaf2:'#d8e8f0',trunk:'#806050',accent:'#e0eef8',wall:'#c8d8e8',windowFrame:'#8899aa',windowSill:'#e8f4ff',curtain:'#c8d8f0',curtainDk:'#a0b8d8',curtainRod:'#8090a8',baseboard:'#a0b8cc',frameOuter:'#8899aa',frameBg:'#eef4ff',frameAccent1:'#a8c0d8',frameAccent2:'#a8c0d8',floor:'#d0dce8',floorLine:'#b0bcc8',rug:'#2c4870',rugCenter:'#3a5888',desk:'#8090a0',deskTop:'#a8b8c8',deskShadow:'#8898a8',lamp:'#fffde8',lampShade:'#f4e8a0',mntGnd:'#c8d8e8',mntGndDk:'#a8b8c8',mntPeak:'#d8e0e8',mntSnow:'#f0f8ff'},
+  desert: {id:'desert',sky1:'#f0c878',sky2:'#f8e0a8',gnd:'#e8d098',gndDk:'#c8a858',leaf1:'#70a858',leaf2:'#508840',trunk:'#c8a858',accent:'#c0a050',wall:'#d8b888',windowFrame:'#b08c60',windowSill:'#c8a070',curtain:'#e0c888',curtainDk:'#c0a860',curtainRod:'#a88848',baseboard:'#b89060',frameOuter:'#b08c60',frameBg:'#fdf0d0',frameAccent1:'#e8a020',frameAccent2:'#f0c030',floor:'#c0a060',floorLine:'#a07840',rug:'#8a3820',rugCenter:'#a84830',desk:'#a07840',deskTop:'#c8a060',deskShadow:'#a88040',lamp:'#f8e060',lampShade:'#f0c820',mntGnd:'#d8a848',mntGndDk:'#b88028',mntPeak:'#e8c870',mntSnow:'#f0d890'},
+};
+/* Copie éditable (live) des thèmes — modifiée par le sous-mode "Thème couleur" */
+let ENV_THEMES_EDIT = JSON.parse(JSON.stringify(ENV_THEMES));
+/* Copie éditable des couleurs Gotchi (retouche live mode Gotchi) */
+let GOTCHI_COLORS_EDIT = JSON.parse(JSON.stringify(GOTCHI_COLORS));
+
+/* Zones éditables des biomes */
+const ENV_ZONES = {
+  parc: [
+    {id:'arbre', label:'🌳 Arbres', tip:'x8,y76 — feuillage (30×28px)'},
+    {id:'sol',   label:'🟩 Sol',    tip:'x0,y120 — bande sol 200×10px'},
+    {id:'ciel',  label:'☁ Ciel',    tip:'Zone haute — nuages, étoiles'},
+  ],
+  chambre: [
+    {id:'cadre',  label:'🖼 Cadre',  tip:'x88,y68 — intérieur 30×30px'},
+    {id:'tapis',  label:'🟪 Tapis',  tip:'x22,y141 — motif 156×59px'},
+    {id:'rideau', label:'🪟 Rideau', tip:'x10,y63 — tissu 12×52px'},
+  ],
+  montagne: [
+    {id:'sommet',  label:'⛰ Sommet', tip:'Triangle x40,y50→x160,y120'},
+    {id:'neige',   label:'❄ Neige',  tip:'Triangle x83→117, y50→70'},
+    {id:'sol_mnt', label:'🟫 Sol',   tip:'x0,y120 — 200×10px'},
+  ],
+};
+
+/* Dimensions exactes des stades Gotchi
+   (tirées des draw*() dans render.js — voir commentaires dans le prompt) */
+const GOTCHI_SIZES = {
+  egg:  { w:7,  h:7,  offR:0 },
+  baby: { w:6,  h:6,  offR:0 },
+  teen: { w:10, h:12, offR:3 },  // oreilles r:-3 → offset +3 dans la grille
+  adult:{ w:12, h:14, offR:3 },
+};
+
+/* Tailles de grille pour chaque zone ENV (en cellules-jeu) */
+const ENV_ZONE_SIZES = {
+  parc_arbre:       {w:6,  h:6},
+  parc_sol:         {w:16, h:2},
+  parc_ciel:        {w:10, h:6},
+  chambre_cadre:    {w:6,  h:6},
+  chambre_tapis:    {w:12, h:6},
+  chambre_rideau:   {w:2,  h:10},
+  montagne_sommet:  {w:16, h:10},
+  montagne_neige:   {w:6,  h:4},
+  montagne_sol_mnt: {w:16, h:2},
+};
+
+/* Rectangles de destination exacts (px logiques) pour la preview ENV */
+const ZONE_RECTS = {
+  parc_arbre:       {x:8,  y:76,  w:30,  h:28},
+  parc_sol:         {x:0,  y:120, w:200, h:10},
+  parc_ciel:        {x:30, y:10,  w:50,  h:30},
+  chambre_cadre:    {x:88, y:68,  w:30,  h:30},
+  chambre_tapis:    {x:22, y:141, w:156, h:59},
+  chambre_rideau:   {x:10, y:63,  w:12,  h:52},
+  montagne_sommet:  {x:40, y:50,  w:120, h:70},
+  montagne_neige:   {x:83, y:50,  w:34,  h:20},
+  montagne_sol_mnt: {x:0,  y:120, w:200, h:10},
+};
+
+/* Descriptions des motions (ambiance) */
+const MOTION_DESC = {
+  drift:   'drift : dérive horizontale douce (nuages, brume)',
+  fall:    'fall : chute verticale lente (pétales, flocons)',
+  float:   'float : flottement sinusoïdal (bulles, lucioles)',
+  sparkle: 'sparkle : scintillement par transparence (étoiles)',
+};
+
+/* ═══════════ CATALOGUE PROPS (miroir de props.json) ═══════════ */
+const PROPS_DATA = [
+  {id:'champignon01', nom:'Champignon Luisant',  emoji:'🍄', type:'decor',      slot:'C', palette:['transparent','#8B4513','#FF6B9D','#FFB5D8','#FFF4A3'], pixels:[[0,0,2,2,2,0,0],[0,2,3,4,3,2,0],[2,3,3,4,3,3,2],[0,0,1,1,1,0,0],[0,0,1,1,1,0,0],[0,0,1,1,1,0,0],[0,0,0,1,0,0,0]]},
+  {id:'meduse_lumineuse', nom:'Méduse Lumineuse', emoji:'🪼', type:'decor',      slot:'A', palette:['transparent','#FF6B9D','#A78BFA','#60EFFF','#FBBF24'], pixels:[[0,0,2,2,2,0,0],[0,2,3,4,3,2,0],[2,3,3,4,3,3,2],[0,2,3,3,3,2,0],[0,1,0,1,0,1,0],[1,0,1,0,1,0,1],[0,1,0,1,0,1,0]]},
+  {id:'lucioles_forestieres', nom:'Lucioles Forestières', emoji:'✨', type:'ambiance', slot:null, motion:'float', palette:['transparent','#FFF4A3','#FFE66D','#B8E986'], pixels:[[0,0,0,1,0,0,0],[0,1,0,0,0,0,0],[0,0,0,0,0,2,0],[0,0,3,0,0,0,0],[1,0,0,0,2,0,0],[0,0,0,1,0,0,0],[0,0,0,0,0,0,3]]},
+  {id:'plante01',     nom:'Plante Grasse',        emoji:'🌵', type:'decor',      slot:'D', palette:['transparent','#58b070','#408050','#c08860','#a07048'], pixels:[[0,0,0,1,0,0,0],[0,0,1,2,1,0,0],[0,1,2,1,2,1,0],[1,2,1,2,1,2,1],[0,1,2,1,2,1,0],[0,0,1,2,1,0,0],[0,0,0,3,0,0,0],[0,0,3,4,3,0,0],[0,0,3,3,3,0,0]]},
+  {id:'couronne01',   nom:'Couronne Dorée',        emoji:'👑', type:'accessoire', slot:null, ancrage:'tete', palette:['transparent','#f0c040','#d8a030','#f8e880'], pixels:[[3,0,3,0,3,0,3],[1,0,1,0,1,0,1],[1,1,1,1,1,1,1],[2,2,2,2,2,2,2]]},
+  {id:'bougie01',     nom:'Bougie Douce',          emoji:'🕯️', type:'decor',     slot:'B', palette:['transparent','#f0e8c8','#e8d8b0','#f0b858','#f08030','#c08860'], pixels:[[0,0,4,0,0],[0,0,3,0,0],[0,0,3,0,0],[0,1,1,1,0],[0,1,2,1,0],[0,1,2,1,0],[0,1,2,1,0],[0,1,1,1,0],[5,5,5,5,5]]},
+  {id:'tapis01',      nom:'Tapis Doux',            emoji:'🟪', type:'decor',     slot:'SOL',palette:['transparent','#b898d4','#a080c0','#c8b0e0','#d8c8e8'], pixels:[[2,1,3,1,3,1,3,1,3,1,2],[1,4,4,4,4,4,4,4,4,4,1],[3,4,1,4,1,4,1,4,1,4,3],[1,4,4,4,4,4,4,4,4,4,1],[2,1,3,1,3,1,3,1,3,1,2]]},
+  {id:'lampe01',      nom:'Lampe de Bureau',       emoji:'🪔', type:'decor',     slot:'A', palette:['transparent','#e8d088','#d0b868','#808080','#606060','#f8f0c0'], pixels:[[0,1,1,1,1,1,0],[1,5,5,5,5,5,1],[0,2,2,2,2,2,0],[0,0,0,3,0,0,0],[0,0,0,3,0,0,0],[0,0,0,3,0,0,0],[0,0,0,3,0,0,0],[0,0,3,4,3,0,0]]},
+  {id:'lunettes01',   nom:'Lunettes Rondes',       emoji:'👓', type:'accessoire',slot:null, ancrage:'yeux', palette:['transparent','#606060','#a0d0e8','#404040'], pixels:[[1,1,1,0,1,1,1],[1,2,1,3,1,2,1],[1,1,1,0,1,1,1]]},
+  {id:'etoiles01',    nom:"Pluie d'Étoiles",       emoji:'✨', type:'ambiance', slot:null, motion:'sparkle', palette:['transparent','#f0e498','#f8f0c0','#e8d088'], pixels:[[0,1,0],[1,2,1],[0,1,0]]},
+  {id:'coussin01',    nom:'Coussin Cœur',          emoji:'🩷', type:'decor',   slot:'C', palette:['transparent','#e8a0bf','#d080a0','#f0c0d8'], pixels:[[0,1,1,0,1,1,0],[1,3,1,1,1,3,1],[1,1,1,1,1,1,1],[0,1,1,1,1,1,0],[0,0,1,1,1,0,0],[0,0,0,2,0,0,0]]},
+  {id:'cactus01',     nom:'Petit Cactus',          emoji:'🌱', type:'decor',   slot:'C', palette:['transparent','#58a868','#408048','#c08860','#a07048','#78c888'], pixels:[[0,0,0,1,0,0,0],[0,0,1,2,1,0,0],[0,5,0,1,0,0,0],[5,2,0,1,0,5,0],[0,1,0,1,1,2,5],[0,0,0,1,0,1,0],[0,0,0,1,0,0,0],[0,0,3,4,3,0,0]]},
+  {id:'noeud01',      nom:'Nœud Papillon',         emoji:'🎀', type:'accessoire',slot:null, ancrage:'cou', palette:['transparent','#e898b8','#d080a0','#c06888'], pixels:[[1,2,0,3,0,2,1],[1,1,1,2,1,1,1],[0,2,0,3,0,2,0]]},
+  {id:'aspirateur01', nom:'Aspirateur Pro',        emoji:'🫧', type:'decor',   slot:'D', palette:['transparent','#e0e0e0','#a0a0a0','#606060','#4090d0','#ffffff'], pixels:[[0,0,0,2,0,0,0],[0,0,2,1,2,0,0],[0,2,1,5,1,2,0],[0,0,2,1,2,0,0],[0,0,0,3,0,0,0],[0,0,3,3,3,0,0],[0,3,3,4,3,3,0]]},
+  {id:'manette01',    nom:'Manette Pixel',         emoji:'🎮', type:'decor',   slot:'C', palette:['transparent','#303030','#505050','#e04040','#4040e0','#f0f0f0'], pixels:[[1,1,0,0,0,1,1],[1,2,1,1,1,2,1],[1,2,5,1,3,2,1],[1,2,1,1,1,2,1],[1,1,1,4,1,1,1],[0,1,1,1,1,1,0]]},
+];
+
+/* ═══════════ GROUPES DE COULEURS DU JEU (pré-chargés) ═══════════ */
+const PAL_GROUPS = [
+  { name:'Corps Gotchi', colors: [
+    {hex:GOTCHI_COLORS.lilas.body, label:'lilas/body'}, {hex:GOTCHI_COLORS.lilas.lt, label:'lilas/lt'}, {hex:GOTCHI_COLORS.lilas.dk, label:'lilas/dk'},
+    {hex:GOTCHI_COLORS.vert.body,  label:'vert/body'},  {hex:GOTCHI_COLORS.vert.lt,  label:'vert/lt'},  {hex:GOTCHI_COLORS.vert.dk,  label:'vert/dk'},
+    {hex:GOTCHI_COLORS.rose.body,  label:'rose/body'},  {hex:GOTCHI_COLORS.rose.lt,  label:'rose/lt'},  {hex:GOTCHI_COLORS.rose.dk,  label:'rose/dk'},
+    {hex:GOTCHI_COLORS.bleu.body,  label:'bleu/body'},  {hex:GOTCHI_COLORS.bleu.lt,  label:'bleu/lt'},  {hex:GOTCHI_COLORS.bleu.dk,  label:'bleu/dk'},
+    {hex:GOTCHI_COLORS.peche.body, label:'peche/body'}, {hex:GOTCHI_COLORS.peche.lt, label:'peche/lt'}, {hex:GOTCHI_COLORS.peche.dk, label:'peche/dk'},
+    {hex:GOTCHI_COLORS.jaune.body, label:'jaune/body'}, {hex:GOTCHI_COLORS.jaune.lt, label:'jaune/lt'}, {hex:GOTCHI_COLORS.jaune.dk, label:'jaune/dk'},
+  ]},
+  { name:'Visage & œuf', colors: [
+    {hex:GC.eye,label:'eye'},{hex:GC.cheek,label:'cheek'},{hex:GC.mouth,label:'mouth'},
+    {hex:GC.egg,label:'egg'},{hex:GC.eggSp,label:'eggSp'},{hex:GC.cloud,label:'cloud'},
+  ]},
+  { name:'Accents thèmes', colors: [
+    {hex:ENV_THEMES.pastel.accent,  label:'pastel'},  {hex:ENV_THEMES.pastel.leaf1,  label:'p.leaf1'},  {hex:ENV_THEMES.pastel.leaf2,  label:'p.leaf2'},
+    {hex:ENV_THEMES.automne.accent, label:'automne'}, {hex:ENV_THEMES.automne.leaf1, label:'a.leaf1'},  {hex:ENV_THEMES.automne.leaf2, label:'a.leaf2'},
+    {hex:ENV_THEMES.hiver.accent,   label:'hiver'},   {hex:ENV_THEMES.hiver.trunk,   label:'h.trunk'},  {hex:ENV_THEMES.hiver.rug,     label:'h.rug'},
+    {hex:ENV_THEMES.desert.accent,  label:'desert'},  {hex:ENV_THEMES.desert.sky1,   label:'d.sky'},    {hex:ENV_THEMES.desert.mntPeak,label:'d.peak'},
+  ]},
+];
+
+/* ═══════════ ÉTAT GLOBAL ═══════════ */
+let mode = 'props';
+let tool = 'draw';
+let leftPane = 'tool';
+
+let selColor = 1, selSlot = 'A';
+let selAncrage = 'tete', selMotion = 'drift';
+
+let envBiome = 'parc', envTheme = 'pastel', envZone = 'arbre';
+let envSub = 'draw';              // 'draw' ou 'theme'
+let selThemeKey = 'accent';       // clé couleur sélectionnée en sous-mode thème
+
+let gotchiStage = 'baby', gotchiColorId = 'lilas';
+let prevEnv = 'parc';
+
+let gW = 8, gH = 8;
+let grid = [];
+let hist = [], future = [];       // undo / redo
+let painting = false;
+let symH = false, snapGrid = false;
+
+let hoverSlotId = null;           // pour prévisualisation hover des slots
+let hoverCell = null;             // coord de la cellule survolée (affichée dans #cinfo)
+
+let palette = ['transparent','#d8b8e8','#c0a0d0','#ecd8f8','#38304a','#f0a0b0','#f0c860','#88d898','#b8d4f0','#f4e6d0'];
+
+let exportHistory = [];           // jusqu'à 8 snapshots
+
+/* ═══════════ RÉFÉRENCES CANVAS ═══════════ */
+const ec   = document.getElementById('ec');
+const oc   = document.getElementById('oc');
+const eCtx = ec.getContext('2d');
+const oCtx = oc.getContext('2d');
+const gpCv  = document.getElementById('gp');
+const gpCtx = gpCv.getContext('2d');
+const ppCv  = document.getElementById('pp');
+const ppCtx = ppCv.getContext('2d');
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   📐 GRILLE — initialisation / redimensionnement
+═══════════════════════════════════════════════════════════════════════════ */
+function initGrid(w, h, keep) {
+  gW = w; gH = h;
+  if (!keep) grid = Array.from({length:h}, () => Array(w).fill(0));
+  hist = []; future = [];
+  syncCanvasSize();
+  redraw(); refreshPrev(); updateJSON();
+  updateGridInfo();
+}
+function syncCanvasSize() {
+  ec.width  = gW * CELL; ec.height = gH * CELL;
+  oc.width  = gW * CELL; oc.height = gH * CELL;
+}
+function updateGridInfo() {
+  const info = document.getElementById('cinfo');
+  const zoom = (CELL / PX).toFixed(1);
+  info.innerHTML = `grille <b>${gW}×${gH}</b> · cellule ${CELL}px · zoom ×${zoom}` +
+    (hoverCell ? ` · col <b>${hoverCell.c}</b> row <b>${hoverCell.r}</b>` : '');
+  document.getElementById('zoom-label').textContent = CELL + 'px';
+  document.getElementById('grid-size-hint').textContent = `${gW}×${gH}`;
+}
+function rz(w, h, btn) {
+  document.querySelectorAll('.szbtn').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  const old = grid.map(r => [...r]);
+  grid = Array.from({length:h}, (_,r) =>
+    Array.from({length:w}, (_,c) => (old[r] && old[r][c] != null) ? old[r][c] : 0));
+  initGrid(w, h, true);
+}
+function zoomStep(dir) {
+  const i = CELL_STEPS.indexOf(CELL);
+  const next = CELL_STEPS[Math.max(0, Math.min(CELL_STEPS.length-1, i + dir))];
+  if (next === CELL) return;
+  CELL = next;
+  syncCanvasSize();
+  redraw();
+  updateGridInfo();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎨 DESSIN DE LA GRILLE ÉDITEUR (canvas central)
+═══════════════════════════════════════════════════════════════════════════ */
+function redraw() {
+  eCtx.clearRect(0, 0, ec.width, ec.height);
+  // Fond en damier pour les pixels transparents
+  for (let r = 0; r < gH; r++) {
+    for (let c = 0; c < gW; c++) {
+      const ci = grid[r][c];
+      if (ci === 0) {
+        eCtx.fillStyle = '#2a2340'; eCtx.fillRect(c*CELL, r*CELL, CELL/2, CELL/2);
+        eCtx.fillStyle = '#1e1a30'; eCtx.fillRect(c*CELL+CELL/2, r*CELL, CELL/2, CELL/2);
+        eCtx.fillRect(c*CELL, r*CELL+CELL/2, CELL/2, CELL/2);
+        eCtx.fillStyle = '#2a2340'; eCtx.fillRect(c*CELL+CELL/2, r*CELL+CELL/2, CELL/2, CELL/2);
+      } else {
+        eCtx.fillStyle = palette[ci] || '#888';
+        eCtx.fillRect(c*CELL, r*CELL, CELL, CELL);
+      }
+      eCtx.strokeStyle = 'rgba(255,255,255,0.05)'; eCtx.lineWidth = .5;
+      eCtx.strokeRect(c*CELL, r*CELL, CELL, CELL);
+    }
+  }
+  // Overlay Gotchi (silhouette fantôme)
+  if (mode === 'gotchi') overlayGotchi();
+  // Liseré ambre pour zone ENV
+  if (mode === 'env' && envSub === 'draw') {
+    eCtx.globalAlpha = .4; eCtx.strokeStyle = '#f0c860'; eCtx.lineWidth = 2; eCtx.setLineDash([4,3]);
+    eCtx.strokeRect(1, 1, ec.width-2, ec.height-2);
+    eCtx.setLineDash([]); eCtx.globalAlpha = 1;
+  }
+  // Axe de symétrie visible
+  if (symH) {
+    eCtx.strokeStyle = 'rgba(240,168,192,.5)';
+    eCtx.setLineDash([4,3]); eCtx.lineWidth = 1;
+    const xm = Math.floor(gW/2) * CELL;
+    eCtx.beginPath(); eCtx.moveTo(xm, 0); eCtx.lineTo(xm, ec.height); eCtx.stroke();
+    if (gW % 2 === 0) {
+      eCtx.beginPath(); eCtx.moveTo(xm, 0); eCtx.lineTo(xm, ec.height); eCtx.stroke();
+    }
+    eCtx.setLineDash([]);
+  }
+}
+
+/* Silhouette Gotchi fantôme (mode Gotchi)
+   Utilise les dimensions offset de GOTCHI_SIZES pour recaler les oreilles */
+function overlayGotchi() {
+  const cc = GOTCHI_COLORS_EDIT[gotchiColorId] || GOTCHI_COLORS_EDIT.lilas;
+  const b = cc.body, l = cc.lt, d = cc.dk, e = GC.eye, ch = GC.cheek;
+  const off = GOTCHI_SIZES[gotchiStage]?.offR || 0;
+  eCtx.globalAlpha = .22;
+  let blocks = [];
+  if (gotchiStage === 'egg') blocks = [
+    {col:GC.egg, c:2,r:0,w:3,h:1}, {col:GC.egg, c:1,r:1,w:5,h:1},
+    {col:GC.egg, c:0,r:2,w:7,h:3}, {col:GC.egg, c:1,r:5,w:5,h:1}, {col:GC.egg, c:2,r:6,w:3,h:1},
+    {col:GC.eggSp,c:2,r:2,w:1,h:1}, {col:GC.eggSp,c:4,r:3,w:2,h:1}, {col:GC.eggSp,c:3,r:5,w:1,h:1},
+  ];
+  else if (gotchiStage === 'baby') blocks = [
+    {col:b,c:1,r:0,w:4,h:1}, {col:b,c:0,r:1,w:6,h:3}, {col:b,c:1,r:4,w:4,h:1},
+    {col:l,c:1,r:1,w:1,h:1}, {col:l,c:2,r:0,w:1,h:1},
+    {col:e,c:1,r:2,w:1,h:1}, {col:e,c:4,r:2,w:1,h:1},
+    {col:ch,c:0,r:3,w:1,h:1}, {col:ch,c:5,r:3,w:1,h:1},
+    {col:e,c:2,r:3,w:2,h:1},
+    {col:d,c:1,r:5,w:1,h:1}, {col:d,c:4,r:5,w:1,h:1},
+  ];
+  else if (gotchiStage === 'teen') blocks = [
+    {col:b,c:2,r:0,w:4,h:1}, {col:b,c:1,r:1,w:6,h:1},
+    {col:b,c:0,r:2,w:8,h:4}, {col:b,c:1,r:6,w:6,h:1}, {col:b,c:2,r:7,w:4,h:1},
+    {col:b,c:1,r:-2,w:2,h:1}, {col:b,c:1,r:-1,w:2,h:1},
+    {col:b,c:5,r:-2,w:2,h:1}, {col:b,c:5,r:-1,w:2,h:1},
+    {col:ch,c:1,r:-1,w:1,h:1}, {col:ch,c:5,r:-1,w:1,h:1},
+    {col:l,c:2,r:1,w:2,h:1}, {col:l,c:1,r:2,w:2,h:1},
+    {col:e,c:1,r:2,w:2,h:1}, {col:e,c:5,r:2,w:2,h:1},
+    {col:ch,c:1,r:4,w:1,h:1}, {col:ch,c:6,r:4,w:1,h:1},
+    {col:e,c:3,r:5,w:2,h:1},
+    {col:d,c:-1,r:4,w:1,h:2}, {col:d,c:8,r:4,w:1,h:2},
+    {col:d,c:2,r:8,w:1,h:1}, {col:d,c:5,r:8,w:1,h:1},
+  ];
+  else blocks = [ // adult
+    {col:b,c:3,r:0,w:4,h:1}, {col:b,c:2,r:1,w:6,h:1},
+    {col:b,c:1,r:2,w:8,h:1}, {col:b,c:0,r:3,w:10,h:4},
+    {col:b,c:1,r:7,w:8,h:1}, {col:b,c:2,r:8,w:6,h:1}, {col:b,c:3,r:9,w:4,h:1},
+    {col:b,c:2,r:-2,w:2,h:1}, {col:b,c:2,r:-1,w:2,h:1},
+    {col:b,c:6,r:-2,w:2,h:1}, {col:b,c:6,r:-1,w:2,h:1},
+    {col:ch,c:2,r:-1,w:1,h:1}, {col:ch,c:6,r:-1,w:1,h:1},
+    {col:l,c:3,r:1,w:2,h:1}, {col:l,c:2,r:2,w:2,h:1}, {col:l,c:1,r:3,w:2,h:1},
+    {col:e,c:2,r:3,w:3,h:1}, {col:e,c:6,r:3,w:3,h:1},
+    {col:ch,c:2,r:6,w:1,h:1}, {col:ch,c:7,r:6,w:1,h:1},
+    {col:e,c:4,r:6,w:2,h:1},
+    {col:d,c:-1,r:5,w:1,h:2}, {col:d,c:10,r:5,w:1,h:2},
+    {col:d,c:3,r:10,w:2,h:1}, {col:d,c:6,r:10,w:2,h:1},
+  ];
+  blocks.forEach(({col,c,r,w,h}) => {
+    eCtx.fillStyle = col;
+    eCtx.fillRect(c*CELL, (r+off)*CELL, w*CELL, h*CELL);
+  });
+  eCtx.globalAlpha = 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖱 ÉVÉNEMENTS DE DESSIN (souris + tactile)
+═══════════════════════════════════════════════════════════════════════════ */
+function cellAt(e) {
+  const r = ec.getBoundingClientRect();
+  return {
+    c: Math.floor(((e.clientX - r.left) * ec.width / r.width) / CELL),
+    r: Math.floor(((e.clientY - r.top)  * ec.height / r.height) / CELL)
+  };
+}
+function apply(c, r) {
+  if (c < 0 || c >= gW || r < 0 || r >= gH) return;
+  if (tool === 'draw')       paintCell(c, r, selColor);
+  else if (tool === 'erase') paintCell(c, r, 0);
+  else if (tool === 'pick')  { selColor = grid[r][c]; refreshPalUI(); return; }
+  else if (tool === 'fill')  flood(c, r, grid[r][c], selColor);
+}
+/* Peindre une cellule + son miroir horizontal si symétrie active */
+function paintCell(c, r, val) {
+  grid[r][c] = val;
+  if (symH) {
+    const mc = gW - 1 - c;
+    if (mc !== c && mc >= 0 && mc < gW) grid[r][mc] = val;
+  }
+}
+function flood(c, r, t, f) {
+  if (t === f) return;
+  const q = [[c, r]];
+  while (q.length) {
+    const [cc, rr] = q.pop();
+    if (cc < 0 || cc >= gW || rr < 0 || rr >= gH) continue;
+    if (grid[rr][cc] !== t) continue;
+    grid[rr][cc] = f;
+    q.push([cc+1,rr], [cc-1,rr], [cc,rr+1], [cc,rr-1]);
+  }
+}
+/* Pas de preventDefault sur mousedown → ok. Pour touch, preventDefault sur start/move */
+ec.addEventListener('mousedown', e => { push(); painting = true; const p = cellAt(e); apply(p.c, p.r); refreshAll(); });
+ec.addEventListener('mousemove', e => { const p = cellAt(e); hov(p.c, p.r); if (!painting) return; apply(p.c, p.r); refreshAll(); });
+ec.addEventListener('mouseup',   () => painting = false);
+ec.addEventListener('mouseleave',() => { painting = false; oCtx.clearRect(0,0,oc.width,oc.height); hoverCell = null; updateGridInfo(); });
+ec.addEventListener('touchstart',e => { e.preventDefault(); push(); painting = true; const p = cellAt(e.touches[0]); apply(p.c, p.r); refreshAll(); }, {passive:false});
+ec.addEventListener('touchmove', e => { e.preventDefault(); const p = cellAt(e.touches[0]); apply(p.c, p.r); refreshAll(); }, {passive:false});
+ec.addEventListener('touchend',  () => painting = false);
+
+function hov(c, r) {
+  oCtx.clearRect(0, 0, oc.width, oc.height);
+  if (c < 0 || c >= gW || r < 0 || r >= gH) { hoverCell = null; updateGridInfo(); return; }
+  hoverCell = {c, r};
+  updateGridInfo();
+  oCtx.strokeStyle = 'rgba(255,255,255,.55)'; oCtx.lineWidth = 1.5;
+  oCtx.strokeRect(c*CELL+1, r*CELL+1, CELL-2, CELL-2);
+  // Visualiser le miroir si symétrie
+  if (symH) {
+    const mc = gW - 1 - c;
+    if (mc !== c) {
+      oCtx.strokeStyle = 'rgba(240,168,192,.55)';
+      oCtx.strokeRect(mc*CELL+1, r*CELL+1, CELL-2, CELL-2);
+    }
+  }
+}
+function refreshAll() { redraw(); refreshPrev(); updateJSON(); }
+
+/* ─── Historique undo/redo ─── */
+function push() { hist.push(grid.map(r => [...r])); if (hist.length > 50) hist.shift(); future = []; }
+function doUndo() { if (!hist.length) return; future.push(grid.map(r=>[...r])); grid = hist.pop(); refreshAll(); }
+function doRedo() { if (!future.length) return; hist.push(grid.map(r=>[...r])); grid = future.pop(); refreshAll(); }
+function doClear() { push(); grid = Array.from({length:gH}, () => Array(gW).fill(0)); refreshAll(); }
+function doFlipH() { push(); grid = grid.map(r => [...r].reverse()); refreshAll(); }
+function doFlipV() { push(); grid = [...grid].reverse(); refreshAll(); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🛠 OUTILS & TOGGLES
+═══════════════════════════════════════════════════════════════════════════ */
+function setTool(t) {
+  tool = t;
+  ['draw','erase','fill','pick'].forEach(n =>
+    document.getElementById('t-'+n)?.classList.toggle('active', n === t));
+}
+function toggleSym(axis) {
+  if (axis === 'H') { symH = !symH; document.getElementById('t-symH').classList.toggle('on', symH); }
+  redraw();
+}
+function toggleSnap() {
+  snapGrid = !snapGrid;
+  document.getElementById('t-snap').classList.toggle('on', snapGrid);
+  // Le snap "éditeur" est déjà implicite (on dessine par cellule).
+  // Cette option sert aux exports : on force les coords destination à être multiples de PX.
+  toast(snapGrid ? '✓ Snap PX activé (exports alignés)' : 'Snap PX désactivé');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎨 PALETTE & COULEURS
+═══════════════════════════════════════════════════════════════════════════ */
+function buildPal() {
+  const el = document.getElementById('pal'); el.innerHTML = '';
+  palette.forEach((col, i) => {
+    const sw = document.createElement('div');
+    sw.className = 'swatch' + (i === selColor ? ' on' : '') + (i === 0 ? ' transp' : '');
+    if (i !== 0) sw.style.background = col;
+    sw.title = i === 0 ? 'Transparent' : col + ' — clic : sélectionner · clic droit : supprimer';
+    sw.onclick = () => { selColor = i; refreshPalUI(); setTool('draw'); };
+    sw.oncontextmenu = (e) => { e.preventDefault(); if (i === 0) return; deletePalColor(i); };
+    el.appendChild(sw);
+  });
+  const add = document.createElement('button');
+  add.className = 'add-sw'; add.textContent = '+';
+  add.title = 'Ajouter la couleur en cours à la palette';
+  add.onclick = () => {
+    const v = document.getElementById('hexin').value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+      if (!palette.includes(v)) palette.push(v);
+      selColor = palette.indexOf(v);
+      buildPal();
+    }
+  };
+  el.appendChild(add);
+  document.getElementById('pal-count').textContent = palette.length + ' coul.';
+  refreshPalUI();
+  buildPalGroups();
+  buildHarmonies();
+}
+function deletePalColor(i) {
+  if (i === 0 || i >= palette.length) return;
+  // Remplacer ci=i par 0 dans la grille, décaler les indices > i
+  grid = grid.map(row => row.map(ci => ci === i ? 0 : (ci > i ? ci - 1 : ci)));
+  palette.splice(i, 1);
+  if (selColor === i) selColor = 1;
+  else if (selColor > i) selColor--;
+  buildPal(); refreshAll();
+  toast('Couleur supprimée');
+}
+function refreshPalUI() {
+  document.querySelectorAll('#pal .swatch').forEach((s, i) =>
+    s.classList.toggle('on', i === selColor));
+  const col = palette[selColor];
+  if (col && col !== 'transparent') {
+    document.getElementById('hexin').value = col;
+    document.getElementById('cpick').value = col;
+    document.getElementById('col-name').textContent = nameForColor(col);
+  } else {
+    document.getElementById('col-name').textContent = 'transparent';
+  }
+}
+function onHex(v) {
+  v = v.trim();
+  if (!/^#[0-9a-fA-F]{6}$/.test(v)) return;
+  document.getElementById('cpick').value = v;
+  if (!palette.includes(v)) palette.push(v);
+  selColor = palette.indexOf(v);
+  buildPal();
+}
+function onCpick(v) {
+  document.getElementById('hexin').value = v;
+  onHex(v);
+}
+
+/* Groupes de palettes du jeu (collapsibles) */
+function buildPalGroups() {
+  const wrap = document.getElementById('palgroups');
+  wrap.innerHTML = '';
+  PAL_GROUPS.forEach((grp, gi) => {
+    const box = document.createElement('div'); box.className = 'palgroup' + (gi === 0 ? ' open' : '');
+    const title = document.createElement('div'); title.className = 'palgroup-title';
+    title.textContent = grp.name;
+    title.onclick = () => box.classList.toggle('open');
+    const body = document.createElement('div'); body.className = 'palgroup-body';
+    grp.colors.forEach(c => {
+      const sw = document.createElement('div'); sw.className = 'mini-sw';
+      sw.style.background = c.hex; sw.title = `${c.label} — ${c.hex}`;
+      sw.onclick = () => {
+        if (!palette.includes(c.hex)) palette.push(c.hex);
+        selColor = palette.indexOf(c.hex);
+        buildPal();
+      };
+      body.appendChild(sw);
+    });
+    box.appendChild(title); box.appendChild(body);
+    wrap.appendChild(box);
+  });
+}
+
+/* ─── Nom approximatif d'une couleur via HSL ─── */
+function hexToHSL(hex) {
+  const r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h=0,s=0,l=(max+min)/2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > .5 ? d/(2-max-min) : d/(max+min);
+    switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}
+    h *= 60;
+  }
+  return { h, s:s*100, l:l*100 };
+}
+function HSLtoHex(h, s, l) {
+  s /= 100; l /= 100;
+  const k = n => (n + h/30) % 12;
+  const a = s * Math.min(l, 1-l);
+  const f = n => { const c = l - a * Math.max(-1, Math.min(k(n)-3, 9-k(n), 1)); return Math.round(c*255).toString(16).padStart(2,'0'); };
+  return '#' + f(0) + f(8) + f(4);
+}
+function nameForColor(hex) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return '—';
+  const {h,s,l} = hexToHSL(hex);
+  if (s < 10) return l < 20 ? 'noir' : l < 40 ? 'gris foncé' : l < 70 ? 'gris' : l < 90 ? 'gris clair' : 'blanc';
+  const hues = [
+    [0,  'rouge'],  [15, 'orangé'], [40, 'jaune'],  [70, 'vert-jaune'], [100,'vert'],
+    [140,'vert d\'eau'],[170,'turquoise'],[195,'bleu clair'],[215,'bleu'],[245,'bleu-violet'],
+    [270,'violet'],[290,'lilas'],[310,'rose'],[335,'rose-rouge'],[360,'rouge']
+  ];
+  let name = hues[0][1];
+  for (const [d, n] of hues) if (h >= d) name = n;
+  const tone = l < 35 ? ' foncé' : l > 78 ? ' pâle' : l > 62 ? ' clair' : '';
+  const sat  = s < 35 ? ' terne' : '';
+  return (name + tone + sat).trim();
+}
+/* Harmonies (complémentaire, triadique, analogues) */
+function buildHarmonies() {
+  const row = document.getElementById('harmo-row');
+  const wrap = document.getElementById('harmo-wrap');
+  row.innerHTML = '';
+  const col = palette[selColor];
+  if (!col || col === 'transparent') { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  const {h,s,l} = hexToHSL(col);
+  const variants = [
+    { hex: HSLtoHex((h+180)%360, s, l), lbl:'complémentaire' },
+    { hex: HSLtoHex((h+120)%360, s, l), lbl:'triadique +120°' },
+    { hex: HSLtoHex((h+240)%360, s, l), lbl:'triadique +240°' },
+    { hex: HSLtoHex((h+30)%360,  s, l), lbl:'analogue +30°' },
+    { hex: HSLtoHex((h-30+360)%360, s, l), lbl:'analogue -30°' },
+  ];
+  variants.forEach(v => {
+    const el = document.createElement('div'); el.className = 'harmo';
+    el.style.background = v.hex; el.title = v.lbl + ' — ' + v.hex;
+    el.onclick = () => {
+      if (!palette.includes(v.hex)) palette.push(v.hex);
+      selColor = palette.indexOf(v.hex);
+      buildPal();
+    };
+    row.appendChild(el);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   📑 ONGLETS PANNEAU GAUCHE
+═══════════════════════════════════════════════════════════════════════════ */
+function switchLeftPane(p) {
+  leftPane = p;
+  document.querySelectorAll('.ltab').forEach(b => b.classList.toggle('active', b.dataset.pane === p));
+  document.querySelectorAll('.lpane').forEach(x => x.classList.toggle('active', x.dataset.pane === p));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎭 GESTION DES MODES (props / env / gotchi / libre)
+═══════════════════════════════════════════════════════════════════════════ */
+function switchMode(m) {
+  mode = m;
+  document.querySelectorAll('.mtab').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  document.querySelectorAll('.mode-box').forEach(x => x.style.display = x.dataset.mode === m ? '' : 'none');
+  // Preview : afficher le picker scène seulement en mode props
+  document.getElementById('env-picker').style.display = m === 'props' ? 'flex' : 'none';
+  document.getElementById('sec-iso').style.display = (m === 'props' || m === 'libre') ? '' : 'none';
+  // Mobile : basculer vers l'onglet META pour voir les options spécifiques
+  if (m !== 'props' || leftPane === 'cat') switchLeftPane('meta');
+  // Init spécifique
+  if (m === 'env') { buildZoneTabs(); buildThemeKeysUI(); }
+  if (m === 'gotchi') syncGotchiTones();
+  refreshAll();
+}
+
+/* ─── Slots (Props) ─── */
+function setSlot(btn, s) {
+  selSlot = s;
+  document.querySelectorAll('.slbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  refreshPrev(); updateJSON();
+}
+function hoverSlot(s) {
+  hoverSlotId = s;
+  refreshPrev();
+}
+function setAncrage(btn, a) {
+  selAncrage = a;
+  document.querySelectorAll('#p-ancrage-tabs .stab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  updateJSON();
+}
+function setMotion(btn, m) {
+  selMotion = m;
+  document.querySelectorAll('#p-motion-tabs .stab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('motion-tip').innerHTML = '<b>' + MOTION_DESC[m].split(':')[0].trim() + '</b> : ' + MOTION_DESC[m].split(':')[1].trim();
+  updateJSON();
+}
+function updatePropMeta() {
+  const t = document.getElementById('p-type').value;
+  document.getElementById('p-slot-wrap').style.display = (t === 'decor') ? '' : 'none';
+  document.getElementById('p-acc-wrap').style.display  = (t === 'accessoire') ? '' : 'none';
+  document.getElementById('p-amb-wrap').style.display  = (t === 'ambiance') ? '' : 'none';
+  if (t !== 'decor') selSlot = null;
+  else if (!selSlot) selSlot = 'A';
+  updateJSON();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🌿 MODE ENV : biome / thème / zone / sous-mode
+═══════════════════════════════════════════════════════════════════════════ */
+function setEnvSub(s) {
+  envSub = s;
+  document.getElementById('env-sub-draw').classList.toggle('on', s === 'draw');
+  document.getElementById('env-sub-theme').classList.toggle('on', s === 'theme');
+  document.getElementById('env-draw-wrap').style.display = s === 'draw' ? '' : 'none';
+  document.getElementById('env-theme-wrap').style.display = s === 'theme' ? '' : 'none';
+  if (s === 'theme') buildThemeKeysUI();
+  refreshAll();
+}
+function setEnvBiome(btn, b) {
+  envBiome = b;
+  document.querySelectorAll('#env-biome-tabs .stab').forEach(x => x.classList.remove('on'));
+  btn.classList.add('on');
+  buildZoneTabs();
+  refreshAll();
+}
+function setEnvTheme(btn, t) {
+  envTheme = t;
+  document.querySelectorAll('#env-theme-tabs .stab').forEach(x => x.classList.remove('on'));
+  btn.classList.add('on');
+  if (envSub === 'theme') buildThemeKeysUI();
+  refreshAll();
+}
+function buildZoneTabs() {
+  const el = document.getElementById('env-zone-tabs'); el.innerHTML = '';
+  const zones = ENV_ZONES[envBiome] || [];
+  zones.forEach((z, i) => {
+    const bt = document.createElement('button');
+    bt.className = 'stab' + (i === 0 ? ' on' : '');
+    bt.textContent = z.label;
+    bt.onclick = () => {
+      envZone = z.id;
+      document.querySelectorAll('#env-zone-tabs .stab').forEach(b => b.classList.remove('on'));
+      bt.classList.add('on');
+      document.getElementById('env-tip').textContent = z.tip;
+      applyEnvZoneSize(z.id);
+      refreshAll();
+    };
+    el.appendChild(bt);
+  });
+  envZone = zones[0]?.id || '';
+  document.getElementById('env-tip').textContent = zones[0]?.tip || '';
+  if (zones[0]) applyEnvZoneSize(zones[0].id);
+}
+function applyEnvZoneSize(zoneId) {
+  const key = `${envBiome}_${zoneId}`;
+  const sz = ENV_ZONE_SIZES[key];
+  if (!sz) return;
+  if (gW === sz.w && gH === sz.h) return;
+  const old = grid.map(r => [...r]);
+  grid = Array.from({length:sz.h}, (_,r) =>
+    Array.from({length:sz.w}, (_,c) => (old[r] && old[r][c] != null) ? old[r][c] : 0));
+  gW = sz.w; gH = sz.h;
+  syncCanvasSize();
+  hist = []; future = [];
+  document.querySelectorAll('.szbtn').forEach(b => b.classList.remove('on'));
+  updateGridInfo();
+}
+
+/* ─── Sous-mode Thème : édition des clés couleur ─── */
+function buildThemeKeysUI() {
+  const wrap = document.getElementById('theme-keys');
+  if (!wrap) return;
+  const th = ENV_THEMES_EDIT[envTheme];
+  if (!th) return;
+  wrap.innerHTML = '';
+  const keys = Object.keys(th).filter(k => k !== 'id');
+  document.getElementById('theme-key-count').textContent = keys.length + ' clés';
+  keys.forEach(k => {
+    const el = document.createElement('div');
+    el.className = 'tkey' + (k === selThemeKey ? ' on' : '');
+    const sw = document.createElement('div'); sw.className = 'tkey-sw'; sw.style.background = th[k];
+    const lb = document.createElement('div'); lb.className = 'tkey-lbl'; lb.textContent = k;
+    el.appendChild(sw); el.appendChild(lb);
+    el.onclick = () => {
+      selThemeKey = k;
+      // Charger la couleur dans le picker
+      const col = th[k];
+      document.getElementById('hexin').value = col;
+      document.getElementById('cpick').value = col;
+      document.getElementById('col-name').textContent = nameForColor(col);
+      if (!palette.includes(col)) palette.push(col);
+      selColor = palette.indexOf(col);
+      buildThemeKeysUI();
+      buildPal();
+    };
+    wrap.appendChild(el);
+  });
+}
+/* Appliquer une couleur à la clé sélectionnée du thème en cours */
+function applyColorToThemeKey(hex) {
+  if (envSub !== 'theme' || !selThemeKey) return;
+  const th = ENV_THEMES_EDIT[envTheme];
+  if (!th || !(selThemeKey in th)) return;
+  th[selThemeKey] = hex;
+  buildThemeKeysUI();
+  refreshPrev();
+  updateJSON();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🐣 MODE GOTCHI : stade / variante / retouche des tons
+═══════════════════════════════════════════════════════════════════════════ */
+function setStage(btn, s) {
+  gotchiStage = s;
+  document.querySelectorAll('#stage-tabs .stab').forEach(b => b.classList.remove('on-pk'));
+  btn.classList.add('on-pk');
+  const sz = GOTCHI_SIZES[s];
+  if (sz) {
+    const old = grid.map(r => [...r]);
+    grid = Array.from({length:sz.h}, (_,r) =>
+      Array.from({length:sz.w}, (_,c) => (old[r] && old[r][c] != null) ? old[r][c] : 0));
+    gW = sz.w; gH = sz.h;
+    syncCanvasSize();
+    hist = []; future = [];
+    document.querySelectorAll('.szbtn').forEach(b => b.classList.remove('on'));
+    updateGridInfo();
+  }
+  refreshAll();
+}
+function setGC(btn, c) {
+  gotchiColorId = c;
+  document.querySelectorAll('#gcolor-tabs .stab').forEach(b => b.classList.remove('on-pk'));
+  btn.classList.add('on-pk');
+  syncGotchiTones();
+  refreshAll();
+}
+function syncGotchiTones() {
+  const cc = GOTCHI_COLORS_EDIT[gotchiColorId];
+  if (!cc) return;
+  document.getElementById('gcol-body').value = cc.body;
+  document.getElementById('gcol-lt').value   = cc.lt;
+  document.getElementById('gcol-dk').value   = cc.dk;
+  document.getElementById('gcol-body-hex').value = cc.body;
+  document.getElementById('gcol-lt-hex').value   = cc.lt;
+  document.getElementById('gcol-dk-hex').value   = cc.dk;
+}
+function onGColorChange(tone, v) {
+  if (!/^#[0-9a-fA-F]{6}$/i.test(v)) return;
+  GOTCHI_COLORS_EDIT[gotchiColorId][tone] = v;
+  document.getElementById('gcol-'+tone+'-hex').value = v;
+  document.getElementById('gcol-'+tone).value = v;
+  refreshAll();
+}
+function resetGColor() {
+  GOTCHI_COLORS_EDIT[gotchiColorId] = {...GOTCHI_COLORS[gotchiColorId]};
+  syncGotchiTones();
+  refreshAll();
+  toast('Couleurs d\'origine restaurées');
+}
+/* Listeners hex pour les 3 champs de tons */
+['body','lt','dk'].forEach(tone => {
+  const ev = () => {
+    const inp = document.getElementById('gcol-'+tone+'-hex');
+    const v = inp.value.trim();
+    if (/^#[0-9a-fA-F]{6}$/i.test(v)) onGColorChange(tone, v);
+  };
+  document.getElementById('gcol-'+tone+'-hex')?.addEventListener('input', ev);
+});
+
+function setPrevEnv(btn, e) {
+  prevEnv = e;
+  document.querySelectorAll('.epbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  refreshPrev();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖼 RENDUS DE SCÈNE — reproduction fidèle de envs.js
+═══════════════════════════════════════════════════════════════════════════ */
+/* Helper px() identique à envs.js — snap sur la grille PX */
+function gr(ctx, x, y, w, h) {
+  ctx.fillRect(
+    Math.floor(x/PX)*PX,
+    Math.floor(y/PX)*PX,
+    Math.max(PX, Math.floor(w/PX)*PX),
+    Math.max(PX, Math.floor(h/PX)*PX)
+  );
+}
+function drawTree(ctx, x, y, c1, c2, ct) {
+  ctx.fillStyle = ct; gr(ctx, x+PX*2, y+PX*4, PX*2, PX*5);
+  ctx.fillStyle = c1; gr(ctx, x, y+PX, PX*6, PX*3); gr(ctx, x+PX, y-PX, PX*4, PX*2);
+  ctx.fillStyle = c2; gr(ctx, x+PX*2, y-PX*2, PX*2, PX);
+}
+function drawFl(ctx, x, y, c) {
+  ctx.fillStyle = '#58a058'; gr(ctx, x, y, PX, PX*2);
+  ctx.fillStyle = c; gr(ctx, x-PX, y-PX, PX, PX); gr(ctx, x+PX, y-PX, PX, PX); gr(ctx, x, y-PX*2, PX, PX);
+  ctx.fillStyle = '#f0d878'; gr(ctx, x, y-PX, PX, PX);
+}
+function drawCactus(ctx, x, y) {
+  ctx.fillStyle = '#70a858'; gr(ctx, x+PX, y, PX*2, PX*7); gr(ctx, x-PX, y+PX*2, PX*2, PX*2);
+  gr(ctx, x-PX, y+PX, PX, PX); gr(ctx, x+PX*3, y+PX*3, PX*2, PX*2); gr(ctx, x+PX*4, y+PX*2, PX, PX);
+  ctx.fillStyle = '#508840'; gr(ctx, x, y+PX*2, PX, PX); gr(ctx, x+PX*3, y+PX*3, PX, PX);
+}
+
+function drawParc(ctx, th) {
+  const g = ctx.createLinearGradient(0,0,0,120);
+  g.addColorStop(0, th.sky1); g.addColorStop(1, th.sky2);
+  ctx.fillStyle = g; ctx.fillRect(0,0,CS,120);
+  ctx.fillStyle = th.gnd;   ctx.fillRect(0,120,CS,80);
+  ctx.fillStyle = th.gndDk; ctx.fillRect(0,120,CS,PX*2);
+  if (th.id !== 'desert') {
+    drawTree(ctx, 8, 86, th.leaf1, th.leaf2, th.trunk);
+    drawTree(ctx, 160, 90, th.leaf1, th.leaf2, th.trunk);
+  } else {
+    drawCactus(ctx, 18, 90); drawCactus(ctx, 168, 94);
+    ctx.fillStyle = th.accent; gr(ctx, 70,136,PX*2,PX); gr(ctx,110,130,PX,PX); gr(ctx,150,138,PX*2,PX);
+  }
+  if (th.id === 'pastel') {
+    drawFl(ctx, 35,120, th.accent); drawFl(ctx, 155,122, th.accent);
+    ctx.fillStyle = th.accent;
+    gr(ctx,13,80,PX,PX); gr(ctx,23,84,PX,PX); gr(ctx,18,90,PX,PX);
+    gr(ctx,165,84,PX,PX); gr(ctx,175,88,PX,PX); gr(ctx,170,94,PX,PX);
+  }
+  if (th.id === 'automne') {
+    ctx.fillStyle = th.accent; gr(ctx,20,60,PX,PX); gr(ctx,80,40,PX,PX); gr(ctx,140,55,PX,PX);
+  }
+  if (th.id === 'hiver') {
+    ctx.fillStyle = th.accent;
+    [[15,20],[55,10],[95,35],[145,18],[175,28]].forEach(s => gr(ctx,s[0],s[1],PX,PX));
+  }
+  ctx.fillStyle = GC.cloud;
+  ctx.fillRect(32,20,PX*5,PX*2); ctx.fillRect(33,19,PX*3,PX);
+  ctx.fillRect(142,35,PX*5,PX*2); ctx.fillRect(143,34,PX*3,PX);
+}
+
+function drawChambre(ctx, th) {
+  const bx = 138;
+  ctx.fillStyle = th.wall; ctx.fillRect(0,60,CS,60);
+  ctx.fillStyle = GC.skyD1; ctx.fillRect(20,68,42,42);
+  ctx.fillStyle = th.windowFrame;
+  ctx.fillRect(18,66,46,3); ctx.fillRect(18,107,46,3);
+  ctx.fillRect(18,66,3,44); ctx.fillRect(62,66,3,44);
+  ctx.fillRect(40,68,3,42); ctx.fillRect(20,88,42,3);
+  ctx.fillStyle = th.windowSill; ctx.fillRect(16,108,50,PX);
+  ctx.fillStyle = th.curtain; ctx.fillRect(10,63,12,52); ctx.fillRect(62,63,12,52);
+  ctx.fillStyle = th.curtainDk;
+  ctx.fillRect(14,63,3,52); ctx.fillRect(20,63,2,52);
+  ctx.fillRect(65,63,3,52); ctx.fillRect(70,63,2,52);
+  ctx.fillStyle = th.curtainRod; ctx.fillRect(8,62,68,3);
+  ctx.fillStyle = th.baseboard; ctx.fillRect(0,118,CS,PX);
+  ctx.fillStyle = th.frameOuter; ctx.fillRect(85,65,36,36);
+  ctx.fillStyle = th.frameBg; ctx.fillRect(88,68,30,30);
+  ctx.fillStyle = th.frameAccent1; gr(ctx,96,76,PX*2,PX*2); gr(ctx,104,84,PX*2,PX*2);
+  ctx.fillStyle = th.frameAccent2; gr(ctx,104,76,PX,PX*3); gr(ctx,96,84,PX*3,PX);
+  ctx.fillStyle = th.floor; ctx.fillRect(0,120,CS,80);
+  ctx.fillStyle = th.floorLine; for (let ly = 130; ly < 200; ly += 13) ctx.fillRect(0,ly,CS,1);
+  ctx.fillStyle = th.rug; ctx.fillRect(18,138,164,62);
+  ctx.fillStyle = th.rugCenter; ctx.fillRect(22,141,156,59);
+  ctx.fillStyle = th.desk; ctx.fillRect(bx+4,108,PX,18); ctx.fillRect(bx+46,108,PX,18);
+  ctx.fillStyle = th.deskTop; ctx.fillRect(bx,100,58,PX*2);
+  ctx.fillStyle = th.deskShadow; ctx.fillRect(bx,108,58,PX);
+  ctx.fillStyle = th.lamp; gr(ctx,bx+38,90,PX,PX*2);
+  ctx.fillStyle = th.lampShade; gr(ctx,bx+33,88,PX*3,PX);
+}
+
+function drawMontagne(ctx, th) {
+  const g = ctx.createLinearGradient(0,0,0,120);
+  g.addColorStop(0, th.sky1); g.addColorStop(1, th.sky2);
+  ctx.fillStyle = g; ctx.fillRect(0,0,CS,120);
+  ctx.fillStyle = th.mntGnd;   ctx.fillRect(0,120,CS,80);
+  ctx.fillStyle = th.mntGndDk; ctx.fillRect(0,120,CS,PX*2);
+  if (th.id !== 'desert') {
+    ctx.fillStyle = th.mntPeak;
+    ctx.beginPath(); ctx.moveTo(40,120); ctx.lineTo(100,50); ctx.lineTo(160,120); ctx.fill();
+    ctx.fillStyle = th.mntSnow;
+    ctx.beginPath(); ctx.moveTo(100,50); ctx.lineTo(83,70); ctx.lineTo(117,70); ctx.fill();
+    if (th.id === 'pastel') {
+      ctx.fillStyle = '#78c488';
+      gr(ctx,10,115,PX*4,PX*2); gr(ctx,50,116,PX*3,PX*2); gr(ctx,140,115,PX*4,PX*2); gr(ctx,175,116,PX*3,PX);
+    }
+  } else {
+    ctx.fillStyle = th.mntPeak;
+    ctx.beginPath(); ctx.moveTo(55,120); ctx.lineTo(100,55); ctx.lineTo(145,120); ctx.fill();
+    ctx.fillStyle = th.mntGndDk;
+    ctx.beginPath(); ctx.moveTo(100,55); ctx.lineTo(100,120); ctx.lineTo(145,120); ctx.fill();
+    ctx.fillStyle = '#6b3a1f'; gr(ctx,96,108,PX*2,PX*3);
+    ctx.fillStyle = th.mntSnow; gr(ctx,62,102,34,PX);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🐣 RENDU GOTCHI (exact render.js pour la preview)
+═══════════════════════════════════════════════════════════════════════════ */
+function drawGotchi(ctx, stage, colorId) {
+  const cc = GOTCHI_COLORS_EDIT[colorId] || GOTCHI_COLORS_EDIT.lilas;
+  const b = cc.body, l = cc.lt, d = cc.dk, e = GC.eye, ch = GC.cheek;
+  const cx = 100;
+  const by = stage === 'egg' ? 115 : stage === 'baby' ? 108 : stage === 'teen' ? 98 : 85;
+
+  if (stage === 'egg') {
+    const x = cx-PX*3, y = by;
+    ctx.fillStyle = GC.egg;
+    gr(ctx,x+PX*2,y,PX*3,PX); gr(ctx,x+PX,y+PX,PX*5,PX); gr(ctx,x,y+PX*2,PX*7,PX*3);
+    gr(ctx,x+PX,y+PX*5,PX*5,PX); gr(ctx,x+PX*2,y+PX*6,PX*3,PX);
+    ctx.fillStyle = GC.eggSp;
+    gr(ctx,x+PX*2,y+PX*2,PX,PX); gr(ctx,x+PX*4,y+PX*3,PX*2,PX); gr(ctx,x+PX*3,y+PX*5,PX,PX);
+    return;
+  }
+  if (stage === 'baby') {
+    const x = cx-PX*3, y = by;
+    ctx.fillStyle = b; gr(ctx,x+PX,y,PX*4,PX); gr(ctx,x,y+PX,PX*6,PX*3); gr(ctx,x+PX,y+PX*4,PX*4,PX);
+    ctx.fillStyle = l; gr(ctx,x+PX,y+PX,PX,PX); gr(ctx,x+PX*2,y,PX,PX);
+    ctx.fillStyle = e; gr(ctx,x+PX,y+PX*2,PX,PX); gr(ctx,x+PX*4,y+PX*2,PX,PX);
+    ctx.fillStyle = '#fff'; ctx.fillRect(x+PX,y+PX*2,2,2); ctx.fillRect(x+PX*4,y+PX*2,2,2);
+    ctx.fillStyle = ch; gr(ctx,x,y+PX*3,PX,PX); gr(ctx,x+PX*5,y+PX*3,PX,PX);
+    ctx.fillStyle = e; gr(ctx,x+PX*2,y+PX*3,PX*2,PX);
+    ctx.fillStyle = d; gr(ctx,x+PX,y+PX*5,PX,PX); gr(ctx,x+PX*4,y+PX*5,PX,PX);
+    return;
+  }
+  if (stage === 'teen') {
+    const x = cx-PX*4, y = by;
+    ctx.fillStyle = b;
+    gr(ctx,x+PX*2,y,PX*4,PX); gr(ctx,x+PX,y+PX,PX*6,PX);
+    gr(ctx,x,y+PX*2,PX*8,PX*4); gr(ctx,x+PX,y+PX*6,PX*6,PX); gr(ctx,x+PX*2,y+PX*7,PX*4,PX);
+    gr(ctx,x+PX,y-PX,PX*2,PX); gr(ctx,x+PX,y-PX*2,PX*2,PX); gr(ctx,x+PX+2,y-PX*3,PX,PX);
+    gr(ctx,x+PX*5,y-PX,PX*2,PX); gr(ctx,x+PX*5,y-PX*2,PX*2,PX); gr(ctx,x+PX*5+2,y-PX*3,PX,PX);
+    ctx.fillStyle = ch; gr(ctx,x+PX+2,y-PX,PX,PX); gr(ctx,x+PX*5+2,y-PX,PX,PX);
+    ctx.fillStyle = l; gr(ctx,x+PX*2,y+PX,PX*2,PX); gr(ctx,x+PX,y+PX*2,PX*2,PX);
+    ctx.fillStyle = e;
+    gr(ctx,x+PX,y+PX*2,PX*2,PX); gr(ctx,x+PX*2,y+PX*3,PX,PX);
+    gr(ctx,x+PX*5,y+PX*2,PX*2,PX); gr(ctx,x+PX*5,y+PX*3,PX,PX);
+    ctx.fillStyle = '#fff'; ctx.fillRect(x+PX+1,y+PX*2+1,4,4); ctx.fillRect(x+PX*5+1,y+PX*2+1,4,4);
+    ctx.fillStyle = ch; gr(ctx,x+PX,y+PX*4,PX,PX); gr(ctx,x+PX*6,y+PX*4,PX,PX);
+    ctx.fillStyle = e; gr(ctx,x+PX*3,y+PX*5,PX*2,PX);
+    ctx.fillStyle = d;
+    gr(ctx,x-PX,y+PX*4,PX,PX*2); gr(ctx,x+PX*8,y+PX*4,PX,PX*2);
+    gr(ctx,x+PX*2,y+PX*8,PX,PX); gr(ctx,x+PX*5,y+PX*8,PX,PX);
+    return;
+  }
+  // adult
+  const x = cx-PX*5, y = by;
+  ctx.fillStyle = b;
+  gr(ctx,x+PX*3,y,PX*4,PX); gr(ctx,x+PX*2,y+PX,PX*6,PX); gr(ctx,x+PX,y+PX*2,PX*8,PX);
+  gr(ctx,x,y+PX*3,PX*10,PX*4); gr(ctx,x+PX,y+PX*7,PX*8,PX); gr(ctx,x+PX*2,y+PX*8,PX*6,PX); gr(ctx,x+PX*3,y+PX*9,PX*4,PX);
+  gr(ctx,x+PX*2,y-PX,PX*2,PX); gr(ctx,x+PX*2,y-PX*2,PX*2,PX); gr(ctx,x+PX*2+2,y-PX*3,PX,PX);
+  gr(ctx,x+PX*6,y-PX,PX*2,PX); gr(ctx,x+PX*6,y-PX*2,PX*2,PX); gr(ctx,x+PX*6+2,y-PX*3,PX,PX);
+  ctx.fillStyle = ch; gr(ctx,x+PX*2+2,y-PX,PX,PX); gr(ctx,x+PX*6+2,y-PX,PX,PX);
+  ctx.fillStyle = l; gr(ctx,x+PX*3,y+PX,PX*2,PX); gr(ctx,x+PX*2,y+PX*2,PX*2,PX); gr(ctx,x+PX,y+PX*3,PX*2,PX);
+  ctx.fillStyle = e;
+  gr(ctx,x+PX*2,y+PX*3,PX*3,PX); gr(ctx,x+PX*3,y+PX*4,PX*2,PX);
+  gr(ctx,x+PX*6,y+PX*3,PX*3,PX); gr(ctx,x+PX*6,y+PX*4,PX*2,PX);
+  ctx.fillStyle = '#fff'; ctx.fillRect(x+PX*2+1,y+PX*3+1,4,4); ctx.fillRect(x+PX*6+1,y+PX*3+1,4,4);
+  ctx.fillStyle = ch; gr(ctx,x+PX*2,y+PX*6,PX,PX); gr(ctx,x+PX*7,y+PX*6,PX,PX);
+  ctx.fillStyle = e; gr(ctx,x+PX*4,y+PX*6,PX*2,PX);
+  ctx.fillStyle = d;
+  gr(ctx,x-PX,y+PX*5,PX,PX*2); gr(ctx,x+PX*10,y+PX*5,PX,PX*2);
+  gr(ctx,x+PX*3,y+PX*10,PX*2,PX); gr(ctx,x+PX*6,y+PX*10,PX*2,PX);
+}
+
+/* Helpers pour tracer le dessin courant */
+function drawGridAt(ctx, ox, oy) {
+  for (let r = 0; r < gH; r++) for (let c = 0; c < gW; c++) {
+    const ci = grid[r][c]; if (!ci) continue;
+    ctx.fillStyle = palette[ci];
+    ctx.fillRect(ox + c*PX, oy + r*PX, PX, PX);
+  }
+}
+function drawGridInRect(ctx, fx, fy, fw, fh) {
+  const cw = fw/gW, ch = fh/gH;
+  for (let r = 0; r < gH; r++) for (let c = 0; c < gW; c++) {
+    const ci = grid[r][c]; if (!ci) continue;
+    ctx.fillStyle = palette[ci];
+    ctx.fillRect(fx + c*cw, fy + r*ch, cw, ch);
+  }
+}
+/* Tracer un prop (pixels+palette) à une position */
+function drawPropPixelsAt(ctx, pixels, pal, ox, oy) {
+  for (let r = 0; r < pixels.length; r++) {
+    for (let c = 0; c < pixels[0].length; c++) {
+      const ci = pixels[r][c]; if (!ci) continue;
+      ctx.fillStyle = pal[ci] || '#888';
+      ctx.fillRect(ox + c*PX, oy + r*PX, PX, PX);
+    }
+  }
+}
+function getZoneRect() { return ZONE_RECTS[`${envBiome}_${envZone}`] || null; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🔁 REFRESH PREVIEW (scène + prop isolé)
+═══════════════════════════════════════════════════════════════════════════ */
+function refreshPrev() {
+  const ctx = gpCtx;
+  ctx.save(); ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,gpCv.width,gpCv.height);
+  ctx.scale(SC, SC);
+
+  if (mode === 'props') {
+    const th = ENV_THEMES_EDIT.pastel;
+    if      (prevEnv === 'parc')    drawParc(ctx, th);
+    else if (prevEnv === 'chambre') drawChambre(ctx, th);
+    else                            drawMontagne(ctx, th);
+    // Slot principal (selSlot) — dessiné en plein
+    if (selSlot) {
+      const sl = PROP_SLOTS[selSlot];
+      drawGridAt(ctx, sl.x, sl.y);
+      ctx.strokeStyle = 'rgba(240,200,80,.55)'; ctx.lineWidth = 1;
+      ctx.setLineDash([3,2]);
+      ctx.strokeRect(sl.x, sl.y, gW*PX, gH*PX);
+      ctx.setLineDash([]);
+    }
+    // Slot survolé (hoverSlotId) — preview fantôme si différent de selSlot
+    if (hoverSlotId && hoverSlotId !== selSlot) {
+      const sl = PROP_SLOTS[hoverSlotId];
+      ctx.globalAlpha = .55;
+      drawGridAt(ctx, sl.x, sl.y);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = 'rgba(240,168,192,.8)'; ctx.lineWidth = 1;
+      ctx.setLineDash([2,2]);
+      ctx.strokeRect(sl.x, sl.y, gW*PX, gH*PX);
+      ctx.setLineDash([]);
+    }
+  }
+  else if (mode === 'env') {
+    const th = ENV_THEMES_EDIT[envTheme] || ENV_THEMES_EDIT.pastel;
+    if      (envBiome === 'parc')    drawParc(ctx, th);
+    else if (envBiome === 'chambre') drawChambre(ctx, th);
+    else                             drawMontagne(ctx, th);
+    // En sous-mode draw, on affiche aussi le dessin dans la zone cible
+    if (envSub === 'draw') {
+      const z = getZoneRect();
+      if (z) {
+        drawGridInRect(ctx, z.x, z.y, z.w, z.h);
+        ctx.strokeStyle = 'rgba(240,200,80,.7)'; ctx.lineWidth = 1;
+        ctx.setLineDash([3,2]);
+        ctx.strokeRect(z.x, z.y, z.w, z.h);
+        ctx.setLineDash([]);
+      }
+    }
+  }
+  else if (mode === 'gotchi') {
+    drawParc(ctx, ENV_THEMES_EDIT.pastel);
+    drawGotchi(ctx, gotchiStage, gotchiColorId);
+    // Aperçu du dessin en cours centré sur le Gotchi
+    const cx = 100;
+    const by = gotchiStage === 'egg' ? 115 : gotchiStage === 'baby' ? 108 : gotchiStage === 'teen' ? 98 : 85;
+    drawGridAt(ctx, cx - Math.floor(gW/2)*PX, by - Math.floor(gH/2)*PX);
+  }
+  else {
+    // mode libre : fond quadrillé discret
+    ctx.fillStyle = '#1e1a30'; ctx.fillRect(0,0,CS,CS);
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = .5;
+    for (let i = 0; i <= CS; i += PX) {
+      ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,CS); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(CS,i); ctx.stroke();
+    }
+    drawGridAt(ctx, Math.floor((CS-gW*PX)/2), Math.floor((CS-gH*PX)/2));
+  }
+
+  ctx.restore();
+  drawIso();
+}
+function drawIso() {
+  const px4 = 4, cw = gW*px4, ch = gH*px4;
+  ppCv.width = cw; ppCv.height = ch;
+  ppCtx.clearRect(0,0,cw,ch);
+  for (let r = 0; r < gH; r++) for (let c = 0; c < gW; c++) {
+    const ci = grid[r][c]; if (!ci) continue;
+    ppCtx.fillStyle = palette[ci];
+    ppCtx.fillRect(c*px4, r*px4, px4, px4);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   📤 EXPORT JSON INTELLIGENT (selon mode)
+═══════════════════════════════════════════════════════════════════════════ */
+/* compact() retire les couleurs non utilisées et renumérote */
+function compact() {
+  const used = new Set(); grid.forEach(row => row.forEach(ci => used.add(ci)));
+  const remap = {0:0}; const pal = ['transparent'];
+  [...used].filter(i => i !== 0).forEach((ci, i) => { remap[ci] = i+1; pal.push(palette[ci]); });
+  return { pal, pixels: grid.map(row => row.map(ci => remap[ci] || 0)) };
+}
+function v(id) { return document.getElementById(id)?.value || ''; }
+
+function updateJSON() {
+  const out = document.getElementById('jout');
+  if (!out) return;
+  let text = '';
+
+  if (mode === 'props') {
+    const {pal, pixels} = compact();
+    const type = v('p-type') || 'decor';
+    // Export compatible props.json : pas de champs _mode, pas de preamble
+    const obj = {
+      id: v('p-id') || 'nouveauProp',
+      nom: v('p-nom') || 'Nouveau Prop',
+      type,
+      emoji: v('p-emoji') || '✨',
+      slot: type === 'decor' ? selSlot : null,
+      cout: parseInt(v('p-cout'), 10) || 0,
+      palette: pal,
+      pixels
+    };
+    if (type === 'accessoire') obj.ancrage = selAncrage;
+    if (type === 'ambiance')   obj.motion  = selMotion;
+    text = JSON.stringify(obj, null, 2);
+  }
+  else if (mode === 'env') {
+    if (envSub === 'theme') {
+      // Export : bloc JS pour config.js → ENV_THEMES
+      const th = ENV_THEMES_EDIT[envTheme];
+      const keys = Object.keys(th);
+      const lines = keys.map(k => `    ${k}: ${JSON.stringify(th[k])}`);
+      text = `// Thème '${envTheme}' modifié — à coller dans config.js → ENV_THEMES\n` +
+             `${envTheme}: {\n${lines.join(',\n')}\n},`;
+    } else {
+      // Sous-mode dessin : JSON + code p5.js généré
+      const {pal, pixels} = compact();
+      const z = getZoneRect();
+      const zkey = `${envBiome}_${envZone}`;
+      let codeSnippet = '';
+      if (z && pixels.length) {
+        const cw = z.w / gW, ch = z.h / gH;
+        const lines = [];
+        for (let r = 0; r < pixels.length; r++) {
+          for (let c = 0; c < pixels[0].length; c++) {
+            const ci = pixels[r][c]; if (!ci) continue;
+            let xx = z.x + c*cw, yy = z.y + r*ch;
+            if (snapGrid) { xx = Math.round(xx/PX)*PX; yy = Math.round(yy/PX)*PX; }
+            lines.push(`  ctx.fillStyle='${pal[ci]}'; px(p, ${xx}, ${yy}, ${Math.round(cw)}, ${Math.round(ch)});`);
+          }
+        }
+        codeSnippet = `\n\n// CODE P5.JS — à intégrer dans envs.js drawActiveEnv() ou drawFrameMotif()\n// Zone cible : ${zkey}  (${z.x},${z.y} ${z.w}×${z.h})\nfunction drawZone_${zkey}(p, ctx) {\n${lines.join('\n')}\n}`;
+      }
+      const jsonPart = {
+        biome: envBiome,
+        theme: envTheme,
+        zone: envZone,
+        dest: z ? { x:z.x, y:z.y, w:z.w, h:z.h } : null,
+        grid: { w: gW, h: gH },
+        palette: pal,
+        pixels
+      };
+      text = '// DATA JSON\n' + JSON.stringify(jsonPart, null, 2) + codeSnippet;
+    }
+  }
+  else if (mode === 'gotchi') {
+    const cc = GOTCHI_COLORS_EDIT[gotchiColorId];
+    const gid = v('g-id') || gotchiColorId;
+    const glabel = v('g-label') || gid[0].toUpperCase() + gid.slice(1);
+    const {pal, pixels} = compact();
+    text =
+      `// Variante couleur Gotchi — à ajouter dans config.js → GOTCHI_COLORS\n` +
+      `${gid}: { body:'${cc.body}', lt:'${cc.lt}', dk:'${cc.dk}' },\n` +
+      `// Ou dans la liste des variantes (avec label) :\n` +
+      `{ id:'${gid}', label:'${glabel}', body:'${cc.body}', bodyLt:'${cc.lt}', bodyDk:'${cc.dk}' },\n\n` +
+      `// DATA du dessin (stade : ${gotchiStage}) — référence pour retoucher render.js draw${gotchiStage[0].toUpperCase()+gotchiStage.slice(1)}()\n` +
+      JSON.stringify({ stage: gotchiStage, variant: gid, grid:{w:gW,h:gH}, palette: pal, pixels }, null, 2);
+  }
+  else {
+    const {pal, pixels} = compact();
+    text = JSON.stringify({
+      id: v('l-id') || 'custom01',
+      nom: v('l-nom') || 'Création libre',
+      palette: pal,
+      pixels
+    }, null, 2);
+  }
+
+  out.value = text;
+}
+
+function doCopy() {
+  const txt = document.getElementById('jout').value;
+  navigator.clipboard.writeText(txt).then(() => {
+    toast('✓ Copié dans le presse-papier');
+    pushHistory();
+  }).catch(() => {
+    // fallback (iOS sécurité)
+    const ta = document.getElementById('jout');
+    ta.removeAttribute('readonly');
+    ta.select();
+    try { document.execCommand('copy'); toast('✓ Copié'); pushHistory(); }
+    catch { toast('⚠ Impossible de copier, sélectionne manuellement', 'warn'); }
+    ta.setAttribute('readonly', '');
+  });
+}
+function doImport() {
+  const txt = prompt('Colle ton JSON ici :');
+  if (!txt) return;
+  try {
+    // Tente de parser, en retirant un éventuel préambule // de commentaire
+    const cleaned = txt.replace(/^\s*\/\/[^\n]*\n/gm, '').trim();
+    const o = JSON.parse(cleaned);
+    if (!o.pixels || !o.palette) throw new Error('no pixels/palette');
+    gH = o.pixels.length; gW = o.pixels[0].length;
+    palette = o.palette.map(c => c === 'transparent' ? 'transparent' : c);
+    grid = o.pixels.map(r => [...r]);
+    initGrid(gW, gH, true);
+    buildPal();
+    toast('✓ Import réussi');
+  } catch (err) {
+    toast('✗ JSON invalide', 'err');
+  }
+}
+function toast(msg, kind) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = ''; t.classList.add('show');
+  if (kind === 'warn') t.classList.add('warn');
+  if (kind === 'err') t.classList.add('err');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+/* Auto-update du JSON quand on tape dans un champ meta */
+['p-id','p-nom','p-emoji','p-cout','l-id','l-nom','g-id','g-label']
+  .forEach(id => document.getElementById(id)?.addEventListener('input', updateJSON));
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   📚 HISTORIQUE VISUEL DES EXPORTS (jusqu'à 8)
+═══════════════════════════════════════════════════════════════════════════ */
+function pushHistory() {
+  // Snapshot léger : pixels, palette, mode, grid size
+  const snap = {
+    mode, gW, gH,
+    palette: [...palette],
+    grid: grid.map(r => [...r]),
+    time: Date.now()
+  };
+  exportHistory.unshift(snap);
+  if (exportHistory.length > 8) exportHistory.pop();
+  renderHistory();
+}
+function renderHistory() {
+  const row = document.getElementById('hist-row');
+  row.innerHTML = '';
+  if (!exportHistory.length) {
+    row.innerHTML = '<div class="hist-empty" style="grid-column:span 4">— aucun export pour le moment —</div>';
+    return;
+  }
+  exportHistory.forEach((snap, i) => {
+    const it = document.createElement('div'); it.className = 'hist-item';
+    it.title = `Mode ${snap.mode} · ${snap.gW}×${snap.gH} · clic pour rappeler`;
+    const cv = document.createElement('canvas');
+    cv.width = snap.gW; cv.height = snap.gH;
+    const x = cv.getContext('2d');
+    for (let r = 0; r < snap.gH; r++) for (let c = 0; c < snap.gW; c++) {
+      const ci = snap.grid[r][c]; if (!ci) continue;
+      x.fillStyle = snap.palette[ci]; x.fillRect(c, r, 1, 1);
+    }
+    it.appendChild(cv);
+    it.onclick = () => recallHistory(i);
+    row.appendChild(it);
+  });
+}
+function recallHistory(i) {
+  const snap = exportHistory[i]; if (!snap) return;
+  if (!confirm('Rappeler cet export ? Le dessin actuel sera remplacé.')) return;
+  palette = [...snap.palette];
+  grid = snap.grid.map(r => [...r]);
+  gW = snap.gW; gH = snap.gH;
+  syncCanvasSize();
+  hist = []; future = [];
+  buildPal(); refreshAll();
+  toast('✓ Export rappelé');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🗂 CATALOGUE PROPS (cartes avec miniatures)
+═══════════════════════════════════════════════════════════════════════════ */
+function buildPropCards(filter = '') {
+  const wrap = document.getElementById('prop-cards');
+  wrap.innerHTML = '';
+  const q = filter.toLowerCase().trim();
+  const list = PROPS_DATA.filter(p =>
+    !q || p.nom.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.type.includes(q));
+  if (!list.length) {
+    wrap.innerHTML = '<div class="hist-empty" style="grid-column:span 3">Aucun résultat</div>';
+    return;
+  }
+  list.forEach(p => {
+    const card = document.createElement('div'); card.className = 'prop-card';
+    card.dataset.id = p.id;
+    const cv = document.createElement('canvas'); cv.className = 'prop-mini';
+    const w = p.pixels[0].length, h = p.pixels.length;
+    const size = 44, scale = Math.floor(size / Math.max(w, h));
+    cv.width = w*scale; cv.height = h*scale;
+    // Rendre carré en centrant
+    cv.style.width = size + 'px'; cv.style.height = size + 'px';
+    const x = cv.getContext('2d');
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+      const ci = p.pixels[r][c]; if (!ci) continue;
+      x.fillStyle = p.palette[ci]; x.fillRect(c*scale, r*scale, scale, scale);
+    }
+    const nm = document.createElement('div'); nm.className = 'pc-name';
+    nm.textContent = p.emoji + ' ' + p.nom;
+    const mt = document.createElement('div'); mt.className = 'pc-meta';
+    mt.textContent = `${w}×${h} · ${p.type}${p.slot ? ' · '+p.slot : ''}`;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(mt);
+    card.onclick = () => loadExistingProp(p.id);
+    wrap.appendChild(card);
+  });
+}
+function filterCatalog(q) { buildPropCards(q); }
+
+function loadExistingProp(id) {
+  if (!id) return;
+  const p = PROPS_DATA.find(x => x.id === id);
+  if (!p) return;
+
+  // 1. Pixels + palette
+  palette = p.palette.map(c => c === 'transparent' ? 'transparent' : c);
+  grid = p.pixels.map(r => [...r]);
+
+  // 2. Dimensions
+  gW = p.pixels[0].length;
+  gH = p.pixels.length;
+  syncCanvasSize();
+  hist = []; future = [];
+
+  // 3. Bouton taille désélectionné (puisqu'on a une taille custom)
+  document.querySelectorAll('.szbtn').forEach(b => b.classList.remove('on'));
+
+  // 4. Passer en mode props + onglet META
+  switchMode('props');
+  switchLeftPane('meta');
+
+  // 5. Métadonnées
+  document.getElementById('p-id').value = p.id;
+  document.getElementById('p-nom').value = p.nom;
+  document.getElementById('p-emoji').value = p.emoji || '';
+  document.getElementById('p-type').value = p.type || 'decor';
+  document.getElementById('p-cout').value = p.cout || 0;
+  updatePropMeta();
+
+  if (p.type === 'decor' && p.slot) {
+    selSlot = p.slot;
+    document.querySelectorAll('.slbtn').forEach(b =>
+      b.classList.toggle('on', b.textContent.trim() === p.slot));
+  }
+  if (p.type === 'accessoire' && p.ancrage) {
+    selAncrage = p.ancrage;
+    document.querySelectorAll('#p-ancrage-tabs .stab').forEach(b =>
+      b.classList.toggle('on', b.textContent.includes(
+        p.ancrage === 'tete' ? 'Tête' : p.ancrage === 'yeux' ? 'Yeux' : 'Cou'
+      )));
+  }
+  if (p.type === 'ambiance' && p.motion) {
+    selMotion = p.motion;
+    document.querySelectorAll('#p-motion-tabs .stab').forEach(b =>
+      b.classList.toggle('on', b.textContent.trim() === p.motion));
+    setMotion({classList:{add:()=>{}, remove:()=>{}}}, p.motion);
+  }
+
+  selColor = 1;
+  buildPal();
+  refreshAll();
+
+  // Mettre en évidence la carte active
+  document.querySelectorAll('.prop-card').forEach(c =>
+    c.classList.toggle('on', c.dataset.id === id));
+
+  toast(`✓ ${p.nom} chargé — ${gW}×${gH}`);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⛶ PLEIN ÉCRAN GRILLE
+═══════════════════════════════════════════════════════════════════════════ */
+function toggleFullscreen() {
+  document.body.classList.toggle('fullscreen');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⌨ RACCOURCIS CLAVIER
+═══════════════════════════════════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); doUndo(); return; }
+  if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) { e.preventDefault(); doRedo(); return; }
+  if (e.key === 'b') setTool('draw');
+  if (e.key === 'e') setTool('erase');
+  if (e.key === 'g') setTool('fill');
+  if (e.key === 'i') setTool('pick');
+  if (e.key === 's') toggleSym('H');
+  if (e.key === '+') zoomStep(+1);
+  if (e.key === '-') zoomStep(-1);
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🔀 LIEN sous-mode THÈME : quand on change de couleur depuis le picker,
+   on l'applique à la clé de thème sélectionnée
+═══════════════════════════════════════════════════════════════════════════ */
+const _origOnCpick = onCpick;
+onCpick = function(v) {
+  _origOnCpick(v);
+  if (mode === 'env' && envSub === 'theme') applyColorToThemeKey(v);
+};
+const _origOnHex = onHex;
+onHex = function(v) {
+  _origOnHex(v);
+  if (mode === 'env' && envSub === 'theme' && /^#[0-9a-fA-F]{6}$/.test(v)) applyColorToThemeKey(v);
+};
+document.getElementById('cpick').oninput = (e) => onCpick(e.target.value);
+document.getElementById('hexin').oninput = (e) => onHex(e.target.value);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🚀 BOOT
+═══════════════════════════════════════════════════════════════════════════ */
+buildPal();
+buildPropCards();
+buildZoneTabs();
+switchMode('props');
+initGrid(8, 8);
+syncGotchiTones();
+renderHistory();
+
+/* Première invite visuelle : mettre le focus léger sur le canvas */
+setTimeout(() => toast('✦ Editor prêt — bonne création !'), 300);
+
+</script>
+</body>
+</html>

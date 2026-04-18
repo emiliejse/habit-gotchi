@@ -724,7 +724,6 @@ function handleDailyReset() {
 
     if (hierLog.length === 0) {
       addXp(-15);
-      window.D.g.petales = Math.max(0, (window.D.g.petales || 0) - 4);
     }
   }
 

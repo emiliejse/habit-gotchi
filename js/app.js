@@ -744,7 +744,7 @@ function initApp() {
 
   // 2. Env selon l'heure (nuit → chambre)
   const h = hr();
-  if (h >= 22 || h < 7) window.D.g.activeEnv = 'chambre';
+  if (h >= 21 || h < 7) window.D.g.activeEnv = 'chambre';
 
   // 3. Spawn caca si 30 min écoulées
   const lastSpawn = window.D.g.lastPoopSpawn || 0;

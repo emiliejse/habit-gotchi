@@ -799,7 +799,6 @@ if (D.g.props) {
                     : def.ancrage === 'cou'  ? (D.g.stage === 'baby' ? ps * 3 : ps * 5)
                     : ps;
       const accY = baseY - def.pixels.length * ps + offsetY;
-      console.log('accY:', accY, 'drawY:', drawY, 'staticInfo.eyeY:', staticInfo.eyeY)
       drawProp(p, def, accX, accY);
     }
   });

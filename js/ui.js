@@ -597,7 +597,7 @@ function acheterProp(propId) {
   label: `${prop.emoji || ''} ${prop.nom}`.trim()
 });
   save();
-  toast(`${obj.emoji || '🎁'} ${prop.nom} ajouté à ton inventaire !`);
+  toast(`${prop.emoji || '🎁'} ${prop.nom} ajouté à ton inventaire !`);
   const buyMsgs = ["Oh un cadeau ! 🎁", "*yeux brillants* ✨", `${prop.emoji} Pour moi ?! 💜`, "J'adore ! 🌸", "*saute de joie* ✿"];
   flashBubble(buyMsgs[Math.floor(Math.random() * buyMsgs.length)], 2500);
   renderProps();

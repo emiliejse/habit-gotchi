@@ -785,10 +785,10 @@ if (D.g.props) {
     const def = getPropDef(prop.id);
     if (def && def.pixels) {
       const ps = def.pxSize || PX;
-      const accX = cx - Math.floor(def.pixels[0].length * ps / 2);
-      const baseY = def.ancrage === 'yeux' ? gotchiInfo.eyeY - bobY + GOTCHI_OFFSET_Y
-            : def.ancrage === 'cou'  ? gotchiInfo.neckY - bobY + GOTCHI_OFFSET_Y
-            : gotchiInfo.topY - bobY + GOTCHI_OFFSET_Y;
+      const accX = cx - Math.floor(def.pixels[0].length * ps / 2) + shakeOffsetX;
+      const baseY = def.ancrage === 'yeux' ? gotchiInfo.eyeY - bobY + GOTCHI_OFFSET_Y - shakeOffsetY
+            : def.ancrage === 'cou'  ? gotchiInfo.neckY - bobY + GOTCHI_OFFSET_Y - shakeOffsetY
+            : gotchiInfo.topY - bobY + GOTCHI_OFFSET_Y - shakeOffsetY;
       const offsetY = def.ancrage === 'yeux' ? (D.g.stage === 'teen' ? ps * 3 : ps * 2)
                     : def.ancrage === 'cou'  ? (D.g.stage === 'baby' ? ps * 3 : ps * 5)
                     : ps;

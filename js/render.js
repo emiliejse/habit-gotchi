@@ -778,20 +778,20 @@ if (window.shakeTimer > 0) window.shakeTimer--;
 
     p.pop();
 
-    // 8. Props Accessoire (Sur le Gotchi)
-    if (D.g.props) {
+// 8. Props Accessoire (Sur le Gotchi)
+if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
     const def = getPropDef(prop.id);
     if (def && def.pixels) {
-      const ps = def.pxSize || PX;  // ← ajout
-      const accX = cx - Math.floor(def.pixels[0].length * ps / 2);  // ← multiply avant floor
-      const baseY = def.ancrage==='yeux' ? gotchiInfo.eyeY - bobY
-            : def.ancrage==='cou'  ? gotchiInfo.neckY - bobY
-            : gotchiInfo.topY - bobY;
-      const offsetY = def.ancrage==='yeux' ? (D.g.stage === 'teen' ? ps*3 : ps*2)   // ← ps
-                    : def.ancrage==='cou'  ? (g.stage === 'baby' ? ps*3 : ps*5)   // ← ps
-                    : ps;                           // ← ps
-      const accY = baseY - def.pixels.length * ps + offsetY;  // ← ps
+      const ps = def.pxSize || PX;
+      const accX = cx - Math.floor(def.pixels[0].length * ps / 2);
+      const baseY = def.ancrage === 'yeux' ? gotchiInfo.eyeY - bobY
+                  : def.ancrage === 'cou'  ? gotchiInfo.neckY - bobY
+                  : gotchiInfo.topY - bobY;
+      const offsetY = def.ancrage === 'yeux' ? (D.g.stage === 'teen' ? ps * 3 : ps * 2)
+                    : def.ancrage === 'cou'  ? (D.g.stage === 'baby' ? ps * 3 : ps * 5)
+                    : ps;
+      const accY = baseY - def.pixels.length * ps + offsetY;
       drawProp(p, def, accX, accY);
     }
   });

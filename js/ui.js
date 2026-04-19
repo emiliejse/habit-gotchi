@@ -562,7 +562,7 @@ function acheterProp(propId) {
   
   D.g.petales = (D.g.petales || 0) - prop.cout;
   if (!D.g.props) D.g.props = [];
-  D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false, pxSize:  obj.pxSize  || null, seen: false });
+  D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false, pxSize:  prop.pxSize  || null, seen: false });
   addEvent({
   type: 'cadeau',
   subtype: 'achat',

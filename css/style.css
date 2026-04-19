@@ -572,6 +572,11 @@ body {
   overflow-y: auto;
   min-height: 0;
   padding-right: 4px;
+  scrollbar-width: none; /* Firefox */
+}
+
+#boutique-contenu::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, mobile */
 }
 
 @keyframes tamaSway {

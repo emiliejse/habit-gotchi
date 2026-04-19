@@ -777,7 +777,6 @@ if (window.shakeTimer > 0) window.shakeTimer--;
       if (sleeping && g.stage !== 'egg') drawZzz(p, drawX + 16, drawY - 10);
     }
 
-    p.pop();
 
 // Après le bloc de dessin du gotchi, recalcule gotchiInfo en statique
 const staticInfo = {
@@ -804,6 +803,8 @@ if (D.g.props) {
     }
   });
 }
+
+    p.pop();
 
     const wc = window.meteoData?.weathercode;
     if (wc === 45 || wc === 48) drawFog(p);

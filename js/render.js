@@ -780,9 +780,9 @@ if (window.shakeTimer > 0) window.shakeTimer--;
 
 // Après le bloc de dessin du gotchi, recalcule gotchiInfo en statique
 const staticInfo = {
-  topY:  by + GOTCHI_OFFSET_Y,
-  eyeY:  by + GOTCHI_OFFSET_Y + (D.g.stage === 'adult' ? PX*3 : PX*2),
-  neckY: by + GOTCHI_OFFSET_Y + (D.g.stage === 'teen' ? PX*5 : D.g.stage === 'adult' ? PX*6 : PX*4),
+  topY:  drawY,
+  eyeY:  drawY + (D.g.stage === 'adult' ? PX*3 : PX*2),
+  neckY: drawY + (D.g.stage === 'teen' ? PX*5 : D.g.stage === 'adult' ? PX*6 : PX*4),
 };
 
 // 8. Props Accessoire (Sur le Gotchi)

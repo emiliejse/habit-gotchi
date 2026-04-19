@@ -610,15 +610,16 @@ function acheterProp(propId) {
   D.g.petales = (D.g.petales || 0) - prop.cout;
   if (!D.g.props) D.g.props = [];
   D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false, pxSize:  prop.pxSize  || null, seen: false });
-  addEvent({
+addEvent({
   type: 'cadeau',
   subtype: 'achat',
   valeur: prop.cout,
-  label: `${prop.emoji || ''} ${prop.nom}`.trim()
+  emoji: prop.emoji || '🛍️',
+  label: prop.nom
 });
   save();
   toast(`${prop.emoji || '🛍️'} ${prop.nom} ajouté à ton inventaire !`);
-  const buyMsgs = [`${prop.emoji} Pour moi ?! 💜`, "*yeux brillants* ✨", `${prop.emoji} J'adore ! 🌸`, "*saute de joie* ✿`, `${prop.emoji} Trop beau ! ✿`];
+  const buyMsgs = [`${prop.emoji} Pour moi ?! 💜`, `*yeux brillants* ✨`, `${prop.emoji} J'adore ! 🌸`, `*saute de joie* ✿`, `${prop.emoji} Trop beau ! ✿`];
   flashBubble(buyMsgs[Math.floor(Math.random() * buyMsgs.length)], 2500);
   renderProps();
   updUI();
@@ -1282,7 +1283,13 @@ async function acheterPropClaude() {
       D.propsPixels[obj.id] = obj;
       window.PROPS_LOCAL    = Object.values(D.propsPixels);
       save(); renderProps(); updUI();
-      addEvent({ type: 'cadeau', subtype: 'ia', valeur: 0, label: `${obj.emoji || '✨'} ${obj.nom} créé par ${D.g.name} !` });
+      addEvent({
+  type: 'cadeau',
+  subtype: 'ia',
+  valeur: 0,
+  emoji: obj.emoji || '✨',
+  label: `${obj.nom} créé par ${D.g.name} !`
+});
       updTabletBadge();
 
       toast(`${obj.emoji || '✨'} ${obj.nom} ajouté à ton inventaire !`);
@@ -2081,7 +2088,7 @@ function openTablet() {
   
   // Sinon, fallback sur le type
   if (ev.type === 'xp')       return (ev.valeur < 0) ? '💤' : '⭐';
-  if (ev.type === 'cadeau')   return ev.label?.split(' ')[0] || '🎁';
+  if (ev.type === 'cadeau') return ev.emoji || '🎁';
   if (ev.type === 'habitude') return '✅';
   if (ev.type === 'note')     return '📓';
   return '•';

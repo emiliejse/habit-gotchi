@@ -1198,7 +1198,7 @@ async function acheterPropClaude() {
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
-      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:300, temperature:1, messages:[{ role:'user', content:prompt }] })
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:600, temperature:1, messages:[{ role:'user', content:prompt }] })
     });
     const data  = await r.json();
     const match = data.content[0].text.match(/\{[\s\S]*\}/);

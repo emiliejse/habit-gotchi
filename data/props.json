@@ -273,22 +273,23 @@
     [0,0,5,6,6,6,5,0,0]
   ]
 },
-    {
-      "id": "noeud01",
-      "nom": "Nœud Papillon",
-      "ancrage": "cou",
-      "type": "accessoire",
-      "emoji": "🎀",
-      "categorie": "tete",
-      "cout": 6,
-      "position": { "x": 0, "y": 0 },
-      "palette": ["transparent", "#e898b8", "#d080a0", "#c06888"],
-      "pixels": [
-        [1,2,0,3,0,2,1],
-        [1,1,1,2,1,1,1],
-        [0,2,0,3,0,2,0]
-      ]
-    },
+{
+  "id": "noeud01",
+  "nom": "Nœud Papillon",
+  "ancrage": "cou",
+  "type": "accessoire",
+  "emoji": "🎀",
+  "categorie": "tete",
+  "cout": 6,
+  "position": { "x": 0, "y": 0 },
+  "pxSize": 3,
+  "palette": ["transparent", "#FFDDED", "#F4A8C8", "#E878A8", "#C85888"],
+  "pixels": [
+    [2,3,0,3,2],
+    [3,4,3,4,3],
+    [0,3,0,3,0]
+  ]
+},
     {
   "id": "toque01",
   "nom": "Toque de Chef Étoilée",

@@ -105,6 +105,7 @@ function getPropDef(id) {
  * Moteur de rendu d'objets (Prop Engine). Traduit le JSON en Pixel Art.
  */
 function drawProp(p, prop, offsetX, offsetY) {
+  console.log('drawProp', prop.id, 'ps=', prop.pxSize || PX); // ← ajoute cette ligne
   if (!prop.pixels || !prop.palette) return;
   const ps = prop.pxSize || PX;  // ← taille pixel du prop (défaut = PX global)
   p.noStroke();

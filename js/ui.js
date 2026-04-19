@@ -1100,7 +1100,7 @@ async function askClaude() {
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
-      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:400, messages:[{ role:'user', content:prompt }] })
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:800, messages:[{ role:'user', content:prompt }] })
     });
     const d       = await r.json();
     const rawText = d.content[0].text;

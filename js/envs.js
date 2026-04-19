@@ -21,6 +21,10 @@ function px(p, x, y, w, h) {
   p.rect(Math.floor(x/PX)*PX, Math.floor(y/PX)*PX, Math.max(PX,Math.floor(w/PX)*PX), Math.max(PX,Math.floor(h/PX)*PX));
 }
 
+function pxFree(p, x, y, w, h) {
+  p.rect(Math.floor(x), Math.floor(y), Math.max(1, Math.floor(w)), Math.max(1, Math.floor(h)));
+}
+
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME & TOPOGRAPHIE (Météo & Nuit) ────────── */
 
 /**

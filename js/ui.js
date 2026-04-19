@@ -1349,17 +1349,23 @@ function genSoutien() {
   const habsDuJour  = D.habits.map(h => ({ label:h.label, faite:(D.log[td]||[]).includes(h.catId) }));
   const notesDuJour = D.journal.filter(j => j.date.startsWith(td)).map(j => ({ humeur:j.mood, texte:j.text }));
   const ctx = window.AI_CONTEXTS;
+  const P = window.PERSONALITY;
   const promptInit = ctx
-    ? ctx.genSoutien
-        .replace('{{energy}}',      `${D.g.energy}/5`)
-        .replace('{{happiness}}',   `${D.g.happiness}/5`)
-        .replace('{{habitsDone}}',  habsDuJour.filter(h=>h.faite).map(h=>h.label).join(', ')||'aucune')
-        .replace('{{habitsUndone}}',habsDuJour.filter(h=>!h.faite).map(h=>h.label).join(', ')||'toutes faites !')
-        .replace('{{notes}}',       notesDuJour.length ? notesDuJour.map(n=>`[${n.humeur}] ${n.texte}`).join(' | ') : 'aucune note')
-        .replace('{{userName}}', D.g.userName || D.userName || 'ton utilisatrice')
-    : `Tu es le Gotchi, un compagnon bienveillant pour le bien-être mental et le TDAH.\nL'utilisateur a besoin de soutien. Énergie: ${D.g.energy}/5, Bonheur: ${D.g.happiness}/5.\nCommence par une phrase douce. Pose UNE question ouverte. Ton doux, jamais de jugement.`;
+  ? ctx.genSoutien
+      .replace('{{nom}}',          D.g.name || P?.nom || 'Gotchi')
+      .replace('{{userName}}',     D.g.userName || D.userName || 'toi')
+      .replace('{{style}}',        P?.style || 'Phrases courtes, bienveillant.')
+      .replace('{{traits}}',       P?.traits?.join(', ') || 'doux, curieux')
+      .replace('{{heure}}',        new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }))
+      .replace('{{date}}',         td)
+      .replace('{{energy}}',       `${D.g.energy}/5`)
+      .replace('{{happiness}}',    `${D.g.happiness}/5`)
+      .replace('{{habitsDone}}',   habsDuJour.filter(h=>h.faite).map(h=>h.label).join(', ') || 'aucune')
+      .replace('{{habitsUndone}}', habsDuJour.filter(h=>!h.faite).map(h=>h.label).join(', ') || 'toutes faites !')
+      .replace('{{notes}}',        notesDuJour.length ? notesDuJour.map(n=>`[${n.humeur}] ${n.texte}`).join(' | ') : 'aucune note')
+  : `Tu es le Gotchi, compagnon bienveillant de ${D.g.userName || 'toi'}.\nIl est ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}, énergie ${D.g.energy}/5, humeur ${D.g.happiness}/5.\nCommence par une phrase qui montre que tu as lu son état. Pose UNE question ouverte. Ton doux, jamais de jugement.`;
 
-  window._soutienHistory = [];
+window._soutienHistory = [];
   window._soutienCount = 0;
   modalLocked = true;
   document.getElementById('modal').style.display = 'flex';
@@ -1420,29 +1426,43 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   chat.scrollTop   = chat.scrollHeight;
 
   /* ── Construction du contexte ── */
-  const messages  = isInit ? [{ role:'user', content:systemPrompt }] : [...window._soutienHistory.slice(-6)];
+  const messages = isInit ? [{ role:'user', content:systemPrompt }] : [...window._soutienHistory.slice(-6)];
 
-  const notesJour = window.D.journal
-    .filter(j => j.date.startsWith(today()))
+  const D  = window.D;
+  const P  = window.PERSONALITY;
+  const td = today();
+
+  const notesJour = D.journal
+    .filter(j => j.date.startsWith(td))
     .slice(-3)
     .map(j => `[${j.mood}] ${j.text}`)
     .join(' | ') || 'aucune note';
 
-  const habsDone  = (window.D.log[today()] || [])
-    .map(catId => {
-      const h = window.D.habits.find(h => h.catId === catId);
-      return h ? h.label : catId;
-    })
+  const habsDone = (D.log[td] || [])
+    .map(catId => { const h = D.habits.find(h => h.catId === catId); return h ? h.label : null; })
+    .filter(Boolean)
     .join(', ') || 'aucune';
 
-  const contexte  = (window.AI_SYSTEM?.soutien_contexte || '')
-    .replace('{energie}',           window.D.g.energy)
-    .replace('{bonheur}',           window.D.g.happiness)
-    .replace('{habitesDone}',       habsDone)
-    .replace('{notes}',             notesJour)
-    .replace('{messages_restants}', 6 - window._soutienCount);
+  const contexte = (window.AI_SYSTEM?.soutien_contexte || '')
+    .replace('{{nom}}',              D.g.name || P?.nom || 'Gotchi')
+    .replace('{{userName}}',         D.g.userName || D.userName || 'toi')
+    .replace('{{style}}',            P?.style || 'Phrases courtes, bienveillant.')
+    .replace('{{traits}}',           P?.traits?.join(', ') || 'doux, curieux')
+    .replace('{{heure}}',            new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }))
+    .replace('{{date}}',             td)
+    .replace('{{energy}}',           D.g.energy)
+    .replace('{{happiness}}',        D.g.happiness)
+    .replace('{{habsDone}}',         habsDone)
+    .replace('{{notes}}',            notesJour)
+    .replace('{{messages_restants}}', 6 - window._soutienCount);
 
-  const sysPrompt = `${window.AI_SYSTEM?.soutien || ''} ${contexte}`.trim();
+  const sysPrompt = (window.AI_SYSTEM?.soutien || '')
+    .replace('{{nom}}',      D.g.name || P?.nom || 'Gotchi')
+    .replace('{{userName}}', D.g.userName || D.userName || 'toi')
+    .replace('{{style}}',    P?.style || 'Phrases courtes, bienveillant.')
+    .replace('{{traits}}',   P?.traits?.join(', ') || 'doux, curieux')
+    .concat(' ', contexte)
+    .trim();
 
   /* ── Appel API ── */
   try {

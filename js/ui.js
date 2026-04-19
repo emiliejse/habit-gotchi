@@ -377,6 +377,11 @@ let propsFilterActive = 'tous';
  * Dessine un aperçu d'un prop Pixel Art sur un élément Canvas (Boutique/Inventaire)
  */
 function renderPropMini(canvas, def) {
+  if (canvas) {
+  renderPropMini(canvas, dernierObj);
+  canvas.style.width = '96px';
+  canvas.style.height = '96px';
+  }
   if (!canvas || !def || !def.pixels) return;
   const ctx = canvas.getContext('2d');
   const cols = def.pixels[0].length, rows = def.pixels.length;
@@ -494,7 +499,11 @@ function ouvrirBoutique() {
   mbox.classList.remove('shop-open');
   void mbox.offsetWidth;
   mbox.classList.add('shop-open');
-
+  if (onglet === 'catalogue') {
+  mbox.classList.add('shop-catalogue');
+  } else {
+  mbox.classList.remove('shop-catalogue');
+  }
   renderBoutiqueOnglet(onglet);
 }
 
@@ -550,12 +559,16 @@ function renderBoutiqueOnglet(onglet) {
         </button>
       </div>
       ${dernierObj ? `
-        <div style="margin-top:20px;text-align:center;border-top:1px solid var(--border);padding-top:16px">
-          <div style="font-size:9px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">dernière création</div>
-          <canvas id="apercu-dernier-prop" style="image-rendering:pixelated;border-radius:6px;border:2px solid var(--border)"></canvas>
-          <div style="font-size:10px;font-weight:bold;margin-top:6px">${dernierObj.emoji} ${dernierObj.nom}</div>
-          <div style="font-size:8px;color:var(--text2);text-transform:uppercase;margin-top:2px">${dernierObj.type}</div>
-        </div>` : ''}
+  <div style="margin-top:20px;text-align:center;border-top:1px solid var(--border);padding-top:16px">
+    <div style="font-size:9px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">dernière création</div>
+    <canvas id="apercu-dernier-prop" style="image-rendering:pixelated;border-radius:6px;border:2px solid var(--border)"></canvas>
+    <div style="font-size:10px;font-weight:bold;margin-top:6px">${dernierObj.emoji} ${dernierObj.nom}</div>
+    <div style="font-size:8px;color:var(--text2);text-transform:uppercase;margin-top:2px">${dernierObj.type}</div>
+  </div>` : `
+  <div style="margin-top:20px;text-align:center;border-top:1px solid var(--border);padding-top:16px;opacity:.5">
+    <div style="font-size:28px;margin-bottom:6px">🌱</div>
+    <div style="font-size:9px;color:var(--text2);line-height:1.6">Pas encore de création...<br>demande à ${window.D.g.name} d'inventer quelque chose ✨</div>
+  </div>`}
     `;
 
     if (dernierObj) {

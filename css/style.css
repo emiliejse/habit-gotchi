@@ -549,11 +549,24 @@ body {
 }
 .modal-box.shop-open {
   animation: shopOpen 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Hauteur fixe uniquement pour le catalogue */
+.modal-box.shop-open.shop-catalogue {
   display: flex;
   flex-direction: column;
   height: 85dvh;
   max-height: 560px;
 }
+
+/* Onglet créations : s'adapte au contenu */
+.modal-box.shop-open:not(.shop-catalogue) {
+  display: block;
+  height: auto;
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+
 #boutique-contenu {
   flex: 1;
   overflow-y: auto;

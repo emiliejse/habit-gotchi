@@ -467,7 +467,7 @@ function ouvrirBoutique() {
 </p>
     </div>
 
-    <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
+    <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px;margin-right:2px">
       <button onclick="switchBoutiqueOnglet('catalogue')"
         style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;
         background:${onglet==='catalogue'?'#fff':'transparent'};

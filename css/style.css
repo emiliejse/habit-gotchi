@@ -571,6 +571,7 @@ body {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  padding-right: 4px;
 }
 
 @keyframes tamaSway {

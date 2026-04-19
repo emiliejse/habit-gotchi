@@ -81,17 +81,18 @@ function drawWind(p) {
  * Dessine un arc-en-ciel géométrique (Bonheur Max)
  */
 function drawRainbow(p) {
-  const cx = CS / 2, cy = 125; // ← centre au niveau du sol
+  const cx = CS + 20;  // ← centre hors écran à droite
+  const cy = 140;
   const bands = C.rainbow;
-  const rInner = 30;
-  const bandW = PX * 3;
+  const rInner = 60;
+  const bandW = PX * 2;
 
   for (let i = 0; i < bands.length; i++) {
     const rMin = rInner + i * bandW;
     const rMax = rMin + bandW;
     p.fill(bands[i]);
-    for (let gx = cx - rMax - PX; gx <= cx + rMax; gx += PX) {
-      for (let gy = cy - rMax - PX; gy < cy; gy += PX) { // gy < cy = seulement au-dessus
+    for (let gx = 0; gx <= CS; gx += PX) {
+      for (let gy = 0; gy < cy; gy += PX) {
         const dist = Math.sqrt((gx - cx) ** 2 + (gy - cy) ** 2);
         if (dist >= rMin && dist < rMax) {
           px(p, gx, gy, PX, PX);

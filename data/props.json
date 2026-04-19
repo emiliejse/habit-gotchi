@@ -79,22 +79,24 @@
       ]
     },
     {
-      "id": "couronne01",
-      "nom": "Couronne Dorée",
-      "ancrage": "tete",
-      "type": "accessoire",
-      "emoji": "👑",
-      "categorie": "tete",
-      "cout": 5,
-      "position": { "x": 0, "y": 0 },
-      "palette": ["transparent", "#f0c040", "#d8a030", "#f8e880"],
-      "pixels": [
-        [3,0,3,0,3,0,3],
-        [1,0,1,0,1,0,1],
-        [1,1,1,1,1,1,1],
-        [2,2,2,2,2,2,2]
-      ]
-    },
+  "id": "couronne01",
+  "nom": "Couronne d'Astres",
+  "ancrage": "tete",
+  "type": "accessoire",
+  "emoji": "👑",
+  "categorie": "tete",
+  "cout": 5,
+  "pxSize": 3,
+  "palette": ["transparent", "#1a1a3e", "#4a5fd9", "#a8b5ff", "#fff9e6", "#ffd700"],
+  "pixels": [
+    [0,0,4,0,0,0,0,4,0,0],
+    [0,4,5,4,0,0,4,5,4,0],
+    [0,3,4,3,0,0,3,4,3,0],
+    [2,3,2,3,2,2,3,2,3,2],
+    [2,2,2,2,2,2,2,2,2,2],
+    [1,2,1,1,2,2,1,1,2,1]
+  ]
+},
     {
       "id": "bougie01",
       "nom": "Bougie Douce",

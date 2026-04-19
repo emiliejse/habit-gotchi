@@ -1120,7 +1120,12 @@ async function askClaude() {
     notesRecentes: notesRecentes
       ? `Aujourd'hui : ${today()}. Ambiance récente : ${notesRecentes}`
       : `Aujourd'hui : ${today()}.`,
-    exemples:      (P?.bulles?.idle || []).slice(0, 3).join(', ') || '*bâille*, *sourit*',
+    exemples: [
+  ...(P?.bulles?.idle   || []).slice(0, 2),
+  ...(P?.bulles?.triste || []).slice(0, 1),
+  ...(P?.bulles?.matin  || []).slice(0, 1),
+  ...(P?.bulles?.soir   || []).slice(0, 1),
+].join(', ') || '*bâille*, *sourit*',
     existingNames: [...new Set([
     ...(D.g.props || []).map(p => p.nom),
     ...(window.PROPS_LIB || []).map(p => p.nom)

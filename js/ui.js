@@ -562,7 +562,7 @@ function acheterProp(propId) {
   
   D.g.petales = (D.g.petales || 0) - prop.cout;
   if (!D.g.props) D.g.props = [];
-  D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false, seen: false });
+  D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false, pxSize:  obj.pxSize  || null, seen: false });
   addEvent({
   type: 'cadeau',
   subtype: 'achat',
@@ -1132,7 +1132,7 @@ async function askClaude() {
     if (giveGift && data.cadeau) {
       if (!D.g.props) D.g.props = [];
       if (!D.g.props.find(p => p.id === data.cadeau.id)) {
-        D.g.props.push({ id:data.cadeau.id, nom:data.cadeau.nom, type:data.cadeau.type, actif:false, seen:false });
+        D.g.props.push({ id:data.cadeau.id, nom:data.cadeau.nom, type:data.cadeau.type, actif:false, pxSize:  obj.pxSize  || null, seen:false });
         D.propsPixels                = D.propsPixels || {};
         D.propsPixels[data.cadeau.id] = data.cadeau;
         window.PROPS_LOCAL           = Object.values(D.propsPixels);
@@ -1401,7 +1401,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
-      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:300, system:sysPrompt, messages })
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:600, system:sysPrompt, messages })
     });
     const d     = await r.json();
     const reply = d.content?.[0]?.text || 'Je suis là. 💜';
@@ -1525,7 +1525,7 @@ if (semaineEnCours) {
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
-      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:400, messages:[{role:'user',content:prompt}] })
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:800, messages:[{role:'user',content:prompt}] })
     });
     const d = await r.json();
     const bilan = d.content?.[0]?.text || 'Je n\'ai pas pu générer le bilan.';

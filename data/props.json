@@ -247,7 +247,7 @@
   "type": "accessoire",
   "emoji": "👨‍🍳",
   "categorie": "tete",
-  "cout": 5,
+  "cout": 6,
   "pxSize": 3,
   "palette": ["transparent", "#F8F8F8", "#E0E0E0", "#C8C8C8", "#FFD700"],
   "pixels": [
@@ -265,12 +265,86 @@
   "type": "accessoire",
   "emoji": "🌫️",
   "categorie": "cou",
-  "cout": 5,
+  "cout": 6,
   "pxSize": 3,
   "palette": ["transparent", "#e8f4f8", "#c5dde8", "#a3c7d6", "#7fa8ba"],
   "pixels": [
     [0,1,2,1,0],
     [2,3,4,3,2]
+  ]
+},
+{
+  "id": "chapeau_sorcier01",
+  "nom": "Chapeau de Sorcier",
+  "ancrage": "tete",
+  "type": "accessoire",
+  "emoji": "🎩",
+  "categorie": "tete",
+  "cout": 5,
+  "pxSize": 3,
+  "palette": ["transparent", "#1a0d42", "#2d1b6b", "#4a2d8f", "#6b4fb3", "#ffd700"],
+  "pixels": [
+    [0,0,0,3,3,0,0],
+    [0,0,2,4,4,2,0],
+    [0,2,3,4,4,3,2],
+    [2,3,3,4,3,3,2],
+    [1,2,2,2,2,2,1]
+  ]
+},
+{
+  "id": "flocon01",
+  "nom": "Flocon Éternel",
+  "type": "ambiance",
+  "emoji": "❄️",
+  "categorie": "ambiance",
+  "cout": 5,
+  "motion": "fall",
+  "pxSize": 3,
+  "palette": ["transparent", "#E8F4F8", "#B8D8E8", "#7AB8D8", "#4A90B0"],
+  "pixels": [
+    [0,0,0,1,0,0,0],
+    [0,0,2,3,2,0,0],
+    [0,2,3,4,3,2,0],
+    [1,3,4,4,4,3,1],
+    [0,2,3,4,3,2,0],
+    [0,0,2,3,2,0,0],
+    [0,0,0,1,0,0,0]
+  ]
+},
+{
+  "id": "nuage_reve01",
+  "nom": "Nuage de Rêve",
+  "type": "ambiance",
+  "emoji": "☁️",
+  "categorie": "ambiance",
+  "cout": 5,
+  "motion": "drift",
+  "pxSize": 3,
+  "palette": ["transparent", "#E8D5F2", "#C7A8E0", "#F5EBFF", "#B396D4"],
+  "pixels": [
+    [0,0,0,2,2,2,0,0,0,0],
+    [0,2,3,3,1,1,2,2,0,0],
+    [2,3,1,1,3,3,1,4,2,0],
+    [1,1,3,3,1,1,3,1,4,2],
+    [1,3,1,1,3,1,1,3,1,2],
+    [2,1,3,3,1,3,1,1,4,0],
+    [0,2,1,1,1,1,4,2,0,0],
+    [0,0,2,4,4,2,2,0,0,0]
+  ]
+},
+{
+  "id": "echarpe_mousse01",
+  "nom": "Écharpe de Mousse",
+  "ancrage": "cou",
+  "type": "accessoire",
+  "emoji": "🍃",
+  "categorie": "cou",
+  "cout": 5,
+  "pxSize": 3,
+  "palette": ["transparent", "#2d5016", "#4a7c2c", "#6b9d4a", "#8fbc6f"],
+  "pixels": [
+    [0,1,2,3,4,4,3,2,1,0],
+    [1,2,3,4,3,3,4,3,2,1]
   ]
 }
   ]

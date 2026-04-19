@@ -106,13 +106,14 @@ function getPropDef(id) {
  */
 function drawProp(p, prop, offsetX, offsetY) {
   if (!prop.pixels || !prop.palette) return;
+  const ps = prop.pxSize || PX;  // ← taille pixel du prop (défaut = PX global)
   p.noStroke();
   for(let row=0; row<prop.pixels.length; row++) {
     for(let col=0; col<prop.pixels[row].length; col++) {
       const ci = prop.pixels[row][col];
       if(ci === 0) continue;
       p.fill(prop.palette[ci]);
-      px(p, offsetX + col*PX, offsetY + row*PX, PX, PX);
+      px(p, offsetX + col*ps, offsetY + row*ps, ps, ps);
     }
   }
 }

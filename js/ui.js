@@ -518,7 +518,7 @@ function renderBoutiqueOnglet(onglet) {
 
   if (onglet === 'catalogue') {
     const lib = window.PROPS_LIB || [];
-    const libFiltree = lib.filter(prop => !(D.g.props || []).find(p => p.id === prop.id));
+    const libFiltree = lib.filter(prop => !(D.g.props || []).find(p => p.id === prop.id))
     .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
 
     el.innerHTML = libFiltree.map(prop => {

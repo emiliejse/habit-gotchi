@@ -1110,7 +1110,7 @@ async function askClaude() {
     .join(' / ');
 
   const vars = {
-    nom:           D.g.name      || P?.nom    || 'Petit·e Gotchi',
+    nameGotchi:           D.g.name      || P?.nom    || 'Petit·e Gotchi',
     userName:      D.g.userName  || D.userName || 'ton utilisatrice',
     style:         P?.style      || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
     traits:        P?.traits?.join(', ') || 'doux, joueur, curieux',

@@ -1103,7 +1103,7 @@ async function askClaude() {
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
-      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:800, messages:[{ role:'user', content:prompt }] })
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:500, messages:[{ role:'user', content:prompt }] })
     });
     const d       = await r.json();
     const rawText = d.content[0].text;
@@ -1206,7 +1206,7 @@ async function acheterPropClaude() {
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
-      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:600, temperature:1, messages:[{ role:'user', content:prompt }] })
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:500, temperature:1, messages:[{ role:'user', content:prompt }] })
     });
     const data  = await r.json();
     const match = data.content[0].text.match(/\{[\s\S]*\}/);
@@ -1401,7 +1401,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
-      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:600, system:sysPrompt, messages })
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:500, system:sysPrompt, messages })
     });
     const d     = await r.json();
     const reply = d.content?.[0]?.text || 'Je suis là. 💜';
@@ -1525,7 +1525,7 @@ if (semaineEnCours) {
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
-      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:800, messages:[{role:'user',content:prompt}] })
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:500, messages:[{role:'user',content:prompt}] })
     });
     const d = await r.json();
     const bilan = d.content?.[0]?.text || 'Je n\'ai pas pu générer le bilan.';

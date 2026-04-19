@@ -780,21 +780,22 @@ if (window.shakeTimer > 0) window.shakeTimer--;
 
     // 8. Props Accessoire (Sur le Gotchi)
     if (D.g.props) {
-      D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
-        const def = getPropDef(prop.id);
-        if (def && def.pixels) {
-          const accX = cx - Math.floor(def.pixels[0].length / 2) * PX;
-          const baseY = def.ancrage==='yeux' ? gotchiInfo.eyeY
-                      : def.ancrage==='cou'  ? gotchiInfo.neckY
-                      : gotchiInfo.topY;
-          const offsetY = def.ancrage==='yeux' ? PX*2
-                        : def.ancrage==='cou'  ? PX*3
-                        : PX;
-          const accY = baseY - def.pixels.length * PX + offsetY;
-          drawProp(p, def, accX, accY);
-        }
-      });
+  D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
+    const def = getPropDef(prop.id);
+    if (def && def.pixels) {
+      const ps = def.pxSize || PX;  // ← ajout
+      const accX = cx - Math.floor(def.pixels[0].length / 2) * ps;  // ← ps
+      const baseY = def.ancrage==='yeux' ? gotchiInfo.eyeY
+                  : def.ancrage==='cou'  ? gotchiInfo.neckY
+                  : gotchiInfo.topY;
+      const offsetY = def.ancrage==='yeux' ? ps*2   // ← ps
+                    : def.ancrage==='cou'  ? ps*3   // ← ps
+                    : ps;                           // ← ps
+      const accY = baseY - def.pixels.length * ps + offsetY;  // ← ps
+      drawProp(p, def, accX, accY);
     }
+  });
+}
 
     const wc = window.meteoData?.weathercode;
     if (wc === 45 || wc === 48) drawFog(p);

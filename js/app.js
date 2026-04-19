@@ -30,7 +30,7 @@ window.meteoData  = null;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v1.1';
+window.APP_VERSION = 'v1.2';
 
 /* ============================================================
    CHARGEMENT FICHIERS DATA + PROMPTS

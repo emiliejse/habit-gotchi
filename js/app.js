@@ -30,7 +30,7 @@ window.meteoData  = null;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v1.2'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v1.4'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 
 /* ============================================================

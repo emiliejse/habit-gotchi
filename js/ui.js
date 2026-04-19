@@ -570,7 +570,7 @@ function acheterProp(propId) {
   label: `${prop.emoji || ''} ${prop.nom}`.trim()
 });
   save();
-  toast(`🎁 ${prop.nom} ajouté à ton inventaire !`);
+  toast(`${obj.emoji || '🎁'} ${obj.nom} ajouté à ton inventaire !`);
   const buyMsgs = ["Oh un cadeau ! 🎁", "*yeux brillants* ✨", `${prop.emoji} Pour moi ?! 💜`, "J'adore ! 🌸", "*saute de joie* ✿"];
   flashBubble(buyMsgs[Math.floor(Math.random() * buyMsgs.length)], 2500);
   renderProps();
@@ -1231,8 +1231,14 @@ async function acheterPropClaude() {
       window.PROPS_LOCAL    = Object.values(D.propsPixels);
       save(); renderProps(); updUI();
 
-      toast(`🎁 ${obj.nom} ajouté à ton inventaire !`);
-      const iaMsgs = ["*yeux brillants* ✨", `${obj.emoji} J'adore ! 💜`, "Je l'ai fait moi-même ! 🌸", "*fière* ✿"];
+      toast(`${obj.emoji || '✨'} ${obj.nom} ajouté à ton inventaire !`);
+      const iaMsgs = [
+    `${obj.emoji} Je l'ai fait pour toi ! 💜`,
+    "*fier·e* C'est mon œuvre ! ✨",
+    `${obj.emoji} J'ai tout imaginé ! 🌸`,
+    "*souffle sur ses pattes* ✿",
+    "Je savais que tu aimerais ! 💜"
+      ];
       flashBubble(iaMsgs[Math.floor(Math.random() * iaMsgs.length)], 2500);
       ouvrirBoutique();
     }

@@ -400,6 +400,7 @@
   "id": "obj_galet_riviere",
   "nom": "Galet de Rivière",
   "type": "decor",
+      "cout": 6,
   "emoji": "🪨",
   "ancrage": null,
   "slot": "SOL",

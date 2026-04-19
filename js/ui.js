@@ -566,12 +566,14 @@ function renderBoutiqueOnglet(onglet) {
   </div>`}
     `;
 
-    if (dernierObj) {
+  if (dernierObj) {
   const canvas = document.getElementById('apercu-dernier-prop');
   if (canvas) {
     renderPropMini(canvas, dernierObj);
-    canvas.style.width = '96px';
-    canvas.style.height = '96px';
+    // Laisse le canvas à sa taille naturelle, juste un max pour les très grands
+    const maxPx = 96;
+    canvas.style.width  = Math.min(canvas.width,  maxPx) + 'px';
+    canvas.style.height = Math.min(canvas.height, maxPx) + 'px';
   }
 }
   }

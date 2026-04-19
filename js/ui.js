@@ -416,11 +416,16 @@ function renderProps() {
   }
   const filtered = D.g.props
     .map((p, index) => ({ p, index, def: allDefs.find(l => l.id === p.id) }))
-    .filter(({ p }) => {
-      if (propsFilterActive === 'tous') return true;
-      if (propsFilterActive === 'claude') return !!(D.propsPixels && D.propsPixels[p.id]);
-      return p.type === propsFilterActive;
-    });
+.filter(({ p }) => {
+    if (propsFilterActive === 'tous') return true;
+    if (propsFilterActive === 'claude') return !!(D.propsPixels && D.propsPixels[p.id]);
+    return p.type === propsFilterActive;
+  })
+  .sort((a, b) => {
+    // Actifs en premier, puis ordre alphabétique dans chaque groupe
+    if (b.p.actif !== a.p.actif) return b.p.actif ? 1 : -1;
+    return a.p.nom.localeCompare(b.p.nom, 'fr');
+  });
   listEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">` +
     filtered.map(({ p, index, def }) => {
       const isClaud = !!(D.propsPixels && D.propsPixels[p.id]);
@@ -514,6 +519,7 @@ function renderBoutiqueOnglet(onglet) {
   if (onglet === 'catalogue') {
     const lib = window.PROPS_LIB || [];
     const libFiltree = lib.filter(prop => !(D.g.props || []).find(p => p.id === prop.id));
+    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
 
     el.innerHTML = libFiltree.map(prop => {
       const peutAcheter = (D.g.petales || 0) >= prop.cout;
@@ -1761,7 +1767,7 @@ function saveJ() {
   if (!t && !selMood) return;
   window.D.journal.push({ date: new Date().toISOString(), mood: selMood || 'ok', text: t });
   addXp(15);
-  addEvent('note', 15, t.slice(0, 30) || 'Note sans texte');  // ← nouveau
+  addEvent('note', 15, 'Note enregistrée  +15 XP');  // ← nouveau
   toast(`+15 XP 📓`);                                         // ← nouveau
   save();
   document.getElementById('j-text').value = '';

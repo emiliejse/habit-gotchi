@@ -560,5 +560,14 @@ function clearDebugLogs() {
 <script src="js/envs.js"></script>
 <script src="js/ui.js"></script>
 
+<!-- PWA Service Worker -->
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('✿ SW enregistré'))
+      .catch(e => console.log('SW erreur:', e));
+  }
+</script>
+
 </body>
 </html>

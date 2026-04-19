@@ -229,8 +229,8 @@ function spawnPoop() {
     window.D.g.poopDay = td;
     window.D.g.poopCount = 0;
   }
-  // Limites : Max 5 cacas par jour, Max 5 affichés simultanément
-  if (window.D.g.poopCount >= 5) return;
+  // Limites : Max 10 cacas par jour, Max 5 affichés simultanément
+  if (window.D.g.poopCount >= 10) return;
   if ((window.D.g.poops || []).length >= 5) return;
   
   // Placement : Évite de superposer 2 cacas
@@ -249,8 +249,13 @@ function spawnPoop() {
   if (typeof updUI === 'function') updUI();
 }
 
-// Probabilité d'apparition : 35% de chance quand appelée
+// Probabilité d'apparition
 function maybeSpawnPoop() {
+  const now = Date.now();
+  const last = window.D.g.lastPoopSpawn || 0;
+  const minDelay = 25 * 60 * 1000; // 25 minutes minimum entre 2 crottes
+  
+  if (now - last < minDelay) return;
   if (Math.random() < 0.35) spawnPoop();
 }
 

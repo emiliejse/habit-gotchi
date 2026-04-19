@@ -599,20 +599,21 @@ const p5s = (p) => {
     const en = g.energy * 20, ha = g.happiness * 20;
     const n = (h >= 21 || h < 6);
 
-    // 1. Fond et Météo
+// 1. Fond et Météo
     drawSky(p, h, ha);
     if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
 
+    const estJour = h < 19;
     let envActif = g.activeEnv || 'parc';
     if (!sleeping) {
-      if (ha < 40)        drawRain(p, ha);      
-      else if (ha === 40) drawRain(p, 35);      
-      else if (ha === 80) drawSun(p);           
-      else if (ha >= 100) drawRainbow(p);       
+      if (ha < 40)                    drawRain(p, ha);
+      else if (ha === 40)             drawRain(p, 35);
+      else if (ha === 80 && estJour)  drawSun(p);
+      else if (ha >= 100 && estJour)  drawRainbow(p);
     }
     if (ha < 40) drawRain(p, ha);
     else if (ha === 40) drawRain(p, 35);
-    
+
     drawActiveEnv(p, envActif, n, h);
 
     // 2. Props Ambiance

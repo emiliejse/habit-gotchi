@@ -530,7 +530,7 @@ function renderBoutiqueOnglet(onglet) {
 
   } else {
     // Onglet IA
-    const peutGenerer = (D.g.petales || 0) >= 16;
+    const peutGenerer = (D.g.petales || 0) >= 10;
     el.innerHTML = `
       <p style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:16px;line-height:1.6">
         ${window.D.g.name} invente un objet unique<br>rien que pour toi ✨
@@ -543,7 +543,7 @@ function renderBoutiqueOnglet(onglet) {
           color:${peutGenerer?'#fff':'#aaa'};
           border-bottom:${peutGenerer?'3px solid rgba(0,0,0,0.15)':'3px solid transparent'};
           letter-spacing:.5px">
-          ${peutGenerer ? `✨ Demander à ${window.D.g.name} — 🌸 16` : '🌸 Il te faut 16 pétales'}
+          ${peutGenerer ? `✨ Demander à ${window.D.g.name} — 🌸 10` : '🌸 Il te faut 10 pétales'}
         </button>
       </div>
     `;
@@ -1162,10 +1162,10 @@ async function askClaude() {
  * Demande à Claude de générer un Pixel Art via la Boutique.
  */
 async function acheterPropClaude() {
-  if ((D.g.petales || 0) < 16) { toast(`Pas assez de pétales 🌸`); return; }
+  if ((D.g.petales || 0) < 10) { toast(`Pas assez de pétales 🌸`); return; }
   if (!D.apiKey) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
 
-  D.g.petales -= 16;
+  D.g.petales -= 10;
   save();
 
   /* ── Animation de chargement ── */

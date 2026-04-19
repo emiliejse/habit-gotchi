@@ -6,7 +6,7 @@
   "type": "decor",
   "emoji": "🍄",
   "categorie": "nature",
-  "cout": 10,
+  "cout": 5,
   "slot": "C",
   "palette": ["transparent", "#8B4513", "#FF6B9D", "#FFB5D8", "#FFF4A3"],
   "pixels": [
@@ -85,7 +85,7 @@
       "type": "accessoire",
       "emoji": "👑",
       "categorie": "tete",
-      "cout": 10,
+      "cout": 5,
       "position": { "x": 0, "y": 0 },
       "palette": ["transparent", "#f0c040", "#d8a030", "#f8e880"],
       "pixels": [
@@ -139,7 +139,7 @@
       "type": "decor",
       "emoji": "🪔",
       "categorie": "mobilier",
-      "cout": 10,
+      "cout": 5,
       "slot": "A",
       "palette": ["transparent", "#e8d088", "#d0b868", "#808080", "#606060", "#f8f0c0"],
       "pixels": [
@@ -190,7 +190,7 @@
       "type": "decor",
       "emoji": "🩷",
       "categorie": "sol",
-      "cout": 10,
+      "cout": 5,
       "slot": "C",
       "palette": ["transparent", "#e8a0bf", "#d080a0", "#f0c0d8"],
       "pixels": [
@@ -208,7 +208,7 @@
       "type": "decor",
       "emoji": "🌱",
       "categorie": "nature",
-      "cout": 10,
+      "cout": 5,
       "slot": "C",
       "palette": ["transparent", "#58a868", "#408048", "#c08860", "#a07048", "#78c888"],
       "pixels": [
@@ -229,7 +229,7 @@
       "type": "accessoire",
       "emoji": "🎀",
       "categorie": "tete",
-      "cout": 10,
+      "cout": 5,
       "position": { "x": 0, "y": 0 },
       "palette": ["transparent", "#e898b8", "#d080a0", "#c06888"],
       "pixels": [

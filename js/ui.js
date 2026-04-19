@@ -568,12 +568,24 @@ function renderBoutiqueOnglet(onglet) {
 
   if (dernierObj) {
   const canvas = document.getElementById('apercu-dernier-prop');
-  if (canvas) {
-    renderPropMini(canvas, dernierObj);
-    // Laisse le canvas à sa taille naturelle, juste un max pour les très grands
-    const maxPx = 96;
-    canvas.style.width  = Math.min(canvas.width,  maxPx) + 'px';
-    canvas.style.height = Math.min(canvas.height, maxPx) + 'px';
+  if (canvas && dernierObj.pixels) {
+    const ctx = canvas.getContext('2d');
+    const cols = dernierObj.pixels[0].length;
+    const rows = dernierObj.pixels.length;
+    const px = Math.min(Math.floor(96 / Math.max(cols, rows)), 10); // ← 54→96, 6→10
+    canvas.width  = cols * px;
+    canvas.height = rows * px;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const ci = dernierObj.pixels[r][c];
+        if (ci === 0) continue;
+        ctx.fillStyle = dernierObj.palette[ci];
+        ctx.fillRect(c * px, r * px, px, px);
+      }
+    }
+    canvas.style.width  = canvas.width  + 'px';
+    canvas.style.height = canvas.height + 'px';
   }
 }
   }

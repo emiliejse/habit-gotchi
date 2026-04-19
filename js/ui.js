@@ -532,7 +532,7 @@ function renderBoutiqueOnglet(onglet) {
 // Onglet IA
     const peutGenerer = (D.g.petales || 0) >= 10;
     const derniersProps = Object.values(window.D.propsPixels || {});
-    const dernierObj = derniersProps.length ? derniersProps[derniersProps.length - 1] : null;
+    const dernierObj = derniersProps.length ? derniersProps[derniersProps.length - 1] : null; 
 
     el.innerHTML = `
       <p style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:16px;line-height:1.6">

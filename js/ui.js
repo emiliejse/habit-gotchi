@@ -1074,7 +1074,10 @@ async function askClaude() {
       ? `Aujourd'hui : ${today()}. Ambiance récente : ${notesRecentes}`
       : `Aujourd'hui : ${today()}.`,
     exemples:      (P?.bulles?.idle || []).slice(0, 3).join(', ') || '*bâille*, *sourit*',
-    existingNames: (D.g.props || []).map(p => p.nom).join(', ') || 'aucun',
+    existingNames: [...new Set([
+    ...(D.g.props || []).map(p => p.nom),
+    ...(window.PROPS_LIB || []).map(p => p.nom)
+    ])].join(', ') || 'aucun',
     timestamp:     Date.now(),
   };
 
@@ -1174,7 +1177,12 @@ async function acheterPropClaude() {
   const animProp = startThinkingAnim('prop-loading', window.D.g.name);
 
   /* ── Construction du prompt ── */
-  const nomsExistants = (D.g.props || []).map(p => `${p.nom} (${p.type})`).join(', ') || 'aucun';
+  const nomsInventaire = (D.g.props || []).map(p => `${p.nom} (${p.type})`);
+  const nomsCatalogue  = (window.PROPS_LIB || []).map(p => `${p.nom} (${p.type})`);
+  const nomsExistants = [...new Set([
+  ...(D.g.props || []).map(p => p.nom),
+  ...(window.PROPS_LIB || []).map(p => p.nom)
+  ])].join(', ') || 'aucun';
   const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
   const theme  = themes[Math.floor(Math.random() * themes.length)];
   const ctx    = window.AI_CONTEXTS;

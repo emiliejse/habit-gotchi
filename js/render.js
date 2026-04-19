@@ -672,7 +672,8 @@ if (D.g.props) {
 
 // 6. Locomotion Gotchi
 bounceT += sleeping ? 0.04 : 0.12;
-let bobY = sleeping ? Math.sin(bounceT) : Math.sin(bounceT)*3 + GOTCHI_OFFSET_Y;
+const staticBob = sleeping ? Math.sin(bounceT) : Math.sin(bounceT) * 3;
+let bobY = staticBob + GOTCHI_OFFSET_Y;
 
 if (window.eatAnim?.active) {
   const progress = 1 - (window.eatAnim.timer / 50);
@@ -680,8 +681,8 @@ if (window.eatAnim?.active) {
     window.eatAnim.jumped = true;
   }
   if (window.eatAnim.jumped) {
-    const t = 1 - (window.eatAnim.timer / (50 * 0.15)); 
-    bobY -= Math.sin(t * Math.PI) * 18; 
+    const t = 1 - (window.eatAnim.timer / (50 * 0.15));
+    bobY -= Math.sin(t * Math.PI) * 18;
   }
 }
 
@@ -785,9 +786,9 @@ if (D.g.props) {
     if (def && def.pixels) {
       const ps = def.pxSize || PX;
       const accX = cx - Math.floor(def.pixels[0].length * ps / 2);
-      const baseY = def.ancrage === 'yeux' ? gotchiInfo.eyeY - bobY
-                  : def.ancrage === 'cou'  ? gotchiInfo.neckY - bobY
-                  : gotchiInfo.topY - bobY;
+      const baseY = def.ancrage === 'yeux' ? gotchiInfo.eyeY - staticBob
+                  : def.ancrage === 'cou'  ? gotchiInfo.neckY - staticBob
+                  : gotchiInfo.topY - staticBob;
       const offsetY = def.ancrage === 'yeux' ? (D.g.stage === 'teen' ? ps * 3 : ps * 2)
                     : def.ancrage === 'cou'  ? (D.g.stage === 'baby' ? ps * 3 : ps * 5)
                     : ps;

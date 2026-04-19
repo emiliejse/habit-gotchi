@@ -377,11 +377,6 @@ let propsFilterActive = 'tous';
  * Dessine un aperçu d'un prop Pixel Art sur un élément Canvas (Boutique/Inventaire)
  */
 function renderPropMini(canvas, def) {
-  if (canvas) {
-  renderPropMini(canvas, dernierObj);
-  canvas.style.width = '96px';
-  canvas.style.height = '96px';
-  }
   if (!canvas || !def || !def.pixels) return;
   const ctx = canvas.getContext('2d');
   const cols = def.pixels[0].length, rows = def.pixels.length;
@@ -572,9 +567,13 @@ function renderBoutiqueOnglet(onglet) {
     `;
 
     if (dernierObj) {
-      const canvas = document.getElementById('apercu-dernier-prop');
-      if (canvas) renderPropMini(canvas, dernierObj);
-    }
+  const canvas = document.getElementById('apercu-dernier-prop');
+  if (canvas) {
+    renderPropMini(canvas, dernierObj);
+    canvas.style.width = '96px';
+    canvas.style.height = '96px';
+  }
+}
   }
 }
 

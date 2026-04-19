@@ -617,8 +617,8 @@ function acheterProp(propId) {
   label: `${prop.emoji || ''} ${prop.nom}`.trim()
 });
   save();
-  toast(`${prop.emoji || '🎁'} ${prop.nom} ajouté à ton inventaire !`);
-  const buyMsgs = ["Oh un cadeau ! 🎁", "*yeux brillants* ✨", `${prop.emoji} Pour moi ?! 💜`, "J'adore ! 🌸", "*saute de joie* ✿"];
+  toast(`${prop.emoji || '🛍️'} ${prop.nom} ajouté à ton inventaire !`);
+  const buyMsgs = [`${prop.emoji} Pour moi ?! 💜`, "*yeux brillants* ✨", `${prop.emoji} J'adore ! 🌸`, "*saute de joie* ✿`, `${prop.emoji} Trop beau ! ✿`];
   flashBubble(buyMsgs[Math.floor(Math.random() * buyMsgs.length)], 2500);
   renderProps();
   updUI();
@@ -915,7 +915,7 @@ r += `${(D.journal||[]).length} entrées · ${nbBulles} bulles perso\n\n`;
   const meteo = window.meteoData || D.meteo;
 r += `🌡️ ${meteo ? `${meteo.temperature}°C · vent ${meteo.windspeed} km/h` : 'aucune donnée'}\n\n`;
 
-  r += `💩 Crottes ramassées aujourd'hui: ${g.poopCount || 0}/5\n\n`;
+  r += `💩 Crottes ramassées aujourd'hui: ${g.poopCount || 0}/10\n\n`;
 
   r += `💾 LocalStorage: ${lsKo} Ko`;
 
@@ -1282,6 +1282,8 @@ async function acheterPropClaude() {
       D.propsPixels[obj.id] = obj;
       window.PROPS_LOCAL    = Object.values(D.propsPixels);
       save(); renderProps(); updUI();
+      addEvent({ type: 'cadeau', subtype: 'ia', valeur: 0, label: `${obj.emoji || '✨'} ${obj.nom} créé par ${D.g.name} !` });
+      updTabletBadge();
 
       toast(`${obj.emoji || '✨'} ${obj.nom} ajouté à ton inventaire !`);
       const iaMsgs = [
@@ -2079,7 +2081,7 @@ function openTablet() {
   
   // Sinon, fallback sur le type
   if (ev.type === 'xp')       return (ev.valeur < 0) ? '💤' : '⭐';
-  if (ev.type === 'cadeau')   return '🎁';
+  if (ev.type === 'cadeau')   return ev.label?.split(' ')[0] || '🎁';
   if (ev.type === 'habitude') return '✅';
   if (ev.type === 'note')     return '📓';
   return '•';

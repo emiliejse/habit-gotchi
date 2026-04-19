@@ -1135,7 +1135,7 @@ async function askClaude() {
         window.PROPS_LOCAL           = Object.values(D.propsPixels);
         D.lastGiftDate               = td;
 
-        const poolCadeau = src.cadeau || ["Oh ! Un cadeau ! 🎁"];
+        const poolCadeau = ["Oh ! Un cadeau ! 🎁", "*yeux brillants* ✨", `${data.cadeau.emoji} Pour moi ?! 💜`, "J'adore ! 🌸"];
         const bulleCadeau = poolCadeau[Math.floor(Math.random() * poolCadeau.length)];
         flashBubble(bulleCadeau.replace('{{nom}}', D.g.name || 'toi'), 3000);
         toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);

@@ -239,6 +239,54 @@
         [1,1,1,2,1,1,1],
         [0,2,0,3,0,2,0]
       ]
-    }
+    },
+    {
+  "id": "toque01",
+  "nom": "Toque de Chef Étoilée",
+  "ancrage": "tete",
+  "type": "accessoire",
+  "emoji": "👨‍🍳",
+  "categorie": "tete",
+  "cout": 5,
+  "pxSize": 3,
+  "palette": ["transparent", "#F8F8F8", "#E0E0E0", "#C8C8C8", "#FFD700"],
+  "pixels": [
+    [0,0,1,1,1,1,1,0,0],
+    [0,1,2,2,2,2,2,1,0],
+    [1,2,1,1,1,1,1,2,1],
+    [1,2,1,4,1,4,1,2,1],
+    [2,2,2,2,2,2,2,2,2]
+  ]
+},
+{
+  "id": "echarpe01",
+  "nom": "Écharpe de Brume",
+  "ancrage": "cou",
+  "type": "accessoire",
+  "emoji": "🌫️",
+  "categorie": "cou",
+  "cout": 5,
+  "pxSize": 3,
+  "palette": ["transparent", "#e8f4f8", "#c5dde8", "#a3c7d6", "#7fa8ba"],
+  "pixels": [
+    [0,1,2,1,0],
+    [2,3,4,3,2]
+  ]
+},
+{
+  "id": "echarpe01",
+  "nom": "Écharpe de Brume",
+  "ancrage": "cou",
+  "type": "accessoire",
+  "emoji": "🌫️",
+  "categorie": "cou",
+  "cout": 5,
+  "pxSize": 3,
+  "palette": ["transparent", "#e8f4f8", "#c5dde8", "#a3c7d6", "#7fa8ba"],
+  "pixels": [
+    [0,1,2,1,0],
+    [2,3,4,3,2]
+  ]
+}
   ]
 }

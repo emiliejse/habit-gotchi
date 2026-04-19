@@ -514,7 +514,7 @@ function renderBoutiqueOnglet(onglet) {
     el.innerHTML = libFiltree.map(prop => {
       const peutAcheter = (D.g.petales || 0) >= prop.cout;
       return `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px;border:2px solid var(--border);border-radius:10px;margin-bottom:6px;background:#fff">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px 8px 10px;border:2px solid var(--border);border-radius:10px;margin-bottom:6px;background:#fff">
           <span style="font-size:18px">${prop.emoji}</span>
           <span style="font-size:10px;font-weight:bold;flex:1;margin:0 8px">${prop.nom}</span>
           <button onclick="acheterProp('${prop.id}')"
@@ -529,8 +529,11 @@ function renderBoutiqueOnglet(onglet) {
     }).join('');
 
   } else {
-    // Onglet IA
+// Onglet IA
     const peutGenerer = (D.g.petales || 0) >= 10;
+    const derniersProps = Object.values(window.D.propsPixels || {});
+    const dernierObj = derniersProps.length ? derniersProps[derniersProps.length - 1] : null;
+
     el.innerHTML = `
       <p style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:16px;line-height:1.6">
         ${window.D.g.name} invente un objet unique<br>rien que pour toi ✨
@@ -546,7 +549,19 @@ function renderBoutiqueOnglet(onglet) {
           ${peutGenerer ? `✨ Demander à ${window.D.g.name} — 🌸 10` : '🌸 Il te faut 10 pétales'}
         </button>
       </div>
+      ${dernierObj ? `
+        <div style="margin-top:20px;text-align:center;border-top:1px solid var(--border);padding-top:16px">
+          <div style="font-size:9px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">dernière création</div>
+          <canvas id="apercu-dernier-prop" style="image-rendering:pixelated;border-radius:6px;border:2px solid var(--border)"></canvas>
+          <div style="font-size:10px;font-weight:bold;margin-top:6px">${dernierObj.emoji} ${dernierObj.nom}</div>
+          <div style="font-size:8px;color:var(--text2);text-transform:uppercase;margin-top:2px">${dernierObj.type}</div>
+        </div>` : ''}
     `;
+
+    if (dernierObj) {
+      const canvas = document.getElementById('apercu-dernier-prop');
+      if (canvas) renderPropMini(canvas, dernierObj);
+    }
   }
 }
 

@@ -789,7 +789,7 @@ if (window.shakeTimer > 0) window.shakeTimer--;
                   : def.ancrage==='cou'  ? gotchiInfo.neckY
                   : gotchiInfo.topY;
       const offsetY = def.ancrage==='yeux' ? ps*2   // ← ps
-                    : def.ancrage==='cou'  ? ps*5   // ← ps
+                    : def.ancrage==='cou'  ? (g.stage === 'baby' ? ps*3 : ps*5)   // ← ps
                     : ps;                           // ← ps
       const accY = baseY - def.pixels.length * ps + offsetY;  // ← ps
       drawProp(p, def, accX, accY);

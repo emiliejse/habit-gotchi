@@ -1581,7 +1581,7 @@ if (semaineEnCours) {
     ? ctx.genBilanSemaine
         .replace('{{weekStart}}',    wd[0])
         .replace('{{weekEnd}}',      wd[6])
-        .replace('{{name}}',         g.name)
+        .replace('{{nameGotchi}}',   g.name)
         .replace('{{userName}}',     D.g.userName || D.userName || 'ton utilisatrice')
         .replace('{{stage}}',        s.l)
         .replace('{{energy}}',       g.energy)

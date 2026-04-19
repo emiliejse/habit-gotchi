@@ -779,16 +779,23 @@ if (window.shakeTimer > 0) window.shakeTimer--;
 
     p.pop();
 
+// Après le bloc de dessin du gotchi, recalcule gotchiInfo en statique
+const staticInfo = {
+  topY:  by + GOTCHI_OFFSET_Y,
+  eyeY:  by + GOTCHI_OFFSET_Y + (D.g.stage === 'adult' ? PX*3 : PX*2),
+  neckY: by + GOTCHI_OFFSET_Y + (D.g.stage === 'teen' ? PX*5 : D.g.stage === 'adult' ? PX*6 : PX*4),
+};
+
 // 8. Props Accessoire (Sur le Gotchi)
 if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
     const def = getPropDef(prop.id);
     if (def && def.pixels) {
       const ps = def.pxSize || PX;
-      const accX = cx - Math.floor(def.pixels[0].length * ps / 2) + shakeOffsetX;
-      const baseY = def.ancrage === 'yeux' ? gotchiInfo.eyeY - bobY + GOTCHI_OFFSET_Y - shakeOffsetY
-            : def.ancrage === 'cou'  ? gotchiInfo.neckY - bobY + GOTCHI_OFFSET_Y - shakeOffsetY
-            : gotchiInfo.topY - bobY + GOTCHI_OFFSET_Y - shakeOffsetY;
+      const accX = drawX - Math.floor(def.pixels[0].length * ps / 2);
+      const baseY = def.ancrage === 'yeux' ? staticInfo.eyeY
+            : def.ancrage === 'cou'  ? staticInfo.neckY
+            : staticInfo.topY;
       const offsetY = def.ancrage === 'yeux' ? (D.g.stage === 'teen' ? ps * 3 : ps * 2)
                     : def.ancrage === 'cou'  ? (D.g.stage === 'baby' ? ps * 3 : ps * 5)
                     : ps;

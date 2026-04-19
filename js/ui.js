@@ -1357,7 +1357,7 @@ function genSoutien() {
   const P = window.PERSONALITY;
   const promptInit = ctx
   ? ctx.genSoutien
-      .replace('{{nom}}',          D.g.name || P?.nom || 'Gotchi')
+      .replace('{{nameGotchi}}',          D.g.name || P?.nom || 'Gotchi')
       .replace('{{userName}}',     D.g.userName || D.userName || 'toi')
       .replace('{{style}}',        P?.style || 'Phrases courtes, bienveillant.')
       .replace('{{traits}}',       P?.traits?.join(', ') || 'doux, curieux')
@@ -1449,7 +1449,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
     .join(', ') || 'aucune';
 
   const contexte = (window.AI_SYSTEM?.soutien_contexte || '')
-    .replace('{{nom}}',              D.g.name || P?.nom || 'Gotchi')
+    .replace('{{nameGotchi}}',              D.g.name || P?.nom || 'Gotchi')
     .replace('{{userName}}',         D.g.userName || D.userName || 'toi')
     .replace('{{style}}',            P?.style || 'Phrases courtes, bienveillant.')
     .replace('{{traits}}',           P?.traits?.join(', ') || 'doux, curieux')
@@ -1462,7 +1462,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
     .replace('{{messages_restants}}', 6 - window._soutienCount);
 
   const sysPrompt = (window.AI_SYSTEM?.soutien || '')
-    .replace('{{nom}}',      D.g.name || P?.nom || 'Gotchi')
+    .replace('{{nameGotchi}}',      D.g.name || P?.nom || 'Gotchi')
     .replace('{{userName}}', D.g.userName || D.userName || 'toi')
     .replace('{{style}}',    P?.style || 'Phrases courtes, bienveillant.')
     .replace('{{traits}}',   P?.traits?.join(', ') || 'doux, curieux')

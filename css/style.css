@@ -555,8 +555,8 @@ body {
 .modal-box.shop-open.shop-catalogue {
   display: flex;
   flex-direction: column;
-  height: 85dvh;
-  max-height: 560px;
+  height: auto;
+  max-height: 85dvh;
 }
 
 /* Onglet créations : s'adapte au contenu */

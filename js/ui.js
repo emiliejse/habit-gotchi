@@ -1184,7 +1184,7 @@ async function askClaude() {
     if (giveGift && data.cadeau) {
       if (!D.g.props) D.g.props = [];
       if (!D.g.props.find(p => p.id === data.cadeau.id)) {
-        D.g.props.push({ id:data.cadeau.id, nom:data.cadeau.nom, type:data.cadeau.type, actif:false, pxSize:  obj.pxSize  || null, seen:false });
+        D.g.props.push({ id:data.cadeau.id, nom:data.cadeau.nom, type:data.cadeau.type, actif:false, pxSize: data.cadeau.pxSize || null, seen:false });
         D.propsPixels                = D.propsPixels || {};
         D.propsPixels[data.cadeau.id] = data.cadeau;
         window.PROPS_LOCAL           = Object.values(D.propsPixels);

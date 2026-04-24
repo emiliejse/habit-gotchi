@@ -420,7 +420,7 @@ function renderProps() {
   const btnTout = document.getElementById('btn-ranger-tout');
 if (btnTout) {
   const aDesActifs = D.g.props.some(p => p.actif);
-  btnTout.style.display = aDesActifs ? 'flex' : 'none';
+  btnTout.style.display = aDesActifs ? 'block' : 'none';
 }
   const listEl = document.getElementById('props-list');
   if (!listEl) return;
@@ -881,6 +881,7 @@ function rangerProp(propIndex) {
 }
 
 function rangerTout(type = 'all') {
+  if (!confirm('📦 Ranger tous les objets actifs ?')) return;
   const D = window.D;
   let count = 0;
   D.g.props.forEach(p => {

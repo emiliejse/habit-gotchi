@@ -2701,25 +2701,43 @@ function toggleJourneeEntiere(checked) {
 }
 
 function confirmerSuppressionRdv(id) {
-  document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = `
-    <p style="text-align:center;font-size:12px;margin-bottom:12px">Supprimer ce rendez-vous ?</p>
-    <div style="display:flex;gap:6px">
-      <button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button>
-      <button class="btn btn-d" onclick="supprimerRdv('${id}');clModal()" style="flex:1">Supprimer</button>
-    </div>`;
-  animEl(document.getElementById('mbox'), 'bounceIn');
+  const el = document.getElementById('agenda-contenu');
+  const rdv = (window.D.rdv || []).find(r => r.id === id);
+  if (!rdv) return;
+  el.insertAdjacentHTML('afterbegin', `
+    <div id="confirm-inline" style="position:sticky;top:0;z-index:10;
+      background:#fff;border:2px solid var(--coral);border-radius:10px;
+      padding:10px;margin-bottom:10px;text-align:center">
+      <div style="font-size:11px;margin-bottom:8px">
+        Supprimer <b>${rdv.label}</b> ?
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-s" onclick="fermerConfirmInline()" style="flex:1">Annuler</button>
+        <button class="btn btn-d" onclick="supprimerRdv('${id}');fermerConfirmInline()" style="flex:1">Supprimer</button>
+      </div>
+    </div>`);
 }
 
 function confirmerSuppressionCycle(ds) {
-  document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = `
-    <p style="text-align:center;font-size:12px;margin-bottom:12px">Supprimer ce cycle ?</p>
-    <div style="display:flex;gap:6px">
-      <button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button>
-      <button class="btn btn-d" onclick="supprimerCycle('${ds}');clModal()" style="flex:1">Supprimer</button>
-    </div>`;
-  animEl(document.getElementById('mbox'), 'bounceIn');
+  const el = document.getElementById('agenda-contenu');
+  const date = new Date(ds + 'T12:00');
+  const fmt  = date.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
+  el.insertAdjacentHTML('afterbegin', `
+    <div id="confirm-inline" style="position:sticky;top:0;z-index:10;
+      background:#fff;border:2px solid var(--coral);border-radius:10px;
+      padding:10px;margin-bottom:10px;text-align:center">
+      <div style="font-size:11px;margin-bottom:8px">
+        Supprimer le cycle du <b>${fmt}</b> ?
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-s" onclick="fermerConfirmInline()" style="flex:1">Annuler</button>
+        <button class="btn btn-d" onclick="supprimerCycle('${ds}');fermerConfirmInline()" style="flex:1">Supprimer</button>
+      </div>
+    </div>`);
+}
+
+function fermerConfirmInline() {
+  document.getElementById('confirm-inline')?.remove();
 }
 
 function editerRdv(id) {
@@ -2762,14 +2780,12 @@ function declarerRegles(ds) {
 
 function ouvrirJournalAuJour(ds) {
   fermerAgenda();
-  const cible = new Date(ds + 'T12:00');
+  const cible      = new Date(ds + 'T12:00');
   const maintenant = new Date(today() + 'T12:00');
-  const diffJours = Math.round((cible - maintenant) / 86400000);
+  const diffJours  = Math.round((cible - maintenant) / 86400000);
   window._journalWOff = Math.floor(diffJours / 7);
-  // Ferme le menu s'il est ouvert avant de naviguer
-  const menuOverlay = document.getElementById('menu-overlay');
-  if (menuOverlay) menuOverlay.classList.remove('open');
-  goMenu('journal');
+  document.getElementById('menu-overlay')?.classList.remove('open');
+  go('journal'); // ← go() directement, sans toggleMenu
 }
 
 /* ─── PANNEAU 2 : MOIS ─────────────────────────────────────── */
@@ -2850,32 +2866,27 @@ function renderAgendaMois(el) {
     const border = estAujourd ? '2px solid var(--lilac)' : '1px solid transparent';
 
     cells += `
-      <div onclick="clickJourMois('${ds}')"
-        style="position:relative;aspect-ratio:1;border-radius:6px;cursor:pointer;
-        background:${bgColor};border:${border};
-        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
+  <div onclick="clickJourMois('${ds}')"
+    style="position:relative;aspect-ratio:1;border-radius:6px;cursor:pointer;
+    background:${bgColor};border:${border};
+    display:flex;flex-direction:column;align-items:center;
+    justify-content:space-between;padding:2px 1px">
 
-        <!-- Cercle ovulation (bleu) -->
-        ${estOvul ? `<div style="position:absolute;inset:2px;border-radius:4px;
-          border:2px solid #80b8e055;background:#80b8e022;pointer-events:none"></div>` : ''}
+    ${estOvul ? `<div style="position:absolute;inset:1px;border-radius:5px;
+      border:2px solid #80b8e066;pointer-events:none"></div>` : ''}
+    ${estJ1 ? `<div style="position:absolute;top:2px;right:2px;width:6px;height:6px;
+      border-radius:50%;background:#e07080"></div>` : ''}
+    ${estPredic && !estJ1 ? `<div style="position:absolute;inset:1px;border-radius:5px;
+      border:2px dashed #e0708066;pointer-events:none"></div>` : ''}
 
-        <!-- Point rouge J1 -->
-        ${estJ1 ? `<div style="position:absolute;top:2px;right:2px;width:6px;height:6px;
-          border-radius:50%;background:#e07080"></div>` : ''}
+    <span style="font-size:10px;font-weight:${estAujourd?'bold':'normal'};
+      color:${estAujourd?'var(--lilac)':'var(--text)'};margin-top:2px">${d}</span>
 
-        <!-- Cercles prédiction (rouge clair) -->
-        ${estPredic && !estJ1 ? `<div style="position:absolute;inset:2px;border-radius:4px;
-          border:2px dashed #e0708055;pointer-events:none"></div>` : ''}
-
-        <span style="font-size:10px;font-weight:${estAujourd?'bold':'normal'};
-          color:${estAujourd?'var(--lilac)':'var(--text)'};line-height:1">${d}</span>
-
-        <!-- Icônes rdv + note -->
-        <div style="display:flex;gap:1px;font-size:7px;line-height:1">
-          ${aRdv  ? '📌' : ''}
-          ${aNote ? '📓' : ''}
-        </div>
-      </div>`;
+    <div style="display:flex;gap:1px;font-size:8px;line-height:1;margin-bottom:1px">
+      ${aRdv  ? '📌' : ''}
+      ${aNote ? '📓' : ''}
+    </div>
+  </div>`;
   }
 
   cells += '</div>';
@@ -2888,17 +2899,16 @@ function renderAgendaMois(el) {
       <button onclick="navAgendaMois(1)" style="background:none;border:none;font-size:18px;cursor:pointer">▶</button>
     </div>
 
-// Légende
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
-  <span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--text2)">
-    <span style="display:inline-block;width:12px;height:12px;border-radius:3px;
-      background:linear-gradient(to right,rgba(80,180,120,0.1),rgba(80,180,120,0.8))"></span>
-    habitudes
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+  <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)">
+    <span style="display:inline-block;width:16px;height:10px;border-radius:3px;
+      background:linear-gradient(to right,rgba(80,180,120,0.1),rgba(80,180,120,0.9))"></span>
+    Habitudes
   </span>
-  <span style="font-size:9px;color:#e07080">● règles</span>
-  <span style="font-size:9px;color:#80b8e0">◻ ovulation</span>
-  <span style="font-size:9px;color:#e07080">⬚ prédiction</span>
-  <span style="font-size:9px;color:var(--text2)">📌 rdv &nbsp;📓 note</span>
+  <span style="font-size:11px;color:#e07080">● Règles</span>
+  <span style="font-size:11px;color:#80b8e0">◻ Ovulation</span>
+  <span style="font-size:11px;color:#e07080">⬚ Prédiction</span>
+  <span style="font-size:11px;color:var(--text2)">📌 Rdv &nbsp; 📓 Note</span>
 </div>
 
     ${cells}
@@ -3016,8 +3026,14 @@ function renderAgendaCycle(el) {
           <div style="display:flex;align-items:center;justify-content:space-between;
             padding:6px 0;border-bottom:1px solid var(--border)">
             <span style="font-size:11px;color:var(--text)">${l.label}</span>
-            <button onclick="confirmerSuppressionCycle('${l.debut}')"
-              style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2)">🗑️</button>
+            <div style="display:flex;gap:4px">
+  <input type="date" id="edit-cycle-${i}" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
+    value="${l.debut}" onchange="modifierCycle('${l.debut}', this.value)">
+  <button onclick="document.getElementById('edit-cycle-${i}').showPicker()"
+    style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
+  <button onclick="confirmerSuppressionCycle('${l.debut}')"
+    style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2)">🗑️</button>
+</div>
           </div>`).join('')}
         <button onclick="exporterCycles()"
           style="width:100%;margin-top:10px;padding:8px;border-radius:10px;
@@ -3044,7 +3060,26 @@ function renderAgendaCycle(el) {
     ${historiqueHtml}
   `;
 }
+function modifierCycle(ancienneDate, nouvelleDate) {
+  if (!nouvelleDate || ancienneDate === nouvelleDate) return;
+  const D = window.D;
 
+  // Vérifie pas de doublon
+  const doublon = (D.cycle || []).find(e => e.date === nouvelleDate && e.type === 'regles');
+  if (doublon) { toast('Un cycle existe déjà à cette date'); return; }
+
+  // Remplace la date
+  const idx = (D.cycle || []).findIndex(e => e.date === ancienneDate && e.type === 'regles');
+  if (idx !== -1) {
+    D.cycle[idx].date = nouvelleDate;
+    // Retrie par date décroissante
+    D.cycle.sort((a, b) => a.date > b.date ? -1 : 1);
+  }
+  save();
+  toast('Cycle mis à jour ✓');
+  // Recalcul automatique — tout se base sur D.cycle donc juste re-render
+  renderAgendaCycle(document.getElementById('agenda-contenu'));
+}
 function declarerReglesCycle() {
   const ds = document.getElementById('cycle-date-input').value;
   if (!ds) return;

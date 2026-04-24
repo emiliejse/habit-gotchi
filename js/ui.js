@@ -2515,23 +2515,17 @@ let _agendaJour = null; // date string "2025-04-24" du jour affiché
 function ouvrirAgenda(dateStr) {
   _agendaJour = dateStr || today();
 
-    modalLocked = true;
-  setTimeout(() => { modalLocked = false; }, 400);
-  
   const mbox = document.getElementById('mbox');
+  const modal = document.getElementById('modal');
+
+  // 1. Prépare le contenu avant d'afficher
   mbox.classList.remove('shop-open', 'shop-catalogue', 'agenda-open');
-  
-  document.getElementById('modal').style.display = 'flex';
-  document.getElementById('dynamic-zone').style.overflowY = 'hidden';
-  
   mbox.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h3 style="font-size:13px;color:var(--lilac)">🗓️ Mon Agenda</h3>
       <button onclick="fermerAgenda()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
     </div>
-
-    <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);
-      border-radius:20px;padding:3px">
+    <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
       <button onclick="switchAgenda('jour')" id="atab-jour"
         style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
         cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
@@ -2548,12 +2542,17 @@ function ouvrirAgenda(dateStr) {
         🌸 Cycle
       </button>
     </div>
-
     <div id="agenda-contenu"></div>
   `;
 
+  // 2. Applique les classes AVANT d'afficher
   void mbox.offsetWidth;
   mbox.classList.add('shop-open', 'agenda-open');
+
+  // 3. Affiche seulement maintenant
+  document.getElementById('dynamic-zone').style.overflowY = 'hidden';
+  modal.style.display = 'flex';
+
   animEl(mbox, 'bounceIn');
   switchAgenda('jour');
 }

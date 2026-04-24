@@ -1001,25 +1001,6 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
       return true;
     }
-    // 🔒 GARDE 4 : hors onglet Gotchi, seul un tap sur le Gotchi lui-même redirige
-const panelGotchi = document.getElementById('p-gotchi');
-const gotchiActif = panelGotchi && panelGotchi.classList.contains('on');
-
-if (!gotchiActif) {
-  // On calcule si le tap est sur la hitbox du Gotchi
-  const _by = window.D.g.stage === 'egg'  ? 115
-             : window.D.g.stage === 'baby' ? 108
-             : window.D.g.stage === 'teen' ? 98
-             : 85;
-  const _cx = window.walkX ?? (p.width / 2);
-  const _cy = _by + (window.GOTCHI_OFFSET_Y || 0) + 30;
-  const _mx = p.touches[0]?.x ?? p.mouseX;
-  const _my = p.touches[0]?.y ?? p.mouseY;
-  const surGotchi = Math.abs(_mx - _cx) < 26 && Math.abs(_my - _cy) < 35;
-
-  if (surGotchi && typeof go === 'function') go('gotchi');
-  return false; // dans tous les cas, on consomme l'événement hors onglet
-}
     const rect = p.canvas.getBoundingClientRect();
     const touch = p.touches[0] || { x: p.mouseX, y: p.mouseY };
     const clientX = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent) ? window.event.touches[0]?.clientX : null;

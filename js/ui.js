@@ -66,6 +66,9 @@ function syncDuringTransition(shell) {
 
 
 function go(t) {
+    // Pilote pointer-events du canvas selon l'onglet actif
+  const cnv = document.querySelector('#console-top canvas');
+  if (cnv) cnv.style.pointerEvents = (t === 'gotchi') ? 'auto' : 'none';
   document.querySelectorAll('.pnl').forEach(p => p.classList.remove('on'));
   const targetPanel = document.getElementById('p-' + t);
   if (targetPanel) targetPanel.classList.add('on');

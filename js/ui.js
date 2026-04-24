@@ -1819,6 +1819,20 @@ const MOODS = [{id:'dur',e:'🌧️'},{id:'bof',e:'😔'},{id:'ok',e:'😐'},{id
 let selMood = null;
 
 function initMoodPicker() {
+  // Compteur de caractères du journal
+const jText = document.getElementById('j-text');
+const vStatus = document.getElementById('v-status');
+if (jText && vStatus) {
+  jText.addEventListener('input', () => {
+    const len = jText.value.length;
+    const max = window.JOURNAL_MAX_CHARS;
+    const restant = max - len;
+    vStatus.textContent = restant >= 0
+      ? `${len}/${max} caractères`
+      : `✂️ Trop long de ${Math.abs(restant)} caractères`;
+    vStatus.style.color = restant < 30 ? '#e07060' : '#a09880';
+  });
+}
   const mp = document.getElementById('mood-pick');
   if (mp) mp.innerHTML = MOODS.map(m => `<button class="mood-b" data-m="${m.id}" onclick="pickM('${m.id}')">${m.e}</button>`).join('');
 }
@@ -1828,6 +1842,27 @@ function pickM(id) {
 }
 function saveJ() {
   const t = document.getElementById('j-text').value.trim();
+    // ── Garde : humeur obligatoire
+  if (!selMood) {
+    const mp = document.getElementById('mood-pick');
+    if (mp) { mp.classList.add('mood-required'); setTimeout(() => mp.classList.remove('mood-required'), 800); }
+    toast(_noOrphan('Choisis une humeur avant de sauvegarder ✿'));
+    return;
+  }
+
+  // ── Garde : limite de caractères
+  if (t.length > window.JOURNAL_MAX_CHARS) {
+    toast(`✂️ Note trop longue (max ${window.JOURNAL_MAX_CHARS} caractères)`);
+    return;
+  }
+
+  // ── Garde : limite quotidienne
+  const todayStr = today(); // fonction existante dans app.js
+  const notesAujourdHui = window.D.journal.filter(n => n.date.startsWith(todayStr));
+  if (notesAujourdHui.length >= window.JOURNAL_MAX_PER_DAY) {
+    toast(`📓 ${window.JOURNAL_MAX_PER_DAY} notes max par jour — reviens demain ✿`);
+    return;
+  }
   if (!selMood) {
     const mp = document.getElementById('mood-pick');
     if (mp) { mp.classList.add('mood-required'); setTimeout(() => mp.classList.remove('mood-required'), 800); }
@@ -1864,6 +1899,16 @@ function getWkDates(off) {
   return dates;
 }
 function renderJEntries() {
+  const todayStr = today();
+const countToday = window.D.journal.filter(n => n.date.startsWith(todayStr)).length;
+const vStatus = document.getElementById('v-status');
+if (vStatus && !document.getElementById('j-text').value) {
+  const reste = window.JOURNAL_MAX_PER_DAY - countToday;
+  vStatus.textContent = reste > 0
+    ? `${countToday}/${window.JOURNAL_MAX_PER_DAY} notes aujourd'hui`
+    : `Quota du jour atteint ✿ — à demain !`;
+  vStatus.style.color = reste === 0 ? '#e07060' : '#a09880';
+}
   const D = window.D;
   const wd = getWkDates(jWeekOff), wt = document.getElementById('j-week-title');
   if (jWeekOff === 0) { if (wt) wt.textContent = 'Cette semaine'; }

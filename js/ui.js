@@ -2548,6 +2548,9 @@ function ouvrirAgenda(dateStr) {
   mbox.classList.remove('shop-open');
   void mbox.offsetWidth;
   mbox.classList.add('shop-open');
+  mbox.classList.remove('shop-open', 'agenda-open');
+void mbox.offsetWidth;
+mbox.classList.add('shop-open', 'agenda-open');
 
   animEl(mbox, 'bounceIn');
   switchAgenda('jour');
@@ -3029,8 +3032,8 @@ function renderAgendaCycle(el) {
     <div style="display:flex;margin-bottom:12px">
       ${phases.map(p => `
         <div style="flex:${p.pct};text-align:center">
-          <div style="font-size:11px;color:${p.couleur};font-weight:bold">${p.label}</div>
-          <div style="font-size:10px;color:var(--text2)">J${p.jours}</div>
+          <div style="font-size:9px;color:${p.couleur};font-weight:bold">${p.label}</div>
+          <div style="font-size:8px;color:var(--text2)">J${p.jours}</div>
         </div>`).join('')}
     </div>
   `;
@@ -3133,31 +3136,32 @@ const voirToutHtml = cycles.length > MAX_VISIBLE ? `
   </button>` : '';
 
     historiqueHtml = `
-      <div style="margin-bottom:12px">
-        <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:8px">
-          JOURS DE RÈGLES ENREGISTRÉS
-        </h3>
-        ${j1Html}
+  <div style="margin-bottom:12px">
+    <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:8px">
+      JOURS DE RÈGLES ENREGISTRÉS
+    </h3>
+    ${j1Html}
+    ${voirToutHtml}
 
-        ${lignes.length >= 1 ? `
-          <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin:12px 0 8px">
-            DURÉES DE CYCLES
-          </h3>
-          ${lignes.map((l, i) => `
-            <div style="padding:6px 0;border-bottom:1px solid var(--border)">
-              <span style="font-size:11px;color:var(--text)">${l.label}</span>
-            </div>`).join('')}
-        ` : ''}
+    ${lignes.length >= 1 ? `
+      <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin:12px 0 8px">
+        DERNIERS CYCLES
+      </h3>
+      ${lignes.slice(0, 2).map(l => `
+        <div style="padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:11px;color:var(--text)">${l.label}</span>
+        </div>`).join('')}
+    ` : ''}
 
-        <button onclick="exporterCycles()"
-          style="width:100%;margin-top:10px;padding:8px;border-radius:10px;
-          border:2px dashed var(--border);background:transparent;
-          font-size:11px;cursor:pointer;color:var(--text2);
-          font-family:'Courier New',monospace">
-          ⬇️ Exporter l'historique (.txt)
-        </button>
-              </div>
-    `;
+    <button onclick="exporterCycles()"
+      style="width:100%;margin-top:10px;padding:8px;border-radius:10px;
+      border:2px dashed var(--border);background:transparent;
+      font-size:11px;cursor:pointer;color:var(--text2);
+      font-family:'Courier New',monospace">
+      ⬇️ Exporter l'historique (.txt)
+    </button>
+  </div>
+`;
   }
 
   el.innerHTML = `

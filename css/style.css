@@ -570,6 +570,26 @@ body {
   overflow-y: auto;
 }
 
+/* Agenda : hauteur fixe avec scroll interne */
+.modal-box.shop-open.agenda-open {
+  display: flex;
+  flex-direction: column;
+  height: 85dvh;
+  max-height: 85dvh;
+}
+
+#agenda-contenu {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
+  scrollbar-width: none;
+}
+
+#agenda-contenu::-webkit-scrollbar {
+  display: none;
+}
+
 #boutique-contenu {
   flex: 1;
   overflow-y: auto;

@@ -2569,15 +2569,4 @@ window.initUI = function() {
   const modalOuverte = modalEl && getComputedStyle(modalEl).display !== 'none';
   if (!window._gotchiActif && !modalOuverte && typeof go === 'function') go('gotchi');
 });
- // 🔒 Bloque le canvas quand mbox est visible
-  const mbox = document.getElementById('mbox');
-  const dynamicZone = document.getElementById('dynamic-zone');
-const observer = new MutationObserver(() => {
-  const mboxBlocked = mbox.classList.contains('shop-open');
-  const menuBlocked = document.getElementById('menu-overlay')?.classList.contains('open');
-  dynamicZone.style.pointerEvents = (mboxBlocked || menuBlocked) ? 'none' : '';
-});
-
-observer.observe(mbox, { attributes: true, attributeFilter: ['class'] });
-observer.observe(document.getElementById('menu-overlay'), { attributes: true, attributeFilter: ['class'] });
 };

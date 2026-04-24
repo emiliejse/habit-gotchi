@@ -1001,9 +1001,13 @@ function isOverlayActive() {
     const menuOverlay = document.getElementById('menu-overlay');
     if (menuOverlay && menuOverlay.classList.contains('open')) return true;
 
-    // 🔒 GARDE 2 : une modale est présente dans le DOM (alertes, boutique, etc.)
-    const modalEl = document.getElementById('modal');
-    if (modalEl && getComputedStyle(modalEl).display !== 'none') return true;
+// 🔒 GARDE 2 : modal OU menu-overlay visibles
+const modalEl = document.getElementById('modal');
+const menuEl = document.getElementById('menu-overlay');
+if (
+  (modalEl && getComputedStyle(modalEl).display !== 'none') ||
+  (menuEl && menuEl.classList.contains('open'))
+) return true;
 
     // 🔒 GARDE 3 : l'utilisateur est focus sur un champ de saisie
     const active = document.activeElement;

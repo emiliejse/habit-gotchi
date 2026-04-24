@@ -367,19 +367,18 @@ function clearDebugLogs() {
     SYSTEM 4: Habitudes — PANNEAU PROPS (Inventaire des objets)
     - Filtres et liste des objets collectés (SYSTEM 4: Habitudes)
   -->
-  <div id="p-props" class="pnl">
-    <div class="card">
-      <h2>🎒 Mon Inventaire</h2>
-      <div id="props-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
-      <div style="display:none;justify-content:center;gap:6px;margin:6px 0 2px" id="btn-ranger-tout">
-<div id="btn-ranger-tout" style="display:none;text-align:right;margin:-2px 0 6px">
-  <button class="btn btn-s" onclick="rangerTout('all')" style="font-size:10px;padding:3px 10px;opacity:0.7">
-    📦 Tout ranger
-  </button>
-</div>
-      <div id="props-list" style="margin-top:6px"></div>
+ <div id="p-props" class="pnl">
+  <div class="card">
+    <h2>🎒 Mon Inventaire</h2>
+    <div id="props-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
+    <div id="btn-ranger-tout" style="display:none;text-align:right;margin:-2px 0 6px">
+      <button class="btn btn-s" onclick="rangerTout('all')" style="font-size:10px;padding:3px 10px;opacity:0.7">
+        📦 Tout ranger
+      </button>
     </div>
-  </div><!-- fin p-props -->
+    <div id="props-list" style="margin-top:6px"></div>
+  </div>
+</div><!-- fin p-props -->
 
   <!--
     SYSTEM 5: UI/Design — PANNEAU PERSO (Personnalisation interface/couleurs)

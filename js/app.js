@@ -32,7 +32,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v2.41'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v2.42'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -132,7 +132,7 @@ snackDone: '', snackEmoji: '',
       lastTick: Date.now(),
       lat: 43.6047,
       lng: 1.4442,
-      solarPhases: null
+      solarPhases: null,
       cycleDuree: 28,// durée du cycle en jours
     },
     habits: CATS.map(c => ({catId:c.id, label:c.label})),

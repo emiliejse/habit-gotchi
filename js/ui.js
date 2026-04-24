@@ -2568,11 +2568,12 @@ function fermerAgenda() {
 }
 
 function chevron(dir) {
-  const r = dir === 'left' ? 'rotate(180)' : '';
+  // Points du chevron : "droite" pointe vers la droite (>), "gauche" pointe vers la gauche (<)
+  const points = dir === 'left' ? '15 18 9 12 15 6' : '9 18 15 12 9 6';
   return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"
     stroke="var(--lilac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-    style="transform:${r};display:block">
-    <polyline points="9 18 15 12 9 6"/>
+    style="display:block">
+    <polyline points="${points}"/>
   </svg>`;
 }
 
@@ -3015,32 +3016,32 @@ function renderAgendaCycle(el) {
     lutéale:      'Retour vers l\'intérieur. Possible fatigue ou sensibilité émotionnelle en fin de phase.'
   };
 
-  // Frise des phases
-  const phases = [
-    { id: 'menstruelle',  label: 'Règles',       jours: '1–5',   pct: 5/duree,  couleur: '#e07080' },
-    { id: 'folliculaire', label: 'Folliculaire',  jours: '6–13',  pct: 8/duree,  couleur: '#80b8e0' },
-    { id: 'ovulation',    label: 'Ovulation',     jours: '14–16', pct: 3/duree,  couleur: '#60c8a0' },
-    { id: 'lutéale',      label: 'Lutéale',       jours: '17–'+duree, pct: (duree-16)/duree, couleur: '#b090d0' },
-  ];
+// Frise des phases
+const phases = [
+  { id: 'menstruelle',  label: 'Règles',      labelShort: 'Règles', jours: '1–5',   pct: 5/duree,  couleur: '#e07080' },
+  { id: 'folliculaire', label: 'Folliculaire', labelShort: 'Follic.', jours: '6–13',  pct: 8/duree,  couleur: '#80b8e0' },
+  { id: 'ovulation',    label: 'Ovulation',    labelShort: 'Ovul.',  jours: '14–16', pct: 3/duree,  couleur: '#60c8a0' },
+  { id: 'lutéale',      label: 'Lutéale',      labelShort: 'Lutéale', jours: '17–'+duree, pct: (duree-16)/duree, couleur: '#b090d0' },
+];
 
-  const friseHtml = `
-    <div style="border-radius:10px;overflow:hidden;display:flex;height:28px;margin-bottom:6px">
-      ${phases.map(p => `
-        <div style="flex:${p.pct};background:${p.couleur}${phaseAujourd?.phase===p.id?'':'88'};
-          display:flex;align-items:center;justify-content:center;
-          font-size:8px;color:#fff;font-weight:bold;position:relative;
-          transition:.3s">
-          ${phaseAujourd?.phase === p.id ? '▼' : ''}
-        </div>`).join('')}
-    </div>
-    <div style="display:flex;margin-bottom:12px">
-      ${phases.map(p => `
-        <div style="flex:${p.pct};text-align:center">
-          <div style="font-size:9px;color:${p.couleur};font-weight:bold">${p.label}</div>
-          <div style="font-size:8px;color:var(--text2)">J${p.jours}</div>
-        </div>`).join('')}
-    </div>
-  `;
+const friseHtml = `
+  <div style="border-radius:10px;overflow:hidden;display:flex;height:28px;margin-bottom:6px">
+    ${phases.map(p => `
+      <div style="flex:${p.pct};background:${p.couleur}${phaseAujourd?.phase===p.id?'':'88'};
+        display:flex;align-items:center;justify-content:center;
+        font-size:8px;color:#fff;font-weight:bold;position:relative;
+        transition:.3s">
+        ${phaseAujourd?.phase === p.id ? '▼' : ''}
+      </div>`).join('')}
+  </div>
+  <div style="display:flex;margin-bottom:12px;gap:2px">
+    ${phases.map(p => `
+      <div style="flex:${p.pct};text-align:center;overflow:hidden;min-width:0;padding:0 2px;box-sizing:border-box">
+        <div style="font-size:9px;color:${p.couleur};font-weight:bold;line-height:1.1;word-break:break-word">${p.labelShort}</div>
+        <div style="font-size:8px;color:var(--text2);line-height:1.1;white-space:nowrap">J${p.jours}</div>
+      </div>`).join('')}
+  </div>
+`;
 
   // Description phase active
   const descHtml = phaseAujourd

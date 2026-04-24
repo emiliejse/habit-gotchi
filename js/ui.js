@@ -2507,7 +2507,7 @@ function applyCheatCode() {
 }
 
 /* ============================================================
-   🌸 ALEXIA — MODALE AGENDA
+   MODALE AGENDA
    ============================================================ */
 
 let _agendaJour = null; // date string "2025-04-24" du jour affiché

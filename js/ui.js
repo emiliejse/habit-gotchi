@@ -101,16 +101,6 @@ function go(t) {
   syncDuringTransition(shell);
 }
 
-function fermerMenuEtOuvrir(callback) {
-  const ov = document.getElementById('menu-overlay');
-  const dz = document.getElementById('dynamic-zone');
-  ov.classList.remove('open');
-  dz.style.overflowY = '';
-  setTimeout(() => {
-    callback();
-  }, 250);
-}
-
 function toggleMenu() {
   const ov = document.getElementById('menu-overlay');
   const dz = document.getElementById('dynamic-zone');
@@ -2528,8 +2518,10 @@ function ouvrirAgenda(dateStr) {
   const mbox = document.getElementById('mbox');
   const modal = document.getElementById('modal');
 
-  // 1. Prépare le contenu avant d'afficher
-  mbox.classList.add('shop-open'); // sans 'agenda-open'
+  // 1. Nettoie les classes d'un éventuel précédent affichage
+  mbox.classList.remove('shop-open', 'shop-catalogue', 'agenda-open');
+
+  // 2. Prépare le contenu
   mbox.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h3 style="font-size:13px;color:var(--lilac)">🗓️ Mon Agenda</h3>
@@ -2555,17 +2547,20 @@ function ouvrirAgenda(dateStr) {
     <div id="agenda-contenu"></div>
   `;
 
-  // 2. Applique les classes AVANT d'afficher
+  // 3. Force un reflow pour redéclencher l'animation shopOpen
   void mbox.offsetWidth;
+
+  // 4. Applique les classes (anime + scroll interne)
   mbox.classList.add('shop-open', 'agenda-open');
 
-  // 3. Affiche seulement maintenant
+  // 5. Affiche la modale
   document.getElementById('dynamic-zone').style.overflowY = 'hidden';
   modal.style.display = 'flex';
 
   animEl(mbox, 'bounceIn');
   switchAgenda('jour');
 }
+
 
 function fermerAgenda() {
   document.getElementById('dynamic-zone').style.overflowY = '';

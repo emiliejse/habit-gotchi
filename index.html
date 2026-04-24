@@ -537,7 +537,7 @@ function clearDebugLogs() {
       </div>
     </div>
 <button class="menu-soutien" 
-  onclick="event.stopPropagation();event.preventDefault();document.getElementById('menu-overlay').classList.remove('open');document.getElementById('dynamic-zone').style.overflowY='';setTimeout(ouvrirAgenda,350)"
+  onclick="event.stopPropagation();event.preventDefault();fermerMenuEtOuvrir(ouvrirAgenda)"
   style="width:80%;display:block;margin:0 auto 8px;background:#fde8f0;border-color:#e0a0c0;
   border-bottom-color:#c07090;border-right-color:#c07090;
   color:#904060;padding:10px 20px;box-sizing:border-box">

@@ -101,6 +101,16 @@ function go(t) {
   syncDuringTransition(shell);
 }
 
+function fermerMenuEtOuvrir(callback) {
+  const ov = document.getElementById('menu-overlay');
+  const dz = document.getElementById('dynamic-zone');
+  ov.classList.remove('open');
+  dz.style.overflowY = '';
+  setTimeout(() => {
+    callback();
+  }, 250);
+}
+
 function toggleMenu() {
   const ov = document.getElementById('menu-overlay');
   const dz = document.getElementById('dynamic-zone');
@@ -2555,9 +2565,6 @@ function ouvrirAgenda(dateStr) {
 
   animEl(mbox, 'bounceIn');
   switchAgenda('jour');
-    // 🔒 Absorbe les événements fantômes (click/touchend résiduels) pendant 400ms
-  modalLocked = true;
-  setTimeout(() => { modalLocked = false; }, 400);
 }
 
 function fermerAgenda() {

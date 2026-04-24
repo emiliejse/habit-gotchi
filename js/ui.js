@@ -3099,10 +3099,20 @@ function renderAgendaCycle(el) {
           font-family:'Courier New',monospace">
           ⬇️ Exporter l'historique (.txt)
         </button>
-      </div>
+              </div>
     `;
   }
-  }
+
+  el.innerHTML = `
+    <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:10px">
+      FRISE DU CYCLE
+    </h3>
+    ${friseHtml}
+    ${descHtml}
+    ${saisieHtml}
+    ${historiqueHtml}
+  `;
+}
 
 
 function modifierCycle(ancienneDate, nouvelleDate) {

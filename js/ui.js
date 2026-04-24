@@ -2636,21 +2636,22 @@ function renderAgendaJour(el) {
     </div>`).join('');
 
   el.innerHTML = `
-    <!-- Navigation jour + date picker caché -->
-    <input type="date" id="agenda-date-picker" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
-      value="${ds}" onchange="changerJourAgenda(this.value)">
-
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <button onclick="navAgendaJour(-1)" style="background:none;border:none;font-size:18px;cursor:pointer">
-  ${chevron('left')}
-      <span onclick="ouvrirDatePickerAgenda()"
-        style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
-        text-align:center;cursor:pointer;text-decoration:underline dotted;color:var(--lilac)">
-        ${titre}
-      </span>
-      <button onclick="navAgendaJour(1)" style="background:none;border:none;font-size:18px;cursor:pointer">>
-  ${chevron('right')}
-    </div>
+    // Jour
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+  <button onclick="navAgendaJour(-1)"
+    style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
+    ${chevron('left')}
+  </button>
+  <span onclick="ouvrirDatePickerAgenda()"
+    style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
+    text-align:center;cursor:pointer;text-decoration:underline dotted;color:var(--lilac);flex:1">
+    ${titre}
+  </span>
+  <button onclick="navAgendaJour(1)"
+    style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
+    ${chevron('right')}
+  </button>
+</div>
 
     ${phaseHtml}
 
@@ -2940,14 +2941,21 @@ function renderAgendaMois(el) {
   cells += '</div>';
 
   el.innerHTML = `
-    <!-- Navigation mois -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <button onclick="navAgendaMois(-1)" style="background:none;border:none;font-size:18px;cursor:pointer">
-  ${chevron('left')}
-      <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;text-transform:capitalize">${moisNom}</span>
-      <button onclick="navAgendaMois(1)" style="background:none;border:none;font-size:18px;cursor:pointer">
-  ${chevron('right')}
-    </div>
+// Mois
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+  <button onclick="navAgendaMois(-1)"
+    style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
+    ${chevron('left')}
+  </button>
+  <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
+    text-transform:capitalize;text-align:center;flex:1">
+    ${moisNom}
+  </span>
+  <button onclick="navAgendaMois(1)"
+    style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
+    ${chevron('right')}
+  </button>
+</div>
 
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;
   align-items:center;justify-content:center">
@@ -2979,16 +2987,15 @@ function clickJourMois(ds) {
 /* ─── PANNEAU 3 : CYCLE ─────────────────────────────────────── */
 
 function renderAgendaCycle(el) {
-  const D      = window.D;
-  // Durée réelle du cycle en cours (entre les 2 derniers J1)
-// Si un seul J1 → fallback sur cycleDuree paramétré
-const duree = cycles.length >= 2
-  ? Math.round((new Date(cycles[0]+'T12:00') - new Date(cycles[1]+'T12:00')) / 86400000)
-  : (D.g.cycleDuree || 28);
+  const D = window.D;
   const cycles = (D.cycle || [])
     .filter(e => e.type === 'regles')
     .map(e => e.date)
     .sort().reverse();
+
+  const duree = cycles.length >= 2
+    ? Math.round((new Date(cycles[0]+'T12:00') - new Date(cycles[1]+'T12:00')) / 86400000)
+    : (D.g.cycleDuree || 28);
 
   // Phase actuelle
   const phaseAujourd = getCyclePhase(today());

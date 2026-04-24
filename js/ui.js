@@ -3029,20 +3029,26 @@ const phases = [
 
 const friseHtml = `
   <div style="border-radius:10px;overflow:hidden;display:flex;height:28px;margin-bottom:6px">
-    ${phases.map(p => `
-      <div style="flex:${p.pct};background:${p.couleur}${phaseAujourd?.phase===p.id?'':'88'};
-        display:flex;align-items:center;justify-content:center;
-        font-size:8px;color:#fff;font-weight:bold;position:relative;
-        transition:.3s">
-        ${phaseAujourd?.phase === p.id ? '▼' : ''}
-      </div>`).join('')}
+    ${phases.map(p => {
+      const isActive = phaseAujourd?.phase === p.id;
+      return `
+        <div style="flex:${p.pct};background:${p.couleur}${isActive?'':'88'};
+          display:flex;align-items:center;justify-content:center;
+          font-size:10px;color:#fff;font-weight:bold;position:relative;
+          transition:background .3s">
+          ${isActive ? '▼' : ''}
+        </div>`;
+    }).join('')}
   </div>
   <div style="display:flex;margin-bottom:12px;gap:2px">
-    ${phases.map(p => `
-      <div style="flex:${p.pct};text-align:center;overflow:hidden;min-width:0;padding:0 2px;box-sizing:border-box">
-        <div style="font-size:9px;color:${p.couleur};font-weight:bold;line-height:1.1;word-break:break-word">${p.labelShort}</div>
-        <div style="font-size:8px;color:var(--text2);line-height:1.1;white-space:nowrap">J${p.jours}</div>
-      </div>`).join('')}
+    ${phases.map(p => {
+      const isActive = phaseAujourd?.phase === p.id;
+      return `
+        <div style="flex:${p.pct};text-align:center;overflow:hidden;min-width:0;padding:0 2px;box-sizing:border-box">
+          <div style="font-size:9px;color:${p.couleur};font-weight:${isActive ? 'bold' : 'normal'};line-height:1.1;word-break:break-word">${p.labelShort}</div>
+          <div style="font-size:8px;color:var(--text2);line-height:1.1;white-space:nowrap">J${p.jours}</div>
+        </div>`;
+    }).join('')}
   </div>
 `;
 

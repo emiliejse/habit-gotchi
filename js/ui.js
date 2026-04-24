@@ -2572,9 +2572,12 @@ window.initUI = function() {
  // 🔒 Bloque le canvas quand mbox est visible
   const mbox = document.getElementById('mbox');
   const dynamicZone = document.getElementById('dynamic-zone');
-  const observer = new MutationObserver(() => {
-    const blocked = getComputedStyle(mbox).display !== 'none';
-    dynamicZone.style.pointerEvents = blocked ? 'none' : '';
-  });
-  observer.observe(mbox, { attributes: true, attributeFilter: ['class', 'style'] });
+const observer = new MutationObserver(() => {
+  const mboxBlocked = mbox.classList.contains('shop-open');
+  const menuBlocked = document.getElementById('menu-overlay')?.classList.contains('open');
+  dynamicZone.style.pointerEvents = (mboxBlocked || menuBlocked) ? 'none' : '';
+});
+
+observer.observe(mbox, { attributes: true, attributeFilter: ['class'] });
+observer.observe(document.getElementById('menu-overlay'), { attributes: true, attributeFilter: ['class'] });
 };

@@ -277,6 +277,15 @@ function clearDebugLogs() {
           <button class="nav-a" onclick="navJWeek(1)">▶</button>
         </div>
         <div id="j-entries"></div>
+        <!-- Export journal (SYSTEM 6: Mémoire/Journal) -->
+<div class="j90" style="display:flex;gap:6px;margin-top:8px;padding-bottom:12px">
+  <button class="btn btn-s" onclick="exportJournal('semaine')" style="flex:1;font-size:10px">
+    ⬇ Cette semaine
+  </button>
+  <button class="btn btn-s" onclick="exportJournal('complet')" style="flex:1;font-size:10px">
+    ⬇ Tout le journal
+  </button>
+</div>
       </div>
     </div>
   </div><!-- fin p-journal -->

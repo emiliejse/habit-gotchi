@@ -1951,6 +1951,50 @@ function saveEditJ(i) {
 }
 function confirmDelJ(i) { window.D.journal.splice(i, 1); save(); clModal(); renderJEntries(); updUI(); }
 
+/* ─── SYSTÈME 6 : EXPORT JOURNAL ─────────────────────────────────── */
+function exportJournal(mode) {
+  const D = window.D;
+  const me = { super: '🌟', bien: '😊', ok: '😐', bof: '😔', dur: '🌧️' };
+  let entries, nomFichier;
+
+  if (mode === 'semaine') {
+    const wd = getWkDates(jWeekOff);
+    entries = D.journal.filter(j => wd.includes(j.date.split('T')[0]));
+    const a = new Date(wd[0]), b = new Date(wd[6]);
+    nomFichier = `journal_${wd[0]}_${wd[6]}.txt`;
+  } else {
+    entries = [...D.journal];
+    nomFichier = `journal_complet_${new Date().toISOString().split('T')[0]}.txt`;
+  }
+
+  if (!entries.length) {
+    alert('Aucune entrée à exporter 🌿');
+    return;
+  }
+
+  // Trier du plus ancien au plus récent
+  entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const lignes = entries.map(e => {
+    const d = new Date(e.date);
+    const dateStr = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const heureStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const humeur = me[e.mood] || '—';
+    return `${dateStr} à ${heureStr} ${humeur}\n${e.text || '—'}\n`;
+  });
+
+  const header = `Journal de ${D.g.userName || 'Habitgotchi'}\nExporté le ${new Date().toLocaleDateString('fr-FR')}\n${'─'.repeat(40)}\n\n`;
+  const contenu = header + lignes.join('\n');
+
+  // Téléchargement
+  const blob = new Blob([contenu], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nomFichier;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /* ─── SYSTÈME 6 : INTROSPECTION & MÉMOIRE (Calendrier) ───────────── */
 
 /* ============================================================

@@ -441,12 +441,6 @@ function renderProps() {
         <div style="width:100%;">
           <div>${p.nom}</div>
           <div style="font-size:8px;text-transform:uppercase;opacity:.7;font-weight:normal;">${p.type}</div>
-          ${p.actif
-  ? `<div style="font-size:8px;background:var(--mint);border-radius:6px;padding:2px 4px;margin-top:2px;color:#fff;font-weight:bold">
-        ✓ actif${p.slot ? ' · ' + p.slot : ''}
-      </div>`
-  : `<div style="font-size:8px;opacity:.4;margin-top:2px">inactif</div>`
-}
         </div>
       </div>`;
     }).join('') + `</div>`;

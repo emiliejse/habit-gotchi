@@ -2582,18 +2582,25 @@ function renderAgendaJour(el) {
   const rdvHtml = rdvDuJour.map(r => `
     <div style="display:flex;align-items:center;justify-content:space-between;
       padding:6px 8px;border-radius:8px;background:#fff;border:1px solid var(--border);margin-bottom:4px">
-      <span style="font-size:11px">${r.heure ? `<b>${r.heure}</b> · ` : ''}${r.label}</span>
+      <span style="font-size:11px">${r.heure ? `<b>${r.heure}</b> · ` : '🗓️ Journée entière · '}${r.label}</span>
       <div style="display:flex;gap:6px">
         <button onclick="editerRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
-        <button onclick="supprimerRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
+        <button onclick="confirmerSuppressionRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
       </div>
     </div>`).join('');
 
   el.innerHTML = `
-    <!-- Navigation jour -->
+    <!-- Navigation jour + date picker caché -->
+    <input type="date" id="agenda-date-picker" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
+      value="${ds}" onchange="changerJourAgenda(this.value)">
+
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <button onclick="navAgendaJour(-1)" style="background:none;border:none;font-size:18px;cursor:pointer">◀</button>
-      <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;text-align:center">${titre}</span>
+      <span onclick="ouvrirDatePickerAgenda()"
+        style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
+        text-align:center;cursor:pointer;text-decoration:underline dotted;color:var(--lilac)">
+        ${titre}
+      </span>
       <button onclick="navAgendaJour(1)" style="background:none;border:none;font-size:18px;cursor:pointer">▶</button>
     </div>
 
@@ -2624,21 +2631,21 @@ function renderAgendaJour(el) {
       <div id="form-rdv" style="display:none;margin-top:8px;padding:10px;
         background:#fff;border-radius:10px;border:1px solid var(--border)">
         <input id="rdv-label" class="inp" placeholder="Gynéco, analyse..." style="margin-bottom:6px">
-        <input id="rdv-heure" class="inp" type="time" style="margin-bottom:8px">
+        <!-- Heure : toggle journée entière -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <input type="time" id="rdv-heure" class="inp" style="flex:1">
+          <label style="display:flex;align-items:center;gap:4px;font-size:10px;
+            color:var(--text2);white-space:nowrap;cursor:pointer">
+            <input type="checkbox" id="rdv-journee" onchange="toggleJourneeEntiere(this.checked)">
+            Journée entière
+          </label>
+        </div>
         <div style="display:flex;gap:6px">
           <button class="btn btn-s" onclick="annulerFormulaireRdv()" style="flex:1">Annuler</button>
-          <button class="btn btn-p" onclick="sauvegarderRdv()" style="flex:1">Enregistrer</button>
+          <button class="btn btn-p" id="btn-save-rdv" onclick="sauvegarderRdv()" style="flex:1">Enregistrer</button>
         </div>
       </div>
     </div>
-
-    <!-- Déclarer règles -->
-    <button onclick="declarerRegles('${ds}')"
-      style="width:100%;padding:10px;border-radius:10px;
-      background:#fde8f0;border:2px solid #e0a0c0;color:#904060;
-      font-size:11px;font-weight:bold;font-family:'Courier New',monospace;cursor:pointer">
-      🩸 Déclarer ce jour comme début de cycle
-    </button>
   `;
 }
 
@@ -2674,10 +2681,45 @@ function sauvegarderRdv() {
   renderAgendaJour(document.getElementById('agenda-contenu'));
 }
 
-function supprimerRdv(id) {
-  window.D.rdv = (window.D.rdv || []).filter(r => r.id !== id);
-  save();
+function ouvrirDatePickerAgenda() {
+  const picker = document.getElementById('agenda-date-picker');
+  if (picker) picker.showPicker();
+}
+
+function changerJourAgenda(val) {
+  if (!val) return;
+  _agendaJour = val;
   renderAgendaJour(document.getElementById('agenda-contenu'));
+}
+
+function toggleJourneeEntiere(checked) {
+  const heureInput = document.getElementById('rdv-heure');
+  if (!heureInput) return;
+  heureInput.disabled = checked;
+  heureInput.style.opacity = checked ? '0.4' : '1';
+  if (checked) heureInput.value = '';
+}
+
+function confirmerSuppressionRdv(id) {
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <p style="text-align:center;font-size:12px;margin-bottom:12px">Supprimer ce rendez-vous ?</p>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button>
+      <button class="btn btn-d" onclick="supprimerRdv('${id}');clModal()" style="flex:1">Supprimer</button>
+    </div>`;
+  animEl(document.getElementById('mbox'), 'bounceIn');
+}
+
+function confirmerSuppressionCycle(ds) {
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <p style="text-align:center;font-size:12px;margin-bottom:12px">Supprimer ce cycle ?</p>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button>
+      <button class="btn btn-d" onclick="supprimerCycle('${ds}');clModal()" style="flex:1">Supprimer</button>
+    </div>`;
+  animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
 function editerRdv(id) {
@@ -2720,12 +2762,13 @@ function declarerRegles(ds) {
 
 function ouvrirJournalAuJour(ds) {
   fermerAgenda();
-  // Calcule le wOff (décalage de semaine) par rapport à aujourd'hui
   const cible = new Date(ds + 'T12:00');
   const maintenant = new Date(today() + 'T12:00');
   const diffJours = Math.round((cible - maintenant) / 86400000);
-  const diffSemaines = Math.floor(diffJours / 7);
-  window._journalWOff = diffSemaines; // sera lu par renderProgress/goMenu
+  window._journalWOff = Math.floor(diffJours / 7);
+  // Ferme le menu s'il est ouvert avant de naviguer
+  const menuOverlay = document.getElementById('menu-overlay');
+  if (menuOverlay) menuOverlay.classList.remove('open');
   goMenu('journal');
 }
 
@@ -2845,14 +2888,18 @@ function renderAgendaMois(el) {
       <button onclick="navAgendaMois(1)" style="background:none;border:none;font-size:18px;cursor:pointer">▶</button>
     </div>
 
-    <!-- Légende -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-      <span style="font-size:9px;color:var(--text2)">🟢 habitudes</span>
-      <span style="font-size:9px;color:var(--text2)">🔴 règles</span>
-      <span style="font-size:9px;color:#80b8e0">◻ ovulation</span>
-      <span style="font-size:9px;color:#e07080">⬚ prédiction</span>
-      <span style="font-size:9px;color:var(--text2)">📌 rdv 📓 note</span>
-    </div>
+// Légende
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
+  <span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--text2)">
+    <span style="display:inline-block;width:12px;height:12px;border-radius:3px;
+      background:linear-gradient(to right,rgba(80,180,120,0.1),rgba(80,180,120,0.8))"></span>
+    habitudes
+  </span>
+  <span style="font-size:9px;color:#e07080">● règles</span>
+  <span style="font-size:9px;color:#80b8e0">◻ ovulation</span>
+  <span style="font-size:9px;color:#e07080">⬚ prédiction</span>
+  <span style="font-size:9px;color:var(--text2)">📌 rdv &nbsp;📓 note</span>
+</div>
 
     ${cells}
   `;
@@ -2969,7 +3016,7 @@ function renderAgendaCycle(el) {
           <div style="display:flex;align-items:center;justify-content:space-between;
             padding:6px 0;border-bottom:1px solid var(--border)">
             <span style="font-size:11px;color:var(--text)">${l.label}</span>
-            <button onclick="supprimerCycle('${l.debut}')"
+            <button onclick="confirmerSuppressionCycle('${l.debut}')"
               style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2)">🗑️</button>
           </div>`).join('')}
         <button onclick="exporterCycles()"

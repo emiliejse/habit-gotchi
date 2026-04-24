@@ -135,58 +135,90 @@ function spawnP(x, y, c) {
  * Dessine le ciel avec un gradient dynamique et des éléments célestes.
  */
 function drawSky(p, h, ha) {
-    p.noStroke(); 
-    let c1, c2; 
-    
-    if(ha <= 40 && h >= 7 && h < 21) {
-      const t = ha / 40; 
-      c1 = p.lerpColor(p.color('#4a4a5c'), p.color(C.skyGray1), t);
-      c2 = p.lerpColor(p.color('#5a5a6c'), p.color(C.skyGray2), t);
+  p.noStroke();
+  let c1, c2;
+
+  const sol = window.getSolarPhase ? window.getSolarPhase() : { phase: 'jour', t: 0.5 };
+  const skyPhase = sol.phase, skyT = sol.t;
+
+  if (skyPhase === 'jour' && ha <= 40) {
+    const blend = ha / 40;
+    c1 = p.lerpColor(p.color('#4a4a5c'), p.color(C.skyGray1), blend);
+    c2 = p.lerpColor(p.color('#5a5a6c'), p.color(C.skyGray2), blend);
+  } else if (skyPhase === 'jour') {
+    c1 = C.skyD1; c2 = C.skyD2;
+  } else if (skyPhase === 'aube') {
+    if (skyT < 0.5) {
+      const lt = skyT * 2;
+      c1 = p.lerpColor(p.color(C.skyN1), p.color(C.skyA1), lt);
+      c2 = p.lerpColor(p.color(C.skyN2), p.color(C.skyA2), lt);
+    } else {
+      const lt = (skyT - 0.5) * 2;
+      c1 = p.lerpColor(p.color(C.skyA1), p.color(C.skyD1), lt);
+      c2 = p.lerpColor(p.color(C.skyA2), p.color(C.skyD2), lt);
     }
-    else if(h >= 7 && h < 17)  { c1 = C.skyD1; c2 = C.skyD2; } 
-    else if(h >= 17 && h < 20) { c1 = C.skyK1; c2 = C.skyK2; } 
-    else if(h >= 20 || h < 5)  { c1 = C.skyN1; c2 = C.skyN2; } 
-    else                       { c1 = C.skyA1; c2 = C.skyA2; } 
-
-    for(let y = 0; y < 120; y += PX) { 
-      p.fill(p.lerpColor(p.color(c1), p.color(c2), y / 120)); 
-      p.rect(0, y, CS, PX); 
+  } else if (skyPhase === 'crepuscule') {
+    if (skyT < 0.5) {
+      const lt = skyT * 2;
+      c1 = p.lerpColor(p.color(C.skyD1), p.color(C.skyK1), lt);
+      c2 = p.lerpColor(p.color(C.skyD2), p.color(C.skyK2), lt);
+    } else {
+      const lt = (skyT - 0.5) * 2;
+      c1 = p.lerpColor(p.color(C.skyK1), p.color(C.skyN1), lt);
+      c2 = p.lerpColor(p.color(C.skyK2), p.color(C.skyN2), lt);
     }
-
-    if(h >= 20 || h < 6) { 
-  p.fill(C.star); 
-  [[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s => {
-    if((p.frameCount + s[0]) % 35 < 25) px(p, s[0], s[1], PX, PX);
-  });
-
-  const cycle = 60;
-  const phase = p.frameCount % cycle;
-  if (phase === 0) {
-    window._starTrail = {
-      startX: Math.random() * 80 + 5,
-      startY: Math.random() * 20 + 3,
-      lenX: 60 + Math.random() * 80,
-      lenY: 25 + Math.random() * 45,
-    };
+  } else {
+    c1 = C.skyN1; c2 = C.skyN2;
   }
-  if (phase < 12 && window._starTrail) {
-    const progress = phase / 12;
-    const sx = window._starTrail.startX + progress * window._starTrail.lenX;
-    const sy = window._starTrail.startY + progress * window._starTrail.lenY;
-    for (let t = 0; t < 3; t++) {
-      const tx = sx - t * PX * 2;
-      const ty = sy - t * PX;
-      const alpha = t === 0 ? 230 : 120 - t * 40;
-      p.fill(p.color(255, 255, 200, alpha));
-      px(p, tx, ty, PX, PX);
+
+  for (let y = 0; y < 120; y += PX) {
+    p.fill(p.lerpColor(p.color(c1), p.color(c2), y / 120));
+    p.rect(0, y, CS, PX);
+  }
+
+  // Étoiles : nuit pleine + fondu en entrée/sortie de crépuscule/aube
+  const showStars = skyPhase === 'nuit'
+    || (skyPhase === 'aube'       && skyT < 0.25)
+    || (skyPhase === 'crepuscule' && skyT > 0.75);
+  if (showStars) {
+    const starAlpha = skyPhase === 'nuit'        ? 255
+      : skyPhase === 'aube'                      ? (1 - skyT / 0.25) * 255
+      : ((skyT - 0.75) / 0.25) * 255;
+    p.fill(p.color(255, 255, 200, Math.round(starAlpha)));
+    [[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s => {
+      if ((p.frameCount + s[0]) % 35 < 25) px(p, s[0], s[1], PX, PX);
+    });
+
+    if (skyPhase === 'nuit') {
+      const trailCycle = 60, trailPhase = p.frameCount % trailCycle;
+      if (trailPhase === 0) {
+        window._starTrail = {
+          startX: Math.random() * 80 + 5, startY: Math.random() * 20 + 3,
+          lenX:   60 + Math.random() * 80, lenY:  25 + Math.random() * 45,
+        };
+      }
+      if (trailPhase < 12 && window._starTrail) {
+        const progress = trailPhase / 12;
+        const sx = window._starTrail.startX + progress * window._starTrail.lenX;
+        const sy = window._starTrail.startY + progress * window._starTrail.lenY;
+        for (let ti = 0; ti < 3; ti++) {
+          p.fill(p.color(255, 255, 200, ti === 0 ? 230 : 120 - ti * 40));
+          px(p, sx - ti * PX * 2, sy - ti * PX, PX, PX);
+        }
+      }
     }
   }
-}
 
-    if(h >= 6 && h < 21 && ha > 40) { 
-      drawCl(p, 40 + Math.sin(p.frameCount * .014) * 8, 20); 
-      drawCl(p, 150 + Math.cos(p.frameCount * .011) * 6, 35); 
-    }
+  // Nuages : jour, fin d'aube, début de crépuscule — et bonne humeur
+  const showClouds = ha > 40 && (
+    skyPhase === 'jour'
+    || (skyPhase === 'aube'       && skyT > 0.5)
+    || (skyPhase === 'crepuscule' && skyT < 0.5)
+  );
+  if (showClouds) {
+    drawCl(p, 40 + Math.sin(p.frameCount * .014) * 8, 20);
+    drawCl(p, 150 + Math.cos(p.frameCount * .011) * 6, 35);
+  }
 }
 
 function drawCl(p, x, y) { 
@@ -599,12 +631,19 @@ const p5s = (p) => {
     const en = g.energy * 20, ha = g.happiness * 20;
     const n = (h >= 21 || h < 6);
 
+    const sol = window.getSolarPhase ? window.getSolarPhase() : { phase: 'jour', t: 0 };
+    const darkAlpha = sol.phase === 'nuit'       ? 100
+                    : sol.phase === 'aube'        ? Math.round(100 * (1 - sol.t))
+                    : sol.phase === 'crepuscule'  ? Math.round(100 * sol.t)
+                    : 0;
+
 // 1. Fond et Météo
     drawSky(p, h, ha);
     if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
 
     const estJour = h < 19;
-    let envActif = g.activeEnv || 'parc';
+    // Nuit (21h–6h) → chambre systématiquement, quelle que soit la préférence stockée
+    let envActif = n ? 'chambre' : (g.activeEnv || 'parc');
     if (!sleeping) {
       if (ha < 40)                    drawRain(p, ha);
       else if (ha === 40)             drawRain(p, 35);
@@ -894,6 +933,13 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
         spawnP(cx + (Math.random() - .5) * 40, by - 10, C.rainbow[Math.floor(Math.random() * C.rainbow.length)]);
       }
       bounceT = Math.PI * 1.5;
+    }
+
+    // Surcouche nuit — couvre env, props, Gotchi ; épargne le HUD
+    if (darkAlpha > 0) {
+      p.noStroke();
+      p.fill(0, 0, 0, darkAlpha);
+      p.rect(0, 0, p.width, p.height);
     }
 
     // 12. HUD (Bandeau supérieur)

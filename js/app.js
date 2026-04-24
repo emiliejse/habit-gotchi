@@ -123,7 +123,12 @@ poopCount: 0,  // nb de cacas spawné aujourd'hui
 snackDone: '', snackEmoji: '',
       props:[], customBubbles:[],
       bilanCount: 0,
-      bilanWeek: ''
+      bilanWeek: '',
+      bilanText: '',
+      lastTick: Date.now(),
+      lat: 43.6047,
+      lng: 1.4442,
+      solarPhases: null
     },
     habits: CATS.map(c => ({catId:c.id, label:c.label})),
     log:{}, journal:[], pin:null, apiKey:null,
@@ -262,11 +267,12 @@ function spawnPoop() {
 // Probabilité d'apparition
 function maybeSpawnPoop() {
   const now = Date.now();
+  window.D.g.lastTick = now; // heartbeat — persisté au prochain save() normal
   const last = window.D.g.lastPoopSpawn || 0;
-  const minDelay = 25 * 60 * 1000; // 25 minutes minimum entre 2 crottes
-  
+  const minDelay = 8 * 60 * 1000; // 8 minutes minimum entre 2 crottes
+
   if (now - last < minDelay) return;
-  if (Math.random() < 0.35) spawnPoop();
+  if (Math.random() < 0.65) spawnPoop();
 }
 
 // Mécanique de Nourriture (Snack)
@@ -551,8 +557,8 @@ function initBaseProps() {
    ============================================================ */
 async function fetchMeteo() {
   try {
-    const METEO_LAT = 43.6047;  // Toulouse
-    const METEO_LON = 1.4442;
+    const METEO_LAT = window.D?.g?.lat || 43.6047;
+    const METEO_LON = window.D?.g?.lng || 1.4442;
     const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${METEO_LAT}&longitude=${METEO_LON}&current_weather=true&timezone=Europe/Paris`);
     const d = await r.json();
     window.meteoData = d.current_weather;
@@ -585,6 +591,51 @@ async function fetchMeteo() {
     updMeteoIcons();
   } catch(e) {}
 }
+
+async function fetchSolarPhases() {
+  const lat = window.D?.g?.lat, lng = window.D?.g?.lng;
+  if (!lat || !lng) return;
+  if (window.D.g.solarPhases?.fetchedDate === today()) return;
+  try {
+    const r = await fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=0`);
+    const d = await r.json();
+    if (d.status !== 'OK') return;
+    const res = d.results;
+    const toHf = iso => { const dt = new Date(iso); return dt.getHours() + dt.getMinutes() / 60; };
+    const sunriseHf = toHf(res.sunrise);
+    const sunsetHf  = toHf(res.sunset);
+    window.D.g.solarPhases = {
+      dawnStart:   toHf(res.civil_twilight_begin),
+      sunriseEnd:  sunriseHf + 1,
+      sunsetStart: sunsetHf  - 1,
+      duskEnd:     toHf(res.civil_twilight_end),
+      fetchedDate: today()
+    };
+    save();
+  } catch(e) { console.log('Solar phases indisponibles, fallback horaire activé'); }
+}
+
+window.getSolarPhase = function() {
+  const now = new Date();
+  const hf  = now.getHours() + now.getMinutes() / 60;
+  const sp  = window.D?.g?.solarPhases;
+  // Fallback si aucune donnée solaire
+  const dawn  = sp?.dawnStart   ?? 6;
+  const rises = sp?.sunriseEnd  ?? 9;
+  const sets  = sp?.sunsetStart ?? 20;
+  const dusk  = sp?.duskEnd     ?? 22;
+
+  if (hf >= rises && hf < sets)
+    return { phase: 'jour',        t: (hf - rises) / (sets - rises) };
+  if (hf >= dawn  && hf < rises)
+    return { phase: 'aube',        t: (hf - dawn)  / (rises - dawn) };
+  if (hf >= sets  && hf < dusk)
+    return { phase: 'crepuscule',  t: (hf - sets)  / (dusk - sets) };
+  // nuit
+  const dur = 24 - dusk + dawn;
+  const t   = hf >= dusk ? (hf - dusk) / dur : (hf + 24 - dusk) / dur;
+  return { phase: 'nuit', t: Math.min(t, 1) };
+};
 
 function updMeteoIcons() {
   const wind = window.meteoData?.windspeed || 0;
@@ -735,6 +786,21 @@ function handleDailyReset() {
   save();
 }
 
+// Sauvegarde lastTick quand l'app passe en arrière-plan
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { window.D.g.lastTick = Date.now(); save(); }
+});
+
+// Spawn rétrospecif des crottes accumulées pendant l'inactivité
+function catchUpPoops() {
+  const last = window.D.g.lastTick || 0;
+  if (!last) return;
+  const deltMin = Math.min((Date.now() - last) / 60000, 480); // plafond 8h
+  if (deltMin < 10) return;
+  const nb = Math.floor(deltMin / 50); // 1 crotte / 50 min hors-session
+  for (let i = 0; i < nb; i++) spawnPoop();
+}
+
 // Flag pour éviter les doubles inits
 let _appInitialized = false;
 
@@ -746,13 +812,12 @@ function initApp() {
   // 1. Reset quotidien (toujours sûr à appeler)
   handleDailyReset();
 
-  // 2. Env selon l'heure (nuit → chambre)
+  // 2. Env — la boucle draw calcule dynamiquement chambre/parc selon hr()
   const h = hr();
-  if (h >= 21 || h < 7) window.D.g.activeEnv = 'chambre';
 
-  // 3. Spawn caca si 30 min écoulées
+  // 3. Spawn caca si 10 min écoulées
   const lastSpawn = window.D.g.lastPoopSpawn || 0;
-  if (Date.now() - lastSpawn > 30 * 60 * 1000) {
+  if (Date.now() - lastSpawn > 10 * 60 * 1000) {
     maybeSpawnPoop();
   }
 
@@ -781,11 +846,13 @@ function bootstrap() {
   loadDataFiles().then(() => {
     initBaseProps();
     if (typeof updBadgeBoutique === 'function') updBadgeBoutique();
+    catchUpPoops();
     initApp();
     _appInitialized = true;
   });
 
   fetchMeteo();
+  fetchSolarPhases();
   setInterval(fetchMeteo, 1800000);
   setInterval(maybeSpawnPoop, 30 * 60 * 1000);
 }

@@ -2569,4 +2569,12 @@ window.initUI = function() {
   const modalOuverte = modalEl && getComputedStyle(modalEl).display !== 'none';
   if (!window._gotchiActif && !modalOuverte && typeof go === 'function') go('gotchi');
 });
+ // 🔒 Bloque le canvas quand mbox est visible
+  const mbox = document.getElementById('mbox');
+  const dynamicZone = document.getElementById('dynamic-zone');
+  const observer = new MutationObserver(() => {
+    const blocked = getComputedStyle(mbox).display !== 'none';
+    dynamicZone.style.pointerEvents = blocked ? 'none' : '';
+  });
+  observer.observe(mbox, { attributes: true, attributeFilter: ['class', 'style'] });
 };

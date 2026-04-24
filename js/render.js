@@ -986,6 +986,15 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     }
   }; // ← fin p.draw()
 
+  // Vérifie si un overlay actif bloque les interactions canvas
+function isOverlayActive() {
+  const modal = document.getElementById('modal');
+  const toast = document.getElementById('toast'); // adapte l'ID si besoin
+  const modalVisible = modal && modal.style.display !== 'none';
+  const toastVisible = toast && toast.style.display !== 'none';
+  return modalVisible || toastVisible;
+}
+
   // 13. Gestionnaire d'événements tactiles (Garde l'accès à "p.")
     p.touchStarted = function() {
     // 🔒 GARDE 1 : menu principal ouvert

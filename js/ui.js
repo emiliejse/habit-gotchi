@@ -432,7 +432,7 @@ function renderProps() {
       const badgeId = `mini-${p.id}`;
       return `<div onclick="toggleProp(${index})" style="background:${p.actif?'var(--mint)':'#fff'};border:2px solid ${p.actif?'var(--mint)':isClaud?'var(--lilac)':'var(--border)'};border-radius:10px;padding:6px 4px 8px;font-size:10px;font-weight:bold;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;transition:.2s;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.05);position:relative;min-height:90px;">
         ${isClaud ? `
-  <span style="position:absolute;top:4px;left:4px;font-size:9px;color:var(--lilac);">✦</span>
+  <span style="position:absolute;top:3px;left:4px;font-size:14px;color:var(--lilac);">✦</span>
   <span onclick="event.stopPropagation();supprimerObjetIA('${p.id}')" style="position:absolute;top:2px;right:4px;font-size:13px;cursor:pointer;opacity:.6">🗑️</span>
 ` : ''}
         <div style="flex:1;display:flex;align-items:center;justify-content:center;">
@@ -1113,9 +1113,10 @@ async function askClaude() {
     energy:        g.energy,
     happiness:     g.happiness,
     heure:         new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    date:          todayFr(),
     notesRecentes: notesRecentes
-      ? `Aujourd'hui : ${today()}. Ambiance récente : ${notesRecentes}`
-      : `Aujourd'hui : ${today()}.`,
+      ? `Aujourd'hui : ${todayFr()}. Ambiance récente : ${notesRecentes}`
+      : `Aujourd'hui : ${todayFr()}.`,
     exemples: [
   ...(P?.bulles?.idle   || []).slice(0, 2),
   ...(P?.bulles?.triste || []).slice(0, 1),
@@ -1366,7 +1367,7 @@ function genSoutien() {
       .replace('{{style}}',        P?.style || 'Phrases courtes, bienveillant.')
       .replace('{{traits}}',       P?.traits?.join(', ') || 'doux, curieux')
       .replace('{{heure}}',        new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }))
-      .replace('{{date}}',         td)
+      .replace('{{date}}',         todayFr())
       .replace('{{energy}}',       `${D.g.energy}/5`)
       .replace('{{happiness}}',    `${D.g.happiness}/5`)
       .replace('{{habitsDone}}',   habsDuJour.filter(h=>h.faite).map(h=>h.label).join(', ') || 'aucune')

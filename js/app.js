@@ -8,6 +8,7 @@
    UTILITAIRES (déclarés en premier — utilisés partout)
    ============================================================ */
 const today  = () => new Date().toISOString().split('T')[0];
+const todayFr = () => new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 const hr = () => window._forceHour ?? new Date().getHours();
 const clamp  = (v,a,b) => Math.max(a, Math.min(b, v));
 
@@ -30,7 +31,7 @@ window.meteoData  = null;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v2.0'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v2.1'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 
 /* ============================================================

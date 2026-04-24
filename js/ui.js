@@ -2639,7 +2639,6 @@ function renderAgendaJour(el) {
     </div>`).join('');
 
   el.innerHTML = `
-    // Jour
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
   <button onclick="navAgendaJour(-1)"
     style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
@@ -2944,7 +2943,6 @@ function renderAgendaMois(el) {
   cells += '</div>';
 
   el.innerHTML = `
-// Mois
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
   <button onclick="navAgendaMois(-1)"
     style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">

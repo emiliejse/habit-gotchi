@@ -2777,6 +2777,9 @@ function confirmerSuppressionRdv(id) {
 }
 
 function confirmerSuppressionCycle(ds) {
+  // 🔒 Ferme une éventuelle confirmation déjà ouverte
+  document.getElementById('confirm-inline')?.remove();
+
   const el = document.getElementById('agenda-contenu');
   const date = new Date(ds + 'T12:00');
   const fmt  = date.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });

@@ -2514,9 +2514,14 @@ let _agendaJour = null; // date string "2025-04-24" du jour affiché
 
 function ouvrirAgenda(dateStr) {
   _agendaJour = dateStr || today();
+  
+  const mbox = document.getElementById('mbox');
+  mbox.classList.remove('shop-open', 'shop-catalogue', 'agenda-open');
+  
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('dynamic-zone').style.overflowY = 'hidden';
-  document.getElementById('mbox').innerHTML = `
+  
+  mbox.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h3 style="font-size:13px;color:var(--lilac)">🗓️ Mon Agenda</h3>
       <button onclick="fermerAgenda()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
@@ -2544,14 +2549,8 @@ function ouvrirAgenda(dateStr) {
     <div id="agenda-contenu"></div>
   `;
 
-  const mbox = document.getElementById('mbox');
-  mbox.classList.remove('shop-open');
   void mbox.offsetWidth;
-  mbox.classList.add('shop-open');
-  mbox.classList.remove('shop-open', 'agenda-open');
-void mbox.offsetWidth;
-mbox.classList.add('shop-open', 'agenda-open');
-
+  mbox.classList.add('shop-open', 'agenda-open');
   animEl(mbox, 'bounceIn');
   switchAgenda('jour');
 }

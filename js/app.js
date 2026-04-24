@@ -31,7 +31,7 @@ window.meteoData  = null;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v2.2'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v2.3'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 
 /* ============================================================
@@ -135,6 +135,7 @@ snackDone: '', snackEmoji: '',
     lastThoughtDate: null,
 thoughtCount: 0,
 lastSoutienDate: null,
+lastJournalExport: null,
 soutienCount: 0,
 eventLog: [],        // historique (max 50)
 firstLaunch: null,   // sera rempli au 1er lancement
@@ -781,6 +782,9 @@ function handleDailyReset() {
     window.D.lastSoutienDate = td;
     window.D.soutienCount    = 0;
   }
+
+    // ── Export journal auto ──
+  exportJournalAuto();
 
   window.D.lastActive = new Date().toISOString();
   save();

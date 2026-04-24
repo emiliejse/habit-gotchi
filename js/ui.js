@@ -2121,6 +2121,33 @@ function importD(event) {
   };
   reader.readAsText(file);
 }
+
+// ─── EXPORT JOURNAL QUOTIDIEN AUTO ───────────────────────────────
+function exportJournalAuto() {
+  const td = today(); // "2025-04-24"
+  if (window.D.lastJournalExport === td) return; // déjà fait aujourd'hui
+
+  const entries = (window.D.journal || []).filter(e => {
+    // garde uniquement les entrées d'avant aujourd'hui
+    return e.date.split('T')[0] < td;
+  });
+
+  if (!entries.length) return; // rien à exporter
+
+  const blob = new Blob(
+    [JSON.stringify({ exportDate: td, journal: entries }, null, 2)],
+    { type: 'application/json' }
+  );
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `habitgotchi-journal-${td}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  window.D.lastJournalExport = td;
+  save();
+}
+
 function confirmReset() {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`;
@@ -2396,6 +2423,13 @@ window.initUI = function() {
     console.warn('initUI appelée avant que D soit prêt');
     return;
   }
+
+    // ── Feedback export journal ──
+  const lastExp = window.D.lastJournalExport;
+  const info = document.getElementById('last-journal-export');
+  if (info) info.textContent = lastExp
+    ? `📓 Journal exporté le ${lastExp}`
+    : '📓 Aucun export automatique encore';
 
   const h = hr();
   window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';

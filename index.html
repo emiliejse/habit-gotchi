@@ -443,6 +443,7 @@ function clearDebugLogs() {
 <!-- Mes données -->
 <div class="card" style="margin-top:15px;">
   <h2>💾 Mes données</h2>
+  <p id="last-journal-export" style="font-size:9px;color:var(--text2);margin-bottom:6px"></p>
   <p style="font-size:10px;color:var(--text2);margin-bottom:10px">Sauvegarde tes progrès avant une mise à jour.</p>
   <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:8px;font-size:10px">📦 Exporter ma sauvegarde</button>
   <input type="file" id="import-file" style="display:none" accept=".json" onchange="importD(event)">

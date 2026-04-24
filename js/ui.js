@@ -2514,27 +2514,64 @@ let _agendaJour = null; // date string "2025-04-24" du jour affiché
 
 function ouvrirAgenda(dateStr) {
   _agendaJour = dateStr || today();
-  document.getElementById('agenda-overlay').style.display = 'flex';
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('dynamic-zone').style.overflowY = 'hidden';
+  document.getElementById('mbox').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h3 style="font-size:13px;color:var(--lilac)">🗓️ Mon Agenda</h3>
+      <button onclick="fermerAgenda()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
+    </div>
+
+    <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);
+      border-radius:20px;padding:3px">
+      <button onclick="switchAgenda('jour')" id="atab-jour"
+        style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
+        cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
+        📅 Jour
+      </button>
+      <button onclick="switchAgenda('mois')" id="atab-mois"
+        style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
+        cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
+        🗓️ Mois
+      </button>
+      <button onclick="switchAgenda('cycle')" id="atab-cycle"
+        style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
+        cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
+        🌸 Cycle
+      </button>
+    </div>
+
+    <div id="agenda-contenu"></div>
+  `;
+
+  const mbox = document.getElementById('mbox');
+  mbox.classList.remove('shop-open');
+  void mbox.offsetWidth;
+  mbox.classList.add('shop-open');
+
+  animEl(mbox, 'bounceIn');
   switchAgenda('jour');
 }
 
 function fermerAgenda() {
-  document.getElementById('agenda-overlay').style.display = 'none';
+  document.getElementById('dynamic-zone').style.overflowY = '';
+  clModal();
 }
 
 function switchAgenda(onglet) {
-  // Style onglets
   ['jour','mois','cycle'].forEach(o => {
     const btn = document.getElementById('atab-' + o);
+    if (!btn) return;
     btn.style.background  = o === onglet ? '#fff' : 'transparent';
     btn.style.color       = o === onglet ? 'var(--lilac)' : 'var(--text2)';
     btn.style.boxShadow   = o === onglet ? '0 1px 4px rgba(0,0,0,.1)' : 'none';
   });
 
   const el = document.getElementById('agenda-contenu');
-  if (onglet === 'jour')   renderAgendaJour(el);
-  if (onglet === 'mois')   renderAgendaMois(el);
-  if (onglet === 'cycle')  renderAgendaCycle(el);
+  if (!el) return;
+  if (onglet === 'jour')  renderAgendaJour(el);
+  if (onglet === 'mois')  renderAgendaMois(el);
+  if (onglet === 'cycle') renderAgendaCycle(el);
 }
 
 /* ─── PANNEAU 1 : JOUR ─────────────────────────────────────── */
@@ -3006,35 +3043,55 @@ function renderAgendaCycle(el) {
     </div>
   `;
 
-  // Historique des cycles
+// Historique des cycles
   let historiqueHtml = '';
-  if (cycles.length >= 2) {
+  if (cycles.length >= 1) {
     const lignes = [];
     for (let i = 0; i < cycles.length - 1; i++) {
-      const d1   = new Date(cycles[i+1] + 'T12:00');
-      const d2   = new Date(cycles[i]   + 'T12:00');
-      const nb   = Math.round((d2 - d1) / 86400000);
-      const fmt  = d => `${d.getDate()} ${d.toLocaleDateString('fr-FR',{month:'short',year:'numeric'})}`;
+      const d1  = new Date(cycles[i+1] + 'T12:00');
+      const d2  = new Date(cycles[i]   + 'T12:00');
+      const nb  = Math.round((d2 - d1) / 86400000);
+      const fmt = d => `${d.getDate()} ${d.toLocaleDateString('fr-FR',{month:'short',year:'numeric'})}`;
       lignes.push({ debut: cycles[i+1], fin: cycles[i], nb, label: `${fmt(d1)} → ${fmt(d2)} · ${nb} jours` });
     }
+
+    // Liste de tous les J1 individuels pour suppression/modification
+    const j1Html = cycles.map((ds, i) => {
+      const d   = new Date(ds + 'T12:00');
+      const fmt = `${d.getDate()} ${d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}`;
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;
+          padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
+          <div style="display:flex;gap:4px">
+            <input type="date" id="edit-j1-${i}"
+              style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
+              value="${ds}" onchange="modifierCycle('${ds}', this.value)">
+            <button onclick="document.getElementById('edit-j1-${i}').showPicker()"
+              style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
+            <button onclick="confirmerSuppressionCycle('${ds}')"
+              style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2)">🗑️</button>
+          </div>
+        </div>`;
+    }).join('');
+
     historiqueHtml = `
       <div style="margin-bottom:12px">
         <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:8px">
-          HISTORIQUE
+          JOURS DE RÈGLES ENREGISTRÉS
         </h3>
-        ${lignes.map((l,i) => `
-          <div style="display:flex;align-items:center;justify-content:space-between;
-            padding:6px 0;border-bottom:1px solid var(--border)">
-            <span style="font-size:11px;color:var(--text)">${l.label}</span>
-            <div style="display:flex;gap:4px">
-  <input type="date" id="edit-cycle-${i}" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
-    value="${l.debut}" onchange="modifierCycle('${l.debut}', this.value)">
-  <button onclick="document.getElementById('edit-cycle-${i}').showPicker()"
-    style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
-  <button onclick="confirmerSuppressionCycle('${l.debut}')"
-    style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2)">🗑️</button>
-</div>
-          </div>`).join('')}
+        ${j1Html}
+
+        ${lignes.length >= 1 ? `
+          <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin:12px 0 8px">
+            DURÉES DE CYCLES
+          </h3>
+          ${lignes.map((l, i) => `
+            <div style="padding:6px 0;border-bottom:1px solid var(--border)">
+              <span style="font-size:11px;color:var(--text)">${l.label}</span>
+            </div>`).join('')}
+        ` : ''}
+
         <button onclick="exporterCycles()"
           style="width:100%;margin-top:10px;padding:8px;border-radius:10px;
           border:2px dashed var(--border);background:transparent;
@@ -3044,22 +3101,10 @@ function renderAgendaCycle(el) {
         </button>
       </div>
     `;
-  } else if (cycles.length === 1) {
-    historiqueHtml = `<div style="font-size:11px;color:var(--text2);font-style:italic">
-      Un seul cycle enregistré — l'historique apparaîtra dès le deuxième.
-    </div>`;
+  }
   }
 
-  el.innerHTML = `
-    <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:10px">
-      FRISE DU CYCLE
-    </h3>
-    ${friseHtml}
-    ${descHtml}
-    ${saisieHtml}
-    ${historiqueHtml}
-  `;
-}
+
 function modifierCycle(ancienneDate, nouvelleDate) {
   if (!nouvelleDate || ancienneDate === nouvelleDate) return;
   const D = window.D;

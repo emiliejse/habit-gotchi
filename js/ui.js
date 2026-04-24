@@ -617,7 +617,7 @@ addEvent({
   subtype: 'achat',
   valeur: prop.cout,
   emoji: prop.emoji || '🛍️',
-  label: prop.nom
+  label: `${prop.nom}  débloqué`
 });
   save();
   toast(`${prop.emoji || '🛍️'} ${prop.nom} ajouté à ton inventaire !`);

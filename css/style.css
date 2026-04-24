@@ -453,6 +453,8 @@ body {
   font-size: 20px; cursor: pointer; transition: .2s; display: flex; align-items: center; justify-content: center;
 }
 .mood-b.sel { border-color: var(--lilac); background: rgba(176,144,208,.1); transform: scale(1.1); }
+#mood-pick.mood-required .mood-b { animation: shakeRow .4s ease; border-color: #e57373; }
+@keyframes shakeRow { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
 
 
 /* ─── SYSTÈME 7 : SYSTÈME D'ONGLETS & MODALES ────────────────────── */

@@ -121,13 +121,21 @@ updDate();
 /* ─── SYSTÈME 7 : INGÉNIERIE (UI & FEEDBACK) ─────────────────── */
 let _toastTimer;
 
+function _noOrphan(txt) {
+  // Colle la ponctuation finale à son mot précédent
+  txt = txt.replace(/ ([!?.:…\u2026]+)$/, '\u00A0$1');
+  // Colle le dernier mot au précédent (évite 1 mot ou 2 mots isolés)
+  txt = txt.replace(/ (\S+)$/, '\u00A0$1');
+  return txt;
+}
+
 /**
  * Toast : Notification éphémère douce en bas de l'écran (non-bloquante)
  */
 function toast(m) {
   let el = document.getElementById('toast');
   if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
-  el.textContent = m;
+  el.textContent = _noOrphan(m);
   el.classList.add('show');
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
@@ -1393,6 +1401,7 @@ window._soutienHistory = [];
       <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:8px 12px">→</button>
     </div>
     <p id="soutien-count" style="font-size:9px;opacity:0.6;text-align:center;margin-top:4px">6 messages restants · session ${D.soutienCount}/3 aujourd'hui</p>
+    <button id="btn-copier-soutien" class="btn btn-s" onclick="copierSoutien()" style="width:100%;font-size:10px;margin-top:6px">Copier la conversation</button>
 `;
 animEl(document.getElementById('mbox'), 'bounceIn');
   sendSoutienMsg(promptInit, true);
@@ -1505,6 +1514,26 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   }
 }
 
+function copierSoutien() {
+  const chat = document.getElementById('soutien-chat');
+  if (!chat) return;
+  const D = window.D;
+  const lignes = [];
+  chat.querySelectorAll('.chat-bubble-user, .chat-bubble-claude').forEach(msg => {
+    const auteur = msg.classList.contains('chat-bubble-user')
+      ? (D.g.userName || D.userName || 'Toi')
+      : (D.g.name || 'Gotchi');
+    lignes.push(`${auteur} : ${msg.innerText.trim()}`);
+  });
+  if (!lignes.length) return;
+  const texte = lignes.join('\n\n');
+  const btn = document.getElementById('btn-copier-soutien');
+  if (!navigator.clipboard) return; // fallback silencieux (contexte non sécurisé)
+  navigator.clipboard.writeText(texte).then(() => {
+    if (btn) { btn.textContent = '✓ Copié !'; setTimeout(() => btn.textContent = 'Copier la conversation', 2000); }
+  }).catch(() => {});
+}
+
 /* ─── SYSTÈME 6 : INTROSPECTION & MÉMOIRE (Bilan IA) ─────────────── */
 
 /* ============================================================
@@ -1575,6 +1604,8 @@ if (semaineEnCours) {
     summaryEl.textContent = `Semaine du ${wd[0]} au ${wd[6]}\n\n${lignes}\n\n${notes.length} note(s) de journal.\n\nAjoute ta clé API pour un bilan personnalisé ✿`;
     document.getElementById('btn-copy-bilan').style.display = 'block';
     document.getElementById('bil-txt-hidden').value = summaryEl.textContent;
+    window.D.g.bilanText = summaryEl.textContent;
+    save();
     return;
   }
 
@@ -1584,10 +1615,10 @@ if (semaineEnCours) {
   const ctx = window.AI_CONTEXTS;
   const prompt = ctx
     ? ctx.genBilanSemaine
+        .replaceAll('{{nameGotchi}}',   g.name)
+        .replaceAll('{{userName}}',     D.g.userName || D.userName || 'ton utilisatrice')
         .replace('{{weekStart}}',    wd[0])
         .replace('{{weekEnd}}',      wd[6])
-        .replace('{{nameGotchi}}',   g.name)
-        .replace('{{userName}}',     D.g.userName || D.userName || 'ton utilisatrice')
         .replace('{{stage}}',        s.l)
         .replace('{{energy}}',       g.energy)
         .replace('{{happiness}}',    g.happiness)
@@ -1611,13 +1642,16 @@ if (semaineEnCours) {
       body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:500, messages:[{role:'user',content:prompt}] })
     });
     const d = await r.json();
-    const bilan = d.content?.[0]?.text || 'Je n\'ai pas pu générer le bilan.';
+    const bilan = (d.content?.[0]?.text || 'Je n\'ai pas pu générer le bilan.')
+      .replaceAll('{{nameGotchi}}', g.name)
+      .replaceAll('{{userName}}',   D.g.userName || D.userName || 'toi');
 
     stopThinkingAnim(animBilan);
     summaryEl.textContent = bilan;
     document.getElementById('bil-txt-hidden').value = bilan;
     document.getElementById('btn-copy-bilan').style.display = 'block';
     window.D.g.bilanCount = (window.D.g.bilanCount || 0) + 1;
+    window.D.g.bilanText  = bilan;
     save();
     renderProg(); // rafraîchit l'état du bouton
 
@@ -1636,14 +1670,14 @@ function copyBilanSemaine() {
   });
 }
 function resetBilan() {
-  if (confirm('Effacer le bilan ?')) {
-// On garde le compteur intact — juste le texte est effacé
-    const el = document.getElementById('claude-summary');
-    if (el) el.textContent = 'Ton bilan de la semaine apparaîtra ici...';
-    document.getElementById('btn-copy-bilan').style.display = 'none';
-    renderProg();
-    toast('Bilan réinitialisé 🌸');
-  }
+  // On garde le compteur intact — juste le texte est effacé
+  const el = document.getElementById('claude-summary');
+  if (el) el.textContent = 'Ton bilan de la semaine apparaîtra ici...';
+  document.getElementById('btn-copy-bilan').style.display = 'none';
+  window.D.g.bilanText = '';
+  save();
+  renderProg();
+  toast(_noOrphan('Bilan effacé 🌸'));
 }
 
 /* ─── SYSTÈME 5 : INVENTAIRE & PERSONNALISATION (Esthétique) ────── */
@@ -1794,8 +1828,13 @@ function pickM(id) {
 }
 function saveJ() {
   const t = document.getElementById('j-text').value.trim();
-  if (!t && !selMood) return;
-  window.D.journal.push({ date: new Date().toISOString(), mood: selMood || 'ok', text: t });
+  if (!selMood) {
+    const mp = document.getElementById('mood-pick');
+    if (mp) { mp.classList.add('mood-required'); setTimeout(() => mp.classList.remove('mood-required'), 800); }
+    toast(_noOrphan('Choisis une humeur avant de sauvegarder ✿'));
+    return;
+  }
+  window.D.journal.push({ date: new Date().toISOString(), mood: selMood, text: t });
   addXp(15);
   addEvent('note', 15, 'Note enregistrée  +15 XP');  // ← nouveau
   toast(`+15 XP 📓`);                                         // ← nouveau
@@ -1942,6 +1981,16 @@ document.getElementById('m-title').textContent =
     const fmt   = d => `${d.getDate()} ${d.toLocaleDateString('fr-FR', { month: 'short' })}`;
     const prenom = D.g.userName || D.userName || 'toi';
     bilanTitre.innerHTML = `🌼 Bilan pour ${prenom}<br><span style="font-size:9px;font-weight:normal;color:var(--text2)">semaine du ${fmt(debut)} au ${fmt(fin)}</span>`;
+  }
+
+  /* ── Restauration bilan persisté ── */
+  const savedBilan = window.D.g.bilanText || '';
+  const summaryRestore = document.getElementById('claude-summary');
+  if (summaryRestore && savedBilan) {
+    summaryRestore.textContent = savedBilan;
+    const hidRestore = document.getElementById('bil-txt-hidden');
+    if (hidRestore) hidRestore.value = savedBilan;
+    document.getElementById('btn-copy-bilan').style.display = 'block';
   }
 
   /* ── État bouton bilan ── */

@@ -432,7 +432,7 @@ function renderProps() {
       const badgeId = `mini-${p.id}`;
       return `<div onclick="toggleProp(${index})" style="background:${p.actif?'var(--mint)':'#fff'};border:2px solid ${p.actif?'var(--mint)':isClaud?'var(--lilac)':'var(--border)'};border-radius:10px;padding:6px 4px 8px;font-size:10px;font-weight:bold;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;transition:.2s;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.05);position:relative;min-height:90px;">
         ${isClaud ? `
-  <span style="position:absolute;top:4px;left:4px;font-size:9px;color:var(--lilac);">✦</span>
+  <span style="position:absolute;top:3px;left:4px;font-size:14px;color:var(--lilac);">✦</span>
   <span onclick="event.stopPropagation();supprimerObjetIA('${p.id}')" style="position:absolute;top:2px;right:4px;font-size:13px;cursor:pointer;opacity:.6">🗑️</span>
 ` : ''}
         <div style="flex:1;display:flex;align-items:center;justify-content:center;">
@@ -441,12 +441,6 @@ function renderProps() {
         <div style="width:100%;">
           <div>${p.nom}</div>
           <div style="font-size:8px;text-transform:uppercase;opacity:.7;font-weight:normal;">${p.type}</div>
-          ${p.actif
-  ? `<div style="font-size:8px;background:var(--mint);border-radius:6px;padding:2px 4px;margin-top:2px;color:#fff;font-weight:bold">
-        ✓ actif${p.slot ? ' · ' + p.slot : ''}
-      </div>`
-  : `<div style="font-size:8px;opacity:.4;margin-top:2px">inactif</div>`
-}
         </div>
       </div>`;
     }).join('') + `</div>`;
@@ -1113,14 +1107,16 @@ async function askClaude() {
   const vars = {
     nameGotchi:           D.g.name      || P?.nom    || 'Petit·e Gotchi',
     userName:      D.g.userName  || D.userName || 'ton utilisatrice',
+    diminutif:     D.g.userNickname || D.g.userName || D.userName || 'toi',
     style:         P?.style      || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
     traits:        P?.traits?.join(', ') || 'doux, joueur, curieux',
     energy:        g.energy,
     happiness:     g.happiness,
     heure:         new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    date:          todayFr(),
     notesRecentes: notesRecentes
-      ? `Aujourd'hui : ${today()}. Ambiance récente : ${notesRecentes}`
-      : `Aujourd'hui : ${today()}.`,
+      ? `Aujourd'hui : ${todayFr()}. Ambiance récente : ${notesRecentes}`
+      : `Aujourd'hui : ${todayFr()}.`,
     exemples: [
   ...(P?.bulles?.idle   || []).slice(0, 2),
   ...(P?.bulles?.triste || []).slice(0, 1),
@@ -1371,7 +1367,7 @@ function genSoutien() {
       .replace('{{style}}',        P?.style || 'Phrases courtes, bienveillant.')
       .replace('{{traits}}',       P?.traits?.join(', ') || 'doux, curieux')
       .replace('{{heure}}',        new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }))
-      .replace('{{date}}',         td)
+      .replace('{{date}}',         todayFr())
       .replace('{{energy}}',       `${D.g.energy}/5`)
       .replace('{{happiness}}',    `${D.g.happiness}/5`)
       .replace('{{habitsDone}}',   habsDuJour.filter(h=>h.faite).map(h=>h.label).join(', ') || 'aucune')
@@ -1813,7 +1809,7 @@ function saveJ() {
   const el = document.getElementById('bubble');
   if (el) {
     let bulle = poolJ[Math.floor(Math.random() * poolJ.length)];
-    bulle = bulle.replace('{{nom}}', D.userName || 'toi');
+    bulle = bulle.replace('{{diminutif}}', D.g.userNickname || D.userName || 'toi');
     el.textContent = bulle;
   }
 }
@@ -2236,7 +2232,7 @@ function getMorningMsg() {
   const name = D.g.name;
   if (str >= 7) return `*s'étire* ${str} jours de suite... tu m'impressionnes 🔥`;
   if (str >= 3) return `${str} jours d'affilée ! On continue ? 💜`;
-  return `Coucou ${D.userName || 'toi'} ! Je t'attendais 🌸`;
+  return `Coucou ${D.g.userNickname || D.userName || 'toi'} ! Je t'attendais 🌸`;
 }
 
 function getAfternoonMsg() {
@@ -2262,7 +2258,7 @@ function getNightMsg() {
   const D = window.D;
   const done = (D.log[today()] || []).length;
   if (done === 6) return `*ronronne* Journée parfaite... dors bien 🌙`;
-  if (done >= 3) return `*bâille* Bonne nuit ${D.userName || 'toi'}... à demain 💜`;
+  if (done >= 3) return `*bâille* Bonne nuit ${D.g.userNickname || D.userName || 'toi'}... à demain 💜`;
   return `*murmure* Je veille. Dors bien 🌙`;
 }
 

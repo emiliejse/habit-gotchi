@@ -8,6 +8,7 @@
    UTILITAIRES (déclarés en premier — utilisés partout)
    ============================================================ */
 const today  = () => new Date().toISOString().split('T')[0];
+const todayFr = () => new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 const hr = () => window._forceHour ?? new Date().getHours();
 const clamp  = (v,a,b) => Math.max(a, Math.min(b, v));
 
@@ -30,7 +31,7 @@ window.meteoData  = null;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v2.0'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v2.1'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 
 /* ============================================================
@@ -116,7 +117,7 @@ const MSG = {
 function defs() {
   return {
     g: {
-      name:'Petit·e Gotchi', userName: 'Émilie', totalXp:0, stage:'egg', energy:3, happiness:3,
+      name:'Petit·e Gotchi', userName: 'Émilie', userNickname: '', totalXp:0, stage:'egg', energy:3, happiness:3,
 envLv:0, activeEnv:'parc', petales:0,poops: [], poopDay: '',    // date du dernier comptage
 poopCount: 0,  // nb de cacas spawné aujourd'hui
 snackDone: '', snackEmoji: '',
@@ -158,8 +159,17 @@ function save() {
   try { localStorage.setItem(SK, JSON.stringify(window.D)); } catch(e) {}
 }
 
+// Dérive le diminutif du prénom (premier mot, accents conservés)
+function computeNickname(full) {
+  return (full || '').trim().split(/\s+/)[0] || 'toi';
+}
+
 // Initialisation au démarrage
 window.D = load();
+// Calcul runtime : ne remplace un userNickname explicitement défini que s'il est vide
+if (!window.D.g.userNickname) {
+  window.D.g.userNickname = computeNickname(window.D.g.userName);
+}
 
 // Restaure les pixels des props générés par Claude (Évite de faire appel à l'IA à chaque F5)
 if (window.D.propsPixels && Object.keys(window.D.propsPixels).length) {
@@ -692,7 +702,7 @@ if (dernierJournal?.date?.startsWith(today())) {
   const el = document.getElementById('bubble');
   if (el) {
     let bulle = poolFinal[Math.floor(Math.random() * poolFinal.length)];
-    bulle = bulle.replace('{{nom}}', D.userName || 'toi');
+    bulle = bulle.replace('{{diminutif}}', D.g.userNickname || D.userName || 'toi');
     el.textContent = bulle;
     window._derniereBulle = bulle; // mémorise pour anti-répétition
   }

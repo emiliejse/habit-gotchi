@@ -141,6 +141,7 @@ body {
 }
 /* Empêche le lissage des pixels pour garder l'effet Rétro */
 .tama-screen canvas {
+  display: block;
   image-rendering: pixelated !important;
   image-rendering: crisp-edges !important;
   width: 100% !important;

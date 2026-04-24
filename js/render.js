@@ -905,7 +905,7 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     p.fill(255);
     p.textSize(11);
     p.textAlign(p.LEFT, p.TOP);
-    p.text('🌸 ' + (g.petales || 0), 6, 6);
+    p.text('🌸 ' + (g.petales || 0), 6, 7);
 
     if (window.meteoData?.temperature) {
   const wc = window.meteoData?.weathercode;
@@ -915,19 +915,19 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
   if (wind > 20) hudMeteo += ' 🌬️';
   p.textSize(hudMeteo.length > 9 ? 9 : 11); // ← réduit si texte long
   p.textAlign(p.RIGHT, p.TOP);
-  p.text(hudMeteo, CS - 6, 6);
+  p.text(hudMeteo, CS - 6, 7);
   p.textSize(11); // ← remet la taille normale
 }
     const hasPoops = (window.D.g.poops || []).length > 0;
     p.textSize(16);
     p.textAlign(p.CENTER, p.TOP);
     p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.3;
-    p.text('🧹', 72, 3);
+    p.text('🧹', 72, 5);
 
     // Fonction today() est supposée déclarée dans app.js
     const snackDone = window.D.g.snackDone === today();
     p.drawingContext.globalAlpha = snackDone ? 0.35 : 1.0;
-    p.text('🍽️', 128, 3);
+    p.text('🍽️', 128, 5);
     p.drawingContext.globalAlpha = 1.0;
 
     if (window._cleanPositions && window._cleanPositions.length) {

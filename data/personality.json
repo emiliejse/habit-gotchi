@@ -6,7 +6,7 @@
     "matin": [
       "*s'étire lentement* 🌸",
       "On prend notre temps ✿",
-      "Doucement, {{nom}}...",
+      "Doucement, {{diminutif}}...",
       "*bâille très fort* bonjour",
       "Le matin existe. C'est déjà bien.",
       "Café d'abord. Monde ensuite. 💜",
@@ -36,7 +36,7 @@
     "nuit": [
       "*ronronne doucement* 🌙",
       "Zzz... 💜",
-      "*murmure* bonne nuit {{nom}}",
+      "*murmure* bonne nuit {{diminutif}}",
       "Les idées peuvent attendre demain ✿",
       "Dors. Le projet sera là. 🌙",
       "*veille sur toi* 💜",
@@ -46,7 +46,7 @@
       "*s'assoit tout près* 💜",
       "Je suis là. Vraiment. ✿",
       "Pas besoin de sourire",
-      "{{nom}}, je te vois 🌸",
+      "{{diminutif}}, je te vois 🌸",
       "C'est ok de pas aller bien",
       "*câlin pixel tout doux* 💜",
       "On reste là ensemble ✿",
@@ -60,13 +60,13 @@
       "*bâille avec toi* 😴",
       "Demain existe, promis 🌸",
       "Repos c'est du travail ✿",
-      "{{nom}}, pose-toi là 💜"
+      "{{diminutif}}, pose-toi là 💜"
     ],
     "fierte": [
       "*saute partout* 🌟",
       "T'as VU ce que t'as fait ?! ✿",
       "Je suis tellement fière 💜",
-      "{{nom}} elle assure 🌟",
+      "{{diminutif}} elle assure 🌟",
       "*cœur qui explose* 💜",
       "On est une équipe de choc ✿",
       "Tu m'épates encore 🌸",
@@ -78,7 +78,7 @@
       "*tourne en rond tellement contente* 🎉",
       "6/6 !! Je savais que t'en étais capable ✿",
       "*brille de tous ses pixels* 🌟",
-      "{{nom}} a TOUT FAIT aujourd'hui 💜",
+      "{{diminutif}} a TOUT FAIT aujourd'hui 💜",
       "Journée parfaite. On mérite un câlin 🌸",
       "Mon cœur pixel déborde 🎉",
       "Historique. Légendaire. Toi. ✿",
@@ -106,7 +106,7 @@
     "chaud": [
       "*fond doucement* 🥵",
       "Pfiou. Toulouse l'été. ✿",
-      "Bois de l'eau {{nom}} 💧",
+      "Bois de l'eau {{diminutif}} 💧",
       "*cherche l'ombre* ouf",
       "Sieste. Maintenant. ✿",
       "*s'évente avec un pixel* 🌞"
@@ -116,7 +116,7 @@
       "Brrrr ! Reste au chaud 🧣",
       "*se blottit en boule* 💜",
       "Chocolat chaud obligatoire ✿",
-      "{{nom}}, mets une couche ! 🧥"
+      "{{diminutif}}, mets une couche ! 🧥"
     ],
     "peu": [
       "*regarde par la fenêtre* 🌸",
@@ -124,14 +124,14 @@
       "Je garde ta place 💜",
       "On reprend quand tu veux",
       "*attend patiemment*",
-      "{{nom}}, tu m'as manqué·e 🌸",
+      "{{diminutif}}, tu m'as manqué·e 🌸",
       "Une seule suffit ✿",
       "Je suis là de toute façon 💜"
     ],
     "cadeau": [
       "*emballe avec soin* 🎀",
       "J'ai fait un truc... 💜",
-      "C'est pour toi {{nom}} ✿",
+      "C'est pour toi {{diminutif}} ✿",
       "*tout excité·e* 🌟",
       "Surprise ! Enfin j'espère 🌸",
       "J'ai créé quelque chose ✿"
@@ -141,7 +141,7 @@
       "Écris ce que tu ressens ✿",
       "Pas de jugement ici 🌸",
       "*attentif·ve et curieux·se*",
-      "Les mots libèrent {{nom}} ✿",
+      "Les mots libèrent {{diminutif}} ✿",
       "Chaque mot compte 💜"
     ],
     "custom": []

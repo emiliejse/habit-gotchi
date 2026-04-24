@@ -548,9 +548,10 @@ function clearDebugLogs() {
 <!-- 🌸 Modale Agenda (Cycle, Rdv, Calendrier) -->
 <div id="agenda-overlay" style="display:none;position:fixed;inset:0;z-index:350;
   background:rgba(56,48,74,0.5);backdrop-filter:blur(3px);
-  align-items:center;justify-content:center;padding:16px>
-  <div id="agenda-box" style="background:var(--card);border-radius:20px;width:100%;max-width:480px;max-height:90vh;height:90vh;display:flex;flex-direction:column;
-    padding:0;overflow:hidden">
+  align-items:flex-end;justify-content:center;padding:16px 16px 16px 16px">
+  <div id="agenda-box" style="background:var(--card);border-radius:20px 20px 0 0;width:100%;
+  max-width:480px;max-height:calc(100vh - 32px);height:calc(100vh - 32px);
+  display:flex;flex-direction:column;padding:0;overflow:hidden">
 
     <!-- Header -->
     <div style="padding:14px 16px 0;flex-shrink:0">

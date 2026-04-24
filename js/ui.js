@@ -2529,7 +2529,7 @@ function ouvrirAgenda(dateStr) {
   const modal = document.getElementById('modal');
 
   // 1. Prépare le contenu avant d'afficher
-  mbox.classList.remove('shop-open', 'shop-catalogue', 'agenda-open');
+  mbox.classList.add('shop-open'); // sans 'agenda-open'
   mbox.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h3 style="font-size:13px;color:var(--lilac)">🗓️ Mon Agenda</h3>

@@ -1001,19 +1001,8 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
       return true;
     }
-// 🔒 GARDE 4 : interactions bloquées hors onglet Gotchi
-if (!window._gotchiActif) return false;
-
-    const rect = p.canvas.getBoundingClientRect();
-    const touch = p.touches[0] || { x: p.mouseX, y: p.mouseY };
-    const clientX = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent) ? window.event.touches[0]?.clientX : null;
-    const clientY = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent) ? window.event.touches[0]?.clientY : null;
-
-    if (clientX !== null && clientY !== null) {
-      if (clientX < rect.left || clientX > rect.right || clientY < rect.top  || clientY > rect.bottom) {
-        return true; 
-      }
-    }
+// 🔒 GARDE 4 : hors onglet Gotchi → géré par pointerdown sur .tama-screen (ui.js)
+if (!window._gotchiActif) return true;
 
     const now = Date.now();
     if (now - (window._lastTapTime || 0) < 200) return false;

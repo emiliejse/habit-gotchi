@@ -2564,6 +2564,8 @@ window.initUI = function() {
   if (vEl) vEl.textContent = window.APP_VERSION || '';
   // Tap sur le tama depuis un autre onglet → retour accueil
   document.querySelector('.tama-screen')?.addEventListener('pointerdown', function() {
-    if (!window._gotchiActif && typeof go === 'function') go('gotchi');
-  });
+  const modalEl = document.getElementById('modal');
+  const modalOuverte = modalEl && getComputedStyle(modalEl).display !== 'none';
+  if (!window._gotchiActif && !modalOuverte && typeof go === 'function') go('gotchi');
+});
 };

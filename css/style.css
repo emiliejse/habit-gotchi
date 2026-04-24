@@ -554,42 +554,6 @@ body {
   animation: shopOpen 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-/* Hauteur fixe uniquement pour le catalogue */
-.modal-box.shop-open.shop-catalogue {
-  display: flex;
-  flex-direction: column;
-  height: auto;
-  max-height: 85dvh;
-}
-
-/* Onglet créations : s'adapte au contenu */
-.modal-box.shop-open:not(.shop-catalogue):not(.agenda-open) {
-  display: block;
-  height: auto;
-  max-height: 90dvh;
-  overflow-y: auto;
-}
-
-/* Agenda : hauteur fixe avec scroll interne */
-.modal-box.shop-open.agenda-open {
-  display: flex;
-  flex-direction: column;
-  height: 85dvh;
-  max-height: 85dvh;
-}
-
-#agenda-contenu {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-  padding-right: 4px;
-  scrollbar-width: none;
-}
-
-#agenda-contenu::-webkit-scrollbar {
-  display: none;
-}
-
 #boutique-contenu {
   flex: 1;
   overflow-y: auto;

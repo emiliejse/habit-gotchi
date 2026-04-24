@@ -2514,6 +2514,9 @@ let _agendaJour = null; // date string "2025-04-24" du jour affiché
 
 function ouvrirAgenda(dateStr) {
   _agendaJour = dateStr || today();
+
+    modalLocked = true;
+  setTimeout(() => { modalLocked = false; }, 400);
   
   const mbox = document.getElementById('mbox');
   mbox.classList.remove('shop-open', 'shop-catalogue', 'agenda-open');

@@ -563,7 +563,7 @@ body {
 }
 
 /* Onglet créations : s'adapte au contenu */
-.modal-box.shop-open:not(.shop-catalogue) {
+.modal-box.shop-open:not(.shop-catalogue):not(.agenda-open) {
   display: block;
   height: auto;
   max-height: 90dvh;

@@ -1131,9 +1131,9 @@ async function askClaude() {
   ...(P?.bulles?.matin  || []).slice(0, 1),
   ...(P?.bulles?.soir   || []).slice(0, 1),
 ].join(', ') || '*bâille*, *sourit*',
-    nomsExistants = [...new Set([
-  ...(D.g.props || []).map(p => `${p.nom} (${p.type})`),
-  ...(window.PROPS_LIB || []).map(p => `${p.nom} (${p.type})`)
+    nomsExistants: [...new Set([
+      ...(D.g.props || []).map(p => `${p.nom} (${p.type})`),
+      ...(window.PROPS_LIB || []).map(p => `${p.nom} (${p.type})`)
     ])].join(', ') || 'aucun',
     timestamp:     Date.now(),
   };
@@ -1237,9 +1237,9 @@ async function acheterPropClaude() {
   const nomsInventaire = (D.g.props || []).map(p => `${p.nom} (${p.type})`);
   const nomsCatalogue  = (window.PROPS_LIB || []).map(p => `${p.nom} (${p.type})`);
   const nomsExistants = [...new Set([
-  ...(D.g.props || []).map(p => p.nom),
-  ...(window.PROPS_LIB || []).map(p => p.nom)
-  ])].join(', ') || 'aucun';
+  ...(D.g.props || []).map(p => `${p.nom} (${p.type})`),
+  ...(window.PROPS_LIB || []).map(p => `${p.nom} (${p.type})`)
+])].join(', ') || 'aucun';
   const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
   const theme  = themes[Math.floor(Math.random() * themes.length)];
   const ctx    = window.AI_CONTEXTS;

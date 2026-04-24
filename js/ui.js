@@ -2558,6 +2558,15 @@ function fermerAgenda() {
   clModal();
 }
 
+function chevron(dir) {
+  const r = dir === 'left' ? 'rotate(180)' : '';
+  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+    stroke="var(--lilac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+    style="transform:${r};display:block">
+    <polyline points="9 18 15 12 9 6"/>
+  </svg>`;
+}
+
 function switchAgenda(onglet) {
   ['jour','mois','cycle'].forEach(o => {
     const btn = document.getElementById('atab-' + o);
@@ -2632,13 +2641,15 @@ function renderAgendaJour(el) {
       value="${ds}" onchange="changerJourAgenda(this.value)">
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <button onclick="navAgendaJour(-1)" style="background:none;border:none;font-size:18px;cursor:pointer">◀</button>
+      <button onclick="navAgendaJour(-1)" style="background:none;border:none;font-size:18px;cursor:pointer">
+  ${chevron('left')}
       <span onclick="ouvrirDatePickerAgenda()"
         style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
         text-align:center;cursor:pointer;text-decoration:underline dotted;color:var(--lilac)">
         ${titre}
       </span>
-      <button onclick="navAgendaJour(1)" style="background:none;border:none;font-size:18px;cursor:pointer">▶</button>
+      <button onclick="navAgendaJour(1)" style="background:none;border:none;font-size:18px;cursor:pointer">>
+  ${chevron('right')}
     </div>
 
     ${phaseHtml}
@@ -2931,12 +2942,15 @@ function renderAgendaMois(el) {
   el.innerHTML = `
     <!-- Navigation mois -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <button onclick="navAgendaMois(-1)" style="background:none;border:none;font-size:18px;cursor:pointer">◀</button>
+      <button onclick="navAgendaMois(-1)" style="background:none;border:none;font-size:18px;cursor:pointer">
+  ${chevron('left')}
       <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;text-transform:capitalize">${moisNom}</span>
-      <button onclick="navAgendaMois(1)" style="background:none;border:none;font-size:18px;cursor:pointer">▶</button>
+      <button onclick="navAgendaMois(1)" style="background:none;border:none;font-size:18px;cursor:pointer">
+  ${chevron('right')}
     </div>
 
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;
+  align-items:center;justify-content:center">
   <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)">
     <span style="display:inline-block;width:16px;height:10px;border-radius:3px;
       background:linear-gradient(to right,rgba(80,180,120,0.1),rgba(80,180,120,0.9))"></span>
@@ -2966,7 +2980,11 @@ function clickJourMois(ds) {
 
 function renderAgendaCycle(el) {
   const D      = window.D;
-  const duree  = D.g.cycleDuree || 28;
+  // Durée réelle du cycle en cours (entre les 2 derniers J1)
+// Si un seul J1 → fallback sur cycleDuree paramétré
+const duree = cycles.length >= 2
+  ? Math.round((new Date(cycles[0]+'T12:00') - new Date(cycles[1]+'T12:00')) / 86400000)
+  : (D.g.cycleDuree || 28);
   const cycles = (D.cycle || [])
     .filter(e => e.type === 'regles')
     .map(e => e.date)
@@ -3004,8 +3022,8 @@ function renderAgendaCycle(el) {
     <div style="display:flex;margin-bottom:12px">
       ${phases.map(p => `
         <div style="flex:${p.pct};text-align:center">
-          <div style="font-size:8px;color:${p.couleur};font-weight:bold">${p.label}</div>
-          <div style="font-size:7px;color:var(--text2)">J${p.jours}</div>
+          <div style="font-size:11px;color:${p.couleur};font-weight:bold">${p.label}</div>
+          <div style="font-size:10px;color:var(--text2)">J${p.jours}</div>
         </div>`).join('')}
     </div>
   `;
@@ -3056,7 +3074,31 @@ function renderAgendaCycle(el) {
     }
 
     // Liste de tous les J1 individuels pour suppression/modification
-    const j1Html = cycles.map((ds, i) => {
+    const MAX_VISIBLE = 3;
+const j1Html = cycles.map((ds, i) => {
+  const d   = new Date(ds + 'T12:00');
+  const fmt = `${d.getDate()} ${d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}`;
+  const cache = i >= MAX_VISIBLE;
+  return `
+    <div class="j1-ligne" style="display:${cache ? 'none' : 'flex'};align-items:center;
+      justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
+      <div style="display:flex;gap:4px">
+        <input type="date" id="edit-j1-${i}"
+          style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
+          value="${ds}" onchange="modifierCycle('${ds}', this.value)">
+        <button onclick="document.getElementById('edit-j1-${i}').showPicker()"
+          style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
+        <button onclick="confirmerSuppressionCycle('${ds}')"
+          style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2)">🗑️</button>
+      </div>
+    </div>`;
+}).join('');
+
+const voirToutHtml = cycles.length > MAX_VISIBLE ? `
+  <div id="j1-voir-tout" style="max-height:0;overflow:hidden;transition:max-height .3s ease">
+    ${cycles.slice(MAX_VISIBLE).map((ds, i) => {
+      const idx = i + MAX_VISIBLE;
       const d   = new Date(ds + 'T12:00');
       const fmt = `${d.getDate()} ${d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}`;
       return `
@@ -3064,16 +3106,24 @@ function renderAgendaCycle(el) {
           padding:6px 0;border-bottom:1px solid var(--border)">
           <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
           <div style="display:flex;gap:4px">
-            <input type="date" id="edit-j1-${i}"
+            <input type="date" id="edit-j1-${idx}"
               style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
               value="${ds}" onchange="modifierCycle('${ds}', this.value)">
-            <button onclick="document.getElementById('edit-j1-${i}').showPicker()"
+            <button onclick="document.getElementById('edit-j1-${idx}').showPicker()"
               style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
             <button onclick="confirmerSuppressionCycle('${ds}')"
               style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2)">🗑️</button>
           </div>
         </div>`;
-    }).join('');
+    }).join('')}
+  </div>
+  <button onclick="toggleJ1Liste()" id="btn-voir-tout-j1"
+    style="width:100%;margin-top:6px;padding:6px;border-radius:8px;
+    border:1px solid var(--border);background:transparent;
+    font-size:10px;cursor:pointer;color:var(--lilac);
+    font-family:'Courier New',monospace">
+    Voir tout (${cycles.length - MAX_VISIBLE} de plus) ▾
+  </button>` : '';
 
     historiqueHtml = `
       <div style="margin-bottom:12px">
@@ -3114,6 +3164,17 @@ function renderAgendaCycle(el) {
   `;
 }
 
+function toggleJ1Liste() {
+  const liste = document.getElementById('j1-voir-tout');
+  const btn   = document.getElementById('btn-voir-tout-j1');
+  if (!liste) return;
+  const ouvert = liste.style.maxHeight !== '0px' && liste.style.maxHeight !== '';
+  liste.style.maxHeight = ouvert ? '0' : '400px';
+  liste.style.overflowY = ouvert ? 'hidden' : 'auto';
+  btn.textContent = ouvert
+    ? `Voir tout (${liste.querySelectorAll('[style*="flex"]').length} de plus) ▾`
+    : 'Réduire ▴';
+}
 
 function modifierCycle(ancienneDate, nouvelleDate) {
   if (!nouvelleDate || ancienneDate === nouvelleDate) return;

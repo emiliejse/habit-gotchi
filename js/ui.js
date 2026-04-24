@@ -1131,9 +1131,9 @@ async function askClaude() {
   ...(P?.bulles?.matin  || []).slice(0, 1),
   ...(P?.bulles?.soir   || []).slice(0, 1),
 ].join(', ') || '*bâille*, *sourit*',
-    existingNames: [...new Set([
-    ...(D.g.props || []).map(p => p.nom),
-    ...(window.PROPS_LIB || []).map(p => p.nom)
+    nomsExistants = [...new Set([
+  ...(D.g.props || []).map(p => `${p.nom} (${p.type})`),
+  ...(window.PROPS_LIB || []).map(p => `${p.nom} (${p.type})`)
     ])].join(', ') || 'aucun',
     timestamp:     Date.now(),
   };

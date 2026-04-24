@@ -103,9 +103,13 @@ function go(t) {
 
 function toggleMenu() {
   const ov = document.getElementById('menu-overlay');
+  const dz = document.getElementById('dynamic-zone');
   if (!ov.classList.contains('open')) {
     const nm = document.getElementById('menu-gotchi-name');
     if (nm) nm.textContent = window.D.g.name || 'Gotchi';
+    dz.style.overflowY = 'hidden'; // ← verrouille
+  } else {
+    dz.style.overflowY = ''; // ← déverrouille
   }
   ov.classList.toggle('open');
 }
@@ -176,6 +180,7 @@ let modalLocked = false; // ← true pendant le soutien
 function clModal(e) {
   if (modalLocked) return; // ← bloque le tap extérieur
   if (!e || e.target.id === 'modal') document.getElementById('modal').style.display = 'none';
+  document.getElementById('dynamic-zone').style.overflowY = '';
 }
 
 /**
@@ -469,6 +474,7 @@ function ouvrirBoutique() {
   const onglet = window._boutiqueOnglet || 'catalogue';
 
   document.getElementById('modal').style.display = 'flex';
+  document.getElementById('dynamic-zone').style.overflowY = 'hidden';
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h3 style="font-size:13px;color:var(--lilac);">🛍️ Boutique</h3>

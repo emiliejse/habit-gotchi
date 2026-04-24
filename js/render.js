@@ -1001,6 +1001,14 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
       return true;
     }
+    // 🔒 GARDE 4 : interactions bloquées hors onglet Gotchi
+const panelGotchi = document.getElementById('p-gotchi');
+if (!panelGotchi || !panelGotchi.classList.contains('on')) {
+  // Le canvas est visible mais l'onglet Gotchi ne l'est pas
+  // → on ramène l'utilisatrice sur l'onglet Gotchi
+  if (typeof go === 'function') go('gotchi');
+  return false;
+}
     const rect = p.canvas.getBoundingClientRect();
     const touch = p.touches[0] || { x: p.mouseX, y: p.mouseY };
     const clientX = (typeof TouchEvent !== 'undefined' && window.event instanceof TouchEvent) ? window.event.touches[0]?.clientX : null;

@@ -2555,6 +2555,9 @@ function ouvrirAgenda(dateStr) {
 
   animEl(mbox, 'bounceIn');
   switchAgenda('jour');
+    // 🔒 Absorbe les événements fantômes (click/touchend résiduels) pendant 400ms
+  modalLocked = true;
+  setTimeout(() => { modalLocked = false; }, 400);
 }
 
 function fermerAgenda() {

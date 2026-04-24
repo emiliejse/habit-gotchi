@@ -1881,11 +1881,25 @@ function renderJEntries() {
 function editJEntry(i) {
   const e = window.D.journal[i]; if (!e) return;
   document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = `<h3>Modifier</h3><textarea id="edit-j-txt" class="inp" rows="3">${e.text||''}</textarea><div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button><button class="btn btn-p" onclick="saveEditJ(${i})" style="flex:1">OK</button></div>`;
+  document.getElementById('mbox').innerHTML = `
+  <h3>Modifier</h3>
+  <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px" id="edit-mood-pick">
+    ${MOODS.map(m => `<button class="mood-b${e.mood===m.id?' sel':''}" data-m="${m.id}" onclick="this.parentNode.querySelectorAll('.mood-b').forEach(b=>b.classList.toggle('sel',b===this));window._editMood='${m.id}'">${m.e}</button>`).join('')}
+  </div>
+  <textarea id="edit-j-txt" class="inp" rows="5" style="font-size:12px">${e.text||''}</textarea>
+  <div style="display:flex;gap:6px;margin-top:8px">
+    <button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button>
+    <button class="btn btn-p" onclick="saveEditJ(${i})" style="flex:1">OK</button>
+  </div>`;
+window._editMood = e.mood;
   animEl(document.getElementById('mbox'), 'bounceIn');
 }
-function saveEditJ(i) { window.D.journal[i].text = document.getElementById('edit-j-txt').value.trim(); save(); clModal(); renderJEntries(); }
-function delJEntry(i) {
+function saveEditJ(i) {
+  window.D.journal[i].text = document.getElementById('edit-j-txt').value.trim();
+  if (window._editMood) window.D.journal[i].mood = window._editMood;
+  window._editMood = null;
+  save(); clModal(); renderJEntries();
+}function delJEntry(i) {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `<p>Supprimer ?</p><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="confirmDelJ(${i})" style="flex:1">Oui</button></div>`;
   animEl(document.getElementById('mbox'), 'bounceIn');

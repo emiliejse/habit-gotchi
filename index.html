@@ -371,6 +371,20 @@ function clearDebugLogs() {
     <div class="card">
       <h2>🎒 Mon Inventaire</h2>
       <div id="props-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
+      <div style="display:none;justify-content:center;gap:6px;margin:6px 0 2px" id="btn-ranger-tout">
+  <button class="btn btn-d" onclick="rangerTout('all')" style="font-size:10px;padding:4px 10px">
+    📦 Tout ranger
+  </button>
+  <button class="btn btn-s" onclick="rangerTout('decor')" style="font-size:10px;padding:4px 10px">
+    🪑 Décors
+  </button>
+  <button class="btn btn-s" onclick="rangerTout('accessoire')" style="font-size:10px;padding:4px 10px">
+    🎀 Acces.
+  </button>
+  <button class="btn btn-s" onclick="rangerTout('ambiance')" style="font-size:10px;padding:4px 10px">
+    🌈 Ambiances
+  </button>
+</div>
       <div id="props-list" style="margin-top:6px"></div>
     </div>
   </div><!-- fin p-props -->

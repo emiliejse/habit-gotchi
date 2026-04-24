@@ -416,6 +416,11 @@ function renderProps() {
       `<button onclick="setPropsFilter('${key}')" style="padding:4px 10px;border-radius:20px;border:2px solid var(--border);font:bold 10px 'Courier New',monospace;cursor:pointer;background:${propsFilterActive===key?'var(--lilac)':'#fff'};color:${propsFilterActive===key?'#fff':'var(--text2)'};transition:.15s;">${cat.label}</button>`
     ).join('');
   }
+  const btnTout = document.getElementById('btn-ranger-tout');
+if (btnTout) {
+  const aDesActifs = D.g.props.some(p => p.actif);
+  btnTout.style.display = aDesActifs ? 'flex' : 'none';
+}
   const listEl = document.getElementById('props-list');
   if (!listEl) return;
   if (!D.g.props || D.g.props.length === 0) {
@@ -873,6 +878,28 @@ function rangerProp(propIndex) {
   renderProps();
   toast(`📦 ${prop.nom} rangé`);
 }
+
+function rangerTout(type = 'all') {
+  const D = window.D;
+  let count = 0;
+  D.g.props.forEach(p => {
+    if (!p.actif) return;
+    if (type === 'all' || p.type === type) {
+      p.actif = false;
+      p.slot = null;
+      count++;
+    }
+  });
+  if (count === 0) {
+    toast('Rien à ranger 😴');
+    return;
+  }
+  save();
+  renderProps();
+  flashBubble(`*soupir de soulagement* Merci ! 🧹`, 2500);
+  toast(`📦 ${count} objet${count > 1 ? 's' : ''} rangé${count > 1 ? 's' : ''}`);
+}
+window.rangerTout = rangerTout;
 
 /* ─── SYSTÈME 7 : INGÉNIERIE (Salle des Machines / Debug) ────────── */
  function debugProps() {

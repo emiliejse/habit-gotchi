@@ -32,7 +32,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v2.4q'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v2.41'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -133,6 +133,7 @@ snackDone: '', snackEmoji: '',
       lat: 43.6047,
       lng: 1.4442,
       solarPhases: null
+      cycleDuree: 28,// durée du cycle en jours
     },
     habits: CATS.map(c => ({catId:c.id, label:c.label})),
     log:{}, journal:[], pin:null, apiKey:null,
@@ -144,8 +145,33 @@ soutienCount: 0,
 eventLog: [],        // historique (max 50)
 firstLaunch: null,   // sera rempli au 1er lancement
 lastActive: null,    // mis à jour à chaque ouverture
+cycle: [], // { date: "2025-04-10", type: "regles" }
+rdv:   [], // { id, date, label, heure? }
   };
 }
+
+// 🌸 Calcul de la phase du cycle pour une date donnée
+function getCyclePhase(dateStr) {
+  const cycles = (window.D.cycle || [])
+    .filter(e => e.type === 'regles')
+    .map(e => e.date)
+    .sort()
+    .reverse();
+
+  if (!cycles.length) return null;
+
+  const j1    = new Date(cycles[0] + 'T12:00');
+  const cible = new Date((dateStr || today()) + 'T12:00');
+  const diff  = Math.floor((cible - j1) / 86400000);
+  const duree = window.D.g.cycleDuree || 28;
+  const j     = ((diff % duree) + duree) % duree + 1; // J1 à J28
+
+  if (j <= 5)          return { phase: 'menstruelle',  j, label: 'Règles',       couleur: '#e07080' };
+  if (j <= 13)         return { phase: 'folliculaire', j, label: 'Folliculaire', couleur: '#80b8e0' };
+  if (j <= 16)         return { phase: 'ovulation',    j, label: 'Ovulation',    couleur: '#60c8a0' };
+  return               { phase: 'lutéale',             j, label: 'Lutéale',      couleur: '#b090d0' };
+}
+window.getCyclePhase = getCyclePhase; // exposée globalement
 
 // Chargement avec fusion (Spread Operator) pour éviter de casser les anciennes sauvegardes
 function load() {

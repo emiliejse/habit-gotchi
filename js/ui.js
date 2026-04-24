@@ -2158,11 +2158,8 @@ if (btnBilan) {
 }
 
 function showDayDetail(ds) {
-  const D      = window.D;
-  const log    = D.log[ds] || [];
-  const date   = new Date(ds + 'T12:00');
-  const labels = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-  const jours  = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  ouvrirAgenda(ds);
+}
 
   // Titre lisible : "Lundi 14 avril"
   const titre = `${jours[date.getDay()]} ${date.getDate()} ${date.toLocaleDateString('fr-FR', { month: 'long' })}`;
@@ -2535,6 +2532,544 @@ function applyCheatCode() {
   } else {
     toast('❓ Code inconnu');
   }
+}
+
+/* ============================================================
+   🌸 ALEXIA — MODALE AGENDA
+   ============================================================ */
+
+let _agendaJour = null; // date string "2025-04-24" du jour affiché
+
+function ouvrirAgenda(dateStr) {
+  _agendaJour = dateStr || today();
+  document.getElementById('agenda-overlay').style.display = 'flex';
+  switchAgenda('jour');
+}
+
+function fermerAgenda() {
+  document.getElementById('agenda-overlay').style.display = 'none';
+}
+
+function switchAgenda(onglet) {
+  // Style onglets
+  ['jour','mois','cycle'].forEach(o => {
+    const btn = document.getElementById('atab-' + o);
+    btn.style.background  = o === onglet ? '#fff' : 'transparent';
+    btn.style.color       = o === onglet ? 'var(--lilac)' : 'var(--text2)';
+    btn.style.boxShadow   = o === onglet ? '0 1px 4px rgba(0,0,0,.1)' : 'none';
+  });
+
+  const el = document.getElementById('agenda-contenu');
+  if (onglet === 'jour')   renderAgendaJour(el);
+  if (onglet === 'mois')   renderAgendaMois(el);
+  if (onglet === 'cycle')  renderAgendaCycle(el);
+}
+
+/* ─── PANNEAU 1 : JOUR ─────────────────────────────────────── */
+
+function renderAgendaJour(el) {
+  const D     = window.D;
+  const ds    = _agendaJour;
+  const date  = new Date(ds + 'T12:00');
+  const jours = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const mois  = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  const titre = `${jours[date.getDay()]} ${date.getDate()} ${mois[date.getMonth()]} ${date.getFullYear()}`;
+
+  // Phase cycle
+  const phase = getCyclePhase(ds);
+  const phaseHtml = phase
+    ? `<div style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:10px;
+        font-weight:bold;background:${phase.couleur}22;color:${phase.couleur};
+        border:1px solid ${phase.couleur}55;margin-bottom:12px">
+        ${phase.label} · J${phase.j}
+       </div>`
+    : '';
+
+  // Habitudes
+  const log = D.log[ds] || [];
+  const habsHtml = log.length
+    ? log.map(catId => {
+        const hab = D.habits.find(h => h.catId === catId);
+        return hab ? `<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:11px">✅ ${hab.label}</div>` : '';
+      }).join('')
+    : `<div style="font-size:11px;color:var(--text2);font-style:italic">Aucune habitude ce jour</div>`;
+
+  // Note journal
+  const note = (D.journal || []).find(n => n.date && n.date.startsWith(ds));
+  const noteHtml = note
+    ? `<button onclick="ouvrirJournalAuJour('${ds}')"
+        style="width:100%;text-align:left;padding:8px 10px;border-radius:10px;
+        border:1px dashed var(--border);background:rgba(255,255,255,0.6);
+        font-size:11px;cursor:pointer;color:var(--text);font-family:'Courier New',monospace">
+        📓 Voir la note du journal →
+       </button>`
+    : `<div style="font-size:11px;color:var(--text2);font-style:italic">Aucune note ce jour</div>`;
+
+  // Rendez-vous
+  const rdvDuJour = (D.rdv || []).filter(r => r.date === ds).sort((a,b) => (a.heure||'') > (b.heure||'') ? 1 : -1);
+  const rdvHtml = rdvDuJour.map(r => `
+    <div style="display:flex;align-items:center;justify-content:space-between;
+      padding:6px 8px;border-radius:8px;background:#fff;border:1px solid var(--border);margin-bottom:4px">
+      <span style="font-size:11px">${r.heure ? `<b>${r.heure}</b> · ` : ''}${r.label}</span>
+      <div style="display:flex;gap:6px">
+        <button onclick="editerRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
+        <button onclick="supprimerRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
+      </div>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <!-- Navigation jour -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <button onclick="navAgendaJour(-1)" style="background:none;border:none;font-size:18px;cursor:pointer">◀</button>
+      <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;text-align:center">${titre}</span>
+      <button onclick="navAgendaJour(1)" style="background:none;border:none;font-size:18px;cursor:pointer">▶</button>
+    </div>
+
+    ${phaseHtml}
+
+    <!-- Habitudes -->
+    <div style="margin-bottom:16px">
+      <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:6px">HABITUDES</h3>
+      ${habsHtml}
+    </div>
+
+    <!-- Note journal -->
+    <div style="margin-bottom:16px">
+      <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:6px">JOURNAL</h3>
+      ${noteHtml}
+    </div>
+
+    <!-- Rendez-vous -->
+    <div style="margin-bottom:12px">
+      <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:6px">RENDEZ-VOUS</h3>
+      ${rdvHtml}
+      <button onclick="afficherFormulaireRdv()" id="btn-add-rdv"
+        style="width:100%;padding:8px;border-radius:10px;border:2px dashed var(--border);
+        background:transparent;font-size:11px;cursor:pointer;color:var(--text2);
+        font-family:'Courier New',monospace;margin-top:4px">
+        + Ajouter un rendez-vous
+      </button>
+      <div id="form-rdv" style="display:none;margin-top:8px;padding:10px;
+        background:#fff;border-radius:10px;border:1px solid var(--border)">
+        <input id="rdv-label" class="inp" placeholder="Gynéco, analyse..." style="margin-bottom:6px">
+        <input id="rdv-heure" class="inp" type="time" style="margin-bottom:8px">
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-s" onclick="annulerFormulaireRdv()" style="flex:1">Annuler</button>
+          <button class="btn btn-p" onclick="sauvegarderRdv()" style="flex:1">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Déclarer règles -->
+    <button onclick="declarerRegles('${ds}')"
+      style="width:100%;padding:10px;border-radius:10px;
+      background:#fde8f0;border:2px solid #e0a0c0;color:#904060;
+      font-size:11px;font-weight:bold;font-family:'Courier New',monospace;cursor:pointer">
+      🩸 Déclarer ce jour comme début de cycle
+    </button>
+  `;
+}
+
+function navAgendaJour(dir) {
+  const d = new Date(_agendaJour + 'T12:00');
+  d.setDate(d.getDate() + dir);
+  _agendaJour = d.toISOString().split('T')[0];
+  const el = document.getElementById('agenda-contenu');
+  renderAgendaJour(el);
+}
+
+function afficherFormulaireRdv() {
+  document.getElementById('form-rdv').style.display = 'block';
+  document.getElementById('btn-add-rdv').style.display = 'none';
+}
+
+function annulerFormulaireRdv() {
+  document.getElementById('form-rdv').style.display = 'none';
+  document.getElementById('btn-add-rdv').style.display = 'block';
+  document.getElementById('rdv-label').value = '';
+  document.getElementById('rdv-heure').value = '';
+}
+
+function sauvegarderRdv() {
+  const label = document.getElementById('rdv-label').value.trim();
+  if (!label) return;
+  const heure = document.getElementById('rdv-heure').value || null;
+  const rdv = { id: Date.now().toString(), date: _agendaJour, label, heure };
+  window.D.rdv = window.D.rdv || [];
+  window.D.rdv.push(rdv);
+  save();
+  annulerFormulaireRdv();
+  renderAgendaJour(document.getElementById('agenda-contenu'));
+}
+
+function supprimerRdv(id) {
+  window.D.rdv = (window.D.rdv || []).filter(r => r.id !== id);
+  save();
+  renderAgendaJour(document.getElementById('agenda-contenu'));
+}
+
+function editerRdv(id) {
+  const rdv = (window.D.rdv || []).find(r => r.id === id);
+  if (!rdv) return;
+  document.getElementById('form-rdv').style.display = 'block';
+  document.getElementById('btn-add-rdv').style.display = 'none';
+  document.getElementById('rdv-label').value = rdv.label;
+  document.getElementById('rdv-heure').value = rdv.heure || '';
+  // Remplace sauvegarderRdv temporairement pour édition
+  window._editRdvId = id;
+  document.querySelector('[onclick="sauvegarderRdv()"]').setAttribute('onclick', 'sauvegarderRdvEdit()');
+}
+
+function sauvegarderRdvEdit() {
+  const label = document.getElementById('rdv-label').value.trim();
+  if (!label) return;
+  const heure = document.getElementById('rdv-heure').value || null;
+  const idx = (window.D.rdv || []).findIndex(r => r.id === window._editRdvId);
+  if (idx !== -1) { window.D.rdv[idx].label = label; window.D.rdv[idx].heure = heure; }
+  save();
+  document.querySelector('[onclick="sauvegarderRdvEdit()"]').setAttribute('onclick', 'sauvegarderRdv()');
+  window._editRdvId = null;
+  annulerFormulaireRdv();
+  renderAgendaJour(document.getElementById('agenda-contenu'));
+}
+
+function declarerRegles(ds) {
+  const D = window.D;
+  // Évite les doublons sur le même jour
+  const existe = (D.cycle || []).find(e => e.date === ds && e.type === 'regles');
+  if (existe) { toast('Déjà enregistré pour ce jour 🩸'); return; }
+  D.cycle = D.cycle || [];
+  D.cycle.push({ date: ds, type: 'regles' });
+  D.cycle.sort((a,b) => a.date > b.date ? -1 : 1);
+  save();
+  toast('Début de cycle enregistré 🩸');
+  renderAgendaJour(document.getElementById('agenda-contenu'));
+}
+
+function ouvrirJournalAuJour(ds) {
+  fermerAgenda();
+  // Calcule le wOff (décalage de semaine) par rapport à aujourd'hui
+  const cible = new Date(ds + 'T12:00');
+  const maintenant = new Date(today() + 'T12:00');
+  const diffJours = Math.round((cible - maintenant) / 86400000);
+  const diffSemaines = Math.floor(diffJours / 7);
+  window._journalWOff = diffSemaines; // sera lu par renderProgress/goMenu
+  goMenu('journal');
+}
+
+/* ─── PANNEAU 2 : MOIS ─────────────────────────────────────── */
+
+let _agendaMoisOffset = 0; // 0 = mois actuel, -1 = mois précédent...
+
+function renderAgendaMois(el) {
+  const D      = window.D;
+  const now    = new Date();
+  const annee  = new Date(now.getFullYear(), now.getMonth() + _agendaMoisOffset, 1);
+  const moisNom = annee.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+  // Premier jour du mois et nb de jours
+  const premierJour = new Date(annee.getFullYear(), annee.getMonth(), 1);
+  const nbJours     = new Date(annee.getFullYear(), annee.getMonth() + 1, 0).getDate();
+
+  // Décalage lundi=0
+  let depart = premierJour.getDay() - 1;
+  if (depart < 0) depart = 6;
+
+  // Précalcul des données du mois
+  const cycleEntries = D.cycle || [];
+  const rdvEntries   = D.rdv   || [];
+  const duree        = D.g.cycleDuree || 28;
+
+  // Trouve tous les J1 pour calculer ovulation + prédiction
+  const j1Dates = cycleEntries
+    .filter(e => e.type === 'regles')
+    .map(e => e.date)
+    .sort().reverse();
+
+  // Génère les cellules
+  let cells = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:8px">';
+
+  // En-têtes
+  ['L','M','M','J','V','S','D'].forEach(j => {
+    cells += `<div style="text-align:center;font-size:9px;color:var(--text2);padding:2px 0">${j}</div>`;
+  });
+
+  // Cases vides avant le 1er
+  for (let i = 0; i < depart; i++) {
+    cells += '<div></div>';
+  }
+
+  for (let d = 1; d <= nbJours; d++) {
+    const ds      = `${annee.getFullYear()}-${String(annee.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const estAujourd = ds === today();
+    const log     = D.log[ds] || [];
+    const total   = D.habits.length;
+    const pct     = total > 0 ? log.length / total : 0;
+
+    // Couleur habitudes : transparent → vert
+    const g       = Math.round(180 + pct * 60);
+    const alpha   = pct > 0 ? 0.15 + pct * 0.6 : 0;
+    const bgColor = pct > 0 ? `rgba(80,${g},120,${alpha})` : 'rgba(0,0,0,0.03)';
+
+    // Indicateurs cycle
+    const estJ1      = j1Dates.includes(ds);
+    let   estOvul    = false;
+    let   estPredic  = false;
+
+    j1Dates.forEach(j1 => {
+      const diff = Math.round((new Date(ds+'T12:00') - new Date(j1+'T12:00')) / 86400000);
+      if (diff >= 12 && diff <= 16) estOvul   = true;
+      if (diff >= 25 && diff <= 30) estPredic = true;
+    });
+    // Prédiction depuis le dernier J1 connu
+    if (j1Dates.length) {
+      const diff = Math.round((new Date(ds+'T12:00') - new Date(j1Dates[0]+'T12:00')) / 86400000);
+      if (diff >= 25 && diff <= 30) estPredic = true;
+    }
+
+    // Icônes
+    const aRdv  = rdvEntries.some(r => r.date === ds);
+    const aNote = (D.journal || []).some(n => n.date && n.date.startsWith(ds));
+
+    // Bordure aujourd'hui
+    const border = estAujourd ? '2px solid var(--lilac)' : '1px solid transparent';
+
+    cells += `
+      <div onclick="clickJourMois('${ds}')"
+        style="position:relative;aspect-ratio:1;border-radius:6px;cursor:pointer;
+        background:${bgColor};border:${border};
+        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
+
+        <!-- Cercle ovulation (bleu) -->
+        ${estOvul ? `<div style="position:absolute;inset:2px;border-radius:4px;
+          border:2px solid #80b8e055;background:#80b8e022;pointer-events:none"></div>` : ''}
+
+        <!-- Point rouge J1 -->
+        ${estJ1 ? `<div style="position:absolute;top:2px;right:2px;width:6px;height:6px;
+          border-radius:50%;background:#e07080"></div>` : ''}
+
+        <!-- Cercles prédiction (rouge clair) -->
+        ${estPredic && !estJ1 ? `<div style="position:absolute;inset:2px;border-radius:4px;
+          border:2px dashed #e0708055;pointer-events:none"></div>` : ''}
+
+        <span style="font-size:10px;font-weight:${estAujourd?'bold':'normal'};
+          color:${estAujourd?'var(--lilac)':'var(--text)'};line-height:1">${d}</span>
+
+        <!-- Icônes rdv + note -->
+        <div style="display:flex;gap:1px;font-size:7px;line-height:1">
+          ${aRdv  ? '📌' : ''}
+          ${aNote ? '📓' : ''}
+        </div>
+      </div>`;
+  }
+
+  cells += '</div>';
+
+  el.innerHTML = `
+    <!-- Navigation mois -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <button onclick="navAgendaMois(-1)" style="background:none;border:none;font-size:18px;cursor:pointer">◀</button>
+      <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;text-transform:capitalize">${moisNom}</span>
+      <button onclick="navAgendaMois(1)" style="background:none;border:none;font-size:18px;cursor:pointer">▶</button>
+    </div>
+
+    <!-- Légende -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <span style="font-size:9px;color:var(--text2)">🟢 habitudes</span>
+      <span style="font-size:9px;color:var(--text2)">🔴 règles</span>
+      <span style="font-size:9px;color:#80b8e0">◻ ovulation</span>
+      <span style="font-size:9px;color:#e07080">⬚ prédiction</span>
+      <span style="font-size:9px;color:var(--text2)">📌 rdv 📓 note</span>
+    </div>
+
+    ${cells}
+  `;
+}
+
+function navAgendaMois(dir) {
+  _agendaMoisOffset += dir;
+  renderAgendaMois(document.getElementById('agenda-contenu'));
+}
+
+function clickJourMois(ds) {
+  _agendaJour = ds;
+  switchAgenda('jour');
+}
+
+/* ─── PANNEAU 3 : CYCLE ─────────────────────────────────────── */
+
+function renderAgendaCycle(el) {
+  const D      = window.D;
+  const duree  = D.g.cycleDuree || 28;
+  const cycles = (D.cycle || [])
+    .filter(e => e.type === 'regles')
+    .map(e => e.date)
+    .sort().reverse();
+
+  // Phase actuelle
+  const phaseAujourd = getCyclePhase(today());
+
+  // Descriptions des phases
+  const descriptions = {
+    menstruelle:  'Le corps se renouvelle. Énergie souvent basse, besoin de repos et de douceur.',
+    folliculaire: 'Énergie en hausse, clarté mentale. Bon moment pour démarrer de nouveaux projets.',
+    ovulation:    'Pic d\'énergie et de sociabilité. Concentration et communication facilitées.',
+    lutéale:      'Retour vers l\'intérieur. Possible fatigue ou sensibilité émotionnelle en fin de phase.'
+  };
+
+  // Frise des phases
+  const phases = [
+    { id: 'menstruelle',  label: 'Règles',       jours: '1–5',   pct: 5/duree,  couleur: '#e07080' },
+    { id: 'folliculaire', label: 'Folliculaire',  jours: '6–13',  pct: 8/duree,  couleur: '#80b8e0' },
+    { id: 'ovulation',    label: 'Ovulation',     jours: '14–16', pct: 3/duree,  couleur: '#60c8a0' },
+    { id: 'lutéale',      label: 'Lutéale',       jours: '17–'+duree, pct: (duree-16)/duree, couleur: '#b090d0' },
+  ];
+
+  const friseHtml = `
+    <div style="border-radius:10px;overflow:hidden;display:flex;height:28px;margin-bottom:6px">
+      ${phases.map(p => `
+        <div style="flex:${p.pct};background:${p.couleur}${phaseAujourd?.phase===p.id?'':'88'};
+          display:flex;align-items:center;justify-content:center;
+          font-size:8px;color:#fff;font-weight:bold;position:relative;
+          transition:.3s">
+          ${phaseAujourd?.phase === p.id ? '▼' : ''}
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;margin-bottom:12px">
+      ${phases.map(p => `
+        <div style="flex:${p.pct};text-align:center">
+          <div style="font-size:8px;color:${p.couleur};font-weight:bold">${p.label}</div>
+          <div style="font-size:7px;color:var(--text2)">J${p.jours}</div>
+        </div>`).join('')}
+    </div>
+  `;
+
+  // Description phase active
+  const descHtml = phaseAujourd
+    ? `<div style="padding:10px 12px;border-radius:10px;margin-bottom:16px;
+        background:${phaseAujourd.couleur}18;border:1px solid ${phaseAujourd.couleur}44">
+        <div style="font-size:11px;font-weight:bold;color:${phaseAujourd.couleur};margin-bottom:4px">
+          ${phaseAujourd.label} · J${phaseAujourd.j}
+        </div>
+        <div style="font-size:11px;color:var(--text);line-height:1.5">
+          ${descriptions[phaseAujourd.phase]}
+        </div>
+      </div>`
+    : `<div style="font-size:11px;color:var(--text2);font-style:italic;margin-bottom:16px">
+        Aucun cycle enregistré — déclare ton premier jour de règles ci-dessous.
+      </div>`;
+
+  // Saisie J1
+  const saisieHtml = `
+    <div style="margin-bottom:16px">
+      <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:8px">
+        DÉCLARER UN DÉBUT DE CYCLE
+      </h3>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="date" id="cycle-date-input" class="inp"
+          value="${today()}"
+          style="flex:1">
+        <button class="btn btn-p" onclick="declarerReglesCycle()"
+          style="white-space:nowrap;font-size:10px">
+          🩸 Enregistrer
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Historique des cycles
+  let historiqueHtml = '';
+  if (cycles.length >= 2) {
+    const lignes = [];
+    for (let i = 0; i < cycles.length - 1; i++) {
+      const d1   = new Date(cycles[i+1] + 'T12:00');
+      const d2   = new Date(cycles[i]   + 'T12:00');
+      const nb   = Math.round((d2 - d1) / 86400000);
+      const fmt  = d => `${d.getDate()} ${d.toLocaleDateString('fr-FR',{month:'short',year:'numeric'})}`;
+      lignes.push({ debut: cycles[i+1], fin: cycles[i], nb, label: `${fmt(d1)} → ${fmt(d2)} · ${nb} jours` });
+    }
+    historiqueHtml = `
+      <div style="margin-bottom:12px">
+        <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:8px">
+          HISTORIQUE
+        </h3>
+        ${lignes.map((l,i) => `
+          <div style="display:flex;align-items:center;justify-content:space-between;
+            padding:6px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--text)">${l.label}</span>
+            <button onclick="supprimerCycle('${l.debut}')"
+              style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2)">🗑️</button>
+          </div>`).join('')}
+        <button onclick="exporterCycles()"
+          style="width:100%;margin-top:10px;padding:8px;border-radius:10px;
+          border:2px dashed var(--border);background:transparent;
+          font-size:11px;cursor:pointer;color:var(--text2);
+          font-family:'Courier New',monospace">
+          ⬇️ Exporter l'historique (.txt)
+        </button>
+      </div>
+    `;
+  } else if (cycles.length === 1) {
+    historiqueHtml = `<div style="font-size:11px;color:var(--text2);font-style:italic">
+      Un seul cycle enregistré — l'historique apparaîtra dès le deuxième.
+    </div>`;
+  }
+
+  el.innerHTML = `
+    <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:10px">
+      FRISE DU CYCLE
+    </h3>
+    ${friseHtml}
+    ${descHtml}
+    ${saisieHtml}
+    ${historiqueHtml}
+  `;
+}
+
+function declarerReglesCycle() {
+  const ds = document.getElementById('cycle-date-input').value;
+  if (!ds) return;
+  declarerRegles(ds); // réutilise la fonction du panneau 1
+  renderAgendaCycle(document.getElementById('agenda-contenu'));
+}
+
+function supprimerCycle(ds) {
+  window.D.cycle = (window.D.cycle || []).filter(e => !(e.date === ds && e.type === 'regles'));
+  save();
+  renderAgendaCycle(document.getElementById('agenda-contenu'));
+}
+
+function exporterCycles() {
+  const D      = window.D;
+  const cycles = (D.cycle || [])
+    .filter(e => e.type === 'regles')
+    .map(e => e.date)
+    .sort().reverse();
+
+  if (cycles.length < 2) { toast('Pas assez de données à exporter'); return; }
+
+  let txt = 'Historique des cycles — HabitGotchi\n';
+  txt += '=====================================\n\n';
+
+  for (let i = 0; i < cycles.length - 1; i++) {
+    const d1  = new Date(cycles[i+1] + 'T12:00');
+    const d2  = new Date(cycles[i]   + 'T12:00');
+    const nb  = Math.round((d2 - d1) / 86400000);
+    const fmt = d => d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+    txt += `Cycle ${cycles.length - 1 - i} : ${fmt(d1)} → ${fmt(d2)} (${nb} jours)\n`;
+  }
+
+  txt += `\nDurée de cycle paramétrée : ${D.g.cycleDuree || 28} jours\n`;
+  txt += `Exporté le ${new Date().toLocaleDateString('fr-FR')}\n`;
+
+  const blob = new Blob([txt], { type: 'text/plain' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'cycles-habitgotchi.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Export téléchargé ✓');
 }
 
 /* ============================================================

@@ -3481,12 +3481,6 @@ const lignesJ1 = cycles.map((ds, i) => {
       justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
       <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
       <div style="display:flex;gap:4px">
-        <label style="cursor:pointer;font-size:13px">
-          ✏️
-          <input type="date" value="${ds}"
-            onchange="modifierCycle('${ds}', this.value)"
-            style="position:absolute;opacity:0;width:0;height:0">
-        </label>
         <button onclick="confirmerSuppressionCycle('${ds}')"
           style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
       </div>

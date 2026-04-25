@@ -2890,14 +2890,7 @@ function selectionnerDuree(v, btn) {
   btn.style.background  = 'var(--lilac)22';
   btn.style.borderColor = 'var(--lilac)';
   btn.style.color       = 'var(--lilac)';
-
-  if (v === 'infini') {
-    window._rdvDuree = null;
-  } else {
-    const fin = new Date(_agendaJour + 'T12:00');
-    fin.setMonth(fin.getMonth() + parseInt(v));
-    window._rdvDuree = fin.toISOString().split('T')[0];
-  }
+  window._rdvDuree = v; // 'infini', '3', '6', '12', '24' — juste la string
 }
 
 function annulerFormulaireRdv() {
@@ -2912,7 +2905,13 @@ function sauvegarderRdv() {
   const heure      = document.getElementById('rdv-heure').value || null;
   const emoji      = window._rdvEmoji || null;
   const recurrence = window._rdvRecurrence || 'aucune';
-  const duree      = window._rdvDuree || null; // date de fin string ou null
+  const dureeBrute = window._rdvDuree;
+let duree = null;
+if (dureeBrute && dureeBrute !== 'infini') {
+  const fin = new Date(_agendaJour + 'T12:00');
+  fin.setMonth(fin.getMonth() + parseInt(dureeBrute));
+  duree = fin.toISOString().split('T')[0];
+}
   const labelFinal = emoji ? `${emoji} ${label}` : label;
 
   window.D.rdv = window.D.rdv || [];

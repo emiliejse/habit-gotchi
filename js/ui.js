@@ -2785,27 +2785,27 @@ function afficherFormulaireRdv() {
         </label>
       </div>
 
-      <!-- Récurrence -->
-      <div style="margin-bottom:8px">
-        <div style="font-size:10px;color:var(--text2);letter-spacing:1px;
-          text-transform:uppercase;margin-bottom:6px">Récurrence</div>
-        <div style="display:flex;gap:6px">
-          ${[
-            {v:'aucune', l:'1×'},
-            {v:'hebdo',  l:'🔁 Hebdo'},
-            {v:'mensuelle', l:'🔁 Mensuel'}
-            {v:'annuelle', l:'🔁 Annuel'}
-          ].map(r => `
-            <button onclick="selectionnerRecurrence('${r.v}', this)"
-              data-rec="${r.v}"
-              style="flex:1;padding:7px;border-radius:8px;font-size:10px;
-              font-family:'Courier New',monospace;cursor:pointer;transition:.15s;
-              border:1.5px solid var(--border);background:#fff;color:var(--text2)">
-              ${r.l}
-            </button>
-          `).join('')}
-        </div>
-      </div>
+<!-- Récurrence -->
+<div style="margin-bottom:8px">
+  <div style="font-size:10px;color:var(--text2);letter-spacing:1px;
+    text-transform:uppercase;margin-bottom:6px">Récurrence</div>
+  <div style="display:flex;gap:6px">
+    ${[
+      {v:'aucune',    l:'1×'},
+      {v:'hebdo',     l:'🔁 Hebdo'},
+      {v:'mensuelle', l:'🔁 Mensuel'},
+      {v:'annuelle',  l:'🔁 Annuel'}
+    ].map(r => `
+      <button onclick="selectionnerRecurrence('${r.v}', this)"
+        data-rec="${r.v}"
+        style="flex:1;padding:7px;border-radius:8px;font-size:10px;
+        font-family:'Courier New',monospace;cursor:pointer;transition:.15s;
+        border:1.5px solid var(--border);background:#fff;color:var(--text2)">
+        ${r.l}
+      </button>
+    `).join('')}
+  </div>
+</div>
 
       <!-- Durée (masquée si aucune récurrence) -->
       <div id="rdv-duree-wrap" style="display:none;margin-bottom:14px">

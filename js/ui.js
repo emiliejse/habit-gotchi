@@ -2595,7 +2595,7 @@ function renderAgendaJour(el) {
   const phaseHtml = phase
     ? `<div style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:10px;
         font-weight:bold;background:${phase.couleur}22;color:${phase.couleur};
-        border:1px solid ${phase.couleur}55;margin-bottom:12px">
+        border:1px solid ${phase.couleur}55;margin-bottom:16px">
         ${phase.label} · J${phase.j}
        </div>`
     : '';
@@ -2605,26 +2605,33 @@ function renderAgendaJour(el) {
   const habsHtml = log.length
     ? log.map(catId => {
         const hab = D.habits.find(h => h.catId === catId);
-        return hab ? `<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:11px">✅ ${hab.label}</div>` : '';
+        return hab
+          ? `<div style="padding:8px 10px;border-radius:8px;font-size:11px;
+              background:rgba(255,255,255,0.7);border:1px solid var(--border);
+              margin-bottom:5px">✅ ${hab.label}</div>`
+          : '';
       }).join('')
-    : `<div style="font-size:11px;color:var(--text2);font-style:italic">Aucune habitude ce jour</div>`;
+    : `<div style="font-size:11px;color:var(--text2);font-style:italic;padding:6px 0">Aucune habitude ce jour</div>`;
 
   // Note journal
   const note = (D.journal || []).find(n => n.date && n.date.startsWith(ds));
   const noteHtml = note
     ? `<button onclick="ouvrirJournalAuJour('${ds}')"
-        style="width:100%;text-align:left;padding:8px 10px;border-radius:10px;
-        border:1px dashed var(--border);background:rgba(255,255,255,0.6);
-        font-size:11px;cursor:pointer;color:var(--text);font-family:'Courier New',monospace">
-        📓 Voir la note du journal →
+        style="width:100%;text-align:left;padding:10px 12px;border-radius:10px;
+        border:1.5px solid var(--lilac);background:rgba(var(--lilac-rgb, 180,160,230),0.07);
+        font-size:11px;cursor:pointer;color:var(--lilac);font-family:'Courier New',monospace;
+        display:flex;align-items:center;justify-content:space-between">
+        <span>📓 Voir la note du journal</span>
+        <span style="opacity:.6">→</span>
        </button>`
-    : `<div style="font-size:11px;color:var(--text2);font-style:italic">Aucune note ce jour</div>`;
+    : `<div style="font-size:11px;color:var(--text2);font-style:italic;padding:6px 0">Aucune note ce jour</div>`;
 
   // Rendez-vous
   const rdvDuJour = (D.rdv || []).filter(r => r.date === ds).sort((a,b) => (a.heure||'') > (b.heure||'') ? 1 : -1);
   const rdvHtml = rdvDuJour.map(r => `
     <div style="display:flex;align-items:center;justify-content:space-between;
-      padding:6px 8px;border-radius:8px;background:#fff;border:1px solid var(--border);margin-bottom:4px">
+      padding:8px 10px;border-radius:8px;background:#fff;
+      border:1px solid var(--border);margin-bottom:5px">
       <span style="font-size:11px">${r.heure ? `<b>${r.heure}</b> · ` : '🗓️ Journée entière · '}${r.label}</span>
       <div style="display:flex;gap:6px">
         <button onclick="editerRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
@@ -2633,50 +2640,52 @@ function renderAgendaJour(el) {
     </div>`).join('');
 
   el.innerHTML = `
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-  <button onclick="navAgendaJour(-1)"
-    style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
-    ${chevron('left')}
-  </button>
-  <span onclick="ouvrirDatePickerAgenda()"
-    style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
-    text-align:center;cursor:pointer;text-decoration:underline dotted;color:var(--lilac);flex:1">
-    ${titre}
-  </span>
-  <button onclick="navAgendaJour(1)"
-    style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
-    ${chevron('right')}
-  </button>
-</div>
+    <!-- Navigation date -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <button onclick="navAgendaJour(-1)"
+        style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
+        ${chevron('left')}
+      </button>
+      <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
+        text-align:center;color:var(--lilac);flex:1">
+        ${titre}
+      </span>
+      <button onclick="navAgendaJour(1)"
+        style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
+        ${chevron('right')}
+      </button>
+    </div>
 
     ${phaseHtml}
 
     <!-- Habitudes -->
-    <div style="margin-bottom:16px">
-      <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:6px">HABITUDES</h3>
+    <div style="margin-bottom:20px">
+      <h3 style="font-size:10px;color:var(--text2);letter-spacing:1.5px;margin-bottom:8px;text-transform:uppercase">Habitudes</h3>
       ${habsHtml}
     </div>
 
     <!-- Note journal -->
-    <div style="margin-bottom:16px">
-      <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:6px">JOURNAL</h3>
+    <div style="margin-bottom:20px">
+      <h3 style="font-size:10px;color:var(--text2);letter-spacing:1.5px;margin-bottom:8px;text-transform:uppercase">Journal</h3>
       ${noteHtml}
     </div>
 
     <!-- Rendez-vous -->
     <div style="margin-bottom:12px">
-      <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:6px">RENDEZ-VOUS</h3>
+      <h3 style="font-size:10px;color:var(--text2);letter-spacing:1.5px;margin-bottom:8px;text-transform:uppercase">Rendez-vous</h3>
       ${rdvHtml}
       <button onclick="afficherFormulaireRdv()" id="btn-add-rdv"
-        style="width:100%;padding:8px;border-radius:10px;border:2px dashed var(--border);
-        background:transparent;font-size:11px;cursor:pointer;color:var(--text2);
-        font-family:'Courier New',monospace;margin-top:4px">
+        style="width:100%;padding:9px;border-radius:10px;
+        border:1.5px solid var(--lilac);background:transparent;
+        font-size:11px;cursor:pointer;color:var(--lilac);
+        font-family:'Courier New',monospace;margin-top:4px;
+        opacity:0.75;transition:opacity .15s"
+        onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.75'">
         + Ajouter un rendez-vous
       </button>
-      <div id="form-rdv" style="display:none;margin-top:8px;padding:10px;
+      <div id="form-rdv" style="display:none;margin-top:8px;padding:12px;
         background:#fff;border-radius:10px;border:1px solid var(--border)">
         <input id="rdv-label" class="inp" placeholder="Gynéco, analyse..." style="margin-bottom:6px">
-        <!-- Heure : toggle journée entière -->
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <input type="time" id="rdv-heure" class="inp" style="flex:1">
           <label style="display:flex;align-items:center;gap:4px;font-size:10px;
@@ -2723,17 +2732,6 @@ function sauvegarderRdv() {
   window.D.rdv.push(rdv);
   save();
   annulerFormulaireRdv();
-  renderAgendaJour(document.getElementById('agenda-contenu'));
-}
-
-function ouvrirDatePickerAgenda() {
-  const picker = document.getElementById('agenda-date-picker');
-  if (picker) picker.showPicker();
-}
-
-function changerJourAgenda(val) {
-  if (!val) return;
-  _agendaJour = val;
   renderAgendaJour(document.getElementById('agenda-contenu'));
 }
 

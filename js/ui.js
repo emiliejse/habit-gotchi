@@ -1172,12 +1172,23 @@ async function askClaude() {
     notesRecentes: notesRecentes
       ? `Aujourd'hui : ${todayFr()}. Ambiance récente : ${notesRecentes}`
       : `Aujourd'hui : ${todayFr()}.`,
-    exemples: [
-  ...(P?.bulles?.idle   || []).slice(0, 2),
-  ...(P?.bulles?.triste || []).slice(0, 1),
-  ...(P?.bulles?.matin  || []).slice(0, 1),
-  ...(P?.bulles?.soir   || []).slice(0, 1),
-].join(', ') || '*bâille*, *sourit*',
+    exemples: (() => {
+      // Voix utilisatrice : ses notes journal récentes (priorité absolue)
+      const notesUser = (D.journal || [])
+        .slice(-15)                                    // 15 dernières notes brutes
+        .map(n => (n.text || '').trim())
+        .filter(t => t.length > 15 && t.length < 200)  // ni trop courtes ni pavés
+        .slice(-4);                                    // on garde 4 max après filtrage
+
+      // Bulles passées (faible poids : juste pour la cohérence du Gotchi)
+      const bullesPassees = [
+        ...(P?.bulles?.idle   || []).slice(0, 1),
+        ...(P?.bulles?.triste || []).slice(0, 1),
+      ];
+
+      const tout = [...notesUser, ...bullesPassees];
+      return tout.length ? tout.join(' / ') : '*bâille*, *sourit*';
+    })(),
     nomsExistants: [...new Set([
       ...(D.g.props || []).map(p => `${p.nom} (${p.type})`),
       ...(window.PROPS_LIB || []).map(p => `${p.nom} (${p.type})`)

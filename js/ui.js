@@ -2813,11 +2813,11 @@ function afficherFormulaireRdv() {
           text-transform:uppercase;margin-bottom:6px">Pendant</div>
         <div style="display:flex;gap:6px">
           ${[
-{e:'Sans fin', v:null},
-{e:'3 mois',  v:3},
-{e:'6 mois',  v:6},
-{e:'1 an',    v:12},
-{e:'2 ans',   v:24}
+{e:'Sans fin', v:'infini'},
+{e:'3 mois',  v:'3'},
+{e:'6 mois',  v:'6'},
+{e:'1 an',    v:'12'},
+{e:'2 ans',   v:'24'}
           ].map(d => `
             <button onclick="selectionnerDuree('${d.v}', this)"
               data-duree="${d.v}"
@@ -2874,7 +2874,8 @@ function selectionnerRecurrence(r, btn) {
     dureeWrap.style.display = r === 'aucune' ? 'none' : 'block';
     // Sélectionne 6 mois par défaut
     if (r !== 'aucune' && !window._rdvDuree) {
-      const btnSansFin = dureeWrap.querySelector('[data-duree="null"]');
+      const btnSansFin = dureeWrap.querySelector('[data-duree="infini"]');
+if (btnSansFin) selectionnerDuree('infini', btnSansFin);
 if (btnSansFin) selectionnerDuree('null', btnSansFin);
     }
   }
@@ -2890,8 +2891,8 @@ function selectionnerDuree(v, btn) {
   btn.style.borderColor = 'var(--lilac)';
   btn.style.color       = 'var(--lilac)';
 
-  if (v === 'null' || v === null) {
-    window._rdvDuree = null; // infini
+  if (v === 'infini') {
+    window._rdvDuree = null;
   } else {
     const fin = new Date(_agendaJour + 'T12:00');
     fin.setMonth(fin.getMonth() + parseInt(v));

@@ -189,9 +189,11 @@ function toastSnack(msg) {
 let modalLocked = false; // ← true pendant le soutien
 
 function clModal(e) {
-  if (modalLocked) return; // ← bloque le tap extérieur
-  if (!e || e.target.id === 'modal') document.getElementById('modal').style.display = 'none';
-  document.getElementById('dynamic-zone').style.overflowY = ''; → unlockScroll();
+  if (modalLocked) return;
+  if (!e || e.target.id === 'modal') {
+    document.getElementById('modal').style.display = 'none';
+    unlockScroll();
+  }
 }
 
 /**
@@ -2048,15 +2050,17 @@ function exportJournal(mode) {
    ============================================================ */
 /* Helper couleur — utilisé par hebdo ET mensuel */
 function calColor(count, total, isToday) {
-  const r = total > 0 ? count / total : 0;
-  let bg, border = 'none';
+  const r   = total > 0 ? count / total : 0;
 
-  if      (count === 0) { bg = 'rgba(204,196,216,.15)'; }
-  else if (r <= 0.33)   { bg = 'rgba(232,196,160,.75)'; }  // pêche  — 1-2 hab
-  else if (r <= 0.66)   { bg = 'rgba(136,190,232,.80)'; }  // sky    — 3-4 hab
-  else if (r <  1)      { bg = 'rgba(128,208,168,.80)'; }  // mint   — 5 hab
-  else                  { bg = 'var(--mint)'; border = '2px solid var(--lilac)'; } // 6/6 ✨
+  // ── même dégradé que l'agenda/mois ──
+  const g      = Math.round(180 + r * 60);
+  const alpha  = r > 0 ? 0.15 + r * 0.6 : 0;
+  let   bg     = r > 0 ? `rgba(80,${g},120,${alpha})` : 'rgba(0,0,0,0.03)';
+  let   border = 'none';
 
+  // Couronne lilac si 100%
+  if (r >= 1) border = '2px solid var(--lilac)';
+  // Contour lilac aujourd'hui même si vide
   if (isToday && count === 0) border = '2px solid var(--lilac)';
 
   return { bg, border };

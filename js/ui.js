@@ -1005,10 +1005,7 @@ function voirBulles() {
     return;
   }
 
-  const contenu = etats.map(etat => {
-    const phrases = cb[etat].map(p => `  • ${p}`).join('\n');
-    return `${etat}\n${phrases}`;
-  }).join('\n\n');
+const contenu = cb.map((p, i) => `  ${i + 1}. ${p}`).join('\n');
 
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `

@@ -2683,22 +2683,7 @@ function renderAgendaJour(el) {
         onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.75'">
         + Ajouter un rendez-vous
       </button>
-      <div id="form-rdv" style="display:none;margin-top:8px;padding:12px;
-        background:#fff;border-radius:10px;border:1px solid var(--border)">
-        <input id="rdv-label" class="inp" placeholder="Gynéco, analyse..." style="margin-bottom:6px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <input type="time" id="rdv-heure" class="inp" style="flex:1">
-          <label style="display:flex;align-items:center;gap:4px;font-size:10px;
-            color:var(--text2);white-space:nowrap;cursor:pointer">
-            <input type="checkbox" id="rdv-journee" onchange="toggleJourneeEntiere(this.checked)">
-            Journée entière
-          </label>
-        </div>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-s" onclick="annulerFormulaireRdv()" style="flex:1">Annuler</button>
-          <button class="btn btn-p" id="btn-save-rdv" onclick="sauvegarderRdv()" style="flex:1">Enregistrer</button>
-        </div>
-      </div>
+      <div id="form-rdv" style="display:none"></div>
     </div>
   `;
 }
@@ -2712,15 +2697,55 @@ function navAgendaJour(dir) {
 }
 
 function afficherFormulaireRdv() {
-  document.getElementById('form-rdv').style.display = 'block';
   document.getElementById('btn-add-rdv').style.display = 'none';
+
+  // Crée l'overlay par-dessus mbox
+  const overlay = document.createElement('div');
+  overlay.id = 'rdv-overlay';
+  overlay.style.cssText = `
+    position:fixed;inset:0;z-index:1000;
+    background:rgba(0,0,0,0.35);
+    display:flex;align-items:flex-end;justify-content:center;
+  `;
+
+  overlay.innerHTML = `
+    <div id="rdv-sheet" style="
+      background:var(--bg, #fff);border-radius:16px 16px 0 0;
+      padding:20px 16px 32px;width:100%;max-width:420px;
+      animation:slideUp .25s ease-out;
+    ">
+      <div style="width:36px;height:4px;background:var(--border);
+        border-radius:2px;margin:0 auto 16px;opacity:.5"></div>
+      <h3 style="font-size:12px;color:var(--lilac);margin-bottom:14px;
+        font-family:'Courier New',monospace">📅 Nouveau rendez-vous</h3>
+      <input id="rdv-label" class="inp" placeholder="Gynéco, analyse..." style="margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <input type="time" id="rdv-heure" class="inp" style="flex:1">
+        <label style="display:flex;align-items:center;gap:4px;font-size:10px;
+          color:var(--text2);white-space:nowrap;cursor:pointer">
+          <input type="checkbox" id="rdv-journee" onchange="toggleJourneeEntiere(this.checked)">
+          Journée entière
+        </label>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-s" onclick="annulerFormulaireRdv()" style="flex:1">Annuler</button>
+        <button class="btn btn-p" onclick="sauvegarderRdv()" style="flex:1">Enregistrer</button>
+      </div>
+    </div>
+  `;
+
+  // Ferme en cliquant sur le fond
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) annulerFormulaireRdv();
+  });
+
+  document.body.appendChild(overlay);
 }
 
 function annulerFormulaireRdv() {
-  document.getElementById('form-rdv').style.display = 'none';
-  document.getElementById('btn-add-rdv').style.display = 'block';
-  document.getElementById('rdv-label').value = '';
-  document.getElementById('rdv-heure').value = '';
+  document.getElementById('rdv-overlay')?.remove();
+  const btn = document.getElementById('btn-add-rdv');
+  if (btn) btn.style.display = 'block';
 }
 
 function sauvegarderRdv() {
@@ -2829,7 +2854,7 @@ function ouvrirJournalAuJour(ds) {
   const cible      = new Date(ds + 'T12:00');
   const maintenant = new Date(today() + 'T12:00');
   const diffJours  = Math.round((cible - maintenant) / 86400000);
-  window._journalWOff = Math.floor(diffJours / 7);
+  window._journalWOff = Math.trunc(diffJours / 7);
   document.getElementById('menu-overlay')?.classList.remove('open');
   go('journal'); // ← go() directement, sans toggleMenu
 }

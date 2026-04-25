@@ -3234,7 +3234,7 @@ function renderAgendaMois(el) {
     const border = estAujourd ? '2px solid var(--lilac)' : '1px solid transparent';
 
     cells += `
-      <div onclick="clickJourMois('${ds}')"
+      <button onclick="clickJourMois('${ds}')"
         style="position:relative;aspect-ratio:1;border-radius:6px;cursor:pointer;
         background:${bgColor};border:${border};
         display:flex;flex-direction:column;align-items:center;
@@ -3254,7 +3254,7 @@ function renderAgendaMois(el) {
           ${rdvEmoji}
           ${aNote ? '📓' : ''}
         </div>
-      </div>`;
+      </button>`;
   }
 
   cells += '</div>';
@@ -3482,7 +3482,7 @@ const descriptions = {
             <input type="date" id="edit-j1-${i}"
               style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
               value="${ds}" onchange="modifierCycle('${ds}', this.value)">
-            <button onclick="document.getElementById('edit-j1-${i}').showPicker()"
+            onclick="document.getElementById('edit-j1-${i}').click()"
               style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
             <button onclick="confirmerSuppressionCycle('${ds}')"
               style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>

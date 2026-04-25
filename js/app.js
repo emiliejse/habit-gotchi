@@ -32,7 +32,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v2.7'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v2.71'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -163,11 +163,13 @@ function getCyclePhase(dateStr) {
   const j1    = new Date(cycles[0] + 'T12:00');
   const cible = new Date((dateStr || today()) + 'T12:00');
   const diff  = Math.floor((cible - j1) / 86400000);
-  const cycles2 = (window.D.cycle || [])
-  .filter(e => e.type === 'regles').map(e => e.date).sort().reverse();
-const duree = cycles2.length >= 2
-  ? Math.round((new Date(cycles2[0]+'T12:00') - new Date(cycles2[1]+'T12:00')) / 86400000)
-  : (window.D.g.cycleDuree || 28);
+  let duree = window.D.g.cycleDuree || 28;
+if (cycles.length >= 2) {
+  let total = 0;
+  for (let i = 0; i < cycles.length - 1; i++)
+    total += Math.round((new Date(cycles[i]+'T12:00') - new Date(cycles[i+1]+'T12:00')) / 86400000);
+  duree = Math.round(total / (cycles.length - 1));
+}
   const j     = ((diff % duree) + duree) % duree + 1; // J1 à J28
 
   if (j <= 5)          return { phase: 'menstruelle',  j, label: 'Règles',       couleur: '#e07080' };

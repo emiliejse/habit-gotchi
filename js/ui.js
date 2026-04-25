@@ -3332,189 +3332,246 @@ function renderAgendaCycle(el) {
     .map(e => e.date)
     .sort().reverse();
 
-  const duree = cycles.length >= 2
-    ? Math.round((new Date(cycles[0]+'T12:00') - new Date(cycles[1]+'T12:00')) / 86400000)
-    : (D.g.cycleDuree || 28);
-
-  // Phase actuelle
-  const phaseAujourd = getCyclePhase(today());
-
-  // Descriptions des phases
-  const descriptions = {
-    menstruelle:  'Le corps se renouvelle. Énergie souvent basse, besoin de repos et de douceur.',
-    folliculaire: 'Énergie en hausse, clarté mentale. Bon moment pour démarrer de nouveaux projets.',
-    ovulation:    'Pic d\'énergie et de sociabilité. Concentration et communication facilitées.',
-    lutéale:      'Retour vers l\'intérieur. Possible fatigue ou sensibilité émotionnelle en fin de phase.'
-  };
-
-// Frise des phases
-const phases = [
-  { id: 'menstruelle',  label: 'Règles',      labelShort: 'Règles', jours: '1–5',   pct: 5/duree,  couleur: '#e07080' },
-  { id: 'folliculaire', label: 'Folliculaire', labelShort: 'Follic.', jours: '6–13',  pct: 8/duree,  couleur: '#80b8e0' },
-  { id: 'ovulation',    label: 'Ovulation',    labelShort: 'Ovul.',  jours: '14–16', pct: 3/duree,  couleur: '#60c8a0' },
-  { id: 'lutéale',      label: 'Lutéale',      labelShort: 'Lutéale', jours: '17–'+duree, pct: (duree-16)/duree, couleur: '#b090d0' },
-];
-
-const friseHtml = `
-  <div style="border-radius:10px;overflow:hidden;display:flex;height:28px;margin-bottom:6px">
-    ${phases.map(p => {
-      const isActive = phaseAujourd?.phase === p.id;
-      return `
-        <div style="flex:${p.pct};background:${p.couleur}${isActive?'':'88'};
-          display:flex;align-items:center;justify-content:center;
-          font-size:10px;color:#fff;font-weight:bold;position:relative;
-          transition:background .3s">
-          ${isActive ? '▼' : ''}
-        </div>`;
-    }).join('')}
-  </div>
-  <div style="display:flex;margin-bottom:12px;gap:2px">
-    ${phases.map(p => {
-      const isActive = phaseAujourd?.phase === p.id;
-      return `
-        <div style="flex:${p.pct};text-align:center;overflow:hidden;min-width:0;padding:0 2px;box-sizing:border-box">
-          <div style="font-size:9px;color:${p.couleur};font-weight:${isActive ? 'bold' : 'normal'};line-height:1.1;word-break:break-word">${p.labelShort}</div>
-          <div style="font-size:8px;color:var(--text2);line-height:1.1;white-space:nowrap">J${p.jours}</div>
-        </div>`;
-    }).join('')}
-  </div>
-`;
-
-  // Description phase active
-  const descHtml = phaseAujourd
-    ? `<div style="padding:10px 12px;border-radius:10px;margin-bottom:16px;
-        background:${phaseAujourd.couleur}18;border:1px solid ${phaseAujourd.couleur}44">
-        <div style="font-size:11px;font-weight:bold;color:${phaseAujourd.couleur};margin-bottom:4px">
-          ${phaseAujourd.label} · J${phaseAujourd.j}
-        </div>
-        <div style="font-size:11px;color:var(--text);line-height:1.5">
-          ${descriptions[phaseAujourd.phase]}
-        </div>
-      </div>`
-    : `<div style="font-size:11px;color:var(--text2);font-style:italic;margin-bottom:16px">
-        Aucun cycle enregistré — déclare ton premier jour de règles ci-dessous.
-      </div>`;
-
-  // Saisie J1
-  const saisieHtml = `
-    <div style="margin-bottom:16px">
-      <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:8px">
-        DÉCLARER UN DÉBUT DE CYCLE
-      </h3>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input type="date" id="cycle-date-input" class="inp"
-          value="${today()}"
-          style="flex:1">
-        <button class="btn btn-p" onclick="declarerReglesCycle()"
-          style="white-space:nowrap;font-size:10px">
-          🩸 Enregistrer
-        </button>
-      </div>
-    </div>
-  `;
-
-// Historique des cycles
-  let historiqueHtml = '';
-  if (cycles.length >= 1) {
-    const lignes = [];
+  // Durée moyenne sur TOUS les cycles connus (plus fiable que juste les 2 derniers)
+  let duree = D.g.cycleDuree || 28;
+  if (cycles.length >= 2) {
+    let total = 0;
     for (let i = 0; i < cycles.length - 1; i++) {
-      const d1  = new Date(cycles[i+1] + 'T12:00');
-      const d2  = new Date(cycles[i]   + 'T12:00');
-      const nb  = Math.round((d2 - d1) / 86400000);
-      const fmt = d => `${d.getDate()} ${d.toLocaleDateString('fr-FR',{month:'short',year:'numeric'})}`;
-      lignes.push({ debut: cycles[i+1], fin: cycles[i], nb, label: `${fmt(d1)} → ${fmt(d2)} · ${nb} jours` });
+      total += Math.round(
+        (new Date(cycles[i] + 'T12:00') - new Date(cycles[i+1] + 'T12:00')) / 86400000
+      );
     }
-
-    // Liste de tous les J1 individuels pour suppression/modification
-    const MAX_VISIBLE = 3;
-const j1Html = cycles.map((ds, i) => {
-  const d   = new Date(ds + 'T12:00');
-  const fmt = `${d.getDate()} ${d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}`;
-  const cache = i >= MAX_VISIBLE;
-  return `
-    <div class="j1-ligne" style="display:${cache ? 'none' : 'flex'};align-items:center;
-      justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
-      <div style="display:flex;gap:4px">
-        <input type="date" id="edit-j1-${i}"
-          style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
-          value="${ds}" onchange="modifierCycle('${ds}', this.value)">
-        <button onclick="document.getElementById('edit-j1-${i}').showPicker()"
-          style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
-        <button onclick="confirmerSuppressionCycle('${ds}')"
-          style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2)">🗑️</button>
-      </div>
-    </div>`;
-}).join('');
-
-const voirToutHtml = cycles.length > MAX_VISIBLE ? `
-  <div id="j1-voir-tout" style="max-height:0;overflow:hidden;transition:max-height .3s ease">
-    ${cycles.slice(MAX_VISIBLE).map((ds, i) => {
-      const idx = i + MAX_VISIBLE;
-      const d   = new Date(ds + 'T12:00');
-      const fmt = `${d.getDate()} ${d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}`;
-      return `
-        <div style="display:flex;align-items:center;justify-content:space-between;
-          padding:6px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
-          <div style="display:flex;gap:4px">
-            <input type="date" id="edit-j1-${idx}"
-              style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
-              value="${ds}" onchange="modifierCycle('${ds}', this.value)">
-            <button onclick="document.getElementById('edit-j1-${idx}').showPicker()"
-              style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
-            <button onclick="confirmerSuppressionCycle('${ds}')"
-              style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2)">🗑️</button>
-          </div>
-        </div>`;
-    }).join('')}
-  </div>
-  <button onclick="toggleJ1Liste()" id="btn-voir-tout-j1"
-    style="width:100%;margin-top:6px;padding:6px;border-radius:8px;
-    border:1px solid var(--border);background:transparent;
-    font-size:10px;cursor:pointer;color:var(--lilac);
-    font-family:'Courier New',monospace">
-    Voir tout (${cycles.length - MAX_VISIBLE} de plus) ▾
-  </button>` : '';
-
-    historiqueHtml = `
-  <div style="margin-bottom:12px">
-    <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:8px">
-      JOURS DE RÈGLES ENREGISTRÉS
-    </h3>
-    ${j1Html}
-    ${voirToutHtml}
-
-    ${lignes.length >= 1 ? `
-      <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin:12px 0 8px">
-        DERNIERS CYCLES
-      </h3>
-      ${lignes.slice(0, 2).map(l => `
-        <div style="padding:6px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:11px;color:var(--text)">${l.label}</span>
-        </div>`).join('')}
-    ` : ''}
-
-    <button onclick="exporterCycles()"
-      style="width:100%;margin-top:10px;padding:8px;border-radius:10px;
-      border:2px dashed var(--border);background:transparent;
-      font-size:11px;cursor:pointer;color:var(--text2);
-      font-family:'Courier New',monospace">
-      ⬇️ Exporter l'historique (.txt)
-    </button>
-  </div>
-`;
+    duree = Math.round(total / (cycles.length - 1));
   }
 
-  el.innerHTML = `
-    <h3 style="font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:10px">
-      FRISE DU CYCLE
-    </h3>
-    ${friseHtml}
-    ${descHtml}
-    ${saisieHtml}
-    ${historiqueHtml}
-  `;
+  const phaseAujourd = getCyclePhase(today());
+  const aDesDonnees  = cycles.length >= 1;
+
+  // ── Détection nudge : phase menstruelle probable mais pas de J1 récent ──
+  // On affiche le nudge si : phase détectée = menstruelle ET le dernier J1
+  // date de plus de (duree - 3) jours (= on est probablement dans un nouveau cycle)
+  let afficherNudge = false;
+  if (phaseAujourd?.phase === 'menstruelle' && aDesDonnees) {
+    const dernierJ1  = new Date(cycles[0] + 'T12:00');
+    const joursDepuis = Math.round((new Date(today() + 'T12:00') - dernierJ1) / 86400000);
+    afficherNudge = joursDepuis > (duree - 3);
+  }
+
+  const descriptions = {
+    menstruelle:  'Ton corps se renouvelle. Énergie souvent basse — c\'est normal de ralentir.',
+    folliculaire: 'Énergie en hausse, tête plus claire. Bon moment pour démarrer des choses.',
+    ovulation:    'Pic d\'énergie et de sociabilité. Tu es souvent à ton meilleur ces jours-ci.',
+    lutéale:      'Retour vers l\'intérieur. La fatigue ou la sensibilité peuvent augmenter en fin de phase — c\'est du signal, pas de la faiblesse.'
+  };
+
+  // ── Hero card ──
+  let heroHtml;
+  if (phaseAujourd && aDesDonnees) {
+    const nudgeHtml = afficherNudge ? `
+      <div onclick="toggleAccordeon('acc-saisie')"
+        style="margin-top:10px;padding:8px 12px;border-radius:8px;
+        background:rgba(255,255,255,0.35);cursor:pointer;
+        display:flex;align-items:center;gap:8px">
+        <span style="font-size:14px">🩸</span>
+        <span style="font-size:11px;color:${phaseAujourd.couleur};font-weight:bold;line-height:1.3">
+          Tu as tes règles en ce moment ?<br>
+          <span style="font-weight:normal;color:var(--text)">Pense à enregistrer ton J1 ↓</span>
+        </span>
+      </div>` : '';
+
+    heroHtml = `
+      <div style="padding:16px;border-radius:14px;margin-bottom:14px;
+        background:${phaseAujourd.couleur}20;border:1px solid ${phaseAujourd.couleur}44">
+        <div style="font-size:13px;font-weight:bold;color:${phaseAujourd.couleur};margin-bottom:6px">
+          ${phaseAujourd.label} · Jour ${phaseAujourd.j}
+        </div>
+        <div style="font-size:11px;color:var(--text);line-height:1.6">
+          ${descriptions[phaseAujourd.phase]}
+        </div>
+        ${nudgeHtml}
+      </div>`;
+  } else {
+    // Pas de données — état d'accueil bienveillant
+    heroHtml = `
+      <div style="padding:16px;border-radius:14px;margin-bottom:14px;
+        background:var(--card);border:1px dashed var(--border);text-align:center">
+        <div style="font-size:22px;margin-bottom:8px">🌙</div>
+        <div style="font-size:12px;font-weight:bold;color:var(--text);margin-bottom:6px">
+          Commence à suivre ton cycle
+        </div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.5">
+          Enregistre ton premier jour de règles ci-dessous.<br>
+          L'app calculera ta phase au fil du temps.
+        </div>
+      </div>`;
+  }
+
+  // ── Frise compacte (sans labels dessous) ──
+  const phases = [
+    { id: 'menstruelle',  label: 'Règles',      jours: '1–5',          pct: 5/duree,           couleur: '#e07080' },
+    { id: 'folliculaire', label: 'Folliculaire', jours: '6–13',         pct: 8/duree,           couleur: '#80b8e0' },
+    { id: 'ovulation',    label: 'Ovulation',    jours: '14–16',        pct: 3/duree,           couleur: '#60c8a0' },
+    { id: 'lutéale',      label: 'Lutéale',      jours: '17–'+duree,    pct: (duree-16)/duree,  couleur: '#b090d0' },
+  ];
+
+  let friseHtml = '';
+  if (aDesDonnees) {
+    friseHtml = `
+      <div style="margin-bottom:14px">
+        <div style="border-radius:10px;overflow:hidden;display:flex;height:24px">
+          ${phases.map(p => {
+            const isActive = phaseAujourd?.phase === p.id;
+            return `<div title="${p.label} (J${p.jours})"
+              style="flex:${p.pct};background:${p.couleur}${isActive ? '' : '55'};
+              display:flex;align-items:center;justify-content:center;
+              font-size:9px;color:#fff;font-weight:bold;transition:background .3s">
+              ${isActive ? '▼' : ''}
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;padding:0 2px">
+          <span style="font-size:9px;color:var(--text2)">J1</span>
+          <span style="font-size:9px;color:var(--text2)">J${duree}</span>
+        </div>
+      </div>`;
+  }
+
+  // ── Accordéon saisie ──
+  const saisieHtml = `
+    <div style="margin-bottom:8px;border-radius:12px;overflow:hidden;
+      border:1px solid var(--border)">
+      <button onclick="toggleAccordeon('acc-saisie')"
+        style="width:100%;padding:12px 14px;background:var(--card);border:none;
+        cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+        font-family:'Courier New',monospace;font-size:11px;color:var(--text)">
+        <span>🩸 Déclarer un début de cycle</span>
+        <span id="acc-saisie-chevron" style="color:var(--text2);transition:transform .2s">▾</span>
+      </button>
+      <div id="acc-saisie" style="max-height:0;overflow:hidden;transition:max-height .3s ease">
+        <div style="padding:12px 14px;border-top:1px solid var(--border)">
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="date" id="cycle-date-input" class="inp"
+              value="${today()}" style="flex:1">
+            <button class="btn btn-p" onclick="declarerReglesCycle()"
+              style="white-space:nowrap;font-size:10px">
+              Enregistrer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // ── Accordéon historique ──
+  let historiqueContenu = `
+    <div style="font-size:11px;color:var(--text2);font-style:italic;padding:12px 14px">
+      Aucun cycle enregistré pour l'instant.
+    </div>`;
+
+  if (aDesDonnees) {
+    const MAX_VISIBLE = 3;
+
+    const lignesJ1 = cycles.map((ds, i) => {
+      const d   = new Date(ds + 'T12:00');
+      const fmt = `${d.getDate()} ${d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
+      const cache = i >= MAX_VISIBLE;
+      return `
+        <div class="j1-ligne" style="display:${cache ? 'none' : 'flex'};align-items:center;
+          justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
+          <div style="display:flex;gap:4px">
+            <input type="date" id="edit-j1-${i}"
+              style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
+              value="${ds}" onchange="modifierCycle('${ds}', this.value)">
+            <button onclick="document.getElementById('edit-j1-${i}').showPicker()"
+              style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
+            <button onclick="confirmerSuppressionCycle('${ds}')"
+              style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    const voirToutBtn = cycles.length > MAX_VISIBLE ? `
+      <button onclick="toggleJ1Liste()" id="btn-voir-tout-j1"
+        style="width:100%;margin-top:6px;padding:6px;border-radius:8px;
+        border:1px solid var(--border);background:transparent;
+        font-size:10px;cursor:pointer;color:var(--lilac);
+        font-family:'Courier New',monospace">
+        Voir tout (${cycles.length - MAX_VISIBLE} de plus) ▾
+      </button>
+      <div id="j1-voir-tout" style="max-height:0;overflow:hidden;transition:max-height .3s ease">
+        ${cycles.slice(MAX_VISIBLE).map((ds, i) => {
+          const idx = i + MAX_VISIBLE;
+          const d   = new Date(ds + 'T12:00');
+          const fmt = `${d.getDate()} ${d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
+          return `
+            <div style="display:flex;align-items:center;justify-content:space-between;
+              padding:7px 0;border-bottom:1px solid var(--border)">
+              <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
+              <div style="display:flex;gap:4px">
+                <input type="date" id="edit-j1-${idx}"
+                  style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
+                  value="${ds}" onchange="modifierCycle('${ds}', this.value)">
+                <button onclick="document.getElementById('edit-j1-${idx}').showPicker()"
+                  style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
+                <button onclick="confirmerSuppressionCycle('${ds}')"
+                  style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>` : '';
+
+    // Durée moyenne affichée
+    const moyenneHtml = cycles.length >= 2
+      ? `<div style="margin-top:10px;padding:8px 10px;border-radius:8px;
+          background:var(--bg);font-size:11px;color:var(--text2)">
+          Durée moyenne de tes cycles : <strong style="color:var(--text)">${duree} jours</strong>
+          <span style="font-size:10px"> (sur ${cycles.length - 1} cycle${cycles.length > 2 ? 's' : ''})</span>
+        </div>` : '';
+
+    historiqueContenu = `
+      <div style="padding:12px 14px;border-top:1px solid var(--border)">
+        ${lignesJ1}
+        ${voirToutBtn}
+        ${moyenneHtml}
+        <button onclick="exporterCycles()"
+          style="width:100%;margin-top:12px;padding:8px;border-radius:10px;
+          border:2px dashed var(--border);background:transparent;
+          font-size:11px;cursor:pointer;color:var(--text2);
+          font-family:'Courier New',monospace">
+          ⬇️ Télécharger l'historique (.txt)
+        </button>
+      </div>`;
+  }
+
+  const historiqueHtml = `
+    <div style="margin-bottom:8px;border-radius:12px;overflow:hidden;
+      border:1px solid var(--border)">
+      <button onclick="toggleAccordeon('acc-historique')"
+        style="width:100%;padding:12px 14px;background:var(--card);border:none;
+        cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+        font-family:'Courier New',monospace;font-size:11px;color:var(--text)">
+        <span>📋 Historique (${cycles.length} J1 enregistré${cycles.length > 1 ? 's' : ''})</span>
+        <span id="acc-historique-chevron" style="color:var(--text2);transition:transform .2s">▾</span>
+      </button>
+      <div id="acc-historique" style="max-height:0;overflow:hidden;transition:max-height .3s ease">
+        ${historiqueContenu}
+      </div>
+    </div>`;
+
+  el.innerHTML = heroHtml + friseHtml + saisieHtml + historiqueHtml;
+
+  // Auto-ouvre l'accordéon saisie si pas encore de données
+  if (!aDesDonnees) toggleAccordeon('acc-saisie');
+}
+
+// ── Accordéon générique ──
+function toggleAccordeon(id) {
+  const panel   = document.getElementById(id);
+  const chevron = document.getElementById(id + '-chevron');
+  if (!panel) return;
+  const ouvert = panel.style.maxHeight && panel.style.maxHeight !== '0px';
+  panel.style.maxHeight = ouvert ? '0px' : '600px';
+  if (chevron) chevron.style.transform = ouvert ? '' : 'rotate(180deg)';
 }
 
 function toggleJ1Liste() {
@@ -3525,34 +3582,29 @@ function toggleJ1Liste() {
   liste.style.maxHeight = ouvert ? '0' : '400px';
   liste.style.overflowY = ouvert ? 'hidden' : 'auto';
   btn.textContent = ouvert
-    ? `Voir tout (${liste.querySelectorAll('[style*="flex"]').length} de plus) ▾`
+    ? `Voir tout (${document.querySelectorAll('#j1-voir-tout .j1-ligne, #j1-voir-tout [style*="flex"]').length} de plus) ▾`
     : 'Réduire ▴';
 }
 
 function modifierCycle(ancienneDate, nouvelleDate) {
   if (!nouvelleDate || ancienneDate === nouvelleDate) return;
-  const D = window.D;
-
-  // Vérifie pas de doublon
+  const D      = window.D;
   const doublon = (D.cycle || []).find(e => e.date === nouvelleDate && e.type === 'regles');
   if (doublon) { toast('Un cycle existe déjà à cette date'); return; }
-
-  // Remplace la date
   const idx = (D.cycle || []).findIndex(e => e.date === ancienneDate && e.type === 'regles');
   if (idx !== -1) {
     D.cycle[idx].date = nouvelleDate;
-    // Retrie par date décroissante
     D.cycle.sort((a, b) => a.date > b.date ? -1 : 1);
   }
   save();
   toast('Cycle mis à jour ✓');
-  // Recalcul automatique — tout se base sur D.cycle donc juste re-render
   renderAgendaCycle(document.getElementById('agenda-contenu'));
 }
+
 function declarerReglesCycle() {
   const ds = document.getElementById('cycle-date-input').value;
   if (!ds) return;
-  declarerRegles(ds); // réutilise la fonction du panneau 1
+  declarerRegles(ds);
   renderAgendaCycle(document.getElementById('agenda-contenu'));
 }
 
@@ -3573,16 +3625,19 @@ function exporterCycles() {
 
   let txt = 'Historique des cycles — HabitGotchi\n';
   txt += '=====================================\n\n';
-
   for (let i = 0; i < cycles.length - 1; i++) {
     const d1  = new Date(cycles[i+1] + 'T12:00');
     const d2  = new Date(cycles[i]   + 'T12:00');
     const nb  = Math.round((d2 - d1) / 86400000);
-    const fmt = d => d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const fmt = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     txt += `Cycle ${cycles.length - 1 - i} : ${fmt(d1)} → ${fmt(d2)} (${nb} jours)\n`;
   }
-
-  txt += `\nDurée de cycle paramétrée : ${D.g.cycleDuree || 28} jours\n`;
+  txt += `\nDurée moyenne : ${(() => {
+    let t = 0;
+    for (let i = 0; i < cycles.length - 1; i++)
+      t += Math.round((new Date(cycles[i]+'T12:00') - new Date(cycles[i+1]+'T12:00')) / 86400000);
+    return Math.round(t / (cycles.length - 1));
+  })()} jours\n`;
   txt += `Exporté le ${new Date().toLocaleDateString('fr-FR')}\n`;
 
   const blob = new Blob([txt], { type: 'text/plain' });

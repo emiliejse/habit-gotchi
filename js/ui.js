@@ -3484,13 +3484,14 @@ const lignesJ1 = cycles.map((ds, i) => {
       justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
       <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
       <div style="display:flex;gap:4px">
-        <input type="date" id="edit-j1-${i}"
-          style="position:absolute;opacity:0;width:0;height:0"
-          value="${ds}" onchange="modifierCycle('${ds}', this.value)">
-        <button onclick="document.getElementById('edit-j1-${i}').click()"
-          style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
         <button onclick="confirmerSuppressionCycle('${ds}')"
           style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
+        <label style="cursor:pointer;font-size:13px">
+          ✏️
+          <input type="date" value="${ds}"
+            onchange="modifierCycle('${ds}', this.value)"
+            style="position:absolute;opacity:0;width:0;height:0">
+        </label>
       </div>
     </div>`;
 }).join('');

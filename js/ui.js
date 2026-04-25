@@ -1443,14 +1443,14 @@ const rdvDuJour = (D.rdv || [])
   .map(r => r.heure ? `${r.heure} ${r.label}` : r.label)
   .join(', ') || 'aucun';
   const ctx = window.AI_CONTEXTS;
-  const P = window.PERSONALITY;
-  const cycleData  = getCyclePhase(td);
-  const cycleInfo  = cycleData ? `${cycleData.label} (J${cycleData.j})` : 'non renseignée';
-  const rdvDuJour  = (D.rdv || [])
+const P = window.PERSONALITY;
+const cycleData  = getCyclePhase(td);
+const cycleInfo  = cycleData ? `${cycleData.label} (J${cycleData.j})` : 'non renseignée';
+const rdvDuJour  = (D.rdv || [])
   .filter(r => r.date === td)
   .map(r => r.heure ? `${r.heure} ${r.label}` : r.label)
   .join(', ') || 'aucun';
-  const promptInit = ctx
+const promptInit = ctx
   ? ctx.genSoutien
       .replace('{{nameGotchi}}',          D.g.name || P?.nom || 'Gotchi')
       .replace('{{userName}}',     D.g.userName || D.userName || 'toi')

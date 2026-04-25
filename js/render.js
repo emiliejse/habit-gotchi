@@ -640,14 +640,17 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
           pose.timer--;
           if (pose.timer === 0) {
             pose.current = 'normal';
-            pose.cooldown = 240 + Math.floor(Math.random() * 240); // 20-40 sec
+            pose.cooldown = 120 + Math.floor(Math.random() * 120); // 10-20 sec
           }
         } else if (pose.cooldown > 0) {
           pose.cooldown--;
         } else {
-          // Étape A : seule la pose 'hanche_g' est active
-          pose.current = 'hanche_g';
-          pose.timer = 60 + Math.floor(Math.random() * 24); // 5-7 sec
+          // Tirage aléatoire pondéré entre les 4 variations
+          const r = Math.random();
+          if      (r < 0.35) { pose.current = 'hanche_g';   pose.timer = 60  + Math.floor(Math.random() * 24); }   // 5-7 sec
+          else if (r < 0.70) { pose.current = 'hanche_d';   pose.timer = 60  + Math.floor(Math.random() * 24); }   // 5-7 sec
+          else if (r < 0.90) { pose.current = 'croises';    pose.timer = 72  + Math.floor(Math.random() * 24); }   // 6-8 sec
+          else               { pose.current = 'salut';      pose.timer = 12  + Math.floor(Math.random() * 6);  }   // 1-1.5 sec
         }
       } else {
         pose.current = 'normal';
@@ -655,11 +658,26 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
 
       // ─── Dessin selon la pose courante ───
       if (pose.current === 'hanche_g') {
-        // Bras gauche plié sur hanche (avant-bras + coude qui dépasse)
+        // Bras gauche plié sur hanche
         px(p, x+PX,    y+PX*5, PX*2, PX);    // avant-bras horizontal
         px(p, x,       y+PX*4, PX,   PX*2);  // coude qui dépasse à gauche
-        // Bras droit normal
-        px(p, x+PX*10, y+PX*5, PX,   PX*2);
+        px(p, x+PX*10, y+PX*5, PX,   PX*2);  // bras droit normal
+      } else if (pose.current === 'hanche_d') {
+        // Bras droit plié sur hanche (miroir de hanche_g)
+        px(p, x-PX,    y+PX*5, PX,   PX*2);  // bras gauche normal
+        px(p, x+PX*7,  y+PX*5, PX*2, PX);    // avant-bras horizontal droit
+        px(p, x+PX*10, y+PX*4, PX,   PX*2);  // coude qui dépasse à droite
+      } else if (pose.current === 'croises') {
+        // Bras croisés devant le ventre
+        px(p, x+PX*2, y+PX*5, PX*2, PX);     // avant-bras gauche
+        px(p, x+PX*6, y+PX*5, PX*2, PX);     // avant-bras droit
+        px(p, x,      y+PX*5, PX,   PX);     // coude gauche
+        px(p, x+PX*9, y+PX*5, PX,   PX);     // coude droit
+      } else if (pose.current === 'salut') {
+        // Bras gauche levé en l'air (coucou)
+        px(p, x-PX,   y+PX*2, PX, PX*3);     // bras vertical levé
+        px(p, x-PX,   y+PX,   PX, PX);       // main au sommet
+        px(p, x+PX*10,y+PX*5, PX, PX*2);     // bras droit normal
       } else {
         // Pose normale (bras le long du corps)
         px(p, x-PX,    y+PX*5, PX, PX*2);

@@ -2663,7 +2663,7 @@ function renderAgendaJour(el) {
     <div style="display:flex;align-items:center;justify-content:space-between;
       padding:8px 10px;border-radius:8px;background:#fff;
       border:1px solid var(--border);margin-bottom:5px">
-      <span style="font-size:11px">${r.heure ? `<b>${r.heure}</b> · ` : '🗓️ Journée entière · '}${r.label}</span>
+      <span style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;display:inline-block">${r.heure ? `<b>${r.heure}</b> · ` : '🗓️ Journée entière · '}${r.label}</span>
       <div style="display:flex;gap:6px">
         <button onclick="editerRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
         <button onclick="confirmerSuppressionRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
@@ -2916,7 +2916,7 @@ function sauvegarderRdv() {
     duree = fin.toISOString().split('T')[0];
   }
 
-  const labelFinal = emoji ? `${emoji} ${label}` : label;
+  const labelFinal = (emoji ? `${emoji} ${label}` : label).slice(0, 40);
 
   window.D.rdv = window.D.rdv || [];
   window.D.rdv.push({

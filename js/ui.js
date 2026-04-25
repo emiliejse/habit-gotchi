@@ -2582,6 +2582,39 @@ function switchAgenda(onglet) {
 
 /* ─── PANNEAU 1 : JOUR ─────────────────────────────────────── */
 
+
+function getRdvDuJour(ds) {
+  return (window.D.rdv || []).filter(r => {
+    // RDV simple ou sans récurrence
+    if (!r.recurrence || r.recurrence === 'aucune') {
+      return r.date === ds;
+    }
+    // RDV récurrent : ds doit être >= date de début
+    if (ds < r.date) return false;
+    // Vérifie la date de fin si elle existe
+    if (r.duree && ds > r.duree) return false;
+
+    const debut = new Date(r.date + 'T12:00');
+    const cible = new Date(ds  + 'T12:00');
+
+    if (r.recurrence === 'hebdo') {
+      const diffJ = Math.round((cible - debut) / 86400000);
+      return diffJ % 7 === 0;
+    }
+    if (r.recurrence === 'mensuelle') {
+      return debut.getDate() === cible.getDate()
+          && (cible.getFullYear() * 12 + cible.getMonth())
+           > (debut.getFullYear()  * 12 + debut.getMonth() - 1);
+    }
+    if (r.recurrence === 'annuelle') {
+      return debut.getDate()  === cible.getDate()
+          && debut.getMonth() === cible.getMonth()
+          && cible.getFullYear() >= debut.getFullYear();
+    }
+    return false;
+  });
+}
+
 function renderAgendaJour(el) {
   const D     = window.D;
   const ds    = _agendaJour;
@@ -2627,7 +2660,7 @@ function renderAgendaJour(el) {
     : `<div style="font-size:11px;color:var(--text2);font-style:italic;padding:6px 0">Aucune note ce jour</div>`;
 
   // Rendez-vous
-  const rdvDuJour = (D.rdv || []).filter(r => r.date === ds).sort((a,b) => (a.heure||'') > (b.heure||'') ? 1 : -1);
+  const rdvDuJour = getRdvDuJour(ds).sort((a,b) => (a.heure||'') > (b.heure||'') ? 1 : -1);
   const rdvHtml = rdvDuJour.map(r => `
     <div style="display:flex;align-items:center;justify-content:space-between;
       padding:8px 10px;border-radius:8px;background:#fff;
@@ -2710,8 +2743,10 @@ function afficherFormulaireRdv() {
   const emojis = [
     {e:'🩺',l:'Médecin'}, {e:'🦷',l:'Dentiste'}, {e:'👁️',l:'Ophtalmo'},
     {e:'💆',l:'Kiné'}, {e:'🧠',l:'Psy'}, {e:'🩸',l:'Analyse'},
-    {e:'💉',l:'Vaccin'}, {e:'📋',l:'Admin'}, {e:'🏃',l:'Sport'},
-    {e:'💛',l:'Perso'}, {e:'🐾',l:'Véto'}, {e:'✈️',l:'Voyage'}
+    {e:'💉',l:'Vaccin'}, {e:'🤰',l:'Gynéco'}, {e:'🐾',l:'Véto'},
+    {e:'🎂',l:'Anniversaire'}, {e:'🎬',l:'Cinéma'}, {e:'🍽️',l:'Restaurant'},
+    {e:'✈️',l:'Voyage'}, {e:'📋',l:'Admin'}, {e:'🏃',l:'Sport'},
+    {e:'💛',l:'Perso'}, {e:'🎉',l:'Fête'}, {e:'📚',l:'Formation'}
   ];
 
   overlay.innerHTML = `
@@ -2725,19 +2760,20 @@ function afficherFormulaireRdv() {
       <h3 style="font-size:12px;color:var(--lilac);margin-bottom:14px;
         font-family:'Courier New',monospace">📅 Nouveau rendez-vous</h3>
 
-      <!-- Sélecteur emoji -->
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+      <!-- Emojis sur 2 lignes -->
+      <div style="display:grid;grid-template-columns:repeat(9,1fr);gap:5px;margin-bottom:12px">
         ${emojis.map(({e,l}) => `
           <button onclick="selectionnerEmoji('${e}', this)"
             title="${l}"
-            style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);
-            background:#fff;font-size:16px;cursor:pointer;transition:.15s"
+            style="aspect-ratio:1;border-radius:8px;border:1.5px solid var(--border);
+            background:#fff;font-size:15px;cursor:pointer;transition:.15s;
+            display:flex;align-items:center;justify-content:center"
             data-emoji="${e}">${e}</button>
         `).join('')}
       </div>
 
       <!-- Label -->
-      <input id="rdv-label" class="inp" placeholder="Gynéco, analyse..." style="margin-bottom:8px">
+      <input id="rdv-label" class="inp" placeholder="Libellé du rendez-vous..." style="margin-bottom:8px">
 
       <!-- Heure -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
@@ -2750,16 +2786,48 @@ function afficherFormulaireRdv() {
       </div>
 
       <!-- Récurrence -->
-      <div style="display:flex;gap:6px;margin-bottom:14px">
-        ${['aucune','hebdo','mensuelle'].map(r => `
-          <button onclick="selectionnerRecurrence('${r}', this)"
-            data-rec="${r}"
-            style="flex:1;padding:7px;border-radius:8px;font-size:10px;
-            font-family:'Courier New',monospace;cursor:pointer;transition:.15s;
-            border:1.5px solid var(--border);background:#fff;color:var(--text2)">
-            ${r === 'aucune' ? '1× ' : r === 'hebdo' ? '🔁 Hebdo' : '🔁 Mensuel'}
-          </button>
-        `).join('')}
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;color:var(--text2);letter-spacing:1px;
+          text-transform:uppercase;margin-bottom:6px">Récurrence</div>
+        <div style="display:flex;gap:6px">
+          ${[
+            {v:'aucune', l:'1×'},
+            {v:'hebdo',  l:'🔁 Hebdo'},
+            {v:'mensuelle', l:'🔁 Mensuel'}
+            {v:'annuelle', l:'🔁 Annuel'}
+          ].map(r => `
+            <button onclick="selectionnerRecurrence('${r.v}', this)"
+              data-rec="${r.v}"
+              style="flex:1;padding:7px;border-radius:8px;font-size:10px;
+              font-family:'Courier New',monospace;cursor:pointer;transition:.15s;
+              border:1.5px solid var(--border);background:#fff;color:var(--text2)">
+              ${r.l}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Durée (masquée si aucune récurrence) -->
+      <div id="rdv-duree-wrap" style="display:none;margin-bottom:14px">
+        <div style="font-size:10px;color:var(--text2);letter-spacing:1px;
+          text-transform:uppercase;margin-bottom:6px">Pendant</div>
+        <div style="display:flex;gap:6px">
+          ${[
+{e:'Sans fin', v:null},
+{e:'3 mois',  v:3},
+{e:'6 mois',  v:6},
+{e:'1 an',    v:12},
+{e:'2 ans',   v:24}
+          ].map(d => `
+            <button onclick="selectionnerDuree('${d.v}', this)"
+              data-duree="${d.v}"
+              style="flex:1;padding:7px;border-radius:8px;font-size:10px;
+              font-family:'Courier New',monospace;cursor:pointer;transition:.15s;
+              border:1.5px solid var(--border);background:#fff;color:var(--text2)">
+              ${d.l}
+            </button>
+          `).join('')}
+        </div>
       </div>
 
       <div style="display:flex;gap:8px">
@@ -2774,8 +2842,6 @@ function afficherFormulaireRdv() {
   });
 
   document.body.appendChild(overlay);
-
-  // Sélectionne "aucune" par défaut
   selectionnerRecurrence('aucune', overlay.querySelector('[data-rec="aucune"]'));
 }
 
@@ -2793,14 +2859,44 @@ function selectionnerEmoji(e, btn) {
 
 function selectionnerRecurrence(r, btn) {
   document.querySelectorAll('#rdv-sheet [data-rec]').forEach(b => {
-    b.style.background = '#fff';
-    b.style.borderColor = 'var(--border)';
-    b.style.color = 'var(--text2)';
+    b.style.background   = '#fff';
+    b.style.borderColor  = 'var(--border)';
+    b.style.color        = 'var(--text2)';
   });
-  btn.style.background = 'var(--lilac)22';
+  btn.style.background  = 'var(--lilac)22';
   btn.style.borderColor = 'var(--lilac)';
-  btn.style.color = 'var(--lilac)';
+  btn.style.color       = 'var(--lilac)';
   window._rdvRecurrence = r;
+
+  // Affiche/masque le sélecteur de durée
+  const dureeWrap = document.getElementById('rdv-duree-wrap');
+  if (dureeWrap) {
+    dureeWrap.style.display = r === 'aucune' ? 'none' : 'block';
+    // Sélectionne 6 mois par défaut
+    if (r !== 'aucune' && !window._rdvDuree) {
+      const btnSansFin = dureeWrap.querySelector('[data-duree="null"]');
+if (btnSansFin) selectionnerDuree('null', btnSansFin);
+    }
+  }
+}
+
+function selectionnerDuree(v, btn) {
+  document.querySelectorAll('#rdv-sheet [data-duree]').forEach(b => {
+    b.style.background  = '#fff';
+    b.style.borderColor = 'var(--border)';
+    b.style.color       = 'var(--text2)';
+  });
+  btn.style.background  = 'var(--lilac)22';
+  btn.style.borderColor = 'var(--lilac)';
+  btn.style.color       = 'var(--lilac)';
+
+  if (v === 'null' || v === null) {
+    window._rdvDuree = null; // infini
+  } else {
+    const fin = new Date(_agendaJour + 'T12:00');
+    fin.setMonth(fin.getMonth() + parseInt(v));
+    window._rdvDuree = fin.toISOString().split('T')[0];
+  }
 }
 
 function annulerFormulaireRdv() {
@@ -2810,44 +2906,27 @@ function annulerFormulaireRdv() {
 }
 
 function sauvegarderRdv() {
-  const label = document.getElementById('rdv-label').value.trim();
+  const label      = document.getElementById('rdv-label').value.trim();
   if (!label) return;
   const heure      = document.getElementById('rdv-heure').value || null;
   const emoji      = window._rdvEmoji || null;
   const recurrence = window._rdvRecurrence || 'aucune';
+  const duree      = window._rdvDuree || null; // date de fin string ou null
   const labelFinal = emoji ? `${emoji} ${label}` : label;
-  const groupId    = Date.now().toString(); // ← une seule fois pour tout le groupe
 
   window.D.rdv = window.D.rdv || [];
+  window.D.rdv.push({
+    id: Date.now().toString(),
+    date: _agendaJour,
+    label: labelFinal,
+    heure,
+    recurrence,
+    duree // null = infini
+  });
 
-  if (recurrence === 'hebdo') {
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(_agendaJour + 'T12:00');
-      d.setDate(d.getDate() + i * 7);
-      window.D.rdv.push({
-        id: `${groupId}-${i}`, date: d.toISOString().split('T')[0],
-        label: labelFinal, heure, recurrence, groupId // ← ajouté
-      });
-    }
-  } else if (recurrence === 'mensuelle') {
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(_agendaJour + 'T12:00');
-      d.setMonth(d.getMonth() + i);
-      window.D.rdv.push({
-        id: `${groupId}-${i}`, date: d.toISOString().split('T')[0],
-        label: labelFinal, heure, recurrence, groupId // ← ajouté
-      });
-    }
-  } else {
-    window.D.rdv.push({
-      id: groupId, date: _agendaJour,
-      label: labelFinal, heure, recurrence: 'aucune'
-      // pas de groupId pour les RDV simples
-    });
-  }
-
-  window._rdvEmoji = null;
+  window._rdvEmoji      = null;
   window._rdvRecurrence = 'aucune';
+  window._rdvDuree      = null;
 
   save();
   annulerFormulaireRdv();
@@ -2867,7 +2946,9 @@ function confirmerSuppressionRdv(id) {
   const rdv = (window.D.rdv || []).find(r => r.id === id);
   if (!rdv) return;
 
-  const isRecurrent = !!rdv.groupId;
+  // AVANT : !!rdv.groupId
+  // APRÈS : on détecte la récurrence directement
+  const isRecurrent = rdv.recurrence && rdv.recurrence !== 'aucune';
 
   el.insertAdjacentHTML('afterbegin', `
     <div id="confirm-inline" style="position:sticky;top:0;z-index:10;
@@ -2879,23 +2960,23 @@ function confirmerSuppressionRdv(id) {
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-s" onclick="fermerConfirmInline()" style="flex:1">Annuler</button>
         <button class="btn btn-d" onclick="supprimerRdv('${id}');fermerConfirmInline()" style="flex:1">
-          Ce rendez-vous
+          ${isRecurrent ? 'Ce rendez-vous' : 'Supprimer'}
         </button>
         ${isRecurrent ? `
-        <button class="btn btn-d" onclick="supprimerRdvSuivants('${id}','${rdv.groupId}');fermerConfirmInline()" style="flex:1;white-space:nowrap">
+        <button class="btn btn-d" onclick="supprimerRdvSuivants('${id}');fermerConfirmInline()" style="flex:1;white-space:nowrap">
           Celui-ci et les suivants
         </button>` : ''}
       </div>
     </div>`);
 }
 
-function supprimerRdvSuivants(id, groupId) {
-  const rdv = (window.D.rdv || []).find(r => r.id === id);
-  if (!rdv) return;
-  // Supprime toutes les occurrences du même groupe à partir de cette date
-  window.D.rdv = window.D.rdv.filter(r =>
-    !(r.groupId === groupId && r.date >= rdv.date)
-  );
+function supprimerRdvSuivants(id) {
+  const idx = (window.D.rdv || []).findIndex(r => r.id === id);
+  if (idx === -1) return;
+  // La date de fin = la veille du jour affiché
+  const veille = new Date(_agendaJour + 'T12:00');
+  veille.setDate(veille.getDate() - 1);
+  window.D.rdv[idx].duree = veille.toISOString().split('T')[0];
   save();
   renderAgendaJour(document.getElementById('agenda-contenu'));
 }

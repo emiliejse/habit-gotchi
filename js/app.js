@@ -32,7 +32,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v3'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v3.01'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -397,8 +397,8 @@ function pickThreeSnacks() {
  * - Marque la fenêtre repas comme "faite" pour aujourd'hui
  */
 function giveSnack(emoji) {
-  const window_ = getCurrentMealWindow();
-  if (!window_) return;                    // hors fenêtre, sécurité
+  const win = getCurrentMealWindow();
+  if (!win) return;                    // hors fenêtre, sécurité
   
   const meals = ensureMealsToday();
   if (meals[window_]) return;              // déjà mangé sur cette fenêtre

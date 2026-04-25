@@ -2087,45 +2087,10 @@ function renderProg() {
     const isT   = ds === today();
     const { bg, border } = calColor(log.length, total, isT);
     const day   = new Date(ds + 'T12:00').getDate();
-
     return `<div class="cal-c" style="background:${bg};border:${border};cursor:pointer" onclick="showDayDetail('${ds}')">${day}</div>`;
   }).join('');
 
-  /* ── Calendrier mensuel ── */
-  const now = new Date();
-  now.setMonth(now.getMonth() + mOff);
-
-  const y     = now.getFullYear();
-  const m     = now.getMonth();
-  const first = new Date(y, m, 1);
-  const last  = new Date(y, m + 1, 0);
-  const off   = (first.getDay() + 6) % 7; // décalage lundi = 0
-
-  const moisLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-document.getElementById('m-title').textContent =
-  moisLabel.charAt(0).toUpperCase() + moisLabel.slice(1);
-
-  let cells = '';
-
-  // Cases vides pour aligner le 1er jour
-  for (let i = 0; i < off; i++) {
-    cells += '<div class="cal-c cal-c-mini"></div>';
-  }
-
-  // Jours du mois
-  for (let d = 1; d <= last.getDate(); d++) {
-    const ds  = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const log = D.log[ds] || [];
-    const isT = ds === today();
-    const { bg, border } = calColor(log.length, total, isT);
-    const weight = isT ? 'font-weight:bold;' : '';
-
-    cells += `<div class="cal-c cal-c-mini" style="background:${bg};border:${border}"></div>`;
-  }
-
-  document.getElementById('m-view').innerHTML = cells;
-
-    /* ── Titre bilan ── */
+  /* ── Titre bilan ── */
   const bilanTitre = document.getElementById('bilan-titre');
   if (bilanTitre) {
     const debut = new Date(wd[0] + 'T12:00');
@@ -2146,27 +2111,27 @@ document.getElementById('m-title').textContent =
   }
 
   /* ── État bouton bilan ── */
-checkBilanReset();
-const btnBilan  = document.querySelector('[onclick="genBilanSemaine()"]');
-if (btnBilan) {
-  const jourSemaine = new Date().getDay(); // 0=dim, 5=ven, 6=sam
-  const estFinSemaine = wOff < 0 || jourSemaine === 0 || jourSemaine === 5 || jourSemaine === 6;
-  const quotaOk = (window.D.g.bilanCount || 0) < 3;
+  checkBilanReset();
+  const btnBilan = document.querySelector('[onclick="genBilanSemaine()"]');
+  if (btnBilan) {
+    const jourSemaine = new Date().getDay();
+    const estFinSemaine = wOff < 0 || jourSemaine === 0 || jourSemaine === 5 || jourSemaine === 6;
+    const quotaOk = (window.D.g.bilanCount || 0) < 3;
 
-  if (!estFinSemaine) {
-    btnBilan.disabled = true;
-    btnBilan.textContent = '⏳ Disponible vendredi';
-    btnBilan.style.opacity = '0.5';
-  } else if (!quotaOk) {
-    btnBilan.disabled = true;
-    btnBilan.textContent = '✓ 3 bilans générés cette semaine';
-    btnBilan.style.opacity = '0.5';
-  } else {
-    btnBilan.disabled = false;
-    btnBilan.textContent = `✿ Générer le bilan (${window.D.g.bilanCount}/3)`;
-    btnBilan.style.opacity = '1';
+    if (!estFinSemaine) {
+      btnBilan.disabled = true;
+      btnBilan.textContent = '⏳ Disponible vendredi';
+      btnBilan.style.opacity = '0.5';
+    } else if (!quotaOk) {
+      btnBilan.disabled = true;
+      btnBilan.textContent = '✓ 3 bilans générés cette semaine';
+      btnBilan.style.opacity = '0.5';
+    } else {
+      btnBilan.disabled = false;
+      btnBilan.textContent = `✿ Générer le bilan (${window.D.g.bilanCount}/3)`;
+      btnBilan.style.opacity = '1';
+    }
   }
-}
 
   updUI();
 }
@@ -3484,14 +3449,14 @@ const lignesJ1 = cycles.map((ds, i) => {
       justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
       <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
       <div style="display:flex;gap:4px">
-        <button onclick="confirmerSuppressionCycle('${ds}')"
-          style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
         <label style="cursor:pointer;font-size:13px">
           ✏️
           <input type="date" value="${ds}"
             onchange="modifierCycle('${ds}', this.value)"
             style="position:absolute;opacity:0;width:0;height:0">
         </label>
+        <button onclick="confirmerSuppressionCycle('${ds}')"
+          style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
       </div>
     </div>`;
 }).join('');

@@ -113,16 +113,17 @@ function unlockScroll() {
 
 function toggleMenu() {
   const ov = document.getElementById('menu-overlay');
-  const dz = document.getElementById('dynamic-zone');
   if (!ov.classList.contains('open')) {
     const nm = document.getElementById('menu-gotchi-name');
     if (nm) nm.textContent = window.D.g.name || 'Gotchi';
-    dz.style.overflowY = 'hidden'; → lockScroll();
+    lockScroll();
   } else {
-    dz.style.overflowY = '';       → unlockScroll();
+    unlockScroll();
   }
   ov.classList.toggle('open');
 }
+
+
 function goMenu(t) { toggleMenu(); go(t); }
 
 function updDate() {

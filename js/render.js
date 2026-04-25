@@ -289,7 +289,9 @@ function drawAccessoires(p, cx, anchors, stage) {
       if (!def || !def.pixels) return;
 
       const ps = def.pxSize || PX;
-      const accX = cx - Math.floor(def.pixels[0].length * ps / 2);
+      // Aligne accX sur la même grille PX que le corps du Gotchi
+      const accXraw = cx - Math.floor(def.pixels[0].length * ps / 2);
+      const accX = Math.floor(accXraw / PX) * PX;
 
       const baseY = def.ancrage === 'yeux' ? anchors.eyeY
                   : def.ancrage === 'cou'  ? anchors.neckY

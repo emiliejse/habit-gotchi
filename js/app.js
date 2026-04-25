@@ -32,7 +32,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v2.87'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v2.88'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -757,19 +757,14 @@ function updBubbleNow() {
   // Idle en fallback seulement si pool trop petit
   if (pool.length < 5)            ajouter(src.idle, 1);
 
-  // ── Bulles IA : 30% max du pool contextuel ────────────────────
-  const cb = D.g.customBubbles;
-  if (cb && typeof cb === 'object' && !Array.isArray(cb)) {
-    const bullesIA = [];
-    Object.values(cb).forEach(phrases => bullesIA.push(...phrases));
-    if (bullesIA.length) {
-      const maxIA = Math.max(1, Math.floor(pool.length * 0.3));
-      const selection = bullesIA
-        .sort(() => Math.random() - 0.5)
-        .slice(0, maxIA);
-      pool.push(...selection);
-    }
-  }
+/* ── Bulles IA : 50% du pool ── */
+const cb = D.g.customBubbles;
+if (Array.isArray(cb) && cb.length) {
+  const maxIA = Math.max(1, Math.floor(pool.length));
+  const selection = [...cb].sort(() => Math.random() - 0.5).slice(0, maxIA);
+  pool.push(...selection);
+}
+
   // Humeur du journal du jour
 const dernierJournal = D.journal[D.journal.length - 1];
 if (dernierJournal?.date?.startsWith(today())) {

@@ -1231,17 +1231,12 @@ async function askClaude() {
     /* ── Message affiché ── */
     if (msgEl) msgEl.textContent = data.message;
 
-    /* ── Bulles enrichies (pool glissant 4 max) ── */
-    if (data.bulles && typeof data.bulles === 'object') {
-      if (!D.g.customBubbles || Array.isArray(D.g.customBubbles))
-        D.g.customBubbles = {};
-      Object.entries(data.bulles).forEach(([etat, phrase]) => {
-        if (!phrase || typeof phrase !== 'string') return;
-        if (!D.g.customBubbles[etat]) D.g.customBubbles[etat] = [];
-        D.g.customBubbles[etat].unshift(phrase);
-        D.g.customBubbles[etat] = D.g.customBubbles[etat].slice(0, 4);
-      });
-    }
+ /* ── Bulles enrichies (pool glissant 20 max) ── */
+if (Array.isArray(data.bulles) && data.bulles.length) {
+  if (!Array.isArray(D.g.customBubbles)) D.g.customBubbles = [];
+  D.g.customBubbles.unshift(...data.bulles);
+  D.g.customBubbles = D.g.customBubbles.slice(0, 20);
+}
 
     /* ── Cadeau ── */
     if (giveGift && data.cadeau) {

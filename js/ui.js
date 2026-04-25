@@ -2699,7 +2699,6 @@ function navAgendaJour(dir) {
 function afficherFormulaireRdv() {
   document.getElementById('btn-add-rdv').style.display = 'none';
 
-  // Crée l'overlay par-dessus mbox
   const overlay = document.createElement('div');
   overlay.id = 'rdv-overlay';
   overlay.style.cssText = `
@@ -2708,9 +2707,16 @@ function afficherFormulaireRdv() {
     display:flex;align-items:flex-end;justify-content:center;
   `;
 
+  const emojis = [
+    {e:'🩺',l:'Médecin'}, {e:'🦷',l:'Dentiste'}, {e:'👁️',l:'Ophtalmo'},
+    {e:'💆',l:'Kiné'}, {e:'🧠',l:'Psy'}, {e:'🩸',l:'Analyse'},
+    {e:'💉',l:'Vaccin'}, {e:'📋',l:'Admin'}, {e:'🏃',l:'Sport'},
+    {e:'💛',l:'Perso'}, {e:'🐾',l:'Véto'}, {e:'✈️',l:'Voyage'}
+  ];
+
   overlay.innerHTML = `
     <div id="rdv-sheet" style="
-      background:var(--bg, #fff);border-radius:16px 16px 0 0;
+      background:var(--bg,#fff);border-radius:16px 16px 0 0;
       padding:20px 16px 32px;width:100%;max-width:420px;
       animation:slideUp .25s ease-out;
     ">
@@ -2718,8 +2724,23 @@ function afficherFormulaireRdv() {
         border-radius:2px;margin:0 auto 16px;opacity:.5"></div>
       <h3 style="font-size:12px;color:var(--lilac);margin-bottom:14px;
         font-family:'Courier New',monospace">📅 Nouveau rendez-vous</h3>
+
+      <!-- Sélecteur emoji -->
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+        ${emojis.map(({e,l}) => `
+          <button onclick="selectionnerEmoji('${e}', this)"
+            title="${l}"
+            style="width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);
+            background:#fff;font-size:16px;cursor:pointer;transition:.15s"
+            data-emoji="${e}">${e}</button>
+        `).join('')}
+      </div>
+
+      <!-- Label -->
       <input id="rdv-label" class="inp" placeholder="Gynéco, analyse..." style="margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+
+      <!-- Heure -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <input type="time" id="rdv-heure" class="inp" style="flex:1">
         <label style="display:flex;align-items:center;gap:4px;font-size:10px;
           color:var(--text2);white-space:nowrap;cursor:pointer">
@@ -2727,6 +2748,20 @@ function afficherFormulaireRdv() {
           Journée entière
         </label>
       </div>
+
+      <!-- Récurrence -->
+      <div style="display:flex;gap:6px;margin-bottom:14px">
+        ${['aucune','hebdo','mensuelle'].map(r => `
+          <button onclick="selectionnerRecurrence('${r}', this)"
+            data-rec="${r}"
+            style="flex:1;padding:7px;border-radius:8px;font-size:10px;
+            font-family:'Courier New',monospace;cursor:pointer;transition:.15s;
+            border:1.5px solid var(--border);background:#fff;color:var(--text2)">
+            ${r === 'aucune' ? '1× ' : r === 'hebdo' ? '🔁 Hebdo' : '🔁 Mensuel'}
+          </button>
+        `).join('')}
+      </div>
+
       <div style="display:flex;gap:8px">
         <button class="btn btn-s" onclick="annulerFormulaireRdv()" style="flex:1">Annuler</button>
         <button class="btn btn-p" onclick="sauvegarderRdv()" style="flex:1">Enregistrer</button>
@@ -2734,12 +2769,38 @@ function afficherFormulaireRdv() {
     </div>
   `;
 
-  // Ferme en cliquant sur le fond
   overlay.addEventListener('click', e => {
     if (e.target === overlay) annulerFormulaireRdv();
   });
 
   document.body.appendChild(overlay);
+
+  // Sélectionne "aucune" par défaut
+  selectionnerRecurrence('aucune', overlay.querySelector('[data-rec="aucune"]'));
+}
+
+function selectionnerEmoji(e, btn) {
+  // Désélectionne tous
+  document.querySelectorAll('#rdv-sheet [data-emoji]').forEach(b => {
+    b.style.background = '#fff';
+    b.style.borderColor = 'var(--border)';
+  });
+  // Sélectionne celui cliqué
+  btn.style.background = 'var(--lilac)22';
+  btn.style.borderColor = 'var(--lilac)';
+  window._rdvEmoji = e;
+}
+
+function selectionnerRecurrence(r, btn) {
+  document.querySelectorAll('#rdv-sheet [data-rec]').forEach(b => {
+    b.style.background = '#fff';
+    b.style.borderColor = 'var(--border)';
+    b.style.color = 'var(--text2)';
+  });
+  btn.style.background = 'var(--lilac)22';
+  btn.style.borderColor = 'var(--lilac)';
+  btn.style.color = 'var(--lilac)';
+  window._rdvRecurrence = r;
 }
 
 function annulerFormulaireRdv() {
@@ -2751,10 +2812,43 @@ function annulerFormulaireRdv() {
 function sauvegarderRdv() {
   const label = document.getElementById('rdv-label').value.trim();
   if (!label) return;
-  const heure = document.getElementById('rdv-heure').value || null;
-  const rdv = { id: Date.now().toString(), date: _agendaJour, label, heure };
+  const heure      = document.getElementById('rdv-heure').value || null;
+  const emoji      = window._rdvEmoji || null;
+  const recurrence = window._rdvRecurrence || 'aucune';
+  const labelFinal = emoji ? `${emoji} ${label}` : label;
+  const groupId    = Date.now().toString(); // ← une seule fois pour tout le groupe
+
   window.D.rdv = window.D.rdv || [];
-  window.D.rdv.push(rdv);
+
+  if (recurrence === 'hebdo') {
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(_agendaJour + 'T12:00');
+      d.setDate(d.getDate() + i * 7);
+      window.D.rdv.push({
+        id: `${groupId}-${i}`, date: d.toISOString().split('T')[0],
+        label: labelFinal, heure, recurrence, groupId // ← ajouté
+      });
+    }
+  } else if (recurrence === 'mensuelle') {
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(_agendaJour + 'T12:00');
+      d.setMonth(d.getMonth() + i);
+      window.D.rdv.push({
+        id: `${groupId}-${i}`, date: d.toISOString().split('T')[0],
+        label: labelFinal, heure, recurrence, groupId // ← ajouté
+      });
+    }
+  } else {
+    window.D.rdv.push({
+      id: groupId, date: _agendaJour,
+      label: labelFinal, heure, recurrence: 'aucune'
+      // pas de groupId pour les RDV simples
+    });
+  }
+
+  window._rdvEmoji = null;
+  window._rdvRecurrence = 'aucune';
+
   save();
   annulerFormulaireRdv();
   renderAgendaJour(document.getElementById('agenda-contenu'));
@@ -2769,9 +2863,12 @@ function toggleJourneeEntiere(checked) {
 }
 
 function confirmerSuppressionRdv(id) {
-  const el = document.getElementById('agenda-contenu');
+  const el  = document.getElementById('agenda-contenu');
   const rdv = (window.D.rdv || []).find(r => r.id === id);
   if (!rdv) return;
+
+  const isRecurrent = !!rdv.groupId;
+
   el.insertAdjacentHTML('afterbegin', `
     <div id="confirm-inline" style="position:sticky;top:0;z-index:10;
       background:#fff;border:2px solid var(--coral);border-radius:10px;
@@ -2779,11 +2876,28 @@ function confirmerSuppressionRdv(id) {
       <div style="font-size:11px;margin-bottom:8px">
         Supprimer <b>${rdv.label}</b> ?
       </div>
-      <div style="display:flex;gap:6px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-s" onclick="fermerConfirmInline()" style="flex:1">Annuler</button>
-        <button class="btn btn-d" onclick="supprimerRdv('${id}');fermerConfirmInline()" style="flex:1">Supprimer</button>
+        <button class="btn btn-d" onclick="supprimerRdv('${id}');fermerConfirmInline()" style="flex:1">
+          Ce rendez-vous
+        </button>
+        ${isRecurrent ? `
+        <button class="btn btn-d" onclick="supprimerRdvSuivants('${id}','${rdv.groupId}');fermerConfirmInline()" style="flex:1;white-space:nowrap">
+          Celui-ci et les suivants
+        </button>` : ''}
       </div>
     </div>`);
+}
+
+function supprimerRdvSuivants(id, groupId) {
+  const rdv = (window.D.rdv || []).find(r => r.id === id);
+  if (!rdv) return;
+  // Supprime toutes les occurrences du même groupe à partir de cette date
+  window.D.rdv = window.D.rdv.filter(r =>
+    !(r.groupId === groupId && r.date >= rdv.date)
+  );
+  save();
+  renderAgendaJour(document.getElementById('agenda-contenu'));
 }
 
 function confirmerSuppressionCycle(ds) {

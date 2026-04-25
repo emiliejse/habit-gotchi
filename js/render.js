@@ -639,7 +639,7 @@ const p5s = (p) => {
 
 // 1. Fond et Météo
     drawSky(p, h, ha);
-    if (window.meteoData && window.meteoData.windspeed > 30) drawWind(p);
+    if (window.meteoData && window.meteoData.windspeed > 20) drawWind(p);
 
     const estJour = h < 19;
     // Nuit (21h–6h) → chambre systématiquement, quelle que soit la préférence stockée

@@ -387,9 +387,47 @@ function drawFl(p, x, y, c) {
  * @returns {string} - Couleur assombrie
  */
 function shadeN(hex) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  const f = 0.65; // Facteur d'assombrissement (Garde 65% de la luminosité)
-  return '#' + [r,g,b].map(v => Math.round(v*f).toString(16).padStart(2,'0')).join('');
+  // Convertit hex → RGB → HSL
+  let r = parseInt(hex.slice(1,3),16) / 255;
+  let g = parseInt(hex.slice(3,5),16) / 255;
+  let b = parseInt(hex.slice(5,7),16) / 255;
+
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h, s, l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch(max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+
+  // Assombrit la luminosité, boost léger de saturation pour garder la vibrance
+  l = l * 0.55;           // ← Luminosité réduite (ajuste entre 0.45–0.60)
+  s = Math.min(1, s * 1.1); // ← Légère compensation de saturation
+
+  // Reconvertit HSL → RGB → hex
+  function hue2rgb(p, q, t) {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q-p)*6*t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q-p)*(2/3-t)*6;
+    return p;
+  }
+  let rr, gg, bb;
+  if (s === 0) {
+    rr = gg = bb = l;
+  } else {
+    const q = l < 0.5 ? l*(1+s) : l+s-l*s;
+    const p = 2*l - q;
+    rr = hue2rgb(p, q, h + 1/3);
+    gg = hue2rgb(p, q, h);
+    bb = hue2rgb(p, q, h - 1/3);
+  }
+  return '#' + [rr, gg, bb].map(v => Math.round(v*255).toString(16).padStart(2,'0')).join('');
 }

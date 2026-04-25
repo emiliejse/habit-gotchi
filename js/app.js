@@ -32,7 +32,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v2.5'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v2.51'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -146,11 +146,11 @@ eventLog: [],        // historique (max 50)
 firstLaunch: null,   // sera rempli au 1er lancement
 lastActive: null,    // mis à jour à chaque ouverture
 cycle: [], // { date: "2025-04-10", type: "regles" }
-rdv:   [], // { id, date, label, heure? }
+rdv:   [] // { id, date, label, heure? }
   };
 }
 
-// 🌸 Calcul de la phase du cycle pour une date donnée
+// Calcul de la phase du cycle pour une date donnée
 function getCyclePhase(dateStr) {
   const cycles = (window.D.cycle || [])
     .filter(e => e.type === 'regles')
@@ -816,9 +816,6 @@ function handleDailyReset() {
     window.D.lastSoutienDate = td;
     window.D.soutienCount    = 0;
   }
-
-    // ── Export journal auto ──
-  exportJournalAuto();
 
   window.D.lastActive = new Date().toISOString();
   save();

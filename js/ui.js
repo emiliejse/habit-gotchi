@@ -101,15 +101,25 @@ function go(t) {
   syncDuringTransition(shell);
 }
 
+function _preventScroll(e) { e.preventDefault(); }
+function lockScroll() {
+  document.getElementById('dynamic-zone').style.overflowY = 'hidden';
+  document.addEventListener('touchmove', _preventScroll, { passive: false });
+}
+function unlockScroll() {
+  document.getElementById('dynamic-zone').style.overflowY = '';
+  document.removeEventListener('touchmove', _preventScroll);
+}
+
 function toggleMenu() {
   const ov = document.getElementById('menu-overlay');
   const dz = document.getElementById('dynamic-zone');
   if (!ov.classList.contains('open')) {
     const nm = document.getElementById('menu-gotchi-name');
     if (nm) nm.textContent = window.D.g.name || 'Gotchi';
-    dz.style.overflowY = 'hidden'; // ← verrouille
+    dz.style.overflowY = 'hidden'; → lockScroll();
   } else {
-    dz.style.overflowY = ''; // ← déverrouille
+    dz.style.overflowY = '';       → unlockScroll();
   }
   ov.classList.toggle('open');
 }
@@ -180,7 +190,7 @@ let modalLocked = false; // ← true pendant le soutien
 function clModal(e) {
   if (modalLocked) return; // ← bloque le tap extérieur
   if (!e || e.target.id === 'modal') document.getElementById('modal').style.display = 'none';
-  document.getElementById('dynamic-zone').style.overflowY = '';
+  document.getElementById('dynamic-zone').style.overflowY = ''; → unlockScroll();
 }
 
 /**
@@ -474,7 +484,7 @@ function ouvrirBoutique() {
   const onglet = window._boutiqueOnglet || 'catalogue';
 
   document.getElementById('modal').style.display = 'flex';
-  document.getElementById('dynamic-zone').style.overflowY = 'hidden';
+  document.getElementById('dynamic-zone').style.overflowY = 'hidden'; → lockScroll();
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h3 style="font-size:13px;color:var(--lilac);">🛍️ Boutique</h3>
@@ -2215,32 +2225,6 @@ function importD(event) {
   reader.readAsText(file);
 }
 
-// ─── EXPORT JOURNAL QUOTIDIEN AUTO ───────────────────────────────
-function exportJournalAuto() {
-  const td = today(); // "2025-04-24"
-  if (window.D.lastJournalExport === td) return; // déjà fait aujourd'hui
-
-  const entries = (window.D.journal || []).filter(e => {
-    // garde uniquement les entrées d'avant aujourd'hui
-    return e.date.split('T')[0] < td;
-  });
-
-  if (!entries.length) return; // rien à exporter
-
-  const blob = new Blob(
-    [JSON.stringify({ exportDate: td, journal: entries }, null, 2)],
-    { type: 'application/json' }
-  );
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `habitgotchi-journal-${td}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-
-  window.D.lastJournalExport = td;
-  save();
-}
-
 function confirmReset() {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`;
@@ -2554,7 +2538,7 @@ function ouvrirAgenda(dateStr) {
   mbox.classList.add('shop-open', 'agenda-open');
 
   // 5. Affiche la modale
-  document.getElementById('dynamic-zone').style.overflowY = 'hidden';
+  document.getElementById('dynamic-zone').style.overflowY = 'hidden'; → lockScroll();
   modal.style.display = 'flex';
 
   animEl(mbox, 'bounceIn');

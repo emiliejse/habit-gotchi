@@ -3167,6 +3167,11 @@ function ouvrirJournalAuJour(ds) {
 
 let _agendaMoisOffset = 0; // 0 = mois actuel, -1 = mois précédent...
 
+function revenirAujourdhuiMois() {
+  _agendaMoisOffset = 0;
+  renderAgendaMois(document.getElementById('agenda-contenu'));
+}
+
 function renderAgendaMois(el) {
   const D      = window.D;
   const now    = new Date();
@@ -3482,8 +3487,8 @@ const descriptions = {
             <input type="date" id="edit-j1-${i}"
               style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
               value="${ds}" onchange="modifierCycle('${ds}', this.value)">
-            onclick="document.getElementById('edit-j1-${i}').click()"
-              style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
+            <button onclick="document.getElementById('edit-j1-${i}').click()"
+  style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
             <button onclick="confirmerSuppressionCycle('${ds}')"
               style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
           </div>

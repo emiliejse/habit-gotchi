@@ -269,6 +269,43 @@ function drawDither(p, x, y, w, h, color) {
   }
 }
 
+/**
+ * Dessine les accessoires équipés DIRECTEMENT sur le sprite du Gotchi.
+ * À appeler depuis drawBaby/drawTeen/drawAdult, avec les coordonnées internes du sprite.
+ * Garantit que l'accessoire suit pixel-perfect le corps (mêmes arrondis, mêmes décalages).
+ *
+ * @param {Object} p - Instance p5
+ * @param {number} cx - Centre X du Gotchi (= cx reçu par drawBaby/Teen/Adult)
+ * @param {Object} anchors - { topY, eyeY, neckY } en coordonnées locales du sprite
+ * @param {string} stage - 'baby' | 'teen' | 'adult' (pour calculer les offsets verticaux)
+ */
+function drawAccessoires(p, cx, anchors, stage) {
+  if (!window.D?.g?.props) return;
+
+  window.D.g.props
+    .filter(pr => pr.actif && pr.type === 'accessoire')
+    .forEach(prop => {
+      const def = getPropDef(prop.id);
+      if (!def || !def.pixels) return;
+
+      const ps = def.pxSize || PX;
+      const accX = cx - Math.floor(def.pixels[0].length * ps / 2);
+
+      const baseY = def.ancrage === 'yeux' ? anchors.eyeY
+                  : def.ancrage === 'cou'  ? anchors.neckY
+                  :                          anchors.topY;
+
+      const offsetY = def.ancrage === 'yeux'
+                    ? (stage === 'teen' ? ps * 3 : ps * 2)
+                    : def.ancrage === 'cou'
+                    ? (stage === 'baby' ? ps * 3 : ps * 5)
+                    : ps;
+
+      const accY = baseY - def.pixels.length * ps + offsetY;
+      drawProp(p, def, accX, accY);
+    });
+}
+
 function drawEgg(p, cx, cy) {
   const x = cx - PX * 3, y = cy; 
   p.noStroke();
@@ -314,6 +351,10 @@ function drawBaby(p, cx, cy, sl, en, ha) {
     p.fill(C.bodyDk); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*4,y+PX*5,PX,PX);
     if(en < 25 && !sl) { px(p,x+PX*2,y+PX*5,PX*2,PX); } 
     if (en < 10 && !sl) drawDither(p, x + PX, y + PX * 3, PX * 4, PX * 3, C.bodyDk);
+
+    // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
+    drawAccessoires(p, cx, { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 }, 'baby');
+
     return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
 }
 
@@ -445,6 +486,10 @@ px(p, x+PX*5+2, y-PX,   PX, PX);
     px(p, x+PX*5, y+PX*8, PX, PX);
     
     if (en < 10 && !sl) drawDither(p, x, y + PX * 4, PX * 8, PX * 5, C.bodyDk);
+
+    // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
+    drawAccessoires(p, cx, { topY: y, eyeY: y + PX*2, neckY: y + PX*5 }, 'teen');
+
     return { topY: y, eyeY: y+PX*2, neckY: y+PX*5 };
 }
 
@@ -583,6 +628,10 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
     px(p, x+PX*3, y+PX*10, PX*2, PX);
     px(p, x+PX*6, y+PX*10, PX*2, PX);
     if (en < 10 && !sl) drawDither(p, x + PX, y + PX * 5, PX * 8, PX * 5, C.bodyDk);
+
+    // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
+    drawAccessoires(p, cx, { topY: y, eyeY: y + PX*3, neckY: y + PX*6 }, 'adult');
+
     return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
 }
 

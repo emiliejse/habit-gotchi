@@ -3357,12 +3357,12 @@ function renderAgendaCycle(el) {
     afficherNudge = joursDepuis > (duree - 3);
   }
 
-  const descriptions = {
-    menstruelle:  'Ton corps se renouvelle. Énergie souvent basse — c\'est normal de ralentir.',
-    folliculaire: 'Énergie en hausse, tête plus claire. Bon moment pour démarrer des choses.',
-    ovulation:    'Pic d\'énergie et de sociabilité. Tu es souvent à ton meilleur ces jours-ci.',
-    lutéale:      'Retour vers l\'intérieur. La fatigue ou la sensibilité peuvent augmenter en fin de phase — c\'est du signal, pas de la faiblesse.'
-  };
+const descriptions = {
+  menstruelle:  'Ton corps fait un gros travail en ce moment. C\'est une période pour ralentir sans culpabilité — le repos est productif lui aussi.',
+  folliculaire: 'L\'énergie revient doucement. Ta tête est plus disponible, c\'est souvent le bon moment pour reprendre des projets en attente ou en lancer de nouveaux.',
+  ovulation:    'Tu es probablement à un pic d\'énergie et de clarté. Profites-en pour les tâches qui demandent de la concentration ou du lien avec les autres.',
+  lutéale:      'Le corps commence à se préparer. La fatigue, l\'irritabilité ou la sensibilité émotionnelle qui arrivent parfois — c\'est physiologique, pas un problème à corriger.'
+};
 
   // ── Hero card ──
   let heroHtml;
@@ -3533,13 +3533,13 @@ function renderAgendaCycle(el) {
         ${lignesJ1}
         ${voirToutBtn}
         ${moyenneHtml}
-        <button onclick="exporterCycles()"
-          style="width:100%;margin-top:12px;padding:8px;border-radius:10px;
-          border:2px dashed var(--border);background:transparent;
-          font-size:11px;cursor:pointer;color:var(--text2);
-          font-family:'Courier New',monospace">
-          ⬇️ Télécharger l'historique (.txt)
-        </button>
+        <button onclick="copierCycles()"
+  style="width:100%;margin-top:12px;padding:8px;border-radius:10px;
+  border:1px solid var(--border);background:transparent;
+  font-size:11px;cursor:pointer;color:var(--text2);
+  font-family:'Courier New',monospace">
+  📋 Copier l'historique
+</button>
       </div>`;
   }
 
@@ -3614,17 +3614,16 @@ function supprimerCycle(ds) {
   renderAgendaCycle(document.getElementById('agenda-contenu'));
 }
 
-function exporterCycles() {
+function copierCycles() {
   const D      = window.D;
   const cycles = (D.cycle || [])
     .filter(e => e.type === 'regles')
     .map(e => e.date)
     .sort().reverse();
 
-  if (cycles.length < 2) { toast('Pas assez de données à exporter'); return; }
+  if (cycles.length < 1) { toast('Aucun cycle à copier'); return; }
 
-  let txt = 'Historique des cycles — HabitGotchi\n';
-  txt += '=====================================\n\n';
+  let txt = 'Historique des cycles — HabitGotchi\n\n';
   for (let i = 0; i < cycles.length - 1; i++) {
     const d1  = new Date(cycles[i+1] + 'T12:00');
     const d2  = new Date(cycles[i]   + 'T12:00');
@@ -3632,22 +3631,14 @@ function exporterCycles() {
     const fmt = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     txt += `Cycle ${cycles.length - 1 - i} : ${fmt(d1)} → ${fmt(d2)} (${nb} jours)\n`;
   }
-  txt += `\nDurée moyenne : ${(() => {
-    let t = 0;
-    for (let i = 0; i < cycles.length - 1; i++)
-      t += Math.round((new Date(cycles[i]+'T12:00') - new Date(cycles[i+1]+'T12:00')) / 86400000);
-    return Math.round(t / (cycles.length - 1));
-  })()} jours\n`;
-  txt += `Exporté le ${new Date().toLocaleDateString('fr-FR')}\n`;
+  if (cycles.length === 1) {
+    const d = new Date(cycles[0] + 'T12:00');
+    txt += `J1 enregistré : ${d.toLocaleDateString('fr-FR')}\n`;
+  }
 
-  const blob = new Blob([txt], { type: 'text/plain' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = 'cycles-habitgotchi.txt';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('Export téléchargé ✓');
+  navigator.clipboard.writeText(txt)
+    .then(() => toast('Historique copié ✓'))
+    .catch(() => toast('Copie non disponible sur cet appareil'));
 }
 
 /* ============================================================

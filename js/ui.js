@@ -1444,6 +1444,12 @@ const rdvDuJour = (D.rdv || [])
   .join(', ') || 'aucun';
   const ctx = window.AI_CONTEXTS;
   const P = window.PERSONALITY;
+  const cycleData  = getCyclePhase(td);
+  const cycleInfo  = cycleData ? `${cycleData.label} (J${cycleData.j})` : 'non renseignée';
+  const rdvDuJour  = (D.rdv || [])
+  .filter(r => r.date === td)
+  .map(r => r.heure ? `${r.heure} ${r.label}` : r.label)
+  .join(', ') || 'aucun';
   const promptInit = ctx
   ? ctx.genSoutien
       .replace('{{nameGotchi}}',          D.g.name || P?.nom || 'Gotchi')
@@ -1551,6 +1557,8 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
     .replace('{{happiness}}',        D.g.happiness)
     .replace('{{habsDone}}',         habsDone)
     .replace('{{notes}}',            notesJour)
+    .replace('{{cycleInfo}}',     cycleInfo)
+    .replace('{{rdvAujourdhui}}', rdvDuJour)
     .replace('{{messages_restants}}', 6 - window._soutienCount);
 
   const sysPrompt = (window.AI_SYSTEM?.soutien || '')

@@ -293,9 +293,11 @@ function drawAccessoires(p, cx, anchors, stage) {
       const cxSnapped = Math.floor(cx / PX) * PX;
       const accX = cxSnapped - Math.floor(def.pixels[0].length * ps / 2 / PX) * PX;
 
-      const baseY = def.ancrage === 'yeux' ? anchors.eyeY
-                  : def.ancrage === 'cou'  ? anchors.neckY
-                  :                          anchors.topY;
+      // Snap des ancrages sur la grille PX (même phase verticale que le corps)
+      const baseYraw = def.ancrage === 'yeux' ? anchors.eyeY
+                     : def.ancrage === 'cou'  ? anchors.neckY
+                     :                          anchors.topY;
+      const baseY = Math.floor(baseYraw / PX) * PX;
 
       const offsetY = def.ancrage === 'yeux'
                     ? (stage === 'teen' ? ps * 3 : ps * 2)
@@ -875,25 +877,6 @@ const staticInfo = {
   eyeY:  drawY + (D.g.stage === 'adult' ? PX*3 : PX*2),
   neckY: drawY + (D.g.stage === 'teen' ? PX*5 : D.g.stage === 'adult' ? PX*6 : PX*4),
 };
-
-// 8. Props Accessoire (Sur le Gotchi)
-if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'accessoire').forEach(prop => {
-    const def = getPropDef(prop.id);
-    if (def && def.pixels) {
-      const ps = def.pxSize || PX;
-      const accX = drawX - Math.floor(def.pixels[0].length * ps / 2);
-      const baseY = def.ancrage === 'yeux' ? staticInfo.eyeY
-            : def.ancrage === 'cou'  ? staticInfo.neckY
-            : staticInfo.topY;
-      const offsetY = def.ancrage === 'yeux' ? (D.g.stage === 'teen' ? ps * 3 : ps * 2)
-                    : def.ancrage === 'cou'  ? (D.g.stage === 'baby' ? ps * 3 : ps * 5)
-                    : ps;
-      const accY = baseY - def.pixels.length * ps + offsetY;
-      drawProp(p, def, accX, accY);
-    }
-  });
-}
 
     p.pop();
 

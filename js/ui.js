@@ -197,49 +197,98 @@ function clModal(e) {
 }
 
 /**
- * Ouvre la popup de nourriture. 
- * Vérifie si c'est la nuit (bloqué) ou si déjà mangé.
+ * Ouvre la popup de nourriture.
+ * Comportement :
+ *  - Hors fenêtre repas (entre 11h-15h, etc.) → message "pas l'heure"
+ *  - Repas déjà fait sur cette fenêtre → message "déjà mangé"
+ *  - Fenêtre dispo → popup avec 3 snacks aléatoires (dont 1 préféré caché)
  */
 function ouvrirSnack() {
+  const modal = document.getElementById('modal');
+  const mbox  = document.getElementById('mbox');
   const h = hr();
+  
+  // Cas 1 : Nuit (avant 7h ou après 22h) → reprend le message existant
   if (h >= 22 || h < 7) {
-  document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = `
-    <div style="text-align:center;padding:10px">
-      <div style="font-size:48px;margin-bottom:8px">🌙</div>
-      <p style="font-size:12px;margin-bottom:12px">
-        ${window.D.g.name} dort... reviens demain 💜
-      </p>
-      <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
-    </div>`;
-  animEl(document.getElementById('mbox'), 'bounceIn');
-  return;
-  }
-  const td = today();
-  const emoji = getSnackOfDay();
-  const dejaMange = window.D.g.snackDone === td;
-
-  document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = dejaMange
-    ? `<div style="text-align:center;padding:10px">
-        <div style="font-size:48px;margin-bottom:8px">${emoji}</div>
+    modal.style.display = 'flex';
+    mbox.innerHTML = `
+      <div style="text-align:center;padding:10px">
+        <div style="font-size:48px;margin-bottom:8px">🌙</div>
         <p style="font-size:12px;margin-bottom:12px">
-          ${window.D.g.name} a déjà mangé aujourd'hui 💜
+          ${window.D.g.name} dort... reviens demain 💜
         </p>
         <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
-      </div>`
-    : `<div style="text-align:center;padding:10px">
-        <div style="font-size:48px;margin-bottom:8px">${emoji}</div>
-        <p style="font-size:12px;margin-bottom:12px">
-          Donner ${emoji} à ${window.D.g.name} ?<br>
-          <span style="color:var(--text2);font-size:10px">+2 🌸 • 1 fois par jour</span>
-        </p>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button>
-          <button class="btn btn-p" onclick="giveSnack();clModal();" style="flex:1">Donner !</button>
-        </div>
       </div>`;
-  animEl(document.getElementById('mbox'), 'bounceIn');
+    animEl(mbox, 'bounceIn');
+    return;
+  }
+  
+  // Cas 2 : Hors fenêtre repas (15h-18h) → message "pas l'heure"
+  const meal = getCurrentMealWindow();
+  if (!meal) {
+    modal.style.display = 'flex';
+    mbox.innerHTML = `
+      <div style="text-align:center;padding:10px">
+        <div style="font-size:48px;margin-bottom:8px">⏰</div>
+        <p style="font-size:12px;margin-bottom:12px">
+          Ce n'est pas encore l'heure du repas...<br>
+          <span style="color:var(--text2);font-size:10px">
+            Matin 7h-11h • Midi 11h-15h • Soir 18h-22h
+          </span>
+        </p>
+        <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
+      </div>`;
+    animEl(mbox, 'bounceIn');
+    return;
+  }
+  
+  // Cas 3 : Repas déjà pris sur cette fenêtre
+  const meals = ensureMealsToday();
+  if (meals[meal]) {
+    const w = MEAL_WINDOWS[meal];
+    modal.style.display = 'flex';
+    mbox.innerHTML = `
+      <div style="text-align:center;padding:10px">
+        <div style="font-size:48px;margin-bottom:8px">${w.icon}</div>
+        <p style="font-size:12px;margin-bottom:12px">
+          ${window.D.g.name} a déjà mangé ce ${w.label.toLowerCase()} 💜<br>
+          <span style="color:var(--text2);font-size:10px">Reviens à la prochaine fenêtre repas</span>
+        </p>
+        <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
+      </div>`;
+    animEl(mbox, 'bounceIn');
+    return;
+  }
+  
+  // Cas 4 : Fenêtre dispo → popup choix de snack
+  const snacks = pickThreeSnacks();
+  const w = MEAL_WINDOWS[meal];
+  
+  // Boutons snack : on échappe l'emoji pour passer en argument à giveSnack()
+  const snackButtons = snacks.map(emoji => `
+    <button class="btn btn-snack" 
+            onclick="giveSnack('${emoji}');clModal();" 
+            style="flex:1;font-size:32px;padding:12px 4px;background:var(--card);border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:transform .15s">
+      ${emoji}
+    </button>
+  `).join('');
+  
+  modal.style.display = 'flex';
+  mbox.innerHTML = `
+    <div style="text-align:center;padding:10px">
+      <div style="font-size:24px;margin-bottom:4px">${w.icon}</div>
+      <p style="font-size:12px;margin-bottom:4px;font-weight:bold">
+        Repas du ${w.label.toLowerCase()}
+      </p>
+      <p style="font-size:10px;color:var(--text2);margin-bottom:12px">
+        Que veux-tu donner à ${window.D.g.name} ?
+      </p>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        ${snackButtons}
+      </div>
+      <button class="btn btn-s" onclick="clModal()" style="width:100%">Annuler</button>
+    </div>`;
+  animEl(mbox, 'bounceIn');
 }
 
 /* ─── SYSTÈME 7 : INGÉNIERIE (Mise à jour des Data dans le DOM) ── */

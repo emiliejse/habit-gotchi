@@ -32,7 +32,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v2.991'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v2.992'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -387,46 +387,56 @@ function pickThreeSnacks() {
   return [pref, ...others].sort(() => Math.random() - 0.5);
 }
 
-// Mécanique de Nourriture (Snack)
-const SNACKS = ['🍎','🍓','🍒','🍑','🍋','🍪','🍩','🧁','🍫','🍬','🍭','🧃','🍵','🧇','🍡'];
-
-function getSnackOfDay() {
-  const td = today();
-  if (window.D.g.snackDone === td) return window.D.g.snackEmoji;
-  // Génère un emoji aléatoire pour aujourd'hui
-  const emoji = SNACKS[Math.floor(Math.random() * SNACKS.length)];
-  window.D.g.snackEmoji = emoji;
-  save();
-  return emoji;
-}
-
-function giveSnack() {
-  const td = today();
-  if (window.D.g.snackDone === td) return;
+/**
+ * Donne un snack au Gotchi pendant la fenêtre repas active.
+ * @param {string} emoji - L'emoji choisi par l'utilisatrice (parmi les 3 proposés)
+ * 
+ * Logique :
+ * - +2 pétales pour tout snack (XP de base, comme avant)
+ * - +2 pétales bonus si l'emoji = snack préféré de la semaine (total = 4)
+ * - Marque la fenêtre repas comme "faite" pour aujourd'hui
+ */
+function giveSnack(emoji) {
+  const window_ = getCurrentMealWindow();
+  if (!window_) return;                    // hors fenêtre, sécurité
+  
+  const meals = ensureMealsToday();
+  if (meals[window_]) return;              // déjà mangé sur cette fenêtre
+  
+  const pref = ensureSnackPref();
+  const isFav = (emoji === pref);
+  const gain = isFav ? 4 : 2;              // +2 base, +2 bonus si préféré
   
   // ✨ Réaction gourmande : déclenchée AVANT l'animation
-  // pour que le Gotchi bave en voyant la nourriture descendre
   if (typeof window.triggerExpr === 'function') {
-    window.triggerExpr('faim', 60);  // bave pendant toute la descente
+    window.triggerExpr('faim', 60);
   }
   
-  window.D.g.snackDone = td;
-  window.D.g.petales = (window.D.g.petales || 0) + 2;
+  // Marque la fenêtre + crédite les pétales
+  meals[window_] = true;
+  window.D.g.petales = (window.D.g.petales || 0) + gain;
   save();
   
+  // Log dans le journal (forme objet privilégiée)
   addEvent({
     type: 'note',
-    subtype: 'snack',
-    label: `${window.D.g.snackEmoji} donné à ${window.D.g.name}  +2 🌸`
+    subtype: 'meal',
+    valeur: gain,
+    label: `${emoji} donné à ${window.D.g.name} (${MEAL_WINDOWS[window_].label})${isFav ? ' — préféré !' : ''}  +${gain} 🌸`
   });
   
-  const snackMsgs = ["Miam ! 💜", "Délicieux ! ✿", "*mange goulûment* 😋", "Encore ! 🌸", "C'était bon ça ! 💜"];
-  flashBubble(snackMsgs[Math.floor(Math.random() * snackMsgs.length)], 2500);
+  // Bulle adaptée : "Miam, mon préféré !" si match, sinon message normal
+  if (isFav) {
+    flashBubble("Miam, mon préféré ! 💜✨", 2800);
+  } else {
+    const msgs = ["Miam ! 💜", "Délicieux ! ✿", "*mange goulûment* 😋", "Encore ! 🌸", "C'était bon ça ! 💜"];
+    flashBubble(msgs[Math.floor(Math.random() * msgs.length)], 2500);
+  }
   
-  window.eatAnim = { active: true, timer: 50, emoji: window.D.g.snackEmoji, jumped: false };
+  // Animation pixel : descente d'emoji
+  window.eatAnim = { active: true, timer: 50, emoji: emoji, jumped: false };
   
-  // ✨ Réaction joie : déclenchée APRÈS la dégustation
-  // Le délai laisse le temps à la bave de disparaître avant la joie
+  // ✨ Réaction joie : après dégustation
   setTimeout(() => {
     if (typeof window.triggerExpr === 'function') {
       window.triggerExpr('joie', 80);

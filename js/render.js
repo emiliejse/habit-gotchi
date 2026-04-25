@@ -1073,9 +1073,11 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.3;
     p.text('🧹', 72, 3);
 
-    // Fonction today() est supposée déclarée dans app.js
-    const snackDone = window.D.g.snackDone === today();
-    p.drawingContext.globalAlpha = snackDone ? 0.35 : 1.0;
+// 🍽️ Assiette : opaque si hors fenêtre repas OU repas déjà fait sur la fenêtre active
+    const mealWin = (typeof getCurrentMealWindow === 'function') ? getCurrentMealWindow() : null;
+    const meals = (typeof ensureMealsToday === 'function') ? ensureMealsToday() : null;
+    const mealAvailable = mealWin && meals && !meals[mealWin];
+    p.drawingContext.globalAlpha = mealAvailable ? 1.0 : 0.35;
     p.text('🍽️', 128, 3);
     p.drawingContext.globalAlpha = 1.0;
 

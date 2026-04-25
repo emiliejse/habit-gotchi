@@ -2908,6 +2908,10 @@ let duree = null;
 if (dureeBrute && dureeBrute !== 'infini') {
   const fin = new Date(_agendaJour + 'T12:00');
   fin.setMonth(fin.getMonth() + parseInt(dureeBrute));
+  if (dureeBrute && dureeBrute !== 'infini') {
+  const fin = new Date(_agendaJour + 'T12:00');
+  console.log('agendaJour:', _agendaJour, '| fin valide?', !isNaN(fin), '| dureeBrute:', dureeBrute, '| parseInt:', parseInt(dureeBrute));
+  fin.setMonth(fin.getMonth() + parseInt(dureeBrute));
   duree = fin.toISOString().split('T')[0];
 }
   const labelFinal = emoji ? `${emoji} ${label}` : label;

@@ -485,9 +485,8 @@ if (btnTout) {
 
 function ouvrirBoutique() {
   const onglet = window._boutiqueOnglet || 'catalogue';
-
   document.getElementById('modal').style.display = 'flex';
-  document.getElementById('dynamic-zone').style.overflowY = 'hidden'; → lockScroll();
+  lockScroll();
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h3 style="font-size:13px;color:var(--lilac);">🛍️ Boutique</h3>

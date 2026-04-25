@@ -2813,11 +2813,11 @@ function afficherFormulaireRdv() {
           text-transform:uppercase;margin-bottom:6px">Pendant</div>
         <div style="display:flex;gap:6px">
           ${[
-{e:'Sans fin', v:'infini'},
-{e:'3 mois',  v:'3'},
-{e:'6 mois',  v:'6'},
-{e:'1 an',    v:'12'},
-{e:'2 ans',   v:'24'}
+{l:'Sans fin', v:'infini'},
+{l:'3 mois',  v:'3'},
+{l:'6 mois',  v:'6'},
+{l:'1 an',    v:'12'},
+{l:'2 ans',   v:'24'}
           ].map(d => `
             <button onclick="selectionnerDuree('${d.v}', this)"
               data-duree="${d.v}"

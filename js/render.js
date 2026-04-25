@@ -307,7 +307,9 @@ function drawAccessoires(p, cx, anchors, stage) {
       const baseY = Math.floor(baseYraw / PX) * PX;
 
       const offsetY = def.ancrage === 'yeux'
-                    ? (stage === 'teen' ? ps * 3 : ps * 2)
+                    ? (stage === 'teen' ? ps * 3
+                     : stage === 'adult' ? ps * 3
+                     : ps * 2)
                     : def.ancrage === 'cou'
                     ? (stage === 'baby' ? ps * 3 : ps * 5)
                     : ps;
@@ -640,7 +642,7 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
           pose.timer--;
           if (pose.timer === 0) {
             pose.current = 'normal';
-            pose.cooldown = 120 + Math.floor(Math.random() * 120); // 10-20 sec
+            pose.cooldown = 60 + Math.floor(Math.random() * 60); // 5-10 sec
           }
         } else if (pose.cooldown > 0) {
           pose.cooldown--;

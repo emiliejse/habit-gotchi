@@ -1431,6 +1431,17 @@ function genSoutien() {
 
   const habsDuJour  = D.habits.map(h => ({ label:h.label, faite:(D.log[td]||[]).includes(h.catId) }));
   const notesDuJour = D.journal.filter(j => j.date.startsWith(td)).map(j => ({ humeur:j.mood, texte:j.text }));
+  // Phase du cycle
+const cycleData = getCyclePhase(td);
+const cycleInfo = cycleData
+  ? `${cycleData.label} (J${cycleData.j})`
+  : 'non renseignée';
+
+// RDV du jour
+const rdvDuJour = (D.rdv || [])
+  .filter(r => r.date === td)
+  .map(r => r.heure ? `${r.heure} ${r.label}` : r.label)
+  .join(', ') || 'aucun';
   const ctx = window.AI_CONTEXTS;
   const P = window.PERSONALITY;
   const promptInit = ctx
@@ -1446,6 +1457,8 @@ function genSoutien() {
       .replace('{{habitsDone}}',   habsDuJour.filter(h=>h.faite).map(h=>h.label).join(', ') || 'aucune')
       .replace('{{habitsUndone}}', habsDuJour.filter(h=>!h.faite).map(h=>h.label).join(', ') || 'toutes faites !')
       .replace('{{notes}}',        notesDuJour.length ? notesDuJour.map(n=>`[${n.humeur}] ${n.texte}`).join(' | ') : 'aucune note')
+      .replace('{{cycleInfo}}',      cycleInfo)
+      .replace('{{rdvAujourdhui}}',  rdvDuJour)
   : `Tu es le Gotchi, compagnon bienveillant de ${D.g.userName || 'toi'}.\nIl est ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}, énergie ${D.g.energy}/5, humeur ${D.g.happiness}/5.\nCommence par une phrase qui montre que tu as lu son état. Pose UNE question ouverte. Ton doux, jamais de jugement.`;
 
 window._soutienHistory = [];

@@ -2498,10 +2498,10 @@ function applyCheatCode() {
    MODALE AGENDA
    ============================================================ */
 
-let _agendaJour = null; // date string "2025-04-24" du jour affiché
+window._agendaJour = null;
 
 function ouvrirAgenda(dateStr) {
-  _agendaJour = dateStr || today();
+  window._agendaJour = dateStr || today();
 
   const mbox = document.getElementById('mbox');
   const modal = document.getElementById('modal');
@@ -2722,7 +2722,7 @@ function renderAgendaJour(el) {
 function navAgendaJour(dir) {
   const d = new Date(_agendaJour + 'T12:00');
   d.setDate(d.getDate() + dir);
-  _agendaJour = d.toISOString().split('T')[0];
+  window._agendaJour = d.toISOString().split('T')[0];
   const el = document.getElementById('agenda-contenu');
   renderAgendaJour(el);
 }

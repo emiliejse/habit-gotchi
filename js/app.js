@@ -32,7 +32,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v2.99'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v2.991'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -310,6 +310,81 @@ function maybeSpawnPoop() {
 
   if (now - last < minDelay) return;
   if (Math.random() < 0.65) spawnPoop();
+}
+
+/* ─── SYSTÈME 1 : Repas (Fenêtres + Snack préféré hebdo) ─────────── */
+
+/**
+ * Renvoie un identifiant ISO de semaine (ex: "2026-W17").
+ * Sert à détecter le changement de semaine pour rouler le snack préféré.
+ * 
+ * Métaphore : c'est l'horloge interne du Gotchi pour savoir 
+ * "tiens, on est lundi, je change mon goût préféré".
+ */
+function getWeekId(d = new Date()) {
+  const target = new Date(d.valueOf());
+  const dayNr  = (d.getDay() + 6) % 7;          // lundi = 0
+  target.setDate(target.getDate() - dayNr + 3); // jeudi de la semaine ISO
+  const firstThursday = new Date(target.getFullYear(), 0, 4);
+  const diff = target - firstThursday;
+  const week = 1 + Math.round(diff / (7 * 24 * 3600 * 1000));
+  return `${target.getFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+/**
+ * Renvoie la fenêtre repas active selon l'heure courante,
+ * ou `null` si on est entre deux fenêtres (ex: 16h, 23h).
+ */
+function getCurrentMealWindow() {
+  const h = hr();
+  for (const [key, w] of Object.entries(MEAL_WINDOWS)) {
+    if (h >= w.start && h < w.end) return key;
+  }
+  return null;
+}
+
+/**
+ * S'assure que `D.g.meals` existe et correspond à AUJOURD'HUI.
+ * Si la date a changé → reset des 3 fenêtres à `false`.
+ * Renvoie l'objet meals à jour.
+ */
+function ensureMealsToday() {
+  const td = today();
+  if (!window.D.g.meals || window.D.g.meals.dateRef !== td) {
+    window.D.g.meals = { matin: false, midi: false, soir: false, dateRef: td };
+  }
+  return window.D.g.meals;
+}
+
+/**
+ * S'assure que `D.g.snackPref` existe et correspond à la SEMAINE en cours.
+ * Si la semaine a changé → tire un nouvel emoji préféré dans SNACKS_POOL.
+ * Renvoie l'emoji préféré.
+ */
+function ensureSnackPref() {
+  const wk = getWeekId();
+  if (!window.D.g.snackPref || window.D.g.snackPref.weekId !== wk) {
+    const emoji = SNACKS_POOL[Math.floor(Math.random() * SNACKS_POOL.length)];
+    window.D.g.snackPref = { emoji, weekId: wk };
+  }
+  return window.D.g.snackPref.emoji;
+}
+
+/**
+ * Tire 3 emojis distincts dans SNACKS_POOL pour le repas en cours.
+ * GARANTIT qu'au moins un des 3 est le snack préféré de la semaine.
+ * L'ordre est mélangé pour que le préféré ne soit pas toujours en 1er.
+ */
+function pickThreeSnacks() {
+  const pref = ensureSnackPref();
+  const pool = SNACKS_POOL.filter(e => e !== pref);
+
+  // Pioche 2 emojis distincts dans le pool restant
+  const shuffled = pool.sort(() => Math.random() - 0.5);
+  const others = shuffled.slice(0, 2);
+
+  // Mélange l'ordre final (préféré + 2 autres)
+  return [pref, ...others].sort(() => Math.random() - 0.5);
 }
 
 // Mécanique de Nourriture (Snack)

@@ -2936,6 +2936,12 @@ function toggleJourneeEntiere(checked) {
   if (checked) heureInput.value = '';
 }
 
+function supprimerRdv(id) {
+  window.D.rdv = (window.D.rdv || []).filter(r => r.id !== id);
+  save();
+  renderAgendaJour(document.getElementById('agenda-contenu'));
+}
+
 function confirmerSuppressionRdv(id) {
   const el  = document.getElementById('agenda-contenu');
   const rdv = (window.D.rdv || []).find(r => r.id === id);

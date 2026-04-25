@@ -3514,8 +3514,6 @@ const lignesJ1 = cycles.map((ds, i) => {
                 <input type="date" id="edit-j1-${idx}"
                   style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
                   value="${ds}" onchange="modifierCycle('${ds}', this.value)">
-                <button onclick="document.getElementById('edit-j1-${idx}').showPicker()"
-                  style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
                 <button onclick="confirmerSuppressionCycle('${ds}')"
                   style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
               </div>

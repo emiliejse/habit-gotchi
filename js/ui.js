@@ -3475,25 +3475,25 @@ const descriptions = {
   if (aDesDonnees) {
     const MAX_VISIBLE = 3;
 
-    const lignesJ1 = cycles.map((ds, i) => {
-      const d   = new Date(ds + 'T12:00');
-      const fmt = `${d.getDate()} ${d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
-      const cache = i >= MAX_VISIBLE;
-      return `
-        <div class="j1-ligne" style="display:${cache ? 'none' : 'flex'};align-items:center;
-          justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
-          <div style="display:flex;gap:4px">
-            <input type="date" id="edit-j1-${i}"
-              style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
-              value="${ds}" onchange="modifierCycle('${ds}', this.value)">
-            <button onclick="document.getElementById('edit-j1-${i}').click()"
-  style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
-            <button onclick="confirmerSuppressionCycle('${ds}')"
-              style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
-          </div>
-        </div>`;
-    }).join('');
+const lignesJ1 = cycles.map((ds, i) => {
+  const d     = new Date(ds + 'T12:00');
+  const fmt   = `${d.getDate()} ${d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
+  const cache = i >= MAX_VISIBLE;
+  return `
+    <div class="j1-ligne" style="display:${cache ? 'none' : 'flex'};align-items:center;
+      justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
+      <div style="display:flex;gap:4px">
+        <input type="date" id="edit-j1-${i}"
+          style="position:absolute;opacity:0;width:0;height:0"
+          value="${ds}" onchange="modifierCycle('${ds}', this.value)">
+        <button onclick="document.getElementById('edit-j1-${i}').click()"
+          style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
+        <button onclick="confirmerSuppressionCycle('${ds}')"
+          style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
+      </div>
+    </div>`;
+}).join('');
 
     const voirToutBtn = cycles.length > MAX_VISIBLE ? `
       <button onclick="toggleJ1Liste()" id="btn-voir-tout-j1"

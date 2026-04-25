@@ -2541,12 +2541,11 @@ function ouvrirAgenda(dateStr) {
   // 4. Applique les classes (anime + scroll interne)
   mbox.classList.add('shop-open', 'agenda-open');
 
-  // 5. Affiche la modale
-  document.getElementById('dynamic-zone').style.overflowY = 'hidden'; → lockScroll();
-  modal.style.display = 'flex';
-
-  animEl(mbox, 'bounceIn');
-  switchAgenda('jour');
+// 5. Affiche la modale
+lockScroll();
+modal.style.display = 'flex';
+animEl(mbox, 'bounceIn');
+switchAgenda('jour');
 }
 
 

@@ -117,3 +117,41 @@ const ENV_THEMES = [
     mntGnd:'#d8a848', mntGndDk:'#b88028', mntPeak:'#e8c870', mntSnow:'#f0d890',
   },
 ];
+
+/* ─── SYSTÈME 1 : MÉTABOLISME (Repas) ────────────────────────────── */
+
+/**
+ * MEAL_WINDOWS : Les 3 fenêtres horaires pour nourrir le Gotchi.
+ * Le Gotchi peut être nourri une fois par fenêtre par jour.
+ * `start` inclus, `end` exclu (ex: matin = 7h, 8h, 9h, 10h).
+ */
+const MEAL_WINDOWS = {
+  matin: { start: 7,  end: 11, label: 'Matin', icon: '🌅' },
+  midi:  { start: 11, end: 15, label: 'Midi',  icon: '☀️' },
+  soir:  { start: 18, end: 22, label: 'Soir',  icon: '🌙' },
+};
+
+/**
+ * SNACKS_POOL : Pool d'emojis food utilisés pour les repas.
+ * Volontairement filtré : pas d'alcool (🍷🍺🥃🍸🍹🥂🍶), pas de tabac.
+ * Le Gotchi pioche 3 emojis aléatoires à chaque ouverture du repas.
+ * Un de ces emojis est le "préféré de la semaine" → +2 bonus.
+ */
+const SNACKS_POOL = [
+  // Fruits
+  '🍇','🍈','🍉','🍊','🍋','🍌','🍍','🥭','🍎','🍏','🍐','🍑','🍒','🍓','🫐','🥝',
+  // Légumes
+  '🍅','🫒','🥥','🥑','🍆','🥔','🥕','🌽','🌶️','🫑','🥒','🥬','🥦','🧄','🧅',
+  // Préparé / pains / céréales
+  '🍄','🥜','🫘','🌰','🍞','🥐','🥖','🫓','🥨','🥯','🥞','🧇','🧀',
+  // Plats salés
+  '🍖','🍗','🥩','🥓','🍔','🍟','🍕','🌭','🥪','🌮','🌯','🫔','🥙','🧆','🥚',
+  '🍳','🥘','🍲','🫕','🥣','🥗','🍿','🧈','🧂','🥫',
+  // Asiatique
+  '🍱','🍘','🍙','🍚','🍛','🍜','🍝','🍠','🍢','🍣','🍤','🍥','🥮','🍡',
+  '🥟','🥠','🥡',
+  // Desserts / sucré
+  '🍦','🍧','🍨','🍩','🍪','🎂','🍰','🧁','🥧','🍫','🍬','🍭','🍮','🍯',
+  // Boissons (sans alcool)
+  '🍼','🥛','☕','🫖','🍵','🧃','🥤','🧋','🧉','🥢',
+];

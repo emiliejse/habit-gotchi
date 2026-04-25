@@ -2874,7 +2874,6 @@ function selectionnerRecurrence(r, btn) {
     if (r !== 'aucune' && !window._rdvDuree) {
       const btnSansFin = dureeWrap.querySelector('[data-duree="infini"]');
 if (btnSansFin) selectionnerDuree('infini', btnSansFin);
-if (btnSansFin) selectionnerDuree('null', btnSansFin);
     }
   }
 }

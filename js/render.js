@@ -50,6 +50,13 @@ window._evoAnim = { active: false, timer: 0, fromStage: '', toStage: '' };
 window.triggerEvoAnim = function(from, to) {
   window._evoAnim = { active: true, timer: 45, fromStage: from, toStage: to };
 };
+
+// Variations de bras de l'adulte (animations idle)
+window._adultPose = {
+  current: 'normal',     // 'normal' | 'hanche_g' (étape A) | (à enrichir étape B)
+  timer: 0,              // frames restantes dans la pose actuelle
+  cooldown: 240          // frames avant la prochaine variation (240 frames = 20 sec à 12 fps)
+};
 // ─── Animation : variables d'expressivité ───
 window._expr = {
   lastMood: null,      // 'faim', 'surprise', 'joie', null
@@ -613,7 +620,7 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
       }
     }
 
-    /* ─── PETITS BRAS SUR LES CÔTÉS ─── */
+/* ─── PETITS BRAS SUR LES CÔTÉS ─── */
     p.fill(C.bodyDk);
     if (en < 20 && !sl) {
       px(p, x-PX,    y+PX*6, PX, PX*2);     // bras tombés
@@ -624,8 +631,40 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
       px(p, x-PX*2,  y+PX*2, PX, PX);
       px(p, x+PX*11, y+PX*2, PX, PX);
     } else {
-      px(p, x-PX,    y+PX*5, PX, PX*2);     // bras normaux
-      px(p, x+PX*10, y+PX*5, PX, PX*2);
+      // ─── Cycle des variations idle ───
+      const pose = window._adultPose;
+      const canVary = !sl && !window._jumpTimer;
+
+      if (canVary) {
+        if (pose.timer > 0) {
+          pose.timer--;
+          if (pose.timer === 0) {
+            pose.current = 'normal';
+            pose.cooldown = 240 + Math.floor(Math.random() * 240); // 20-40 sec
+          }
+        } else if (pose.cooldown > 0) {
+          pose.cooldown--;
+        } else {
+          // Étape A : seule la pose 'hanche_g' est active
+          pose.current = 'hanche_g';
+          pose.timer = 60 + Math.floor(Math.random() * 24); // 5-7 sec
+        }
+      } else {
+        pose.current = 'normal';
+      }
+
+      // ─── Dessin selon la pose courante ───
+      if (pose.current === 'hanche_g') {
+        // Bras gauche plié sur hanche (avant-bras + coude qui dépasse)
+        px(p, x+PX,    y+PX*5, PX*2, PX);    // avant-bras horizontal
+        px(p, x,       y+PX*4, PX,   PX*2);  // coude qui dépasse à gauche
+        // Bras droit normal
+        px(p, x+PX*10, y+PX*5, PX,   PX*2);
+      } else {
+        // Pose normale (bras le long du corps)
+        px(p, x-PX,    y+PX*5, PX, PX*2);
+        px(p, x+PX*10, y+PX*5, PX, PX*2);
+      }
     }
 
     /* ─── PETITS PIEDS ─── */
@@ -831,6 +870,8 @@ window._gotchiY = by + (bobY || 0);
 const tilt = (!sleeping && en < 40) ? Math.sin(p.frameCount * 0.05) * 2 : 0;
 
 if (window.shakeTimer > 0) window.shakeTimer--;
+
+
 // 7. Dessin du Gotchi
     let gotchiInfo;
     p.push();
@@ -869,14 +910,6 @@ if (window.shakeTimer > 0) window.shakeTimer--;
       else                          gotchiInfo = drawAdult(p, drawX, drawY, sleeping, en, ha);
       if (sleeping && g.stage !== 'egg') drawZzz(p, drawX + 16, drawY - 10);
     }
-
-
-// Après le bloc de dessin du gotchi, recalcule gotchiInfo en statique
-const staticInfo = {
-  topY:  drawY,
-  eyeY:  drawY + (D.g.stage === 'adult' ? PX*3 : PX*2),
-  neckY: drawY + (D.g.stage === 'teen' ? PX*5 : D.g.stage === 'adult' ? PX*6 : PX*4),
-};
 
     p.pop();
 

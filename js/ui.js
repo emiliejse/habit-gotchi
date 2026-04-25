@@ -2904,16 +2904,15 @@ function sauvegarderRdv() {
   const emoji      = window._rdvEmoji || null;
   const recurrence = window._rdvRecurrence || 'aucune';
   const dureeBrute = window._rdvDuree;
-let duree = null;
-if (dureeBrute && dureeBrute !== 'infini') {
-  const fin = new Date(_agendaJour + 'T12:00');
-  fin.setMonth(fin.getMonth() + parseInt(dureeBrute));
+
+  let duree = null;
   if (dureeBrute && dureeBrute !== 'infini') {
-  const fin = new Date(_agendaJour + 'T12:00');
-  console.log('agendaJour:', _agendaJour, '| fin valide?', !isNaN(fin), '| dureeBrute:', dureeBrute, '| parseInt:', parseInt(dureeBrute));
-  fin.setMonth(fin.getMonth() + parseInt(dureeBrute));
-  duree = fin.toISOString().split('T')[0];
-}
+    const fin = new Date(_agendaJour + 'T12:00');
+    console.log('agendaJour:', _agendaJour, '| fin valide?', !isNaN(fin), '| dureeBrute:', dureeBrute, '| parseInt:', parseInt(dureeBrute));
+    fin.setMonth(fin.getMonth() + parseInt(dureeBrute));
+    duree = fin.toISOString().split('T')[0];
+  }
+
   const labelFinal = emoji ? `${emoji} ${label}` : label;
 
   window.D.rdv = window.D.rdv || [];
@@ -2923,7 +2922,7 @@ if (dureeBrute && dureeBrute !== 'infini') {
     label: labelFinal,
     heure,
     recurrence,
-    duree // null = infini
+    duree
   });
 
   window._rdvEmoji      = null;

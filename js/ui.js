@@ -1536,6 +1536,13 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
     .filter(Boolean)
     .join(', ') || 'aucune';
 
+  const cycleData  = getCyclePhase(td);
+  const cycleInfo  = cycleData ? `${cycleData.label} (J${cycleData.j})` : 'non renseignée';
+  const rdvDuJour  = (D.rdv || [])
+  .filter(r => r.date === td)
+  .map(r => r.heure ? `${r.heure} ${r.label}` : r.label)
+  .join(', ') || 'aucun';
+
   const contexte = (window.AI_SYSTEM?.soutien_contexte || '')
     .replace('{{nameGotchi}}',              D.g.name || P?.nom || 'Gotchi')
     .replace('{{userName}}',         D.g.userName || D.userName || 'toi')

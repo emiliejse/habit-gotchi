@@ -1291,10 +1291,25 @@ async function acheterPropClaude() {
   const theme  = themes[Math.floor(Math.random() * themes.length)];
   const ctx    = window.AI_CONTEXTS;
 
+  /* ── Calcul du type le moins représenté (côté JS, fiable) ── */
+  const allProps = [...(D.g.props || []), ...(window.PROPS_LIB || [])];
+  const counts = { decor: 0, accessoire: 0, ambiance: 0 };
+  allProps.forEach(p => { if (counts[p.type] !== undefined) counts[p.type]++; });
+
+  // Tri : moins représenté en premier, égalité → ambiance > accessoire > decor
+  const priorite = { ambiance: 3, accessoire: 2, decor: 1 };
+  const typeImpose = Object.keys(counts).sort((a, b) => {
+    if (counts[a] !== counts[b]) return counts[a] - counts[b];
+    return priorite[b] - priorite[a];
+  })[0];
+
+  console.log('[buyProp] Comptage:', counts, '→ type imposé:', typeImpose);
+
   const prompt = ctx
     ? ctx.buyProp
         .replace('{{theme}}',         theme)
         .replace('{{existingNames}}', nomsExistants)
+        .replace('{{typeImpose}}',    typeImpose)   // 🆕 nouvelle ligne
         .replace('{{timestamp}}',     Date.now())
     : (() => { toast(`*inquiet* Mes fichiers de mémoire sont manquants... 💜`); return null; })();
 

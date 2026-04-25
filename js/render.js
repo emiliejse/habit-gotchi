@@ -688,9 +688,24 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
       }
     }
 
-    /* ─── PETITS PIEDS ─── */
-    px(p, x+PX*3, y+PX*10, PX*2, PX);
-    px(p, x+PX*6, y+PX*10, PX*2, PX);
+/* ─── PETITS PIEDS — légère levée alternée pendant la marche ─── */
+    // Compteur de pas basé sur la distance parcourue : 1 alternance tous les PX pixels
+    const isMoving = !sl && (typeof walkPause !== 'undefined' && walkPause === 0);
+    const stepPhase = isMoving ? Math.floor(walkX / PX) % 2 : -1;
+
+    if (stepPhase === 0) {
+      // Pied gauche au sol, pied droit légèrement levé
+      px(p, x+PX*3, y+PX*10, PX*2, PX);          // pied gauche normal
+      px(p, x+PX*6, y+PX*10 - 1, PX*2, PX);      // pied droit levé d'1px
+    } else if (stepPhase === 1) {
+      // Pied gauche légèrement levé, pied droit au sol
+      px(p, x+PX*3, y+PX*10 - 1, PX*2, PX);      // pied gauche levé d'1px
+      px(p, x+PX*6, y+PX*10, PX*2, PX);          // pied droit normal
+    } else {
+      // Immobile : les deux pieds au sol
+      px(p, x+PX*3, y+PX*10, PX*2, PX);
+      px(p, x+PX*6, y+PX*10, PX*2, PX);
+    }
     if (en < 10 && !sl) drawDither(p, x + PX, y + PX * 5, PX * 8, PX * 5, C.bodyDk);
 
     // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)

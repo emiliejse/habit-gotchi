@@ -2585,13 +2585,11 @@ function switchAgenda(onglet) {
 
 function getRdvDuJour(ds) {
   return (window.D.rdv || []).filter(r => {
-    // RDV simple ou sans récurrence
     if (!r.recurrence || r.recurrence === 'aucune') {
       return r.date === ds;
     }
-    // RDV récurrent : ds doit être >= date de début
     if (ds < r.date) return false;
-    // Vérifie la date de fin si elle existe
+    if (r.exceptions && r.exceptions.includes(ds)) return false; // ← ajouté
     if (r.duree && ds > r.duree) return false;
 
     const debut = new Date(r.date + 'T12:00');
@@ -3009,13 +3007,118 @@ function fermerConfirmInline() {
 function editerRdv(id) {
   const rdv = (window.D.rdv || []).find(r => r.id === id);
   if (!rdv) return;
-  document.getElementById('form-rdv').style.display = 'block';
-  document.getElementById('btn-add-rdv').style.display = 'none';
-  document.getElementById('rdv-label').value = rdv.label;
-  document.getElementById('rdv-heure').value = rdv.heure || '';
-  // Remplace sauvegarderRdv temporairement pour édition
+
+  const isRecurrent = rdv.recurrence && rdv.recurrence !== 'aucune';
   window._editRdvId = id;
-  document.querySelector('[onclick="sauvegarderRdv()"]').setAttribute('onclick', 'sauvegarderRdvEdit()');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'rdv-overlay';
+  overlay.style.cssText = `
+    position:fixed;inset:0;z-index:1000;
+    background:rgba(0,0,0,0.35);
+    display:flex;align-items:flex-end;justify-content:center;
+  `;
+
+  overlay.innerHTML = `
+    <div id="rdv-sheet" style="
+      background:var(--bg,#fff);border-radius:16px 16px 0 0;
+      padding:20px 16px 32px;width:100%;max-width:420px;
+      animation:slideUp .25s ease-out;
+    ">
+      <div style="width:36px;height:4px;background:var(--border);
+        border-radius:2px;margin:0 auto 16px;opacity:.5"></div>
+      <h3 style="font-size:12px;color:var(--lilac);margin-bottom:14px;
+        font-family:'Courier New',monospace">✏️ Modifier le rendez-vous</h3>
+
+      <input id="rdv-label" class="inp"
+        value="${rdv.label}"
+        placeholder="Libellé..." style="margin-bottom:8px">
+
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+        <input type="time" id="rdv-heure" class="inp"
+          value="${rdv.heure || ''}" style="flex:1">
+        <label style="display:flex;align-items:center;gap:4px;font-size:10px;
+          color:var(--text2);white-space:nowrap;cursor:pointer">
+          <input type="checkbox" id="rdv-journee"
+            ${!rdv.heure ? 'checked' : ''}
+            onchange="toggleJourneeEntiere(this.checked)">
+          Journée entière
+        </label>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-s" onclick="annulerFormulaireRdv()" style="flex:1">Annuler</button>
+        ${isRecurrent ? `
+          <button class="btn btn-p" onclick="confirmerEditRdv('ce')" style="flex:1">
+            Ce rendez-vous
+          </button>
+          <button class="btn btn-p" onclick="confirmerEditRdv('suivants')" style="flex:1">
+            Celui-ci et les suivants
+          </button>
+        ` : `
+          <button class="btn btn-p" onclick="confirmerEditRdv('simple')" style="flex:1">
+            Enregistrer
+          </button>
+        `}
+      </div>
+    </div>
+  `;
+
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) annulerFormulaireRdv();
+  });
+
+  document.body.appendChild(overlay);
+
+  // Initialise l'état journée entière
+  if (!rdv.heure) toggleJourneeEntiere(true);
+}
+
+function confirmerEditRdv(mode) {
+  const label = document.getElementById('rdv-label').value.trim();
+  if (!label) return;
+  const heure = document.getElementById('rdv-heure').value || null;
+  const id    = window._editRdvId;
+  const rdv   = (window.D.rdv || []).find(r => r.id === id);
+  if (!rdv) return;
+
+  if (mode === 'simple') {
+    // RDV ponctuel — modifie directement
+    rdv.label = label;
+    rdv.heure = heure;
+
+  } else if (mode === 'ce') {
+    // Crée une exception pour ce jour uniquement
+    window.D.rdv.push({
+      id: Date.now().toString(),
+      date: _agendaJour,
+      label, heure,
+      recurrence: 'aucune'
+    });
+    // Ajoute ce jour dans les exceptions de l'entrée maîtresse
+    rdv.exceptions = rdv.exceptions || [];
+    rdv.exceptions.push(_agendaJour);
+
+  } else if (mode === 'suivants') {
+    // Coupe la récurrence d'origine à la veille
+    const veille = new Date(_agendaJour + 'T12:00');
+    veille.setDate(veille.getDate() - 1);
+    rdv.duree = veille.toISOString().split('T')[0];
+
+    // Crée une nouvelle récurrence à partir d'aujourd'hui
+    window.D.rdv.push({
+      id: Date.now().toString(),
+      date: _agendaJour,
+      label, heure,
+      recurrence: rdv.recurrence,
+      duree: rdv.duree_originale || null // hérite la durée d'origine si elle existe
+    });
+  }
+
+  window._editRdvId = null;
+  save();
+  annulerFormulaireRdv();
+  renderAgendaJour(document.getElementById('agenda-contenu'));
 }
 
 function sauvegarderRdvEdit() {

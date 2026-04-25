@@ -3167,128 +3167,136 @@ function renderAgendaMois(el) {
   const annee  = new Date(now.getFullYear(), now.getMonth() + _agendaMoisOffset, 1);
   const moisNom = annee.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
-  // Premier jour du mois et nb de jours
   const premierJour = new Date(annee.getFullYear(), annee.getMonth(), 1);
   const nbJours     = new Date(annee.getFullYear(), annee.getMonth() + 1, 0).getDate();
 
-  // Décalage lundi=0
   let depart = premierJour.getDay() - 1;
   if (depart < 0) depart = 6;
 
-  // Précalcul des données du mois
   const cycleEntries = D.cycle || [];
-  const rdvEntries   = D.rdv   || [];
   const duree        = D.g.cycleDuree || 28;
 
-  // Trouve tous les J1 pour calculer ovulation + prédiction
   const j1Dates = cycleEntries
     .filter(e => e.type === 'regles')
     .map(e => e.date)
     .sort().reverse();
 
-  // Génère les cellules
-  let cells = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:8px">';
-
-  // En-têtes
+  // En-têtes jours
+  let cells = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px">';
   ['L','M','M','J','V','S','D'].forEach(j => {
-    cells += `<div style="text-align:center;font-size:9px;color:var(--text2);padding:2px 0">${j}</div>`;
+    cells += `<div style="text-align:center;font-size:9px;color:var(--text2);
+      padding:3px 0;font-weight:bold">${j}</div>`;
   });
 
-  // Cases vides avant le 1er
-  for (let i = 0; i < depart; i++) {
-    cells += '<div></div>';
-  }
+  // Cases vides
+  for (let i = 0; i < depart; i++) cells += '<div></div>';
 
   for (let d = 1; d <= nbJours; d++) {
-    const ds      = `${annee.getFullYear()}-${String(annee.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ds = `${annee.getFullYear()}-${String(annee.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const estAujourd = ds === today();
-    const log     = D.log[ds] || [];
-    const total   = D.habits.length;
-    const pct     = total > 0 ? log.length / total : 0;
+    const log   = D.log[ds] || [];
+    const total = D.habits.length;
+    const pct   = total > 0 ? log.length / total : 0;
 
-    // Couleur habitudes : transparent → vert
     const g       = Math.round(180 + pct * 60);
     const alpha   = pct > 0 ? 0.15 + pct * 0.6 : 0;
     const bgColor = pct > 0 ? `rgba(80,${g},120,${alpha})` : 'rgba(0,0,0,0.03)';
 
-    // Indicateurs cycle
-    const estJ1      = j1Dates.includes(ds);
-    let   estOvul    = false;
-    let   estPredic  = false;
-
+    // Cycle
+    const estJ1     = j1Dates.includes(ds);
+    let   estOvul   = false;
+    let   estPredic = false;
     j1Dates.forEach(j1 => {
       const diff = Math.round((new Date(ds+'T12:00') - new Date(j1+'T12:00')) / 86400000);
       if (diff >= 12 && diff <= 16) estOvul   = true;
       if (diff >= 25 && diff <= 30) estPredic = true;
     });
-    // Prédiction depuis le dernier J1 connu
-    if (j1Dates.length) {
-      const diff = Math.round((new Date(ds+'T12:00') - new Date(j1Dates[0]+'T12:00')) / 86400000);
-      if (diff >= 25 && diff <= 30) estPredic = true;
+
+    // ← RDV via getRdvDuJour (récurrents inclus)
+    const rdvDuJour = getRdvDuJour(ds);
+    const aNote     = (D.journal || []).some(n => n.date && n.date.startsWith(ds));
+
+    // Emoji à afficher : premier emoji trouvé dans le label, sinon 📌
+    let rdvEmoji = '';
+    if (rdvDuJour.length) {
+      const match = rdvDuJour[0].label.match(/^\p{Emoji}/u);
+      rdvEmoji = match ? match[0] : '📌';
+      // Si plusieurs RDV, affiche un + discret
+      if (rdvDuJour.length > 1) rdvEmoji += `<span style="font-size:7px;vertical-align:super">+${rdvDuJour.length - 1}</span>`;
     }
 
-    // Icônes
-    const aRdv  = rdvEntries.some(r => r.date === ds);
-    const aNote = (D.journal || []).some(n => n.date && n.date.startsWith(ds));
-
-    // Bordure aujourd'hui
     const border = estAujourd ? '2px solid var(--lilac)' : '1px solid transparent';
 
     cells += `
-  <div onclick="clickJourMois('${ds}')"
-    style="position:relative;aspect-ratio:1;border-radius:6px;cursor:pointer;
-    background:${bgColor};border:${border};
-    display:flex;flex-direction:column;align-items:center;
-    justify-content:space-between;padding:2px 1px">
+      <div onclick="clickJourMois('${ds}')"
+        style="position:relative;aspect-ratio:1;border-radius:6px;cursor:pointer;
+        background:${bgColor};border:${border};
+        display:flex;flex-direction:column;align-items:center;
+        justify-content:space-between;padding:2px 1px">
 
-    ${estOvul ? `<div style="position:absolute;inset:1px;border-radius:5px;
-      border:2px solid #80b8e066;pointer-events:none"></div>` : ''}
-    ${estJ1 ? `<div style="position:absolute;top:2px;right:2px;width:6px;height:6px;
-      border-radius:50%;background:#e07080"></div>` : ''}
-    ${estPredic && !estJ1 ? `<div style="position:absolute;inset:1px;border-radius:5px;
-      border:2px dashed #e0708066;pointer-events:none"></div>` : ''}
+        ${estOvul ? `<div style="position:absolute;inset:1px;border-radius:5px;
+          border:2px solid #80b8e066;pointer-events:none"></div>` : ''}
+        ${estJ1 ? `<div style="position:absolute;top:2px;right:2px;width:6px;height:6px;
+          border-radius:50%;background:#e07080"></div>` : ''}
+        ${estPredic && !estJ1 ? `<div style="position:absolute;inset:1px;border-radius:5px;
+          border:2px dashed #e0708066;pointer-events:none"></div>` : ''}
 
-    <span style="font-size:10px;font-weight:${estAujourd?'bold':'normal'};
-      color:${estAujourd?'var(--lilac)':'var(--text)'};margin-top:2px">${d}</span>
+        <span style="font-size:10px;font-weight:${estAujourd?'bold':'normal'};
+          color:${estAujourd?'var(--lilac)':'var(--text)'};margin-top:2px">${d}</span>
 
-    <div style="display:flex;gap:1px;font-size:8px;line-height:1;margin-bottom:1px">
-      ${aRdv  ? '📌' : ''}
-      ${aNote ? '📓' : ''}
-    </div>
-  </div>`;
+        <div style="display:flex;gap:1px;font-size:9px;line-height:1;margin-bottom:1px">
+          ${rdvEmoji}
+          ${aNote ? '📓' : ''}
+        </div>
+      </div>`;
   }
 
   cells += '</div>';
 
+  // Légende en grille 2×2
+  const legende = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;
+      margin-bottom:12px;padding:10px;border-radius:10px;
+      background:rgba(0,0,0,0.03)">
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2)">
+        <span style="display:inline-block;width:28px;height:10px;border-radius:3px;
+          background:linear-gradient(to right,rgba(80,180,120,0.1),rgba(80,180,120,0.85))"></span>
+        Habitudes
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2)">
+        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;
+          background:#e07080"></span>
+        Règles (J1)
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2)">
+        <span style="display:inline-block;width:12px;height:12px;border-radius:3px;
+          border:2px solid #80b8e0"></span>
+        Ovulation
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2)">
+        <span style="display:inline-block;width:12px;height:12px;border-radius:3px;
+          border:2px dashed #e07080"></span>
+        Prédiction
+      </div>
+    </div>
+  `;
+
   el.innerHTML = `
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-  <button onclick="navAgendaMois(-1)"
-    style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
-    ${chevron('left')}
-  </button>
-  <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
-    text-transform:capitalize;text-align:center;flex:1">
-    ${moisNom}
-  </span>
-  <button onclick="navAgendaMois(1)"
-    style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
-    ${chevron('right')}
-  </button>
-</div>
-
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;
-  align-items:center;justify-content:center">
-  <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)">
-    <span style="display:inline-block;width:16px;height:10px;border-radius:3px;
-      background:linear-gradient(to right,rgba(80,180,120,0.1),rgba(80,180,120,0.9))"></span>
-    Habitudes
-  </span>
-  <span style="font-size:11px;color:#e07080">● Règles</span>
-  <span style="font-size:11px;color:#80b8e0">◻ Ovulation</span>
-  <span style="font-size:11px;color:#e07080">⬚ Prédiction</span>
-  <span style="font-size:11px;color:var(--text2)">📌 Rdv &nbsp; 📓 Note</span>
-</div>
-
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <button onclick="navAgendaMois(-1)"
+        style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
+        ${chevron('left')}
+      </button>
+      <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
+        text-transform:capitalize;text-align:center;flex:1">
+        ${moisNom}
+      </span>
+      <button onclick="navAgendaMois(1)"
+        style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
+        ${chevron('right')}
+      </button>
+    </div>
+    ${legende}
     ${cells}
   `;
 }

@@ -665,14 +665,15 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
       } else if (pose.current === 'hanche_d') {
         // Bras droit plié sur hanche (miroir de hanche_g)
         px(p, x-PX,    y+PX*5, PX,   PX*2);  // bras gauche normal
-        px(p, x+PX*7,  y+PX*5, PX*2, PX);    // avant-bras horizontal droit
-        px(p, x+PX*10, y+PX*4, PX,   PX*2);  // coude qui dépasse à droite
+        px(p, x+PX*7,  y+PX*7, PX*2, PX);    // avant-bras horizontal droit (bas du corps)
+        px(p, x+PX*10, y+PX*6, PX,   PX*2);  // coude qui dépasse à droite
       } else if (pose.current === 'croises') {
-        // Bras croisés devant le ventre
-        px(p, x+PX*2, y+PX*5, PX*2, PX);     // avant-bras gauche
-        px(p, x+PX*6, y+PX*5, PX*2, PX);     // avant-bras droit
-        px(p, x,      y+PX*5, PX,   PX);     // coude gauche
-        px(p, x+PX*9, y+PX*5, PX,   PX);     // coude droit
+        // Bras croisés devant le ventre — légèrement plus haut, débordants
+        p.fill(C.bodyDk);
+        px(p, x-PX,    y+PX*4, PX,   PX);    // coude gauche qui dépasse
+        px(p, x,       y+PX*5, PX*4, PX);    // avant-bras gauche (traverse vers la droite)
+        px(p, x+PX*6,  y+PX*5, PX*4, PX);    // avant-bras droit (traverse vers la gauche)
+        px(p, x+PX*10, y+PX*4, PX,   PX);    // coude droit qui dépasse
       } else if (pose.current === 'salut') {
         // Bras gauche levé en l'air (coucou)
         px(p, x-PX,   y+PX*2, PX, PX*3);     // bras vertical levé

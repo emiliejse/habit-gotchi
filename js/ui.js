@@ -2722,9 +2722,13 @@ function renderAgendaJour(el) {
 function navAgendaJour(dir) {
   const d = new Date(_agendaJour + 'T12:00');
   d.setDate(d.getDate() + dir);
-  window._agendaJour = d.toISOString().split('T')[0];
-  const el = document.getElementById('agenda-contenu');
-  renderAgendaJour(el);
+  _agendaJour = d.toISOString().split('T')[0];
+
+  // 🔁 Synchro vue Mois
+  const now = new Date();
+  _agendaMoisOffset = (d.getFullYear() - now.getFullYear()) * 12 + (d.getMonth() - now.getMonth());
+
+  renderAgendaJour(document.getElementById('agenda-contenu'));
 }
 
 function afficherFormulaireRdv() {
@@ -3255,51 +3259,57 @@ function renderAgendaMois(el) {
 
   cells += '</div>';
 
-  // Légende en grille 2×2
-  const legende = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;
-      margin-bottom:12px;padding:10px;border-radius:10px;
-      background:rgba(0,0,0,0.03)">
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2)">
-        <span style="display:inline-block;width:28px;height:10px;border-radius:3px;
-          background:linear-gradient(to right,rgba(80,180,120,0.1),rgba(80,180,120,0.85))"></span>
-        Habitudes
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2)">
-        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;
-          background:#e07080"></span>
-        Règles (J1)
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2)">
-        <span style="display:inline-block;width:12px;height:12px;border-radius:3px;
-          border:2px solid #80b8e0"></span>
-        Ovulation
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2)">
-        <span style="display:inline-block;width:12px;height:12px;border-radius:3px;
-          border:2px dashed #e07080"></span>
-        Prédiction
-      </div>
-    </div>
-  `;
-
-  el.innerHTML = `
+el.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <button onclick="navAgendaMois(-1)"
         style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
         ${chevron('left')}
       </button>
-      <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
-        text-transform:capitalize;text-align:center;flex:1">
-        ${moisNom}
-      </span>
+      <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px">
+        <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
+          text-transform:capitalize;text-align:center">
+          ${moisNom}
+        </span>
+        ${_agendaMoisOffset !== 0 ? `
+          <button onclick="revenirAujourdhuiMois()"
+            style="padding:2px 12px;border-radius:20px;border:none;
+            background:var(--lilac);color:#fff;font-size:9px;cursor:pointer;
+            font-family:'Courier New',monospace;font-weight:bold">
+            ↩ Aujourd'hui
+          </button>` : ''}
+      </div>
       <button onclick="navAgendaMois(1)"
         style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
         ${chevron('right')}
       </button>
     </div>
-    ${legende}
+
     ${cells}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;
+      margin-top:14px;padding:10px 14px;border-radius:12px;
+      background:rgba(0,0,0,0.03);border:1px solid rgba(0,0,0,0.05)">
+      <div style="display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text2)">
+        <span style="display:inline-block;width:28px;height:10px;border-radius:3px;flex-shrink:0;
+          background:linear-gradient(to right,rgba(80,180,120,0.1),rgba(80,180,120,0.85))"></span>
+        Habitudes
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text2)">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;flex-shrink:0;
+          background:#e07080"></span>
+        Règles (J1)
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text2)">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:3px;flex-shrink:0;
+          border:2px solid #80b8e0"></span>
+        Ovulation
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text2)">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:3px;flex-shrink:0;
+          border:2px dashed #e07080"></span>
+        Prédiction
+      </div>
+    </div>
   `;
 }
 

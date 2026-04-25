@@ -1431,17 +1431,7 @@ function genSoutien() {
 
   const habsDuJour  = D.habits.map(h => ({ label:h.label, faite:(D.log[td]||[]).includes(h.catId) }));
   const notesDuJour = D.journal.filter(j => j.date.startsWith(td)).map(j => ({ humeur:j.mood, texte:j.text }));
-  // Phase du cycle
-const cycleData = getCyclePhase(td);
-const cycleInfo = cycleData
-  ? `${cycleData.label} (J${cycleData.j})`
-  : 'non renseignée';
-
-// RDV du jour
-const rdvDuJour = (D.rdv || [])
-  .filter(r => r.date === td)
-  .map(r => r.heure ? `${r.heure} ${r.label}` : r.label)
-  .join(', ') || 'aucun';
+  
   const ctx = window.AI_CONTEXTS;
 const P = window.PERSONALITY;
 const cycleData  = getCyclePhase(td);

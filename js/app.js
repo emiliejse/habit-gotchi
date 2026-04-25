@@ -32,7 +32,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v3.01'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v3.02'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -401,7 +401,7 @@ function giveSnack(emoji) {
   if (!win) return;                    // hors fenêtre, sécurité
   
   const meals = ensureMealsToday();
-  if (meals[window_]) return;              // déjà mangé sur cette fenêtre
+  if (meals[win]) return;              // déjà mangé sur cette fenêtre
   
   const pref = ensureSnackPref();
   const isFav = (emoji === pref);
@@ -413,7 +413,7 @@ function giveSnack(emoji) {
   }
   
   // Marque la fenêtre + crédite les pétales
-  meals[window_] = true;
+  meals[win] = true;
   window.D.g.petales = (window.D.g.petales || 0) + gain;
   save();
   
@@ -422,7 +422,7 @@ function giveSnack(emoji) {
     type: 'note',
     subtype: 'meal',
     valeur: gain,
-    label: `${emoji} donné à ${window.D.g.name} (${MEAL_WINDOWS[window_].label})${isFav ? ' — préféré !' : ''}  +${gain} 🌸`
+    label: `${emoji} donné à ${window.D.g.name} (${MEAL_WINDOWS[win].label})${isFav ? ' — préféré !' : ''}  +${gain} 🌸`
   });
   
   // Bulle adaptée : "Miam, mon préféré !" si match, sinon message normal

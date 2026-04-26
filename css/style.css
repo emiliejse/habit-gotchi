@@ -268,9 +268,6 @@ body {
 /* Languette Menu Discrète (En bas de l'écran) */
 .menu-languette {
   position: fixed;
-  /* POURQUOI bottom:0 et non var(--sab) : bottom décale depuis le bord de l'écran physique.
-     Mettre bottom:var(--sab) faisait flotter la languette EN L'AIR au-dessus de la barre d'accueil iOS.
-     La bonne approche : coller à bottom:0 et compenser la barre avec padding-bottom interne. */
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
@@ -278,12 +275,14 @@ body {
   border: 3px solid #c8b8a0;
   border-bottom: none;
   border-radius: 20px 20px 0 0;
-  /* POURQUOI padding-bottom calc(var(--sab) + 8px) : la safe-area iOS est absorbée ici,
-     le contenu (icône ☰) reste visible au-dessus de la barre d'accueil */
-  /* POURQUOI padding-top 6px seulement : on veut juste voir l'icône, pas d'espace superflu au-dessus.
-     padding-bottom = safe-area pure, sans ajout — évite l'espace blanc sous l'icône sur iPhone */
-  padding: 4px 14px calc(var(--sab) + 2px);
-  font-size: 24px;
+  /* POURQUOI flex + align-items:flex-start : l'icône reste collée en haut,
+     le padding-bottom absorbe la safe-area sans faire "monter" l'icône au centre */
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4px 14px 0;
+  padding-bottom: var(--sab);
+  font-size: 18px;
   color: #6a5a40;
   cursor: pointer;
   z-index: 150;
@@ -379,6 +378,20 @@ body {
   border-radius: var(--r-lg); padding: var(--sp-md); margin-bottom: var(--sp-sm); box-shadow: 0 2px 8px var(--shadow);
 }
 .card h2 { font-size: var(--fs-sm); margin-bottom: var(--sp-sm); letter-spacing: 1px; }
+
+/* RÔLE : Carte d'action principale — visuellement dominante */
+/* POURQUOI : Les habitudes sont l'action prioritaire, pas juste de l'info */
+.card-primary {
+  border-color: var(--lilac);
+  box-shadow: 0 4px 16px rgba(176,144,208,0.2), 0 2px 6px rgba(0,0,0,0.06);
+  padding-top: 20px; /* absorbe le label "PROCHAIN ✿" flottant */
+}
+
+/* RÔLE : Carte secondaire — info passive, recule visuellement */
+#claude-card {
+  border-color: var(--border);
+  padding: var(--sp-sm) var(--sp-md);
+}
 
 .inp {
   width: 100%; padding: var(--sp-sm) var(--sp-md); border: 2px solid var(--border); border-radius: var(--r-md);
@@ -480,11 +493,11 @@ body {
   border-color: var(--lilac);
 }
 /* Petit label "À faire" discret au-dessus de la checkbox */
-/* POURQUOI top: -14px : le label doit flotter juste au-dessus du bord supérieur du bloc .hab */
+/* POURQUOI top: -11px : le label doit flotter juste au-dessus du bord supérieur du bloc .hab */
 .hab--next::before {
   content: 'Prochain ✿';
   position: absolute;
-  top: -14px;
+  top: -11px;
   left: 8px;
   font-size: var(--fs-xs); /* était 9px hardcodé — aligné avec la variable */
   font-weight: bold;
@@ -493,7 +506,7 @@ body {
   text-transform: uppercase;
   pointer-events: none;
   background: var(--card); /* POURQUOI : léger fond pour rester lisible sur n'importe quelle palette */
-  padding: 0 3px;
+  padding: 0 5px;
   border-radius: 3px;
 }
 

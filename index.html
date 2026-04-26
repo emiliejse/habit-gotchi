@@ -511,46 +511,67 @@ function clearDebugLogs() {
 <!-- Menu overlay (SYSTEM 5: UI/Design) -->
 <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()">
   <div class="menu-book" onclick="event.stopPropagation()">
-    <h2>✿ <span id="menu-gotchi-name">Gotchi</span> ✿</h2>
-    <div class="menu-grid" id="menu-grid">
-      <!-- Navigation vers les différents panneaux (SYSTEM 5: UI/Design) -->
-      <div class="menu-circle" onclick="goMenu('gotchi')">
-        <span class="mc-icon">🏠</span><span class="mc-label">Gotchi</span>
-      </div>
-      <div class="menu-circle" onclick="goMenu('journal')">
-        <span class="mc-icon">📓</span><span class="mc-label">Journal</span>
-      </div>
-      <div class="menu-circle" onclick="goMenu('props')" style="position:relative">
-        <span class="mc-icon">🎒</span>
-        <span class="mc-label">Inventaire</span>
-        <!-- Badge pour notifications (SYSTEM 4: Habitudes) -->
-        <span id="badge-boutique" style="display:none;position:absolute;top:-4px;right:-4px;
-          background:var(--pink);color:#fff;border-radius:50%;
-          width:14px;height:14px;font-size:var(--fs-xs);line-height:14px;text-align:center">!</span> <!-- était 8px -->
-      </div>
-      <div class="menu-circle" onclick="goMenu('progress')">
-        <span class="mc-icon">📊</span><span class="mc-label">Progrès</span>
-      </div>
-      <div class="menu-circle" onclick="goMenu('perso')">
-        <span class="mc-icon">🎨</span><span class="mc-label">Perso</span>
-      </div>
-      <div class="menu-circle" onclick="goMenu('settings')">
-        <span class="mc-icon">⚙️</span><span class="mc-label">Réglages</span>
-      </div>
+
+  <!-- Doodle pixel art coin supérieur droit -->
+  <div class="menu-doodle" aria-hidden="true">
+    <svg width="48" height="48" viewBox="0 0 12 12" style="image-rendering:pixelated">
+      <!-- étoile -->
+      <rect x="5" y="0" width="2" height="2" fill="#b090d0"/>
+      <rect x="3" y="2" width="6" height="2" fill="#b090d0"/>
+      <rect x="0" y="4" width="12" height="2" fill="#b090d0"/>
+      <rect x="2" y="6" width="3" height="2" fill="#b090d0"/>
+      <rect x="7" y="6" width="3" height="2" fill="#b090d0"/>
+      <rect x="1" y="8" width="2" height="2" fill="#e8a0bf"/>
+      <rect x="9" y="8" width="2" height="2" fill="#e8a0bf"/>
+    </svg>
+  </div>
+
+  <h2>✿ <span id="menu-gotchi-name">Gotchi</span> ✿</h2>
+
+  <!-- Navigation : lignes de cahier -->
+  <nav class="menu-lines" id="menu-grid">
+    <div class="menu-line" onclick="goMenu('gotchi')">
+      <span class="ml-icon">🏠</span>
+      <span class="ml-label">Accueil</span>
     </div>
-<button class="menu-soutien" 
-  onclick="event.stopPropagation();toggleMenu();ouvrirAgenda()"
-  style="width:80%;display:block;margin:0 auto 8px;background:#fde8f0;border-color:#e0a0c0;
-  border-bottom-color:#c07090;border-right-color:#c07090;
-  color:#904060;padding:10px 20px;box-sizing:border-box"
-  id="btn-menu-agenda">
-  🗓️ Mon agenda & cycle
-</button>
-<button class="menu-soutien" onclick="genSoutien();toggleMenu()"
-  style="width:80%;display:block;margin:0 auto;padding:10px 20px;box-sizing:border-box">
-  💜 Besoin de soutien
-</button>
-  </div> <!-- ferme .menu-book -->
+    <div class="menu-line" onclick="goMenu('journal')">
+      <span class="ml-icon">📓</span>
+      <span class="ml-label">Journal</span>
+    </div>
+    <div class="menu-line" onclick="goMenu('props')" style="position:relative">
+      <span class="ml-icon">🎒</span>
+      <span class="ml-label">Inventaire</span>
+      <span id="badge-boutique" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);
+        background:var(--pink);color:#fff;border-radius:50%;
+        width:14px;height:14px;font-size:var(--fs-xs);line-height:14px;text-align:center">!</span>
+    </div>
+    <div class="menu-line" onclick="goMenu('progress')">
+      <span class="ml-icon">📊</span>
+      <span class="ml-label">Progrès</span>
+    </div>
+    <div class="menu-line" onclick="goMenu('perso')">
+      <span class="ml-icon">🎨</span>
+      <span class="ml-label">Perso</span>
+    </div>
+    <div class="menu-line" onclick="goMenu('settings')">
+      <span class="ml-icon">⚙️</span>
+      <span class="ml-label">Réglages</span>
+    </div>
+  </nav>
+
+  <!-- Post-its en bas -->
+  <div class="menu-postits">
+    <button class="menu-postit menu-postit--rose"
+      onclick="event.stopPropagation();toggleMenu();ouvrirAgenda()"
+      id="btn-menu-agenda">
+      🗓️ Agenda & cycle
+    </button>
+    <button class="menu-postit menu-postit--lilac"
+      onclick="genSoutien();toggleMenu()">
+      💜 Soutien
+    </button>
+  </div>
+</div>
 </div> <!-- ferme #menu-overlay -->
 
 <!-- Modal générique (SYSTEM 5: UI/Design) -->

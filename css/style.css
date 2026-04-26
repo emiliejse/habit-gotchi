@@ -300,65 +300,147 @@ body {
 }
 .menu-overlay.open { display: flex; }
 
-/* Design "Carnet/Livre" du menu */
+/* ─── MENU CAHIER D'ADO ──────────────────────────────────────────── */
+
+/* RÔLE : Conteneur principal — aspect cahier spirale avec lignes bleues */
 .menu-book {
-  background: var(--paper-book-bg); border: 4px solid var(--paper-book-border); border-radius: var(--r-sm);
-  padding: var(--sp-md) var(--sp-md) var(--sp-sm); width: 300px;
+  background: var(--paper-book-bg);
+  border: 4px solid var(--paper-book-border);
+  border-radius: var(--r-sm);
+  padding: var(--sp-md) var(--sp-md) var(--sp-sm) 28px; /* 28px à gauche = espace reliure */
+  width: 300px;
   box-shadow: 4px 4px 0 var(--paper-book-shadow), inset 0 0 20px rgba(0,0,0,.05);
-  font-family: 'Courier New', monospace; position: relative;
-}
-.menu-book::before {
-  content: ''; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px; background: var(--paper-book-line);
-}
-.menu-book h2 {
-  text-align: center; font-size: 13px; letter-spacing: 2px; margin-bottom: 14px;
-  border-bottom: 2px dashed var(--paper-book-border); padding-bottom: 8px; color: var(--paper-text);
-}
-.menu-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-  margin-bottom: 12px; padding: 0 4px;
-}
-.menu-circle {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
-  background: #fff8ee; border: 2px solid #c8b898; border-radius: 50%; aspect-ratio: 1;
-  width: 90px; margin: 0 auto; cursor: pointer;
-  box-shadow: 2px 2px 0 #d4c4a8;
-  transition: transform .15s, background .15s;
-}
-.menu-circle:active { transform: scale(.92); background: #ede4d0; }
-/* RÔLE : Marquer visuellement le panneau actuellement affiché dans le menu */
-/* POURQUOI : Sans cet état, l'utilisatrice n'a aucun repère de "où elle est" quand elle rouvre le menu */
-.menu-circle.active {
-  border-color: var(--lilac);
-  box-shadow: 2px 2px 0 var(--lilac), 0 0 0 3px rgba(176,144,208,0.25);
-  background: rgba(176,144,208,0.12);
-}
-.menu-circle.active .mc-label { color: var(--lilac); }
-.menu-circle .mc-icon { font-size: 40px; line-height: 1; }
-.menu-circle .mc-label {
-  /* POURQUOI display:none : les icônes seules suffisent à identifier les sections dans un menu circulaire.
-     Le texte était trop grand pour les cercles et débordait — on simplifie pour un look plus propre */
-  display: none;
+  font-family: 'Courier New', monospace;
+  position: relative;
+  /* POURQUOI repeating-linear-gradient : simule les lignes d'un cahier, sans image à charger */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 27px,
+    #c8d8f0 27px,
+    #c8d8f0 28px
+  );
+  background-position: 0 52px; /* décale les lignes sous le titre */
 }
 
-/* Bouton Soutien (Désaxé volontairement) */
-.menu-soutien {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 8px 14px; width: auto; margin: 16px auto 0;
-  background: #e8d8f0; border: 2px solid #b090d0;
-  border-bottom: 3px solid #8060b0; border-right: 3px solid #8060b0;
-  border-radius: 4px; color: #5a3a80;
-  /* POURQUOI font-size var(--fs-xs) : le texte "Mon agenda et cycle" / "Besoin de soutien" débordait
-     en 2 lignes avec var(--fs-sm) — on réduit pour tenir sur une seule ligne */
-  font-size: var(--fs-xs); font-weight: bold;
-  font-family: 'Courier New', monospace; cursor: pointer; letter-spacing: 0.5px;
-  white-space: nowrap; /* POURQUOI : force le texte sur une seule ligne */
-  opacity: 1;
+/* Reliure rouge à gauche */
+.menu-book::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: #e09090;
 }
-.menu-soutien:active {
-  border-bottom-width: 2px; border-right-width: 2px;
-  transform: translate(1px, 1px);
+
+/* Trous de reliure */
+.menu-book::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 0; bottom: 0;
+  width: 10px;
+  background-image: radial-gradient(circle, #d4c4a8 4px, transparent 4px);
+  background-size: 10px 36px;
+  background-repeat: repeat-y;
+  background-position: 0 18px;
 }
+
+/* Titre du cahier */
+.menu-book h2 {
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  color: var(--paper-text);
+  position: relative; /* passe au-dessus des lignes */
+  z-index: 1;
+}
+
+/* Doodle pixel art coin haut droit */
+.menu-doodle {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  opacity: 0.7;
+}
+
+/* RÔLE : Liste de navigation — lignes de cahier cliquables */
+.menu-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+/* RÔLE : Une ligne de navigation */
+/* POURQUOI height 28px : correspond exactement à l'espacement des lignes du cahier */
+.menu-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 28px;
+  padding: 0 6px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background .12s;
+  color: var(--paper-text);
+  font-size: var(--fs-sm);
+  font-weight: bold;
+}
+.menu-line:active { background: rgba(176,144,208,0.15); }
+
+/* RÔLE : État actif — ligne surlignée comme au stabilo */
+.menu-line.active {
+  background: rgba(176,144,208,0.2);
+  color: var(--lilac);
+}
+.menu-line.active .ml-icon { filter: none; }
+
+.ml-icon { font-size: 16px; line-height: 1; width: 22px; text-align: center; }
+.ml-label { flex: 1; letter-spacing: 0.5px; }
+
+/* RÔLE : Post-its en bas du cahier */
+.menu-postits {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+/* RÔLE : Style post-it collé */
+.menu-postit {
+  flex: 1;
+  padding: 8px 6px;
+  font-size: var(--fs-xs);
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
+  border-radius: 2px;
+  border: none;
+  letter-spacing: 0.3px;
+  /* POURQUOI rotate léger : effet post-it collé à la va-vite, comme dans un vrai cahier d'ado */
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.12);
+  transition: transform .12s;
+}
+.menu-postit:active { transform: scale(.95); }
+
+.menu-postit--rose {
+  background: #fde8f0;
+  color: #904060;
+  transform: rotate(-1deg);
+}
+.menu-postit--rose:active { transform: rotate(-1deg) scale(.95); }
+
+.menu-postit--lilac {
+  background: #ede0f8;
+  color: #5a3a80;
+  transform: rotate(0.8deg);
+}
+.menu-postit--lilac:active { transform: rotate(0.8deg) scale(.95); }
 
 @keyframes bookSlideUp {
   0%   { transform: translateY(60px) scale(.95); opacity: 0; }

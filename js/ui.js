@@ -99,10 +99,9 @@ function go(t) {
   const targetPanel = document.getElementById('p-' + t);
   if (targetPanel) targetPanel.classList.add('on');
 
-  // RÔLE : Marquer le cercle de menu correspondant au panneau actif
-  // POURQUOI : Sans ça, l'utilisatrice n'a aucun repère visuel de "où elle est" quand elle rouvre le menu
-  document.querySelectorAll('.menu-circle').forEach(c => c.classList.remove('active'));
-  const activeCircle = document.querySelector(`.menu-circle[onclick*="'${t}'"]`);
+  // RÔLE : Marquer la ligne de menu correspondant au panneau actif
+  document.querySelectorAll('.menu-line').forEach(c => c.classList.remove('active'));
+  const activeCircle = document.querySelector(`.menu-line[onclick*="'${t}'"]`);
   if (activeCircle) activeCircle.classList.add('active');
 
   const shell = document.querySelector('.tama-shell');

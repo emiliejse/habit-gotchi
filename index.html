@@ -140,7 +140,7 @@ function clearDebugLogs() {
   <!-- HEADER : Boutons (boutique, menu), titre et date -->
   <div class="hdr">
     <!-- Bouton Boutique (SYSTEM 4: Habitudes) -->
-    <button id="btn-boutique-hdr" onclick="ouvrirBoutique()" class="menu-btn" style="position:relative">
+    <button id="btn-boutique-hdr" onclick="ouvrirBoutique()" class="menu-btn" style="position:relative" aria-label="Ouvrir la boutique">
       🛍️
       <!-- Badge pour indiquer des notifications (ex: achats disponibles) -->
       <span id="badge-boutique-hdr" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--pink);color:#fff;font-size:var(--fs-xs);border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
@@ -153,7 +153,7 @@ function clearDebugLogs() {
 </sub>
     </div>
     <!-- Bouton Tablette (SYSTEM 3: IA & Cognition) -->
-    <button id="btn-tablet" onclick="openTablet()" class="menu-btn" style="position:relative">
+    <button id="btn-tablet" onclick="openTablet()" class="menu-btn" style="position:relative" aria-label="Ouvrir la tablette">
       📟
       <!-- Badge pour notifications (ex: messages de l'IA) -->
       <span id="tablet-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--coral);color:#fff;font-size:var(--fs-xs);border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
@@ -274,9 +274,9 @@ function clearDebugLogs() {
       <!-- Navigation par semaine (SYSTEM 2: Écosystème) -->
       <div class="j90" style="margin-top:8px">
         <div class="nav-r">
-          <button class="nav-a" onclick="navJWeek(-1)">◀</button>
+          <button class="nav-a" onclick="navJWeek(-1)" aria-label="Semaine précédente">◀</button>
           <h2 style="margin:0;font-size:12px" id="j-week-title">Cette semaine</h2>
-          <button class="nav-a" onclick="navJWeek(1)">▶</button>
+          <button class="nav-a" onclick="navJWeek(1)" aria-label="Semaine suivante">▶</button>
         </div>
         <div id="j-entries"></div>
         <!-- Export journal (SYSTEM 6: Mémoire/Journal) -->
@@ -324,7 +324,7 @@ function clearDebugLogs() {
   <div class="card">
     <h2 style="display:flex;justify-content:space-between;align-items:center;">
       <span id="bilan-titre">🧠 Bilan Hebdo</span>
-      <button onclick="resetBilan()" style="background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;" title="Réinitialiser">🔄</button>
+      <button onclick="resetBilan()" style="background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;" title="Réinitialiser" aria-label="Réinitialiser le bilan">🔄</button>
     </h2>
     <div id="claude-summary" style="background:rgba(255,255,255,0.5);padding:12px;border-radius:8px;font-size:var(--fs-sm);border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);"> <!-- était 11px -->
       Ton bilan de la semaine apparaîtra ici...
@@ -341,9 +341,9 @@ function clearDebugLogs() {
   <!-- Calendrier hebdomadaire interactif (SYSTEM 2: Écosystème) -->
   <div class="card">
     <div class="nav-r">
-      <button class="nav-a" onclick="navW(-1)">◀</button>
+      <button class="nav-a" onclick="navW(-1)" aria-label="Semaine précédente">◀</button>
       <h2 style="margin:0" id="w-title">Cette semaine</h2>
-      <button class="nav-a" onclick="navW(1)">▶</button>
+      <button class="nav-a" onclick="navW(1)" aria-label="Semaine suivante">▶</button>
     </div>
     <div id="w-view" class="cal"></div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-top:3px">
@@ -500,7 +500,7 @@ function clearDebugLogs() {
   ============================================================
 -->
 <!-- Languette du menu (SYSTEM 5: UI/Design) -->
-<button class="menu-languette" onclick="toggleMenu()">☰</button>
+<button class="menu-languette" onclick="toggleMenu()" aria-label="Ouvrir le menu">☰</button>
 
 <!-- Menu overlay (SYSTEM 5: UI/Design) -->
 <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()">

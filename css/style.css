@@ -106,7 +106,7 @@ body {
 .hdr h1 { font-size: 12px; color: var(--lilac); letter-spacing: 2px; flex: 1; }
 .hdr sub { font-size: var(--fs-xs); color: var(--text2); }
 .hdr .menu-btn {
-  width: 36px; height: 36px; border-radius: 10px; border: 2px solid var(--border);
+  width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--border); /* était 36×36 — Apple HIG : 44pt minimum */
   background: var(--solid); font-size: 16px; cursor: pointer; display: flex;
   align-items: center; justify-content: center; transition: .15s; flex-shrink: 0;
 }
@@ -219,14 +219,14 @@ body {
 /* Languette Menu Discrète (En bas de l'écran) */
 .menu-languette {
   position: fixed;
-  bottom: 0;
+  bottom: var(--sab); /* POURQUOI : était bottom:0 — sur iPhone X+ la barre d'accueil iOS recouvrait partiellement la languette */
   left: 50%;
   transform: translateX(-50%);
   background: var(--card);
   border: 3px solid #c8b8a0;
   border-bottom: none;
   border-radius: 20px 20px 0 0;
-  padding: 4px 30px 8px;
+  padding: 4px 30px calc(8px + var(--sab)); /* padding-bottom intègre aussi la safe-area pour le contenu interne */
   font-size: 24px;
   color: #6a5a40;
   cursor: pointer;
@@ -323,10 +323,30 @@ body {
   cursor: pointer; transition: .12s;
 }
 .btn:active { transform: scale(.94); }
+/* RÔLE : Anneau de focus visible pour navigation clavier et assistive */
+/* POURQUOI : Aucun :focus n'était défini — invisible sur tablette/desktop et inaccessible au clavier */
+.btn:focus-visible,
+.menu-btn:focus-visible,
+.menu-circle:focus-visible,
+.nav-a:focus-visible,
+.pin-k:focus-visible,
+.inp:focus-visible,
+.mood-b:focus-visible {
+  outline: 3px solid var(--lilac);
+  outline-offset: 2px;
+}
 .btn-p { background: var(--lilac); color: #fff; }
 .btn-s { background: #fff; color: var(--text); border: 2px solid var(--border); }
 .btn-d { background: var(--coral); color: #fff; }
 .btn-m { background: var(--mint); color: var(--text); }
+
+/* RÔLE : Signaler visuellement qu'un bouton est désactivé (ex: quota IA atteint) */
+/* POURQUOI : Sans ce style, un bouton disabled est visuellement identique à un actif → confusion TDAH */
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important; /* bloque l'animation :active */
+}
 
 .btn-boutique {
   background: linear-gradient(135deg, var(--lilac), var(--pink));
@@ -451,7 +471,9 @@ body {
 }
 .nav-r { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .nav-a {
-  width: 28px; height: 28px; border-radius: 8px; border: 2px solid var(--border); background: #fff;
+  /* RÔLE : Boutons ◀▶ de navigation semaine/journal */
+  /* POURQUOI : Étendus à 44×44px pour respecter la recommandation Apple HIG et éviter les fausses touches */
+  min-width: 44px; min-height: 44px; border-radius: 8px; border: 2px solid var(--border); background: #fff; /* était 28×28 */
   font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text2);
 }
 .nav-a:active { background: var(--border); }

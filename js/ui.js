@@ -7,6 +7,34 @@
                CATS, STG, UI_PALETTES, GOTCHI_COLORS, ENV_THEMES, SK)
    ============================================================ */
 
+/* ============================================================
+   UTILITAIRES USER_CONFIG
+   ============================================================ */
+// RÔLE : Indique si les mentions TDAH doivent être affichées.
+// POURQUOI : Alexia ne veut pas voir ces mentions. Cette fonction
+//            centralise la vérification pour tout le fichier.
+//            Par défaut true — comportement inchangé si pas de config.
+function showTDAH() {
+  return window.USER_CONFIG?.ui?.showTDAHMention !== false;
+}
+
+// RÔLE : Indique si la feature cycle menstruel doit être affichée.
+// POURQUOI : Même logique que showTDAH() — on pose les deux ici
+//            pour les avoir au même endroit.
+//            Par défaut true — comportement inchangé si pas de config.
+function showCycle() {
+  return window.USER_CONFIG?.ui?.showCycleFeature !== false;
+}
+
+// RÔLE : Indique si la feature agenda/rendez-vous doit être affichée.
+// POURQUOI : Émilie ne prévoit pas de s'en servir à terme.
+//            Alexia oui. Cette fonction permet de masquer proprement
+//            le bouton et les sections RDV selon la config.
+//            Par défaut true — comportement inchangé si pas de config.
+function showRDV() {
+  return window.USER_CONFIG?.ui?.showRDVFeature !== false;
+}
+
 /**
  * UTILITAIRE GLOBAL (Système 7 : Ingénierie)
  * animEl() : applique une animation Animate.css sur un élément.

@@ -31,7 +31,8 @@
   "ui": {
     "appTitle": "HabitGotchi",
     "showTDAHMention": true,
-    "showCycleFeature": true
+    "showCycleFeature": true,
+    "showRDVFeature": true
   },
 
   "startProps": [],

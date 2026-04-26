@@ -406,86 +406,93 @@ function clearDebugLogs() {
     - Export/import, réinitialisation, outils debug
   -->
   <div id="p-settings" class="pnl">
-    <!-- Réglages de base (SYSTEM 7: Ingénierie/Layout) -->
-    <div class="card" style="margin-bottom:12px;">
-      <h2>⚙️ Réglages</h2>
-      <div style="margin-bottom:10px">
-        <label class="slbl">Nom du Gotchi</label>
-        <div style="display:flex;gap:5px">
-          <input type="text" id="name-inp" class="inp" autocomplete="off">
-          <button class="btn btn-p" onclick="saveName()">OK</button>
-        </div>
-      </div>
-      <div style="margin-bottom:10px">
-        <label class="slbl">Clé API</label>
-        <div style="display:flex;gap:5px">
-          <input type="password" id="api-inp" class="inp" autocomplete="new-password">
-          <button class="btn btn-p" onclick="saveApi()">OK</button>
-        </div>
-      </div>
-      <!-- Bouton de test de la clé API (SYSTEM 3: IA & Cognition) -->
-      <button class="btn btn-s" onclick="testApiKey()" style="font-size:var(--fs-sm);margin-top:6px;width:100%"> <!-- était 10px -->
-        🔌 Tester la connexion
-      </button>
-      <div id="api-status" style="font-size:var(--fs-xs);margin-top:6px;text-align:center"></div> <!-- était 10px — statut secondaire -->
 
-      <!-- Code spécial (cheat code) (SYSTEM 7: Ingénierie/Layout) -->
-      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
-        <label style="font-size:var(--fs-xs);color:var(--text2)">🔮 Code spécial</label> <!-- était 10px -->
-        <div style="display:flex;gap:6px;margin-top:4px">
-          <input id="cheat-input" type="text" placeholder="Entrer un code..."
-            style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:var(--fs-sm);font-family:'Courier New',monospace"> <!-- était 11px -->
-          <button class="btn btn-s" onclick="applyCheatCode()" style="font-size:var(--fs-sm);white-space:nowrap">Activer</button> <!-- était 10px -->
-        </div>
-      </div>
+    <!-- ── Section 1 : Compte (ouverte par défaut) ── -->
+    <details class="settings-section" open>
+      <summary>⚙️ Compte</summary>
+      <div class="settings-body">
 
-<div>
-  <label class="slbl">Code PIN</label>
-  <div style="display:flex;flex-direction:column;gap:5px">
-    <input type="password" id="pin-ancien" class="inp" maxlength="4" 
-      inputmode="numeric" placeholder="PIN actuel" autocomplete="current-password">
-    <div style="display:flex;gap:5px">
-      <input type="password" id="pin-inp" class="inp" maxlength="4" 
-        inputmode="numeric" placeholder="Nouveau PIN" autocomplete="new-password">
-      <button class="btn btn-p" onclick="savePin()">OK</button>
+        <div>
+          <label class="slbl">Nom du Gotchi</label>
+          <div style="display:flex;gap:5px">
+            <input type="text" id="name-inp" class="inp" autocomplete="off">
+            <button class="btn btn-p" onclick="saveName()">OK</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="slbl">Clé API</label>
+          <div style="display:flex;gap:5px">
+            <input type="password" id="api-inp" class="inp" autocomplete="new-password">
+            <button class="btn btn-p" onclick="saveApi()">OK</button>
+          </div>
+          <button class="btn btn-s" onclick="testApiKey()" style="font-size:var(--fs-sm);margin-top:6px;width:100%">
+            🔌 Tester la connexion
+          </button>
+          <div id="api-status" style="font-size:var(--fs-xs);margin-top:6px;text-align:center"></div>
+        </div>
+
+        <div>
+          <label class="slbl">Code PIN</label>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <input type="password" id="pin-ancien" class="inp" maxlength="4"
+              inputmode="numeric" placeholder="PIN actuel" autocomplete="current-password">
+            <div style="display:flex;gap:5px">
+              <input type="password" id="pin-inp" class="inp" maxlength="4"
+                inputmode="numeric" placeholder="Nouveau PIN" autocomplete="new-password">
+              <button class="btn btn-p" onclick="savePin()">OK</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding-top:8px;border-top:1px solid var(--border)">
+          <label style="font-size:var(--fs-xs);color:var(--text2)">🔮 Code spécial</label>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <input id="cheat-input" type="text" placeholder="Entrer un code..."
+              style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:var(--fs-sm);font-family:'Courier New',monospace">
+            <button class="btn btn-s" onclick="applyCheatCode()" style="font-size:var(--fs-sm);white-space:nowrap">Activer</button>
+          </div>
+        </div>
+
+      </div>
+    </details>
+
+    <!-- ── Section 2 : Données (fermée par défaut) ── -->
+    <details class="settings-section">
+      <summary>💾 Mes données</summary>
+      <div class="settings-body">
+        <p id="last-journal-export" style="font-size:var(--fs-xs);color:var(--text2)"></p>
+        <p style="font-size:var(--fs-xs);color:var(--text2)">Sauvegarde tes progrès avant une mise à jour.</p>
+        <button class="btn btn-s" onclick="exportD()" style="width:100%;font-size:var(--fs-sm)">📦 Exporter ma sauvegarde</button>
+        <input type="file" id="import-file" style="display:none" accept=".json" onchange="importD(event)">
+        <button class="btn btn-s" onclick="document.getElementById('import-file').click()" style="width:100%;font-size:var(--fs-sm);background:var(--mint);color:#fff;border:none;">📥 Restaurer une sauvegarde</button>
+        <button class="btn btn-s" onclick="forceUpdate()" style="width:100%;font-size:var(--fs-sm)">🔄 Mettre à jour l'app</button>
+      </div>
+    </details>
+
+    <!-- ── Section 3 : Avancé & Danger (fermée par défaut) ── -->
+    <details class="settings-section danger">
+      <summary>⚠️ Avancé</summary>
+      <div class="settings-body">
+        <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:var(--fs-sm)">🗑️ Tout réinitialiser</button>
+        <!-- Outils développeur -->
+        <details style="border:1px dashed var(--border);border-radius:8px;overflow:hidden;padding:4px 8px">
+          <summary style="font-size:var(--fs-xs);color:var(--text2);cursor:pointer;padding:4px 0;list-style:none">🛠️ Outils développeur</summary>
+          <div style="padding-top:6px;display:flex;flex-direction:column;gap:4px">
+            <button class="btn btn-s" onclick="debugProps()" style="width:100%;font-size:var(--fs-xs)">🔍 État système</button>
+            <button class="btn btn-s" onclick="cleanProps()" style="width:100%;font-size:var(--fs-xs)">🧹 Nettoyer inventaire</button>
+            <button class="btn btn-s" onclick="toggleDebugPanel()" style="width:100%;font-size:var(--fs-xs)">🐛 Console debug PWA</button>
+          </div>
+        </details>
+      </div>
+    </details>
+
+    <!-- Version -->
+    <div style="text-align:center;margin-top:8px;font-size:var(--fs-xs);color:var(--text2)">
+      Habit-Gotchi <span id="APP_VERSION"></span> ✿
     </div>
-  </div>
-</div>
-    </div>
 
-<!-- Mes données -->
-<div class="card" style="margin-top:15px;">
-  <h2>💾 Mes données</h2>
-  <p id="last-journal-export" style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:6px"></p> <!-- était 9px -->
-  <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:10px">Sauvegarde tes progrès avant une mise à jour.</p> <!-- était 10px -->
-  <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:8px;font-size:var(--fs-sm)">📦 Exporter ma sauvegarde</button> <!-- était 10px -->
-  <input type="file" id="import-file" style="display:none" accept=".json" onchange="importD(event)">
-  <button class="btn btn-s" onclick="document.getElementById('import-file').click()" style="width:100%;margin-bottom:8px;font-size:var(--fs-sm);background:var(--mint);color:#fff;border:none;">📥 Restaurer une sauvegarde</button> <!-- était 10px -->
-  <button class="btn btn-s" onclick="forceUpdate()" style="width:100%;font-size:var(--fs-sm)">🔄 Mettre à jour l'app</button> <!-- était 10px -->
-</div>
-
-<!-- Danger zone -->
-<div class="card" style="margin-top:12px;border-color:var(--danger)"> <!-- était #e57373 hardcodé -->
-  <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:var(--fs-sm)">🗑️ Tout réinitialiser</button> <!-- était 10px -->
-</div>
-
-<!-- Version -->
-<div style="text-align:center;margin-top:12px;font-size:var(--fs-xs);color:var(--text2)"> <!-- était 9px — numéro de version = timestamp -->
-  Habit-Gotchi <span id="APP_VERSION"></span> ✿
-</div>
-
-<!-- Outils développeur (caché) -->
-<div style="margin-top:12px;border:1px dashed var(--border);border-radius:10px;overflow:hidden">
-  <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
-    style="width:100%;background:none;border:none;padding:8px;font-size:var(--fs-xs);color:var(--text2);cursor:pointer;text-align:left"> <!-- était 9px -->
-    🛠️ Outils développeur ▾
-  </button>
-  <div style="display:none;padding:0 8px 8px">
-    <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:4px;font-size:var(--fs-xs)">🔍 État système</button> <!-- était 9px -->
-    <button class="btn btn-s" onclick="cleanProps()" style="width:100%;margin-top:4px;font-size:var(--fs-xs)">🧹 Nettoyer inventaire</button> <!-- était 9px -->
-    <button class="btn btn-s" onclick="toggleDebugPanel()" style="width:100%;margin-top:4px;font-size:var(--fs-xs)">🐛 Console debug PWA</button> <!-- était 9px -->
-  </div>
-</div>
+  </div><!-- fin p-settings -->
 
 </div><!-- fin dynamic-zone -->
 

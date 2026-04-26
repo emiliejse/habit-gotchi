@@ -414,6 +414,31 @@ body {
   100% { transform: scale(1); }
 }
 
+/* RÔLE : Met en évidence la prochaine habitude à cocher */
+/* POURQUOI : Sans signal visuel, l'utilisatrice doit scanner toute la liste pour trouver quoi faire
+   — coût décisionnel élevé au démarrage, incompatible avec la fatigue TDAH */
+.hab--next {
+  border-color: var(--lilac);
+  box-shadow: 0 0 0 3px rgba(176,144,208,0.2);
+  background: rgba(176,144,208,0.06);
+}
+.hab--next .ck {
+  border-color: var(--lilac);
+}
+/* Petit label "À faire" discret au-dessus de la checkbox */
+.hab--next::before {
+  content: 'Prochain ✿';
+  position: absolute;
+  top: -10px;
+  left: 8px;
+  font-size: 9px;
+  font-weight: bold;
+  color: var(--lilac);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
 /* Jauges d'Énergie et de Bonheur (Sliders) */
 .slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .slider-row label { font-size: var(--fs-xs); font-weight: bold; width: 55px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); } /* était 9px */
@@ -465,6 +490,48 @@ body {
   display: flex; align-items: center; justify-content: center; transition: .12s;
 }
 .pin-k:active { background: var(--border); transform: scale(.9); }
+
+/* ─── SYSTÈME 7 : RÉGLAGES COLLAPSIBLES ──────────────────────────── */
+/* RÔLE : Sections pliables dans #p-settings pour réduire la surcharge décisionnelle */
+/* POURQUOI : 8 cartes visibles d'un coup = overload cognitif. <details> natif = 0 JS nécessaire */
+details.settings-section {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+details.settings-section > summary {
+  padding: 14px 16px;
+  font-weight: bold;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  list-style: none; /* supprime le triangle natif */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  user-select: none;
+}
+details.settings-section > summary::-webkit-details-marker { display: none; }
+details.settings-section > summary::after {
+  content: '▾';
+  font-size: 14px;
+  color: var(--text2);
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+details.settings-section[open] > summary::after { transform: rotate(180deg); }
+details.settings-section > summary:active { background: rgba(0,0,0,.04); }
+.settings-body {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* Danger zone : bordure rouge sur la section */
+details.settings-section.danger { border-color: var(--danger); }
+details.settings-section.danger > summary { color: var(--danger); }
 
 /* Calendrier (Vue Progression) */
 .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }

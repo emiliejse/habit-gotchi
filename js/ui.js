@@ -485,21 +485,27 @@ function renderHabs() {
   // --- Page d'accueil : liste des habitudes ---
   const habHome = document.getElementById('hab-home');
   if (habHome) {
+    // RÔLE : Identifier la première habitude non-cochée pour la mettre en avant
+    // POURQUOI : Offrir un point d'entrée immédiat → réduit le coût décisionnel au démarrage
+    const firstUndoneIndex = D.habits.findIndex(h => !log.includes(h.catId));
+
 habHome.innerHTML = D.habits.map((h, i) => {
   const c = CATS.find(c => c.id === h.catId);
   const d = log.includes(h.catId);
   const libelle = (h.label !== c?.label) ? h.label : (c?.def || h.label);
+  // Ajoute .hab--next uniquement sur la première habitude non-cochée (si toutes pas finies)
+  const isNext = !d && i === firstUndoneIndex && done < D.habits.length;
   return `
-    <div class="hab ${d ? 'done' : ''}" style="position:relative">
+    <div class="hab ${d ? 'done' : ''} ${isNext ? 'hab--next' : ''}" style="position:relative">
       <div class="ck" onclick="toggleHab('${h.catId}')">${d ? '✓' : ''}</div>
       <span id="hab-label-${h.catId}" style="flex:1;font-size:12px;cursor:pointer"
   onclick="toggleHab('${h.catId}')">${libelle}</span>
       <span style="font-size:16px">${c.icon}</span>
       <span style="width:1px;background:var(--border);height:14px;margin:0 4px"></span>
-      <span style="font-size:11px;color:var(--text2);cursor:pointer;padding:0 2px"
+      <span style="font-size:var(--fs-xs);color:var(--text2);cursor:pointer;padding:0 2px"
         onclick="editHabInline('${h.catId}', ${i})">✏️</span>
     </div>`;
-}).join('') + `<p style="font-size:10px;color:var(--text2);text-align:center;margin-top:6px;opacity:0.7">
+}).join('') + `<p style="font-size:var(--fs-xs);color:var(--text2);text-align:center;margin-top:6px;opacity:0.7">
   ✏️ Appuie sur le crayon pour personnaliser tes habitudes
 </p>`;
   }

@@ -49,6 +49,22 @@
   --fs-md:  15px;  /* Corps de texte standard */
   --fs-lg:  18px;  /* Titres de carte, titres de section */
   --fs-xl:  22px;  /* Titre de panneau principal */
+
+  /* ─── ESPACEMENTS ────────────────────────────────────────────────── */
+  /* RÔLE : Espacements cohérents qui évoluent avec la typographie */
+  /* POURQUOI : Quand le texte grossit, les conteneurs calibrés en px fixes deviennent trop serrés */
+  --sp-xs:  4px;   /* Séparateurs, gaps internes minimes */
+  --sp-sm:  8px;   /* Padding interne des petits composants (badges, tags) */
+  --sp-md:  12px;  /* Padding standard des cartes et boutons */
+  --sp-lg:  16px;  /* Padding généreux, marges entre sections */
+  --sp-xl:  24px;  /* Marges entre blocs majeurs */
+
+  /* ─── BORDER RADIUS ──────────────────────────────────────────────── */
+  /* RÔLE : Rayon de courbure cohérent sur tous les composants */
+  --r-sm:   6px;   /* Tags, badges, petits boutons */
+  --r-md:   10px;  /* Boutons standard, inputs */
+  --r-lg:   14px;  /* Cartes, modales */
+  --r-xl:   20px;  /* Éléments très arrondis (languette, pills) */
 }
 
 /* Reset CSS basique */
@@ -257,8 +273,8 @@ body {
 
 /* Design "Carnet/Livre" du menu */
 .menu-book {
-  background: #f4edd8; border: 4px solid #c8b898; border-radius: 6px;
-  padding: 18px 16px 14px; width: 300px;
+  background: #f4edd8; border: 4px solid #c8b898; border-radius: var(--r-sm);
+  padding: var(--sp-lg) var(--sp-md) var(--sp-md); width: 300px;
   box-shadow: 4px 4px 0 #b8a888, inset 0 0 20px rgba(0,0,0,.05);
   font-family: 'Courier New', monospace; position: relative;
 }
@@ -325,18 +341,18 @@ body {
 
 .card {
   background: var(--card); backdrop-filter: blur(6px); border: 2px solid var(--border);
-  border-radius: 14px; padding: 12px; margin-bottom: 8px; box-shadow: 0 2px 8px var(--shadow);
+  border-radius: var(--r-lg); padding: var(--sp-md); margin-bottom: var(--sp-sm); box-shadow: 0 2px 8px var(--shadow);
 }
-.card h2 { font-size: 13px; margin-bottom: 8px; letter-spacing: 1px; }
+.card h2 { font-size: var(--fs-sm); margin-bottom: var(--sp-sm); letter-spacing: 1px; }
 
 .inp {
-  width: 100%; padding: 8px 10px; border: 2px solid var(--border); border-radius: 10px;
-  background: #fff; font: 13px 'Courier New', monospace; color: var(--text); outline: none; transition: .2s;
+  width: 100%; padding: var(--sp-sm) var(--sp-md); border: 2px solid var(--border); border-radius: var(--r-md);
+  background: #fff; font: var(--fs-sm) 'Courier New', monospace; color: var(--text); outline: none; transition: .2s;
 }
 .inp:focus { border-color: var(--lilac); }
 
 .btn {
-  padding: 8px 16px; border: none; border-radius: 10px; font: bold 11px/1 'Courier New', monospace;
+  padding: var(--sp-sm) var(--sp-lg); border: none; border-radius: var(--r-md); font: bold var(--fs-sm)/1 'Courier New', monospace; /* font-size 11px → var(--fs-sm) */
   cursor: pointer; transition: .12s;
 }
 .btn:active { transform: scale(.94); }
@@ -383,8 +399,8 @@ body {
 
 /* Bloc Habitude */
 .hab {
-  display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px;
-  border: 2px solid var(--border); margin-bottom: 4px; background: #fff; cursor: pointer;
+  display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-sm); border-radius: var(--r-sm);
+  border: 2px solid var(--border); margin-bottom: var(--sp-xs); background: #fff; cursor: pointer;
   transition: transform 0.1s ease;
 }
 .hab:active { transform: scale(0.97); } /* Petit écrasement au clic */
@@ -461,16 +477,16 @@ body {
 
 /* Le Journal Années 90 */
 .j90 {
-  background: #e8e0d0; border: 3px solid #c8b8a0; border-radius: 4px; padding: 10px;
+  background: #e8e0d0; border: 3px solid #c8b8a0; border-radius: var(--r-sm); padding: var(--sp-md);
   box-shadow: inset 0 2px 8px rgba(0,0,0,.06);
 }
 .j90 h2 {
-  font-size: 13px; text-align: center; border-bottom: 2px dashed #c8b8a0; 
-  padding-bottom: 6px; margin-bottom: 8px; letter-spacing: 2px;
+  font-size: var(--fs-sm); text-align: center; border-bottom: 2px dashed #c8b8a0;
+  padding-bottom: var(--sp-xs); margin-bottom: var(--sp-sm); letter-spacing: 2px;
 }
 .j-entry {
-  padding: 8px; border: 1px dashed #c8b8a0; margin-bottom: 6px; 
-  border-radius: 4px; background: rgba(255,255,255,.5);
+  padding: var(--sp-sm); border: 1px dashed #c8b8a0; margin-bottom: var(--sp-sm);
+  border-radius: var(--r-sm); background: rgba(255,255,255,.5);
 }
 .j-entry .j-date { font-size: var(--fs-xs); color: #a09880; } /* était 9px — timestamp = seul cas où --fs-xs est approprié */
 .j-entry .j-actions { display: flex; gap: 4px; margin-top: 4px; }
@@ -588,7 +604,7 @@ details.settings-section.danger > summary { color: var(--danger); }
   z-index: 300; display: flex; align-items: center; justify-content: center; padding: 16px;
 }
 .modal-box {
-  background: #fff; border-radius: 16px; padding: 18px; max-width: 340px; width: 100%;
+  background: #fff; border-radius: var(--r-lg); padding: var(--sp-lg); max-width: 340px; width: 100%;
   box-shadow: 0 16px 40px rgba(56, 48, 74, 0.2);
   position: relative; /* POURQUOI : nécessaire pour positionner le .modal-close en absolute */
   max-height: 85dvh; overflow-y: auto; /* POURQUOI : empêche les modales longues de déborder hors écran */

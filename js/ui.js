@@ -217,7 +217,7 @@ function toastSnack(msg) {
   if (!el) {
     el = document.createElement('div'); el.id = 'snack';
     el.style.cssText = `position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
-      background:#38304a;color:#fff;padding:8px 16px;border-radius:20px;font-size:10px;
+      background:#38304a;color:#fff;padding:var(--sp-sm) 16px;border-radius:20px;font-size:var(--fs-sm);
       font-family:'Courier New',monospace;z-index:500;opacity:0;transition:opacity .2s;
       pointer-events:none;white-space:nowrap;`;
     document.body.appendChild(el);
@@ -272,8 +272,8 @@ function ouvrirSnack() {
     modal.style.display = 'flex';
     mbox.innerHTML = `
       <div style="text-align:center;padding:10px">
-        <div style="font-size:48px;margin-bottom:8px">🌙</div>
-        <p style="font-size:12px;margin-bottom:12px">
+        <div style="font-size:48px;margin-bottom:var(--sp-sm)">🌙</div>
+        <p style="font-size:12px;margin-bottom:var(--sp-md)">
           ${window.D.g.name} dort... reviens demain 💜
         </p>
         <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
@@ -288,10 +288,10 @@ function ouvrirSnack() {
     modal.style.display = 'flex';
     mbox.innerHTML = `
       <div style="text-align:center;padding:10px">
-        <div style="font-size:48px;margin-bottom:8px">⏰</div>
-        <p style="font-size:12px;margin-bottom:12px">
+        <div style="font-size:48px;margin-bottom:var(--sp-sm)">⏰</div>
+        <p style="font-size:var(--fs-sm);margin-bottom:var(--sp-md)">
           Ce n'est pas encore l'heure du repas...<br>
-          <span style="color:var(--text2);font-size:10px">
+          <span style="color:var(--text2);font-size:var(--fs-xs)">
             Matin 7h-11h • Midi 11h-15h • Soir 18h-22h
           </span>
         </p>
@@ -308,10 +308,10 @@ function ouvrirSnack() {
     modal.style.display = 'flex';
     mbox.innerHTML = `
       <div style="text-align:center;padding:10px">
-        <div style="font-size:48px;margin-bottom:8px">${w.icon}</div>
-        <p style="font-size:12px;margin-bottom:12px">
+        <div style="font-size:48px;margin-bottom:var(--sp-sm)">${w.icon}</div>
+        <p style="font-size:var(--fs-sm);margin-bottom:var(--sp-md)">
           ${window.D.g.name} a déjà mangé ce ${w.label.toLowerCase()} 💜<br>
-          <span style="color:var(--text2);font-size:10px">Reviens à la prochaine fenêtre repas</span>
+          <span style="color:var(--text2);font-size:var(--fs-xs)">Reviens à la prochaine fenêtre repas</span>
         </p>
         <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
       </div>`;
@@ -327,7 +327,7 @@ function ouvrirSnack() {
   const snackButtons = snacks.map(emoji => `
     <button class="btn btn-snack" 
             onclick="giveSnack('${emoji}');clModal();" 
-            style="flex:1;font-size:32px;padding:12px 4px;background:var(--card);border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:transform .15s">
+            style="flex:1;font-size:32px;padding:var(--sp-md) 4px;background:var(--card);border:2px solid var(--border);border-radius:var(--r-md);cursor:pointer;transition:transform .15s">
       ${emoji}
     </button>
   `).join('');
@@ -336,13 +336,13 @@ function ouvrirSnack() {
   mbox.innerHTML = `
     <div style="text-align:center;padding:10px">
       <div style="font-size:24px;margin-bottom:4px">${w.icon}</div>
-      <p style="font-size:12px;margin-bottom:4px;font-weight:bold">
+      <p style="font-size:var(--fs-sm);margin-bottom:4px;font-weight:bold">
         Repas du ${w.label.toLowerCase()}
       </p>
-      <p style="font-size:10px;color:var(--text2);margin-bottom:12px">
+      <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:var(--sp-md)">
         Que veux-tu donner à ${window.D.g.name} ?
       </p>
-      <div style="display:flex;gap:6px;margin-bottom:12px">
+      <div style="display:flex;gap:6px;margin-bottom:var(--sp-md)">
         ${snackButtons}
       </div>
       <button class="btn btn-s" onclick="clModal()" style="width:100%">Annuler</button>
@@ -404,7 +404,7 @@ function updUI() {
       bdgEl.onclick = () => {
         document.getElementById('modal').style.display = 'flex';
         document.getElementById('mbox').innerHTML = `
-          <div style="text-align:center;padding:8px">
+          <div style="text-align:center;padding:var(--sp-sm)">
             <div style="font-size:40px">🎂</div>
             <p style="font-size:12px;color:var(--text);margin:12px 0;line-height:1.6;white-space:pre-line">${bday.message || 'Joyeux anniversaire 💜'}</p>
             <button class="btn btn-p" onclick="clModal()" style="margin-top:8px;width:100%">Merci 💜</button>
@@ -583,7 +583,7 @@ if (btnTout) {
   const listEl = document.getElementById('props-list');
   if (!listEl) return;
   if (!D.g.props || D.g.props.length === 0) {
-    listEl.innerHTML = '<p style="font-size:10px;color:var(--text2);text-align:center;padding:12px">Ton sac est vide. Reviens plus tard ! ✿</p>';
+    listEl.innerHTML = '<p style="font-size:var(--fs-sm);color:var(--text2);text-align:center;padding:var(--sp-md)">Ton sac est vide. Reviens plus tard ! ✿</p>';
     return;
   }
   const filtered = D.g.props
@@ -602,7 +602,7 @@ if (btnTout) {
     filtered.map(({ p, index, def }) => {
       const isClaud = !!(D.propsPixels && D.propsPixels[p.id]);
       const badgeId = `mini-${p.id}`;
-      return `<div onclick="toggleProp(${index})" style="background:${p.actif?'var(--mint)':'#fff'};border:2px solid ${p.actif?'var(--mint)':isClaud?'var(--lilac)':'var(--border)'};border-radius:10px;padding:6px 4px 8px;font-size:10px;font-weight:bold;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;transition:.2s;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.05);position:relative;min-height:90px;">
+      return `<div onclick="toggleProp(${index})" style="background:${p.actif?'var(--mint)':'#fff'};border:2px solid ${p.actif?'var(--mint)':isClaud?'var(--lilac)':'var(--border)'};border-radius:var(--r-md);padding:6px 4px 8px;font-size:var(--fs-xs);font-weight:bold;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;transition:.2s;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.05);position:relative;min-height:90px;">
         ${isClaud ? `
   <span style="position:absolute;top:3px;left:4px;font-size:14px;color:var(--lilac);">✦</span>
   <span onclick="event.stopPropagation();supprimerObjetIA('${p.id}')" style="position:absolute;top:2px;right:4px;font-size:13px;cursor:pointer;opacity:.6">🗑️</span>
@@ -612,7 +612,7 @@ if (btnTout) {
         </div>
         <div style="width:100%;">
           <div>${p.nom}</div>
-          <div style="font-size:8px;text-transform:uppercase;opacity:.7;font-weight:normal;">${p.type}</div>
+          <div style="font-size:var(--fs-xs);text-transform:uppercase;opacity:.7;font-weight:normal;">${p.type}</div>
         </div>
       </div>`;
     }).join('') + `</div>`;
@@ -633,14 +633,14 @@ function ouvrirBoutique() {
 <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>    </div>
 
     <div style="text-align:center;margin-bottom:16px">
-      <p style="font-size:11px;color:var(--text2);text-align:center">
-  🌸 <b style="font-size:15px;color:var(--lilac)">${D.g.petales || 0}</b> pétales disponibles
+      <p style="font-size:var(--fs-sm);color:var(--text2);text-align:center">
+  🌸 <b style="font-size:var(--fs-lg);color:var(--lilac)">${D.g.petales || 0}</b> pétales disponibles
 </p>
     </div>
 
     <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px;margin-right:2px">
       <button onclick="switchBoutiqueOnglet('catalogue')"
-        style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;
+        style="flex:1;padding:7px;border-radius:var(--r-xl);border:none;font-size:var(--fs-xs);cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;
         background:${onglet==='catalogue'?'#fff':'transparent'};
         color:${onglet==='catalogue'?'var(--lilac)':'var(--text2)'};
         box-shadow:${onglet==='catalogue'?'0 1px 4px rgba(0,0,0,.1)':'none'};
@@ -648,7 +648,7 @@ function ouvrirBoutique() {
         🌸 Catalogue
       </button>
       <button onclick="switchBoutiqueOnglet('claude')"
-        style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;
+        style="flex:1;padding:7px;border-radius:var(--r-xl);border:none;font-size:var(--fs-xs);cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;
         background:${onglet==='claude'?'#fff':'transparent'};
         color:${onglet==='claude'?'var(--lilac)':'var(--text2)'};
         box-shadow:${onglet==='claude'?'0 1px 4px rgba(0,0,0,.1)':'none'};
@@ -690,11 +690,11 @@ function renderBoutiqueOnglet(onglet) {
     el.innerHTML = libFiltree.map(prop => {
       const peutAcheter = (D.g.petales || 0) >= prop.cout;
       return `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px 8px 10px;border:2px solid var(--border);border-radius:10px;margin-bottom:6px;background:#fff">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-sm) 12px 8px 10px;border:2px solid var(--border);border-radius:var(--r-md);margin-bottom:6px;background:#fff">
           <span style="font-size:18px">${prop.emoji}</span>
-          <span style="font-size:10px;font-weight:bold;flex:1;margin:0 8px">${prop.nom}</span>
+          <span style="font-size:var(--fs-sm);font-weight:bold;flex:1;margin:0 8px">${prop.nom}</span>
           <button onclick="acheterProp('${prop.id}')"
-            style="padding:5px 12px;border-radius:20px;border:none;font-size:9px;font-weight:bold;font-family:'Courier New',monospace;
+            style="padding:5px 12px;border-radius:20px;border:none;font-size:var(--fs-xs);font-weight:bold;font-family:'Courier New',monospace;
             cursor:${peutAcheter?'pointer':'not-allowed'};
             background:${peutAcheter?'linear-gradient(135deg,var(--lilac),var(--pink))':'#ddd'};
             color:${peutAcheter?'#fff':'#aaa'};
@@ -711,12 +711,12 @@ function renderBoutiqueOnglet(onglet) {
     const dernierObj = derniersProps.length ? derniersProps[derniersProps.length - 1] : null; 
 
     el.innerHTML = `
-      <p style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:16px;line-height:1.6">
+      <p style="font-size:var(--fs-sm);color:var(--text2);text-align:center;margin-bottom:16px;line-height:1.6">
         ${window.D.g.name} invente un objet unique<br>rien que pour toi ✨
       </p>
       <div style="text-align:center">
         <button onclick="acheterPropClaude()"
-          style="padding:12px 28px;border-radius:999px;border:none;font-size:11px;font-weight:bold;font-family:'Courier New',monospace;
+          style="padding:var(--sp-md) 28px;border-radius:999px;border:none;font-size:var(--fs-sm);font-weight:bold;font-family:'Courier New',monospace;
           cursor:${peutGenerer?'pointer':'not-allowed'};
           background:${peutGenerer?'linear-gradient(135deg,var(--lilac),var(--pink))':'#ddd'};
           color:${peutGenerer?'#fff':'#aaa'};
@@ -727,14 +727,14 @@ function renderBoutiqueOnglet(onglet) {
       </div>
       ${dernierObj ? `
   <div style="margin-top:20px;text-align:center;border-top:1px solid var(--border);padding-top:16px">
-    <div style="font-size:9px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">dernière création</div>
+    <div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:var(--sp-sm);text-transform:uppercase;letter-spacing:1px">dernière création</div>
     <canvas id="apercu-dernier-prop" style="image-rendering:pixelated;border-radius:6px;border:2px solid var(--border)"></canvas>
-    <div style="font-size:10px;font-weight:bold;margin-top:6px">${dernierObj.emoji} ${dernierObj.nom}</div>
-    <div style="font-size:8px;color:var(--text2);text-transform:uppercase;margin-top:2px">${dernierObj.type}</div>
+    <div style="font-size:var(--fs-sm);font-weight:bold;margin-top:6px">${dernierObj.emoji} ${dernierObj.nom}</div>
+    <div style="font-size:var(--fs-xs);color:var(--text2);text-transform:uppercase;margin-top:2px">${dernierObj.type}</div>
   </div>` : `
   <div style="margin-top:20px;text-align:center;border-top:1px solid var(--border);padding-top:16px;opacity:.5">
     <div style="font-size:28px;margin-bottom:6px">🌱</div>
-    <div style="font-size:9px;color:var(--text2);line-height:1.6">Pas encore de création...<br>demande à ${window.D.g.name} d'inventer quelque chose ✨</div>
+    <div style="font-size:var(--fs-xs);color:var(--text2);line-height:1.6">Pas encore de création...<br>demande à ${window.D.g.name} d'inventer quelque chose ✨</div>
   </div>`}
     `;
 
@@ -871,9 +871,9 @@ function toggleProp(index) {
 function supprimerObjetIA(propId) {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
-    <p style="text-align:center;font-size:12px;margin-bottom:12px">Supprimer cet objet définitivement ?</p>
-    <button class="btn btn-d" onclick="confirmerSuppressionIA('${propId}')" style="width:100%;margin-bottom:6px;font-size:10px">🗑️ Supprimer</button>
-    <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:10px">Annuler</button>
+    <p style="text-align:center;font-size:12px;margin-bottom:var(--sp-md)">Supprimer cet objet définitivement ?</p>
+    <button class="btn btn-d" onclick="confirmerSuppressionIA('${propId}')" style="width:100%;margin-bottom:6px;font-size:var(--fs-sm)">🗑️ Supprimer</button>
+    <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:var(--fs-sm)">Annuler</button>
   `;
   animEl(document.getElementById('mbox'), 'bounceIn');
 }
@@ -892,16 +892,16 @@ function makeSlotBtn(propIndex, slotId, label, arrow, occupied, currentSlot) {
   const isCurrent = currentSlot === slotId;
   return `<div onclick="confirmSlot(${propIndex},'${slotId}')" style="
     border:2px solid ${isCurrent ? 'var(--lilac)' : 'var(--border)'}; 
-    border-radius:8px; padding:8px 4px;
-    cursor:pointer; text-align:center; font-size:10px; font-weight:bold;
+    border-radius:var(--r-sm); padding:var(--sp-sm) 4px;
+    cursor:pointer; text-align:center; font-size:var(--fs-sm); font-weight:bold;
     background:${isCurrent ? 'rgba(176,144,208,.15)' : taken ? '#fff8f0' : '#fff'}; 
     transition:.15s;"
     onmouseover="this.style.borderColor='var(--mint)'"
     onmouseout="this.style.borderColor='${isCurrent ? 'var(--lilac)' : 'var(--border)'}'">
     <div style="font-size:14px">${arrow}</div>
     <div>${label}</div>
-    ${isCurrent ? `<div style="font-size:8px;color:var(--lilac);font-weight:bold">● ici</div>` : ''}
-    ${taken && !isCurrent ? `<div style="font-size:8px;color:var(--coral)">⚠ ${taken}</div>` : ''}
+    ${isCurrent ? `<div style="font-size:var(--fs-xs);color:var(--lilac);font-weight:bold">● ici</div>` : ''}
+    ${taken && !isCurrent ? `<div style="font-size:var(--fs-xs);color:var(--coral)">⚠ ${taken}</div>` : ''}
   </div>`;
 }
 
@@ -928,18 +928,18 @@ const slots = [
   const slotHTML = slots.map(s => {
     const taken = occupied[s.id];
     const takenBadge = taken
-      ? `<span style="font-size:8px;color:var(--lilac);display:block">⚠ ${taken}</span>`
+      ? `<span style="font-size:var(--fs-xs);color:var(--lilac);display:block">⚠ ${taken}</span>`
       : '';
     return `
       <div onclick="confirmSlot(${propIndex},'${s.id}')" style="
-        border:2px solid var(--border); border-radius:8px; padding:8px 6px;
-        cursor:pointer; text-align:center; font-size:10px; font-weight:bold;
+        border:2px solid var(--border); border-radius:var(--r-sm); padding:var(--sp-sm) 6px;
+        cursor:pointer; text-align:center; font-size:var(--fs-sm); font-weight:bold;
         background:${taken ? '#fff8f0' : '#fff'};
         transition:.15s;" onmouseover="this.style.borderColor='var(--mint)'"
         onmouseout="this.style.borderColor='var(--border)'">
         <div style="font-size:16px">📍</div>
         <div>${s.label}</div>
-        <div style="font-size:8px;opacity:.6;font-weight:normal">${s.desc}</div>
+        <div style="font-size:var(--fs-xs);opacity:.6;font-weight:normal">${s.desc}</div>
         ${takenBadge}
       </div>`;
   }).join('');
@@ -950,20 +950,20 @@ document.getElementById('mbox').innerHTML = `
     📍 Où placer ${prop.emoji || '🎁'} ${prop.nom} ?
   </h3>
 
-  <div style="font-size:9px;opacity:.5;margin-bottom:4px;text-transform:uppercase">Fond</div>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px">
+  <div style="font-size:var(--fs-xs);opacity:.5;margin-bottom:4px;text-transform:uppercase">Fond</div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:var(--sp-sm)">
     ${makeSlotBtn(propIndex, 'A', 'Gauche',  '↖', occupied)}
     ${makeSlotBtn(propIndex, 'B', 'Droite',  '↗', occupied)}
   </div>
 
-  <div style="font-size:9px;opacity:.5;margin-bottom:4px;text-transform:uppercase">Devant</div>
+  <div style="font-size:var(--fs-xs);opacity:.5;margin-bottom:4px;text-transform:uppercase">Devant</div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
     ${makeSlotBtn(propIndex, 'C',   'Gauche', '↙', occupied)}
     ${makeSlotBtn(propIndex, 'SOL', 'Centre', '⬇', occupied)}
     ${makeSlotBtn(propIndex, 'D',   'Droite', '↘', occupied)}
   </div>
 
-  <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:10px">Annuler</button>
+  <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:var(--fs-sm)">Annuler</button>
 `;
 animEl(document.getElementById('mbox'), 'bounceIn');
 }
@@ -1008,10 +1008,10 @@ function openSlotPickerAvecRangement(propIndex) {
     <h3 style="font-size:13px;margin-bottom:6px;color:var(--lilac)">
       📍 ${prop.emoji || '🎁'} ${prop.nom}
     </h3>
-    <p style="font-size:10px;opacity:.6;margin-bottom:10px">
+    <p style="font-size:var(--fs-sm);opacity:.6;margin-bottom:10px">
       Changer d'emplacement ?
     </p>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:var(--sp-sm)">
       ${makeSlotBtn(propIndex, 'A',   'Gauche', '↖', occupied, prop.slot)}
       ${makeSlotBtn(propIndex, 'B',   'Droite', '↗', occupied, prop.slot)}
     </div>
@@ -1020,10 +1020,10 @@ function openSlotPickerAvecRangement(propIndex) {
       ${makeSlotBtn(propIndex, 'SOL', 'Centre', '⬇', occupied, prop.slot)}
       ${makeSlotBtn(propIndex, 'D',   'Droite', '↘', occupied, prop.slot)}
     </div>
-    <button class="btn btn-d" onclick="rangerProp(${propIndex})" style="width:100%;font-size:10px;margin-bottom:6px">
+    <button class="btn btn-d" onclick="rangerProp(${propIndex})" style="width:100%;font-size:var(--fs-sm);margin-bottom:6px">
       📦 Ranger
     </button>
-    <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:10px">Annuler</button>
+    <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:var(--fs-sm)">Annuler</button>
   `;
   animEl(document.getElementById('mbox'), 'bounceIn');
 }
@@ -1115,21 +1115,21 @@ r += `🌡️ ${meteo ? `${meteo.temperature}°C · vent ${meteo.windspeed} km/h
       <h3 style="font-size:13px;color:var(--lilac);">🔍 État système</h3>
       <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button>
     </div>
-    <pre id="debug-contenu" style="font-size:10px;line-height:1.6;white-space:pre-wrap;color:var(--text2);margin:0 0 10px 0">${r}</pre>
+    <pre id="debug-contenu" style="font-size:var(--fs-sm);line-height:1.6;white-space:pre-wrap;color:var(--text2);margin:0 0 10px 0">${r}</pre>
     <button onclick="navigator.clipboard.writeText(document.getElementById('debug-contenu').textContent).then(()=>toast('Copié ✓'))"
-      style="width:100%;padding:8px;border-radius:12px;border:2px solid var(--border);font-size:10px;cursor:pointer;background:transparent;color:var(--text2);margin-bottom:6px">
+      style="width:100%;padding:var(--sp-sm);border-radius:var(--r-md);border:2px solid var(--border);font-size:var(--fs-sm);cursor:pointer;background:transparent;color:var(--text2);margin-bottom:6px">
       📋 Copier
     </button>
     <button onclick="clModal();setTimeout(voirBulles,150)"
-  style="width:100%;padding:8px;border-radius:12px;border:2px solid var(--border);font-size:10px;cursor:pointer;background:transparent;color:var(--text2);margin-bottom:6px">
+  style="width:100%;padding:var(--sp-sm);border-radius:var(--r-md);border:2px solid var(--border);font-size:var(--fs-sm);cursor:pointer;background:transparent;color:var(--text2);margin-bottom:6px">
   💬 Voir les bulles perso
 </button>
     <button onclick="viderJournal()"
-      style="width:100%;padding:8px;border-radius:12px;border:none;font-size:var(--fs-sm);cursor:pointer;background:transparent;color:var(--danger);border:2px solid var(--danger);margin-bottom:6px"> <!-- #e57373 → var(--danger), font-size → var(--fs-sm) -->
+      style="width:100%;padding:var(--sp-sm);border-radius:var(--r-md);border:none;font-size:var(--fs-sm);cursor:pointer;background:transparent;color:var(--danger);border:2px solid var(--danger);margin-bottom:6px"> <!-- #e57373 → var(--danger), font-size → var(--fs-sm) -->
       🗑️ Vider le journal
     </button>
     <button onclick="viderObjetsIA()"
-      style="width:100%;padding:8px;border-radius:12px;border:none;font-size:var(--fs-sm);cursor:pointer;background:transparent;color:var(--danger);border:2px solid var(--danger)"> <!-- #e57373 → var(--danger), font-size → var(--fs-sm) -->
+      style="width:100%;padding:var(--sp-sm);border-radius:var(--r-md);border:none;font-size:var(--fs-sm);cursor:pointer;background:transparent;color:var(--danger);border:2px solid var(--danger)"> <!-- #e57373 → var(--danger), font-size → var(--fs-sm) -->
       🗑️ Vider les objets IA
     </button>
   `;
@@ -1153,8 +1153,8 @@ const contenu = cb.map((p, i) => `  ${i + 1}. ${p}`).join('\n');
       <h3 style="font-size:13px;color:var(--lilac);">💬 Bulles personnalisées</h3>
       <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button>
     </div>
-    <pre style="font-size:10px;line-height:1.8;white-space:pre-wrap;color:var(--text2);margin:0 0 10px;max-height:60vh;overflow-y:auto">${contenu}</pre>
-    <button onclick="clModal()" class="btn btn-s" style="width:100%;font-size:10px">Fermer</button>
+    <pre style="font-size:var(--fs-sm);line-height:1.8;white-space:pre-wrap;color:var(--text2);margin:0 0 10px;max-height:60vh;overflow-y:auto">${contenu}</pre>
+    <button onclick="clModal()" class="btn btn-s" style="width:100%;font-size:var(--fs-sm)">Fermer</button>
   `;
   animEl(document.getElementById('mbox'), 'bounceIn');
 }
@@ -1174,8 +1174,8 @@ function cleanProps() {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
     <h3>Props orphelins (${orphelins.length})</h3>
-    <p style="font-size:11px;color:var(--text2);margin:6px 0">Ces props n'ont plus de données associées :</p>
-    <div style="font-size:11px;margin:8px 0;line-height:1.8">${liste}</div>
+    <p style="font-size:var(--fs-sm);color:var(--text2);margin:6px 0">Ces props n'ont plus de données associées :</p>
+    <div style="font-size:var(--fs-sm);margin:8px 0;line-height:1.8">${liste}</div>
     <div style="display:flex;gap:6px;margin-top:10px">
       <button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button>
       <button class="btn btn-d" onclick="confirmCleanProps()" style="flex:1">Supprimer</button>
@@ -1420,7 +1420,7 @@ async function acheterPropClaude() {
 
   /* ── Animation de chargement ── */
   const el = document.getElementById('boutique-contenu');
-  if (el) el.innerHTML = `<p style="text-align:center;font-size:11px;padding:20px" id="prop-loading">💭</p>`;
+  if (el) el.innerHTML = `<p style="text-align:center;font-size:var(--fs-sm);padding:20px" id="prop-loading">💭</p>`;
   const animProp = startThinkingAnim('prop-loading', window.D.g.name);
 
   /* ── Construction du prompt ── */
@@ -1541,11 +1541,11 @@ function genSoutien() {
     document.getElementById('modal').style.display = 'flex';
     document.getElementById('mbox').innerHTML = `
       <div style="text-align:center;padding:10px">
-        <div style="font-size:40px;margin-bottom:8px">🔑</div>
+        <div style="font-size:40px;margin-bottom:var(--sp-sm)">🔑</div>
         <p style="font-size:12px;margin-bottom:4px;color:var(--lilac);font-weight:bold">
           Clé API manquante
         </p>
-        <p style="font-size:11px;color:var(--text2);margin-bottom:12px">
+        <p style="font-size:var(--fs-sm);color:var(--text2);margin-bottom:var(--sp-md)">
           Pour accéder au soutien du Gotchi,<br>ajoute ta clé API dans les Réglages.
         </p>
         <button class="btn btn-p" onclick="clModal(); go('settings')" style="width:100%">
@@ -1610,12 +1610,12 @@ window._soutienHistory = [];
       <div class="soutien-chat" id="soutien-chat"></div>
     </div>
     <div style="display:flex;gap:6px;margin-top:8px">
-      <input type="text" id="soutien-inp" class="inp" placeholder="Réponds ici..." style="font-size:11px"
+      <input type="text" id="soutien-inp" class="inp" placeholder="Réponds ici..." style="font-size:var(--fs-sm)"
         onkeydown="if(event.key==='Enter')sendSoutienMsg()">
-      <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:8px 12px">→</button>
+      <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:var(--sp-sm) 12px">→</button>
     </div>
-    <p id="soutien-count" style="font-size:9px;opacity:0.6;text-align:center;margin-top:4px">6 messages restants · session ${D.soutienCount}/3 aujourd'hui</p>
-    <button id="btn-copier-soutien" class="btn btn-s" onclick="copierSoutien()" style="width:100%;font-size:10px;margin-top:6px">Copier la conversation</button>
+    <p id="soutien-count" style="font-size:var(--fs-xs);opacity:0.6;text-align:center;margin-top:4px">6 messages restants · session ${D.soutienCount}/3 aujourd'hui</p>
+    <button id="btn-copier-soutien" class="btn btn-s" onclick="copierSoutien()" style="width:100%;font-size:var(--fs-sm);margin-top:6px">Copier la conversation</button>
 `;
 animEl(document.getElementById('mbox'), 'bounceIn');
   sendSoutienMsg(promptInit, true);
@@ -1914,13 +1914,13 @@ function renderPerso() {
   if (pg) {
     const current = D.g.uiPalette || 'lavande';
     pg.innerHTML = UI_PALETTES.map(p => `
-      <div onclick="applyUIPalette('${p.id}')" style="padding:8px;border-radius:10px;cursor:pointer;text-align:center;border:3px solid ${current===p.id?p.lilac:'transparent'};background:${p.bg};transition:.2s;">
+      <div onclick="applyUIPalette('${p.id}')" style="padding:var(--sp-sm);border-radius:var(--r-md);cursor:pointer;text-align:center;border:3px solid ${current===p.id?p.lilac:'transparent'};background:${p.bg};transition:.2s;">
         <div style="display:flex;gap:4px;justify-content:center;margin-bottom:4px">
           <div style="width:14px;height:14px;border-radius:50%;background:${p.lilac}"></div>
           <div style="width:14px;height:14px;border-radius:50%;background:${p.mint}"></div>
           <div style="width:14px;height:14px;border-radius:50%;background:${p.pink}"></div>
         </div>
-        <div style="font-size:9px;font-weight:bold;color:${p.text || '#38304a'}">${p.label}</div>
+        <div style="font-size:var(--fs-xs);font-weight:bold;color:${p.text || '#38304a'}">${p.label}</div>
       </div>`).join('');
   }
   const gc = document.getElementById('gotchi-colors');
@@ -1928,14 +1928,14 @@ function renderPerso() {
     const current = D.g.gotchiColor || 'vert';
     gc.innerHTML = GOTCHI_COLORS.map(c => `
   <div onclick="applyGotchiColor('${c.id}')" style="
-    border-radius:10px;cursor:pointer;
+    border-radius:var(--r-md);cursor:pointer;
     background:${c.body};
     border:3px solid ${current===c.id ? 'var(--lilac)' : 'transparent'};
     padding:6px 4px;
     display:flex;flex-direction:column;align-items:center;gap:3px;
     transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1);">
     <div style="width:20px;height:20px;border-radius:50%;background:${c.bodyLt};border:2px solid ${c.bodyDk}"></div>
-    <div style="font-size:8px;font-weight:bold;color:${c.bodyDk};text-align:center">${c.label}</div>
+    <div style="font-size:var(--fs-xs);font-weight:bold;color:${c.bodyDk};text-align:center">${c.label}</div>
   </div>`).join('');
   }
   const et = document.getElementById('env-themes');
@@ -1943,13 +1943,13 @@ function renderPerso() {
     const current = D.g.envTheme || 'pastel';
 et.innerHTML = ENV_THEMES.map(t => `
   <div onclick="applyEnvTheme('${t.id}')" style="
-    padding:12px 8px;border-radius:10px;cursor:pointer;
+    padding:var(--sp-md) 8px;border-radius:var(--r-md);cursor:pointer;
     background:linear-gradient(135deg,${t.sky1},${t.gnd});
     border:3px solid ${current===t.id?'var(--lilac)':'transparent'};
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:4px;transition:.2s;">
     <div style="font-size:24px;line-height:1">${t.icon}</div>
-    <div style="font-size:10px;font-weight:bold;color:#fff;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.4)">${t.label}</div>
+    <div style="font-size:var(--fs-sm);font-weight:bold;color:#fff;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.4)">${t.label}</div>
   </div>`).join('');
   }
 } // ← ferme renderPerso()
@@ -2140,10 +2140,10 @@ if (vStatus && !document.getElementById('j-text').value) {
   const c = document.getElementById('j-entries');
   const me = {super:'🌟',bien:'😊',ok:'😐',bof:'😔',dur:'🌧️'};
   if (!c) return;
-  if (!entries.length) { c.innerHTML = '<p style="font-size:11px;color:#a09880;text-align:center">Aucune entrée</p>'; return; }
+  if (!entries.length) { c.innerHTML = '<p style="font-size:var(--fs-sm);color:#a09880;text-align:center">Aucune entrée</p>'; return; }
   c.innerHTML = entries.map(e => {
     const d = new Date(e.date), gi = D.journal.indexOf(e);
-    return `<div class="j-entry"><div style="display:flex;justify-content:space-between"><span class="j-date">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})} ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span><span style="font-size:16px">${me[e.mood]||'😐'}</span></div><div style="font-size:11px;margin-top:3px">${e.text||'—'}</div><div class="j-actions"><button onclick="editJEntry(${gi})">✏️</button><button onclick="delJEntry(${gi})">🗑️</button></div></div>`;
+    return `<div class="j-entry"><div style="display:flex;justify-content:space-between"><span class="j-date">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})} ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span><span style="font-size:16px">${me[e.mood]||'😐'}</span></div><div style="font-size:var(--fs-sm);margin-top:3px">${e.text||'—'}</div><div class="j-actions"><button onclick="editJEntry(${gi})">✏️</button><button onclick="delJEntry(${gi})">🗑️</button></div></div>`;
   }).join('');
 }
 function editJEntry(i) {
@@ -2151,7 +2151,7 @@ function editJEntry(i) {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
   <h3>Modifier</h3>
-  <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px" id="edit-mood-pick">
+  <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:var(--sp-sm)" id="edit-mood-pick">
     ${MOODS.map(m => `<button class="mood-b${e.mood===m.id?' sel':''}" data-m="${m.id}" onclick="this.parentNode.querySelectorAll('.mood-b').forEach(b=>b.classList.toggle('sel',b===this));window._editMood='${m.id}'">${m.e}</button>`).join('')}
   </div>
   <textarea id="edit-j-txt" class="inp" rows="5" style="font-size:12px">${e.text||''}</textarea>
@@ -2271,7 +2271,7 @@ function renderProg() {
     const fin   = new Date(wd[6] + 'T12:00');
     const fmt   = d => `${d.getDate()} ${d.toLocaleDateString('fr-FR', { month: 'short' })}`;
     const prenom = D.g.userName || D.userName || 'toi';
-    bilanTitre.innerHTML = `🌼 Bilan pour ${prenom}<br><span style="font-size:9px;font-weight:normal;color:var(--text2)">semaine du ${fmt(debut)} au ${fmt(fin)}</span>`;
+    bilanTitre.innerHTML = `🌼 Bilan pour ${prenom}<br><span style="font-size:var(--fs-xs);font-weight:normal;color:var(--text2)">semaine du ${fmt(debut)} au ${fmt(fin)}</span>`;
   }
 
   /* ── Restauration bilan persisté ── */
@@ -2470,7 +2470,7 @@ function checkWelcome() {
       save();
       document.getElementById('modal').style.display = 'flex';
       document.getElementById('mbox').innerHTML = `
-        <div style="text-align:center;padding:8px">
+        <div style="text-align:center;padding:var(--sp-sm)">
           <div style="font-size:40px">🎂</div>
           <p style="font-size:12px;color:var(--text);margin:12px 0;line-height:1.6;white-space:pre-line">${bday.message || 'Joyeux anniversaire 💜'}</p>
           <button class="btn btn-p" onclick="clModal()" style="margin-top:8px;width:100%">Merci 💜</button>
@@ -2691,18 +2691,18 @@ mbox.innerHTML = `
   </div>
   <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
     <button onclick="switchAgenda('jour')" id="atab-jour"
-      style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
+      style="flex:1;padding:7px;border-radius:var(--r-lg);border:none;font-size:var(--fs-sm);
       cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
       📅 Jour
     </button>
     <button onclick="switchAgenda('mois')" id="atab-mois"
-      style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
+      style="flex:1;padding:7px;border-radius:var(--r-lg);border:none;font-size:var(--fs-sm);
       cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
       🗓️ Mois
     </button>
     ${showCycle() ? `
     <button onclick="switchAgenda('cycle')" id="atab-cycle"
-      style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
+      style="flex:1;padding:7px;border-radius:var(--r-lg);border:none;font-size:var(--fs-sm);
       cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
       🌸 Cycle
     </button>` : ''}
@@ -2795,7 +2795,7 @@ function renderAgendaJour(el) {
   // Phase cycle
   const phase = getCyclePhase(ds);
   const phaseHtml = phase
-    ? `<div style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:10px;
+    ? `<div style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:var(--fs-sm);
         font-weight:bold;background:${phase.couleur}22;color:${phase.couleur};
         border:1px solid ${phase.couleur}55;margin-bottom:16px">
         ${phase.label} · J${phase.j}
@@ -2808,33 +2808,33 @@ function renderAgendaJour(el) {
     ? log.map(catId => {
         const hab = D.habits.find(h => h.catId === catId);
         return hab
-          ? `<div style="padding:8px 10px;border-radius:8px;font-size:11px;
+          ? `<div style="padding:var(--sp-sm) 10px;border-radius:var(--r-sm);font-size:var(--fs-sm);
               background:rgba(255,255,255,0.7);border:1px solid var(--border);
               margin-bottom:5px">✅ ${hab.label}</div>`
           : '';
       }).join('')
-    : `<div style="font-size:11px;color:var(--text2);font-style:italic;padding:6px 0">Aucune habitude ce jour</div>`;
+    : `<div style="font-size:var(--fs-sm);color:var(--text2);font-style:italic;padding:6px 0">Aucune habitude ce jour</div>`;
 
   // Note journal
   const note = (D.journal || []).find(n => n.date && n.date.startsWith(ds));
   const noteHtml = note
     ? `<button onclick="ouvrirJournalAuJour('${ds}')"
-        style="width:100%;text-align:left;padding:10px 12px;border-radius:10px;
+        style="width:100%;text-align:left;padding:10px 12px;border-radius:var(--r-md);
         border:1.5px solid var(--lilac);background:rgba(var(--lilac-rgb, 180,160,230),0.07);
-        font-size:11px;cursor:pointer;color:var(--lilac);font-family:'Courier New',monospace;
+        font-size:var(--fs-sm);cursor:pointer;color:var(--lilac);font-family:'Courier New',monospace;
         display:flex;align-items:center;justify-content:space-between">
         <span>📓 Voir la note du journal</span>
         <span style="opacity:.6">→</span>
        </button>`
-    : `<div style="font-size:11px;color:var(--text2);font-style:italic;padding:6px 0">Aucune note ce jour</div>`;
+    : `<div style="font-size:var(--fs-sm);color:var(--text2);font-style:italic;padding:6px 0">Aucune note ce jour</div>`;
 
   // Rendez-vous
   const rdvDuJour = getRdvDuJour(ds).sort((a,b) => (a.heure||'') > (b.heure||'') ? 1 : -1);
   const rdvHtml = rdvDuJour.map(r => `
     <div style="display:flex;align-items:center;justify-content:space-between;
-      padding:8px 10px;border-radius:8px;background:#fff;
+      padding:var(--sp-sm) 10px;border-radius:var(--r-sm);background:#fff;
       border:1px solid var(--border);margin-bottom:5px">
-      <span style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;display:inline-block">${r.heure ? `<b>${r.heure}</b> · ` : '🗓️ Journée · '}${r.label}</span>
+      <span style="font-size:var(--fs-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;display:inline-block">${r.heure ? `<b>${r.heure}</b> · ` : '🗓️ Journée · '}${r.label}</span>
       <div style="display:flex;gap:6px">
         <button onclick="editerRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
         <button onclick="confirmerSuppressionRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
@@ -2862,24 +2862,24 @@ function renderAgendaJour(el) {
 
     <!-- Habitudes -->
     <div style="margin-bottom:20px">
-      <h3 style="font-size:10px;color:var(--text2);letter-spacing:1.5px;margin-bottom:8px;text-transform:uppercase">Habitudes</h3>
+      <h3 style="font-size:var(--fs-sm);color:var(--text2);letter-spacing:1.5px;margin-bottom:var(--sp-sm);text-transform:uppercase">Habitudes</h3>
       ${habsHtml}
     </div>
 
     <!-- Note journal -->
     <div style="margin-bottom:20px">
-      <h3 style="font-size:10px;color:var(--text2);letter-spacing:1.5px;margin-bottom:8px;text-transform:uppercase">Journal</h3>
+      <h3 style="font-size:var(--fs-sm);color:var(--text2);letter-spacing:1.5px;margin-bottom:var(--sp-sm);text-transform:uppercase">Journal</h3>
       ${noteHtml}
     </div>
 
     <!-- Rendez-vous -->
-    <div style="margin-bottom:12px">
-      <h3 style="font-size:10px;color:var(--text2);letter-spacing:1.5px;margin-bottom:8px;text-transform:uppercase">Rendez-vous</h3>
+    <div style="margin-bottom:var(--sp-md)">
+      <h3 style="font-size:var(--fs-sm);color:var(--text2);letter-spacing:1.5px;margin-bottom:var(--sp-sm);text-transform:uppercase">Rendez-vous</h3>
       ${rdvHtml}
       <button onclick="afficherFormulaireRdv()" id="btn-add-rdv"
-        style="width:100%;padding:9px;border-radius:10px;
+        style="width:100%;padding:9px;border-radius:var(--r-md);
         border:1.5px solid var(--lilac);background:transparent;
-        font-size:11px;cursor:pointer;color:var(--lilac);
+        font-size:var(--fs-sm);cursor:pointer;color:var(--lilac);
         font-family:'Courier New',monospace;margin-top:4px;
         opacity:0.75;transition:opacity .15s"
         onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.75'">
@@ -2924,7 +2924,7 @@ function afficherFormulaireRdv() {
 
   overlay.innerHTML = `
     <div id="rdv-sheet" style="
-      background:var(--bg,#fff);border-radius:16px 16px 0 0;
+      background:var(--bg,#fff);border-radius:var(--r-lg) 16px 0 0;
       padding:20px 16px 32px;width:100%;max-width:420px;
       animation:slideUp .25s ease-out;
     ">
@@ -2934,11 +2934,11 @@ function afficherFormulaireRdv() {
         font-family:'Courier New',monospace">📅 Nouveau rendez-vous</h3>
 
       <!-- Emojis sur 2 lignes -->
-      <div style="display:grid;grid-template-columns:repeat(9,1fr);gap:5px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:repeat(9,1fr);gap:5px;margin-bottom:var(--sp-md)">
         ${emojis.map(({e,l}) => `
           <button onclick="selectionnerEmoji('${e}', this)"
             title="${l}"
-            style="aspect-ratio:1;border-radius:8px;border:1.5px solid var(--border);
+            style="aspect-ratio:1;border-radius:var(--r-sm);border:1.5px solid var(--border);
             background:#fff;font-size:15px;cursor:pointer;transition:.15s;
             display:flex;align-items:center;justify-content:center"
             data-emoji="${e}">${e}</button>
@@ -2946,12 +2946,12 @@ function afficherFormulaireRdv() {
       </div>
 
       <!-- Label -->
-      <input id="rdv-label" class="inp" placeholder="Libellé du rendez-vous..." style="margin-bottom:8px">
+      <input id="rdv-label" class="inp" placeholder="Libellé du rendez-vous..." style="margin-bottom:var(--sp-sm)">
 
       <!-- Heure -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:var(--sp-sm)">
         <input type="time" id="rdv-heure" class="inp" style="flex:1">
-        <label style="display:flex;align-items:center;gap:4px;font-size:10px;
+        <label style="display:flex;align-items:center;gap:4px;font-size:var(--fs-sm);
           color:var(--text2);white-space:nowrap;cursor:pointer">
           <input type="checkbox" id="rdv-journee" onchange="toggleJourneeEntiere(this.checked)">
           Journée entière
@@ -2959,8 +2959,8 @@ function afficherFormulaireRdv() {
       </div>
 
 <!-- Récurrence -->
-<div style="margin-bottom:8px">
-  <div style="font-size:10px;color:var(--text2);letter-spacing:1px;
+<div style="margin-bottom:var(--sp-sm)">
+  <div style="font-size:var(--fs-sm);color:var(--text2);letter-spacing:1px;
     text-transform:uppercase;margin-bottom:6px">Récurrence</div>
   <div style="display:flex;gap:6px">
     ${[
@@ -2971,7 +2971,7 @@ function afficherFormulaireRdv() {
     ].map(r => `
       <button onclick="selectionnerRecurrence('${r.v}', this)"
         data-rec="${r.v}"
-        style="flex:1;padding:7px;border-radius:8px;font-size:10px;
+        style="flex:1;padding:7px;border-radius:var(--r-sm);font-size:var(--fs-sm);
         font-family:'Courier New',monospace;cursor:pointer;transition:.15s;
         border:1.5px solid var(--border);background:#fff;color:var(--text2)">
         ${r.l}
@@ -2982,7 +2982,7 @@ function afficherFormulaireRdv() {
 
       <!-- Durée (masquée si aucune récurrence) -->
       <div id="rdv-duree-wrap" style="display:none;margin-bottom:14px">
-        <div style="font-size:10px;color:var(--text2);letter-spacing:1px;
+        <div style="font-size:var(--fs-sm);color:var(--text2);letter-spacing:1px;
           text-transform:uppercase;margin-bottom:6px">Pendant</div>
         <div style="display:flex;gap:6px">
           ${[
@@ -2994,7 +2994,7 @@ function afficherFormulaireRdv() {
           ].map(d => `
             <button onclick="selectionnerDuree('${d.v}', this)"
               data-duree="${d.v}"
-              style="flex:1;padding:7px;border-radius:8px;font-size:10px;
+              style="flex:1;padding:7px;border-radius:var(--r-sm);font-size:var(--fs-sm);
               font-family:'Courier New',monospace;cursor:pointer;transition:.15s;
               border:1.5px solid var(--border);background:#fff;color:var(--text2)">
               ${d.l}
@@ -3133,9 +3133,9 @@ function confirmerSuppressionRdv(id) {
 
   el.insertAdjacentHTML('afterbegin', `
     <div id="confirm-inline" style="position:sticky;top:0;z-index:10;
-      background:#fff;border:2px solid var(--coral);border-radius:10px;
+      background:#fff;border:2px solid var(--coral);border-radius:var(--r-md);
       padding:10px;margin-bottom:10px;text-align:center">
-      <div style="font-size:11px;margin-bottom:8px">
+      <div style="font-size:var(--fs-sm);margin-bottom:var(--sp-sm)">
         Supprimer <b>${rdv.label}</b> ?
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -3171,9 +3171,9 @@ function confirmerSuppressionCycle(ds) {
   const fmt  = date.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
   el.insertAdjacentHTML('afterbegin', `
     <div id="confirm-inline" style="position:sticky;top:0;z-index:10;
-      background:#fff;border:2px solid var(--coral);border-radius:10px;
+      background:#fff;border:2px solid var(--coral);border-radius:var(--r-md);
       padding:10px;margin-bottom:10px;text-align:center">
-      <div style="font-size:11px;margin-bottom:8px">
+      <div style="font-size:var(--fs-sm);margin-bottom:var(--sp-sm)">
         Supprimer le cycle du <b>${fmt}</b> ?
       </div>
       <div style="display:flex;gap:6px">
@@ -3204,7 +3204,7 @@ function editerRdv(id) {
 
   overlay.innerHTML = `
     <div id="rdv-sheet" style="
-      background:var(--bg,#fff);border-radius:16px 16px 0 0;
+      background:var(--bg,#fff);border-radius:var(--r-lg) 16px 0 0;
       padding:20px 16px 32px;width:100%;max-width:420px;
       animation:slideUp .25s ease-out;
     ">
@@ -3215,12 +3215,12 @@ function editerRdv(id) {
 
       <input id="rdv-label" class="inp"
         value="${rdv.label}"
-        placeholder="Libellé..." style="margin-bottom:8px">
+        placeholder="Libellé..." style="margin-bottom:var(--sp-sm)">
 
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
         <input type="time" id="rdv-heure" class="inp"
           value="${rdv.heure || ''}" style="flex:1">
-        <label style="display:flex;align-items:center;gap:4px;font-size:10px;
+        <label style="display:flex;align-items:center;gap:4px;font-size:var(--fs-sm);
           color:var(--text2);white-space:nowrap;cursor:pointer">
           <input type="checkbox" id="rdv-journee"
             ${!rdv.heure ? 'checked' : ''}
@@ -3372,7 +3372,7 @@ function renderAgendaMois(el) {
   // En-têtes jours
   let cells = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px">';
   ['L','M','M','J','V','S','D'].forEach(j => {
-    cells += `<div style="text-align:center;font-size:9px;color:var(--text2);
+    cells += `<div style="text-align:center;font-size:var(--fs-xs);color:var(--text2);
       padding:3px 0;font-weight:bold">${j}</div>`;
   });
 
@@ -3429,10 +3429,10 @@ function renderAgendaMois(el) {
         ${estPredic && !estJ1 ? `<div style="position:absolute;inset:1px;border-radius:5px;
           border:2px dashed #e0708066;pointer-events:none"></div>` : ''}
 
-        <span style="font-size:10px;font-weight:${estAujourd?'bold':'normal'};
+        <span style="font-size:var(--fs-sm);font-weight:${estAujourd?'bold':'normal'};
           color:${estAujourd?'var(--lilac)':'var(--text)'};margin-top:2px">${d}</span>
 
-        <div style="display:flex;gap:1px;font-size:9px;line-height:1;margin-bottom:1px">
+        <div style="display:flex;gap:1px;font-size:var(--fs-xs);line-height:1;margin-bottom:1px">
           ${rdvEmoji}
           ${aNote ? '📓' : ''}
         </div>
@@ -3455,7 +3455,7 @@ el.innerHTML = `
         ${_agendaMoisOffset !== 0 ? `
           <button onclick="revenirAujourdhuiMois()"
             style="padding:2px 12px;border-radius:20px;border:none;
-            background:var(--lilac);color:#fff;font-size:9px;cursor:pointer;
+            background:var(--lilac);color:#fff;font-size:var(--fs-xs);cursor:pointer;
             font-family:'Courier New',monospace;font-weight:bold">
             ↩ Aujourd'hui
           </button>` : ''}
@@ -3469,24 +3469,24 @@ el.innerHTML = `
     ${cells}
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;
-      margin-top:14px;padding:10px 14px;border-radius:12px;
+      margin-top:14px;padding:10px 14px;border-radius:var(--r-md);
       background:rgba(0,0,0,0.03);border:1px solid rgba(0,0,0,0.05)">
-      <div style="display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text2)">
+      <div style="display:flex;align-items:center;gap:7px;font-size:var(--fs-sm);color:var(--text2)">
         <span style="display:inline-block;width:28px;height:10px;border-radius:3px;flex-shrink:0;
           background:linear-gradient(to right,rgba(80,180,120,0.1),rgba(80,180,120,0.85))"></span>
         Habitudes
       </div>
-      <div style="display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text2)">
+      <div style="display:flex;align-items:center;gap:7px;font-size:var(--fs-sm);color:var(--text2)">
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;flex-shrink:0;
           background:#e07080"></span>
         Règles (J1)
       </div>
-      <div style="display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text2)">
+      <div style="display:flex;align-items:center;gap:7px;font-size:var(--fs-sm);color:var(--text2)">
         <span style="display:inline-block;width:10px;height:10px;border-radius:3px;flex-shrink:0;
           border:2px solid #80b8e0"></span>
         Ovulation
       </div>
-      <div style="display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text2)">
+      <div style="display:flex;align-items:center;gap:7px;font-size:var(--fs-sm);color:var(--text2)">
         <span style="display:inline-block;width:10px;height:10px;border-radius:3px;flex-shrink:0;
           border:2px dashed #e07080"></span>
         Prédiction
@@ -3551,11 +3551,11 @@ const descriptions = {
   if (phaseAujourd && aDesDonnees) {
     const nudgeHtml = afficherNudge ? `
       <div onclick="toggleAccordeon('acc-saisie')"
-        style="margin-top:10px;padding:8px 12px;border-radius:8px;
+        style="margin-top:10px;padding:var(--sp-sm) 12px;border-radius:var(--r-sm);
         background:rgba(255,255,255,0.35);cursor:pointer;
         display:flex;align-items:center;gap:8px">
         <span style="font-size:14px">🩸</span>
-        <span style="font-size:11px;color:${phaseAujourd.couleur};font-weight:bold;line-height:1.3">
+        <span style="font-size:var(--fs-sm);color:${phaseAujourd.couleur};font-weight:bold;line-height:1.3">
           Tu as tes règles en ce moment ?<br>
           <span style="font-weight:normal;color:var(--text)">Pense à enregistrer ton J1 ↓</span>
         </span>
@@ -3567,7 +3567,7 @@ const descriptions = {
         <div style="font-size:13px;font-weight:bold;color:${phaseAujourd.couleur};margin-bottom:6px">
           ${phaseAujourd.label} · Jour ${phaseAujourd.j}
         </div>
-        <div style="font-size:11px;color:var(--text);line-height:1.6">
+        <div style="font-size:var(--fs-sm);color:var(--text);line-height:1.6">
           ${descriptions[phaseAujourd.phase]}
         </div>
         ${nudgeHtml}
@@ -3577,11 +3577,11 @@ const descriptions = {
     heroHtml = `
       <div style="padding:16px;border-radius:14px;margin-bottom:14px;
         background:var(--card);border:1px dashed var(--border);text-align:center">
-        <div style="font-size:22px;margin-bottom:8px">🌙</div>
+        <div style="font-size:22px;margin-bottom:var(--sp-sm)">🌙</div>
         <div style="font-size:12px;font-weight:bold;color:var(--text);margin-bottom:6px">
           Commence à suivre ton cycle
         </div>
-        <div style="font-size:11px;color:var(--text2);line-height:1.5">
+        <div style="font-size:var(--fs-sm);color:var(--text2);line-height:1.5">
           Enregistre ton premier jour de règles ci-dessous.<br>
           L'app calculera ta phase au fil du temps.
         </div>
@@ -3600,42 +3600,42 @@ const descriptions = {
   if (aDesDonnees) {
     friseHtml = `
       <div style="margin-bottom:14px">
-        <div style="border-radius:10px;overflow:hidden;display:flex;height:24px">
+        <div style="border-radius:var(--r-md);overflow:hidden;display:flex;height:24px">
           ${phases.map(p => {
             const isActive = phaseAujourd?.phase === p.id;
             return `<div title="${p.label} (J${p.jours})"
               style="flex:${p.pct};background:${p.couleur}${isActive ? '' : '55'};
               display:flex;align-items:center;justify-content:center;
-              font-size:9px;color:#fff;font-weight:bold;transition:background .3s">
+              font-size:var(--fs-xs);color:#fff;font-weight:bold;transition:background .3s">
               ${isActive ? '▼' : ''}
             </div>`;
           }).join('')}
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:4px;padding:0 2px">
-          <span style="font-size:9px;color:var(--text2)">J1</span>
-          <span style="font-size:9px;color:var(--text2)">J${duree}</span>
+          <span style="font-size:var(--fs-xs);color:var(--text2)">J1</span>
+          <span style="font-size:var(--fs-xs);color:var(--text2)">J${duree}</span>
         </div>
       </div>`;
   }
 
   // ── Accordéon saisie ──
   const saisieHtml = `
-    <div style="margin-bottom:8px;border-radius:12px;overflow:hidden;
+    <div style="margin-bottom:var(--sp-sm);border-radius:var(--r-md);overflow:hidden;
       border:1px solid var(--border)">
       <button onclick="toggleAccordeon('acc-saisie')"
-        style="width:100%;padding:12px 14px;background:var(--card);border:none;
+        style="width:100%;padding:var(--sp-md) 14px;background:var(--card);border:none;
         cursor:pointer;display:flex;align-items:center;justify-content:space-between;
-        font-family:'Courier New',monospace;font-size:11px;color:var(--text)">
+        font-family:'Courier New',monospace;font-size:var(--fs-sm);color:var(--text)">
         <span>🩸 Déclarer un début de cycle</span>
         <span id="acc-saisie-chevron" style="color:var(--text2);transition:transform .2s">▾</span>
       </button>
       <div id="acc-saisie" style="max-height:0;overflow:hidden;transition:max-height .3s ease">
-        <div style="padding:12px 14px;border-top:1px solid var(--border)">
+        <div style="padding:var(--sp-md) 14px;border-top:1px solid var(--border)">
           <div style="display:flex;gap:6px;align-items:center">
             <input type="date" id="cycle-date-input" class="inp"
               value="${today()}" style="flex:1">
             <button class="btn btn-p" onclick="declarerReglesCycle()"
-              style="white-space:nowrap;font-size:10px">
+              style="white-space:nowrap;font-size:var(--fs-sm)">
               Enregistrer
             </button>
           </div>
@@ -3645,7 +3645,7 @@ const descriptions = {
 
   // ── Accordéon historique ──
   let historiqueContenu = `
-    <div style="font-size:11px;color:var(--text2);font-style:italic;padding:12px 14px">
+    <div style="font-size:var(--fs-sm);color:var(--text2);font-style:italic;padding:var(--sp-md) 14px">
       Aucun cycle enregistré pour l'instant.
     </div>`;
 
@@ -3659,7 +3659,7 @@ const lignesJ1 = cycles.map((ds, i) => {
   return `
     <div class="j1-ligne" style="display:${cache ? 'none' : 'flex'};align-items:center;
       justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
+      <span style="font-size:var(--fs-sm);color:var(--text)">🩸 ${fmt}</span>
       <div style="display:flex;gap:4px">
         <button onclick="confirmerSuppressionCycle('${ds}')"
           style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
@@ -3669,9 +3669,9 @@ const lignesJ1 = cycles.map((ds, i) => {
 
     const voirToutBtn = cycles.length > MAX_VISIBLE ? `
       <button onclick="toggleJ1Liste()" id="btn-voir-tout-j1"
-        style="width:100%;margin-top:6px;padding:6px;border-radius:8px;
+        style="width:100%;margin-top:6px;padding:6px;border-radius:var(--r-sm);
         border:1px solid var(--border);background:transparent;
-        font-size:10px;cursor:pointer;color:var(--lilac);
+        font-size:var(--fs-sm);cursor:pointer;color:var(--lilac);
         font-family:'Courier New',monospace">
         Voir tout (${cycles.length - MAX_VISIBLE} de plus) ▾
       </button>
@@ -3683,7 +3683,7 @@ const lignesJ1 = cycles.map((ds, i) => {
           return `
             <div style="display:flex;align-items:center;justify-content:space-between;
               padding:7px 0;border-bottom:1px solid var(--border)">
-              <span style="font-size:11px;color:var(--text)">🩸 ${fmt}</span>
+              <span style="font-size:var(--fs-sm);color:var(--text)">🩸 ${fmt}</span>
               <div style="display:flex;gap:4px">
                 <input type="date" id="edit-j1-${idx}"
                   style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
@@ -3697,21 +3697,21 @@ const lignesJ1 = cycles.map((ds, i) => {
 
     // Durée moyenne affichée
     const moyenneHtml = cycles.length >= 2
-      ? `<div style="margin-top:10px;padding:8px 10px;border-radius:8px;
-          background:var(--bg);font-size:11px;color:var(--text2)">
+      ? `<div style="margin-top:10px;padding:var(--sp-sm) 10px;border-radius:var(--r-sm);
+          background:var(--bg);font-size:var(--fs-sm);color:var(--text2)">
           Durée moyenne de tes cycles : <strong style="color:var(--text)">${duree} jours</strong>
-          <span style="font-size:10px"> (sur ${cycles.length - 1} cycle${cycles.length > 2 ? 's' : ''})</span>
+          <span style="font-size:var(--fs-sm)"> (sur ${cycles.length - 1} cycle${cycles.length > 2 ? 's' : ''})</span>
         </div>` : '';
 
     historiqueContenu = `
-      <div style="padding:12px 14px;border-top:1px solid var(--border)">
+      <div style="padding:var(--sp-md) 14px;border-top:1px solid var(--border)">
         ${lignesJ1}
         ${voirToutBtn}
         ${moyenneHtml}
         <button onclick="copierCycles()"
-  style="width:100%;margin-top:12px;padding:8px;border-radius:10px;
+  style="width:100%;margin-top:12px;padding:var(--sp-sm);border-radius:var(--r-md);
   border:1px solid var(--border);background:transparent;
-  font-size:11px;cursor:pointer;color:var(--text2);
+  font-size:var(--fs-sm);cursor:pointer;color:var(--text2);
   font-family:'Courier New',monospace">
   📋 Copier l'historique
 </button>
@@ -3719,12 +3719,12 @@ const lignesJ1 = cycles.map((ds, i) => {
   }
 
   const historiqueHtml = `
-    <div style="margin-bottom:8px;border-radius:12px;overflow:hidden;
+    <div style="margin-bottom:var(--sp-sm);border-radius:var(--r-md);overflow:hidden;
       border:1px solid var(--border)">
       <button onclick="toggleAccordeon('acc-historique')"
-        style="width:100%;padding:12px 14px;background:var(--card);border:none;
+        style="width:100%;padding:var(--sp-md) 14px;background:var(--card);border:none;
         cursor:pointer;display:flex;align-items:center;justify-content:space-between;
-        font-family:'Courier New',monospace;font-size:11px;color:var(--text)">
+        font-family:'Courier New',monospace;font-size:var(--fs-sm);color:var(--text)">
         <span>📋 Historique (${cycles.length} J1 enregistré${cycles.length > 1 ? 's' : ''})</span>
         <span id="acc-historique-chevron" style="color:var(--text2);transition:transform .2s">▾</span>
       </button>

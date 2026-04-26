@@ -679,8 +679,8 @@ function initBaseProps() {
    ============================================================ */
 async function fetchMeteo() {
   try {
-    const METEO_LAT = window.D?.g?.lat || 43.6047;
-    const METEO_LON = window.D?.g?.lng || 1.4442;
+    const METEO_LAT = window.USER_CONFIG?.meteo?.lat ?? window.D?.g?.lat ?? 43.6047;
+    const METEO_LON = window.USER_CONFIG?.meteo?.lon ?? window.D?.g?.lng ?? 1.4442;
     const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${METEO_LAT}&longitude=${METEO_LON}&current_weather=true&timezone=Europe/Paris`);
     const d = await r.json();
     window.meteoData = d.current_weather;
@@ -715,7 +715,8 @@ async function fetchMeteo() {
 }
 
 async function fetchSolarPhases() {
-  const lat = window.D?.g?.lat, lng = window.D?.g?.lng;
+  const lat = window.USER_CONFIG?.meteo?.lat ?? window.D.g.lat;
+  const lng = window.USER_CONFIG?.meteo?.lon ?? window.D.g.lng;
   if (!lat || !lng) return;
   if (window.D.g.solarPhases?.fetchedDate === today()) return;
   try {
@@ -976,7 +977,7 @@ async function bootstrap() {
     initApp();
     return;
   }
-  
+
   await loadUserConfig(); // Charge la config perso avant tout le reste
   loadDataFiles().then(() => {
     initBaseProps();

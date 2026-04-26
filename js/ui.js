@@ -2399,20 +2399,43 @@ function checkWelcome() {
     return;
   }
 
-  // 2. Garde anti-répétition : une seule fois par créneau
+  // 2. Anniversaire — affiché une fois par jour si USER_CONFIG le définit
+  // RÔLE : Affiche une modale surprise le jour de l'anniversaire.
+  // POURQUOI : La date et le message viennent de user_config.json — rien n'est hardcodé.
+  //            Si birthday.month est null → ce bloc est ignoré entièrement.
+  const bday = window.USER_CONFIG?.birthday;
+  if (bday?.month && !D.g.birthdayShown) {
+    const now = new Date();
+    if (now.getMonth() + 1 === bday.month && now.getDate() === bday.day) {
+      D.g.birthdayShown = true;
+      save();
+      document.getElementById('modal').style.display = 'flex';
+      document.getElementById('mbox').innerHTML = `
+        <div style="text-align:center;padding:8px">
+          <div style="font-size:40px">🎂</div>
+          <p style="font-size:12px;color:var(--text);margin:12px 0;line-height:1.6;white-space:pre-line">${bday.message || 'Joyeux anniversaire 💜'}</p>
+          <button class="btn btn-p" onclick="clModal()" style="margin-top:8px;width:100%">Merci 💜</button>
+        </div>
+      `;
+      animEl(document.getElementById('mbox'), 'bounceIn');
+      return;
+    }
+  }
+
+  // 3. Garde anti-répétition : une seule fois par créneau
   const créneau = h < 12 ? 'matin' : h < 18 ? 'aprem' : h < 21 ? 'soir' : 'nuit';
   const done = (D.log[td] || []).length;
   const etatActuel = `${td}-${créneau}-${done}`;
   if (D.lastWelcomeState === etatActuel) return;
 
-  // 3. Calcul jours d'absence (avant de mettre à jour lastActive)
+  // 4. Calcul jours d'absence (avant de mettre à jour lastActive)
   let joursAbsence = 0;
   if (D.lastActive) {
     const diff = Date.now() - new Date(D.lastActive);
     joursAbsence = Math.floor(diff / (1000 * 60 * 60 * 24));
   }
 
-  // 4. Cadeaux-IA reçus depuis la dernière visite (achats boutique exclus)
+  // 5. Cadeaux-IA reçus depuis la dernière visite (achats boutique exclus)
   const derniereVisite = D.lastActive || td;
   const nouveauxCadeaux = (D.eventLog || []).filter(ev =>
     ev.type === 'cadeau' &&
@@ -2420,14 +2443,14 @@ function checkWelcome() {
     new Date(ev.date) > new Date(derniereVisite)
   ).length;
 
-  // 5. Mise à jour de la session
+  // 6. Mise à jour de la session
   D.lastWelcomeState = etatActuel;
   D.lastActive = new Date().toISOString();
   save();
 
   // ❌ SUPPRIMÉ : ancien `if (!D.firstLaunch…)` dupliqué — code mort
 
-  // 6. Contenu selon contexte
+  // 7. Contenu selon contexte
   let titre, corps, extra = '';
 
   // ✏️ UNIFIÉ : pénalité unique pour toute absence ≥ 1 jour (-15 XP × jours)

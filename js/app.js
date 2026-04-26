@@ -148,6 +148,8 @@ snackDone: '', snackEmoji: '',
       lng: 1.4442,
       solarPhases: null,
       cycleDuree: 28,// durée du cycle en jours
+      birthdayShown: false,    // true une fois la modale anniversaire affichée ce jour-là
+      birthdayCodeUsed: false, // true une fois le code cheat anniversaire utilisé
     },
     habits: CATS.map(c => ({catId:c.id, label:c.label})),
     log:{}, journal:[], pin:null, apiKey:null,

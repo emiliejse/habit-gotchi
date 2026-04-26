@@ -2455,8 +2455,11 @@ function checkWelcome() {
   const h  = hr();
 
   // 1. Premier lancement — priorité absolue
-  if (!D.firstLaunch || D.g.name === 'Petit·e Gotchi') {
-    D.firstLaunch = D.firstLaunch || new Date().toISOString();
+  // POURQUOI : on ne teste QUE !D.firstLaunch, pas le nom.
+  // Tester D.g.name === 'Petit·e Gotchi' re-déclenchait le wizard après une mise à jour
+  // si le localStorage avait été vidé ou si le merge avec defs() ramenait la valeur par défaut.
+  if (!D.firstLaunch) {
+    D.firstLaunch = new Date().toISOString();
     save();
     showWelcomeModal();
     return;

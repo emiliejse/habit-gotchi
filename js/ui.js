@@ -358,6 +358,32 @@ function updUI() {
   if (btnAsk) {
     btnAsk.childNodes[0].textContent = `Une pensée de ${window.D.g.name || 'le Gotchi'} `;
   }
+  // RÔLE : Affiche ou masque le badge 🎂 selon la date du jour et la config anniversaire.
+  // POURQUOI : Le badge est cliquable pour rouvrir la modale — il reste visible toute la journée.
+  //            Si birthday.month est null → jamais affiché.
+  const bdgEl = document.getElementById('birthday-badge');
+  if (bdgEl) {
+    const bday = window.USER_CONFIG?.birthday;
+    const now  = new Date();
+    const showBd = !!(bday?.month &&
+      now.getMonth() + 1 === bday.month &&
+      now.getDate()      === bday.day);
+    bdgEl.style.display = showBd ? 'inline' : 'none';
+    if (showBd) {
+      bdgEl.onclick = () => {
+        document.getElementById('modal').style.display = 'flex';
+        document.getElementById('mbox').innerHTML = `
+          <div style="text-align:center;padding:8px">
+            <div style="font-size:40px">🎂</div>
+            <p style="font-size:12px;color:var(--text);margin:12px 0;line-height:1.6;white-space:pre-line">${bday.message || 'Joyeux anniversaire 💜'}</p>
+            <button class="btn btn-p" onclick="clModal()" style="margin-top:8px;width:100%">Merci 💜</button>
+          </div>
+        `;
+        animEl(document.getElementById('mbox'), 'bounceIn');
+      };
+    }
+  }
+
   updBadgeBoutique();
 }
 

@@ -2610,7 +2610,21 @@ function applyCheatCode() {
     'resetpin': () => { D.pin = null; toast('🔓 Code PIN supprimé'); },
     'resetbilan':   () => { D.g.bilanCount = 0; D.g.bilanWeek = ''; toast('📊 Quota bilan → 0/3'); },
     'resetsoutien': () => { D.soutienCount = 0; D.lastSoutienDate = null; toast('💜 Quota soutien → 0/3'); },
-    'resetmsg3':     () => { D.thoughtCount = 0; D.lastThoughtDate = null; toast('💬 Quota pensées → 0/3'); },
+    'resetmsg3':    () => { D.thoughtCount = 0; D.lastThoughtDate = null; toast('💬 Quota pensées → 0/3'); },
+    // RÔLE : Code cheat anniversaire — offre des pétales et remet les compteurs à zéro.
+    // POURQUOI : Le mot de passe et le bonus viennent de user_config.json.
+    //            Si birthday.month est null → le code n'existe pas, toast "Code inconnu".
+    [window.USER_CONFIG?.birthday?.cheatCode]: window.USER_CONFIG?.birthday?.month
+      ? () => {
+          if (D.g.birthdayCodeUsed) { toast('Ce code a déjà été utilisé 🌸'); return; }
+          D.g.birthdayCodeUsed = true;
+          D.g.petales = (D.g.petales || 0) + (window.USER_CONFIG.birthday.petalesBonus || 50);
+          D.g.snackDone = ''; D.g.snackEmoji = '';
+          D.g.poops = []; D.g.poopCount = 0; D.g.poopDay = '';
+          window.D.lastThoughtDate = null; window.D.thoughtCount = 0;
+          toast(`🎂 Cadeau activé ! +${window.USER_CONFIG.birthday.petalesBonus || 50} pétales 🌸`);
+        }
+      : undefined,
   };
 
   if (codes[code]) {

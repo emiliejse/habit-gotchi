@@ -1250,6 +1250,66 @@ function stopThinkingAnim(interval) {
 /* ============================================================
    API CLAUDE — CADEAU / BULLE
    ============================================================ */
+
+// RÔLE : Choisit un registre d'expression selon l'état du gotchi + aléatoire
+// POURQUOI : Force la variété réelle des pensées sans dépendre du modèle seul
+function getRegistre(energy, happiness, h) {
+  const registres = [];
+
+  // Selon l'énergie
+  if (energy <= 1) registres.push(
+    "autodérision douce (tu es épuisé·e mais tu l'assumes avec humour)",
+    "observation absurde sur le fait de survivre à une journée difficile"
+  );
+  if (energy >= 4) registres.push(
+    "enthousiasme légèrement excessif et un peu ridicule",
+    "taquin·e et complice, comme quelqu'un de trop réveillé"
+  );
+
+  // Selon le bonheur
+  if (happiness <= 2) registres.push(
+    "tendresse maladroite, comme quelqu'un qui cherche ses mots",
+    "humour très léger sur les petits riens qui vont pas"
+  );
+  if (happiness >= 4) registres.push(
+    "citation absurde ou légèrement philosophique détournée",
+    "fierté un peu excessive pour quelque chose de minuscule"
+  );
+
+  // Selon l'heure
+  if (h >= 7  && h < 11) registres.push("optimisme du matin légèrement naïf");
+  if (h >= 13 && h < 16) registres.push("constat un peu blasé mais affectueux sur l'après-midi");
+  if (h >= 21)           registres.push("pensée flottante, un peu philosophique, légèrement fatiguée");
+
+  // Registres universels (toujours disponibles)
+  registres.push(
+    "non-sequitur poétique totalement inattendu",
+    "observation microscopique sur quelque chose d'insignifiant",
+    "mini-déclaration dramatique pour un détail du quotidien"
+  );
+
+  // Tire un registre au hasard dans ce qui est pertinent
+  return registres[Math.floor(Math.random() * registres.length)];
+}
+
+// RÔLE : Construit les exemples de style pour le prompt IA
+// POURQUOI : Extraite de askClaude pour éviter une IIFE illisible dans l'objet vars
+function getExemples(journal, personality) {
+  const notesUser = (journal || [])
+    .slice(-15)
+    .map(n => (n.text || '').trim())
+    .filter(t => t.length > 15 && t.length < 200)
+    .slice(-4);
+
+  const bullesPassees = [
+    ...(personality?.bulles?.idle   || []).slice(0, 1),
+    ...(personality?.bulles?.triste || []).slice(0, 1),
+  ];
+
+  const tout = [...notesUser, ...bullesPassees];
+  return tout.length ? tout.join(' / ') : '*bâille*, *sourit*';
+}
+
 /**
  * Demande à Claude une pensée personnalisée (Limité à 3x par jour).
  */
@@ -1290,20 +1350,19 @@ async function askClaude() {
   const P   = window.PERSONALITY;
   const CTX = window.AI_CONTEXTS?.askClaude;
 
+  // RÔLE : Notes écrites aujourd'hui uniquement
   const notesRecentes = D.journal
-    .slice(-3)
-    .map(j => {
-      const d = j.date ? j.date.split('T')[0] : 'date inconnue';
-      return `[${d}] ${j.text.slice(0, 40)}`;
-    })
+    .filter(j => j.date && j.date.startsWith(td))
+    .map(j => j.text.slice(0, 40))
     .filter(t => t.length > 0)
     .join(' / ');
 
   const vars = {
-    nameGotchi:           D.g.name      || P?.nom    || 'Petit·e Gotchi',
-    userName:      D.g.userName  || D.userName || 'ton utilisatrice',
+    nameGotchi:    D.g.name         || P?.nom    || 'Petit·e Gotchi',
+    userName:      D.g.userName     || D.userName || 'ton utilisatrice',
     diminutif:     D.g.userNickname || D.g.userName || D.userName || 'toi',
-    style:         P?.style      || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
+    registre:      getRegistre(g.energy, g.happiness, hr()),
+    style:         P?.style         || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
     traits:        P?.traits?.join(', ') || 'doux, joueur, curieux',
     energy:        g.energy,
     happiness:     g.happiness,
@@ -1312,23 +1371,7 @@ async function askClaude() {
     notesRecentes: notesRecentes
       ? `Aujourd'hui : ${todayFr()}. Ambiance récente : ${notesRecentes}`
       : `Aujourd'hui : ${todayFr()}.`,
-    exemples: (() => {
-      // Voix utilisatrice : ses notes journal récentes (priorité absolue)
-      const notesUser = (D.journal || [])
-        .slice(-15)                                    // 15 dernières notes brutes
-        .map(n => (n.text || '').trim())
-        .filter(t => t.length > 15 && t.length < 200)  // ni trop courtes ni pavés
-        .slice(-4);                                    // on garde 4 max après filtrage
-
-      // Bulles passées (faible poids : juste pour la cohérence du Gotchi)
-      const bullesPassees = [
-        ...(P?.bulles?.idle   || []).slice(0, 1),
-        ...(P?.bulles?.triste || []).slice(0, 1),
-      ];
-
-      const tout = [...notesUser, ...bullesPassees];
-      return tout.length ? tout.join(' / ') : '*bâille*, *sourit*';
-    })(),
+    exemples:      getExemples(D.journal, P),
     nomsExistants: [...new Set([
       ...(D.g.props || []).map(p => `${p.nom} (${p.type})`),
       ...(window.PROPS_LIB || []).map(p => `${p.nom} (${p.type})`)

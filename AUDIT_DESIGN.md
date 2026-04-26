@@ -129,7 +129,7 @@ Les 2 boutons `.menu-soutien` sont en bas du menu, accessibles en 2 taps. Pour l
 
 ### 2.3 Cohérence graphique
 
-#### 🔴 OUVERT — Trois langages graphiques concurrents
+#### ✅ RÉSOLU — Trois langages graphiques concurrents
 `.card` (pastel, radius 14px), `.j90` (beige #e8e0d0, radius 4px), `.menu-book` (carton #f4edd8, radius 6px), `#tablet-box` (noir #1a1a1a) cohabitent. Les deux derniers utilisent des couleurs hardcodées qui **ne réagissent pas aux palettes `UI_PALETTES`**.
 - **Impact TDAH :** Chaque panneau = nouveau code visuel à décoder.
 - **Suggestion :** Ajouter dans `UI_PALETTES` : `paperBg`, `paperLine`, `paperText`. Utiliser ces variables dans `.j90` et `.menu-book`. Pour la tablette, créer `--terminal-bg`, `--terminal-text` dans `:root` (fixes, assumées).

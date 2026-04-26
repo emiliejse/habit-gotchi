@@ -121,7 +121,7 @@ const MSG = {
 function defs() {
   return {
     g: {
-      name:'Petit·e Gotchi', userName: 'Émilie', userNickname: '', totalXp:0, stage:'egg', energy:3, happiness:3,
+      name:'Petit·e Gotchi', userName: 'Émilie', userNickname: window.USER_CONFIG?.identity?.userNickname ?? '', totalXp:0, stage:'egg', energy:3, happiness:3,
 envLv:0, activeEnv:'parc', petales:0,poops: [], poopDay: '',    // date du dernier comptage
 poopCount: 0,  // nb de cacas spawné aujourd'hui
 snackDone: '', snackEmoji: '',
@@ -981,6 +981,15 @@ async function bootstrap() {
   await loadUserConfig(); // Charge la config perso avant tout le reste
   loadDataFiles().then(() => {
     initBaseProps();
+    // RÔLE : Force le surnom et le nom depuis user_config.json à chaque démarrage.
+    // POURQUOI : defs() ne s'applique qu'au premier lancement.
+    //            Sans ça, les utilisatrices existantes garderaient l'ancienne valeur vide.
+    if (window.USER_CONFIG?.identity && window.D?.g) {
+      if (window.USER_CONFIG.identity.userNickname) window.D.g.userNickname = window.USER_CONFIG.identity.userNickname;
+      if (window.USER_CONFIG.identity.userName)     window.D.g.userName     = window.USER_CONFIG.identity.userName;
+      if (window.USER_CONFIG.identity.gotchiName)   window.D.g.name         = window.USER_CONFIG.identity.gotchiName;
+      save();
+    }
     if (typeof updBadgeBoutique === 'function') updBadgeBoutique();
     catchUpPoops();
     initApp();

@@ -247,14 +247,19 @@ body {
 /* Languette Menu Discrète (En bas de l'écran) */
 .menu-languette {
   position: fixed;
-  bottom: var(--sab); /* POURQUOI : était bottom:0 — sur iPhone X+ la barre d'accueil iOS recouvrait partiellement la languette */
+  /* POURQUOI bottom:0 et non var(--sab) : bottom décale depuis le bord de l'écran physique.
+     Mettre bottom:var(--sab) faisait flotter la languette EN L'AIR au-dessus de la barre d'accueil iOS.
+     La bonne approche : coller à bottom:0 et compenser la barre avec padding-bottom interne. */
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   background: var(--card);
   border: 3px solid #c8b8a0;
   border-bottom: none;
   border-radius: 20px 20px 0 0;
-  padding: 4px 30px calc(8px + var(--sab)); /* padding-bottom intègre aussi la safe-area pour le contenu interne */
+  /* POURQUOI padding-bottom calc(var(--sab) + 8px) : la safe-area iOS est absorbée ici,
+     le contenu (icône ☰) reste visible au-dessus de la barre d'accueil */
+  padding: 4px 30px calc(var(--sab) + 8px);
   font-size: 24px;
   color: #6a5a40;
   cursor: pointer;

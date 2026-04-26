@@ -259,7 +259,9 @@ body {
   border-radius: 20px 20px 0 0;
   /* POURQUOI padding-bottom calc(var(--sab) + 8px) : la safe-area iOS est absorbée ici,
      le contenu (icône ☰) reste visible au-dessus de la barre d'accueil */
-  padding: 4px 30px calc(var(--sab) + 8px);
+  /* POURQUOI padding-top 6px seulement : on veut juste voir l'icône, pas d'espace superflu au-dessus.
+     padding-bottom = safe-area pure, sans ajout — évite l'espace blanc sous l'icône sur iPhone */
+  padding: 6px 18px var(--sab);
   font-size: 24px;
   color: #6a5a40;
   cursor: pointer;

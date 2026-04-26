@@ -99,6 +99,12 @@ function go(t) {
   const targetPanel = document.getElementById('p-' + t);
   if (targetPanel) targetPanel.classList.add('on');
 
+  // RÔLE : Marquer le cercle de menu correspondant au panneau actif
+  // POURQUOI : Sans ça, l'utilisatrice n'a aucun repère visuel de "où elle est" quand elle rouvre le menu
+  document.querySelectorAll('.menu-circle').forEach(c => c.classList.remove('active'));
+  const activeCircle = document.querySelector(`.menu-circle[onclick*="'${t}'"]`);
+  if (activeCircle) activeCircle.classList.add('active');
+
   const shell = document.querySelector('.tama-shell');
   if (t === 'gotchi') {
     shell.classList.remove('shrunk');
@@ -186,11 +192,20 @@ function toast(m) {
 }
 
 /**
+ * RÔLE : Génère le bouton ✕ de fermeture persistant pour toutes les modales
+ * POURQUOI : Sans bouton explicite, l'utilisatrice doit deviner qu'il faut taper à côté
+ *            pour fermer — source de frustration sur mobile, surtout avec TDAH
+ */
+function _modalCloseBtn() {
+  return `<button class="modal-close" onclick="clModal()" aria-label="Fermer">✕</button>`;
+}
+
+/**
  * Modale standard avec bouton OK (bloquante)
  */
 function toastModal(m) {
   document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = `<p style="text-align:center;font-size:12px">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`;
+  document.getElementById('mbox').innerHTML = `${_modalCloseBtn()}<p style="text-align:center;font-size:12px;padding-top:8px">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`;
   animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
@@ -218,10 +233,26 @@ let modalLocked = false; // ← true pendant le soutien
 
 function clModal(e) {
   if (modalLocked) return;
-  if (!e || e.target.id === 'modal') {
+  // POURQUOI : on ferme si : (a) clic direct sur le fond #modal, (b) appel sans event (depuis bouton OK/Annuler), (c) bouton .modal-close
+  if (!e || e.target.id === 'modal' || e.currentTarget?.classList?.contains('modal-close')) {
     document.getElementById('modal').style.display = 'none';
     unlockScroll();
   }
+}
+
+/**
+ * RÔLE : Ouvre la modale avec contenu HTML et injecte automatiquement le bouton ✕
+ * POURQUOI : Centralise l'ouverture pour éviter de modifier les 20+ appels mbox.innerHTML
+ *            Le ✕ apparaît sur toutes les modales sans avoir à y penser à chaque fois
+ * USAGE : openModal(`<h3>Titre</h3><p>Contenu</p>`, 'bounceIn')
+ */
+function openModal(html, anim = 'bounceIn') {
+  const modal = document.getElementById('modal');
+  const mbox  = document.getElementById('mbox');
+  modal.style.display = 'flex';
+  lockScroll();
+  mbox.innerHTML = `${_modalCloseBtn()}${html}`;
+  animEl(mbox, anim);
 }
 
 /**
@@ -395,7 +426,7 @@ async function testApiKey() {
   if (!statusEl) return;
   
   const key = D.apiKey;
-  if (!key) { statusEl.innerHTML = '❌ <span style="color:#e57373">Aucune clé saisie</span>'; return; }
+  if (!key) { statusEl.innerHTML = '❌ <span style="color:var(--danger)">Aucune clé saisie</span>'; return; } // était #e57373 hardcodé
   
   statusEl.innerHTML = '⏳ Test en cours...';
   
@@ -417,12 +448,12 @@ async function testApiKey() {
     const d = await r.json();
     
     if (d.error) {
-      statusEl.innerHTML = `❌ <span style="color:#e57373">${d.error.message}</span>`;
+      statusEl.innerHTML = `❌ <span style="color:var(--danger)">${d.error.message}</span>`; // était #e57373 hardcodé
     } else if (d.content) {
       statusEl.innerHTML = '✅ <span style="color:#81c784">Connecté</span>';
     }
   } catch(e) {
-    statusEl.innerHTML = `❌ <span style="color:#e57373">${e.message}</span>`;
+    statusEl.innerHTML = `❌ <span style="color:var(--danger)">${e.message}</span>`; // était #e57373 hardcodé
   }
 }
 
@@ -1088,11 +1119,11 @@ r += `🌡️ ${meteo ? `${meteo.temperature}°C · vent ${meteo.windspeed} km/h
   💬 Voir les bulles perso
 </button>
     <button onclick="viderJournal()"
-      style="width:100%;padding:8px;border-radius:12px;border:none;font-size:10px;cursor:pointer;background:transparent;color:#e57373;border:2px solid #e57373;margin-bottom:6px">
+      style="width:100%;padding:8px;border-radius:12px;border:none;font-size:var(--fs-sm);cursor:pointer;background:transparent;color:var(--danger);border:2px solid var(--danger);margin-bottom:6px"> <!-- #e57373 → var(--danger), font-size → var(--fs-sm) -->
       🗑️ Vider le journal
     </button>
     <button onclick="viderObjetsIA()"
-      style="width:100%;padding:8px;border-radius:12px;border:none;font-size:10px;cursor:pointer;background:transparent;color:#e57373;border:2px solid #e57373">
+      style="width:100%;padding:8px;border-radius:12px;border:none;font-size:var(--fs-sm);cursor:pointer;background:transparent;color:var(--danger);border:2px solid var(--danger)"> <!-- #e57373 → var(--danger), font-size → var(--fs-sm) -->
       🗑️ Vider les objets IA
     </button>
   `;
@@ -2131,9 +2162,7 @@ function saveEditJ(i) {
   window._editMood = null;
   save(); clModal(); renderJEntries();
 }function delJEntry(i) {
-  document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = `<p>Supprimer ?</p><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="confirmDelJ(${i})" style="flex:1">Oui</button></div>`;
-  animEl(document.getElementById('mbox'), 'bounceIn');
+  openModal(`<p>Supprimer ?</p><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="confirmDelJ(${i})" style="flex:1">Oui</button></div>`);
 }
 function confirmDelJ(i) { window.D.journal.splice(i, 1); save(); clModal(); renderJEntries(); updUI(); }
 
@@ -2334,9 +2363,7 @@ function importD(event) {
 }
 
 function confirmReset() {
-  document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = `<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`;
-animEl(document.getElementById('mbox'), 'bounceIn');
+  openModal(`<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`);
 }
 
 /* ─── SYSTÈME 6 : INTROSPECTION & MÉMOIRE (Le Terminal) ──────────── */

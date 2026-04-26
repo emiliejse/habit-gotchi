@@ -22,9 +22,18 @@
   --tama: #c8d8c0;
   
   --text: #38304a;
-  --text2: #887ea0;
+  --text2: #6e5e8c; /* était #887ea0 — foncé pour passer WCAG AA (ratio > 5:1 sur --card) */
   --border: #ccc4d8;
   --shadow: rgba(56, 48, 74, 0.08);
+
+  /* ─── COULEURS SÉMANTIQUES ────────────────────────────────────────── */
+  /* RÔLE : Couche de sens au-dessus des couleurs déco — succès, erreur, warning, info, focus */
+  /* POURQUOI : Actuellement tout passe par les couleurs décoratives (--mint, --coral…) sans intention claire */
+  --success:    var(--mint);    /* Validation, habitude cochée, connexion OK */
+  --danger:     var(--coral);   /* Reset, suppression, erreur */
+  --warning:    #e8c068;        /* Attention, limite de quota */
+  --info:       var(--sky);     /* Information neutre */
+  --focus-ring: var(--lilac);   /* Anneau de focus clavier (cf. :focus-visible) */
   
   /* Variables d'environnement PWA (Encoches iPhone / Android) */
   --sat: env(safe-area-inset-top, 0px);
@@ -273,6 +282,14 @@ body {
   transition: transform .15s, background .15s;
 }
 .menu-circle:active { transform: scale(.92); background: #ede4d0; }
+/* RÔLE : Marquer visuellement le panneau actuellement affiché dans le menu */
+/* POURQUOI : Sans cet état, l'utilisatrice n'a aucun repère de "où elle est" quand elle rouvre le menu */
+.menu-circle.active {
+  border-color: var(--lilac);
+  box-shadow: 2px 2px 0 var(--lilac), 0 0 0 3px rgba(176,144,208,0.25);
+  background: rgba(176,144,208,0.12);
+}
+.menu-circle.active .mc-label { color: var(--lilac); }
 .menu-circle .mc-icon { font-size: 40px; line-height: 1; }
 .menu-circle .mc-label {
   font-size: var(--fs-xs); font-weight: bold; color: #6a5a40; letter-spacing: .5px; /* était 8px */
@@ -484,7 +501,7 @@ body {
   font-size: 20px; cursor: pointer; transition: .2s; display: flex; align-items: center; justify-content: center;
 }
 .mood-b.sel { border-color: var(--lilac); background: rgba(176,144,208,.1); transform: scale(1.1); }
-#mood-pick.mood-required .mood-b { animation: shakeRow .4s ease; border-color: #e57373; }
+#mood-pick.mood-required .mood-b { animation: shakeRow .4s ease; border-color: var(--danger); } /* était #e57373 hardcodé */
 @keyframes shakeRow { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
 
 
@@ -506,7 +523,32 @@ body {
 .modal-box {
   background: #fff; border-radius: 16px; padding: 18px; max-width: 340px; width: 100%;
   box-shadow: 0 16px 40px rgba(56, 48, 74, 0.2);
+  position: relative; /* POURQUOI : nécessaire pour positionner le .modal-close en absolute */
+  max-height: 85dvh; overflow-y: auto; /* POURQUOI : empêche les modales longues de déborder hors écran */
 }
+
+/* RÔLE : Bouton ✕ de fermeture persistant sur toutes les modales */
+/* POURQUOI : Sans lui, la seule façon de fermer est de taper à côté — piège UX sur mobile */
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: none;
+  font-size: 18px;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background .15s;
+  flex-shrink: 0;
+}
+.modal-close:hover { background: var(--border); }
+.modal-close:active { background: var(--border); transform: scale(.9); }
 
 .meteo-badge { font-size: var(--fs-xs); color: var(--text2); text-align: center; margin-top: 2px; } /* était 9px */
 

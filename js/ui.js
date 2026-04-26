@@ -1511,7 +1511,7 @@ function genSoutien() {
   
   const ctx = window.AI_CONTEXTS;
 const P = window.PERSONALITY;
-const cycleData  = getCyclePhase(td);
+const cycleData  = showCycle() ? getCyclePhase(td) : null;
 const cycleInfo  = cycleData ? `${cycleData.label} (J${cycleData.j})` : 'non renseignée';
 const rdvDuJour  = (D.rdv || [])
   .filter(r => r.date === td)
@@ -1613,7 +1613,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
     .filter(Boolean)
     .join(', ') || 'aucune';
 
-  const cycleData  = getCyclePhase(td);
+  const cycleData  = showCycle() ? getCyclePhase(td) : null;
   const cycleInfo  = cycleData ? `${cycleData.label} (J${cycleData.j})` : 'non renseignée';
   const rdvDuJour  = (D.rdv || [])
   .filter(r => r.date === td)

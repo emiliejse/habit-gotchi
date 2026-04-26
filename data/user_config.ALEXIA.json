@@ -179,6 +179,7 @@
   },
 
   "startProps": [],
+  "extraPropsFile": "data/props.ALEXIA.json",
 
   "ai": {
     "systemPromptOverride": null,

@@ -675,14 +675,29 @@ function changeEnv(v) { window.D.g.activeEnv = v; save(); }
 /* ============================================================
    INIT PROPS DE BASE
    ============================================================ */
+// RÔLE : Débloque les objets gratuits (cout = 0) + les objets définis dans user_config.startProps.
+// POURQUOI : Les objets exclusifs d'une utilisatrice (ex: aspirateur d'Alexia) sont listés
+//            dans son user_config.json et débloqués ici au premier lancement.
 function initBaseProps() {
   if (window.D.propsInitialized) return;
+
+  // 1. Objets gratuits (cout = 0) — comportement existant
   const base = (window.PROPS_LIB || []).filter(p => p.cout === 0);
   base.forEach(b => {
     if (!window.D.g.props.find(p => p.id === b.id)) {
       window.D.g.props.push({ id:b.id, nom:b.nom, type:b.type, emoji:b.emoji||'🎁', actif:false });
     }
   });
+
+  // 2. Objets exclusifs via user_config.startProps
+  const extra = window.USER_CONFIG?.startProps || [];
+  extra.forEach(id => {
+    const prop = (window.PROPS_LIB || []).find(p => p.id === id);
+    if (prop && !window.D.g.props.find(p => p.id === id)) {
+      window.D.g.props.push({ id:prop.id, nom:prop.nom, type:prop.type, emoji:prop.emoji||'🎁', actif:false });
+    }
+  });
+
   window.D.propsInitialized = true;
   save();
 }

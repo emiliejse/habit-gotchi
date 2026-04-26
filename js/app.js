@@ -64,7 +64,21 @@ async function loadDataFiles() {
       });
       save(); renderProps(); updBadgeBoutique();
     }
-    if (results[1].status === 'fulfilled') window.PERSONALITY = results[1].value;
+    if (results[1].status === 'fulfilled') {
+      window.PERSONALITY = results[1].value;
+      // RÔLE : Si user_config.json définit une personnalité complète, elle remplace personality.json.
+      // POURQUOI : Permet à chaque utilisatrice d'avoir ses propres traits/style/bulles
+      //            sans avoir un personality.json séparé dans son repo.
+      if (window.USER_CONFIG?.personality?.source === 'config') {
+        const p = window.USER_CONFIG.personality;
+        window.PERSONALITY = {
+          nom:    window.PERSONALITY?.nom,
+          traits: p.traits ?? window.PERSONALITY?.traits,
+          style:  p.style  ?? window.PERSONALITY?.style,
+          bulles: p.bulles ?? window.PERSONALITY?.bulles
+        };
+      }
+    }
     if (results[2].status === 'fulfilled') window.AI_CONTEXTS = results[2].value;
     if (results[3].status === 'fulfilled') window.AI_SYSTEM   = results[3].value;
 

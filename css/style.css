@@ -280,9 +280,8 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 4px 14px 0;
-  padding-bottom: var(--sab);
-  font-size: 18px;
+  padding: 4px 14px max(var(--sab), 4px);
+  font-size: 22px;
   color: #6a5a40;
   cursor: pointer;
   z-index: 150;
@@ -379,18 +378,51 @@ body {
 }
 .card h2 { font-size: var(--fs-sm); margin-bottom: var(--sp-sm); letter-spacing: 1px; }
 
-/* RÔLE : Carte d'action principale — visuellement dominante */
-/* POURQUOI : Les habitudes sont l'action prioritaire, pas juste de l'info */
+/* RÔLE : Carte action principale — visuellement dominante, header coloré bord à bord */
 .card-primary {
   border-color: var(--lilac);
-  box-shadow: 0 4px 16px rgba(176,144,208,0.2), 0 2px 6px rgba(0,0,0,0.06);
-  padding-top: 20px; /* absorbe le label "PROCHAIN ✿" flottant */
+  box-shadow: 0 4px 20px rgba(176,144,208,0.25), 0 2px 6px rgba(0,0,0,0.05);
+  padding: 0;
+  overflow: hidden;
 }
 
-/* RÔLE : Carte secondaire — info passive, recule visuellement */
-#claude-card {
-  border-color: var(--border);
+/* RÔLE : Header coloré de la carte habitudes */
+.card-primary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(176,144,208,0.12);
+  border-bottom: 1px solid var(--lilac);
   padding: var(--sp-sm) var(--sp-md);
+  margin-bottom: 0;
+}
+
+/* RÔLE : Badge compteur habitudes */
+#hab-count {
+  font-size: var(--fs-sm);
+  background: var(--lilac);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+/* RÔLE : Zone liste des habitudes — padding interne après le header */
+#hab-home {
+  padding: var(--sp-sm) var(--sp-md) var(--sp-md);
+}
+
+/* RÔLE : Carte pensée — zone de lecture, pas une carte d'action */
+#claude-card {
+  background: rgba(176,144,208,0.07);
+  border: none;
+  border-radius: var(--r-lg);
+  padding: var(--sp-sm) var(--sp-md);
+  margin-bottom: var(--sp-sm);
+}
+
+#claude-card #claude-msg {
+  font-style: italic;
 }
 
 .inp {

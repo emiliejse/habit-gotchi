@@ -2588,44 +2588,41 @@ function ouvrirAgenda(dateStr) {
   mbox.classList.remove('shop-open', 'shop-catalogue', 'agenda-open');
 
   // 2. Prépare le contenu
-  mbox.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h3 style="font-size:13px;color:var(--lilac)">🗓️ Mon Agenda</h3>
-      <button onclick="fermerAgenda()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
-      <button onclick="switchAgenda('jour')" id="atab-jour"
-        style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
-        cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
-        📅 Jour
-      </button>
-      <button onclick="switchAgenda('mois')" id="atab-mois"
-        style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
-        cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
-        🗓️ Mois
-      </button>
-      ${showCycle() ? `<button onclick="switchAgenda('cycle')" id="atab-cycle"
-        style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
-        cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
-        🌸 Cycle
-      </button>
-    </div>
-    <div id="agenda-contenu"></div>
-  `;
-
-  // 3. Force un reflow pour redéclencher l'animation shopOpen
-  void mbox.offsetWidth;
-
-  // 4. Applique les classes (anime + scroll interne)
-  mbox.classList.add('shop-open', 'agenda-open');
-
+mbox.innerHTML = `
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <h3 style="font-size:13px;color:var(--lilac)">🗓️ Mon Agenda</h3>
+    <button onclick="fermerAgenda()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
+    <button onclick="switchAgenda('jour')" id="atab-jour"
+      style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
+      cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
+      📅 Jour
+    </button>
+    <button onclick="switchAgenda('mois')" id="atab-mois"
+      style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
+      cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
+      🗓️ Mois
+    </button>
+    ${showCycle() ? `
+    <button onclick="switchAgenda('cycle')" id="atab-cycle"
+      style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
+      cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
+      🌸 Cycle
+    </button>` : ''}
+  </div>
+  <div id="agenda-contenu"></div>
+`;
+// 3. Force un reflow pour redéclencher l'animation shopOpen
+void mbox.offsetWidth;
+// 4. Applique les classes (anime + scroll interne)
+mbox.classList.add('shop-open', 'agenda-open');
 // 5. Affiche la modale
 lockScroll();
 modal.style.display = 'flex';
 animEl(mbox, 'bounceIn');
 switchAgenda('jour');
 }
-
 
 function fermerAgenda() {
   document.getElementById('dynamic-zone').style.overflowY = '';

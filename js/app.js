@@ -970,13 +970,14 @@ async function loadUserConfig() {
   }
 }
 
-function bootstrap() {
+async function bootstrap() {
   if (_appInitialized) {
     // Déjà init → on fait juste le refresh (retour foreground)
     initApp();
     return;
   }
-
+  
+  await loadUserConfig(); // Charge la config perso avant tout le reste
   loadDataFiles().then(() => {
     initBaseProps();
     if (typeof updBadgeBoutique === 'function') updBadgeBoutique();

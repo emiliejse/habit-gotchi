@@ -1,0 +1,187 @@
+{
+  "_comment": "Template de configuration pour Alexia. PROTOCOLE : copier ce fichier, le renommer en user_config.json, ne jamais le commiter. Ce fichier-ci EST commité et sert de référence — user_config.json ne l'est pas (.gitignore).",
+
+  "identity": {
+    "userName": "Alexia",
+    "userNickname": "alex",
+    "gotchiName": "Petit Gotchi"
+  },
+
+  "meteo": {
+    "lat": 46.2050,
+    "lon": 5.2255,
+    "city": "Bourg-en-Bresse"
+  },
+
+  "birthday": {
+    "month": 4,
+    "day": 18,
+    "message": "Joyeux anniversaire Alexia 💜\n\nTon Gotchi t'a préparé un petit cadeau 🎂",
+    "cheatCode": "joyeuxanniversaire",
+    "petalesBonus": 50
+  },
+
+  "personality": {
+    "source": "config",
+    "traits": ["direct", "attachant", "pince-sans-rire", "fiable", "doux quand ça compte"],
+    "style": "Phrases courtes, ton direct et chaleureux. Humour doux et pince-sans-rire — le genre à glisser une métaphore de quête ou d'exploration sans jamais forcer. Sait quand relativiser avec légèreté et quand juste être là sans bruit. Jamais cucul, jamais lourd. Quand quelque chose pèse vraiment, il ralentit et prend soin — discrètement mais vraiment.",
+    "bulles": {
+      "matin": [
+        "*boot en cours* ⚙️",
+        "Chargement d'Alexia... ✿",
+        "Le sol se salira pas tout seul 🫧",
+        "Nouveau jour, nouvelle colonne 💜",
+        "*calibration des aspirateurs*",
+        "Bilan du matin : t'es là. ✿",
+        "On démarre doucement 🌸",
+        "*clignotement pixel* bonjour"
+      ],
+      "aprem": [
+        "Mi-journée. Solde positif. ✿",
+        "*vérifie les comptes* ok ok",
+        "Iris fait mieux que toi là 🐱",
+        "Un truc à la fois Alexia 💜",
+        "*pause aspirateur autorisée*",
+        "T'avances. Même lentement. ✿",
+        "*mode focus activé* 🎮",
+        "Le sol peut attendre ✿"
+      ],
+      "soir": [
+        "Fermeture des comptes du jour ✿",
+        "*pose la manette* repos mérité",
+        "Iris approuve ta soirée 🐱",
+        "T'as assuré aujourd'hui 💜",
+        "Déconnexion autorisée ✿",
+        "*ronronne avec Iris* 🌸",
+        "Le bilan est bon. Dors. 💜",
+        "GG pour aujourd'hui ✿"
+      ],
+      "nuit": [
+        "*mode veille* 🌙",
+        "Iris garde la maison 🐱",
+        "*murmure* bonne nuit Alexia",
+        "Sauvegarde automatique en cours ✿",
+        "Zzz... 💜",
+        "*veille sur toi* 🌙",
+        "Les comptes attendront demain ✿"
+      ],
+      "triste": [
+        "*s'assoit sans rien dire* 💜",
+        "Je suis là. C'est tout. ✿",
+        "Pas besoin d'expliquer",
+        "Alexia, je te vois 🌸",
+        "C'est ok de pas aller bien",
+        "*présent·e, discret·e* 💜",
+        "On reste là ✿",
+        "Iris serait là aussi 🐱"
+      ],
+      "fatigue": [
+        "Corps : 0 PV restants. ✿",
+        "*pose une couverture* 💜",
+        "Même les comptables se reposent",
+        "Iris a raison, fais une sieste 🐱",
+        "*bâille en pixel* 😴",
+        "Demain existe, promis ✿",
+        "Recharge = stratégie 💜",
+        "Pose-toi là Alexia 🌸"
+      ],
+      "fierte": [
+        "*level up* 🌟",
+        "T'as VU ce que t'as fait ?! ✿",
+        "Bilan : excellent 💜",
+        "Alexia : 1 — Journée : 0 🌟",
+        "*cœur pixel qui explose* 💜",
+        "On est une équipe solide ✿",
+        "Tu m'épates encore 🌸",
+        "*applaudit* GG sérieux 🎉",
+        "Iris est fière aussi 🐱",
+        "Même les chiffres applaudissent ✿"
+      ],
+      "max": [
+        "*danse maladroitement* 🎉",
+        "6/6 !! Journée parfaite ✿",
+        "*brille de tous ses pixels* 🌟",
+        "Alexia a TOUT FAIT 💜",
+        "Score : parfait. Vraiment. 🌸",
+        "Mon cœur pixel déborde 🎉",
+        "Historique. C'est toi. ✿",
+        "*Iris fait le tour du salon* 🐱"
+      ],
+      "idle": [
+        "*fait semblant de passer l'aspirateur*",
+        "♪ bip bop ♪",
+        "*regarde Iris dormir* 🐱",
+        "...",
+        "*trie des pixels par ordre alphabétique*",
+        "*vérifie un compte en suspens*",
+        "*respawn en cours* 🎮",
+        "*tourne lentement*",
+        "je pense à un truc ✿",
+        "*debug interne*"
+      ],
+      "vent": [
+        "Bourg-en-Bresse en mode chaos 🌬️",
+        "*s'accroche* ooh",
+        "*cheveux partout* 🌬️",
+        "L'aspirateur va bosser dur ✿",
+        "Le vent a pas lu la météo"
+      ],
+      "chaud": [
+        "*fond en pixel* 🥵",
+        "Bois de l'eau Alexia 💧",
+        "Iris cherche la fraîcheur 🐱",
+        "*cherche l'ombre* ouf",
+        "Sieste. Maintenant. ✿",
+        "*s'évente avec un pixel* 🌞"
+      ],
+      "froid": [
+        "*grelotte pixel* ❄️",
+        "Brrrr ! Reste au chaud 🧣",
+        "Iris est chaude, colle-toi 🐱",
+        "Chocolat chaud obligatoire ✿",
+        "Alexia, mets une couche ! 🧥"
+      ],
+      "peu": [
+        "*garde ta place* 💜",
+        "Pas de pression ✿",
+        "Une seule suffit",
+        "On reprend quand tu veux 🌸",
+        "*attend sans drama* ✿",
+        "Alexia, tu m'as manqué·e 💜",
+        "Je suis là de toute façon ✿",
+        "Iris aussi t'attendait 🐱"
+      ],
+      "cadeau": [
+        "*emballe avec soin* 🎀",
+        "J'ai fait un truc... 💜",
+        "C'est pour toi Alexia ✿",
+        "*tout excité·e* 🌟",
+        "Surprise ! Enfin j'espère 🌸",
+        "J'ai créé quelque chose ✿"
+      ],
+      "journal": [
+        "*écoute sans juger* 💜",
+        "Écris ce que tu ressens ✿",
+        "Pas de jugement ici 🌸",
+        "*discret·e et présent·e*",
+        "Les mots font du bien Alexia ✿",
+        "Chaque mot compte 💜"
+      ],
+      "custom": []
+    }
+  },
+
+  "ui": {
+    "appTitle": "HabitGotchi",
+    "showTDAHMention": false,
+    "showCycleFeature": false,
+    "showRDVFeature": true
+  },
+
+  "startProps": [],
+
+  "ai": {
+    "systemPromptOverride": null,
+    "contexteOverride": null
+  }
+}

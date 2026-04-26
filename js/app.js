@@ -953,6 +953,23 @@ function initApp() {
  * Point d'entrée principal : charge les données PUIS initialise.
  * L'ordre est critique : pas d'UI avant que D soit prêt.
  */
+
+/* ============================================================
+   CONFIGURATION UTILISATEUR
+   ============================================================ */
+// RÔLE : Charge le fichier data/user_config.json et l'expose sur window.USER_CONFIG.
+// POURQUOI : Permet de personnaliser l'app (nom, météo, anniversaire...)
+//            sans modifier le code. Chaque utilisatrice a son propre fichier.
+async function loadUserConfig() {
+  try {
+    const r = await fetch('data/user_config.json');
+    if (r.ok) window.USER_CONFIG = await r.json();
+  } catch(e) {
+    // Si le fichier est absent ou illisible → on continue sans config perso.
+    window.USER_CONFIG = null;
+  }
+}
+
 function bootstrap() {
   if (_appInitialized) {
     // Déjà init → on fait juste le refresh (retour foreground)

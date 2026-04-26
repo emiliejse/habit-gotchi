@@ -205,7 +205,9 @@ function _modalCloseBtn() {
  */
 function toastModal(m) {
   document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = `${_modalCloseBtn()}<p style="text-align:center;font-size:12px;padding-top:8px">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`;
+  // POURQUOI padding-top:36px sur le <p> : le bouton .modal-close est positionné à top:10px avec ~24px de hauteur
+  // Sans ce padding, le texte commence sous la croix et se superpose visuellement
+  document.getElementById('mbox').innerHTML = `${_modalCloseBtn()}<p style="text-align:center;font-size:var(--fs-sm);padding-top:36px;line-height:1.5">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`;
   animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
@@ -385,9 +387,11 @@ function updUI() {
   
   const tc = document.getElementById('thought-count');
   if (tc) tc.textContent = `(${window.D.thoughtCount || 0}/3)`;
-  const btnAsk = document.getElementById('btn-ask-claude');
-  if (btnAsk) {
-    btnAsk.childNodes[0].textContent = `Une pensée de ${window.D.g.name || 'le Gotchi'} `;
+  // RÔLE : Met à jour le label du bouton avec le nom du Gotchi
+  // POURQUOI : Le span #btn-ask-label est la seule source du texte — plus de nœud texte brut dans le HTML
+  const btnAskLabel = document.getElementById('btn-ask-label');
+  if (btnAskLabel) {
+    btnAskLabel.textContent = `Une pensée de ${window.D.g.name || 'le Gotchi'} ✿ `;
   }
   // RÔLE : Affiche ou masque le badge 🎂 selon la date du jour et la config anniversaire.
   // POURQUOI : Le badge est cliquable pour rouvrir la modale — il reste visible toute la journée.

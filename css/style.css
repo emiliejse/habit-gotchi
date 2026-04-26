@@ -190,10 +190,13 @@ body {
   background: var(--card);
   border: 2px solid var(--lilac);
   border-radius: 8px;
-  padding: 5px 12px;
+  /* POURQUOI padding 8px 14px : avec fs-sm (13px) et line-height 1.4, le texte peut s'étendre sur 2-3 lignes.
+     Le padding vertical plus généreux évite que le texte soit à l'étroit */
+  padding: 8px 14px;
   font-size: var(--fs-sm); /* était 10px — bulle de pensée = cœur émotionnel de l'app, doit être lisible */
+  line-height: 1.4; /* POURQUOI : améliore la lisibilité des messages multi-lignes */
   text-align: center;
-  min-height: 32px; /* légèrement agrandi pour respirer avec la nouvelle taille */
+  min-height: 44px; /* POURQUOI : taille minimale avec le nouveau fs-sm pour éviter l'écrasement */
   box-shadow: 0 -2px 8px var(--shadow);
   position: relative;
   margin: 0 auto;
@@ -308,18 +311,23 @@ body {
 .menu-circle.active .mc-label { color: var(--lilac); }
 .menu-circle .mc-icon { font-size: 40px; line-height: 1; }
 .menu-circle .mc-label {
-  font-size: var(--fs-xs); font-weight: bold; color: #6a5a40; letter-spacing: .5px; /* était 8px */
-  text-align: center; text-transform: uppercase;
+  /* POURQUOI display:none : les icônes seules suffisent à identifier les sections dans un menu circulaire.
+     Le texte était trop grand pour les cercles et débordait — on simplifie pour un look plus propre */
+  display: none;
 }
 
 /* Bouton Soutien (Désaxé volontairement) */
 .menu-soutien {
-  display: flex; align-items: center; justify-content: center; gap: 12px;
-  padding: 8px 20px; width: auto; margin: 16px auto 0;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 14px; width: auto; margin: 16px auto 0;
   background: #e8d8f0; border: 2px solid #b090d0;
   border-bottom: 3px solid #8060b0; border-right: 3px solid #8060b0;
-  border-radius: 4px; color: #5a3a80; font-size: var(--fs-sm); font-weight: bold; /* était 11px */
-  font-family: 'Courier New', monospace; cursor: pointer; letter-spacing: 1px;
+  border-radius: 4px; color: #5a3a80;
+  /* POURQUOI font-size var(--fs-xs) : le texte "Mon agenda et cycle" / "Besoin de soutien" débordait
+     en 2 lignes avec var(--fs-sm) — on réduit pour tenir sur une seule ligne */
+  font-size: var(--fs-xs); font-weight: bold;
+  font-family: 'Courier New', monospace; cursor: pointer; letter-spacing: 0.5px;
+  white-space: nowrap; /* POURQUOI : force le texte sur une seule ligne */
   opacity: 1;
 }
 .menu-soutien:active {
@@ -400,8 +408,11 @@ body {
 /* Bloc Habitude */
 .hab {
   display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-sm); border-radius: var(--r-sm);
-  border: 2px solid var(--border); margin-bottom: var(--sp-xs); background: #fff; cursor: pointer;
+  /* POURQUOI margin-bottom var(--sp-md) : le label Prochain ✿ en ::before dépasse de ~12px au-dessus — l'espace
+     entre habitudes doit compenser pour que le label ne chevauche pas le bloc précédent */
+  border: 2px solid var(--border); margin-bottom: var(--sp-md); background: #fff; cursor: pointer;
   transition: transform 0.1s ease;
+  position: relative; /* POURQUOI : nécessaire pour que ::before se positionne par rapport au .hab */
 }
 .hab:active { transform: scale(0.97); } /* Petit écrasement au clic */
 
@@ -442,17 +453,21 @@ body {
   border-color: var(--lilac);
 }
 /* Petit label "À faire" discret au-dessus de la checkbox */
+/* POURQUOI top: -14px : le label doit flotter juste au-dessus du bord supérieur du bloc .hab */
 .hab--next::before {
   content: 'Prochain ✿';
   position: absolute;
-  top: -10px;
+  top: -14px;
   left: 8px;
-  font-size: 9px;
+  font-size: var(--fs-xs); /* était 9px hardcodé — aligné avec la variable */
   font-weight: bold;
   color: var(--lilac);
   letter-spacing: 0.5px;
   text-transform: uppercase;
   pointer-events: none;
+  background: var(--card); /* POURQUOI : léger fond pour rester lisible sur n'importe quelle palette */
+  padding: 0 3px;
+  border-radius: 3px;
 }
 
 /* Jauges d'Énergie et de Bonheur (Sliders) */

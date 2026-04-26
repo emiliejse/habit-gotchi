@@ -104,7 +104,7 @@ body {
   align-items: center;
 }
 .hdr h1 { font-size: 12px; color: var(--lilac); letter-spacing: 2px; flex: 1; }
-.hdr sub { font-size: 8px; color: var(--text2); }
+.hdr sub { font-size: var(--fs-xs); color: var(--text2); }
 .hdr .menu-btn {
   width: 36px; height: 36px; border-radius: 10px; border: 2px solid var(--border);
   background: var(--solid); font-size: 16px; cursor: pointer; display: flex;
@@ -166,9 +166,9 @@ body {
   border: 2px solid var(--lilac);
   border-radius: 8px;
   padding: 5px 12px;
-  font-size: 10px;
+  font-size: var(--fs-sm); /* était 10px — bulle de pensée = cœur émotionnel de l'app, doit être lisible */
   text-align: center;
-  min-height: 24px;
+  min-height: 32px; /* légèrement agrandi pour respirer avec la nouvelle taille */
   box-shadow: 0 -2px 8px var(--shadow);
   position: relative;
   margin: 0 auto;
@@ -200,16 +200,16 @@ body {
 .chat-bubble-user {
   align-self: flex-end; background: var(--lilac); color: #fff;
   border-radius: 12px 12px 2px 12px; padding: 8px 12px;
-  font-size: 11px; max-width: 85%; line-height: 1.5;
+  font-size: var(--fs-sm); max-width: 85%; line-height: 1.5; /* était 11px */
 }
 .chat-bubble-claude {
   align-self: flex-start; background: #f0e8ff; color: var(--text);
   border-radius: 12px 12px 12px 2px; padding: 8px 12px;
-  font-size: 11px; max-width: 90%; line-height: 1.5;
+  font-size: var(--fs-sm); max-width: 90%; line-height: 1.5; /* était 11px */
   border: 1px solid var(--border);
 }
 .chat-bubble-system {
-  text-align: center; font-size: 9px; color: var(--text2);
+  text-align: center; font-size: var(--fs-xs); color: var(--text2); /* était 9px — messages système = secondaires */
   padding: 2px 0; font-style: italic;
 }
 
@@ -275,7 +275,7 @@ body {
 .menu-circle:active { transform: scale(.92); background: #ede4d0; }
 .menu-circle .mc-icon { font-size: 40px; line-height: 1; }
 .menu-circle .mc-label {
-  font-size: 8px; font-weight: bold; color: #6a5a40; letter-spacing: .5px;
+  font-size: var(--fs-xs); font-weight: bold; color: #6a5a40; letter-spacing: .5px; /* était 8px */
   text-align: center; text-transform: uppercase;
 }
 
@@ -285,7 +285,7 @@ body {
   padding: 8px 20px; width: auto; margin: 16px auto 0;
   background: #e8d8f0; border: 2px solid #b090d0;
   border-bottom: 3px solid #8060b0; border-right: 3px solid #8060b0;
-  border-radius: 4px; color: #5a3a80; font-size: 11px; font-weight: bold;
+  border-radius: 4px; color: #5a3a80; font-size: var(--fs-sm); font-weight: bold; /* était 11px */
   font-family: 'Courier New', monospace; cursor: pointer; letter-spacing: 1px;
   opacity: 1;
 }
@@ -379,7 +379,7 @@ body {
 
 /* Jauges d'Énergie et de Bonheur (Sliders) */
 .slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.slider-row label { font-size: 9px; font-weight: bold; width: 55px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); }
+.slider-row label { font-size: var(--fs-xs); font-weight: bold; width: 55px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); } /* était 9px */
 .slider-row input[type=range] { flex: 1; -webkit-appearance: none; height: 8px; border-radius: 4px; outline: none; opacity: .85; }
 .slider-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
 .slider-row .sv { font-size: 13px; font-weight: bold; width: 20px; text-align: center; }
@@ -392,7 +392,7 @@ body {
 /* Barre d'XP */
 .pbar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
 .pfill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.34, 1.56, .64, 1); }
-.slbl { font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); }
+.slbl { font-size: var(--fs-xs); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); } /* était 9px */
 
 
 /* ─── SYSTÈME 6 : INTROSPECTION & MÉMOIRE ────────────────────────── */
@@ -410,10 +410,10 @@ body {
   padding: 8px; border: 1px dashed #c8b8a0; margin-bottom: 6px; 
   border-radius: 4px; background: rgba(255,255,255,.5);
 }
-.j-entry .j-date { font-size: 9px; color: #a09880; }
+.j-entry .j-date { font-size: var(--fs-xs); color: #a09880; } /* était 9px — timestamp = seul cas où --fs-xs est approprié */
 .j-entry .j-actions { display: flex; gap: 4px; margin-top: 4px; }
 .j-entry .j-actions button {
-  font-size: 9px; padding: 2px 8px; border-radius: 4px; border: 1px solid #c8b8a0;
+  font-size: var(--fs-xs); padding: 2px 8px; border-radius: 4px; border: 1px solid #c8b8a0; /* était 9px */
   background: #f0e8d8; cursor: pointer; font-family: 'Courier New', monospace;
 }
 
@@ -439,7 +439,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: var(--fs-xs); /* était 9px — numéros de jours du calendrier */
   font-weight: bold;
 }
 
@@ -486,11 +486,11 @@ body {
   box-shadow: 0 16px 40px rgba(56, 48, 74, 0.2);
 }
 
-.meteo-badge { font-size: 9px; color: var(--text2); text-align: center; margin-top: 2px; }
+.meteo-badge { font-size: var(--fs-xs); color: var(--text2); text-align: center; margin-top: 2px; } /* était 9px */
 
 #update-banner {
   display: none; position: fixed; top: var(--sat); left: 0; right: 0; z-index: 999;
-  background: var(--mint); color: #fff; text-align: center; padding: 8px; font-size: 11px;
+  background: var(--mint); color: #fff; text-align: center; padding: 8px; font-size: var(--fs-sm); /* était 11px */
   font-weight: bold; cursor: pointer;
 }
 
@@ -504,7 +504,7 @@ body {
   color: #fff;
   padding: 8px 18px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: var(--fs-sm); /* était 11px — les toasts sont des messages à lire */
   font-family: 'Courier New', monospace;
   z-index: 500;
   opacity: 0;
@@ -539,16 +539,16 @@ body {
 #tablet-screen {
   background: #0a0a0a; margin: 10px; border-radius: 6px; border: 1px solid #333;
   padding: 10px; overflow-y: auto; flex: 1;
-  font-family: 'Courier New', monospace; font-size: 11px; color: #00ff41;
+  font-family: 'Courier New', monospace; font-size: var(--fs-sm); color: #00ff41; /* était 11px */
 }
 .tablet-line { margin-bottom: 6px; line-height: 1.4; border-bottom: 1px solid #0f2a0f; padding-bottom: 6px; }
-.tablet-line .tl-time { color: #007a1f; font-size: 9px; display: block; }
+.tablet-line .tl-time { color: #007a1f; font-size: var(--fs-xs); display: block; } /* était 9px — timestamp tablette = secondaire */
 .tablet-line .tl-icon { margin-right: 4px; }
 
 #tablet-header {
   display: flex; justify-content: space-between; align-items: center;
   padding: 8px 12px 4px; color: #00ff41; font-family: 'Courier New', monospace;
-  font-size: 11px; border-bottom: 1px solid #222;
+  font-size: var(--fs-sm); border-bottom: 1px solid #222; /* était 11px */
 }
 
 

@@ -143,12 +143,12 @@ function clearDebugLogs() {
     <button id="btn-boutique-hdr" onclick="ouvrirBoutique()" class="menu-btn" style="position:relative">
       🛍️
       <!-- Badge pour indiquer des notifications (ex: achats disponibles) -->
-      <span id="badge-boutique-hdr" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--pink);color:#fff;font-size:8px;border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
+      <span id="badge-boutique-hdr" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--pink);color:#fff;font-size:var(--fs-xs);border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
     </button>
     <!-- Titre central (SYSTEM 5: UI/Design) -->
     <div style="display:flex;flex-direction:column;align-items:center;flex:1">
       <h1>✿ Habit-Gotchi ✿</h1>
-      <sub id="date-d" style="font-size:10px;color:var(--text2)">
+      <sub id="date-d" style="font-size:var(--fs-xs);color:var(--text2)"> <!-- était 10px -->
   <span id="date-txt"></span>
 </sub>
     </div>
@@ -156,7 +156,7 @@ function clearDebugLogs() {
     <button id="btn-tablet" onclick="openTablet()" class="menu-btn" style="position:relative">
       📟
       <!-- Badge pour notifications (ex: messages de l'IA) -->
-      <span id="tablet-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--coral);color:#fff;font-size:8px;border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
+      <span id="tablet-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--coral);color:#fff;font-size:var(--fs-xs);border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
     </button>
   </div>
 
@@ -207,7 +207,7 @@ function clearDebugLogs() {
         <!-- Badge anniversaire — visible uniquement le jour J via updUI() -->
         <span id="birthday-badge" style="display:none;cursor:pointer;margin-left:6px;">🎂</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:9px;margin-top:10px;font-weight:bold;">
+      <div style="display:flex;justify-content:space-between;font-size:var(--fs-xs);margin-top:10px;font-weight:bold;"> <!-- était 9px -->
         <span class="slbl" style="color:var(--lilac)">Progression</span>
         <span class="slbl" id="xp-l" style="color:var(--text);">0/150 XP</span>
       </div>
@@ -220,13 +220,13 @@ function clearDebugLogs() {
     <!-- Carte "Interroger le Gotchi" (SYSTEM 3: IA & Cognition) -->
     <div class="card" id="claude-card">
       <div style="display:flex;gap:6px;align-items:center">
-        <button class="btn btn-p" onclick="askClaude()" id="btn-ask-claude" style="flex:1;font-size:10px;">
+        <button class="btn btn-p" onclick="askClaude()" id="btn-ask-claude" style="flex:1;font-size:var(--fs-sm);"> <!-- était 10px -->
           Une pensée de Gotchi ✿ <span id="thought-count">(0/3)</span>
         </button>
         <button onclick="toastInfo()" style="background:none;border:none;font-size:14px;cursor:pointer;">ℹ️</button>
       </div>
       <!-- Zone de réponse de l'IA (SYSTEM 3: IA & Cognition) -->
-      <div id="claude-msg" style="font-size:11px;color:var(--text2);line-height:1.4;margin-top:6px;"></div>
+      <div id="claude-msg" style="font-size:var(--fs-sm);color:var(--text2);line-height:1.4;margin-top:6px;"></div> <!-- était 11px -->
     </div>
 
     <!-- Panneau des habitudes du jour (SYSTEM 4: Habitudes) -->
@@ -234,7 +234,7 @@ function clearDebugLogs() {
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <h2 style="margin:0">Mes intentions du jour</h2>
         <!-- Badge de progression des habitudes (SYSTEM 4: Habitudes) -->
-        <span id="hab-count" style="font-size:11px;background:var(--mint);color:#fff;padding:2px 8px;border-radius:10px;font-weight:bold">0/6</span>
+        <span id="hab-count" style="font-size:var(--fs-sm);background:var(--mint);color:#fff;padding:2px 8px;border-radius:10px;font-weight:bold">0/6</span> <!-- était 11px -->
       </div>
       <div id="hab-home"></div>
     </div>
@@ -252,7 +252,7 @@ function clearDebugLogs() {
     <div id="pin-gate">
       <div class="j90" style="text-align:center">
         <h2>🔒 Journal Intime 🔒</h2>
-        <p style="font-size:10px;color:#a09880;margin-bottom:4px" id="pin-msg">Code secret (4 chiffres)</p>
+        <p style="font-size:var(--fs-xs);color:#a09880;margin-bottom:4px" id="pin-msg">Code secret (4 chiffres)</p> <!-- était 10px -->
         <div class="pin-dots" id="pin-dots"></div>
         <!-- Clavier PIN (SYSTEM 6: Mémoire/Journal) -->
         <div class="pin-pad" id="pin-pad"></div>
@@ -267,9 +267,9 @@ function clearDebugLogs() {
         <!-- Zone de texte (SYSTEM 6: Mémoire/Journal) -->
         <textarea id="j-text" class="inp" rows="5" placeholder="Écris ici..." maxlength="600" style="background:#faf6f0;border-color:#c8b8a0;font-size:12px"></textarea>
         <div style="margin-top:6px">
-          <button class="btn btn-p" onclick="saveJ()" style="width:100%;font-size:10px">✿ Sauver</button>
+          <button class="btn btn-p" onclick="saveJ()" style="width:100%;font-size:var(--fs-sm)">✿ Sauver</button> <!-- était 10px -->
         </div>
-        <p id="v-status" style="font-size:9px;color:#a09880;text-align:center;margin-top:3px"></p>
+        <p id="v-status" style="font-size:var(--fs-xs);color:#a09880;text-align:center;margin-top:3px"></p> <!-- était 9px — statut secondaire -->
       </div>
       <!-- Navigation par semaine (SYSTEM 2: Écosystème) -->
       <div class="j90" style="margin-top:8px">
@@ -281,10 +281,10 @@ function clearDebugLogs() {
         <div id="j-entries"></div>
         <!-- Export journal (SYSTEM 6: Mémoire/Journal) -->
 <div class="j90" style="display:flex;gap:6px;margin-top:8px;padding-bottom:12px">
-  <button class="btn btn-s" onclick="exportJournal('semaine')" style="flex:1;font-size:10px">
+  <button class="btn btn-s" onclick="exportJournal('semaine')" style="flex:1;font-size:var(--fs-sm)"> <!-- était 10px -->
     ⬇ Cette semaine
   </button>
-  <button class="btn btn-s" onclick="exportJournal('complet')" style="flex:1;font-size:10px">
+  <button class="btn btn-s" onclick="exportJournal('complet')" style="flex:1;font-size:var(--fs-sm)"> <!-- était 10px -->
     ⬇ Tout le journal
   </button>
 </div>
@@ -326,14 +326,14 @@ function clearDebugLogs() {
       <span id="bilan-titre">🧠 Bilan Hebdo</span>
       <button onclick="resetBilan()" style="background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;" title="Réinitialiser">🔄</button>
     </h2>
-    <div id="claude-summary" style="background:rgba(255,255,255,0.5);padding:12px;border-radius:8px;font-size:11px;border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);">
+    <div id="claude-summary" style="background:rgba(255,255,255,0.5);padding:12px;border-radius:8px;font-size:var(--fs-sm);border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);"> <!-- était 11px -->
       Ton bilan de la semaine apparaîtra ici...
     </div>
     <textarea id="bil-txt-hidden" style="display:none"></textarea>
-    <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%;font-size:10px;margin-bottom:6px;">
+    <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%;font-size:var(--fs-sm);margin-bottom:6px;"> <!-- était 10px -->
       ✿ Générer le bilan
     </button>
-    <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="width:100%;font-size:10px;display:none;">
+    <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="width:100%;font-size:var(--fs-sm);display:none;"> <!-- était 10px -->
       📋 Copier le bilan
     </button>
   </div>
@@ -347,13 +347,13 @@ function clearDebugLogs() {
     </div>
     <div id="w-view" class="cal"></div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-top:3px">
-  <span style="font-size:9px;color:var(--text2);text-align:center">L</span>
-  <span style="font-size:9px;color:var(--text2);text-align:center">M</span>
-  <span style="font-size:9px;color:var(--text2);text-align:center">M</span>
-  <span style="font-size:9px;color:var(--text2);text-align:center">J</span>
-  <span style="font-size:9px;color:var(--text2);text-align:center">V</span>
-  <span style="font-size:9px;color:var(--text2);text-align:center">S</span>
-  <span style="font-size:9px;color:var(--text2);text-align:center">D</span>
+  <span style="font-size:var(--fs-xs);color:var(--text2);text-align:center">L</span> <!-- était 9px — labels jours du calendrier -->
+  <span style="font-size:var(--fs-xs);color:var(--text2);text-align:center">M</span>
+  <span style="font-size:var(--fs-xs);color:var(--text2);text-align:center">M</span>
+  <span style="font-size:var(--fs-xs);color:var(--text2);text-align:center">J</span>
+  <span style="font-size:var(--fs-xs);color:var(--text2);text-align:center">V</span>
+  <span style="font-size:var(--fs-xs);color:var(--text2);text-align:center">S</span>
+  <span style="font-size:var(--fs-xs);color:var(--text2);text-align:center">D</span>
 </div>
   </div>
 
@@ -369,7 +369,7 @@ function clearDebugLogs() {
       🎒 Mon Inventaire
       <div id="btn-ranger-tout" style="display:none">
         <button class="btn btn-s" onclick="rangerTout('all')"
-          style="font-size:10px;padding:3px 8px;opacity:0.6;border-style:dashed">
+          style="font-size:var(--fs-sm);padding:3px 8px;opacity:0.6;border-style:dashed"> <!-- était 10px -->
           📦 Tout ranger
         </button>
       </div>
@@ -424,18 +424,18 @@ function clearDebugLogs() {
         </div>
       </div>
       <!-- Bouton de test de la clé API (SYSTEM 3: IA & Cognition) -->
-      <button class="btn btn-s" onclick="testApiKey()" style="font-size:10px;margin-top:6px;width:100%">
+      <button class="btn btn-s" onclick="testApiKey()" style="font-size:var(--fs-sm);margin-top:6px;width:100%"> <!-- était 10px -->
         🔌 Tester la connexion
       </button>
-      <div id="api-status" style="font-size:10px;margin-top:6px;text-align:center"></div>
+      <div id="api-status" style="font-size:var(--fs-xs);margin-top:6px;text-align:center"></div> <!-- était 10px — statut secondaire -->
 
       <!-- Code spécial (cheat code) (SYSTEM 7: Ingénierie/Layout) -->
       <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
-        <label style="font-size:10px;color:var(--text2)">🔮 Code spécial</label>
+        <label style="font-size:var(--fs-xs);color:var(--text2)">🔮 Code spécial</label> <!-- était 10px -->
         <div style="display:flex;gap:6px;margin-top:4px">
           <input id="cheat-input" type="text" placeholder="Entrer un code..."
-            style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:'Courier New',monospace">
-          <button class="btn btn-s" onclick="applyCheatCode()" style="font-size:10px;white-space:nowrap">Activer</button>
+            style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:var(--fs-sm);font-family:'Courier New',monospace"> <!-- était 11px -->
+          <button class="btn btn-s" onclick="applyCheatCode()" style="font-size:var(--fs-sm);white-space:nowrap">Activer</button> <!-- était 10px -->
         </div>
       </div>
 
@@ -456,34 +456,34 @@ function clearDebugLogs() {
 <!-- Mes données -->
 <div class="card" style="margin-top:15px;">
   <h2>💾 Mes données</h2>
-  <p id="last-journal-export" style="font-size:9px;color:var(--text2);margin-bottom:6px"></p>
-  <p style="font-size:10px;color:var(--text2);margin-bottom:10px">Sauvegarde tes progrès avant une mise à jour.</p>
-  <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:8px;font-size:10px">📦 Exporter ma sauvegarde</button>
+  <p id="last-journal-export" style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:6px"></p> <!-- était 9px -->
+  <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:10px">Sauvegarde tes progrès avant une mise à jour.</p> <!-- était 10px -->
+  <button class="btn btn-s" onclick="exportD()" style="width:100%;margin-bottom:8px;font-size:var(--fs-sm)">📦 Exporter ma sauvegarde</button> <!-- était 10px -->
   <input type="file" id="import-file" style="display:none" accept=".json" onchange="importD(event)">
-  <button class="btn btn-s" onclick="document.getElementById('import-file').click()" style="width:100%;margin-bottom:8px;font-size:10px;background:var(--mint);color:#fff;border:none;">📥 Restaurer une sauvegarde</button>
-  <button class="btn btn-s" onclick="forceUpdate()" style="width:100%;font-size:10px">🔄 Mettre à jour l'app</button>
+  <button class="btn btn-s" onclick="document.getElementById('import-file').click()" style="width:100%;margin-bottom:8px;font-size:var(--fs-sm);background:var(--mint);color:#fff;border:none;">📥 Restaurer une sauvegarde</button> <!-- était 10px -->
+  <button class="btn btn-s" onclick="forceUpdate()" style="width:100%;font-size:var(--fs-sm)">🔄 Mettre à jour l'app</button> <!-- était 10px -->
 </div>
 
 <!-- Danger zone -->
 <div class="card" style="margin-top:12px;border-color:#e57373">
-  <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:10px">🗑️ Tout réinitialiser</button>
+  <button class="btn btn-d" onclick="confirmReset()" style="width:100%;font-size:var(--fs-sm)">🗑️ Tout réinitialiser</button> <!-- était 10px -->
 </div>
 
 <!-- Version -->
-<div style="text-align:center;margin-top:12px;font-size:9px;color:var(--text2)">
+<div style="text-align:center;margin-top:12px;font-size:var(--fs-xs);color:var(--text2)"> <!-- était 9px — numéro de version = timestamp -->
   Habit-Gotchi <span id="APP_VERSION"></span> ✿
 </div>
 
 <!-- Outils développeur (caché) -->
 <div style="margin-top:12px;border:1px dashed var(--border);border-radius:10px;overflow:hidden">
   <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
-    style="width:100%;background:none;border:none;padding:8px;font-size:9px;color:var(--text2);cursor:pointer;text-align:left">
+    style="width:100%;background:none;border:none;padding:8px;font-size:var(--fs-xs);color:var(--text2);cursor:pointer;text-align:left"> <!-- était 9px -->
     🛠️ Outils développeur ▾
   </button>
   <div style="display:none;padding:0 8px 8px">
-    <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:4px;font-size:9px">🔍 État système</button>
-    <button class="btn btn-s" onclick="cleanProps()" style="width:100%;margin-top:4px;font-size:9px">🧹 Nettoyer inventaire</button>
-    <button class="btn btn-s" onclick="toggleDebugPanel()" style="width:100%;margin-top:4px;font-size:9px">🐛 Console debug PWA</button>
+    <button class="btn btn-s" onclick="debugProps()" style="width:100%;margin-top:4px;font-size:var(--fs-xs)">🔍 État système</button> <!-- était 9px -->
+    <button class="btn btn-s" onclick="cleanProps()" style="width:100%;margin-top:4px;font-size:var(--fs-xs)">🧹 Nettoyer inventaire</button> <!-- était 9px -->
+    <button class="btn btn-s" onclick="toggleDebugPanel()" style="width:100%;margin-top:4px;font-size:var(--fs-xs)">🐛 Console debug PWA</button> <!-- était 9px -->
   </div>
 </div>
 
@@ -520,7 +520,7 @@ function clearDebugLogs() {
         <!-- Badge pour notifications (SYSTEM 4: Habitudes) -->
         <span id="badge-boutique" style="display:none;position:absolute;top:-4px;right:-4px;
           background:var(--pink);color:#fff;border-radius:50%;
-          width:14px;height:14px;font-size:8px;line-height:14px;text-align:center">!</span>
+          width:14px;height:14px;font-size:var(--fs-xs);line-height:14px;text-align:center">!</span> <!-- était 8px -->
       </div>
       <div class="menu-circle" onclick="goMenu('progress')">
         <span class="mc-icon">📊</span><span class="mc-label">Progrès</span>

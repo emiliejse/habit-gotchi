@@ -381,15 +381,21 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 28px;
+  height: 36px; /* était 28px */
   padding: 0 6px;
   cursor: pointer;
   border-radius: 3px;
   transition: background .12s;
   color: var(--paper-text);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md); /* était --fs-sm */
   font-weight: bold;
 }
+
+/* RÔLE : Ligne décalée vers la droite pour effet quinconce */
+.menu-line--indent {
+  padding-left: 32px;
+}
+
 .menu-line:active { background: rgba(176,144,208,0.15); }
 
 /* RÔLE : État actif — ligne surlignée comme au stabilo */
@@ -399,16 +405,32 @@ body {
 }
 .menu-line.active .ml-icon { filter: none; }
 
-.ml-icon { font-size: 16px; line-height: 1; width: 22px; text-align: center; }
+.ml-icon { font-size: 20px; line-height: 1; width: 26px; text-align: center; }
 .ml-label { flex: 1; letter-spacing: 0.5px; }
 
-/* RÔLE : Post-its en bas du cahier */
+/* RÔLE : Post-its empilés verticalement */
 .menu-postits {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  flex-direction: column; /* était row */
+  gap: 6px;
+  margin-top: 10px;
   position: relative;
   z-index: 1;
+}
+
+.menu-postit {
+  width: 100%; /* prend toute la largeur */
+  padding: 10px 12px;
+  font-size: var(--fs-sm);
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
+  border-radius: 2px;
+  border: none;
+  letter-spacing: 0.3px;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.12);
+  transition: transform .12s;
+  text-align: left;
 }
 
 /* RÔLE : Style post-it collé */

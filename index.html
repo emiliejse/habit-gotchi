@@ -534,32 +534,32 @@ function clearDebugLogs() {
       <span class="ml-icon">🏠</span>
       <span class="ml-label">Accueil</span>
     </div>
+    <div class="menu-line menu-line--indent" onclick="goMenu('progress')">
+      <span class="ml-icon">📊</span>
+      <span class="ml-label">Progrès</span>
+    </div>
     <div class="menu-line" onclick="goMenu('journal')">
       <span class="ml-icon">📓</span>
       <span class="ml-label">Journal</span>
     </div>
-    <div class="menu-line" onclick="goMenu('props')" style="position:relative">
+    <div class="menu-line menu-line--indent" onclick="goMenu('props')" style="position:relative">
       <span class="ml-icon">🎒</span>
       <span class="ml-label">Inventaire</span>
       <span id="badge-boutique" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);
         background:var(--pink);color:#fff;border-radius:50%;
         width:14px;height:14px;font-size:var(--fs-xs);line-height:14px;text-align:center">!</span>
     </div>
-    <div class="menu-line" onclick="goMenu('progress')">
-      <span class="ml-icon">📊</span>
-      <span class="ml-label">Progrès</span>
-    </div>
     <div class="menu-line" onclick="goMenu('perso')">
       <span class="ml-icon">🎨</span>
       <span class="ml-label">Perso</span>
     </div>
-    <div class="menu-line" onclick="goMenu('settings')">
+    <div class="menu-line menu-line--indent" onclick="goMenu('settings')">
       <span class="ml-icon">⚙️</span>
       <span class="ml-label">Réglages</span>
     </div>
   </nav>
 
-  <!-- Post-its en bas -->
+  <!-- Post-its empilés -->
   <div class="menu-postits">
     <button class="menu-postit menu-postit--rose"
       onclick="event.stopPropagation();toggleMenu();ouvrirAgenda()"
@@ -568,7 +568,7 @@ function clearDebugLogs() {
     </button>
     <button class="menu-postit menu-postit--lilac"
       onclick="genSoutien();toggleMenu()">
-      💜 Soutien
+      💜 Besoin de soutien
     </button>
   </div>
 </div>

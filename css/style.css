@@ -369,44 +369,49 @@ body {
 .menu-lines {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  align-items: flex-start; /* ← nécessaire pour que --indent fonctionne */
+  gap: 2px;
   margin-bottom: 12px;
   position: relative;
   z-index: 1;
 }
 
-/* RÔLE : Une ligne de navigation */
-/* POURQUOI height 28px : correspond exactement à l'espacement des lignes du cahier */
+/* RÔLE : Une ligne de navigation — grande zone de tap, centrée */
 .menu-line {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 36px; /* était 28px */
-  padding: 0 6px;
+  justify-content: center; /* centré horizontalement */
+  gap: 12px;
+  height: 44px; /* grande zone de tap iOS recommandée */
+  padding: 0 12px;
   cursor: pointer;
-  border-radius: 3px;
-  transition: background .12s;
+  border-radius: 6px;
+  border: 2px solid var(--paper-border);
+  transition: background .12s, border-color .12s;
   color: var(--paper-text);
-  font-size: var(--fs-md); /* était --fs-sm */
+  font-size: var(--fs-lg); /* 18px — même taille pour tous */
   font-weight: bold;
+  width: 70%; /* largeur fixe pour que le quinconce soit visible */
 }
 
-/* RÔLE : Ligne décalée vers la droite pour effet quinconce */
+/* RÔLE : Lignes paires décalées à droite — effet quinconce centré */
 .menu-line--indent {
-  padding-left: 32px;
+  align-self: flex-end;
+  margin-right: 10%;
 }
 
-.menu-line:active { background: rgba(176,144,208,0.15); }
+/* Rendre cliquable visuellement */
+.menu-line:active { background: rgba(176,144,208,0.2); border-color: var(--lilac); }
 
-/* RÔLE : État actif — ligne surlignée comme au stabilo */
+/* RÔLE : État actif — surlignage stabilo */
 .menu-line.active {
-  background: rgba(176,144,208,0.2);
+  background: rgba(176,144,208,0.18);
+  border-color: var(--lilac);
   color: var(--lilac);
 }
-.menu-line.active .ml-icon { filter: none; }
 
-.ml-icon { font-size: 20px; line-height: 1; width: 26px; text-align: center; }
-.ml-label { flex: 1; letter-spacing: 0.5px; }
+.ml-icon  { font-size: 20px; line-height: 1; flex-shrink: 0; }
+.ml-label { font-size: var(--fs-lg); letter-spacing: 0.5px; }
 
 /* RÔLE : Post-its empilés verticalement */
 .menu-postits {

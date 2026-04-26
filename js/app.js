@@ -32,7 +32,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'hg-v3.16'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'hg-v3.17'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -1029,7 +1029,9 @@ async function bootstrap() {
     if (window.USER_CONFIG?.identity && window.D?.g) {
       if (window.USER_CONFIG.identity.userNickname) window.D.g.userNickname = window.USER_CONFIG.identity.userNickname;
       if (window.USER_CONFIG.identity.userName)     window.D.g.userName     = window.USER_CONFIG.identity.userName;
-      if (window.USER_CONFIG.identity.gotchiName)   window.D.g.name         = window.USER_CONFIG.identity.gotchiName;
+      // RÔLE : N'applique gotchiName que si l'utilisatrice n'a pas encore personnalisé le nom
+      // POURQUOI : évite d'écraser le nom choisi dans le wizard à chaque mise à jour
+      if (window.USER_CONFIG.identity.gotchiName && window.D.g.name === 'Petit·e Gotchi') window.D.g.name = window.USER_CONFIG.identity.gotchiName;
       save();
     }
     if (typeof updBadgeBoutique === 'function') updBadgeBoutique();

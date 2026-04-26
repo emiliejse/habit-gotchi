@@ -24,6 +24,35 @@ const UI_PALETTES = [
   { id:'peche',   label:'Pêche',   bg:'#f0e0d0', lilac:'#c09070', mint:'#90d0a8', pink:'#e8b090', text:'#483020', text2:'#705040', card:'rgba(255,255,255,.88)', border:'#d8c0a8' }, // text2 : #907060 → #705040
 ];
 
+/* ─── VARIABLES PAPIER & TERMINAL (composants hors palette) ──────── */
+// RÔLE : Centraliser les couleurs des composants "papier" (.j90, .menu-book)
+// et "terminal" (#tablet-box) — ils n'obéissent pas aux palettes UI mais
+// doivent quand même être modifiables depuis un seul endroit.
+const PAPER_THEME = {
+  bg:     '#e8e0d0',  // fond beige papier (.j90)
+  border: '#c8b8a0',  // contour couture
+  text:   '#6a5a40',  // texte encre
+  line:   '#c8b8a0',  // tirets et séparateurs
+  entry:  'rgba(255,255,255,.5)', // fond entrée journal
+  entryTs:'#a09880',  // timestamp (secondaire)
+  entryBtn:'#f0e8d8', // fond bouton action journal
+
+  bookBg:    '#f4edd8',  // fond carton menu-book
+  bookBorder:'#c8b898',  // contour menu-book
+  bookShadow:'#b8a888',  // ombre portée menu-book
+  bookLine:  '#d4c4a8',  // reliure (::before)
+};
+
+const TERMINAL_THEME = {
+  box:    '#1a1a1a',  // fond boîte tablette
+  border: '#444',     // contour
+  screen: '#0a0a0a',  // fond écran intérieur
+  screenBorder: '#333',
+  text:   '#00ff41',  // vert phosphore
+  textDim:'#007a1f',  // timestamp (secondaire)
+  lineDiv:'#0f2a0f',  // séparateur ligne
+};
+
 /* ─── SYSTÈME 5 : PERSONNALISATION (Sprite) ──────────────────────── */
 
 /**

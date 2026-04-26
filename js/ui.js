@@ -2604,7 +2604,7 @@ function ouvrirAgenda(dateStr) {
         cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
         🗓️ Mois
       </button>
-      <button onclick="switchAgenda('cycle')" id="atab-cycle"
+      ${showCycle() ? `<button onclick="switchAgenda('cycle')" id="atab-cycle"
         style="flex:1;padding:7px;border-radius:16px;border:none;font-size:10px;
         cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
         🌸 Cycle
@@ -2643,7 +2643,7 @@ function chevron(dir) {
 }
 
 function switchAgenda(onglet) {
-  ['jour','mois','cycle'].forEach(o => {
+  ['jour','mois', ...(showCycle() ? ['cycle'] : [])].forEach(o => {
     const btn = document.getElementById('atab-' + o);
     if (!btn) return;
     btn.style.background  = o === onglet ? '#fff' : 'transparent';

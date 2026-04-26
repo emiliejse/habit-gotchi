@@ -56,6 +56,20 @@ async function loadDataFiles() {
     // Initialisation du catalogue d'objets
     if (results[0].status === 'fulfilled') {
       window.PROPS_LIB = results[0].value.catalogue || [];
+
+      // RÔLE : Charge un catalogue d'objets exclusifs si user_config définit extraPropsFile.
+      // POURQUOI : Permet à Alexia d'avoir ses propres objets sans polluer le catalogue commun.
+      //            Chez Émilie, extraPropsFile est absent → ce bloc est ignoré.
+      if (window.USER_CONFIG?.extraPropsFile) {
+        try {
+          const r = await fetch(window.USER_CONFIG.extraPropsFile);
+          if (r.ok) {
+            const extra = await r.json();
+            window.PROPS_LIB = window.PROPS_LIB.concat(extra.catalogue || []);
+          }
+        } catch(e) { console.log('extraPropsFile introuvable — ignoré'); }
+      }
+
       window.PROPS_LIB.forEach(prop => {
         // Ajoute automatiquement les objets gratuits (cout = 0) à l'inventaire
         if (prop.cout === 0 && window.D && !window.D.g.props.find(p => p.id === prop.id)) {

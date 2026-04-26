@@ -20,7 +20,7 @@ const clamp  = (v,a,b) => Math.max(a, Math.min(b, v));
 window.D            = null;   // données utilisateur (LocalStorage)
 window.PROPS_LIB    = [];     // catalogue (data/props.json)
 window.PROPS_LOCAL  = [];     // objets générés par l'IA (session)
-window.PERSONALITY  = null;   // data/personality.json
+window.PERSONALITY  = null;   // chargé depuis user_config.json (personality.source = "config")
 window.AI_CONTEXTS  = null;   // prompts/ai_contexts.json
 window.AI_SYSTEM    = null;   // prompts/ai_system.json
 
@@ -48,7 +48,7 @@ async function loadDataFiles() {
   try {
     const results = await Promise.allSettled([
       fetch(base + 'props.json').then(r => r.json()),              // 0
-      fetch(base + 'personality.json').then(r => r.json()),        // 1
+      Promise.resolve(null),              // 1 — personality supprimé, chargé via user_config
       fetch(promptsBase + 'ai_contexts.json').then(r => r.json()), // 2
       fetch(promptsBase + 'ai_system.json').then(r => r.json()),   // 3
     ]);
@@ -64,20 +64,17 @@ async function loadDataFiles() {
       });
       save(); renderProps(); updBadgeBoutique();
     }
-    if (results[1].status === 'fulfilled') {
-      window.PERSONALITY = results[1].value;
-      // RÔLE : Si user_config.json définit une personnalité complète, elle remplace personality.json.
-      // POURQUOI : Permet à chaque utilisatrice d'avoir ses propres traits/style/bulles
-      //            sans avoir un personality.json séparé dans son repo.
-      if (window.USER_CONFIG?.personality?.source === 'config') {
-        const p = window.USER_CONFIG.personality;
-        window.PERSONALITY = {
-          nom:    window.PERSONALITY?.nom,
-          traits: p.traits ?? window.PERSONALITY?.traits,
-          style:  p.style  ?? window.PERSONALITY?.style,
-          bulles: p.bulles ?? window.PERSONALITY?.bulles
-        };
-      }
+    // RÔLE : Charge la personnalité depuis user_config.json directement.
+    // POURQUOI : personality.json est supprimé — toute la personnalité
+    //            est maintenant dans user_config.json pour les deux repos.
+    if (window.USER_CONFIG?.personality?.source === 'config') {
+      const p = window.USER_CONFIG.personality;
+      window.PERSONALITY = {
+        nom:    p.traits ? p.traits[0] : 'Petit·e Gotchi',
+        traits: p.traits,
+        style:  p.style,
+        bulles: p.bulles
+      };
     }
     if (results[2].status === 'fulfilled') window.AI_CONTEXTS = results[2].value;
     if (results[3].status === 'fulfilled') window.AI_SYSTEM   = results[3].value;

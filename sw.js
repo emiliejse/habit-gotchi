@@ -26,7 +26,6 @@ const ASSETS = [
 
   // Data (JSON — les plus importants à versionner)
   './data/props.json',
-  './data/personality.json',
   './prompts/ai_contexts.json',
   './prompts/ai_system.json',
 ];

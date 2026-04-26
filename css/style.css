@@ -31,6 +31,15 @@
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
+
+  /* ─── ÉCHELLE TYPOGRAPHIQUE ───────────────────────────────────────── */
+  /* RÔLE : Plancher de lisibilité — rien ne doit descendre sous --fs-xs */
+  /* POURQUOI : Les tailles 8/9/10px épuisent la lecture, surtout sur iPhone avec TDAH */
+  --fs-xs:  11px;  /* Réservé aux timestamps, numéros de version */
+  --fs-sm:  13px;  /* Labels secondaires, badges, sous-titres */
+  --fs-md:  15px;  /* Corps de texte standard */
+  --fs-lg:  18px;  /* Titres de carte, titres de section */
+  --fs-xl:  22px;  /* Titre de panneau principal */
 }
 
 /* Reset CSS basique */
@@ -616,9 +625,12 @@ body {
 .tama-wind { animation: tamaSway 1.4s ease-in-out infinite; }
 .tama-wind-strong { animation: tamaSwayStrong 0.9s ease-in-out infinite; }
 
-/* Dans style.css, sur #mbox ou .mbox */
-word-break: keep-all;
-overflow-wrap: break-word;
+/* RÔLE : Empêche le texte long de déborder des modales */
+/* POURQUOI : Ces 2 propriétés flottaient hors de toute règle CSS — elles étaient ignorées silencieusement par le navigateur */
+.modal-box {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
 
 /* Masquer l'icône native des inputs time (agenda) */
 input[type="time"]::-webkit-calendar-picker-indicator {
@@ -641,4 +653,15 @@ input[type="time"] {
 @keyframes slideUp {
   from { transform: translateY(100%); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ─── ACCESSIBILITÉ : RÉDUCTION DES ANIMATIONS ───────────────────── */
+/* RÔLE : Respecter le réglage iOS "Réduire les animations" et les préférences système */
+/* POURQUOI : Critique pour les troubles vestibulaires, le TDAH et la fatigue sensorielle */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

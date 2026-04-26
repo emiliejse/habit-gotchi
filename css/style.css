@@ -211,21 +211,21 @@ body {
   background: var(--card);
   border: 2px solid var(--lilac);
   border-radius: 8px;
-  /* POURQUOI padding 8px 14px : avec fs-sm (13px) et line-height 1.4, le texte peut s'étendre sur 2-3 lignes.
-     Le padding vertical plus généreux évite que le texte soit à l'étroit */
   padding: 8px 14px;
-  font-size: var(--fs-sm); /* était 10px — bulle de pensée = cœur émotionnel de l'app, doit être lisible */
-  line-height: 1.4; /* POURQUOI : améliore la lisibilité des messages multi-lignes */
+  font-size: var(--fs-sm);
+  line-height: 1.4;
   text-align: center;
-  min-height: 44px; /* POURQUOI : taille minimale avec le nouveau fs-sm pour éviter l'écrasement */
+  height: auto;          /* ← remplace min-height: 44px */
+  display: flex;         /* ← nouveau */
+  align-items: center;   /* ← nouveau */
+  justify-content: center; /* ← nouveau */
   box-shadow: 0 -2px 8px var(--shadow);
   position: relative;
-  margin: 0 auto;
+  margin: 6px auto 0;
   max-width: 340px;
   width: 100%;
   box-sizing: border-box;
   z-index: 10;
-  margin-top: 6px;
 }
 /* La petite flèche pointant vers le Gotchi */
 .bubble::before {
@@ -280,7 +280,7 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 4px 14px max(var(--sab), 4px);
+  padding: 2px 32px max(var(--sab), 4px);
   font-size: 22px;
   color: #6a5a40;
   cursor: pointer;
@@ -414,7 +414,7 @@ body {
 
 /* RÔLE : Carte pensée — zone de lecture, pas une carte d'action */
 #claude-card {
-  background: rgba(176,144,208,0.07);
+  background: rgba(176,144,208,0.15);
   border: none;
   border-radius: var(--r-lg);
   padding: var(--sp-sm) var(--sp-md);

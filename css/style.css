@@ -386,7 +386,7 @@ body {
   padding: 0 12px;
   cursor: pointer;
   border-radius: 6px;
-  border: 2px solid var(--paper-border);
+  border: 2px solid rgba(200,184,160,0.4);
   transition: background .12s, border-color .12s;
   color: var(--paper-text);
   font-size: var(--fs-lg); /* 18px — même taille pour tous */
@@ -410,7 +410,7 @@ body {
   color: var(--lilac);
 }
 
-.ml-icon  { font-size: 20px; line-height: 1; flex-shrink: 0; }
+.ml-icon  { font-size: 26px; line-height: 1; flex-shrink: 0; }
 .ml-label { font-size: var(--fs-lg); letter-spacing: 0.5px; }
 
 /* RÔLE : Post-its empilés verticalement */
@@ -423,8 +423,10 @@ body {
   z-index: 1;
 }
 
+/* RÔLE : Post-it collé en bas du cahier */
+/* POURQUOI rotate léger : effet post-it à la va-vite, comme dans un vrai cahier d'ado */
 .menu-postit {
-  width: 100%; /* prend toute la largeur */
+  width: 100%;
   padding: 10px 12px;
   font-size: var(--fs-sm);
   font-weight: bold;
@@ -435,23 +437,8 @@ body {
   letter-spacing: 0.3px;
   box-shadow: 2px 2px 4px rgba(0,0,0,0.12);
   transition: transform .12s;
-  text-align: left;
-}
-
-/* RÔLE : Style post-it collé */
-.menu-postit {
-  flex: 1;
-  padding: 8px 6px;
-  font-size: var(--fs-xs);
-  font-weight: bold;
-  font-family: 'Courier New', monospace;
-  cursor: pointer;
-  border-radius: 2px;
-  border: none;
-  letter-spacing: 0.3px;
-  /* POURQUOI rotate léger : effet post-it collé à la va-vite, comme dans un vrai cahier d'ado */
-  box-shadow: 2px 2px 4px rgba(0,0,0,0.12);
-  transition: transform .12s;
+  text-align: center;
+  box-sizing: border-box;
 }
 .menu-postit:active { transform: scale(.95); }
 

@@ -70,7 +70,7 @@ async function loadDataFiles() {
     if (window.USER_CONFIG?.personality?.source === 'config') {
       const p = window.USER_CONFIG.personality;
       window.PERSONALITY = {
-        nom:    p.traits ? p.traits[0] : 'Petit·e Gotchi',
+        nom:    window.USER_CONFIG?.identity?.gotchiName ?? 'Petit·e Gotchi',
         traits: p.traits,
         style:  p.style,
         bulles: p.bulles

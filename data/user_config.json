@@ -1,0 +1,43 @@
+{
+  "_comment": "Fichier personnel — ne jamais commiter (protégé par .gitignore).",
+
+  "identity": {
+    "userName": "Émilie",
+    "userNickname": "mimi",
+    "gotchiName": "Petit·e Gotchi"
+  },
+
+  "meteo": {
+    "lat": 43.6047,
+    "lon": 1.4442,
+    "city": "Toulouse"
+  },
+
+  "birthday": {
+    "month": null,
+    "day": null,
+    "message": "",
+    "cheatCode": "joyeuxanniversaire",
+    "petalesBonus": 50
+  },
+
+  "personality": {
+    "source": "file",
+    "traits": null,
+    "style": null,
+    "bulles": null
+  },
+
+  "ui": {
+    "appTitle": "HabitGotchi",
+    "showTDAHMention": true,
+    "showCycleFeature": true
+  },
+
+  "startProps": [],
+
+  "ai": {
+    "systemPromptOverride": null,
+    "contexteOverride": null
+  }
+}

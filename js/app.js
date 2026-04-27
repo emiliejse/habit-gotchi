@@ -32,7 +32,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'hg-v3.26'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'hg-v3.27'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -155,8 +155,6 @@ snackDone: '', snackEmoji: '',
       bilanWeek: '',
       bilanText: '',
       lastTick: Date.now(),
-      lat: 43.6047,
-      lng: 1.4442,
       solarPhases: null,
       cycleDuree: 28,// durée du cycle en jours
       birthdayShown: false,    // true une fois la modale anniversaire affichée ce jour-là
@@ -668,16 +666,26 @@ function editH(i, v) {
   save();
 }
 
+// RÔLE : Version "anti-rafale" de save() pour les sliders.
+// POURQUOI : setEnergy et setHappy sont appelées à chaque pixel de déplacement
+//            du slider. Sans debounce, save() écrit dans localStorage des dizaines
+//            de fois par seconde. Ici on attend 300ms de calme avant d'écrire.
+let _saveTimer = null;
+function saveDebounced() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => save(), 300);
+}
+
 // Mise à jour des jauges vitales (0-5)
 function setEnergy(v) {
   window.D.g.energy = +v;
   document.getElementById('sv-energy').textContent = v;
-  save();
+  saveDebounced();
 }
 function setHappy(v) {
   window.D.g.happiness = +v;
   document.getElementById('sv-happy').textContent = v;
-  save(); updBubbleNow();
+  saveDebounced(); updBubbleNow();
 }
 
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME & TOPOGRAPHIE (Suite) ───────────────── */
@@ -913,7 +921,7 @@ if (dernierJournal?.date?.startsWith(today())) {
   const el = document.getElementById('bubble');
   if (el) {
     let bulle = poolFinal[Math.floor(Math.random() * poolFinal.length)];
-    bulle = bulle.replace('{{diminutif}}', D.g.userNickname || D.userName || 'toi');
+    bulle = bulle.replace('{{diminutif}}', D.g.userNickname || D.g.userName || 'toi');
     el.textContent = bulle;
     window._derniereBulle = bulle; // mémorise pour anti-répétition
   }

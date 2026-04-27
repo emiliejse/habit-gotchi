@@ -26,6 +26,21 @@ function showCycle() {
   return window.USER_CONFIG?.ui?.showCycleFeature !== false;
 }
 
+// RÔLE : Protège l'app contre les injections HTML (XSS).
+// POURQUOI : D.g.name, les noms de props et les textes IA peuvent contenir
+//            des caractères spéciaux (<, >, &, ", ') qui, injectés directement
+//            dans innerHTML, permettraient d'exécuter du code malveillant.
+//            Cette fonction les remplace par leurs équivalents HTML inoffensifs.
+function escape(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')   // & → &amp; (en premier, sinon les autres sont re-encodés)
+    .replace(/</g, '&lt;')    // < → &lt;
+    .replace(/>/g, '&gt;')    // > → &gt;
+    .replace(/"/g, '&quot;')  // " → &quot;
+    .replace(/'/g, '&#39;');  // ' → &#39;
+}
+
 // RÔLE : Indique si la feature agenda/rendez-vous doit être affichée.
 // POURQUOI : Émilie ne prévoit pas de s'en servir à terme.
 //            Alexia oui. Cette fonction permet de masquer proprement
@@ -51,7 +66,6 @@ function animEl(el, anim, dur = 600) {
 
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME & NAVIGATION ────────────────────── */
 let journalLocked = true;
-let masquerAcquis = true;
 
 /**
  * Moteur de Routage interne (Single Page Application)
@@ -275,7 +289,7 @@ function ouvrirSnack() {
       <div style="text-align:center;padding:10px">
         <div style="font-size:48px;margin-bottom:var(--sp-sm)">🌙</div>
         <p style="font-size:12px;margin-bottom:var(--sp-md)">
-          ${window.D.g.name} dort... reviens demain 💜
+          ${escape(window.D.g.name)} dort... reviens demain 💜
         </p>
         <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
       </div>`;
@@ -311,7 +325,7 @@ function ouvrirSnack() {
       <div style="text-align:center;padding:10px">
         <div style="font-size:48px;margin-bottom:var(--sp-sm)">${w.icon}</div>
         <p style="font-size:var(--fs-sm);margin-bottom:var(--sp-md)">
-          ${window.D.g.name} a déjà mangé ce ${w.label.toLowerCase()} 💜<br>
+          ${escape(window.D.g.name)} a déjà mangé ce ${w.label.toLowerCase()} 💜<br>
           <span style="color:var(--text2);font-size:var(--fs-xs)">Reviens à la prochaine fenêtre repas</span>
         </p>
         <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
@@ -341,7 +355,7 @@ function ouvrirSnack() {
         Repas du ${w.label.toLowerCase()}
       </p>
       <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:var(--sp-md)">
-        Que veux-tu donner à ${window.D.g.name} ?
+        Que veux-tu donner à ${escape(window.D.g.name)} ?
       </p>
       <div style="display:flex;gap:6px;margin-bottom:var(--sp-md)">
         ${snackButtons}
@@ -695,7 +709,7 @@ function renderBoutiqueOnglet(onglet) {
       return `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-sm) 12px 8px 10px;border:2px solid var(--border);border-radius:var(--r-md);margin-bottom:6px;background:#fff">
           <span style="font-size:18px">${prop.emoji}</span>
-          <span style="font-size:var(--fs-sm);font-weight:bold;flex:1;margin:0 8px">${prop.nom}</span>
+          <span style="font-size:var(--fs-sm);font-weight:bold;flex:1;margin:0 8px">${escape(prop.nom)}</span>
           <button onclick="acheterProp('${prop.id}')"
             style="padding:5px 12px;border-radius:20px;border:none;font-size:var(--fs-xs);font-weight:bold;font-family:'Courier New',monospace;
             cursor:${peutAcheter?'pointer':'not-allowed'};
@@ -715,7 +729,7 @@ function renderBoutiqueOnglet(onglet) {
 
     el.innerHTML = `
       <p style="font-size:var(--fs-sm);color:var(--text2);text-align:center;margin-bottom:16px;line-height:1.6">
-        ${window.D.g.name} invente un objet unique<br>rien que pour toi ✨
+        ${escape(window.D.g.name)} invente un objet unique<br>rien que pour toi ✨
       </p>
       <div style="text-align:center">
         <button onclick="acheterPropClaude()"
@@ -725,7 +739,7 @@ function renderBoutiqueOnglet(onglet) {
           color:${peutGenerer?'#fff':'#aaa'};
           border-bottom:${peutGenerer?'3px solid rgba(0,0,0,0.15)':'3px solid transparent'};
           letter-spacing:.5px">
-          ${peutGenerer ? `✨ Demander à ${window.D.g.name} — 🌸 10` : '🌸 Il te faut 10 pétales'}
+          ${peutGenerer ? `✨ Demander à ${escape(window.D.g.name)} — 🌸 10` : '🌸 Il te faut 10 pétales'}
         </button>
       </div>
       ${dernierObj ? `
@@ -737,7 +751,7 @@ function renderBoutiqueOnglet(onglet) {
   </div>` : `
   <div style="margin-top:20px;text-align:center;border-top:1px solid var(--border);padding-top:16px;opacity:.5">
     <div style="font-size:28px;margin-bottom:6px">🌱</div>
-    <div style="font-size:var(--fs-xs);color:var(--text2);line-height:1.6">Pas encore de création...<br>demande à ${window.D.g.name} d'inventer quelque chose ✨</div>
+    <div style="font-size:var(--fs-xs);color:var(--text2);line-height:1.6">Pas encore de création...<br>demande à ${escape(window.D.g.name)} d'inventer quelque chose ✨</div>
   </div>`}
     `;
 
@@ -764,11 +778,6 @@ function renderBoutiqueOnglet(onglet) {
   }
 }
   }
-}
-
-function toggleMasquerAcquis() {
-  masquerAcquis = !masquerAcquis;
-  renderBoutiqueOnglet('catalogue');
 }
 
 function acheterProp(propId) {
@@ -950,7 +959,7 @@ const slots = [
   document.getElementById('modal').style.display = 'flex';
 document.getElementById('mbox').innerHTML = `
   <h3 style="font-size:13px;margin-bottom:10px;color:var(--lilac)">
-    📍 Où placer ${prop.emoji || '🎁'} ${prop.nom} ?
+    📍 Où placer ${prop.emoji || '🎁'} ${escape(prop.nom)} ?
   </h3>
 
   <div style="font-size:var(--fs-xs);opacity:.5;margin-bottom:4px;text-transform:uppercase">Fond</div>
@@ -1009,7 +1018,7 @@ function openSlotPickerAvecRangement(propIndex) {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
     <h3 style="font-size:13px;margin-bottom:6px;color:var(--lilac)">
-      📍 ${prop.emoji || '🎁'} ${prop.nom}
+      📍 ${prop.emoji || '🎁'} ${escape(prop.nom)}
     </h3>
     <p style="font-size:var(--fs-sm);opacity:.6;margin-bottom:10px">
       Changer d'emplacement ?
@@ -2125,12 +2134,6 @@ function saveJ() {
     toast(`📓 ${window.JOURNAL_MAX_PER_DAY} notes max par jour — reviens demain ✿`);
     return;
   }
-  if (!selMood) {
-    const mp = document.getElementById('mood-pick');
-    if (mp) { mp.classList.add('mood-required'); setTimeout(() => mp.classList.remove('mood-required'), 800); }
-    toast(_noOrphan('Choisis une humeur avant de sauvegarder ✿'));
-    return;
-  }
   window.D.journal.push({ date: new Date().toISOString(), mood: selMood, text: t });
   addXp(15);
   addEvent({ type: 'note', subtype: 'journal', valeur: 15, label: 'Note enregistrée  +15 XP' });
@@ -2193,7 +2196,7 @@ function editJEntry(i) {
   <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:var(--sp-sm)" id="edit-mood-pick">
     ${MOODS.map(m => `<button class="mood-b${e.mood===m.id?' sel':''}" data-m="${m.id}" onclick="this.parentNode.querySelectorAll('.mood-b').forEach(b=>b.classList.toggle('sel',b===this));window._editMood='${m.id}'">${m.e}</button>`).join('')}
   </div>
-  <textarea id="edit-j-txt" class="inp" rows="5" style="font-size:12px">${e.text||''}</textarea>
+  <textarea id="edit-j-txt" class="inp" rows="5" style="font-size:12px">${escape(e.text||'')}</textarea>
   <div style="display:flex;gap:6px;margin-top:8px">
     <button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button>
     <button class="btn btn-p" onclick="saveEditJ(${i})" style="flex:1">OK</button>
@@ -2220,7 +2223,6 @@ function exportJournal(mode) {
   if (mode === 'semaine') {
     const wd = getWkDates(jWeekOff);
     entries = D.journal.filter(j => wd.includes(j.date.split('T')[0]));
-    const a = new Date(wd[0]), b = new Date(wd[6]);
     nomFichier = `journal_${wd[0]}_${wd[6]}.txt`;
   } else {
     entries = [...D.journal];
@@ -2876,7 +2878,7 @@ function renderAgendaJour(el) {
     <div style="display:flex;align-items:center;justify-content:space-between;
       padding:var(--sp-sm) 10px;border-radius:var(--r-sm);background:#fff;
       border:1px solid var(--border);margin-bottom:5px">
-      <span style="font-size:var(--fs-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;display:inline-block">${r.heure ? `<b>${r.heure}</b> · ` : '🗓️ Journée · '}${r.label}</span>
+      <span style="font-size:var(--fs-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;display:inline-block">${r.heure ? `<b>${escape(r.heure)}</b> · ` : '🗓️ Journée · '}${escape(r.label)}</span>
       <div style="display:flex;gap:6px">
         <button onclick="editerRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
         <button onclick="confirmerSuppressionRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
@@ -3342,19 +3344,6 @@ function confirmerEditRdv(mode) {
 
   window._editRdvId = null;
   save();
-  annulerFormulaireRdv();
-  renderAgendaJour(document.getElementById('agenda-contenu'));
-}
-
-function sauvegarderRdvEdit() {
-  const label = document.getElementById('rdv-label').value.trim();
-  if (!label) return;
-  const heure = document.getElementById('rdv-heure').value || null;
-  const idx = (window.D.rdv || []).findIndex(r => r.id === window._editRdvId);
-  if (idx !== -1) { window.D.rdv[idx].label = label; window.D.rdv[idx].heure = heure; }
-  save();
-  document.querySelector('[onclick="sauvegarderRdvEdit()"]').setAttribute('onclick', 'sauvegarderRdv()');
-  window._editRdvId = null;
   annulerFormulaireRdv();
   renderAgendaJour(document.getElementById('agenda-contenu'));
 }

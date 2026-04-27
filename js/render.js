@@ -1055,10 +1055,10 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     p.text('🌸 ' + (g.petales || 0), 6, 6);
 
     if (window.meteoData?.temperature) {
-  const wc = window.meteoData?.weathercode;
+  const wcMeteo = window.meteoData?.weathercode;
   const wind = window.meteoData?.windspeed || 0;
   let hudMeteo = Math.round(window.meteoData.temperature) + '°C';
-  if (wc === 45 || wc === 48) hudMeteo += ' 😶‍🌫️';
+  if (wcMeteo === 45 || wcMeteo === 48) hudMeteo += ' 😶‍🌫️';
   if (wind > 20) hudMeteo += ' 🌬️';
   p.textSize(hudMeteo.length > 9 ? 9 : 11); // ← réduit si texte long
   p.textAlign(p.RIGHT, p.TOP);

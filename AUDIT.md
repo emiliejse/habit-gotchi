@@ -1,5 +1,5 @@
 # AUDIT HabitGotchi — 2026-04-26
-## Mis à jour le 2026-04-27 — Sessions 1 à 4 complétées ✅
+## Mis à jour le 2026-04-27 — Sessions 1 à 4 + Session 5 (P1 + N1–N8) complétées ✅
 
 > Audit de référence sur la branche `Annotation`, version `v3.02`. Lecture intégrale de `config.js`, `app.js`, `envs.js`, `render.js`, `sw.js`, `index.html`, `prompts/*.json`. Lecture quasi-intégrale de `ui.js` (3735 lignes — 100% des fonctions principales lues, quelques sections de rendu d'agenda parcourues). `data/props.json` et `data/personality.json` parcourus comme données pures (pas d'analyse de code).
 
@@ -12,10 +12,10 @@
 | Fichier | Score | Justification courte |
 |---|---|---|
 | `data/config.js` | **A** ✅ | Pure data, bien commentée. `AI_MODEL` ajouté (session 3). |
-| `js/app.js` | **B+** ✅ | `addEvent` unifié, `visibilitychange` fusionné, `reload(true)` corrigé. |
-| `js/render.js` | **C+** ✅ | Double pluie supprimée. Reste : `p.draw()` monolithique (hors scope). |
+| `js/app.js` | **A-** ✅ | `addEvent` unifié, `visibilitychange` fusionné, `reload(true)` corrigé, chemins morts `D.userName`/`D.lat`/`D.lng` supprimés, debounce sliders ajouté. |
+| `js/render.js` | **B-** ✅ | Double pluie supprimée, `wcMeteo` renommé. Reste : `p.draw()` monolithique (hors scope). |
 | `js/envs.js` | **B+** ✅ | `drawFrameMotif` simplifié, triangle montagne doublonné supprimé. |
-| `js/ui.js` | **C+** ✅ | `getWeekId` doublonnée supprimée, `AI_MODEL` centralisé, bug +16 corrigé, `addEvent` unifié. Reste : XSS innerHTML, globales agenda. |
+| `js/ui.js` | **B-** ✅ | `getWeekId` doublonnée supprimée, `AI_MODEL` centralisé, bug +16 corrigé, `addEvent` unifié, XSS innerHTML sanitisé (`escape()`), code mort supprimé (N1–N4). Reste : globales agenda, refactoring modules. |
 | `index.html` | **B** | 593 lignes, JS inline (debug panel ~80 lignes) qui devrait migrer dans un fichier. Sinon structure claire. |
 | `sw.js` | **A** | 70 lignes, stratégie cache-first claire. Versionné. Petit bémol : caching aveugle des fetchs cross-fingers. |
 | `style.css` | non audité (643 lignes) | hors scope JS. |
@@ -624,20 +624,20 @@ index.html
 4. ✅ **`render.js` — supprimer la double pluie** — fait en session 2.
 5. ✅ **`app.js` — fusionner les deux `visibilitychange`** — fait en session 1.
 6. ✅ **`app.js` — `location.reload(true)` → `location.reload()`** — fait en session 1.
-7. ⏳ **`ui.js` — sanitiser les données utilisateur dans `innerHTML`** — non traité, reste prioritaire.
+7. ✅ **`ui.js` — sanitiser les données utilisateur dans `innerHTML`** — fait en session 5. Fonction `escape()` créée, appliquée sur `D.g.name` (6 occurrences), `prop.nom` (3), `e.text` (textarea journal), `r.heure`/`r.label` (agenda).
 
 ### Phase 2 — Nettoyage (quick wins)
 
-1. ⏳ **`ui.js`** — supprimer `sauvegarderRdvEdit` (mort, [L3186](js/ui.js#L3186)).
-2. ⏳ **`ui.js`** — supprimer la variable `masquerAcquis` et la fonction `toggleMasquerAcquis` ([L26](js/ui.js#L26), [L675](js/ui.js#L675)).
-3. ⏳ **`ui.js`** — supprimer la 2e garde `if (!selMood)` dans `saveJ` ([L1998-2003](js/ui.js#L1998)).
-4. ⏳ **`ui.js`** — supprimer `a, b` inutilisés dans `exportJournal('semaine')` ([L2095](js/ui.js#L2095)).
+1. ✅ **`ui.js`** — supprimer `sauvegarderRdvEdit` (mort) — fait en session 5.
+2. ✅ **`ui.js`** — supprimer la variable `masquerAcquis` et la fonction `toggleMasquerAcquis` — fait en session 5.
+3. ✅ **`ui.js`** — supprimer la 2e garde `if (!selMood)` dans `saveJ` — fait en session 5.
+4. ✅ **`ui.js`** — supprimer `a, b` inutilisés dans `exportJournal('semaine')` — fait en session 5.
 5. ✅ **`envs.js`** — réduire `drawFrameMotif` à un seul bloc — fait en session 2.
 6. ✅ **`envs.js`** — supprimer la duplication du triangle de pic montagne — fait en session 2.
-7. ⏳ **`render.js`** — renommer le 2e `wc` ([L1060](js/render.js#L1060)) pour éviter le shadowing apparent.
+7. ✅ **`render.js`** — renommer le 2e `wc` en `wcMeteo` — fait en session 5.
 8. ✅ **`app.js`** — `forceUpdate` : supprimer l'argument `true` de `reload()` — fait en session 1.
-9. ⏳ **`app.js`** — supprimer `D.userName`, `D.lat`, `D.lng` à la racine.
-10. ⏳ **`app.js`** — passer la sauvegarde des sliders (`setEnergy`/`setHappy`) en debounce 300ms.
+9. ✅ **`app.js`** — supprimer `D.userName` (chemin mort → `D.g.userName`), `D.lat` et `D.lng` à la racine de `defs()` — fait en session 5.
+10. ✅ **`app.js`** — passer la sauvegarde des sliders (`setEnergy`/`setHappy`) en debounce 300ms — fait en session 5. Fonction `saveDebounced()` ajoutée.
 11. ✅ **`ui.js`** — uniformiser `addEvent` : 3 appels migrés en API objet — fait en session 4.
 
 ### Phase 3 — Amélioration structurelle (moyen terme)

@@ -23,15 +23,15 @@
 
 ### Les 3 problèmes les plus urgents
 
-1. **Modèle Claude `claude-sonnet-4-5` hardcodé en 5 endroits** ([ui.js:358](js/ui.js#L358), [1267](js/ui.js#L1267), [1380](js/ui.js#L1380), [1628](js/ui.js#L1628), [1774](js/ui.js#L1774)) → toute migration de modèle (4.5 → 4.6 → 4.7) demande 5 modifications synchronisées, oubli probable. À extraire en constante.
-2. **Doublon de `getWeekId`** ([app.js:324](js/app.js#L324) ISO + [ui.js:1691](js/ui.js#L1691) approximatif). La 2e définition shadow la première dans le scope global ; selon l'ordre de chargement, `ensureSnackPref` peut piocher un nouvel emoji "préféré" à un moment incohérent avec l'identifiant utilisé par `checkBilanReset`. Risque silencieux : snack préféré mal aligné aux bornes de semaine.
-3. **API `addEvent(type, valeur, label)` ancienne ET nouvelle utilisées en parallèle** ([app.js:479](js/app.js#L479) accepte les deux ; appels mélangés à [app.js:562](js/app.js#L562), [ui.js:2006](js/ui.js#L2006), [ui.js:2409](js/ui.js#L2409) en ancienne ; [app.js:261](js/app.js#L261), [421](js/app.js#L421), [468](js/app.js#L468), [ui.js:688](js/ui.js#L688), [1301](js/ui.js#L1301), [1404](js/ui.js#L1404) en nouvelle). Le rendu de la tablette ([ui.js:2300](js/ui.js#L2300)) accède à `ev.subtype` et `ev.emoji` qui n'existent pas dans l'ancienne forme → événements affichés sans icône fine. À unifier sur la nouvelle API objet.
+1. ✅ **Modèle Claude `claude-sonnet-4-5` hardcodé en 5 endroits** — résolu en session 3. Constante `AI_MODEL` dans `config.js`, 5 occurrences remplacées dans `ui.js`.
+2. ✅ **Doublon de `getWeekId`** — résolu en session 1. Version approximative supprimée de `ui.js`, version ISO d'`app.js` fait foi.
+3. ✅ **API `addEvent` double** — résolu en session 4. Les 3 appels en ancienne API migrés vers la forme objet (`app.js:589`, `ui.js:2136`, `ui.js:2561`).
 
 ### Les 3 quick wins les plus faciles
 
-1. **Pluie dessinée 2× quand `ha < 40`** ([render.js:776](js/render.js#L776) puis [render.js:781](js/render.js#L781)). Supprimer le 2e bloc → +5–10% de FPS sur cas pluvieux.
-2. **`drawFrameMotif`** ([envs.js:278](js/envs.js#L278)) a 4 branches `if/else if` strictement identiques. Remplacer par un seul appel.
-3. **Double `visibilitychange`** ([app.js:907](js/app.js#L907) + [app.js:1000](js/app.js#L1000)). Fusionner en un seul handler — actuellement le 2e appelle `initApp()` mais le 1er ne sait pas qu'il est doublé, on persiste `lastTick` inutilement.
+1. ✅ **Pluie dessinée 2×** — résolu en session 2. Double appel `drawRain` supprimé.
+2. ✅ **`drawFrameMotif` 4 branches identiques** — résolu en session 2. Réduit à un seul bloc.
+3. ✅ **Double `visibilitychange`** — résolu en session 1. Fusionné en un seul handler.
 
 ---
 
@@ -616,28 +616,29 @@ index.html
 
 ## 10. Plan de refactoring recommandé
 
-### Phase 1 — Corrections critiques (à faire en priorité)
+### Phase 1 — Corrections critiques ✅ COMPLÉTÉE (2026-04-27)
 
-1. **`ui.js` — supprimer la redéfinition de `getWeekId`** ([L1691](js/ui.js#L1691)). Action : supprimer les lignes 1691-1696. Tester `genBilanSemaine` et `ensureSnackPref` autour d'un changement de semaine.
-2. **`ui.js` — extraire `claude-sonnet-4-5` en constante**. Action : déclarer `const CLAUDE_MODEL = 'claude-sonnet-4-5'` au sommet d'ui.js (ou dans config.js), remplacer les 5 occurrences. Tester la connexion via `testApiKey`.
-3. **`ui.js` — bug remboursement `acheterPropClaude`** ([L1427](js/ui.js#L1427)) : changer `+ 16` en `+ 10`.
-4. **`render.js` — supprimer la double pluie** : retirer les lignes 781-782.
-5. **`app.js` — fusionner les deux `visibilitychange`** : un seul handler à la fin du fichier, qui fait les deux.
-6. **`ui.js` — sanitiser les données utilisateur dans `innerHTML`** : minimum vital — un helper `escapeHTML(s)` appliqué à `D.g.name`, `prop.nom`, `journal.text`, `rdv.label`, et **toutes les valeurs venant de réponses IA**.
+1. ✅ **`ui.js` — supprimer la redéfinition de `getWeekId`** — fait en session 1.
+2. ✅ **`ui.js` — extraire `claude-sonnet-4-5` en constante `AI_MODEL`** — fait en session 3 (`config.js`).
+3. ✅ **`ui.js` — bug remboursement `acheterPropClaude`** `+ 16` → `+ 10` — fait en session 1.
+4. ✅ **`render.js` — supprimer la double pluie** — fait en session 2.
+5. ✅ **`app.js` — fusionner les deux `visibilitychange`** — fait en session 1.
+6. ✅ **`app.js` — `location.reload(true)` → `location.reload()`** — fait en session 1.
+7. ⏳ **`ui.js` — sanitiser les données utilisateur dans `innerHTML`** — non traité, reste prioritaire.
 
 ### Phase 2 — Nettoyage (quick wins)
 
-1. **`ui.js`** — supprimer `sauvegarderRdvEdit` (mort, [L3186](js/ui.js#L3186)).
-2. **`ui.js`** — supprimer la variable `masquerAcquis` et la fonction `toggleMasquerAcquis` ([L26](js/ui.js#L26), [L675](js/ui.js#L675)).
-3. **`ui.js`** — supprimer la 2e garde `if (!selMood)` dans `saveJ` ([L1998-2003](js/ui.js#L1998)).
-4. **`ui.js`** — supprimer `a, b` inutilisés dans `exportJournal('semaine')` ([L2095](js/ui.js#L2095)).
-5. **`envs.js`** — réduire `drawFrameMotif` à un seul bloc.
-6. **`envs.js`** — supprimer la duplication du triangle de pic montagne ([L240](js/envs.js#L240)).
-7. **`render.js`** — renommer le 2e `wc` ([L1060](js/render.js#L1060)) pour éviter le shadowing apparent.
-8. **`app.js`** — `forceUpdate` : supprimer l'argument `true` de `reload()`.
-9. **`app.js`** — supprimer `D.userName`, `D.lat`, `D.lng` à la racine (les `||` qui les utilisent comme fallback peuvent partir).
-10. **`app.js`** — passer la sauvegarde des sliders (`setEnergy`/`setHappy`) en debounce 300ms.
-11. **`ui.js`** — uniformiser `addEvent` : migrer les 3 derniers appels en API objet.
+1. ⏳ **`ui.js`** — supprimer `sauvegarderRdvEdit` (mort, [L3186](js/ui.js#L3186)).
+2. ⏳ **`ui.js`** — supprimer la variable `masquerAcquis` et la fonction `toggleMasquerAcquis` ([L26](js/ui.js#L26), [L675](js/ui.js#L675)).
+3. ⏳ **`ui.js`** — supprimer la 2e garde `if (!selMood)` dans `saveJ` ([L1998-2003](js/ui.js#L1998)).
+4. ⏳ **`ui.js`** — supprimer `a, b` inutilisés dans `exportJournal('semaine')` ([L2095](js/ui.js#L2095)).
+5. ✅ **`envs.js`** — réduire `drawFrameMotif` à un seul bloc — fait en session 2.
+6. ✅ **`envs.js`** — supprimer la duplication du triangle de pic montagne — fait en session 2.
+7. ⏳ **`render.js`** — renommer le 2e `wc` ([L1060](js/render.js#L1060)) pour éviter le shadowing apparent.
+8. ✅ **`app.js`** — `forceUpdate` : supprimer l'argument `true` de `reload()` — fait en session 1.
+9. ⏳ **`app.js`** — supprimer `D.userName`, `D.lat`, `D.lng` à la racine.
+10. ⏳ **`app.js`** — passer la sauvegarde des sliders (`setEnergy`/`setHappy`) en debounce 300ms.
+11. ✅ **`ui.js`** — uniformiser `addEvent` : 3 appels migrés en API objet — fait en session 4.
 
 ### Phase 3 — Amélioration structurelle (moyen terme)
 

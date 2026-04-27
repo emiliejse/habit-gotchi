@@ -586,7 +586,7 @@ if (habEl) floatXP(habEl.closest('.hab'));
       window.D.g.petales = (window.D.g.petales || 0) + 2;
       window.D.petalesEarned[td].push(catId);
     }
-    addEvent('habitude', `${hab?.label || catId} ✓  +15 XP${dejaGagne ? '' : ', +2 🌸'}`);
+    addEvent({ type: 'habitude', subtype: 'check', valeur: 15, label: `${hab?.label || catId} ✓  +15 XP${dejaGagne ? '' : ', +2 🌸'}` });
 
     const gx = window._gotchiX || 100;
     const gy = window._gotchiY || 100;

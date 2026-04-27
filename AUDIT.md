@@ -1,4 +1,5 @@
 # AUDIT HabitGotchi — 2026-04-26
+## Mis à jour le 2026-04-27 — Sessions 1 à 4 complétées ✅
 
 > Audit de référence sur la branche `Annotation`, version `v3.02`. Lecture intégrale de `config.js`, `app.js`, `envs.js`, `render.js`, `sw.js`, `index.html`, `prompts/*.json`. Lecture quasi-intégrale de `ui.js` (3735 lignes — 100% des fonctions principales lues, quelques sections de rendu d'agenda parcourues). `data/props.json` et `data/personality.json` parcourus comme données pures (pas d'analyse de code).
 

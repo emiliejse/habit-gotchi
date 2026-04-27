@@ -2133,7 +2133,7 @@ function saveJ() {
   }
   window.D.journal.push({ date: new Date().toISOString(), mood: selMood, text: t });
   addXp(15);
-  addEvent('note', 15, 'Note enregistrée  +15 XP');  // ← nouveau
+  addEvent({ type: 'note', subtype: 'journal', valeur: 15, label: 'Note enregistrée  +15 XP' });
   toast(`+15 XP 📓`);                                         // ← nouveau
   save();
   document.getElementById('j-text').value = '';
@@ -2558,7 +2558,7 @@ function checkWelcome() {
   if (joursAbsence >= 1) {
     const xpPerdu = joursAbsence * 15;
     addXp(-xpPerdu);
-    addEvent('xp', -xpPerdu, `${joursAbsence} jour${joursAbsence > 1 ? 's' : ''} d'absence — -${xpPerdu} XP`);
+    addEvent({ type: 'xp', subtype: 'absence', valeur: -xpPerdu, label: `${joursAbsence} jour${joursAbsence > 1 ? 's' : ''} d'absence — -${xpPerdu} XP` });
 
     // Message doux pour 1 jour, plus marqué au-delà
     if (joursAbsence === 1) {

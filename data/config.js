@@ -187,3 +187,6 @@ const SNACKS_POOL = [
   // Boissons (sans alcool)
   '🍼','🥛','☕','🫖','🍵','🧃','🥤','🧋','🧉','🥢',
 ];
+
+// Modèle Claude utilisé pour tous les appels IA — changer ici suffit pour tout mettre à jour
+const AI_MODEL = 'claude-sonnet-4-5';

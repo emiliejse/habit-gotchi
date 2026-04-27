@@ -778,8 +778,6 @@ const p5s = (p) => {
       else if (ha === 80 && estJour)  drawSun(p);
       else if (ha >= 100 && estJour)  drawRainbow(p);
     }
-    if (ha < 40) drawRain(p, ha);
-    else if (ha === 40) drawRain(p, 35);
 
     drawActiveEnv(p, envActif, n, h);
 

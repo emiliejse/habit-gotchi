@@ -237,7 +237,6 @@ function drawActiveEnv(p, env, n, h) {
   else if (env === 'montagne') {
    p.fill(tc(n, theme.mntGnd));   p.rect(0, 120, CS, 80);
     p.fill(tc(n, theme.mntGndDk)); p.rect(0, 120, CS, PX*2);
-    p.fill(tc(n, theme.mntPeak));  p.triangle(40, 120, 100, 50, 160, 120);
     
     if (theme.id !== 'desert') {
       p.fill(tc(n, theme.mntPeak));  p.triangle(40, 120, 100, 50, 160, 120);
@@ -276,31 +275,10 @@ function drawActiveEnv(p, env, n, h) {
  * Modifie l'art abstrait dans le cadre selon la palette active
  */
 function drawFrameMotif(p, theme, n) {
-  if (theme.id === 'automne') {
-    p.fill(tc(n, theme.frameAccent1));
-    px(p, 96, 76, PX*2, PX*2); px(p, 104, 84, PX*2, PX*2);
-    p.fill(tc(n, theme.frameAccent2));
-    px(p, 104, 76, PX, PX*3); px(p, 96, 84, PX*3, PX);
-  }
-  else if (theme.id === 'hiver') {
-    p.fill(tc(n, theme.frameAccent1));
-    px(p, 96, 76, PX*2, PX*2); px(p, 104, 84, PX*2, PX*2);
-    p.fill(tc(n, theme.frameAccent2));
-    px(p, 104, 76, PX, PX*3); px(p, 96, 84, PX*3, PX);
-  }
-  else if (theme.id === 'desert') {
-    p.fill(tc(n, theme.frameAccent1));
-    px(p, 96, 76, PX*2, PX*2); px(p, 104, 84, PX*2, PX*2);
-    p.fill(tc(n, theme.frameAccent2));
-    px(p, 104, 76, PX, PX*3); px(p, 96, 84, PX*3, PX);
-  }
-  else {
-    // pastel
-    p.fill(tc(n, theme.frameAccent1));
-    px(p, 96, 76, PX*2, PX*2); px(p, 104, 84, PX*2, PX*2);
-    p.fill(tc(n, theme.frameAccent2));
-    px(p, 104, 76, PX, PX*3); px(p, 96, 84, PX*3, PX);
-  }
+  p.fill(tc(n, theme.frameAccent1));
+  px(p, 96, 76, PX*2, PX*2); px(p, 104, 84, PX*2, PX*2);
+  p.fill(tc(n, theme.frameAccent2));
+  px(p, 104, 76, PX, PX*3); px(p, 96, 84, PX*3, PX);
 }
 
 /**

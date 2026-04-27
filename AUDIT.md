@@ -11,11 +11,11 @@
 
 | Fichier | Score | Justification courte |
 |---|---|---|
-| `data/config.js` | **A** | Pure data, bien commentée, 156 lignes. |
-| `js/app.js` | **B** | Bien commentée, mais double API `addEvent`, doubles écouteurs `visibilitychange`, `getWeekId` doublonné avec ui.js. |
-| `js/render.js` | **C** | 1189 lignes monolithiques. `p.draw()` mélange état métier + rendu. Logique pluie dupliquée. |
-| `js/envs.js` | **B** | Bien découpé. Doublons dans `drawFrameMotif` (4 branches identiques) et `drawActiveEnv` (montagne dessinée 2×). |
-| `js/ui.js` | **D** | 3735 lignes, 5 occurrences `claude-sonnet-4-5` hardcodées, modèle UI mélangé avec API IA, fonction `getWeekId` redéfinie qui shadow celle d'app.js, HTML dans des template strings (XSS-prone), `_agendaJour` accédé en bare globals. |
+| `data/config.js` | **A** ✅ | Pure data, bien commentée. `AI_MODEL` ajouté (session 3). |
+| `js/app.js` | **B+** ✅ | `addEvent` unifié, `visibilitychange` fusionné, `reload(true)` corrigé. |
+| `js/render.js` | **C+** ✅ | Double pluie supprimée. Reste : `p.draw()` monolithique (hors scope). |
+| `js/envs.js` | **B+** ✅ | `drawFrameMotif` simplifié, triangle montagne doublonné supprimé. |
+| `js/ui.js` | **C+** ✅ | `getWeekId` doublonnée supprimée, `AI_MODEL` centralisé, bug +16 corrigé, `addEvent` unifié. Reste : XSS innerHTML, globales agenda. |
 | `index.html` | **B** | 593 lignes, JS inline (debug panel ~80 lignes) qui devrait migrer dans un fichier. Sinon structure claire. |
 | `sw.js` | **A** | 70 lignes, stratégie cache-first claire. Versionné. Petit bémol : caching aveugle des fetchs cross-fingers. |
 | `style.css` | non audité (643 lignes) | hors scope JS. |

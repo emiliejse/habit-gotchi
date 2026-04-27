@@ -32,7 +32,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'hg-v3.24'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'hg-v3.25'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -255,7 +255,7 @@ function forceUpdate() {
     caches.keys().then(names => { names.forEach(name => caches.delete(name)); });
   }
   toast(`Mise à jour en cours... ✿`);
-  setTimeout(() => window.location.reload(true), 500);
+  setTimeout(() => window.location.reload(), 500);
 }
 
 // Vérifie les mises à jour Service Worker au démarrage
@@ -946,10 +946,6 @@ function handleDailyReset() {
   save();
 }
 
-// Sauvegarde lastTick quand l'app passe en arrière-plan
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { window.D.g.lastTick = Date.now(); save(); }
-});
 
 // Spawn rétrospecif des crottes accumulées pendant l'inactivité
 function catchUpPoops() {
@@ -1070,7 +1066,11 @@ window.addEventListener('pageshow', (e) => {
 // Filet de sécurité Android : visibilitychange attrape les cas où
 // pageshow ne se redéclenche pas (switch d'app sans unload complet)
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && _appInitialized) {
+  if (document.hidden) {
+    // Arrière-plan : sauvegarde l'heure pour calculer les crottes en retard
+    window.D.g.lastTick = Date.now(); save();
+  } else if (document.visibilityState === 'visible' && _appInitialized) {
+    // Retour au premier plan : relance l'app (filet Android)
     initApp();
   }
 });

@@ -1561,7 +1561,7 @@ async function acheterPropClaude() {
 
   } catch(e) {
     stopThinkingAnim(animProp);
-    D.g.petales = (D.g.petales || 0) + 16;
+    D.g.petales = (D.g.petales || 0) + 10;
     save();
     toast(`*soupir* Je n'ai pas pu créer l'objet... pétales remboursés 🌸`);
     console.error('Erreur création prop IA :', e);
@@ -1824,13 +1824,6 @@ function navW(d) {
 }
 function navM(d) { mOff += d; renderProg(); }
 
-/* ── Utilitaire : identifiant semaine (ex: "2026-W15") ── */
-function getWeekId() {
-  const now = new Date();
-  const jan4 = new Date(now.getFullYear(), 0, 4);
-  const week = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-  return `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
-}
 
 /* ── Reset du compteur si nouvelle semaine ── */
 function checkBilanReset() {

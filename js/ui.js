@@ -176,8 +176,10 @@ function go(t) {
   const shell = document.querySelector('.tama-shell');
   const consoleTop = document.getElementById('console-top');
 
-  // RÔLE : Mode compact — masque les sliders et remonte le tama sur le header dans les autres onglets
-  // POURQUOI : Gagner de la place dans la dynamic-zone et garder un lien visuel avec le gotchi
+  // RÔLE : Mode compact — le tama se positionne en absolu par-dessus #hdr-title masqué.
+  // POURQUOI : On ne déplace pas le DOM (trop fragile). Le tama reste à sa place dans le HTML,
+  //            mais #hdr-title disparaît et le tama passe en position absolute centré à sa hauteur.
+  //            Les boutons boutique/tablette restent dans .hdr, fixes, non affectés.
   if (t === 'gotchi') {
     shell.classList.remove('shrunk');
     consoleTop.classList.remove('compact');

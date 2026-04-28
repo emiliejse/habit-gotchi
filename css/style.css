@@ -185,15 +185,20 @@ body {
   transform-origin: top center;
 }
 
-/* RÔLE : Mode compact — le tama reste dans le flux, prend la place du header masqué */
-/* POURQUOI : "Habit-Gotchi" et la date disparaissent, le tama occupe cet espace,
-              la bulle reste juste en dessous à largeur identique. Pas de superposition. */
+/* RÔLE : Mode compact — le tama se positionne en absolu à la place du titre masqué */
+/* POURQUOI : #hdr-title disparaît, le tama occupe visuellement cet espace central.
+              Les boutons boutique/tablette restent dans .hdr, non affectés.
+              La bulle reste juste en dessous dans le flux. */
 .tama-shell.shrunk {
-  max-width: 220px;  /* légèrement plus petit qu'à l'état normal (340px), mais lisible */
+  max-width: 200px;
   padding: 2px;
-  margin-top: 2px;
-  position: relative; /* reste dans le flux normal */
-  z-index: 1;
+  margin: 0 auto;
+  position: absolute;
+  /* top = safe area + padding #console-top (6px) — aligne sur le début du .hdr */
+  top: calc(var(--sat) + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2; /* au-dessus de #hdr-title masqué, sous les boutons (pas besoin de plus) */
 }
 
 /* L'écran Canvas (Le jeu en lui-même) */
@@ -664,11 +669,27 @@ body {
 #sl-happy::-webkit-slider-thumb { background: var(--mint); }
 
 /* RÔLE : Mode compact — masque le titre/date, garde les boutons boutique et tablette */
-/* POURQUOI : Le tama prend la place du titre masqué, les boutons restent accessibles.
-              On ne masque que le centre du header, pas les actions latérales. */
-#console-top.compact #hdr-title    { display: none; }  /* masque "Habit-Gotchi" + date uniquement */
-#console-top.compact #sliders-wrap { display: none; }  /* masque les sliders énergie/bonheur */
+/* POURQUOI : Le tama passe en position absolute à la place du titre masqué.
+              La bulle descend sous le tama grâce à margin-top calculé sur la hauteur du tama compact.
+              Les boutons restent dans .hdr, fixes, non affectés. */
+#console-top.compact #hdr-title    { visibility: hidden; } /* garde sa place dans .hdr → boutons fixes */
+#console-top.compact #sliders-wrap { display: none; }      /* masque les sliders énergie/bonheur */
 #console-top.compact .bubble       { margin-bottom: 8px; } /* petit espace sous la bulle */
+
+/* RÔLE : Placeholder qui reproduit la taille du tama compact dans le flux normal */
+/* POURQUOI : Le tama passe en position:absolute → sort du flux → la bulle remonte.
+              Le placeholder garde exactement la même taille pour que la bulle
+              se positionne naturellement juste en dessous, sur n'importe quel écran. */
+#tama-placeholder {
+  display: none; /* invisible en mode normal */
+}
+#console-top.compact #tama-placeholder {
+  display: block;
+  max-width: 200px;    /* même valeur que .tama-shell.shrunk */
+  width: 100%;
+  aspect-ratio: 1 / 1; /* carré comme le canvas du tama */
+  margin: 2px auto 0;  /* même margin que .tama-shell.shrunk */
+}
 
 /* Barre d'XP */
 .pbar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }

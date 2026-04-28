@@ -144,8 +144,8 @@ function syncConsoleHeight() {
       ? lastChild.getBoundingClientRect().bottom
       : top.getBoundingClientRect().bottom;
 
-    zone.style.paddingTop = (bottomY + 6) + 'px';
-    // POURQUOI : était +16 — réduit à +6 pour moins d'espace mort sous la console sur mobile
+    zone.style.paddingTop = (bottomY + 8) + 'px';
+    // POURQUOI : +8 = gap minimal entre le bas de la console et le premier élément scrollable
   });
 }
 

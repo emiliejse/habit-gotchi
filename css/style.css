@@ -134,8 +134,8 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 8px 10px;
-  padding-top: calc(var(--console-height, 320px) + 6px);
-  /* POURQUOI : +6px — gap minimal sous la console, aligné avec syncConsoleHeight() */
+  padding-top: calc(var(--console-height, 320px) + 8px);
+  /* POURQUOI : valeur de fallback avant calcul JS — le vrai paddingTop est posé par syncConsoleHeight() */
   padding-bottom: calc(64px + var(--sab));
   width: 100%;
   max-width: 460px;
@@ -190,7 +190,7 @@ body {
   padding: 2px;
   box-shadow: none;
   margin: 4px auto 0;
-  max-width: 340px;
+  max-width: 260px; /* POURQUOI : était 340px — réduit pour que la console prenne moins de hauteur sur mobile */
   position: relative;
   z-index: 1;
   /* Réduction dynamique de la console (quand on change d'onglet) */

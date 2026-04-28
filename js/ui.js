@@ -210,11 +210,11 @@ function go(t) {
   if (t === 'journal') { journalLocked = true; renderJ(); }
 
   document.getElementById('dynamic-zone').scrollTop = 0;
-  // RÔLE : Recalcule la hauteur de la console après changement de mode
-  // POURQUOI : display:none sur #tama-shell-main change instantanément la hauteur de #console-top.
-  //            On sync tout de suite, puis une deuxième fois après rendu pour être sûr.
-  syncConsoleHeight();
-  setTimeout(syncConsoleHeight, 50);
+  // RÔLE : Sync frame par frame pendant toute la durée de la transition
+  // POURQUOI : margin-top de #tama-bubble-wrap s'anime sur 400ms — la dynamic-zone
+  //            doit suivre en continu, pas juste au début/fin.
+  const wrap = document.getElementById('tama-bubble-wrap');
+  syncDuringTransition(wrap);
 }
 
 function _preventScroll(e) { e.preventDefault(); }

@@ -154,9 +154,21 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   flex: 1;
+  align-self: stretch;
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transform-origin: top center;
 }
-.hdr h1 { font-size: 12px; color: var(--lilac); letter-spacing: 2px; flex: 1; }
+/* titre qui rétrécit et remonte en partant */
+#hdr-title.hiding {
+  opacity: 0;
+  transform: scale(0.7) translateY(-10px);
+  pointer-events: none;
+}
+.hdr h1 { font-size: 12px; color: var(--lilac); letter-spacing: 2px; line-height: 1.2; }
 .hdr sub { font-size: var(--fs-xs); color: var(--text2); }
 .hdr .menu-btn {
   width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--border); /* était 36×36 — Apple HIG : 44pt minimum */
@@ -185,17 +197,28 @@ body {
   transform-origin: top center;
 }
 
-/* RÔLE : Slot compact dans le .hdr — vide en mode normal, contient le canvas en mode compact */
+/* RÔLE : Slot compact dans le .hdr — glissement + agrandissement avec bounce */
 #tama-slot {
-  display: none; /* invisible en mode normal */
+  display: none;
   flex: 1;
-  align-self: flex-start; /* aligné en haut comme les boutons */
-  padding: 1px;
+  align-self: flex-start;
+  padding: 1px 10px;
+  opacity: 0;
+  /* part petit et en haut — va grandir en rebondissant */
+  transform: scale(0.4) translateY(-20px);
+  transform-origin: top center;
+  transition: opacity 0.35s ease,
+              transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); /* bounce naturel */
+}
+/* tama qui arrive en grandissant avec léger bounce */
+#tama-slot.showing {
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }
 
 /* RÔLE : Mode compact — slot visible, grand tama masqué */
-#console-top.compact #tama-slot    { display: block; }
-#console-top.compact #tama-shell-main { display: none; }  /* grand tama masqué */
+#console-top.compact #tama-slot       { display: block; }
+#console-top.compact #tama-shell-main { display: none; }
 
 /* RÔLE : Mode compact — canvas dans le slot, carré, taille proportionnelle aux boutons */
 #tama-slot .tama-screen {

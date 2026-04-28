@@ -182,22 +182,33 @@ function go(t) {
   // POURQUOI : Il n'y a qu'un seul canvas. En mode compact on le glisse dans #tama-slot
   //            (dans le .hdr, aligné en haut avec les boutons). En mode normal on le remet
   //            dans #tama-shell-main sous le .hdr.
+  const hdrTitle = document.getElementById('hdr-title');
+
   if (t === 'gotchi') {
-    // RETOUR MODE NORMAL : canvas → grand tama
-    if (screen && screen.parentNode !== shellMain) {
-      shellMain.appendChild(screen);
-    }
-    shellMain.classList.remove('shrunk');
-    consoleTop.classList.remove('compact');
+    // RETOUR MODE NORMAL
+    // 1. Tama compact rétrécit et remonte (retire .showing → animation inverse)
+    slot.classList.remove('showing');
+    // 2. Après que le tama compact soit sorti (350ms = durée transition), remet le grand tama
+    setTimeout(() => {
+      if (screen && screen.parentNode !== shellMain) shellMain.appendChild(screen);
+      shellMain.classList.remove('shrunk');
+      consoleTop.classList.remove('compact');
+      syncConsoleHeight();
+    }, 350);
+    // 3. Le titre revient en parallèle avec son bounce
+    hdrTitle.classList.remove('hiding');
     const h = hr();
     window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
   } else {
-    // MODE COMPACT : canvas → slot dans le .hdr
-    if (screen && screen.parentNode !== slot) {
-      slot.appendChild(screen);
-    }
+    // MODE COMPACT
+    // 1. Titre rétrécit et remonte
+    hdrTitle.classList.add('hiding');
+    // 2. Déplace le canvas et active le mode compact immédiatement
+    if (screen && screen.parentNode !== slot) slot.appendChild(screen);
     shellMain.classList.add('shrunk');
     consoleTop.classList.add('compact');
+    // 3. Double rAF : attend que display:block soit peint avant de lancer la transition scale
+    requestAnimationFrame(() => requestAnimationFrame(() => slot.classList.add('showing')));
     if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
     else if (t === 'perso')    window.D.g.activeEnv = 'parc';
     else if (t === 'progress') window.D.g.activeEnv = 'montagne';
@@ -218,7 +229,11 @@ function go(t) {
   if (t === 'journal') { journalLocked = true; renderJ(); }
 
   document.getElementById('dynamic-zone').scrollTop = 0;
-  syncDuringTransition(shell);
+  // RÔLE : Recalcule la hauteur de la console après changement de mode
+  // POURQUOI : display:none sur #tama-shell-main change instantanément la hauteur de #console-top.
+  //            On sync tout de suite, puis une deuxième fois après rendu pour être sûr.
+  syncConsoleHeight();
+  setTimeout(syncConsoleHeight, 50);
 }
 
 function _preventScroll(e) { e.preventDefault(); }

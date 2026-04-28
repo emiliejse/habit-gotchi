@@ -793,7 +793,12 @@ body {
 #sliders-wrap.open #sliders-hint { display: block; }
 
 /* RÔLE : Corps dépliable */
-#sliders-body { padding: 2px 0; }
+/* POURQUOI : overflow hidden coupe tout débordement horizontal (fleur à valeur 5 sur iOS).
+              padding vertical 14px = place pour les pétales hautes/basses sans clippage vertical. */
+#sliders-body {
+  overflow: hidden;
+  padding: 14px 0;
+}
 
 /* RÔLE : Icône dans la ligne de slider */
 .slider-icon { font-size: 14px; width: 22px; text-align: center; flex-shrink: 0; }
@@ -802,11 +807,13 @@ body {
 .slider-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; min-height: 44px; }
 
 /* RÔLE : Track du slider */
-/* POURQUOI : margin-right: 28px compense le débordement du thumb sur iOS Safari.
-              iOS applique un padding interne natif (~8-10px) sur le track, ce qui pousse
-              le thumb vers la droite à la valeur max. Avec un thumb de 28px transparent
-              + pétales de 6px, le débordement total peut atteindre ~28px sur mobile.
-              margin-left: 6px pour que la pétale gauche (valeur 0) ne soit pas rognée non plus. */
+/* POURQUOI : margin-right raccourcit physiquement le track pour que le centre du thumb
+              à la valeur max (5) soit assez loin du bord droit du conteneur.
+              Sur iOS Safari, le padding natif du track (~8px) décale le thumb vers la droite :
+              margin-right: 22px = 14px (demi-thumb) + 8px (padding iOS natif).
+              margin-left: 8px = symétrique pour la valeur 0 à gauche.
+              overflow: hidden sur l'input (pas visible) : on ne laisse plus rien déborder,
+              la contrainte est gérée par les marges. */
 .slider-row input[type=range] {
   flex: 1;
   -webkit-appearance: none;
@@ -814,17 +821,16 @@ body {
   border-radius: 4px;
   outline: none;
   opacity: .85;
-  overflow: visible;
-  margin: 0 28px 0 6px;
+  overflow: hidden;
+  margin: 0 22px 0 8px;
   min-width: 0;
 }
 
 /* RÔLE : Neutraliser le padding natif iOS sur le track webkit */
-/* POURQUOI : sans cette règle, Safari ajoute du padding de chaque côté du track
-              ce qui décale le thumb et cause le débordement à droite sur iPhone */
 .slider-row input[type=range]::-webkit-slider-runnable-track {
   margin: 0;
   padding: 0;
+  border-radius: 4px;
 }
 
 /* RÔLE : Thumb du slider — 28×28px transparent pour une grande zone de tap */

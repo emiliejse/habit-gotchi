@@ -282,8 +282,15 @@ function load() {
 }
 
 // Sauvegarde synchrone dans le LocalStorage
+// RÔLE : Sérialise window.D dans localStorage sous la clé SK.
+// POURQUOI : Le catch loggue l'erreur au lieu de l'avaler — utile si
+//            le localStorage est plein (Safari privé, quota dépassé).
 function save() {
-  try { localStorage.setItem(SK, JSON.stringify(window.D)); } catch(e) {}
+  try {
+    localStorage.setItem(SK, JSON.stringify(window.D));
+  } catch(e) {
+    console.warn('[HabitGotchi] save() échoué :', e);
+  }
 }
 
 // Dérive le diminutif du prénom (premier mot, accents conservés)

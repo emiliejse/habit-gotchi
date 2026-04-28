@@ -84,74 +84,50 @@
 
 ### 2.3 Problèmes identifiés
 
-#### 🔴 CRITIQUE
+#### ✅ CRITIQUE — résolu (session 4)
 **Double API `addEvent` — incohérence d'événements en log**
-- Lignes : `479-491`
-- Description : la fonction accepte `addEvent(typeObj)` OU `addEvent(type, valeur, label)`. Les appels en ancienne API ([L562](js/app.js#L562), [ui.js:2006](js/ui.js#L2006), [ui.js:2409](js/ui.js#L2409)) ne posent pas de `subtype`/`emoji`, donc l'icône calculée par `getIcon()` ([ui.js:2300](js/ui.js#L2300)) tombe sur un fallback générique.
-- Risque : tablette rétro affiche des icônes incohérentes selon l'origine de l'événement. Pas de crash.
-- Suggestion : choisir la forme objet, faire un sweep et migrer les 3 appels restants.
+- Les 3 appels en ancienne API migrés vers la forme objet. `addEvent` n'accepte plus que `{ type, subtype, valeur, label }`.
 
-#### 🟠 IMPORTANT
+#### ✅ IMPORTANT — résolu (session 1)
 **Double `visibilitychange`**
-- Lignes : `907-909` et `1000-1004`
-- Description : 2 listeners distincts. Le 1er persiste `lastTick`, le 2e relance `initApp()`. Aujourd'hui ils ne se contredisent pas, mais ils ouvrent la porte à un double-trigger si plus tard `initApp` modifie `lastTick`.
-- Risque : effets de bord cumulatifs si la logique change.
-- Suggestion : un seul handler qui fait les deux.
+- Fusionné en un seul handler : `hidden` → persiste `lastTick` ; `visible` → relance `initApp()`.
 
-#### 🟠 IMPORTANT
+#### ✅ IMPORTANT — résolu (session 1)
 **`getWeekId` ISO redéfini en non-ISO dans ui.js**
-- Lignes : `324-332`
-- Description : version ISO correcte (jeudi pivot). `ui.js:1691` la redéfinit en algo approximatif. Comme les deux sont des `function` au scope global, **le second écrase le premier au moment du parse de ui.js**.
-- Risque : `ensureSnackPref` ([L364](js/app.js#L364)) et `checkBilanReset` ([ui.js:1699](js/ui.js#L1699)) utilisent désormais la version approximative — divergence possible en début/fin d'année (semaines 52/53/1).
-- Suggestion : supprimer la définition d'ui.js et laisser celle d'app.js (ISO).
+- Définition approximative supprimée de `ui.js`. Seule la version ISO d'`app.js` fait foi.
 
-#### 🟡 MINEUR
+#### ✅ MINEUR — résolu (session 1)
 **`forceUpdate()` utilise `location.reload(true)` déprécié**
-- Lignes : `231`
-- Description : l'argument booléen de `reload()` est ignoré sur tous les navigateurs modernes.
-- Risque : nul (juste mort), mais induit en erreur la lecture du code.
-- Suggestion : `location.reload()`.
+- Corrigé en `location.reload()`.
 
-#### 🟡 MINEUR
-**`MSG` fallback ([L106](js/app.js#L106)) sans clés `chaud`, `froid`, `journal`**
-- Lignes : `106-113`
-- Description : `updBubbleNow` ([L838-840](js/app.js#L838)) tente d'ajouter `src.chaud`, `src.froid` ; `saveJ` ([ui.js:2014](js/ui.js#L2014)) lit `src.journal`. Si `personality.json` ne charge pas, ces clés sont `undefined` et `ajouter()` court-circuite — silencieux mais incomplet.
-- Risque : fallback dégradé sans message visible.
-- Suggestion : compléter MSG ou logger un warning quand on tombe sur ce fallback.
-
-#### 🟡 MINEUR
+#### 🟡 MINEUR — ouvert
 **`save()` swallow silencieux**
-- Lignes : `200-202`
-- Description : `try/catch` qui avale toute exception — plein localStorage Safari privé, quota, etc. → utilisateur ne sait pas que ses données ne sont plus sauvegardées.
+- Lignes : `286`
+- Description : `catch(e) {}` vide avale toute exception (quota, Safari privé...) — utilisatrice ne sait pas que ses données ne sont plus sauvegardées.
 - Risque : perte de données silencieuse.
-- Suggestion : au minimum `console.warn`, idéalement un toast une seule fois par session.
+- Suggestion : au minimum `console.warn(e)`, idéalement un toast une seule fois par session.
 
-#### 🟡 MINEUR
+#### ✅ MINEUR — résolu (session 4 / annotation)
 **`addXp(-15)` au décochage : pas de downgrade visuel**
-- Lignes : `253-272`
-- Description : la comparaison `ancienStade !== nouveauStade` détecte uniquement les level-up car `triggerEvoAnim` est appelée seulement si `n > 0`. Cohérent avec l'intention (ne pas spammer une régression), mais le `stage` peut bel et bien régresser en arrière-plan.
-- Risque : sprite redessiné à un stade inférieur sans animation explicite. Voulu ? À expliciter.
-- Suggestion : ajouter un commentaire ou un `addEvent` informatif quand on régresse.
+- Comportement assumé et documenté dans le code : régression de stade sans animation volontaire.
 
-#### 🟡 MINEUR
-**`calcStr()` : sécurité `s>999`**
-- Lignes : `502`
-- Description : OK, mais utiliser `for (let i=0; i<999; i++)` serait plus lisible que `while(true)` + break.
+#### ✅ MINEUR — résolu
+**`calcStr()` : `while(true)` peu lisible**
+- Remplacé par une boucle `for`.
 
-#### 🟡 MINEUR
+#### ✅ MINEUR — résolu (session 7)
 **Coordonnées Toulouse hardcodées par défaut**
-- Lignes : `133-134`, `682-683`
-- Description : `lat: 43.6047, lng: 1.4442` (Toulouse) sans constante nommée. Lisible si on connaît la ville, opaque sinon.
+- Les coords passent désormais par `USER_CONFIG?.meteo?.lat/lon` avec fallback `D.g.lat/lng`. Les valeurs Toulouse (43.6047, 1.4442) restent en dernier fallback documenté dans `fetchMeteo()`.
 
 ### 2.4 Code mort / redondances
-- `D.userName` est lu à plusieurs endroits ([L209](js/app.js#L209), [ui.js:1212](js/ui.js#L1212)) mais n'est **jamais écrit** — `defs()` ne le contient pas. C'est une « ancien path » : la valeur réelle vit dans `D.g.userName`. À nettoyer (chaque `D.userName ||` est mort).
-- `MSG` ([L106](js/app.js#L106)) : si `personality.json` charge correctement (cas standard), MSG n'est jamais utilisé.
-- `D.lat` / `D.lng` à la racine — inutilisés (les coords vivent dans `D.g.lat/lng`).
+- ✅ `D.userName` nettoyé — lectures mortes supprimées, la valeur réelle vit dans `D.g.userName`.
+- ✅ `D.lat` / `D.lng` racine supprimés — coords vivent dans `D.g.lat/lng` et `USER_CONFIG`.
+- `MSG` ([L106](js/app.js#L106)) : fallback toujours présent mais `personality.json` se charge via `user_config` désormais — MSG n'est jamais atteint en fonctionnement normal. Peut être supprimé à terme.
 
 ### 2.5 Annotations manquantes
-- `defs()` ([L121](js/app.js#L121)) : pas de docstring listant les sous-champs (et il y en a beaucoup).
-- `addXp()` : pas de doc sur le fait que `n` peut être négatif.
-- `floatXP()` ([L509](js/app.js#L509)) : pas de doc.
+- ✅ `defs()` : docstring et sommaire §1-§17 ajoutés (session 5).
+- ✅ `addXp()` : doc sur valeurs négatives ajoutée.
+- ✅ `floatXP()` : annotée.
 
 ---
 

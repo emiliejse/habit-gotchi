@@ -1855,7 +1855,7 @@ window._soutienHistory = [];
         onkeydown="if(event.key==='Enter')sendSoutienMsg()">
       <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:var(--sp-sm) 12px">→</button>
     </div>
-    <p id="soutien-count" style="font-size:var(--fs-xs);opacity:0.6;text-align:center;margin-top:4px">6 messages restants · session ${D.soutienCount}/3 aujourd'hui</p>
+    <p id="soutien-count" style="font-size:var(--fs-xs);opacity:0.6;text-align:center;margin-top:4px;line-height:1.6">6 messages restants<br>conversation non sauvegardée</p>
     <button id="btn-copier-soutien" class="btn btn-s" onclick="copierSoutien()"
             style="width:100%;font-size:var(--fs-sm);margin-top:6px;
                    display:none;opacity:0;transition:opacity 0.5s ease">
@@ -1881,9 +1881,9 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
     const countEl  = document.getElementById('soutien-count');
     if (countEl) {
       if (restants <= 0) {
-        countEl.textContent = 'Dernier message · conversation non sauvegardée';
+        countEl.innerHTML = 'Dernier message<br>conversation non sauvegardée';
       } else {
-        countEl.textContent = `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''} · conversation non sauvegardée`;
+        countEl.innerHTML = `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''}<br>conversation non sauvegardée`;
       }
     }
 

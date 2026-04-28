@@ -554,6 +554,9 @@ index.html
 9. ✅ **`app.js`** — supprimer `D.userName` (chemin mort → `D.g.userName`), `D.lat` et `D.lng` à la racine de `defs()` — fait en session 5.
 10. ✅ **`app.js`** — passer la sauvegarde des sliders (`setEnergy`/`setHappy`) en debounce 300ms — fait en session 5. Fonction `saveDebounced()` ajoutée.
 11. ✅ **`ui.js`** — uniformiser `addEvent` : 3 appels migrés en API objet — fait en session 4.
+12. ✅ **`app.js`** — `save()` : `catch(e) {}` → `console.warn('[HabitGotchi] save() échoué :', e)` — fait en session 10 (2026-04-28).
+13. ✅ **`config.js`** — palette `card` factorisée dans `CARD_BG` — fait en session 10 (2026-04-28).
+14. ✅ **`config.js`** — constantes exposées sous `window.HG_CONFIG` — fait en session 10 (2026-04-28). 15 occurrences migrées dans `app.js`, `render.js`, `ui.js`.
 
 ### Phase 3 — Amélioration structurelle (moyen terme)
 
@@ -575,6 +578,29 @@ index.html
 5. ✅ **Schéma de migration `D`** explicite — `SCHEMA_VERSION` + système de migrations ajouté dans `load()` (session 5/7). Protège les sauvegardes existantes.
 6. ✅ **Tests manuels documentés** dans `TESTING.md` — fait en session 9. 11 sections + raccourcis console.
 
+### Phase 4 — Items ouverts (backlog priorisé)
+
+#### Priorité haute
+- ⚠️ **`render.js`** — hitbox `touchStarted` : remplacer `72`, `128`, `14`, `26` par des constantes nommées.
+- ⚠️ **`ui.js`** — variables RDV (`_rdvEmoji`, `_rdvRecurrence`) : réinitialiser à l'ouverture du formulaire.
+- ⚠️ **`ui.js L2555`** — supprimer le commentaire `❌ SUPPRIMÉ` orphelin.
+- ⚠️ **`app.js`** — `setInterval(fetchMeteo)` sans `clearInterval` : stocker le handle, `clearInterval` en cas de re-init.
+
+#### Priorité moyenne
+- ⚠️ **`render.js`** — `_bounceT` (L45) et `_lastPetTime` (L728) : jamais lus, à supprimer.
+- ⚠️ **`render.js`** — `updateParts` : pré-stocker `[r,g,b]` au `spawnP` pour éviter le parse couleur à chaque frame.
+- ⚠️ **`ui.js`** — `_agendaJour` : aligner sur `window._agendaJour` partout (ou déclarer en `let`).
+- ⚠️ **`ui.js`** — `tabletLastSeenDate` : persister dans `D.g.tabletLastSeenDate`.
+- ⚠️ **`prompts/`** — créer `README.md` listant les variables `{{}}` et leur source JS.
+
+#### Priorité basse / documentaire
+- 🟡 **`sw.js`** — tester `response.ok` avant de cacher.
+- 🟡 **`ui.js`** — helper unique `copyToClipboard(text, msg)` pour les 3 fonctions de copie.
+- 🟡 **`envs.js`** — `drawWind` : passer `#d8d8e8` dans `tc(n, ...)` pour variation nuit.
+- 🟡 **`index.html`** — p5.js CDN : ajouter `integrity=` SRI.
+- 🟡 **`index.html`** — script debug inline : déplacer dans `js/debug.js`.
+- 🟡 **`render.js`** — `p.draw()` monolithique : extraire `drawHud`, `drawProps`, `drawNightOverlay` (gros chantier, session dédiée).
+
 ---
 
 ## 11. Glossaire des fonctions clés
@@ -582,11 +608,15 @@ index.html
 ### data/config.js
 | Fonction/Const | Rôle | Lecteurs |
 |---|---|---|
-| `UI_PALETTES` | 6 palettes UI (CSS vars) | ui.js (`renderPerso`, `applyUIPalette`) |
-| `GOTCHI_COLORS` | 6 couleurs sprite | render.js (`getGotchiC`), ui.js (`renderPerso`) |
-| `ENV_THEMES` | 4 thèmes décor (parc/chambre/montagne) | render.js (`getEnvC`), envs.js (`drawActiveEnv`, `drawFrameMotif`, `drawThemeAccents`) |
-| `MEAL_WINDOWS` | 3 fenêtres horaires | app.js (`getCurrentMealWindow`, `giveSnack`), ui.js (`ouvrirSnack`) |
-| `SNACKS_POOL` | Pool d'emojis food | app.js (`ensureSnackPref`, `pickThreeSnacks`) |
+| `CARD_BG` | Fond carte commun aux 6 palettes (`rgba(255,255,255,.88)`) | `UI_PALETTES` |
+| `UI_PALETTES` | 6 palettes UI (CSS vars) | `window.HG_CONFIG.UI_PALETTES` → ui.js (`renderPerso`, `applyUIPalette`) |
+| `GOTCHI_COLORS` | 6 couleurs sprite | `window.HG_CONFIG.GOTCHI_COLORS` → render.js (`getGotchiC`), ui.js (`renderPerso`) |
+| `ENV_THEMES` | 4 thèmes décor (parc/chambre/montagne) | `window.HG_CONFIG.ENV_THEMES` → render.js (`getEnvC`), envs.js (`drawActiveEnv`, `drawFrameMotif`, `drawThemeAccents`) |
+| `MEAL_WINDOWS` | 3 fenêtres horaires | `window.HG_CONFIG.MEAL_WINDOWS` → app.js (`getCurrentMealWindow`, `giveSnack`), ui.js (`ouvrirSnack`) |
+| `SNACKS_POOL` | Pool d'emojis food | `window.HG_CONFIG.SNACKS_POOL` → app.js (`ensureSnackPref`, `pickThreeSnacks`) |
+| `PAPER_THEME` | Couleurs composants "papier" (.j90, menu-book) | ui.js (`renderPerso`) |
+| `TERMINAL_THEME` | Couleurs terminal (#tablet-box) | ui.js (`openTablet`) |
+| `window.HG_CONFIG` | Namespace global regroupant les 5 constantes ci-dessus | app.js, render.js, ui.js |
 | `AI_MODEL` | Modèle Claude actif | ui.js (`callClaude`) |
 | `XP_HABITUDE` / `XP_NOTE` / `XP_MAX` | XP par action et seuil max | app.js (`addXp`, `nxtTh`), ui.js (`saveJ`, `checkAbsence`) |
 | `PETALES_SNACK` | Pétales gagnés par snack | app.js (`giveSnack`) |
@@ -614,7 +644,7 @@ index.html
 | `flashBubble(msg, dur)` | Bulle temporaire | partout | `updBubbleNow` |
 | `updBubbleNow()` | Recalcule la bulle ambiante | `flashBubble`, `setHappy`, `initUI`, `saveJ` | — |
 | `bootstrap()` / `initApp()` | Cycle de vie PWA | `load`/`pageshow`/`visibilitychange` | `loadDataFiles`, `initBaseProps`, `catchUpPoops`, `initUI`, `fetchMeteo`, `fetchSolarPhases` |
-| `getWeekId()` | ISO week id | `ensureSnackPref` (en théorie ; en pratique shadow par ui.js) | — |
+| `getWeekId()` | ISO week id (jeudi pivot) | `ensureSnackPref`, `checkBilanReset` (ui.js) | — |
 
 ### js/render.js
 | Fonction | Rôle | Appelée par | Appelle |
@@ -656,7 +686,8 @@ index.html
 | `updUI` | Sync HUD avec D | toute mutation d'état |
 | `renderHabs` / `renderProg` / `renderProps` / `renderPerso` / `renderJ` | Render des panneaux | `go`, save flows |
 | `toggleHab` proxy via app.js | — | onclick HTML |
-| `askClaude` / `acheterPropClaude` / `genSoutien` / `sendSoutienMsg` / `genBilanSemaine` | Appels API Claude | UI buttons |
+| `callClaude({messages, max_tokens, system?, temperature?})` | Helper fetch API Claude centralisé | `askClaude`, `acheterPropClaude`, `genSoutien`, `sendSoutienMsg`, `genBilanSemaine` |
+| `askClaude` / `acheterPropClaude` / `genSoutien` / `sendSoutienMsg` / `genBilanSemaine` | Appels API Claude (via `callClaude`) | UI buttons |
 | `ouvrirSnack` / `giveSnack` | Modale repas | tap HUD assiette, modale |
 | `acheterProp` / `toggleProp` / `confirmSlot` / `rangerProp` / `rangerTout` | Inventaire/boutique | onclick |
 | `renderJEntries` / `saveJ` / `editJEntry` / `delJEntry` / `exportJournal` | Journal | onclick + auto |

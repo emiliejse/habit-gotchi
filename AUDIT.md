@@ -407,11 +407,11 @@
 
 ### 8.3 Problèmes identifiés
 
-#### 🟡 MINEUR
-**Variables non documentées centralement**
-- Description : `{{nameGotchi}}, {{userName}}, {{style}}, {{traits}}, {{cycleInfo}}, {{rdvAujourdhui}}, {{messages_restants}}, {{habsDone}}, {{habitudes}}, {{notes}}, {{exemples}}, {{nomsExistants}}, {{timestamp}}, {{theme}}, {{existingNames}}, {{typeImpose}}, {{weekStart}}, {{weekEnd}}, …`
-- Risque : ajouter/renommer une variable côté JS sans la pousser ici (ou vice-versa) = silencieux.
-- Suggestion : un README dans `prompts/` listant les variables et leur source.
+#### ⚠️ MINEUR — ouvert
+**Variables `{{}}` non documentées centralement**
+- Pas de README dans `prompts/`. Variables utilisées : `{{nameGotchi}}`, `{{userName}}`, `{{style}}`, `{{traits}}`, `{{cycleInfo}}`, `{{rdvAujourdhui}}`, `{{messages_restants}}`, `{{habsDone}}`, `{{habitudes}}`, `{{notes}}`, `{{exemples}}`, `{{nomsExistants}}`, `{{timestamp}}`, `{{theme}}`, `{{existingNames}}`, `{{typeImpose}}`, `{{weekStart}}`, `{{weekEnd}}`, etc.
+- Risque : renommer une variable côté JS sans mettre à jour le prompt = silencieux.
+- Suggestion : créer `prompts/README.md` listant les variables et leur source JS.
 
 ---
 
@@ -467,11 +467,9 @@ index.html
 
 **Particules** : `updateParts` parse la couleur à chaque frame pour chaque particule (`p.color(pt.c)._array`). Cf. §3.3.
 
-**API IA** : aucun debounce. `askClaude` est limité à 3/jour côté code, mais rien n'empêche de spammer le bouton avant que la première requête revienne (le compteur n'est incrémenté qu'**après** réponse [L1307](js/ui.js#L1307)).
-- Risque : 4-5 requêtes parallèles si l'utilisatrice double-clique pendant le `thinking`.
-- Suggestion : `btn.disabled = true` au début, `false` au catch/then.
+**API IA** : `btnBilan.disabled` géré (L2338-2346). `askClaude` (bouton pensée) : le bouton est `disabled = true` pendant la requête (L1710). ✅ partiellement résolu.
 
-**Polling fetchMeteo** : `setInterval(fetchMeteo, 1800000)` (30 min). OK. Mais aucun `clearInterval` à l'unload — fuite si ré-init.
+**Polling fetchMeteo** : `setInterval(fetchMeteo, 1800000)` (30 min, app.js:L1116). ⚠️ Aucun `clearInterval` à l'unload — fuite potentielle si `bootstrap()` est rappelé.
 
 **Localstorage** : `setEnergy`/`setHappy` → save à chaque cran. Pour 5 paliers × 2 sliders, OK ; mais sur un drag long, le slider envoie chaque step → spam.
 
@@ -516,16 +514,16 @@ index.html
 - Cas net dans `toggleHab` ([app.js:535](js/app.js#L535)) : XP, pétales, log + dans la même fonction : `flashBubble`, `floatXP`, particules, animations corps, confettis. ~100 lignes mélangent état et FX.
 - Idem dans `giveSnack` ([app.js:399](js/app.js#L399)).
 
-**TODO/FIXME existants** : grep rapide ne trouve rien d'explicite (`TODO|FIXME|XXX|HACK`) — bon point. Mais le code contient plusieurs commentaires « ❌ SUPPRIMÉ » ([ui.js:2400](js/ui.js#L2400)) qui mériteraient une vraie suppression de commentaire (info historique, plus actuelle).
+**TODO/FIXME existants** : aucun `TODO|FIXME|XXX|HACK` — bon point. ⚠️ Un commentaire `❌ SUPPRIMÉ` subsiste (ui.js:L2555) — à nettoyer.
 
 ### 9.6 Dette technique connue à vérifier
 
 | Item | Status réel | Détails |
 |---|---|---|
 | `render.js` monolithique | ✅ confirmé | 1189 lignes, `p.draw` = 340 lignes. Responsabilités enchevêtrées : sprites, env, props, locomotion, HUD, tap, FX. |
-| `toggleHab()` ancienne API `addEvent(type, valeur, label)` | ✅ confirmé | [app.js:562](js/app.js#L562). |
-| `saveJ()` ancienne API | ✅ confirmé | [ui.js:2006](js/ui.js#L2006). Aussi présente dans `checkWelcome` [ui.js:2409](js/ui.js#L2409). |
-| `claude-sonnet-4-5` hardcodé | ✅ confirmé | **5 occurrences** : ui.js lignes 358, 1267, 1380, 1628, 1774. |
+| `toggleHab()` ancienne API `addEvent(type, valeur, label)` | ✅ résolu (session 4) | Migré en forme objet. |
+| `saveJ()` ancienne API | ✅ résolu (session 4) | Migré en forme objet. |
+| `claude-sonnet-4-5` hardcodé | ✅ résolu (session 3) | Constante `AI_MODEL` dans config.js. Helper `callClaude()` dans ui.js (session 6). |
 | Variables `window.*` globales | ✅ confirmé | ~40 globales. Liste résumée : `D, PROPS_LIB, PROPS_LOCAL, PERSONALITY, AI_CONTEXTS, AI_SYSTEM, celebQueue, shakeTimer, meteoData, _gotchiActif, APP_VERSION, JOURNAL_MAX_PER_DAY, JOURNAL_MAX_CHARS, getCyclePhase, getSolarPhase, particles, touchReactions, eatAnim, triggerGotchiBounce, triggerGotchiShake, spawnP, _nextBlinkAt, _blinkDuration, _evoAnim, triggerEvoAnim, _adultPose, _expr, triggerExpr, _starTrail, _gotchiNearPoop, _gotchiX, _gotchiY, _cleanPositions, _lastTapTime, _lastTapX, _petCount, _lastPetTime, _petResetTimer, _bubbleTimer, _derniereBulle, _forceHour, _bounceT, _jumpTimer, initUI, rangerTout, _boutiqueOnglet, _soutienHistory, _soutienCount, _editMood, _agendaJour, _rdvEmoji, _rdvRecurrence, _rdvDuree, _editRdvId, _journalWOff, _debugLogs, showDebug`. Risques de collision : avec p5 (`p5`), avec un futur module éditeur (`editor.html` n'a pas été audité — vérifier). |
 | Seuil dithering `en < 40` | ⚠️ partiellement | Le seuil **40** correspond au **tilt** ([render.js:906](js/render.js#L906)), pas au dithering. Le dithering est `en < 10` (3 occurrences : [render.js:366](js/render.js#L366), [501](js/render.js#L501), [709](js/render.js#L709)). Bras tombés : `en < 25` (baby/teen), `en < 20` (adult). À aligner ou documenter. |
 

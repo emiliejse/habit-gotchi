@@ -193,45 +193,43 @@ function clearDebugLogs() {
   -->
   <div id="p-gotchi" class="pnl on">
 
-    <!-- Carte d'état du Gotchi (SYSTEM 1: Métabolisme + SYSTEM 4: Habitudes) -->
-    <div class="card" style="background:linear-gradient(135deg,rgba(176,144,208,0.15),rgba(232,160,191,0.15));border:2px solid var(--lilac);text-align:center;padding:15px;">
-      <div style="font-size:16px;font-weight:bold;color:var(--text);">
+    <!-- Carte d'état du Gotchi + pensée IA (SYSTEM 1 + SYSTEM 3) -->
+    <div class="card card-gotchi">
+      <!-- Nom, stade, XP -->
+      <div style="font-size:16px;font-weight:bold;color:var(--text);text-align:center;">
         <span id="g-name">Petit·e Gotchi</span>
         <span style="color:var(--lilac);opacity:0.3;"> | </span>
         <span id="g-stage" style="color:var(--lilac);">Œuf</span>
-        <!-- Badge anniversaire — visible uniquement le jour J via updUI() -->
         <span id="birthday-badge" style="display:none;cursor:pointer;margin-left:6px;">🎂</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:var(--fs-xs);margin-top:10px;font-weight:bold;"> <!-- était 9px -->
+      <div style="display:flex;justify-content:space-between;font-size:var(--fs-xs);margin-top:10px;font-weight:bold;">
         <span class="slbl" style="color:var(--lilac)">Progression</span>
         <span class="slbl" id="xp-l" style="color:var(--text);">0/150 XP</span>
       </div>
       <div class="pbar" style="height:10px;margin-top:5px;background:rgba(0,0,0,0.06);border-radius:5px;">
-        <!-- Barre de progression XP (SYSTEM 4: Habitudes) -->
         <div class="pfill" id="xp-b" style="width:0%;background:linear-gradient(90deg,var(--lilac),var(--pink));border-radius:5px;"></div>
       </div>
-    </div>
 
-    <!-- Carte "Interroger le Gotchi" (SYSTEM 3: IA & Cognition) -->
-    <div id="claude-card">
-      <div style="display:flex;gap:6px;align-items:center">
-        <button class="btn btn-p" onclick="askClaude()" id="btn-ask-claude" style="flex:1;font-size:var(--fs-sm);"> <!-- était 10px -->
-          <span id="btn-ask-label">Une pensée de Gotchi ✿ </span><span id="thought-count">(0/3)</span>
-        </button>
-        <button onclick="toastInfo()" style="background:none;border:none;font-size:14px;cursor:pointer;">ℹ️</button>
+      <!-- Séparateur + zone pensée IA (SYSTEM 3: IA & Cognition) -->
+      <div id="claude-card">
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn btn-p" onclick="askClaude()" id="btn-ask-claude" style="flex:1;font-size:var(--fs-sm);">
+            <span id="btn-ask-label">Une pensée de Gotchi ✿ </span><span id="thought-count">(0/3)</span>
+          </button>
+          <button onclick="toastInfo()" style="background:none;border:none;font-size:14px;cursor:pointer;">ℹ️</button>
+        </div>
+        <div id="claude-msg" style="font-size:var(--fs-sm);color:var(--text2);line-height:1.4;margin-top:6px;"></div>
       </div>
-      <!-- Zone de réponse de l'IA (SYSTEM 3: IA & Cognition) -->
-      <div id="claude-msg" style="font-size:var(--fs-sm);color:var(--text2);line-height:1.4;margin-top:6px;"></div> <!-- était 11px -->
     </div>
 
     <!-- Panneau des habitudes du jour (SYSTEM 4: Habitudes) -->
     <div class="card card-primary">
-  <div class="card-primary-header">
-    <h2 style="margin:0">Mes intentions du jour</h2>
-    <span id="hab-count">0/6</span>
-  </div>
-  <div id="hab-home"></div>
-</div>
+      <div class="card-primary-header">
+        <h2 style="margin:0">Mes intentions du jour</h2>
+        <span id="hab-count">0/6</span>
+      </div>
+      <div id="hab-home"></div>
+    </div>
 
   </div><!-- fin p-gotchi -->
 

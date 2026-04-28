@@ -514,7 +514,8 @@ body {
 
 .card {
   background: var(--card); backdrop-filter: blur(6px); border: 2px solid var(--border);
-  border-radius: var(--r-lg); padding: var(--sp-md); margin-bottom: var(--sp-sm); box-shadow: 0 2px 8px var(--shadow);
+  border-radius: var(--r-lg); padding: var(--sp-md); margin-bottom: var(--sp-lg); box-shadow: 0 2px 8px var(--shadow);
+  /* POURQUOI : sp-lg (16px) uniformise l'espace entre tous les blocs de l'accueil */
 }
 .card h2 { font-size: var(--fs-sm); margin-bottom: var(--sp-sm); letter-spacing: 1px; }
 
@@ -549,17 +550,28 @@ body {
 
 /* RÔLE : Zone liste des habitudes — padding interne après le header */
 #hab-home {
-  padding: var(--sp-md) 0 var(--sp-lg);
-  /* POURQUOI : plus d'air vertical autour de la liste d'habitudes, padding latéral géré par #dynamic-zone */
+  padding: var(--sp-md) var(--sp-sm) var(--sp-lg);
+  /* POURQUOI : padding latéral var(--sp-sm) pour que les habitudes ne collent pas aux bords du bloc */
 }
 
-/* RÔLE : Carte pensée — zone de lecture, pas une carte d'action */
+/* RÔLE : Carte principale Gotchi — stat + pensée IA réunies */
+.card-gotchi {
+  background: linear-gradient(135deg, rgba(176,144,208,0.15), rgba(232,160,191,0.15));
+  border: 2px solid var(--lilac);
+  text-align: center;
+  padding: var(--sp-lg);
+  margin-bottom: var(--sp-lg); /* POURQUOI : espace généreux entre carte Gotchi et carte habitudes */
+}
+
+/* RÔLE : Zone pensée IA — intégrée dans la carte Gotchi avec fond légèrement plus foncé */
+/* POURQUOI : distingue visuellement la section IA sans en faire une carte séparée */
 #claude-card {
-  background: rgba(176,144,208,0.15);
+  background: rgba(176,144,208,0.22); /* POURQUOI : fond plus marqué pour distinguer la zone IA dans la carte */
   border: none;
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   padding: var(--sp-sm) var(--sp-md);
-  margin-bottom: var(--sp-sm);
+  margin-top: var(--sp-md);
+  text-align: left;
 }
 
 #claude-card #claude-msg {
@@ -691,10 +703,11 @@ body {
 .slider-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
 .slider-row .sv { font-size: 13px; font-weight: bold; width: 20px; text-align: center; }
 
-#sl-energy { background: linear-gradient(90deg, var(--peach), var(--coral)); }
-#sl-energy::-webkit-slider-thumb { background: var(--coral); }
-#sl-happy { background: linear-gradient(90deg, var(--sky), var(--mint)); }
-#sl-happy::-webkit-slider-thumb { background: var(--mint); }
+/* POURQUOI : sliders neutres — couleur uniforme discrète pour ne pas concurrencer le tama visuellement */
+#sl-energy { background: var(--border); }
+#sl-energy::-webkit-slider-thumb { background: var(--text2); }
+#sl-happy { background: var(--border); }
+#sl-happy::-webkit-slider-thumb { background: var(--text2); }
 
 /* RÔLE : Mode compact — masque le titre/date, garde les boutons boutique et tablette */
 /* POURQUOI : Le tama passe en position absolute à la place du titre masqué.
@@ -832,6 +845,16 @@ details.settings-section.danger > summary { color: var(--danger); }
 @keyframes fu {
   from { opacity: 0; transform: translateY(5px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* RÔLE : Animation d'ouverture de la boîte modale — montée douce sans scale */
+/* POURQUOI : translateY seul évite le clipping causé par overflow-y:auto + transform scale */
+@keyframes modalPop {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.modal-box.modal-pop {
+  animation: modalPop .22s cubic-bezier(0.25, 1.15, 0.5, 1) both;
 }
 
 /* Modale Principale (Alertes, Boutique) */

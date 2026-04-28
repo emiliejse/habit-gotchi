@@ -334,17 +334,18 @@ function clModal(e) {
  *            Le ✕ apparaît sur toutes les modales sans avoir à y penser à chaque fois
  * USAGE : openModal(`<h3>Titre</h3><p>Contenu</p>`)
  */
-function openModal(html, anim = 'bounceIn') { 
+function openModal(html) {
   const modal = document.getElementById('modal');
   const mbox  = document.getElementById('mbox');
   modal.style.display = 'flex';
   lockScroll();
   mbox.innerHTML = `${_modalCloseBtn()}${html}`;
-  // RÔLE : Anime le backdrop #modal plutôt que #mbox
-  // POURQUOI : overflow-y:auto sur #mbox clippait bounceIn (contrainte CSS navigateur)
-  //            Le backdrop est full viewport — aucun clip possible, animation toujours visible
-  void modal.offsetWidth; // force reflow pour rejouer l'animation à chaque ouverture
-  animEl(modal, anim);
+  // RÔLE : Rejoue l'animation CSS sur #mbox à chaque ouverture
+  // POURQUOI : On retire/remet la classe pour forcer le reflow et relancer @keyframes modalPop
+  //            Le backdrop #modal n'est pas animé — il apparaît instantanément (comportement attendu)
+  mbox.classList.remove('modal-pop');
+  void mbox.offsetWidth; // force reflow
+  mbox.classList.add('modal-pop');
 }
 
 /**
@@ -613,6 +614,51 @@ function saveHabInline(catId, i, value) {
     window.D.habits[i].label = trimmed;
     save();
   }
+  renderHabs();
+}
+
+/**
+ * RÔLE : Ouvre une modale centralisée pour renommer toutes les habitudes d'un coup
+ * POURQUOI : Remplace les crayons individuels — une seule action, moins de bruit visuel
+ */
+function ouvrirEditionHabitudes() {
+  const D = window.D;
+  const champs = D.habits.map((h, i) => {
+    const c = CATS.find(c => c.id === h.catId);
+    const libelle = (h.label !== c?.label) ? h.label : (c?.def || h.label);
+    return `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:18px;width:24px;text-align:center">${c.icon}</span>
+        <input class="inp" id="hab-edit-${h.catId}"
+          value="${libelle}"
+          style="flex:1;font-size:var(--fs-sm);padding:6px 10px"
+          onkeydown="if(event.key==='Enter') document.getElementById('hab-save-btn').click()">
+      </div>`;
+  }).join('');
+  // POURQUOI : openModal() standard — même animation que toutes les autres modales
+  openModal(`
+    <h3 style="margin-bottom:14px;font-size:var(--fs-md)">✏️ Mes habitudes</h3>
+    ${champs}
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-s" onclick="clModal()" style="flex:1">Annuler</button>
+      <button id="hab-save-btn" class="btn btn-p" onclick="sauvegarderToutesHabitudes()" style="flex:1">Enregistrer</button>
+    </div>
+  `);
+}
+
+/**
+ * RÔLE : Lit tous les champs de la modale d'édition et sauvegarde les labels modifiés
+ */
+function sauvegarderToutesHabitudes() {
+  const D = window.D;
+  D.habits.forEach((h, i) => {
+    const input = document.getElementById('hab-edit-' + h.catId);
+    if (!input) return;
+    const trimmed = input.value.trim();
+    if (trimmed) D.habits[i].label = trimmed;
+  });
+  save();
+  clModal();
   renderHabs();
 }
 

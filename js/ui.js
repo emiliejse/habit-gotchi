@@ -4,7 +4,7 @@
    Il gère tout ce que l'utilisateur clique, lit et ouvre.
    Dépend de : app.js (window.D, save, today, hr, haptic, addXp,
                getSt, nxtTh, calcStr, toggleHab, editH, updBubbleNow,
-               CATS, STG, UI_PALETTES, GOTCHI_COLORS, ENV_THEMES, SK)
+               CATS, STG, window.HG_CONFIG, SK)
 
    NAVIGATION RAPIDE (Ctrl+G dans VS Code → numéro de ligne) :
    §1  ~17    HELPER IA         callClaude()
@@ -1962,7 +1962,7 @@ function renderPerso() {
   const pg = document.getElementById('palette-grid');
   if (pg) {
     const current = D.g.uiPalette || 'lavande';
-    pg.innerHTML = UI_PALETTES.map(p => `
+    pg.innerHTML = window.HG_CONFIG.UI_PALETTES.map(p => `
       <div onclick="applyUIPalette('${p.id}')" style="padding:var(--sp-sm);border-radius:var(--r-md);cursor:pointer;text-align:center;border:3px solid ${current===p.id?p.lilac:'transparent'};background:${p.bg};transition:.2s;">
         <div style="display:flex;gap:4px;justify-content:center;margin-bottom:4px">
           <div style="width:14px;height:14px;border-radius:50%;background:${p.lilac}"></div>
@@ -1975,7 +1975,7 @@ function renderPerso() {
   const gc = document.getElementById('gotchi-colors');
   if (gc) {
     const current = D.g.gotchiColor || 'vert';
-    gc.innerHTML = GOTCHI_COLORS.map(c => `
+    gc.innerHTML = window.HG_CONFIG.GOTCHI_COLORS.map(c => `
   <div onclick="applyGotchiColor('${c.id}')" style="
     border-radius:var(--r-md);cursor:pointer;
     background:${c.body};
@@ -1990,7 +1990,7 @@ function renderPerso() {
   const et = document.getElementById('env-themes');
   if (et) {
     const current = D.g.envTheme || 'pastel';
-et.innerHTML = ENV_THEMES.map(t => `
+et.innerHTML = window.HG_CONFIG.ENV_THEMES.map(t => `
   <div onclick="applyEnvTheme('${t.id}')" style="
     padding:var(--sp-md) 8px;border-radius:var(--r-md);cursor:pointer;
     background:linear-gradient(135deg,${t.sky1},${t.gnd});
@@ -2004,7 +2004,7 @@ et.innerHTML = ENV_THEMES.map(t => `
 } // ← ferme renderPerso()
 
 function applyUIPalette(id, silent = false) {
-  const p = UI_PALETTES.find(x => x.id === id); if (!p) return;
+  const p = window.HG_CONFIG.UI_PALETTES.find(x => x.id === id); if (!p) return;
   document.documentElement.style.setProperty('--bg',    p.bg);
   document.documentElement.style.setProperty('--lilac', p.lilac);
   document.documentElement.style.setProperty('--mint',  p.mint);
@@ -2017,12 +2017,12 @@ document.documentElement.style.setProperty('--border', p.border || '#ccc4d8');
   if (!silent) toast(`Palette ${p.label} appliquée ✿`);
 }
 function applyGotchiColor(id, silent = false) {
-  const c = GOTCHI_COLORS.find(x => x.id === id); if (!c) return;
+  const c = window.HG_CONFIG.GOTCHI_COLORS.find(x => x.id === id); if (!c) return;
   window.D.g.gotchiColor = id; save(); renderPerso();
   if (!silent) toast(`Couleur ${c.label} appliquée ✿`);
 }
 function applyEnvTheme(id, silent = false) {
-  const t = ENV_THEMES.find(x => x.id === id); if (!t) return;
+  const t = window.HG_CONFIG.ENV_THEMES.find(x => x.id === id); if (!t) return;
   window.D.g.envTheme = id; save(); renderPerso();
   if (!silent) toast(`Ambiance ${t.label} appliquée ✿`);
 }

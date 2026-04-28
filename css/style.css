@@ -134,7 +134,8 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 8px 10px;
-  padding-top: calc(var(--console-height, 320px) + 8px);
+  padding-top: calc(var(--console-height, 320px) + 16px);
+  /* POURQUOI : +8px supplémentaires sous la console pour aérer l'espace entre les éléments */
   padding-bottom: calc(64px + var(--sab));
   width: 100%;
   max-width: 460px;
@@ -249,18 +250,19 @@ body {
 
 /* La Bulle de pensée */
 .bubble {
-  background: var(--card);
-  border: 2px solid var(--lilac);
+  background: #fff;
+  /* POURQUOI : fond blanc pur sans bordure — aspect carte flottante propre */
+  border: none;
   border-radius: 8px;
-  padding: 8px 14px;
+  padding: 10px 16px;
   font-size: var(--fs-sm);
   line-height: 1.4;
   text-align: center;
-  height: auto;          /* ← remplace min-height: 44px */
-  display: flex;         /* ← nouveau */
-  align-items: center;   /* ← nouveau */
-  justify-content: center; /* ← nouveau */
-  box-shadow: 0 -2px 8px var(--shadow);
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px var(--shadow);
   position: relative;
   margin: 6px auto 0;
   max-width: 340px;
@@ -269,6 +271,7 @@ body {
   z-index: 10;
 }
 /* La petite flèche pointant vers le Gotchi */
+/* POURQUOI : triangle blanc sans bordure — cohérent avec le fond blanc de la bulle */
 .bubble::before {
   content: '';
   position: absolute;
@@ -277,7 +280,7 @@ body {
   transform: translateX(-50%);
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
-  border-bottom: 8px solid var(--lilac);
+  border-bottom: 8px solid #fff;
   display: block;
 }
 .bubble::after { display: none; }
@@ -546,7 +549,8 @@ body {
 
 /* RÔLE : Zone liste des habitudes — padding interne après le header */
 #hab-home {
-  padding: var(--sp-sm) var(--sp-md) var(--sp-md);
+  padding: var(--sp-md) 0 var(--sp-lg);
+  /* POURQUOI : plus d'air vertical autour de la liste d'habitudes, padding latéral géré par #dynamic-zone */
 }
 
 /* RÔLE : Carte pensée — zone de lecture, pas une carte d'action */
@@ -616,19 +620,20 @@ body {
 
 /* Bloc Habitude */
 .hab {
-  display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-sm); border-radius: var(--r-sm);
+  display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-sm) var(--sp-md); border-radius: var(--r-md);
   /* POURQUOI margin-bottom var(--sp-md) : le label Prochain ✿ en ::before dépasse de ~12px au-dessus — l'espace
      entre habitudes doit compenser pour que le label ne chevauche pas le bloc précédent */
-  border: 2px solid var(--border); margin-bottom: var(--sp-md); background: #fff; cursor: pointer;
+  /* POURQUOI : fond lilas très doux sans bordure — respire mieux, moins de bruit visuel */
+  border: none; margin-bottom: var(--sp-md); background: rgba(176,144,208,0.09); cursor: pointer;
   transition: transform 0.1s ease;
   position: relative; /* POURQUOI : nécessaire pour que ::before se positionne par rapport au .hab */
 }
 .hab:active { transform: scale(0.97); } /* Petit écrasement au clic */
 
 /* État Validé */
+/* POURQUOI : sans bordure, on garde juste le fond vert doux pour signaler la complétion */
 .hab.done {
-  background: linear-gradient(135deg, rgba(128,208,168,.15), rgba(176,144,208,.15));
-  border-color: var(--mint);
+  background: linear-gradient(135deg, rgba(128,208,168,.18), rgba(176,144,208,.12));
 }
 
 /* La Checkbox vide */
@@ -654,9 +659,9 @@ body {
 /* POURQUOI : Sans signal visuel, l'utilisatrice doit scanner toute la liste pour trouver quoi faire
    — coût décisionnel élevé au démarrage, incompatible avec la fatigue TDAH */
 .hab--next {
-  border-color: var(--lilac);
-  box-shadow: 0 0 0 3px rgba(176,144,208,0.2);
-  background: rgba(176,144,208,0.06);
+  /* POURQUOI : pas de border-color (bordure supprimée) — le glow + fond plus intense suffisent */
+  box-shadow: 0 0 0 3px rgba(176,144,208,0.25);
+  background: rgba(176,144,208,0.16);
 }
 .hab--next .ck {
   border-color: var(--lilac);

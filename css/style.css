@@ -809,9 +809,7 @@ body {
 .slider-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; min-height: 44px; }
 
 /* RÔLE : Track du slider */
-/* POURQUOI : margin-right: 16px réserve l'espace pour le demi-thumb (10px) + pétale (6px).
-              Sur iOS Safari le padding natif du track décale le thumb — margin-right absorbe ce décalage.
-              overflow: visible indispensable pour que les pétales (box-shadow) soient visibles. */
+/* POURQUOI : overflow: visible nécessaire pour que le thumb (28px) dépasse du track (8px) verticalement */
 .slider-row input[type=range] {
   flex: 1;
   -webkit-appearance: none;
@@ -820,7 +818,7 @@ body {
   outline: none;
   opacity: .85;
   overflow: visible;
-  margin: 0 16px 0 6px;
+  margin: 0;
   min-width: 0;
 }
 
@@ -831,34 +829,36 @@ body {
   border-radius: 4px;
 }
 
-/* RÔLE : Thumb du slider — transparent, zone de tap 20×20px */
-/* POURQUOI : 20px = zone de tap suffisante (la min-height: 44px de .slider-row complète la zone tactile).
-              Thumb transparent : la couleur vient uniquement des box-shadow (pétales).
-              20px réduit le débordement à droite vs 28px, ce qui aide sur iOS. */
+/* RÔLE : Thumb du slider — fleur pixel art dessinée en gradient, tout contenu dans le thumb */
+/* POURQUOI : les box-shadow débordent du thumb et sont clippées par iOS Safari.
+              Avec radial-gradient, tout est dessiné À L'INTÉRIEUR du thumb — rien ne dépasse.
+              28×28px = grande zone de tap, la fleur occupe toute la surface. */
 .slider-row input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 20px; height: 20px;
-  border-radius: 50%;
+  width: 28px; height: 28px;
+  border-radius: 0;   /* POURQUOI : carré = la fleur en gradient occupe les coins */
   cursor: pointer;
   border: none;
-  background: transparent;
-  box-shadow:
-    0    -6px  0 2px currentColor,
-    0     6px  0 2px currentColor,
-    -6px  0    0 2px currentColor,
-    6px   0    0 2px currentColor,
-    -5px -5px  0 1px currentColor,
-    5px  -5px  0 1px currentColor,
-    -5px  5px  0 1px currentColor,
-    5px   5px  0 1px currentColor;
+  /* POURQUOI : fleur 8 pétales en radial-gradient superposés.
+     Chaque cercle est positionné autour du centre pour former une rosette.
+     currentColor ne fonctionne pas en gradient — on utilise var(--text2) directement. */
+  background:
+    radial-gradient(circle 5px at 50% 15%,   var(--text2) 100%, transparent 100%), /* haut        */
+    radial-gradient(circle 5px at 50% 85%,   var(--text2) 100%, transparent 100%), /* bas         */
+    radial-gradient(circle 5px at 15% 50%,   var(--text2) 100%, transparent 100%), /* gauche      */
+    radial-gradient(circle 5px at 85% 50%,   var(--text2) 100%, transparent 100%), /* droite      */
+    radial-gradient(circle 4px at 22% 22%,   var(--text2) 100%, transparent 100%), /* haut-gauche */
+    radial-gradient(circle 4px at 78% 22%,   var(--text2) 100%, transparent 100%), /* haut-droite */
+    radial-gradient(circle 4px at 22% 78%,   var(--text2) 100%, transparent 100%), /* bas-gauche  */
+    radial-gradient(circle 4px at 78% 78%,   var(--text2) 100%, transparent 100%), /* bas-droite  */
+    radial-gradient(circle 4px at 50% 50%,   var(--text2) 100%, transparent 100%); /* centre      */
 }
 .slider-row .sv { font-size: 13px; font-weight: bold; width: 20px; text-align: center; flex-shrink: 0; }
 
-/* POURQUOI : sliders neutres — couleur uniforme discrète */
+/* POURQUOI : sliders neutres — couleur du track uniforme discrète */
+/* Les thumbs héritent du gradient fleur défini dans .slider-row input::-webkit-slider-thumb */
 #sl-energy { background: var(--border); }
-#sl-energy::-webkit-slider-thumb { background: transparent; color: var(--text2); }
 #sl-happy  { background: var(--border); }
-#sl-happy::-webkit-slider-thumb  { background: transparent; color: var(--text2); }
 
 /* RÔLE : Mode compact — masque les sliders */
 #console-top.compact #sliders-wrap { display: none; }

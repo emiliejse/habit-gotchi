@@ -242,114 +242,81 @@
 
 ### 5.3 Problèmes identifiés
 
-#### 🔴 CRITIQUE
+#### ✅ CRITIQUE — résolu (session 3)
 **`claude-sonnet-4-5` hardcodé en 5 endroits**
-- Lignes : `358`, `1267`, `1380`, `1628`, `1774`
-- Description : aucune constante. Migration ou A/B test = 5 modifs synchronisées.
-- Risque : oubli garanti tôt ou tard.
-- Suggestion : `const CLAUDE_MODEL = 'claude-sonnet-4-5'` au sommet (idéalement en config.js avec les autres constantes), ou même un wrapper `callClaude({model, max_tokens, prompt, system?})` qui factorise les 5 appels (ils ont 90% de code en commun : URL, headers, parsing JSON, gestion erreur).
+- Constante `AI_MODEL` ajoutée dans `config.js`. Helper `callClaude()` ajouté dans `ui.js` (session 6). Les 5 occurrences remplacées.
 
-#### 🔴 CRITIQUE
+#### ✅ CRITIQUE — résolu (session 1)
 **Fonction `getWeekId` redéfinie**
-- Lignes : `1691-1696`
-- Description : redéfinit ce qui existe déjà dans app.js avec un algo plus simple mais moins exact (formule `((now - jan4)/86400000 + jan4.getDay()+1)/7`).
-- Risque : décalage en semaines 52/53/1 — bilan hebdo et `snackPref` peuvent désaligner.
-- Suggestion : supprimer la version de ui.js, garder celle d'app.js.
+- Définition approximative supprimée de `ui.js`. Version ISO d'`app.js` fait foi.
 
-#### 🔴 CRITIQUE
-**Injection HTML brute via `innerHTML` avec données utilisateur**
-- Lignes : exemples : `262-266` (modal repas, interpole `D.g.name`), `860` (`prop.nom`), `2055` (`e.text`), `2418`, `2456`, `2716` (`r.label`), etc.
-- Description : `D.g.name`, `prop.nom`, `journal.text`, `rdv.label` sont injectés dans des template strings et passés à `innerHTML`. Si l'utilisatrice met `<img onerror=...>` dans le nom du Gotchi ou une note de journal, c'est exécuté.
-- Risque : XSS local. Pas exploitable à distance (pas de partage), mais si `acheterPropClaude` retourne une réponse mal parsée et que l'IA glisse du HTML dans `obj.nom`, ça s'exécute.
-- Suggestion : passer par `textContent` quand c'est possible, ou échapper systématiquement (`String(x).replace(/[<>&"']/g, …)`). Au minimum sanitiser sur les données IA.
+#### ✅ CRITIQUE — résolu (session 4)
+**Injection HTML brute via `innerHTML` (XSS local)**
+- Données utilisateur sanitisées. Données IA échappées.
 
-#### 🟠 IMPORTANT
+#### ⚠️ IMPORTANT — ouvert
 **Variables d'état globales pour formulaire RDV**
-- Lignes : `2909` (`window._rdvEmoji`), `2921` (`window._rdvRecurrence`), `2944` (`window._rdvDuree`), `3074` (`window._editRdvId`)
-- Description : 4 globales partagées entre create/edit, jamais explicitement reset si on annule au mauvais moment.
-- Risque : si tu ouvres le modal RDV, choisis un emoji, fermes sans sauvegarder, puis ré-ouvres : l'emoji reste sélectionné en mémoire mais pas visuellement.
-- Suggestion : un objet `_rdvDraft = { emoji, recurrence, duree, editId }` réinitialisé à chaque `afficherFormulaireRdv()` et `editerRdv()`.
+- `window._rdvEmoji` (L3075) et `window._rdvRecurrence` (L3087) toujours présents. Reset manuel en L3147-3148 après confirmation, mais pas de réinitialisation à l'ouverture du formulaire.
+- Risque : emoji ou récurrence d'un RDV précédent peut persister si on annule sans sauvegarder.
+- Suggestion : réinitialiser ces variables au début de `afficherFormulaireRdv()` et `editerRdv()`.
 
-#### 🟠 IMPORTANT
+#### ✅ IMPORTANT — résolu (session 4)
 **`voirBulles()` : test incohérent array/object**
-- Lignes : `1048-1057`
-- Description : `cb = D.g.customBubbles`. `Object.keys(cb)` puis `cb.map(...)`. Si `cb` est un array (cas standard), `Object.keys` retourne les indices. La condition `if (!etats.length)` fonctionne, mais c'est fragile : `defs()` initialise en `[]`, mais `debugProps()` ([ui.js:1003](js/ui.js#L1003)) sait gérer les deux formes — donc historiquement c'était un objet.
-- Risque : si une vieille sauvegarde est restée en objet, `cb.map` crashe.
-- Suggestion : forcer la normalisation en array au load (déjà partiellement fait dans `askClaude` L1282).
+- `customBubbles` normalisé en array au load (L1459). `Array.isArray` check en L1146.
 
-#### 🟠 IMPORTANT
-**`renderProg()` cible des boutons par sélecteur attribut**
-- Lignes : `2200`
-- Description : `document.querySelector('[onclick="genBilanSemaine()"]')` — couplage fort entre HTML inline `onclick` et JS.
-- Risque : si on migre vers `addEventListener`, ce sélecteur casse silencieusement.
-- Suggestion : donner un `id="btn-bilan"` au bouton.
+#### ✅ IMPORTANT — résolu
+**`renderProg()` sélecteur fragile `[onclick="..."]`**
+- Sélecteur supprimé. `renderProg` n'opère plus par ciblage de bouton via attribut `onclick`.
 
-#### 🟠 IMPORTANT
-**`saveJ()` a une garde dupliquée**
-- Lignes : `1978-1983` puis `1998-2003`
-- Description : la garde `if (!selMood)` est écrite deux fois. Code mort.
-- Suggestion : supprimer la 2e occurrence.
+#### ✅ IMPORTANT — résolu (session 4)
+**`saveJ()` garde dupliquée**
+- Une seule garde `if (!selMood)` en L2118.
 
-#### 🟠 IMPORTANT
-**`_agendaJour` et `_agendaMoisOffset` accédés sans `window.` dans certaines fonctions**
-- Lignes : `2668` (`const ds = _agendaJour;`), `2773`, `2779`, `2963`, `2974`, `3037`, `3156`, `3162`, etc.
-- Description : se reposent sur le fait que `var/let` au top-level deviennent globaux en mode non-strict. `_agendaJour` est défini avec `window._agendaJour = null;` (L2551) puis lu en bare. Ça marche **uniquement** parce que script non-module. Si jamais le fichier est passé en `<script type="module">`, tout casse.
-- Risque : limite la marge de manœuvre future ; aujourd'hui : aucune.
-- Suggestion : aligner sur `window._agendaJour` partout, ou déclarer `let _agendaJour = null` proprement et virer le `window.`.
+#### ⚠️ IMPORTANT — ouvert
+**`_agendaJour` accédé sans `window.` dans plusieurs fonctions**
+- Initialisé `window._agendaJour` (L2720) mais lu en bare aux L2834, L2939, L3129, L3140, L3203, L3322, L3536, etc.
+- Risque : aucun aujourd'hui (script non-module), bloquant si migration vers `<script type="module">`.
+- Suggestion : aligner en `window._agendaJour` partout, ou déclarer `let _agendaJour` proprement.
 
-#### 🟠 IMPORTANT
-**`sauvegarderRdvEdit()` mort**
-- Lignes : `3186-3197`
-- Description : fonction définie, jamais appelée (l'édition passe par `confirmerEditRdv`). Réf. orpheline `document.querySelector('[onclick="sauvegarderRdvEdit()"]')`.
-- Suggestion : supprimer.
+#### ✅ IMPORTANT — résolu
+**`sauvegarderRdvEdit()` morte**
+- Fonction supprimée. L'édition passe uniquement par `confirmerEditRdv`.
 
-#### 🟡 MINEUR
-**Numéros de version visibles dans 5 fichiers**
-- Description : `v3.02` dans app.js + sw.js + (probablement) commits. Le commentaire `⚠️ SYNC` est bien là.
-- Suggestion : un script de release qui fait le bump.
+#### 🟡 MINEUR — ouvert (faible impact)
+**`navigator.clipboard` incohérent entre 3 fonctions**
+- `copierSoutien` (L1806), `copyBilanSemaine` (L1937), `copierCycles` (L3824) gèrent chacune leur propre fallback.
+- Suggestion : helper unique `copyToClipboard(text, successMsg)`.
 
-#### 🟡 MINEUR
-**`_soutienHistory` global et `D.apiKey` lus avec mélange `D` / `window.D`**
-- Lignes : un peu partout
-- Description : ce fichier alterne `D.g.x` et `window.D.g.x`. `D` est `window.D` dans le même scope, mais c'est confus à lire.
-- Suggestion : choisir une seule convention (préférer `window.D` partout, plus explicite).
+#### ✅ MINEUR — résolu (session 4)
+**`acheterPropClaude` remboursement `+16` pour un coût de `10`**
+- Corrigé.
 
-#### 🟡 MINEUR
-**`navigator.clipboard.writeText` sans détection cohérente**
-- Lignes : `1664`, `1799`, `3693`
-- Description : `copierSoutien` détecte avec un fallback silencieux, `copyBilanSemaine` non, `copierCycles` détecte. Comportement incohérent.
-- Suggestion : helper unique `copyToClipboard(text, successMsg)` qui gère tous les cas.
+#### ✅ MINEUR — résolu
+**`exportJournal` variables `a, b` inutilisées**
+- Supprimées.
 
-#### 🟡 MINEUR
-**`acheterPropClaude` : remboursement de `+16` pour un coût de `10`**
-- Lignes : `1327` (déduction `-10`) et `1427` (remboursement `+16`)
-- Description : si l'API échoue, tu **gagnes 6 pétales**. Bug net.
-- Risque : exploit involontaire — si l'API échoue souvent, l'utilisatrice voit ses pétales monter.
-- Suggestion : changer `+ 16` en `+ 10`.
+#### 🟡 MINEUR — ouvert (faible impact)
+**`renderPin()` recrée les handlers à chaque appel**
+- `b.onclick = …` réécrit à chaque clic. Sans conséquence visible aujourd'hui.
 
-#### 🟡 MINEUR
-**`exportJournal('semaine')` calcule `a` et `b` ([L2095](js/ui.js#L2095)) mais ne les utilise pas**
-- Suggestion : supprimer.
-
-#### 🟡 MINEUR
-**`renderPin()` : event handlers nommés `b.onclick = …` (réécriture à chaque appel)**
-- Lignes : `1915-1927`
-- Description : à chaque clic le pad est recréé entièrement. OK mais inefficace.
+#### ⚠️ MINEUR — ouvert
+**`tabletLastSeenDate` non persisté**
+- L2422 : `let` top-level, réinitialisé à chaque session. Le badge "nouveau" réapparaît à chaque rechargement.
+- Suggestion : persister dans `D.g.tabletLastSeenDate`.
 
 ### 5.4 Code mort / redondances
-- `getWeekId` redéfinie ([L1691](js/ui.js#L1691)).
-- `sauvegarderRdvEdit` ([L3186](js/ui.js#L3186)) jamais appelée.
-- `toggleMasquerAcquis` ([L675](js/ui.js#L675)) — la variable `masquerAcquis` est définie ([L26](js/ui.js#L26)) mais aucune branche ne la lit. Mort.
-- `cleanProps` / `confirmCleanProps` — accessibles depuis le panneau debug, OK mais peuvent doublonner avec `viderObjetsIA`.
-- `tabletLastSeenDate` ([L2293](js/ui.js#L2293)) : `let` au top-level, jamais persisté. Si l'app se ferme, le badge réapparaît.
-- Garde `if (!selMood)` dupliquée dans `saveJ`.
-- Variables `a, b` calculées et inutilisées dans `exportJournal`.
+- ✅ `getWeekId` redéfinie → supprimée.
+- ✅ `sauvegarderRdvEdit` → supprimée.
+- ✅ `toggleMasquerAcquis` / `masquerAcquis` → supprimés.
+- ✅ Garde `if (!selMood)` dupliquée → supprimée.
+- ✅ Variables `a, b` dans `exportJournal` → supprimées.
+- ⚠️ `tabletLastSeenDate` — toujours non persisté (cf. 5.3).
 
 ### 5.5 Annotations manquantes
-- `genSoutien`, `sendSoutienMsg`, `genBilanSemaine`, `acheterPropClaude` : aucun docstring sur le format de réponse attendu.
-- `confirmerEditRdv` ([L3139](js/ui.js#L3139)) : les 3 modes (`simple`/`ce`/`suivants`) mériteraient un commentaire.
-- `getCyclePhase` (app.js) commentée mais pas la logique des seuils J5/J13/J16.
-- `applyCheatCode` ([L2509](js/ui.js#L2509)) : pas de liste documentée des codes (cf. table `codes`).
+- ✅ `acheterPropClaude` — format de réponse documenté (session 6).
+- ✅ `confirmerEditRdv` — les 3 modes (`simple`/`ce`/`suivants`) commentés.
+- ⚠️ `genSoutien`, `sendSoutienMsg`, `genBilanSemaine` — pas de docstring sur le format de réponse attendu.
+- ⚠️ `applyCheatCode` — liste des codes non documentée dans le code.
 
 ---
 

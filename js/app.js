@@ -796,11 +796,17 @@ function saveDebounced() {
 function setEnergy(v) {
   window.D.g.energy = +v;
   document.getElementById('sv-energy').textContent = v;
+  // RÔLE : mettre à jour la capsule compacte en temps réel pendant le glissement
+  const c = document.getElementById('sv-energy-compact');
+  if (c) c.textContent = v;
   saveDebounced();
 }
 function setHappy(v) {
   window.D.g.happiness = +v;
   document.getElementById('sv-happy').textContent = v;
+  // RÔLE : mettre à jour la capsule compacte en temps réel pendant le glissement
+  const c = document.getElementById('sv-happy-compact');
+  if (c) c.textContent = v;
   saveDebounced(); updBubbleNow();
 }
 

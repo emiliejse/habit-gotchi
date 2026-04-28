@@ -727,83 +727,85 @@ body {
   border-radius: 3px;
 }
 
-/* Jauges d'Énergie et de Bonheur (Sliders) — bloc dépliable */
-
-/* Jauges d'Énergie et de Bonheur (Sliders) — bloc dépliable */
+/* ─── JAUGES D'ÉNERGIE ET DE BONHEUR (Sliders dépliables) ──────── */
 
 /* RÔLE : Wrapper global */
 #sliders-wrap { margin: 4px auto 2px; }
 
 /* RÔLE : Barre résumée cliquable (toujours visible) */
-/* POURQUOI : button natif = accessible au clavier et au tap, pas de JS de focus à gérer */
 #sliders-toggle {
   display: flex;
-  align-items: flex-end; /* POURQUOI : aligne capsules et flèche sur la ligne de base basse */
+  align-items: center;
   justify-content: space-between;
   width: 100%;
   background: none;
   border: none;
-  padding: 4px 2px;
+  padding: 4px 0;
   cursor: pointer;
   color: var(--text2);
   font-family: 'Courier New', monospace;
-  min-height: 36px; /* POURQUOI : zone de tap confortable sur mobile */
+  min-height: 40px;
 }
 
 /* RÔLE : Groupe des deux capsules */
-#slider-summary { display: flex; gap: 10px; align-items: flex-end; }
+#slider-summary { display: flex; gap: 8px; align-items: center; }
 
-/* RÔLE : Capsule individuelle — fond légèrement contrasté, coins arrondis */
-/* POURQUOI : capsule = lecture instantanée sans avoir à déplier */
+/* RÔLE : Capsule individuelle — taille fixe pour que les deux soient identiques */
+/* POURQUOI : width fixe = même largeur quelle que soit la taille des emojis ⚡ vs ✿ */
 .stat-capsule {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  width: 110px;          /* POURQUOI : largeur fixe = capsules toujours identiques */
   background: var(--card);
   border: 1.5px solid var(--border);
   border-radius: var(--r-sm);
-  padding: 2px 7px 2px 5px;
+  padding: 4px 8px;
   line-height: 1;
 }
-.capsule-icon { font-size: 11px; }
-.capsule-val  { font-size: var(--fs-sm); font-weight: bold; color: var(--text2); line-height: 1; }
+.capsule-icon  { font-size: 12px; flex-shrink: 0; }
+.capsule-label { font-size: var(--fs-xs); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); flex: 1; }
+.capsule-val   { font-size: var(--fs-sm); font-weight: bold; color: var(--text2); min-width: 14px; text-align: right; }
 
-/* RÔLE : Flèche dépliante — plus grande pour être facile à lire */
+/* RÔLE : Flèche dépliante */
+/* POURQUOI : 22px = suffisamment grand pour être vu et tapoté facilement */
 #sliders-arrow {
-  font-size: 16px; /* POURQUOI : était 10px — trop petit, difficilement lisible */
-  opacity: 0.7;
+  font-size: 22px;
+  opacity: 0.8;
   line-height: 1;
+  flex-shrink: 0;
   transition: transform 0.2s ease;
 }
 #sliders-toggle[aria-expanded="true"] #sliders-arrow { transform: rotate(180deg); }
 
 /* RÔLE : Message d'invite — visible uniquement quand le bloc est ouvert */
-/* POURQUOI : rappel doux d'utiliser les curseurs pour se checker */
 #sliders-hint {
-  display: none; /* masqué par défaut */
+  display: none;
   font-size: var(--fs-xs);
-  color: var(--lilac);
+  color: var(--text2);       /* POURQUOI : text2 au lieu de lilac — plus lisible sur le fond */
+  font-weight: bold;
   font-style: italic;
   text-align: center;
-  margin: 2px 0 4px;
+  margin: 0 0 4px;
   letter-spacing: 0.5px;
 }
 #sliders-wrap.open #sliders-hint { display: block; }
 
-/* RÔLE : Corps dépliable — padding vertical pour que les pétales ne soient pas rognées */
-#sliders-body { padding: 2px 0; }
+/* RÔLE : Corps dépliable */
+/* POURQUOI : padding-right 16px = réserve l'espace pour la fleur (thumb 28px / 2 = 14px + 2px de marge)
+              sans quoi la fleur à la valeur max (5) sort du conteneur à droite */
+#sliders-body { padding: 2px 16px 2px 0; }
 
-/* RÔLE : Icône dans la ligne de slider (remplace le label texte) */
+/* RÔLE : Icône dans la ligne de slider */
 .slider-icon { font-size: 14px; width: 22px; text-align: center; flex-shrink: 0; }
 
-/* RÔLE : Une ligne de slider (icône + valeur + input) */
-/* POURQUOI : min-height 44px = zone de tap mobile recommandée (WCAG 2.5.5) */
+/* RÔLE : Une ligne de slider */
 .slider-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; min-height: 44px; }
 
 /* RÔLE : Track du slider */
-/* POURQUOI : padding-right: 14px sur le wrapper plutôt que margin sur l'input —
-              le track occupe tout l'espace flex disponible MOINS 14px à droite,
-              ce qui empêche la fleur (rayon effectif ~14px) de déborder hors de #sliders-wrap */
+/* POURQUOI : margin: 0 + min-width: 0 — le track se rétrécit proprement dans le flex,
+              c'est le padding de #sliders-body qui absorbe le débordement de la fleur */
 .slider-row input[type=range] {
   flex: 1;
   -webkit-appearance: none;
@@ -812,42 +814,39 @@ body {
   outline: none;
   opacity: .85;
   overflow: visible;
-  margin: 0;         /* pas de margin — c'est le padding du wrapper qui gère l'espace */
-  min-width: 0;      /* POURQUOI : évite que flex ignore le rétrécissement sur petits écrans */
+  margin: 0;
+  min-width: 0;
 }
 
-/* RÔLE : Wrapper de la zone slider — padding latéral pour absorber le débordement de la fleur */
-/* POURQUOI : 14px = moitié du thumb (28px) — garantit que la fleur reste visible à 0 et à 5 */
-#sliders-body { padding: 2px 14px 2px 0; }
-
-/* RÔLE : Thumb du slider — zone de tap large, fleur visuellement identique */
-/* POURQUOI : thumb 28×28px transparent = zone de tap ×5 sans changer l'aspect visuel des pétales */
+/* RÔLE : Thumb du slider — 28×28px transparent pour une grande zone de tap */
+/* POURQUOI : le navigateur mobile calcule la zone de tap sur le thumb réel, pas les box-shadow.
+              Thumb transparent = zone de tap large sans modifier l'aspect des pétales. */
 .slider-row input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 28px; height: 28px;
   border-radius: 50%;
   cursor: pointer;
   border: none;
-  background: transparent; /* POURQUOI : invisible — la couleur vient des box-shadow (pétales) */
+  background: transparent;
   box-shadow:
-    0    -6px  0 2px currentColor,  /* haut         */
-    0     6px  0 2px currentColor,  /* bas          */
-    -6px  0    0 2px currentColor,  /* gauche       */
-    6px   0    0 2px currentColor,  /* droite       */
-    -5px -5px  0 1px currentColor,  /* haut-gauche  */
-    5px  -5px  0 1px currentColor,  /* haut-droite  */
-    -5px  5px  0 1px currentColor,  /* bas-gauche   */
-    5px   5px  0 1px currentColor;  /* bas-droite   */
+    0    -6px  0 2px currentColor,
+    0     6px  0 2px currentColor,
+    -6px  0    0 2px currentColor,
+    6px   0    0 2px currentColor,
+    -5px -5px  0 1px currentColor,
+    5px  -5px  0 1px currentColor,
+    -5px  5px  0 1px currentColor,
+    5px   5px  0 1px currentColor;
 }
 .slider-row .sv { font-size: 13px; font-weight: bold; width: 20px; text-align: center; flex-shrink: 0; }
 
-/* POURQUOI : sliders neutres — couleur uniforme discrète pour ne pas concurrencer le tama visuellement */
+/* POURQUOI : sliders neutres — couleur uniforme discrète */
 #sl-energy { background: var(--border); }
 #sl-energy::-webkit-slider-thumb { background: transparent; color: var(--text2); }
 #sl-happy  { background: var(--border); }
 #sl-happy::-webkit-slider-thumb  { background: transparent; color: var(--text2); }
 
-/* RÔLE : Mode compact — masque les sliders, espace sous la bulle */
+/* RÔLE : Mode compact — masque les sliders */
 #console-top.compact #sliders-wrap { display: none; }
 
 /* Barre d'XP */

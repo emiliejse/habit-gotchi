@@ -263,6 +263,32 @@ function toggleMenu() {
 
 function goMenu(t) { toggleMenu(); go(t); }
 
+/**
+ * RÔLE : Déplier / replier le bloc sliders (énergie + bonheur).
+ * POURQUOI : Les sliders sont masqués par défaut pour économiser la hauteur du #console-top.
+ *            Un tap sur la barre résumée les révèle. Un second tap les masque à nouveau.
+ */
+function toggleSliders() {
+  const btn  = document.getElementById('sliders-toggle');
+  const body = document.getElementById('sliders-body');
+  if (!btn || !body) return;
+
+  const isOpen = btn.getAttribute('aria-expanded') === 'true';
+
+  if (isOpen) {
+    // RÔLE : Replier — masquer le corps et mettre à jour l'état ARIA
+    body.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+  } else {
+    // RÔLE : Déplier — afficher le corps et mettre à jour l'état ARIA
+    body.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+  }
+
+  // RÔLE : Recalculer la hauteur du #console-top après le changement de taille
+  syncConsoleHeight();
+}
+
 function updDate() {
   const d = new Date();
   const days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
@@ -496,6 +522,9 @@ function updUI() {
   if (document.getElementById('xp-b'))     document.getElementById('xp-b').style.width = pct + '%';
   if (document.getElementById('sl-energy'))  { document.getElementById('sl-energy').value = g.energy; document.getElementById('sv-energy').textContent = g.energy; }
   if (document.getElementById('sl-happy'))   { document.getElementById('sl-happy').value = g.happiness; document.getElementById('sv-happy').textContent = g.happiness; }
+  // RÔLE : Mettre à jour les valeurs résumées dans la barre compacte du toggle
+  if (document.getElementById('sv-energy-compact')) document.getElementById('sv-energy-compact').textContent = g.energy;
+  if (document.getElementById('sv-happy-compact'))  document.getElementById('sv-happy-compact').textContent  = g.happiness;
   if (document.getElementById('s-xp'))    document.getElementById('s-xp').textContent = g.totalXp;
   if (document.getElementById('s-str'))   document.getElementById('s-str').textContent = calcStr();
   if (document.getElementById('s-jrn'))   document.getElementById('s-jrn').textContent = D.journal.length;

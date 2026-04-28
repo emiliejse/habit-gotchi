@@ -727,20 +727,65 @@ body {
   border-radius: 3px;
 }
 
-/* Jauges d'Énergie et de Bonheur (Sliders) */
-/* POURQUOI : min-height = thumb (12px) + pétales (6px de chaque côté) = 24px minimum pour éviter le chevauchement */
-.slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; min-height: 28px; }
-.slider-row label { font-size: var(--fs-xs); font-weight: bold; width: 55px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); } /* était 9px */
-/* POURQUOI : overflow visible + margin interne pour que le thumb ne soit pas rogné aux extrémités */
-.slider-row input[type=range] { flex: 1; -webkit-appearance: none; height: 8px; border-radius: 4px; outline: none; opacity: .85; overflow: visible; margin: 0 6px; }
+/* Jauges d'Énergie et de Bonheur (Sliders) — bloc dépliable */
+
+/* RÔLE : Wrapper global — pas de marge superflue, juste l'espace pour le toggle */
+#sliders-wrap { margin: 4px auto 2px; }
+
+/* RÔLE : Barre résumée cliquable (toujours visible) */
+/* POURQUOI : button natif = accessible au clavier et au tap, pas de JS de focus à gérer */
+#sliders-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 4px 2px;
+  cursor: pointer;
+  color: var(--text2);
+  font-family: 'Courier New', monospace;
+  min-height: 32px; /* POURQUOI : zone de tap confortable sur mobile */
+}
+
+/* RÔLE : Les deux valeurs résumées côte à côte */
+#slider-summary {
+  display: flex;
+  gap: 16px;
+  font-size: var(--fs-sm);
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* RÔLE : Flèche d'indication d'état déplié/replié */
+#sliders-arrow { font-size: 10px; opacity: 0.6; transition: transform 0.2s ease; }
+#sliders-toggle[aria-expanded="true"] #sliders-arrow { transform: rotate(180deg); }
+
+/* RÔLE : Corps dépliable — padding vertical pour que les pétales ne soient pas rognées */
+#sliders-body { padding: 4px 0 2px; }
+
+/* RÔLE : Une ligne de slider (label + valeur + input) */
+/* POURQUOI : min-height 44px = zone de tap mobile recommandée (WCAG 2.5.5) */
+.slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; min-height: 44px; }
+.slider-row label { font-size: var(--fs-xs); font-weight: bold; width: 55px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); }
+
+/* RÔLE : Track du slider */
+/* POURQUOI : margin: 0 14px compense la moitié du thumb (28px/2=14px) pour que la fleur
+              ne soit jamais rognée à gauche (valeur 0) ni à droite (valeur 5) */
+.slider-row input[type=range] { flex: 1; -webkit-appearance: none; height: 8px; border-radius: 4px; outline: none; opacity: .85; overflow: visible; margin: 0 14px; }
+
+/* RÔLE : Thumb du slider — zone de tap large, fleur visuellement identique */
+/* POURQUOI : thumb 28×28px transparent = zone de tap ×5 sans changer l'aspect visuel des pétales.
+              Le navigateur mobile calcule la zone de tap sur le thumb réel (pas les box-shadow),
+              donc agrandir le thumb invisible est le seul moyen d'agrandir la zone cliquable. */
 .slider-row input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  /* POURQUOI : 12px = plus facile à tapper qu'avant (6px) sans gonfler la hauteur du slider */
-  width: 12px; height: 12px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   cursor: pointer;
   border: none;
-  /* POURQUOI : 8 pétales pixel art — proportions ajustées à la nouvelle taille du thumb */
+  background: transparent; /* POURQUOI : invisible — la couleur vient des box-shadow (pétales) */
+  /* POURQUOI : pétales pixel art — valeurs absolues inchangées, aspect visuel identique à avant */
   box-shadow:
     0    -6px  0 2px currentColor,  /* haut         */
     0     6px  0 2px currentColor,  /* bas          */
@@ -755,14 +800,10 @@ body {
 
 /* POURQUOI : sliders neutres — couleur uniforme discrète pour ne pas concurrencer le tama visuellement */
 #sl-energy { background: var(--border); }
-#sl-energy::-webkit-slider-thumb { background: var(--text2); color: var(--text2); }
+#sl-energy::-webkit-slider-thumb { background: transparent; color: var(--text2); }
 #sl-happy { background: var(--border); }
-#sl-happy::-webkit-slider-thumb { background: var(--text2); color: var(--text2); }
+#sl-happy::-webkit-slider-thumb { background: transparent; color: var(--text2); }
 
-/* RÔLE : Mode compact — masque le titre/date, garde les boutons boutique et tablette */
-/* POURQUOI : Le tama passe en position absolute à la place du titre masqué.
-              La bulle descend sous le tama grâce à margin-top calculé sur la hauteur du tama compact.
-              Les boutons restent dans .hdr, fixes, non affectés. */
 /* RÔLE : Mode compact — masque titre/sliders, espace sous la bulle */
 #console-top.compact #sliders-wrap { display: none; } /* sliders masqués en mode compact */
 

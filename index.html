@@ -164,18 +164,32 @@ function clearDebugLogs() {
   </div>
 
   <!-- SLIDERS : Contrôlent les stats d'énergie et de bonheur (SYSTEM 1: Métabolisme) -->
-  <!-- POURQUOI : padding vertical pour que les pétales du thumb ne soient pas rognés aux extrémités -->
-  <div id="sliders-wrap" style="margin:6px auto 4px;padding:6px 0">
-    <div class="slider-row">
-      <label>Énergie</label>
-      <span class="sv" id="sv-energy">3</span>
-      <input type="range" id="sl-energy" min="0" max="5" step="1" value="3" oninput="setEnergy(this.value)">
+  <!-- POURQUOI : bloc dépliable — fermé au chargement pour économiser la hauteur du #console-top -->
+  <div id="sliders-wrap">
+
+    <!-- BARRE RÉSUMÉE : toujours visible, tap pour déplier/replier -->
+    <button id="sliders-toggle" onclick="toggleSliders()" aria-expanded="false" aria-controls="sliders-body">
+      <span id="slider-summary">
+        <span>⚡ <span id="sv-energy-compact">3</span></span>
+        <span>✿ <span id="sv-happy-compact">3</span></span>
+      </span>
+      <span id="sliders-arrow">▾</span>
+    </button>
+
+    <!-- CORPS DÉPLIABLE : masqué par défaut -->
+    <div id="sliders-body" hidden>
+      <div class="slider-row">
+        <label>Énergie</label>
+        <span class="sv" id="sv-energy">3</span>
+        <input type="range" id="sl-energy" min="0" max="5" step="1" value="3" oninput="setEnergy(this.value)">
+      </div>
+      <div class="slider-row">
+        <label>Bonheur</label>
+        <span class="sv" id="sv-happy">3</span>
+        <input type="range" id="sl-happy" min="0" max="5" step="1" value="3" oninput="setHappy(this.value)">
+      </div>
     </div>
-    <div class="slider-row">
-      <label>Bonheur</label>
-      <span class="sv" id="sv-happy">3</span>
-      <input type="range" id="sl-happy" min="0" max="5" step="1" value="3" oninput="setHappy(this.value)">
-    </div>
+
   </div>
 
 </div>

@@ -271,18 +271,21 @@ function goMenu(t) { toggleMenu(); go(t); }
 function toggleSliders() {
   const btn  = document.getElementById('sliders-toggle');
   const body = document.getElementById('sliders-body');
-  if (!btn || !body) return;
+  const wrap = document.getElementById('sliders-wrap');
+  if (!btn || !body || !wrap) return;
 
   const isOpen = btn.getAttribute('aria-expanded') === 'true';
 
   if (isOpen) {
-    // RÔLE : Replier — masquer le corps et mettre à jour l'état ARIA
+    // RÔLE : Replier — masquer le corps, retirer la classe open (masque le hint)
     body.hidden = true;
     btn.setAttribute('aria-expanded', 'false');
+    wrap.classList.remove('open');
   } else {
-    // RÔLE : Déplier — afficher le corps et mettre à jour l'état ARIA
+    // RÔLE : Déplier — afficher le corps, ajouter la classe open (affiche le hint)
     body.hidden = false;
     btn.setAttribute('aria-expanded', 'true');
+    wrap.classList.add('open');
   }
 
   // RÔLE : Recalculer la hauteur du #console-top après le changement de taille

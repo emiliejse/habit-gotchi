@@ -1620,7 +1620,7 @@ function _showSoutienConfirm(onConfirm) {
   document.getElementById('mbox').innerHTML = `
     <div style="text-align:center;padding:12px 8px 8px">
 
-      <p style="font-size:var(--fs-sm);color:var(--lilac);font-weight:bold;margin-bottom:10px">
+      <p style="font-size:var(--fs-sm);color:var(--lilac);font-weight:bold;margin-bottom:10px;text-align:left">
         💜 Besoin de soutien
       </p>
 
@@ -1872,27 +1872,29 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
 
   /* ── Limite 6 messages par session ── */
   if (!isInit) {
-    if (window._soutienCount >= 6) {
+    // RÔLE : On incrémente ICI, avant l'appel API, pour que le 6ème message
+    //        soit le dernier accepté (et non le 7ème).
+    window._soutienCount++;
+
+    // Met à jour le compteur affiché APRÈS le ++
+    const restants = 6 - window._soutienCount;
+    const countEl  = document.getElementById('soutien-count');
+    if (countEl) {
+      if (restants <= 0) {
+        countEl.textContent = 'Dernier message · conversation non sauvegardée';
+      } else {
+        countEl.textContent = `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''} · conversation non sauvegardée`;
+      }
+    }
+
+    // RÔLE : Bloque l'envoi si le quota est déjà atteint (appel suivant après le 6ème)
+    if (window._soutienCount > 6) {
       chat.innerHTML += `<div class="chat-bubble-system">Tu as atteint la limite de 6 messages pour cette session. Prends soin de toi 💜</div>`;
       chat.scrollTop = chat.scrollHeight;
       document.getElementById('soutien-inp').disabled = true;
       document.querySelector('#mbox .btn-p').disabled  = true;
-
-      // RÔLE : Révèle le bouton "Copier" avec une apparition douce (opacity 0→1)
-      // POURQUOI : Le bouton est inutile pendant la conversation — il n'a de sens
-      //            que quand il n'y a plus de messages disponibles
-      const btnCopier = document.getElementById('btn-copier-soutien');
-      if (btnCopier) {
-        btnCopier.style.display = 'block';          // Insère dans le flux
-        requestAnimationFrame(() => {               // Attend 1 frame pour que la transition CSS joue
-          btnCopier.style.opacity = '1';
-        });
-      }
       return;
     }
-    const restants = 6 - window._soutienCount;
-    const countEl  = document.getElementById('soutien-count');
-    if (countEl) countEl.textContent = `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''} · conversation non sauvegardée`;
   }
 
   if (!key) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
@@ -1965,7 +1967,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   try {
     const d = await callClaude({ messages, system: sysPrompt });
     const reply = d.content?.[0]?.text || 'Je suis là. 💜';
-    window._soutienCount++;
+    // NOTE : _soutienCount++ a été déplacé AVANT l'appel API (dans le bloc limite)
     stopThinkingAnim(animSoutien);
     document.getElementById(bubbleId)?.remove();
     chat.innerHTML += `<div class="chat-bubble-claude">${reply}</div>`;
@@ -1973,6 +1975,19 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
 
     if (isInit) window._soutienHistory.push({ role:'user', content:systemPrompt });
     window._soutienHistory.push({ role:'assistant', content:reply });
+
+    // RÔLE : Révèle le bouton "Copier" et bloque l'input après le 6ème message
+    // POURQUOI : On le fait ici (après réception) plutôt qu'avant l'envoi —
+    //            l'utilisatrice voit d'abord la réponse, puis le bouton apparaît
+    if (window._soutienCount >= 6) {
+      document.getElementById('soutien-inp').disabled = true;
+      document.querySelector('#mbox .btn-p').disabled  = true;
+      const btnCopier = document.getElementById('btn-copier-soutien');
+      if (btnCopier) {
+        btnCopier.style.display = 'block';
+        requestAnimationFrame(() => { btnCopier.style.opacity = '1'; });
+      }
+    }
 
   } catch(e) {
     stopThinkingAnim(animSoutien);

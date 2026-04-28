@@ -528,6 +528,23 @@ function updBilanFlowers() {
 }
 
 /**
+ * RÔLE : Met à jour les fleurs de quota dans #journal-flowers (onglet Journal)
+ * POURQUOI : Cohérent avec thought-count et bilan-flowers — remplace le compteur texte "X/5 notes"
+ *            par des ✿ visuelles qui s'estompent au fil des notes enregistrées dans la journée.
+ */
+function updJournalFlowers() {
+  const jf = document.getElementById('journal-flowers');
+  if (!jf) return;
+  const todayStr = today(); // fonction app.js — retourne "YYYY-MM-DD"
+  const used  = window.D.journal.filter(n => n.date.startsWith(todayStr)).length;
+  const total = window.JOURNAL_MAX_PER_DAY || 5;
+  jf.innerHTML = Array.from({ length: total }, (_, i) =>
+    // Les fleurs restantes (non utilisées) sont allumées, les utilisées s'éteignent
+    `<span class="${i < (total - used) ? 'flower-on' : 'flower-off'}">✿</span>`
+  ).join('');
+}
+
+/**
  * Fonction centrale de mise à jour de l'interface (HUD, jauges, XP, noms).
  * Appelée dès qu'une donnée change dans app.js.
  */
@@ -562,6 +579,8 @@ function updUI() {
   if (petalesBoutique) petalesBoutique.textContent = `${D.g.petales || 0}`;
   
   updThoughtFlowers();
+  // RÔLE : Synchroniser les fleurs de quota journal à chaque mise à jour globale de l'UI
+  updJournalFlowers();
   // RÔLE : Met à jour le label du bouton avec le nom du Gotchi
   // POURQUOI : Le span #btn-ask-label est la seule source du texte — plus de nœud texte brut dans le HTML
   const btnAskLabel = document.getElementById('btn-ask-label');
@@ -2879,29 +2898,82 @@ function getWkDates(off) {
   return dates;
 }
 function renderJEntries() {
+  // ── Mise à jour du statut / fleurs de quota journal du jour
   const todayStr = today();
-const countToday = window.D.journal.filter(n => n.date.startsWith(todayStr)).length;
-const vStatus = document.getElementById('v-status');
-if (vStatus && !document.getElementById('j-text').value) {
-  const reste = window.JOURNAL_MAX_PER_DAY - countToday;
-  vStatus.textContent = reste > 0
-    ? `${countToday}/${window.JOURNAL_MAX_PER_DAY} notes aujourd'hui`
-    : `Quota du jour atteint ✿ — à demain !`;
-  vStatus.style.color = reste === 0 ? '#e07060' : '#a09880';
-}
+  const countToday = window.D.journal.filter(n => n.date.startsWith(todayStr)).length;
+  const vStatus = document.getElementById('v-status');
+  if (vStatus && !document.getElementById('j-text').value) {
+    const reste = window.JOURNAL_MAX_PER_DAY - countToday;
+    // RÔLE : Message de quota — remplacé visuellement par les fleurs, mais conservé en fallback texte
+    vStatus.textContent = reste === 0 ? `Quota du jour atteint ✿ — à demain !` : '';
+    vStatus.style.color = '#e07060';
+  }
+  // RÔLE : Synchroniser les fleurs de quota journal à chaque rendu
+  updJournalFlowers();
+
   const D = window.D;
-  const wd = getWkDates(jWeekOff), wt = document.getElementById('j-week-title');
-  if (jWeekOff === 0) { if (wt) wt.textContent = 'Cette semaine'; }
-  else { const a=new Date(wd[0]),b=new Date(wd[6]); if(wt) wt.textContent=`${a.getDate()}/${a.getMonth()+1} — ${b.getDate()}/${b.getMonth()+1}`; }
-  const entries = D.journal.filter(j=>wd.includes(j.date.split('T')[0])).reverse();
+  const wd = getWkDates(jWeekOff);
+  const wt = document.getElementById('j-week-title');
+  const wc = document.getElementById('j-week-count'); // compteur de notes de la semaine
+
+  // ── Titre de navigation semaine
+  if (jWeekOff === 0) {
+    if (wt) wt.textContent = 'Cette semaine';
+  } else {
+    const a = new Date(wd[0]), b = new Date(wd[6]);
+    if (wt) wt.textContent = `${a.getDate()}/${a.getMonth()+1} — ${b.getDate()}/${b.getMonth()+1}`;
+  }
+
+  // ── Entrées de la semaine filtrées (du plus récent au plus ancien)
+  const entries = D.journal.filter(j => wd.includes(j.date.split('T')[0])).reverse();
+
+  // RÔLE : Afficher le nombre de notes de la semaine sous le titre de navigation
+  if (wc) {
+    wc.textContent = entries.length > 0 ? `${entries.length} note${entries.length > 1 ? 's' : ''} cette semaine` : '';
+  }
+
   const c = document.getElementById('j-entries');
-  const me = {super:'🌟',bien:'😊',ok:'😐',bof:'😔',dur:'🌧️'};
+  const me = { super: '🌟', bien: '😊', ok: '😐', bof: '😔', dur: '🌧️' };
   if (!c) return;
-  if (!entries.length) { c.innerHTML = '<p style="font-size:var(--fs-sm);color:#a09880;text-align:center">Aucune entrée</p>'; return; }
-  c.innerHTML = entries.map(e => {
-    const d = new Date(e.date), gi = D.journal.indexOf(e);
-    return `<div class="j-entry"><div style="display:flex;justify-content:space-between"><span class="j-date">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})} ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span><span style="font-size:16px">${me[e.mood]||'😐'}</span></div><div style="font-size:var(--fs-sm);margin-top:3px">${e.text||'—'}</div><div class="j-actions"><button onclick="editJEntry(${gi})">✏️</button><button onclick="delJEntry(${gi})">🗑️</button></div></div>`;
-  }).join('');
+  if (!entries.length) {
+    c.innerHTML = '<p style="font-size:var(--fs-sm);color:#a09880;text-align:center">Aucune entrée</p>';
+    return;
+  }
+
+  // RÔLE : Générer les entrées avec séparateurs de date entre chaque groupe du même jour
+  // POURQUOI : Plusieurs notes le même jour s'enchaînaient sans repère visuel
+  let html = '';
+  let lastDate = '';
+  entries.forEach(e => {
+    const d   = new Date(e.date);
+    const gi  = D.journal.indexOf(e);
+    const dateKey = e.date.split('T')[0]; // "YYYY-MM-DD" — clé de groupement
+
+    // ── Insérer un séparateur si on change de jour
+    if (dateKey !== lastDate) {
+      lastDate = dateKey;
+      // Format : "Lundi 28 avril" (ou "aujourd'hui" si c'est le jour courant)
+      const estAujd = dateKey === todayStr;
+      const labelDate = estAujd
+        ? `Aujourd'hui`
+        : d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+      html += `<div class="j-day-sep">${labelDate}</div>`;
+    }
+
+    // ── Carte de note avec teinte d'humeur et heure seulement (la date est dans le séparateur)
+    html += `<div class="j-entry mood-${e.mood || 'ok'}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="j-date">${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+        <span style="font-size:16px">${me[e.mood] || '😐'}</span>
+      </div>
+      <div style="font-size:var(--fs-sm);margin-top:3px">${e.text || '—'}</div>
+      <div class="j-actions">
+        <button onclick="editJEntry(${gi})">✏️</button>
+        <button onclick="delJEntry(${gi})">🗑️</button>
+      </div>
+    </div>`;
+  });
+  c.innerHTML = html;
 }
 function editJEntry(i) {
   const e = window.D.journal[i]; if (!e) return;

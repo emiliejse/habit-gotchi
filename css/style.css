@@ -875,16 +875,53 @@ body {
   font-size: var(--fs-sm); text-align: center; border-bottom: 2px dashed var(--paper-border);
   padding-bottom: var(--sp-xs); margin-bottom: var(--sp-sm); letter-spacing: 2px; color: var(--paper-text);
 }
+/* RÔLE : Entrée de journal — fond légèrement teinté selon l'humeur, fade-in à l'apparition */
+/* POURQUOI : Rend chaque note visuellement distincte et donne un retour immédiat de l'humeur choisie */
 .j-entry {
   padding: var(--sp-sm); border: 1px dashed var(--paper-border); margin-bottom: var(--sp-sm);
   border-radius: var(--r-sm); background: var(--paper-entry);
+  animation: jEntryFadeIn .25s ease both;
 }
+@keyframes jEntryFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* RÔLE : Teinte de fond selon l'humeur — très douce pour ne pas écraser le contenu */
+.j-entry.mood-super { background: rgba(255, 240, 160, 0.35); }
+.j-entry.mood-bien  { background: rgba(160, 230, 180, 0.30); }
+.j-entry.mood-ok    { background: rgba(200, 200, 220, 0.25); }
+.j-entry.mood-bof   { background: rgba(200, 180, 220, 0.30); }
+.j-entry.mood-dur   { background: rgba(200, 160, 160, 0.28); }
+
 .j-entry .j-date { font-size: var(--fs-xs); color: var(--paper-entry-ts); }
 .j-entry .j-actions { display: flex; gap: 4px; margin-top: 4px; }
 .j-entry .j-actions button {
   font-size: var(--fs-xs); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--paper-border);
   background: var(--paper-entry-btn); cursor: pointer; font-family: 'Courier New', monospace;
 }
+
+/* RÔLE : Séparateur visuel de date dans la liste des entrées — distingue les notes du même jour */
+/* POURQUOI : Quand plusieurs notes sont écrites le même jour, il faut un repère visuel clair */
+.j-day-sep {
+  font-size: var(--fs-xs); color: var(--paper-text); font-family: 'Courier New', monospace;
+  text-align: center; letter-spacing: 1px; margin: 10px 0 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.j-day-sep::before, .j-day-sep::after {
+  content: ''; flex: 1; height: 1px; background: var(--paper-border);
+}
+
+/* RÔLE : Boutons export discrets — pill léger, moins encombrants que les btn-s standard */
+/* POURQUOI : Les grands btn-s blancs attiraient trop l'attention pour une action secondaire */
+.btn-export {
+  font: bold var(--fs-xs)/1 'Courier New', monospace;
+  padding: 5px 14px; border-radius: 20px;
+  border: 1px solid var(--paper-border);
+  background: var(--paper-entry-btn); color: var(--paper-text);
+  cursor: pointer; transition: .12s; letter-spacing: .5px;
+}
+.btn-export:hover  { background: var(--paper-border); }
+.btn-export:active { transform: scale(.94); }
 
 /* Le Code PIN du Journal */
 .pin-dots { display: flex; gap: 10px; justify-content: center; margin: 12px 0; }

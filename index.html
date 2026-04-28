@@ -287,33 +287,36 @@ function clearDebugLogs() {
     <!-- Contenu du journal (affiché après saisie du PIN) -->
     <div id="j-inner" style="display:none">
       <div class="j90">
-        <h2>📓 Mon Journal 📓</h2>
+        <!-- RÔLE : Titre avec cadenas ouvert — renforcement positif après déverrouillage du PIN -->
+        <h2>🔓 Mon Journal 🔓</h2>
+        <!-- RÔLE : Fleurs de quota journal (max JOURNAL_MAX_PER_DAY notes/jour) — cohérent avec thought-count -->
+        <div id="journal-flowers" class="thought-flowers" style="text-align:center;margin-bottom:6px"></div>
         <!-- Mood picker (SYSTEM 6: Mémoire/Journal) -->
         <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px" id="mood-pick"></div>
         <!-- Zone de texte (SYSTEM 6: Mémoire/Journal) -->
         <textarea id="j-text" class="inp" rows="5" placeholder="Écris ici..." maxlength="600" style="background:#faf6f0;border-color:#c8b8a0;font-size:12px"></textarea>
         <div style="margin-top:6px">
-          <button class="btn btn-p" onclick="saveJ()" style="width:100%;font-size:var(--fs-sm)">✿ Sauver</button> <!-- était 10px -->
+          <button class="btn btn-p" onclick="saveJ()" style="width:100%;font-size:var(--fs-sm)">✿ Sauver</button>
         </div>
-        <p id="v-status" style="font-size:var(--fs-xs);color:#a09880;text-align:center;margin-top:3px"></p> <!-- était 9px — statut secondaire -->
+        <p id="v-status" style="font-size:var(--fs-xs);color:#a09880;text-align:center;margin-top:3px"></p>
       </div>
       <!-- Navigation par semaine (SYSTEM 2: Écosystème) -->
       <div class="j90" style="margin-top:8px">
         <div class="nav-r">
           <button class="nav-a" onclick="navJWeek(-1)" aria-label="Semaine précédente">◀</button>
-          <h2 style="margin:0;font-size:12px" id="j-week-title">Cette semaine</h2>
+          <!-- RÔLE : Titre semaine + compteur de notes — info contextuelle rapide -->
+          <div style="text-align:center">
+            <h2 style="margin:0;font-size:12px" id="j-week-title">Cette semaine</h2>
+            <span id="j-week-count" style="font-size:var(--fs-xs);color:var(--paper-entry-ts)"></span>
+          </div>
           <button class="nav-a" onclick="navJWeek(1)" aria-label="Semaine suivante">▶</button>
         </div>
         <div id="j-entries"></div>
-        <!-- Export journal (SYSTEM 6: Mémoire/Journal) -->
-<div class="j90" style="display:flex;gap:6px;margin-top:8px;padding-bottom:12px">
-  <button class="btn btn-s" onclick="exportJournal('semaine')" style="flex:1;font-size:var(--fs-sm)"> <!-- était 10px -->
-    ⬇ Cette semaine
-  </button>
-  <button class="btn btn-s" onclick="exportJournal('complet')" style="flex:1;font-size:var(--fs-sm)"> <!-- était 10px -->
-    ⬇ Tout le journal
-  </button>
-</div>
+        <!-- RÔLE : Boutons export discrets — icône pill, moins encombrants que les btn-s standard -->
+        <div style="display:flex;gap:6px;margin-top:10px;padding-bottom:12px;justify-content:center">
+          <button class="btn-export" onclick="exportJournal('semaine')" title="Exporter la semaine en cours">↓ semaine</button>
+          <button class="btn-export" onclick="exportJournal('complet')" title="Exporter tout le journal">↓ tout</button>
+        </div>
       </div>
     </div>
   </div><!-- fin p-journal -->

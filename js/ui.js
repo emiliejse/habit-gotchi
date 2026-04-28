@@ -2402,10 +2402,33 @@ function importD(event) {
   reader.onload = function(e) {
     try {
       const imported = JSON.parse(e.target.result);
-      window.D = { ...defs(), ...imported, g:{ ...defs().g, ...imported.g } };
-      save(); toast(`Bienvenue de retour ${window.D.g.name} ! ✿`);
-      setTimeout(() => location.reload(), 800);
-    } catch(err) { toast(`*perplexe* Ce fichier me semble bizarre... 💜`); }
+
+      // RÔLE : détecte si c'est un export journal partiel ou une sauvegarde complète
+      // POURQUOI : exportJournal() produit { exportDate, journal } — pas un D complet
+      const isJournalOnly = imported.exportDate && imported.journal && !imported.g;
+
+      if (isJournalOnly) {
+        // Fusion du journal uniquement — ne touche pas au reste de D
+        const existing = window.D.journal || [];
+        const merged = [...imported.journal];
+        existing.forEach(e => {
+          if (!merged.find(j => j.date === e.date)) merged.push(e);
+        });
+        window.D.journal = merged.sort((a, b) => b.date.localeCompare(a.date));
+        save();
+        toast(`Journal restauré (${imported.journal.length} entrées) ✿`);
+        setTimeout(() => location.reload(), 800);
+      } else {
+        // Sauvegarde complète
+        window.D = { ...defs(), ...imported, g: { ...defs().g, ...imported.g } };
+        save();
+        toast(`Bienvenue de retour ${window.D.g.name} ! ✿`);
+        setTimeout(() => location.reload(), 800);
+      }
+    } catch(err) {
+      console.warn('[HabitGotchi] importD() échoué :', err);
+      toast(`*perplexe* Ce fichier me semble bizarre... 💜`);
+    }
   };
   reader.readAsText(file);
 }

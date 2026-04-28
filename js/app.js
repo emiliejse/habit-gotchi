@@ -277,7 +277,7 @@ function load() {
       });
       return {...defs(), ...d, g:{...defs().g, ...d.g}, habits:d.habits||defs().habits};
     }
-  } catch(e) {}
+  } catch(e) { console.warn('[HabitGotchi] load() échoué :', e); }
   return defs();
 }
 

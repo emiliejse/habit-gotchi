@@ -199,29 +199,28 @@ body {
   transform-origin: top center;
 }
 
-/* RÔLE : Wrapper tama + bulle — animé ensemble vers le haut en mode compact */
+/* RÔLE : Wrapper tama + bulle — en mode normal, dans le flux */
 #tama-bubble-wrap {
-  transition: transform 0.4s cubic-bezier(0.25, 1.15, 0.5, 1);
-  transform: translateY(0);
+  transition: margin-top 0.4s cubic-bezier(0.25, 1.15, 0.5, 1);
 }
+
+/* RÔLE : Mode compact — le wrapper remonte pour s'aligner avec les boutons du .hdr */
+/* POURQUOI : Le .hdr fait ~48px (boutons 44px + padding). En mode compact, #hdr-title
+              disparaît (max-height→0) mais .hdr garde sa hauteur pour les boutons.
+              On remonte #tama-bubble-wrap de cette hauteur pour que le tama
+              soit visuellement aligné avec les boutons. */
 #console-top.compact #tama-bubble-wrap {
-  transform: translateY(0); /* le wrapper monte naturellement car #hdr-title se réduit */
+  margin-top: -48px; /* remonte de la hauteur du .hdr */
 }
 
-/* RÔLE : Tama en mode compact — rétrécit sans opacité */
-#tama-shell-main {
-  transition: max-width 0.4s cubic-bezier(0.25, 1.15, 0.5, 1),
-              margin 0.4s ease;
-}
+/* Tama réduit en mode compact */
 #console-top.compact #tama-shell-main {
-  max-width: 180px; /* réduit par rapport aux 340px normaux */
-  margin-top: 2px;
+  max-width: 180px;
+  margin-left: auto;
+  margin-right: auto;
+  transition: max-width 0.4s cubic-bezier(0.25, 1.15, 0.5, 1);
 }
-
-/* RÔLE : Bulle en mode compact — suit le tama, espace en bas */
-#console-top.compact .bubble {
-  margin-bottom: 8px;
-}
+#console-top.compact .bubble { margin-bottom: 8px; }
 
 /* L'écran Canvas (Le jeu en lui-même) */
 .tama-screen {

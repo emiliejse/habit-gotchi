@@ -130,11 +130,17 @@ function syncConsoleHeight() {
   const top  = document.getElementById('console-top');
   const zone = document.getElementById('dynamic-zone');
   if (!top || !zone) return;
-  
+
   requestAnimationFrame(() => {
     const sat = parseInt(getComputedStyle(document.documentElement)
       .getPropertyValue('--sat')) || 0;
-    zone.style.paddingTop = (top.offsetHeight - sat + 8) + 'px';
+    // RÔLE : En mode compact, #tama-bubble-wrap a margin-top: -48px qui réduit la hauteur
+    // visuelle du #console-top mais pas son offsetHeight. On compense manuellement.
+    const wrap = document.getElementById('tama-bubble-wrap');
+    const wrapMargin = wrap
+      ? parseInt(getComputedStyle(wrap).marginTop) || 0
+      : 0;
+    zone.style.paddingTop = (top.offsetHeight + wrapMargin - sat + 8) + 'px';
   });
 }
 

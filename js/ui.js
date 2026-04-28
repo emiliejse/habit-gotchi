@@ -137,8 +137,10 @@ function syncConsoleHeight() {
     //            et de la position dans le viewport. Plus fiable que getBoundingClientRect().bottom
     //            qui variait selon les plateformes (safe area iOS, zoom navigateur...).
     const h = top.offsetHeight;
-    zone.style.paddingTop = (h + 6) + 'px';
-    // POURQUOI : +6 = gap minimal entre la console et le premier élément
+    // POURQUOI : on soustrait --sat car offsetHeight l'inclut dans le padding de #console-top,
+    //            mais la dynamic-zone est déjà décalée par le layout — sinon double-comptage sur iOS
+    const sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0;
+    zone.style.paddingTop = (h - sat + 6) + 'px';
   });
 }
 

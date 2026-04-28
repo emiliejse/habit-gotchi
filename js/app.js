@@ -16,7 +16,7 @@
    §10 ~390   SEMAINE & REPAS      getWeekId(), getCurrentMealWindow(), giveSnack()
    §11 ~560   HABITUDES            calcStr(), toggleHab(), editH()
    §12 ~715   SAVE DEBOUNCED       saveDebounced(), setEnergy(), setHappy()
-   §13 ~738   INIT PROPS           initBaseProps()
+   §13 ~738   INIT PROPS           initBaseProps() 
    §14 ~768   MÉTÉO                fetchMeteo(), fetchSolarPhases(), getSolarPhase()
    §15 ~867   BULLE DE DIALOGUE    flashBubble(), updBubbleNow()
    §16 ~973   INIT QUOTIDIENNE     handleDailyReset(), catchUpPoops()

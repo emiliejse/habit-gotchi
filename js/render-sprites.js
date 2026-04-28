@@ -1,0 +1,484 @@
+/* ============================================================
+   render-sprites.js — Sprites pixel art du Gotchi
+   RÔLE : Contient tous les sprites du Gotchi (œuf, bébé, ado, adulte)
+          ainsi que les helpers de dessin (dithering, accessoires).
+          C'est ici qu'on ajoute un nouveau stade ou une variante visuelle.
+
+   DÉPENDANCES (chargé APRÈS dans index.html) :
+     - config.js     → EN_CRIT, EN_WARN, HA_SAD, HA_MED, HA_HIGH,
+                        HA_HAPPY_TEEN, HA_MED_ADULT, HA_ARMS_UP
+     - render.js     → px(), C, PX, blink, getBreath(), getCheekPulse(),
+                        getPropDef(), drawProp(), walkX, window._expr,
+                        window._adultPose, window._gotchiNearPoop
+
+   NAVIGATION RAPIDE :
+   §1  drawDither()       — effet épuisement style Gameboy
+   §2  drawAccessoires()  — accessoires équipés sur le sprite
+   §3  drawEgg()          — stade œuf
+   §4  drawBaby()         — stade bébé
+   §5  drawTeen()         — stade ado
+   §6  drawAdult()        — stade adulte (avec poses idle)
+   ============================================================ */
+
+/* ─── §1 DITHERING ───────────────────────────────────────────────── */
+
+// DITHERING : damier semi-transparent "état critique" style Gameboy
+function drawDither(p, x, y, w, h, color) {
+  const col = p.color(color);
+  col.setAlpha(100);
+  p.fill(col);
+  p.noStroke();
+  for (let row = 0; row < h; row += PX * 2) {
+    for (let col2 = (row / PX % 2 === 0 ? 0 : PX); col2 < w; col2 += PX * 2) {
+      px(p, x + col2, y + row, PX, PX);
+    }
+  }
+}
+
+/* ─── §2 ACCESSOIRES ─────────────────────────────────────────────── */
+
+/**
+ * Dessine les accessoires équipés DIRECTEMENT sur le sprite du Gotchi.
+ * À appeler depuis drawBaby/drawTeen/drawAdult, avec les coordonnées internes du sprite.
+ * Garantit que l'accessoire suit pixel-perfect le corps (mêmes arrondis, mêmes décalages).
+ *
+ * @param {Object} p - Instance p5
+ * @param {number} cx - Centre X du Gotchi (= cx reçu par drawBaby/Teen/Adult)
+ * @param {Object} anchors - { topY, eyeY, neckY } en coordonnées locales du sprite
+ * @param {string} stage - 'baby' | 'teen' | 'adult' (pour calculer les offsets verticaux)
+ */
+function drawAccessoires(p, cx, anchors, stage) {
+  if (!window.D?.g?.props) return;
+
+  window.D.g.props
+    .filter(pr => pr.actif && pr.type === 'accessoire')
+    .forEach(prop => {
+      const def = getPropDef(prop.id);
+      if (!def || !def.pixels) return;
+
+      const ps = def.pxSize || PX;
+      // Centre Gotchi aligné sur la grille PX (même phase que le corps)
+      const cxSnapped = Math.floor(cx / PX) * PX;
+      const accX = cxSnapped - Math.floor(def.pixels[0].length * ps / 2 / PX) * PX;
+
+      // Snap des ancrages sur la grille PX (même phase verticale que le corps)
+      const baseYraw = def.ancrage === 'yeux' ? anchors.eyeY
+                     : def.ancrage === 'cou'  ? anchors.neckY
+                     :                          anchors.topY;
+      const baseY = Math.floor(baseYraw / PX) * PX;
+
+      const offsetY = def.ancrage === 'yeux'
+                    ? (stage === 'teen' ? ps * 3
+                     : stage === 'adult' ? ps * 3
+                     : ps * 2)
+                    : def.ancrage === 'cou'
+                    ? (stage === 'baby' ? ps * 3 : ps * 5)
+                    : ps;
+
+      const accY = baseY - def.pixels.length * ps + offsetY;
+      drawProp(p, def, accX, accY);
+    });
+}
+
+/* ─── §3 STADE ŒUF ──────────────────────────────────────────────── */
+
+function drawEgg(p, cx, cy) {
+  const x = cx - PX * 3, y = cy;
+  p.noStroke();
+  p.fill(C.egg);
+  px(p,x+PX*2,y,PX*3,PX); px(p,x+PX,y+PX,PX*5,PX); px(p,x,y+PX*2,PX*7,PX*3); px(p,x+PX,y+PX*5,PX*5,PX); px(p,x+PX*2,y+PX*6,PX*3,PX);
+  p.fill(C.eggSp); px(p,x+PX*2,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); px(p,x+PX*3,y+PX*5,PX,PX);
+  const totalXp = window.D.g.totalXp;
+if (totalXp > 45) {
+  const intensity = totalXp >= 75 ? 2 : 1;
+  const wobble = Math.sin(Date.now() * 0.015) * intensity;
+  p.fill(C.eggCr);
+  px(p, x + PX*3 + wobble, y + PX,   PX, PX);
+  px(p, x + PX*4 + wobble, y + PX*2, PX, PX);
+  px(p, x + PX*3 + wobble, y + PX*3, PX, PX);
+}
+  return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
+}
+
+/* ─── §4 STADE BÉBÉ ─────────────────────────────────────────────── */
+
+function drawBaby(p, cx, cy, sl, en, ha) {
+    const x = cx - PX * 3, y = cy; p.noStroke();
+    p.fill(C.body); px(p,x+PX,y,PX*4,PX); px(p,x,y+PX,PX*6,PX*3); px(p,x+PX,y+PX*4,PX*4,PX);
+    p.fill(C.bodyLt); px(p,x+PX,y+PX,PX,PX); px(p,x+PX*2,y,PX,PX);
+
+    if(sl || blink) {
+      p.fill(C.eye); px(p,x+PX,y+PX*2,PX*2,PX); px(p,x+PX*3,y+PX*2,PX*2,PX);
+    } else {
+      p.fill(C.eye); px(p,x+PX,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX);
+      p.fill('#fff'); p.rect(x+PX,y+PX*2,2,2); p.rect(x+PX*4,y+PX*2,2,2);
+    }
+
+    p.fill(C.cheek); px(p,x,y+PX*3,PX,PX); px(p,x+PX*5,y+PX*3,PX,PX);
+    if (window._gotchiNearPoop && !sl) {
+      p.fill(C.eye); px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
+    }
+
+    p.fill(C.mouth);
+    if(!sl) {
+      if(ha > HA_HIGH) px(p,x+PX*2,y+PX*3,PX*2,PX);       // sourire bébé (ha > 4)
+      else if(ha < HA_SAD) px(p,x+PX*2,y+PX*3+2,PX*2,PX); // bouche triste (ha < 1)
+      else px(p,x+PX*2,y+PX*3,PX,PX);
+    }
+
+    p.fill(C.bodyDk); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*4,y+PX*5,PX,PX);
+    if(en < EN_WARN && !sl) { px(p,x+PX*2,y+PX*5,PX*2,PX); }       // bras tombés (en < 2)
+    if (en < EN_CRIT && !sl) drawDither(p, x + PX, y + PX * 3, PX * 4, PX * 3, C.bodyDk); // épuisement (en < 1)
+
+    // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
+    drawAccessoires(p, cx, { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 }, 'baby');
+
+    return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
+}
+
+/* ─── §5 STADE ADO ──────────────────────────────────────────────── */
+
+function drawTeen(p, cx, cy, sl, en, ha) {
+    // ─── Respiration : étire légèrement la largeur (±1 pixel) ───
+    const breath = getBreath(p);
+    const breathX = sl ? 0 : Math.round(breath * 2 - 1);
+    const x = cx - PX * 4 - breathX, y = cy;
+    p.noStroke();
+
+    /* ─── CORPS ROND FUSIONNÉ (8×8 PX) ─── */
+    p.fill(C.body);
+    px(p, x+PX*2, y,        PX*4, PX);      // arrondi haut
+    px(p, x+PX,   y+PX,     PX*6, PX);
+    px(p, x,      y+PX*2,   PX*8, PX*4);    // milieu large (visage+corps)
+    px(p, x+PX,   y+PX*6,   PX*6, PX);
+    px(p, x+PX*2, y+PX*7,   PX*4, PX);      // arrondi bas
+
+    /* ─── HIGHLIGHTS ─── */
+    p.fill(C.bodyLt);
+    px(p, x+PX*2, y+PX,   PX*2, PX);
+    px(p, x+PX,   y+PX*2, PX*2, PX);
+
+    /* ─── OREILLES D'OURSON (demi-cercles) ─── */
+p.fill(C.body);
+// oreille gauche
+px(p, x+PX,   y-PX,   PX*2, PX);   // base large
+px(p, x+PX,   y-PX*2, PX*2, PX);   // milieu
+px(p, x+PX*1+2, y-PX*3, PX, PX);   // sommet arrondi
+// oreille droite (miroir)
+px(p, x+PX*5, y-PX,   PX*2, PX);
+px(p, x+PX*5, y-PX*2, PX*2, PX);
+px(p, x+PX*5+2, y-PX*3, PX, PX);
+
+// Intérieur d'oreille rose (creux)
+p.fill(C.cheek);
+px(p, x+PX+2,   y-PX,   PX, PX);
+px(p, x+PX*5+2, y-PX,   PX, PX);
+
+    /* ─── YEUX (grands, amande) ─── */
+    const expr = window._expr;
+    const isSurprise = expr.moodTimer > 0 && expr.lastMood === 'surprise';
+
+    if (sl || blink) {
+      p.fill(C.eye);
+      px(p, x+PX,   y+PX*3, PX*2, PX);
+      px(p, x+PX*5, y+PX*3, PX*2, PX);
+    } else if (isSurprise) {
+      // Yeux grands ouverts : carrés pleins
+      p.fill(C.eye);
+      px(p, x+PX,   y+PX*2, PX*2, PX*2);
+      px(p, x+PX*5, y+PX*2, PX*2, PX*2);
+      p.fill('#fff');
+      p.rect(x+PX+1,   y+PX*2+1, 4, 4);
+      p.rect(x+PX*5+1, y+PX*2+1, 4, 4);
+    } else {
+      p.fill(C.eye);
+      px(p, x+PX,   y+PX*2, PX*2, PX);      // œil gauche haut large
+      px(p, x+PX*2, y+PX*3, PX,   PX);      // œil gauche bas étroit
+      px(p, x+PX*5, y+PX*2, PX*2, PX);      // œil droit miroir
+      px(p, x+PX*5, y+PX*3, PX,   PX);
+      p.fill('#fff');
+      p.rect(x+PX+1,   y+PX*2+1, 4, 4);
+      p.rect(x+PX*5+1, y+PX*2+1, 4, 4);
+    }
+
+    /* ─── POOP DISGUST ─── */
+    if (window._gotchiNearPoop && !sl) {
+      p.fill(C.eye);
+      px(p, x+PX,   y+PX*2, PX*2, PX);
+      px(p, x+PX*5, y+PX*2, PX*2, PX);
+    }
+
+    /* ─── JOUES ROSES (pulsantes, centrées) ─── */
+    const pulse = getCheekPulse(p);
+    p.fill(p.lerpColor(p.color(C.cheek), p.color('#e88098'), pulse));
+    px(p, x+PX,   y+PX*4, PX, PX);
+    px(p, x+PX*6, y+PX*4, PX, PX);
+
+    // Joues débordantes si joie active
+    if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
+      p.drawingContext.globalAlpha = 0.7;
+      px(p, x,      y+PX*4, PX, PX);
+      px(p, x+PX*7, y+PX*4, PX, PX);
+      p.drawingContext.globalAlpha = 1.0;
+    }
+
+    /* ─── BOUCHE ─── */
+    p.fill(C.mouth);
+    if (!sl) {
+      // Respiration bouche : descend de 0-2 px sur le cycle
+      const mouthY = y + PX*5 + Math.round(breath * 2);
+
+      if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
+        // Grand sourire : barre principale en bas, coins relevés
+        px(p, x+PX*2, mouthY+PX, PX*4, PX);   // ligne principale
+        px(p, x+PX,   mouthY,    PX,   PX);   // coin gauche relevé
+        px(p, x+PX*6, mouthY,    PX,   PX);   // coin droit relevé
+      } else if (expr.moodTimer > 0 && expr.lastMood === 'faim') {
+        // Bouche baveuse (ouverte + goutte bleue)
+        px(p, x+PX*3, mouthY, PX*2, PX*2);
+        p.fill('#88c0e0');
+        px(p, x+PX*3, mouthY+PX*2, PX, PX);
+        p.fill(C.mouth);
+      } else if (expr.moodTimer > 0 && expr.lastMood === 'surprise') {
+        // Petit "o" de surprise
+        px(p, x+PX*3, mouthY, PX*2, PX*2);
+      } else {
+        // Humeurs normales
+        if      (ha > HA_HAPPY_TEEN) { px(p,x+PX*3,mouthY,PX*2,PX); px(p,x+PX*2,mouthY,PX,PX); px(p,x+PX*5,mouthY,PX,PX); } // grand sourire (ha > 4)
+        else if (ha > HA_MED)         px(p,x+PX*3,mouthY,PX*2,PX);   // sourire neutre (ha > 2)
+        else if (ha < HA_SAD)         px(p,x+PX*3,mouthY+2,PX*2,PX); // bouche triste (ha < 1)
+        else                px(p,x+PX*3,mouthY,PX,PX);
+      }
+    }
+
+    /* ─── PETITS BRAS SUR LES CÔTÉS ─── */
+    p.fill(C.bodyDk);
+    if (en < EN_WARN && !sl) {
+      px(p, x-PX,   y+PX*5, PX, PX);        // bras tombés (en < 2)
+      px(p, x+PX*8, y+PX*5, PX, PX);
+    } else {
+      px(p, x-PX,   y+PX*4, PX, PX*2);      // bras normaux
+      px(p, x+PX*8, y+PX*4, PX, PX*2);
+    }
+
+    /* ─── PETITS PIEDS ─── */
+    px(p, x+PX*2, y+PX*8, PX, PX);
+    px(p, x+PX*5, y+PX*8, PX, PX);
+
+    if (en < EN_CRIT && !sl) drawDither(p, x, y + PX * 4, PX * 8, PX * 5, C.bodyDk); // épuisement (en < 1)
+
+    // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
+    drawAccessoires(p, cx, { topY: y, eyeY: y + PX*2, neckY: y + PX*5 }, 'teen');
+
+    return { topY: y, eyeY: y+PX*2, neckY: y+PX*5 };
+}
+
+/* ─── §6 STADE ADULTE ───────────────────────────────────────────── */
+
+function drawAdult(p, cx, cy, sl, en, ha) {
+    // ─── Respiration : étire légèrement la largeur (±1 pixel) ───
+    const breath = getBreath(p);
+    const breathX = sl ? 0 : Math.round(breath * 2 - 1);
+    const x = cx - PX * 5 - breathX, y = cy;
+    p.noStroke();
+
+    /* ─── CORPS ROND FUSIONNÉ (10×9 PX) ─── */
+    p.fill(C.body);
+    px(p, x+PX*3, y,        PX*4, PX);      // arrondi haut
+    px(p, x+PX*2, y+PX,     PX*6, PX);
+    px(p, x+PX,   y+PX*2,   PX*8, PX);
+    px(p, x,      y+PX*3,   PX*10, PX*4);   // milieu très large
+    px(p, x+PX,   y+PX*7,   PX*8, PX);
+    px(p, x+PX*2, y+PX*8,   PX*6, PX);
+    px(p, x+PX*3, y+PX*9,   PX*4, PX);      // arrondi bas
+
+    /* ─── HIGHLIGHTS ─── */
+    p.fill(C.bodyLt);
+    px(p, x+PX*3, y+PX,   PX*2, PX);
+    px(p, x+PX*2, y+PX*2, PX*2, PX);
+    px(p, x+PX,   y+PX*3, PX*2, PX);
+
+    /* ─── OREILLES D'OURSON (demi-cercles) ─── */
+p.fill(C.body);
+// oreille gauche
+px(p, x+PX*2, y-PX,   PX*2, PX);   // base large
+px(p, x+PX*2, y-PX*2, PX*2, PX);   // milieu
+px(p, x+PX*2+2, y-PX*3, PX, PX);   // sommet arrondi
+// oreille droite
+px(p, x+PX*6, y-PX,   PX*2, PX);
+px(p, x+PX*6, y-PX*2, PX*2, PX);
+px(p, x+PX*6+2, y-PX*3, PX, PX);
+
+// Intérieur d'oreille rose
+p.fill(C.cheek);
+px(p, x+PX*2+2, y-PX,   PX, PX);
+px(p, x+PX*6+2, y-PX,   PX, PX);
+
+    /* ─── YEUX (grands, amande) ─── */
+    const expr = window._expr;
+    const isSurprise = expr.moodTimer > 0 && expr.lastMood === 'surprise';
+
+    if (sl || blink) {
+      p.fill(C.eye);
+      px(p, x+PX*2, y+PX*4, PX*3, PX);
+      px(p, x+PX*6, y+PX*4, PX*3, PX);
+    } else if (isSurprise) {
+      // Yeux grands ouverts : carrés pleins
+      p.fill(C.eye);
+      px(p, x+PX*2, y+PX*3, PX*3, PX*2);
+      px(p, x+PX*6, y+PX*3, PX*3, PX*2);
+      p.fill('#fff');
+      p.rect(x+PX*2+1, y+PX*3+1, 4, 4);
+      p.rect(x+PX*6+1, y+PX*3+1, 4, 4);
+    } else {
+      p.fill(C.eye);
+      px(p, x+PX*2, y+PX*3, PX*3, PX);      // œil gauche haut large
+      px(p, x+PX*3, y+PX*4, PX*2, PX);      // œil gauche bas étroit
+      px(p, x+PX*6, y+PX*3, PX*3, PX);      // œil droit miroir
+      px(p, x+PX*6, y+PX*4, PX*2, PX);
+      p.fill('#fff');
+      p.rect(x+PX*2+1, y+PX*3+1, 4, 4);
+      p.rect(x+PX*6+1, y+PX*3+1, 4, 4);
+    }
+
+    /* ─── POOP DISGUST ─── */
+    if (window._gotchiNearPoop && !sl) {
+      p.fill(C.eye);
+      px(p, x+PX*2, y+PX*3, PX*3, PX);
+      px(p, x+PX*6, y+PX*3, PX*3, PX);
+    }
+
+    /* ─── JOUES ROSES (pulsantes) ─── */
+    const pulse = getCheekPulse(p);
+    p.fill(p.lerpColor(p.color(C.cheek), p.color('#e88098'), pulse));
+    px(p, x+PX*2, y+PX*6, PX, PX);
+    px(p, x+PX*7, y+PX*6, PX, PX);
+
+    // Joues débordantes si joie active
+    if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
+      p.drawingContext.globalAlpha = 0.7;
+      px(p, x+PX,   y+PX*6, PX, PX);
+      px(p, x+PX*8, y+PX*6, PX, PX);
+      p.drawingContext.globalAlpha = 1.0;
+    }
+
+    /* ─── BOUCHE ─── */
+    p.fill(C.mouth);
+    if (!sl) {
+      // Respiration bouche : descend de 0-2 px sur le cycle
+      const mouthY = y + PX*6 + Math.round(breath * 2);
+
+      if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
+        // Grand sourire : barre principale en bas, coins relevés
+        px(p, x+PX*3, mouthY+PX, PX*4, PX);   // ligne principale
+        px(p, x+PX*2, mouthY,    PX,   PX);   // coin gauche relevé
+        px(p, x+PX*7, mouthY,    PX,   PX);   // coin droit relevé
+      } else if (expr.moodTimer > 0 && expr.lastMood === 'faim') {
+        // Bouche baveuse (ouverte + goutte bleue)
+        px(p, x+PX*4, mouthY, PX*2, PX*2);
+        p.fill('#88c0e0');
+        px(p, x+PX*4, mouthY+PX*2, PX, PX);
+        p.fill(C.mouth);
+      } else if (expr.moodTimer > 0 && expr.lastMood === 'surprise') {
+        // Petit "o" de surprise
+        px(p, x+PX*4, mouthY, PX*2, PX*2);
+      } else {
+        // Humeurs normales
+        if      (ha > HA_HIGH)      { px(p,x+PX*3,mouthY+PX,PX*4,PX); px(p,x+PX*2,mouthY,PX,PX); px(p,x+PX*7,mouthY,PX,PX); } // grand sourire (ha > 4)
+        else if (ha > HA_MED_ADULT)   px(p,x+PX*4,mouthY,PX*2,PX);                                                               // sourire neutre (ha > 3)
+        else if (ha < HA_SAD)       { px(p,x+PX*4,mouthY+2,PX*2,PX); px(p,x+PX*3,mouthY,PX,PX); }                              // bouche triste (ha < 1)
+        else                px(p,x+PX*4,mouthY,PX,PX);
+      }
+    }
+
+/* ─── PETITS BRAS SUR LES CÔTÉS ─── */
+    p.fill(C.bodyDk);
+    if (en < EN_WARN && !sl) {
+      px(p, x-PX,    y+PX*6, PX, PX*2);     // bras tombés (en < 2)
+      px(p, x+PX*10, y+PX*6, PX, PX*2);
+    } else if (ha > HA_ARMS_UP && !sl) {     // bras levés joie (ha > 4)
+      px(p, x-PX,    y+PX*3, PX, PX*2);     // bras levés (joie)
+      px(p, x+PX*10, y+PX*3, PX, PX*2);
+      px(p, x-PX*2,  y+PX*2, PX, PX);
+      px(p, x+PX*11, y+PX*2, PX, PX);
+    } else {
+      // ─── Cycle des variations idle ───
+      const pose = window._adultPose;
+      const canVary = !sl && !window._jumpTimer;
+
+      if (canVary) {
+        if (pose.timer > 0) {
+          pose.timer--;
+          if (pose.timer === 0) {
+            pose.current = 'normal';
+            pose.cooldown = 60 + Math.floor(Math.random() * 60); // 5-10 sec
+          }
+        } else if (pose.cooldown > 0) {
+          pose.cooldown--;
+        } else {
+          // Tirage aléatoire pondéré entre les 4 variations
+          const r = Math.random();
+          if      (r < 0.35) { pose.current = 'hanche_g';   pose.timer = 60  + Math.floor(Math.random() * 24); }   // 5-7 sec
+          else if (r < 0.70) { pose.current = 'hanche_d';   pose.timer = 60  + Math.floor(Math.random() * 24); }   // 5-7 sec
+          else if (r < 0.90) { pose.current = 'croises';    pose.timer = 72  + Math.floor(Math.random() * 24); }   // 6-8 sec
+          else               { pose.current = 'salut';      pose.timer = 12  + Math.floor(Math.random() * 6);  }   // 1-1.5 sec
+        }
+      } else {
+        pose.current = 'normal';
+      }
+
+      // ─── Dessin selon la pose courante ───
+      if (pose.current === 'hanche_g') {
+        // Bras gauche plié sur hanche
+        px(p, x+PX,    y+PX*5, PX*2, PX);    // avant-bras horizontal
+        px(p, x,       y+PX*4, PX,   PX*2);  // coude qui dépasse à gauche
+        px(p, x+PX*10, y+PX*5, PX,   PX*2);  // bras droit normal
+      } else if (pose.current === 'hanche_d') {
+        // Bras droit plié sur hanche (miroir de hanche_g)
+        px(p, x-PX,    y+PX*5, PX,   PX*2);  // bras gauche normal
+        px(p, x+PX*7,  y+PX*7, PX*2, PX);    // avant-bras horizontal droit (bas du corps)
+        px(p, x+PX*10, y+PX*6, PX,   PX*2);  // coude qui dépasse à droite
+      } else if (pose.current === 'croises') {
+        // Bras croisés devant le ventre — légèrement plus haut, débordants
+        p.fill(C.bodyDk);
+        px(p, x-PX,    y+PX*4, PX,   PX);    // coude gauche qui dépasse
+        px(p, x,       y+PX*5, PX*4, PX);    // avant-bras gauche (traverse vers la droite)
+        px(p, x+PX*6,  y+PX*5, PX*4, PX);    // avant-bras droit (traverse vers la gauche)
+        px(p, x+PX*10, y+PX*4, PX,   PX);    // coude droit qui dépasse
+      } else if (pose.current === 'salut') {
+        // Bras gauche levé en l'air (coucou)
+        px(p, x-PX,   y+PX*2, PX, PX*3);     // bras vertical levé
+        px(p, x-PX,   y+PX,   PX, PX);       // main au sommet
+        px(p, x+PX*10,y+PX*5, PX, PX*2);     // bras droit normal
+      } else {
+        // Pose normale (bras le long du corps)
+        px(p, x-PX,    y+PX*5, PX, PX*2);
+        px(p, x+PX*10, y+PX*5, PX, PX*2);
+      }
+    }
+
+/* ─── PETITS PIEDS — légère levée alternée pendant la marche ─── */
+    // Compteur de pas basé sur la distance parcourue : 1 alternance tous les PX pixels
+    const isMoving = !sl && (typeof walkPause !== 'undefined' && walkPause === 0);
+    const stepPhase = isMoving ? Math.floor(walkX / PX) % 2 : -1;
+
+    if (stepPhase === 0) {
+      // Pied gauche au sol, pied droit légèrement levé
+      px(p, x+PX*3, y+PX*10, PX*2, PX);          // pied gauche normal
+      px(p, x+PX*6, y+PX*10 - 1, PX*2, PX);      // pied droit levé d'1px
+    } else if (stepPhase === 1) {
+      // Pied gauche légèrement levé, pied droit au sol
+      px(p, x+PX*3, y+PX*10 - 1, PX*2, PX);      // pied gauche levé d'1px
+      px(p, x+PX*6, y+PX*10, PX*2, PX);          // pied droit normal
+    } else {
+      // Immobile : les deux pieds au sol
+      px(p, x+PX*3, y+PX*10, PX*2, PX);
+      px(p, x+PX*6, y+PX*10, PX*2, PX);
+    }
+    if (en < EN_CRIT && !sl) drawDither(p, x + PX, y + PX * 5, PX * 8, PX * 5, C.bodyDk); // épuisement (en < 1)
+
+    // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
+    drawAccessoires(p, cx, { topY: y, eyeY: y + PX*3, neckY: y + PX*6 }, 'adult');
+
+    return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
+}

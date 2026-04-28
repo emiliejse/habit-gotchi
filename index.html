@@ -598,17 +598,19 @@ function clearDebugLogs() {
 <!--
   ============================================================
   SCRIPTS — Ordre impératif (SYSTEM 7: Ingénierie/Layout)
-  - config.js : Configuration globale (SYSTEM 7: Ingénierie/Layout)
-  - app.js : Logique métier principale (SYSTEM 1 à SYSTEM 7)
-  - render.js : Rendu graphique (SYSTEM 3: IA & Cognition + SYSTEM 5: UI/Design)
-  - envs.js : Gestion des environnements (SYSTEM 2: Écosystème)
-  - ui.js : Gestion de l'interface (SYSTEM 5: UI/Design)
+  - config.js       : Configuration globale (SYSTEM 7: Ingénierie/Layout)
+  - app.js          : Logique métier principale (SYSTEM 1 à SYSTEM 7)
+  - render.js       : Rendu graphique principal (SYSTEM 3: IA & Cognition + SYSTEM 5: UI/Design)
+  - envs.js         : Gestion des environnements (SYSTEM 2: Écosystème)
+  - render-sprites.js : Sprites du Gotchi — dépend de render.js ET envs.js (pxFree)
+  - ui.js           : Gestion de l'interface (SYSTEM 5: UI/Design)
   ============================================================
 -->
 <script src="data/config.js"></script>
 <script src="js/app.js"></script>
 <script src="js/render.js"></script>
 <script src="js/envs.js"></script>
+<script src="js/render-sprites.js"></script>
 <script src="js/ui.js"></script>
 
 <!-- Conditions USER_CONFIG — masquage des features selon config perso -->

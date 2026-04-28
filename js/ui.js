@@ -5,6 +5,26 @@
    Dépend de : app.js (window.D, save, today, hr, haptic, addXp,
                getSt, nxtTh, calcStr, toggleHab, editH, updBubbleNow,
                CATS, STG, UI_PALETTES, GOTCHI_COLORS, ENV_THEMES, SK)
+
+   NAVIGATION RAPIDE (Ctrl+G dans VS Code → numéro de ligne) :
+   §1  ~17    HELPER IA         callClaude()
+   §2  ~45    UTILITAIRES       showTDAH, showCycle, escape, animEl, toast, modal
+   §3  ~109   NAVIGATION        go(), goMenu(), syncConsoleHeight()
+   §4  ~211   HUD & DATE        updDate(), updUI(), updBadgeBoutique()
+   §5  ~315   REPAS             ouvrirSnack(), giveSnack()
+   §6  ~519   HABITUDES         renderHabs(), editHabInline(), saveHabInline()
+   §7  ~584   BOUTIQUE          ouvrirBoutique(), acheterProp(), toggleProp()
+   §8  ~1280  IA BULLE/CADEAU   askClaude(), acheterPropClaude()
+   §9  ~1582  IA SOUTIEN        genSoutien(), sendSoutienMsg()
+   §10 ~1808  IA BILAN          genBilanSemaine(), copyBilanSemaine()
+   §11 ~1937  PERSONNALISATION  renderPerso(), applyUIPalette()
+   §12 ~2017  PIN & JOURNAL     saveJ(), renderJ(), exportJournal()
+   §13 ~2243  PROGRESSION       renderProg(), showDayDetail()
+   §14 ~2341  RÉGLAGES          saveName(), saveApi(), exportD(), confirmReset()
+   §15 ~2399  TABLETTE RÉTRO    openTablet(), updTabletBadge()
+   §16 ~2467  BIENVENUE         checkWelcome(), showWelcomeModal()
+   §17 ~2696  AGENDA            ouvrirAgenda(), sauvegarderRdv(), renderAgendaMois()
+   §18 ~3831  INIT UI           window.initUI()
    ============================================================ */
 
 // ─────────────────────────────────────────────────────────────

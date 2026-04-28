@@ -2,6 +2,13 @@
    envs.js — Décors, Météo et Moteur de Pixel
    RÔLE : Ce fichier est le "Chef Décorateur". Il dessine le fond
    de la scène (Parc, Chambre, Montagne) et les effets climatiques.
+
+   NAVIGATION RAPIDE (Ctrl+G dans VS Code → numéro de ligne) :
+   §1  ~7     MOTEUR PIXEL         px(), tc(), shadeN()
+   §2  ~39    EFFETS MÉTÉO         drawWind(), drawRain(), drawRainbow(), drawSun()
+   §3  ~155   BIOMES               drawActiveEnv() — Parc, Chambre, Montagne, Plage…
+   §4  ~278   DÉCORATION           drawFrameMotif(), drawThemeAccents()
+   §5  ~333   VÉGÉTATION           drawTreeTheme(), drawCactus(), drawFl()
    ============================================================ */
 
 /* ─── SYSTÈME 7 : INGÉNIERIE (Moteur de Rendu) ───────────────────── */

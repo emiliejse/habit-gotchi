@@ -1,7 +1,26 @@
 /* ============================================================
    app.js — Données, save/load, logique métier, chargement fichiers
-   RÔLE : C'est le "Cerveau" de l'application. Gère la sauvegarde, 
+   RÔLE : C'est le "Cerveau" de l'application. Gère la sauvegarde,
    les mathématiques (XP, pétales), le temps, et l'humeur.
+
+   NAVIGATION RAPIDE (Ctrl+G dans VS Code → numéro de ligne) :
+   §1  ~10    UTILITAIRES GLOBAUX  today(), hr(), haptic()
+   §2  ~17    VARIABLES GLOBALES   window.D, window.PROPS_LIB, etc.
+   §3  ~41    CHARGEMENT JSON      loadDataFiles()
+   §4  ~102   CONSTANTES MÉTIER    SK, STG, CATS
+   §5  ~142   STRUCTURE D          defs(), getCyclePhase()
+   §6  ~208   SAVE / LOAD          migrate(), load(), save(), saveDebounced()
+   §7  ~288   UTILITAIRES          forceUpdate(), computeNickname()
+   §8  ~309   XP & STADES          getSt(), nxtTh(), addXp()
+   §9  ~343   CROTTES              spawnPoop(), maybeSpawnPoop(), cleanPoops()
+   §10 ~390   SEMAINE & REPAS      getWeekId(), getCurrentMealWindow(), giveSnack()
+   §11 ~560   HABITUDES            calcStr(), toggleHab(), editH()
+   §12 ~715   SAVE DEBOUNCED       saveDebounced(), setEnergy(), setHappy()
+   §13 ~738   INIT PROPS           initBaseProps()
+   §14 ~768   MÉTÉO                fetchMeteo(), fetchSolarPhases(), getSolarPhase()
+   §15 ~867   BULLE DE DIALOGUE    flashBubble(), updBubbleNow()
+   §16 ~973   INIT QUOTIDIENNE     handleDailyReset(), catchUpPoops()
+   §17 ~1045  CONFIG UTILISATEUR   loadUserConfig(), bootstrap()
    ============================================================ */
 
    /* ============================================================

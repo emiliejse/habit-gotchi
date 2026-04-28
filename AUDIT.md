@@ -51,17 +51,13 @@
 
 ### 1.3 Problèmes identifiés
 
-#### 🔵 STYLE
+#### ✅ STYLE — résolu (2026-04-28)
 **Constantes globales sans namespace**
-- Lignes : `15`, `31`, `48`, `128`, `140`
-- Description : `UI_PALETTES`, `GOTCHI_COLORS`, `ENV_THEMES`, `MEAL_WINDOWS`, `SNACKS_POOL` polluent l'espace global. Acceptable pour un projet vanilla, mais collision possible si un `<script>` tiers est ajouté.
-- Risque : faible aujourd'hui, augmente si on monte un éditeur (`editor.html` existe déjà et déclare probablement les mêmes noms).
-- Suggestion : envelopper dans un `window.HG_CONFIG = { palettes, gotchiColors, envThemes, meals, snacks }` à terme.
+- `UI_PALETTES`, `GOTCHI_COLORS`, `ENV_THEMES`, `MEAL_WINDOWS`, `SNACKS_POOL` exposées sous `window.HG_CONFIG` à la fin de `config.js`. Les 15 occurrences dans `app.js`, `render.js`, `ui.js` migrées vers `window.HG_CONFIG.*`.
 
-#### 🟡 MINEUR
-**Pas de `const` figée — palette `card` non documentée**
-- Lignes : `16-21`
-- Description : la clé `card` (`rgba(255,255,255,.88)`) est identique pour toutes les palettes. Soit factoriser, soit documenter pourquoi elle est répétée (extensibilité future ?).
+#### ✅ MINEUR — résolu (2026-04-28)
+**Palette `card` non documentée et répétée**
+- Factorisée dans la constante `CARD_BG = 'rgba(255,255,255,.88)'`, référencée dans les 6 entrées de `UI_PALETTES`.
 
 ### 1.4 Code mort / redondances
 - Aucune fonction. Quelques entrées `card` strictement identiques (cf. ci-dessus).
@@ -100,12 +96,9 @@
 **`forceUpdate()` utilise `location.reload(true)` déprécié**
 - Corrigé en `location.reload()`.
 
-#### 🟡 MINEUR — ouvert
+#### ✅ MINEUR — résolu (2026-04-28)
 **`save()` swallow silencieux**
-- Lignes : `286`
-- Description : `catch(e) {}` vide avale toute exception (quota, Safari privé...) — utilisatrice ne sait pas que ses données ne sont plus sauvegardées.
-- Risque : perte de données silencieuse.
-- Suggestion : au minimum `console.warn(e)`, idéalement un toast une seule fois par session.
+- `catch(e) {}` remplacé par `console.warn('[HabitGotchi] save() échoué :', e)`.
 
 #### ✅ MINEUR — résolu (session 4 / annotation)
 **`addXp(-15)` au décochage : pas de downgrade visuel**

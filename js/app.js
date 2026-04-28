@@ -1047,7 +1047,7 @@ async function bootstrap() {
   fetchMeteo();
   fetchSolarPhases();
   setInterval(fetchMeteo, 1800000);
-  setInterval(maybySpawnPoop, POOP_CHECK_INTERVAL_MS);
+  setInterval(maybeSpawnPoop, POOP_CHECK_INTERVAL_MS);
 }
 
 /* ---------- Déclencheurs ---------- */

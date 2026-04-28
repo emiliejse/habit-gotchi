@@ -712,7 +712,7 @@ body {
 /* Petit label "À faire" discret au-dessus de la checkbox */
 /* POURQUOI top: -11px : le label doit flotter juste au-dessus du bord supérieur du bloc .hab */
 .hab--next::before {
-  content: 'Prochain ✿';
+  content: 'Prochaine';
   position: absolute;
   top: -11px;
   left: 8px;

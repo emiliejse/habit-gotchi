@@ -766,37 +766,50 @@ function renderPropMini(canvas, def) {
 
 // RÔLE : Construit le HTML d'une carte d'objet dans l'inventaire.
 // POURQUOI : Factorisé pour être réutilisé dans tous les groupes.
-// isNew : true si l'objet a été acquis il y a moins de 48h
-function _propCard(p, index, def, D, isNew) {
+// isNew        : true si l'objet a été acquis il y a moins de 48h
+// modeSuppr    : true si le mode suppression est actif (affiche ✕ sur les objets IA)
+function _propCard(p, index, def, D, isNew, modeSuppr) {
   const isClaud = !!(D.propsPixels && D.propsPixels[p.id]);
   const badgeId = `mini-${p.id}`;
 
-  // Badge "NEW" pour les objets récents (< 48h), seulement dans la section Rangés
+  // Badge "NEW" — quand présent, remplace le ✦ (redondant : la bordure lilas identifie déjà l'IA)
+  // POURQUOI : ✦ + NEW ensemble encombrent le coin ; NEW suffit à signaler le statut
   const newBadge = isNew
     ? `<span style="position:absolute;top:3px;left:4px;font-size:8px;font-weight:bold;
         background:var(--coral,#f07);color:#fff;border-radius:6px;padding:1px 4px;
         letter-spacing:.5px;line-height:1.4">NEW</span>`
     : '';
 
-  // Icône ✦ + export + corbeille pour les créations IA
-  // POURQUOI : L'export 📤 permet de copier le JSON au format props.json pour l'envoyer ou l'intégrer au catalogue
-  const claudBadge = isClaud ? `
-    <span style="position:absolute;top:3px;${isNew ? 'left:32px' : 'left:4px'};font-size:14px;color:var(--lilac);">✦</span>
-    <span onclick="event.stopPropagation();exportObjetIA('${p.id}')"
-      style="position:absolute;bottom:2px;right:22px;font-size:11px;cursor:pointer;opacity:.55"
-      title="Exporter le JSON">📤</span>
-    <span onclick="event.stopPropagation();supprimerObjetIA('${p.id}')"
-      style="position:absolute;bottom:2px;right:4px;font-size:11px;cursor:pointer;opacity:.55">🗑️</span>
-  ` : '';
+  // ✦ visible seulement si PAS de badge NEW
+  const etoile = (isClaud && !isNew)
+    ? `<span style="position:absolute;top:3px;left:4px;font-size:14px;color:var(--lilac);">✦</span>`
+    : '';
 
-  return `<div onclick="toggleProp(${index})" style="
+  // ✕ de suppression — visible uniquement en mode suppression, sur les objets IA uniquement
+  // POURQUOI : Seuls les objets IA (propsPixels) peuvent être supprimés définitivement
+  const suppressBtn = (isClaud && modeSuppr)
+    ? `<span onclick="event.stopPropagation();supprimerObjetIA('${p.id}')"
+        style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+        background:rgba(255,255,255,.75);border-radius:var(--r-md);
+        font-size:28px;color:#e33;font-weight:bold;cursor:pointer;z-index:2;">✕</span>`
+    : '';
+
+  // Long press (500ms) → export JSON pour les objets IA
+  // POURQUOI : Pas de bouton dédié sur la carte — le long press est discret et ne pollue pas l'UI
+  const longPressAttrs = isClaud
+    ? `onmousedown="startLongPress(event,'${p.id}')" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()"
+       ontouchstart="startLongPress(event,'${p.id}')" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()"`
+    : '';
+
+  return `<div onclick="toggleProp(${index})" ${longPressAttrs} style="
     background:${p.actif ? 'var(--mint)' : '#fff'};
     border:2px solid ${p.actif ? 'var(--mint)' : isClaud ? 'var(--lilac)' : 'var(--border)'};
     border-radius:var(--r-md);padding:6px 4px 8px;font-size:var(--fs-xs);font-weight:bold;
     cursor:pointer;display:flex;flex-direction:column;align-items:center;
     justify-content:space-between;gap:4px;transition:.2s;text-align:center;
-    box-shadow:0 2px 4px rgba(0,0,0,.05);position:relative;min-height:90px;">
-    ${newBadge}${claudBadge}
+    box-shadow:0 2px 4px rgba(0,0,0,.05);position:relative;min-height:90px;
+    user-select:none;-webkit-user-select:none;">
+    ${newBadge}${etoile}${suppressBtn}
     <div style="flex:1;display:flex;align-items:center;justify-content:center;">
       ${def && def.pixels
         ? `<canvas id="${badgeId}" style="image-rendering:pixelated;border-radius:3px"></canvas>`
@@ -834,7 +847,9 @@ function renderProps() {
   const envActif = D.g.activeEnv || 'parc'; // env actuellement affiché dans le switcher
   const now48h   = Date.now() - 48 * 60 * 60 * 1000; // seuil "nouveau" = 48h
 
-  // ── Filtres par catégorie — pleine largeur sur 2 lignes ──────────
+  // ── Filtres par catégorie — style distinct des boutons d'action ──
+  // POURQUOI : Forme carrée avec coins légèrement arrondis vs boutons d'action pill-shape,
+  //            pour distinguer visuellement les deux types de contrôles.
   const cats = [
     { key: 'tous',       label: '✿ Tous' },
     { key: 'decor',      label: '🪑 Décor' },
@@ -848,9 +863,10 @@ function renderProps() {
     filterEl.innerHTML = cats.map(({ key, label }) => {
       const active = propsFilterActive === key;
       return `<button onclick="setPropsFilter('${key}')"
-        style="padding:5px 2px;border-radius:20px;border:2px solid var(--border);
+        style="padding:5px 2px;border-radius:6px;
+        border:2px solid ${active ? 'var(--lilac)' : 'var(--border)'};
         font:bold 9px 'Courier New',monospace;cursor:pointer;width:100%;
-        background:${active ? 'var(--lilac)' : '#fff'};
+        background:${active ? 'var(--lilac)' : 'rgba(0,0,0,.03)'};
         color:${active ? '#fff' : 'var(--text2)'};
         transition:.15s;">${label}</button>`;
     }).join('');
@@ -890,48 +906,82 @@ function renderProps() {
                                  .sort((a, b) => (b.p.acquis || 0) - (a.p.acquis || 0));
   const rangesOld   = sortAlpha(ranges.filter(({ p }) => (p.acquis || 0) <= now48h));
 
+  // ── Mode suppression — flag global ───────────────────────
+  // POURQUOI : Quand actif, les cartes IA affichent un ✕ de suppression.
+  //            Le flag est remis à false à chaque appel de renderProps (hors clic bouton).
+  const modeSuppr = !!window._propsModeSuppr;
+
   // ── Génération des cartes ─────────────────────────────────
   const toCards = (arr, markNew = false) =>
-    arr.map(({ p, index, def }) => _propCard(p, index, def, D, markNew && (p.acquis || 0) > now48h));
+    arr.map(({ p, index, def }) =>
+      _propCard(p, index, def, D, markNew && (p.acquis || 0) > now48h, modeSuppr));
 
   const aDesActifs = groupActifs.length > 0;
 
-  // ── Nom de la section active selon l'env ─────────────────
+  // ── Bandeau de section avec bouton d'action à droite ─────
+  // POURQUOI : "Tout ranger" à droite de l'env actif, "Supprimer" à droite de Rangés.
+  //            Homogène et contextuel — chaque action est au niveau de sa section.
   const envTitres = { parc: '🌳 Parc', chambre: '🛏️ Chambre', montagne: '⛰️ Montagne' };
   const titreActif = envTitres[envActif] || '✨ Actifs';
 
-  // ── Section active : vide → message indicatif ────────────
-  // POURQUOI : On veut toujours afficher la section même si elle est vide,
-  //            pour que l'utilisatrice sache qu'il n'y a rien dans cet env.
-  const sectionActiveHTML = aDesActifs
-    ? _propSection(titreActif, toCards(groupActifs))
-    : `<div style="margin-bottom:12px">
-        <div style="font-size:var(--fs-xs);font-weight:bold;text-transform:uppercase;
-          letter-spacing:1px;color:var(--text2);padding:4px 0 6px;
-          border-bottom:1px solid var(--border);margin-bottom:6px">
-          ${titreActif} <span style="font-weight:normal;opacity:.6">(0)</span>
-        </div>
-        <p style="font-size:var(--fs-xs);color:var(--text2);text-align:center;
-          padding:10px 0;opacity:.6">Aucun objet dans cet univers ✿</p>
-      </div>`;
+  // Style partagé pour les boutons d'action de bandeau (pill-shape, distinct des filtres carrés)
+  const btnActionStyle = `border-radius:999px;border:1.5px solid var(--border);
+    font:bold 9px 'Courier New',monospace;cursor:pointer;padding:3px 10px;
+    background:#fff;color:var(--text2);transition:.15s;white-space:nowrap;`;
 
-  // ── Bouton "Tout ranger" — entre section active et rangés ─
-  // POURQUOI : Toujours visible, mais opaque si rien à ranger dans cet env.
-  //            Range uniquement les objets de l'env actif (pas tout l'inventaire).
-  const btnRangerHTML = `
-    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-      <button onclick="rangerTout('${envActif}')" class="btn btn-s"
-        style="font-size:var(--fs-xs);padding:3px 12px;
-        opacity:${aDesActifs ? '1' : '0.35'};
+  // Bandeau section env actif — avec "Tout ranger" à droite
+  const bandeauActif = `
+    <div style="display:flex;align-items:center;justify-content:space-between;
+      padding:4px 0 6px;border-bottom:1px solid var(--border);margin-bottom:6px">
+      <span style="font-size:var(--fs-xs);font-weight:bold;text-transform:uppercase;
+        letter-spacing:1px;color:var(--text2)">
+        ${titreActif} <span style="font-weight:normal;opacity:.6">(${groupActifs.length})</span>
+      </span>
+      <button onclick="rangerTout('${envActif}')"
+        style="${btnActionStyle}opacity:${aDesActifs ? '1' : '0.35'};
         pointer-events:${aDesActifs ? 'auto' : 'none'};">
         📦 Tout ranger
       </button>
     </div>`;
 
-  listEl.innerHTML =
-    sectionActiveHTML +
-    btnRangerHTML +
-    _propSection('📦 Rangés', toCards(rangesNew, true).concat(toCards(rangesOld)));
+  // Bandeau section Rangés — avec "Supprimer" à droite (toggle mode suppression)
+  const hasIA = ranges.some(({ p }) => !!(D.propsPixels && D.propsPixels[p.id]));
+  const bandeauRanges = `
+    <div style="display:flex;align-items:center;justify-content:space-between;
+      padding:4px 0 6px;border-bottom:1px solid var(--border);margin-bottom:6px">
+      <span style="font-size:var(--fs-xs);font-weight:bold;text-transform:uppercase;
+        letter-spacing:1px;color:var(--text2)">
+        📦 Rangés <span style="font-weight:normal;opacity:.6">(${ranges.length})</span>
+      </span>
+      <button onclick="toggleModeSuppr()"
+        style="${btnActionStyle}${modeSuppr ? 'background:var(--coral,#f55);color:#fff;border-color:var(--coral,#f55);' : ''}
+        opacity:${hasIA ? '1' : '0.35'};pointer-events:${hasIA ? 'auto' : 'none'};">
+        ${modeSuppr ? '✓ Terminer' : '🗑️ Supprimer'}
+      </button>
+    </div>`;
+
+  // ── Section active (vide → message indicatif) ─────────────
+  const sectionActiveHTML = `
+    <div style="margin-bottom:12px">
+      ${bandeauActif}
+      ${aDesActifs
+        ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${toCards(groupActifs).join('')}</div>`
+        : `<p style="font-size:var(--fs-xs);color:var(--text2);text-align:center;padding:10px 0;opacity:.6">
+             Aucun objet dans cet univers ✿</p>`}
+    </div>`;
+
+  // ── Section Rangés ────────────────────────────────────────
+  const cardesRanges = toCards(rangesNew, true).concat(toCards(rangesOld));
+  const sectionRangesHTML = `
+    <div style="margin-bottom:12px">
+      ${bandeauRanges}
+      ${cardesRanges.length
+        ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${cardesRanges.join('')}</div>`
+        : `<p style="font-size:var(--fs-xs);color:var(--text2);text-align:center;padding:10px 0;opacity:.6">
+             Rien ici pour l'instant ✿</p>`}
+    </div>`;
+
+  listEl.innerHTML = sectionActiveHTML + sectionRangesHTML;
 
   // ── Dessiner les mini-sprites pixel art ──────────────────
   filtered.forEach(({ p, def }) => {
@@ -1244,6 +1294,38 @@ function escapeHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+// ─── Long press & mode suppression ───────────────────────────────────────────
+
+// RÔLE : Démarre un timer de 500ms pour déclencher l'export d'un objet IA via appui long.
+// POURQUOI : Évite d'encombrer les cartes avec un bouton export — le geste est naturel sur mobile.
+let _longPressTimer = null;
+function startLongPress(event, propId) {
+  // Annuler tout timer précédent (sécurité si deux events se chevauchent)
+  cancelLongPress();
+  _longPressTimer = setTimeout(() => {
+    _longPressTimer = null;
+    exportObjetIA(propId);
+  }, 500); // 500ms = durée standard d'un appui long
+}
+
+// RÔLE : Annule le timer d'appui long si le doigt/curseur est relâché ou quitte la carte.
+// POURQUOI : Empêche l'export de se déclencher sur un simple tap ou un glissement.
+function cancelLongPress() {
+  if (_longPressTimer !== null) {
+    clearTimeout(_longPressTimer);
+    _longPressTimer = null;
+  }
+}
+
+// RÔLE : Bascule le mode suppression (affiche/masque les ✕ sur les objets IA rangés).
+// POURQUOI : Permet de supprimer des objets IA sans risquer de supprimer accidentellement
+//            depuis une interface permanente — le mode doit être activé explicitement.
+function toggleModeSuppr() {
+  window._propsModeSuppr = !window._propsModeSuppr;
+  renderProps(); // Rafraîchit l'affichage pour montrer/masquer les ✕
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 // RÔLE : Génère un bouton de slot (position dans l'environnement).
 // POURQUOI : Réutilisé dans openSlotPickerAvecEnv.

@@ -793,9 +793,7 @@ body {
 #sliders-wrap.open #sliders-hint { display: block; }
 
 /* RÔLE : Corps dépliable */
-/* POURQUOI : padding-right 16px = réserve l'espace pour la fleur (thumb 28px / 2 = 14px + 2px de marge)
-              sans quoi la fleur à la valeur max (5) sort du conteneur à droite */
-#sliders-body { padding: 2px 16px 2px 0; }
+#sliders-body { padding: 2px 0; }
 
 /* RÔLE : Icône dans la ligne de slider */
 .slider-icon { font-size: 14px; width: 22px; text-align: center; flex-shrink: 0; }
@@ -804,8 +802,12 @@ body {
 .slider-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; min-height: 44px; }
 
 /* RÔLE : Track du slider */
-/* POURQUOI : margin: 0 + min-width: 0 — le track se rétrécit proprement dans le flex,
-              c'est le padding de #sliders-body qui absorbe le débordement de la fleur */
+/* POURQUOI : margin-right: 18px raccourcit le track côté droit.
+              Quand le thumb est à la valeur max (5), son centre est au bord droit du track.
+              Le thumb fait 28px donc son bord droit dépasse de 14px.
+              Les pétales (box-shadow) s'étendent encore de 6px au-delà = 20px au total.
+              18px de marge garantit que tout reste dans le conteneur sans être coupé.
+              margin-left: 0 car les pétales gauche sont couvertes par l'icône adjacente. */
 .slider-row input[type=range] {
   flex: 1;
   -webkit-appearance: none;
@@ -814,7 +816,7 @@ body {
   outline: none;
   opacity: .85;
   overflow: visible;
-  margin: 0;
+  margin: 0 18px 0 0;
   min-width: 0;
 }
 

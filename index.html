@@ -356,8 +356,8 @@ function clearDebugLogs() {
 Ton bilan de la semaine apparaîtra ici...
     </div>
     <textarea id="bil-txt-hidden" style="display:none"></textarea>
-    <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%;font-size:var(--fs-sm);margin-bottom:6px;"> <!-- était 10px -->
-      ✿ Générer le bilan
+    <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%;font-size:var(--fs-sm);margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;"> <!-- était 10px -->
+      <span id="bilan-btn-label">✿ Générer le bilan</span><span id="bilan-flowers" class="thought-flowers"></span>
     </button>
     <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="width:100%;font-size:var(--fs-sm);display:none;"> <!-- était 10px -->
       📋 Copier le bilan

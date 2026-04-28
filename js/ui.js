@@ -504,6 +504,26 @@ function updThoughtFlowers() {
 }
 
 /**
+ * RÔLE : Met à jour les fleurs de quota dans #bilan-flowers (onglet Progrès)
+ * POURQUOI : Même logique visuelle que les fleurs de pensée — 3 ✿ qui s'estompent au fil des bilans générés.
+ *            N'affiche les fleurs que si on est sur la semaine en cours et en fin de semaine.
+ */
+function updBilanFlowers() {
+  const bf = document.getElementById('bilan-flowers');
+  if (!bf) return;
+  // On n'affiche les fleurs que quand le bouton est actif (semaine en cours, fin de semaine)
+  const jourSemaine     = new Date().getDay();
+  const estSemaineEnCours = typeof wOff !== 'undefined' ? wOff === 0 : true;
+  const estFinSemaine     = estSemaineEnCours && (jourSemaine === 0 || jourSemaine === 5 || jourSemaine === 6);
+  if (!estFinSemaine) { bf.innerHTML = ''; return; }
+  const used  = window.D.g.bilanCount || 0;
+  const total = 3;
+  bf.innerHTML = Array.from({ length: total }, (_, i) =>
+    `<span class="${i < (total - used) ? 'flower-on' : 'flower-off'}">✿</span>`
+  ).join('');
+}
+
+/**
  * Fonction centrale de mise à jour de l'interface (HUD, jauges, XP, noms).
  * Appelée dès qu'une donnée change dans app.js.
  */
@@ -2553,6 +2573,14 @@ async function genBilanSemaine() {
     return;
   }
 
+  /* ── Semaine en cours uniquement ── */
+  // RÔLE : Empêche la génération d'un bilan sur une semaine passée même si le bouton est contourné.
+  // POURQUOI : Le bilan est pensé comme un outil de la semaine active, pas un retour en arrière.
+  if (wOff !== 0) {
+    summaryEl.textContent = 'Le bilan ne peut être généré que pour la semaine en cours 💜';
+    return;
+  }
+
   /* ── Semaine en cours ou passée ? ── */
   const semaineEnCours  = wOff === 0;
   const jourSemaine     = new Date().getDay();
@@ -3009,27 +3037,37 @@ function renderProg() {
   }
 
   /* ── État bouton bilan ── */
+  // RÔLE : Met à jour le label et l'état du bouton bilan selon la semaine et le quota.
+  // POURQUOI : Le bouton utilise deux spans (#bilan-btn-label + #bilan-flowers) pour séparer
+  //            le texte des fleurs — on ne touche jamais à textContent du bouton entier.
   checkBilanReset();
-  const btnBilan = document.querySelector('[onclick="genBilanSemaine()"]');
-  if (btnBilan) {
-    const jourSemaine = new Date().getDay();
-    const estFinSemaine = wOff < 0 || jourSemaine === 0 || jourSemaine === 5 || jourSemaine === 6;
-    const quotaOk = (window.D.g.bilanCount || 0) < 3;
+  const btnBilan   = document.querySelector('[onclick="genBilanSemaine()"]');
+  const lblBilan   = document.getElementById('bilan-btn-label');
+  if (btnBilan && lblBilan) {
+    const jourSemaine       = new Date().getDay();
+    const estSemaineEnCours = wOff === 0;
+    const estFinSemaine     = estSemaineEnCours && (jourSemaine === 0 || jourSemaine === 5 || jourSemaine === 6);
+    const quotaOk           = (window.D.g.bilanCount || 0) < 3;
 
-    if (!estFinSemaine) {
-      btnBilan.disabled = true;
-      btnBilan.textContent = '⏳ Disponible vendredi';
+    if (!estSemaineEnCours) {
+      btnBilan.disabled     = true;
+      lblBilan.textContent  = '📅 Semaines passées';
+      btnBilan.style.opacity = '0.5';
+    } else if (!estFinSemaine) {
+      btnBilan.disabled     = true;
+      lblBilan.textContent  = '⏳ Disponible vendredi';
       btnBilan.style.opacity = '0.5';
     } else if (!quotaOk) {
-      btnBilan.disabled = true;
-      btnBilan.textContent = '✓ 3 bilans générés cette semaine';
+      btnBilan.disabled     = true;
+      lblBilan.textContent  = '✓ 3 bilans générés cette semaine';
       btnBilan.style.opacity = '0.5';
     } else {
-      btnBilan.disabled = false;
-      btnBilan.textContent = `✿ Générer le bilan (${window.D.g.bilanCount}/3)`;
+      btnBilan.disabled     = false;
+      lblBilan.textContent  = '✿ Générer le bilan';
       btnBilan.style.opacity = '1';
     }
   }
+  updBilanFlowers(); // met à jour les 3 fleurs de quota
 
   updUI();
 }

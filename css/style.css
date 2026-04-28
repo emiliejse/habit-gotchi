@@ -594,6 +594,10 @@ body {
 .thought-flowers .flower-on  { opacity: 1;   color: var(--lilac); }
 .thought-flowers .flower-off { opacity: 0.2; color: var(--text2); }
 
+/* RÔLE : Fleurs de quota bilan — inline dans le bouton, pas de margin-top ni centrage */
+/* POURQUOI : Override du style .thought-flowers pour usage dans un flex button */
+#bilan-flowers.thought-flowers { margin-top: 0; justify-content: flex-start; font-size: 16px; }
+
 /* RÔLE : Zone pensée IA — intégrée dans la carte Gotchi avec fond légèrement plus foncé */
 /* POURQUOI : distingue visuellement la section IA sans en faire une carte séparée */
 #claude-card {

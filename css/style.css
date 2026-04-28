@@ -323,7 +323,7 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 2px 40px max(var(--sab), 4px);
+  padding: 8px 40px max(var(--sab), 4px); /* POURQUOI : était 2px en haut — augmenté pour plus de hauteur */
   font-size: 22px;
   color: #6a5a40;
   cursor: pointer;

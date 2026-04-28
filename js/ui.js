@@ -137,8 +137,8 @@ function syncConsoleHeight() {
     //            et de la position dans le viewport. Plus fiable que getBoundingClientRect().bottom
     //            qui variait selon les plateformes (safe area iOS, zoom navigateur...).
     const h = top.offsetHeight;
-    zone.style.paddingTop = (h + 16) + 'px';
-    // POURQUOI : +16 = gap visuel confortable entre la console et le premier élément
+    zone.style.paddingTop = (h + 6) + 'px';
+    // POURQUOI : +6 = gap minimal entre la console et le premier élément
   });
 }
 

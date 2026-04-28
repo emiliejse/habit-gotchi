@@ -1,7 +1,9 @@
 # AUDIT HabitGotchi — 2026-04-26
-## Mis à jour le 2026-04-27 — Sessions 1 à 4 + Session 5 (P1 + N1–N8) complétées ✅
+## Mis à jour le 2026-04-28 — Sessions 1 à 9 complétées ✅
 
 > Audit de référence sur la branche `Annotation`, version `v3.02`. Lecture intégrale de `config.js`, `app.js`, `envs.js`, `render.js`, `sw.js`, `index.html`, `prompts/*.json`. Lecture quasi-intégrale de `ui.js` (3735 lignes — 100% des fonctions principales lues, quelques sections de rendu d'agenda parcourues). `data/props.json` et `data/personality.json` parcourus comme données pures (pas d'analyse de code).
+>
+> **Version courante : `hg-v3.28`** (bumped en session 5 — `app.js` + `sw.js` synchronisés).
 
 ---
 
@@ -11,13 +13,15 @@
 
 | Fichier | Score | Justification courte |
 |---|---|---|
-| `data/config.js` | **A** ✅ | Pure data, bien commentée. `AI_MODEL` ajouté (session 3). |
-| `js/app.js` | **A-** ✅ | `addEvent` unifié, `visibilitychange` fusionné, `reload(true)` corrigé, chemins morts `D.userName`/`D.lat`/`D.lng` supprimés, debounce sliders ajouté. |
-| `js/render.js` | **B-** ✅ | Double pluie supprimée, `wcMeteo` renommé. Reste : `p.draw()` monolithique (hors scope). |
-| `js/envs.js` | **B+** ✅ | `drawFrameMotif` simplifié, triangle montagne doublonné supprimé. |
-| `js/ui.js` | **B-** ✅ | `getWeekId` doublonnée supprimée, `AI_MODEL` centralisé, bug +16 corrigé, `addEvent` unifié, XSS innerHTML sanitisé (`escape()`), code mort supprimé (N1–N4). Reste : globales agenda, refactoring modules. |
-| `index.html` | **B** | 593 lignes, JS inline (debug panel ~80 lignes) qui devrait migrer dans un fichier. Sinon structure claire. |
-| `sw.js` | **A** | 70 lignes, stratégie cache-first claire. Versionné. Petit bémol : caching aveugle des fetchs cross-fingers. |
+| `data/config.js` | **A** ✅ | Pure data, bien commentée. `AI_MODEL` ajouté (session 3). Constantes GAMEPLAY + SEUILS VISUELS centralisées (sessions 7–8). |
+| `js/app.js` | **A-** ✅ | `addEvent` unifié, `visibilitychange` fusionné, `reload(true)` corrigé, chemins morts supprimés, debounce sliders, constantes GAMEPLAY migrées, typo `maybySpawnPoop` corrigé, sommaire §1-§17 ajouté, SCHEMA_VERSION ajouté. |
+| `js/render.js` | **B** ✅ | Double pluie supprimée, `wcMeteo` renommé, seuils EN_*/HA_* centralisés, échelle 0-5 native (×20 supprimé), sommaire §1-§9 ajouté, sprites extraits dans `render-sprites.js`. Reste : `p.draw()` monolithique. |
+| `js/render-sprites.js` | **A** ✅ | Nouveau fichier (session 9). Contient drawDither, drawAccessoires, drawEgg, drawBaby, drawTeen, drawAdult. Sommaire §1-§6. |
+| `js/envs.js` | **B+** ✅ | `drawFrameMotif` simplifié, triangle doublonné supprimé, `drawRain` formula mise à jour (échelle 0-5), sommaire §1-§5 ajouté. |
+| `js/ui.js` | **B-** ✅ | `getWeekId` doublonnée supprimée, `AI_MODEL` centralisé, bug +16 corrigé, `addEvent` unifié, XSS sanitisé, code mort supprimé, `callClaude()` helper ajouté (session 6), constantes XP_NOTE/XP_HABITUDE utilisées, sommaire §1-§18 ajouté. Reste : globales agenda, refactoring modules. |
+| `index.html` | **B** | Script tag `render-sprites.js` ajouté (session 9) dans le bon ordre. Commentaire d'ordre chargement mis à jour. |
+| `sw.js` | **A** | Version synchronisée à `hg-v3.28` (session 5). Stratégie cache-first. |
+| `TESTING.md` | **nouveau** ✅ | Checklist manuelle 11 sections + raccourcis console (session 9). |
 | `style.css` | non audité (643 lignes) | hors scope JS. |
 | `prompts/*.json` | **A** | Concis et structurés. |
 
@@ -507,16 +511,18 @@
 ```
 index.html
   └─ <script src=> (ordre):
-       data/config.js   (constantes pures)
-       js/app.js        (état D, save/load, métabolisme, météo, bootstrap)
+       data/config.js        (constantes pures : AI_MODEL, GAMEPLAY, SEUILS VISUELS, palettes)
+       js/app.js             (état D, save/load, métabolisme, météo, bootstrap)
          ↓ déclare window.D, window.PROPS_LIB, hr(), today(), addEvent, save, …
-       js/render.js     (p5 instance, sprites, draw loop, HUD, taps)
+       js/render.js          (p5 instance, boucle draw, helpers visuels, HUD, taps)
          ↓ lit window.D, expose window.spawnP, window.triggerExpr, …
-       js/envs.js       (décors, météo visuelle, shadeN, tc, drawActiveEnv)
-         ↓ utilisé par render.js (via globals)
-       js/ui.js         (interactions, modales, IA, agenda, init UI)
+       js/envs.js            (décors, météo visuelle, shadeN, tc, pxFree, drawActiveEnv)
+         ↓ utilisé par render.js et render-sprites.js (via globals)
+       js/render-sprites.js  (sprites : drawEgg, drawBaby, drawTeen, drawAdult, drawDither, drawAccessoires)
+         ↓ dépend de render.js (px, C, PX, getBreath…) ET envs.js (pxFree)
+       js/ui.js              (interactions, modales, IA via callClaude(), agenda, init UI)
          ↓ expose window.initUI, appelé par bootstrap d'app.js
-       sw.js            (cache PWA)
+       sw.js                 (cache PWA, version hg-v3.28)
 ```
 
 **Couplage** : entièrement via `window.*`. Aucun module ESM. C'est cohérent pour vanilla JS sans bundler, mais fragile dès qu'un nom est répété (`getWeekId`, `defs`, `today`).
@@ -642,23 +648,23 @@ index.html
 
 ### Phase 3 — Amélioration structurelle (moyen terme)
 
-1. **Découper `render.js`** en modules clairs :
-   - `render-core.js` (boucle p5, locomotion, draw orchestrateur)
-   - `render-sprites.js` (drawEgg/Baby/Teen/Adult/drawAccessoires)
+1. ✅ **Découper `render.js`** — sprites extraits dans `render-sprites.js` (session 9). Reste à faire si besoin :
    - `render-fx.js` (particules, touchReactions, eatAnim, evoAnim)
    - `render-hud.js` (overlay haut + tap zones)
 2. **Découper `ui.js`** en au moins :
    - `ui-core.js` (toast, modal, animEl, go, navigation)
    - `ui-shop.js` (boutique, props)
-   - `ui-ai.js` (askClaude, sendSoutienMsg, genBilanSemaine, acheterPropClaude — avec un helper `callClaude` commun)
+   - `ui-ai.js` (askClaude, sendSoutienMsg, genBilanSemaine, acheterPropClaude — `callClaude` ✅ ajouté en session 6)
    - `ui-journal.js` (PIN, journal, exports)
    - `ui-agenda.js` (agenda, RDV, cycle)
    - `ui-perso.js` (palettes, couleurs Gotchi, thèmes env)
    - `ui-settings.js` (réglages, cheats, debug)
-3. **Centraliser les constantes magiques** (XP, limites, seuils, slots, tailles canvas) dans `config.js`.
-4. **Helper unique `callClaude({mode, prompt, system?, model?})`** qui gère URL, headers, parsing JSON, gestion erreur — utilisé par les 5 sites d'appel.
-5. **Schéma de migration `D`** explicite : un `MIGRATIONS = { 'v3.02': fn, 'v3.01': fn }` dans `load()` qui transforme les anciennes formes (par exemple `D.userName` → `D.g.userName`).
-6. **Tests manuels documentés** dans un `TESTING.md` : checklist des 10 chemins critiques (cocher habitude, snack, poop, achat boutique, IA pensée, IA cadeau, IA bilan, soutien, RDV récurrent, cycle).
+3. ✅ **Centraliser les constantes magiques** dans `config.js` — fait en sessions 7 et 8 :
+   - Bloc GAMEPLAY : `XP_HABITUDE`, `XP_NOTE`, `XP_MAX`, `PETALES_SNACK`, `POOP_*_DELAY_MS`
+   - Bloc SEUILS VISUELS : `EN_CRIT`, `EN_WARN`, `EN_TILT`, `HA_SAD`, `HA_MED`, `HA_MED_ADULT`, `HA_SLOW`, `HA_WALK`, `HA_HIGH`, `HA_HAPPY_TEEN`, `HA_ARMS_UP`
+4. ✅ **Helper `callClaude({messages, max_tokens, system?, temperature?})`** — fait en session 6. 5 fetch() remplacés dans `ui.js`.
+5. ✅ **Schéma de migration `D`** explicite — `SCHEMA_VERSION` + système de migrations ajouté dans `load()` (session 5/7). Protège les sauvegardes existantes.
+6. ✅ **Tests manuels documentés** dans `TESTING.md` — fait en session 9. 11 sections + raccourcis console.
 
 ---
 
@@ -672,6 +678,12 @@ index.html
 | `ENV_THEMES` | 4 thèmes décor (parc/chambre/montagne) | render.js (`getEnvC`), envs.js (`drawActiveEnv`, `drawFrameMotif`, `drawThemeAccents`) |
 | `MEAL_WINDOWS` | 3 fenêtres horaires | app.js (`getCurrentMealWindow`, `giveSnack`), ui.js (`ouvrirSnack`) |
 | `SNACKS_POOL` | Pool d'emojis food | app.js (`ensureSnackPref`, `pickThreeSnacks`) |
+| `AI_MODEL` | Modèle Claude actif | ui.js (`callClaude`) |
+| `XP_HABITUDE` / `XP_NOTE` / `XP_MAX` | XP par action et seuil max | app.js (`addXp`, `nxtTh`), ui.js (`saveJ`, `checkAbsence`) |
+| `PETALES_SNACK` | Pétales gagnés par snack | app.js (`giveSnack`) |
+| `POOP_MIN_DELAY_MS` / `POOP_SPAWN_DELAY_MS` / `POOP_CHECK_INTERVAL_MS` | Timing des crottes | app.js (`maybeSpawnPoop`, `setInterval`) |
+| `EN_CRIT` / `EN_WARN` / `EN_TILT` | Seuils visuels énergie (échelle 0-5) | render.js, render-sprites.js |
+| `HA_SAD` / `HA_MED` / `HA_MED_ADULT` / `HA_SLOW` / `HA_WALK` / `HA_HIGH` / `HA_HAPPY_TEEN` / `HA_ARMS_UP` | Seuils visuels bonheur (échelle 0-5) | render.js, render-sprites.js, envs.js |
 
 ### js/app.js
 | Fonction | Rôle | Appelée par | Appelle |
@@ -702,12 +714,19 @@ index.html
 | `drawProp(p, prop, x, y)` | Pixel art d'un prop | `drawAccessoires`, `p.draw` | `pxFree` |
 | `spawnP(x, y, c)` | Push particule | `toggleHab`, `cleanPoops`, `confirmSlot`, `acheterProp`, `triggerTouchReaction` | — |
 | `drawSky` / `drawCl` / `drawZzz` | Ciel + nuages + Zzz | `p.draw` | `px`, `getSolarPhase` |
-| `drawDither` | Damier état critique | `drawBaby/Teen/Adult` | — |
-| `drawAccessoires` | Accessoires sur sprite | `drawBaby/Teen/Adult` | `getPropDef`, `drawProp` |
-| `drawEgg` / `drawBaby` / `drawTeen` / `drawAdult` | Sprites par stade | `p.draw` | `px`, `getBreath`, `getCheekPulse`, `drawDither`, `drawAccessoires` |
 | `triggerTouchReaction` | FX au tap | `p.draw` (eatAnim), `p.touchStarted` | `flashBubble` |
-| `p.draw` | Boucle principale (340 lignes) | p5 framework | tout ce qui est ci-dessus |
+| `p.draw` | Boucle principale (~340 lignes) | p5 framework | sprites (render-sprites.js), envs.js, helpers ci-dessus |
 | `p.touchStarted` | Gestion taps | p5 framework | `cleanPoops`, `ouvrirSnack`, `triggerTouchReaction`, `triggerExpr` |
+
+### js/render-sprites.js *(nouveau — session 9)*
+| Fonction | Rôle | Appelée par | Appelle |
+|---|---|---|---|
+| `drawDither(p, x, y, w, h)` | Damier état critique (énergie basse) | `drawBaby`, `drawTeen`, `drawAdult` | `px` |
+| `drawAccessoires(p, topY, eyeY, neckY)` | Accessoires équipés sur le sprite | `drawBaby`, `drawTeen`, `drawAdult` | `getPropDef`, `drawProp`, `pxFree` |
+| `drawEgg(p, en, ha)` | Sprite stade œuf | `p.draw` | `px`, `getBreath` |
+| `drawBaby(p, en, ha)` | Sprite stade bébé | `p.draw` | `px`, `getBreath`, `getCheekPulse`, `drawDither`, `drawAccessoires` |
+| `drawTeen(p, en, ha)` | Sprite stade ado | `p.draw` | `px`, `getBreath`, `getCheekPulse`, `drawDither`, `drawAccessoires` |
+| `drawAdult(p, en, ha)` | Sprite stade adulte avec poses idle | `p.draw` | `px`, `getBreath`, `getCheekPulse`, `drawDither`, `drawAccessoires` |
 
 ### js/envs.js
 | Fonction | Rôle | Appelée par |

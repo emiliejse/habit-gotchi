@@ -1365,8 +1365,8 @@ function escapeHtml(str) {
 
 // ─── Long press & mode suppression ───────────────────────────────────────────
 
-// RÔLE : Démarre un timer de 500ms pour déclencher l'export d'un objet IA via appui long.
-// POURQUOI : Évite d'encombrer les cartes avec un bouton export — le geste est naturel sur mobile.
+// RÔLE : Démarre un timer de 900ms pour déclencher l'export d'un objet IA via appui long.
+// POURQUOI : 500ms se déclenchait trop facilement en scrollant l'inventaire — 900ms force un geste intentionnel.
 let _longPressTimer = null;
 function startLongPress(event, propId) {
   // Annuler tout timer précédent (sécurité si deux events se chevauchent)
@@ -1374,7 +1374,7 @@ function startLongPress(event, propId) {
   _longPressTimer = setTimeout(() => {
     _longPressTimer = null;
     exportObjetIA(propId);
-  }, 500); // 500ms = durée standard d'un appui long
+  }, 900); // 900ms : intentionnel sans être inconfortable
 }
 
 // RÔLE : Annule le timer d'appui long si le doigt/curseur est relâché ou quitte la carte.

@@ -835,23 +835,14 @@ body {
               28×28px = grande zone de tap, la fleur occupe toute la surface. */
 .slider-row input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 28px; height: 28px;
-  border-radius: 0;   /* POURQUOI : carré = la fleur en gradient occupe les coins */
+  width: 35px; height: 35px;
+  border-radius: 50%;
   cursor: pointer;
   border: none;
-  /* POURQUOI : fleur 8 pétales en radial-gradient superposés.
-     Chaque cercle est positionné autour du centre pour former une rosette.
-     currentColor ne fonctionne pas en gradient — on utilise var(--text2) directement. */
-  background:
-    radial-gradient(circle 5px at 50% 15%,   var(--text2) 100%, transparent 100%), /* haut        */
-    radial-gradient(circle 5px at 50% 85%,   var(--text2) 100%, transparent 100%), /* bas         */
-    radial-gradient(circle 5px at 15% 50%,   var(--text2) 100%, transparent 100%), /* gauche      */
-    radial-gradient(circle 5px at 85% 50%,   var(--text2) 100%, transparent 100%), /* droite      */
-    radial-gradient(circle 4px at 22% 22%,   var(--text2) 100%, transparent 100%), /* haut-gauche */
-    radial-gradient(circle 4px at 78% 22%,   var(--text2) 100%, transparent 100%), /* haut-droite */
-    radial-gradient(circle 4px at 22% 78%,   var(--text2) 100%, transparent 100%), /* bas-gauche  */
-    radial-gradient(circle 4px at 78% 78%,   var(--text2) 100%, transparent 100%), /* bas-droite  */
-    radial-gradient(circle 4px at 50% 50%,   var(--text2) 100%, transparent 100%); /* centre      */
+  /* POURQUOI : simple cercle plein — propre, lisible, pas de fond parasite.
+     radial-gradient du centre vers l'extérieur : couleur jusqu'à 45% du rayon, transparent au-delà.
+     Résultat : un disque coloré centré dans le thumb, fond transparent autour. */
+  background: radial-gradient(circle at 50% 50%, var(--text2) 45%, transparent 46%);
 }
 .slider-row .sv { font-size: 13px; font-weight: bold; width: 20px; text-align: center; flex-shrink: 0; }
 

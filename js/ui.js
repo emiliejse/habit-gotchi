@@ -442,6 +442,20 @@ function ouvrirSnack() {
 /* ─── SYSTÈME 7 : INGÉNIERIE (Mise à jour des Data dans le DOM) ── */
 
 /**
+ * RÔLE : Met à jour les fleurs de quota dans #thought-count
+ * POURQUOI : Remplace l'affichage textuel "(0/3)" par 3 ✿ visuelles qui s'estompent
+ */
+function updThoughtFlowers() {
+  const tc = document.getElementById('thought-count');
+  if (!tc) return;
+  const used = window.D.thoughtCount || 0;
+  const total = 3;
+  tc.innerHTML = Array.from({ length: total }, (_, i) =>
+    `<span class="${i < (total - used) ? 'flower-on' : 'flower-off'}">✿</span>`
+  ).join('');
+}
+
+/**
  * Fonction centrale de mise à jour de l'interface (HUD, jauges, XP, noms).
  * Appelée dès qu'une donnée change dans app.js.
  */
@@ -472,13 +486,12 @@ function updUI() {
   const petalesBoutique = document.getElementById('petales-wallet-boutique');
   if (petalesBoutique) petalesBoutique.textContent = `${D.g.petales || 0}`;
   
-  const tc = document.getElementById('thought-count');
-  if (tc) tc.textContent = `(${window.D.thoughtCount || 0}/3)`;
+  updThoughtFlowers();
   // RÔLE : Met à jour le label du bouton avec le nom du Gotchi
   // POURQUOI : Le span #btn-ask-label est la seule source du texte — plus de nœud texte brut dans le HTML
   const btnAskLabel = document.getElementById('btn-ask-label');
   if (btnAskLabel) {
-    btnAskLabel.textContent = `Une pensée de ${window.D.g.name || 'le Gotchi'} ✿ `;
+    btnAskLabel.textContent = `Demander une pensée`;
   }
   // RÔLE : Affiche ou masque le badge 🎂 selon la date du jour et la config anniversaire.
   // POURQUOI : Le badge est cliquable pour rouvrir la modale — il reste visible toute la journée.
@@ -1545,8 +1558,7 @@ if (Array.isArray(data.bulles) && data.bulles.length) {
 
     /* ── Compteur ── */
     window.D.thoughtCount++;
-    const tc = document.getElementById('thought-count');
-    if (tc) tc.textContent = `(${window.D.thoughtCount}/3)`;
+    updThoughtFlowers();
 
     save(); renderProps(); updBubbleNow();
 

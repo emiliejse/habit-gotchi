@@ -58,6 +58,7 @@
   --sp-md:  12px;  /* Padding standard des cartes et boutons */
   --sp-lg:  16px;  /* Padding généreux, marges entre sections */
   --sp-xl:  24px;  /* Marges entre blocs majeurs */
+  --app-gutter: 14px; /* RÔLE : marge latérale uniforme — console, dynamic-zone, tama, bulle, sliders */
 
   /* ─── BORDER RADIUS ──────────────────────────────────────────────── */
   /* RÔLE : Rayon de courbure cohérent sur tous les composants */
@@ -124,7 +125,7 @@ body {
   right: 0;
   z-index: 50;
   background: var(--bg);
-  padding: calc(var(--sat) + 6px) 10px 0;
+  padding: calc(var(--sat) + 6px) var(--app-gutter) 0;
   border-bottom: 2px solid var(--border);
   box-shadow: 0 2px 10px var(--shadow);
 }
@@ -133,7 +134,7 @@ body {
 #dynamic-zone{
   flex: 1;
   overflow-y: auto;
-  padding: 8px 10px;
+  padding: 8px var(--app-gutter);
   padding-top: 320px; /* fallback avant calcul JS — remplacé immédiatement par syncConsoleHeight() */
   padding-bottom: calc(64px + var(--sab));
   width: 100%;
@@ -189,7 +190,7 @@ body {
   padding: 2px;
   box-shadow: none;
   margin: 4px auto 0;
-  max-width: 340px;
+  max-width: 100%; /* POURQUOI : le padding de #console-top gère déjà les marges latérales */
   position: relative;
   z-index: 1;
   /* Réduction dynamique de la console (quand on change d'onglet) */
@@ -264,7 +265,7 @@ body {
   box-shadow: 0 2px 12px var(--shadow);
   position: relative;
   margin: 6px auto 0;
-  max-width: 340px;
+  max-width: 100%; /* POURQUOI : le padding de #console-top gère déjà les marges latérales */
   width: 100%;
   box-sizing: border-box;
   z-index: 10;
@@ -561,6 +562,37 @@ body {
   padding: var(--sp-lg);
   margin-bottom: var(--sp-lg); /* POURQUOI : espace généreux entre carte Gotchi et carte habitudes */
 }
+
+/* RÔLE : Bouton info discret — juste un petit "i" dans le coin, pas un bouton visible */
+.btn-info-discret {
+  background: none;
+  border: 1px solid rgba(176,144,208,0.4);
+  border-radius: 50%;
+  width: 18px; height: 18px;
+  font-size: 10px;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-family: serif; /* POURQUOI : le "i" en serif est plus lisible à petite taille */
+  font-style: italic;
+  padding: 0;
+  opacity: 0.8;
+  transition: opacity .15s;
+}
+.btn-info-discret:hover { opacity: 1; }
+
+/* RÔLE : Fleurs de quota — indique visuellement combien de pensées il reste */
+.thought-flowers {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 8px;
+  font-size: 20px;
+  letter-spacing: 3px;
+}
+.thought-flowers .flower-on  { opacity: 1;   color: var(--lilac); }
+.thought-flowers .flower-off { opacity: 0.2; color: var(--text2); }
 
 /* RÔLE : Zone pensée IA — intégrée dans la carte Gotchi avec fond légèrement plus foncé */
 /* POURQUOI : distingue visuellement la section IA sans en faire une carte séparée */

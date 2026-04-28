@@ -50,8 +50,12 @@ function drawDither(p, x, y, w, h, color) {
 function drawAccessoires(p, cx, anchors, stage) {
   if (!window.D?.g?.props) return;
 
+  // RÔLE : Filtrer les accessoires par environnement actif.
+  // POURQUOI : Feature multi-env v3.49 — chaque env peut avoir ses propres accessoires.
+  //            Rétrocompat : si prop.env non défini (ancienne sauvegarde), on affiche quand même.
+  const envActif = window.D.g.activeEnv || 'parc';
   window.D.g.props
-    .filter(pr => pr.actif && pr.type === 'accessoire')
+    .filter(pr => pr.actif && pr.type === 'accessoire' && (pr.env === envActif || !pr.env))
     .forEach(prop => {
       const def = getPropDef(prop.id);
       if (!def || !def.pixels) return;

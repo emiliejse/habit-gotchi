@@ -343,9 +343,12 @@ const p5s = (p) => {
 
     drawActiveEnv(p, envActif, n, h);
 
-    // 2. Props Ambiance
+    // 2. Props Ambiance — filtrées par environnement actif
+    // RÔLE : N'afficher que les ambiances assignées à l'env en cours.
+    // POURQUOI : Chaque univers peut avoir ses propres ambiances depuis la v3.49.
+    //            Rétrocompat : si env non défini (ancienne sauvegarde), on affiche quand même.
     if (g.props) {
-      g.props.filter(pr => pr.actif && pr.type === 'ambiance').forEach(prop => {
+      g.props.filter(pr => pr.actif && pr.type === 'ambiance' && (pr.env === envActif || !pr.env)).forEach(prop => {
         const def = getPropDef(prop.id);
         if (def && def.pixels) {
           const motion = def.motion || 'drift';
@@ -382,17 +385,19 @@ const p5s = (p) => {
     });
     window._gotchiNearPoop = gotchiNearPoop;
 
-    // 4. Props Décor — Fond (A, B)
+    // 4. Props Décor — Fond (A, B) — filtrées par environnement actif
+    // RÔLE : N'afficher que les décors de fond assignés à l'env en cours.
+    // POURQUOI : Feature multi-env v3.49. Rétrocompat : env absent → toujours visible.
 if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B')).forEach(prop => {
+  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B') && (pr.env === envActif || !pr.env)).forEach(prop => {
     const def = getPropDef(prop.id);
     if (def?.pixels) { const slot = PROP_SLOTS[prop.slot]; if (slot) drawProp(p, def, slot.x, slot.y); }
   });
 }
 
-// 5. Props Décor — SOL (devant le décor, DERRIÈRE le Gotchi)
+// 5. Props Décor — SOL (devant le décor, DERRIÈRE le Gotchi) — filtrées par env
 if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot === 'SOL').forEach(prop => {
+  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot === 'SOL' && (pr.env === envActif || !pr.env)).forEach(prop => {
     const def = getPropDef(prop.id);
     if (def?.pixels) { const slot = PROP_SLOTS['SOL']; if (slot) drawProp(p, def, slot.x, slot.y); }
   });
@@ -526,9 +531,9 @@ if (window.shakeTimer > 0) window.shakeTimer--;
     const wc = window.meteoData?.weathercode;
     if (wc === 45 || wc === 48) drawFog(p);
 
-    // 9. Props Décor — Premier plan (C, D) — DEVANT le Gotchi
+    // 9. Props Décor — Premier plan (C, D) — DEVANT le Gotchi — filtrées par env
 if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'C' || pr.slot === 'D')).forEach(prop => {
+  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'C' || pr.slot === 'D') && (pr.env === envActif || !pr.env)).forEach(prop => {
     const def = getPropDef(prop.id);
     if (def?.pixels) { const slot = PROP_SLOTS[prop.slot]; if (slot) drawProp(p, def, slot.x, slot.y); }
   });

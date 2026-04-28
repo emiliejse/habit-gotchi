@@ -4,7 +4,7 @@
    pour forcer le rechargement chez tous les utilisateurs.
    ============================================================ */
 
-const CACHE_VERSION = 'v3.48';  // ⚠️ SYNC → app.js ligne 1 : window.APP_VERSION
+const CACHE_VERSION = 'v3.50';  // ⚠️ SYNC → app.js ligne 1 : window.APP_VERSION
 
 const ASSETS = [
   './',

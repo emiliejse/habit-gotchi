@@ -186,15 +186,34 @@ function go(t) {
   // donnent l'effet de glissement/rétrécissement. syncConsoleHeight recalcule après.
   if (t === 'gotchi') {
     consoleTop.classList.remove('compact');
-    const h = hr();
-    window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
+    // Si on quitte l'inventaire (forçage temporaire actif), on remet l'env selon l'heure
+    if (window._invEnvForced) {
+      window._invEnvForced = false;
+      const h = hr();
+      window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
+    } else {
+      const h = hr();
+      window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
+    }
   } else {
     consoleTop.classList.add('compact');
-    if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
-    else if (t === 'perso')    window.D.g.activeEnv = 'parc';
-    else if (t === 'progress') window.D.g.activeEnv = 'montagne';
-    else if (t === 'settings') window.D.g.activeEnv = 'chambre';
-    else if (t === 'props')    window.D.g.activeEnv = 'parc';
+    if (t === 'props') {
+      // RÔLE : En arrivant dans l'inventaire, on ne force PAS d'env —
+      //        on garde l'env actuel pour que le switcher soit cohérent avec ce qu'on voit.
+      // POURQUOI : L'utilisatrice peut arriver depuis n'importe quel état. Le switcher
+      //            se synchronise sur l'env en cours et elle peut ensuite changer.
+      window._invEnvForced = false; // reset au cas où on revient dans l'onglet
+      // l'env reste tel quel — le switcher affichera l'env actuel
+    } else {
+      // En quittant props vers un autre onglet, nettoyer le flag et reprendre la logique normale
+      if (window._invEnvForced) {
+        window._invEnvForced = false;
+      }
+      if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
+      else if (t === 'perso')    window.D.g.activeEnv = 'parc';
+      else if (t === 'progress') window.D.g.activeEnv = 'montagne';
+      else if (t === 'settings') window.D.g.activeEnv = 'chambre';
+    }
   }
   save();
 
@@ -205,6 +224,8 @@ function go(t) {
     save();
     renderProps();
     updBadgeBoutique();
+    // RÔLE : Synchroniser le switcher sur l'env actuel après le rendu
+    window._updInvEnvSwitcher?.();
   }
   if (t === 'perso')   renderPerso();
   if (t === 'journal') { journalLocked = true; renderJ(); }
@@ -743,68 +764,160 @@ function renderPropMini(canvas, def) {
   }
 }
 
+// RÔLE : Construit le HTML d'une carte d'objet dans l'inventaire.
+// POURQUOI : Factorisé pour être réutilisé dans tous les groupes.
+// isNew : true si l'objet a été acquis il y a moins de 48h
+function _propCard(p, index, def, D, isNew) {
+  const isClaud = !!(D.propsPixels && D.propsPixels[p.id]);
+  const badgeId = `mini-${p.id}`;
+
+  // Badge "NEW" pour les objets récents (< 48h), seulement dans la section Rangés
+  const newBadge = isNew
+    ? `<span style="position:absolute;top:3px;left:4px;font-size:8px;font-weight:bold;
+        background:var(--coral,#f07);color:#fff;border-radius:6px;padding:1px 4px;
+        letter-spacing:.5px;line-height:1.4">NEW</span>`
+    : '';
+
+  // Icône ✦ + corbeille pour les créations IA
+  const claudBadge = isClaud ? `
+    <span style="position:absolute;top:3px;${isNew ? 'left:32px' : 'left:4px'};font-size:14px;color:var(--lilac);">✦</span>
+    <span onclick="event.stopPropagation();supprimerObjetIA('${p.id}')"
+      style="position:absolute;top:2px;right:4px;font-size:13px;cursor:pointer;opacity:.6">🗑️</span>
+  ` : '';
+
+  return `<div onclick="toggleProp(${index})" style="
+    background:${p.actif ? 'var(--mint)' : '#fff'};
+    border:2px solid ${p.actif ? 'var(--mint)' : isClaud ? 'var(--lilac)' : 'var(--border)'};
+    border-radius:var(--r-md);padding:6px 4px 8px;font-size:var(--fs-xs);font-weight:bold;
+    cursor:pointer;display:flex;flex-direction:column;align-items:center;
+    justify-content:space-between;gap:4px;transition:.2s;text-align:center;
+    box-shadow:0 2px 4px rgba(0,0,0,.05);position:relative;min-height:90px;">
+    ${newBadge}${claudBadge}
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+      ${def && def.pixels
+        ? `<canvas id="${badgeId}" style="image-rendering:pixelated;border-radius:3px"></canvas>`
+        : `<span style="font-size:22px">${p.emoji || '🎁'}</span>`}
+    </div>
+    <div style="width:100%;">
+      <div>${p.nom}</div>
+      <div style="font-size:var(--fs-xs);text-transform:uppercase;opacity:.7;font-weight:normal;">${p.type}</div>
+    </div>
+  </div>`;
+}
+
+// RÔLE : Construit une section (bandeau + grille) pour un groupe d'objets.
+// POURQUOI : Évite la répétition pour chaque groupe de l'inventaire.
+function _propSection(titre, items) {
+  if (items.length === 0) return '';
+  return `
+    <div style="margin-bottom:12px">
+      <div style="font-size:var(--fs-xs);font-weight:bold;text-transform:uppercase;
+        letter-spacing:1px;color:var(--text2);padding:4px 0 6px;
+        border-bottom:1px solid var(--border);margin-bottom:6px">
+        ${titre} <span style="font-weight:normal;opacity:.6">(${items.length})</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+        ${items.join('')}
+      </div>
+    </div>`;
+}
+
+// RÔLE : Affiche et met à jour l'onglet inventaire complet.
+// POURQUOI : Appelé après chaque action sur les props (activer, ranger, acheter, etc.)
 function renderProps() {
-  const D = window.D;
+  const D       = window.D;
   const allDefs = [...(window.PROPS_LIB || []), ...(window.PROPS_LOCAL || [])];
-  const cats = {
-    'tous':       { label: '✿ Tous' },
-    'decor':      { label: '🪑 Décor' },
-    'accessoire': { label: '🎀 Accessoires' },
-    'ambiance':   { label: '🌈 Ambiances' },
-    'claude':     { label: '✨ Créations' },
-  };
+  const envActif = D.g.activeEnv || 'parc'; // env actuellement affiché dans le switcher
+  const now48h   = Date.now() - 48 * 60 * 60 * 1000; // seuil "nouveau" = 48h
+
+  // ── Filtres par catégorie — pleine largeur sur 2 lignes ──────────
+  const cats = [
+    { key: 'tous',       label: '✿ Tous' },
+    { key: 'decor',      label: '🪑 Décor' },
+    { key: 'accessoire', label: '🎀 Accessoires' },
+    { key: 'ambiance',   label: '🌈 Ambiances' },
+    { key: 'claude',     label: '✨ Créations' },
+  ];
   const filterEl = document.getElementById('props-filters');
   if (filterEl) {
-    filterEl.innerHTML = Object.entries(cats).map(([key, cat]) =>
-      `<button onclick="setPropsFilter('${key}')" style="padding:4px 10px;border-radius:20px;border:2px solid var(--border);font:bold 10px 'Courier New',monospace;cursor:pointer;background:${propsFilterActive===key?'var(--lilac)':'#fff'};color:${propsFilterActive===key?'#fff':'var(--text2)'};transition:.15s;">${cat.label}</button>`
-    ).join('');
+    filterEl.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:8px 0';
+    filterEl.innerHTML = cats.map(({ key, label }) => {
+      const active = propsFilterActive === key;
+      return `<button onclick="setPropsFilter('${key}')"
+        style="padding:5px 2px;border-radius:20px;border:2px solid var(--border);
+        font:bold 9px 'Courier New',monospace;cursor:pointer;width:100%;
+        background:${active ? 'var(--lilac)' : '#fff'};
+        color:${active ? '#fff' : 'var(--text2)'};
+        transition:.15s;">${label}</button>`;
+    }).join('');
   }
+
+  // ── Masquer l'ancien conteneur du header (plus utilisé) ──
   const btnTout = document.getElementById('btn-ranger-tout');
-if (btnTout) {
-  const aDesActifs = D.g.props.some(p => p.actif);
-  btnTout.style.display = aDesActifs ? 'block' : 'none';
-}
+  if (btnTout) btnTout.style.display = 'none';
+
   const listEl = document.getElementById('props-list');
   if (!listEl) return;
+
+  // ── Inventaire vide ───────────────────────────────────────
   if (!D.g.props || D.g.props.length === 0) {
     listEl.innerHTML = '<p style="font-size:var(--fs-sm);color:var(--text2);text-align:center;padding:var(--sp-md)">Ton sac est vide. Reviens plus tard ! ✿</p>';
     return;
   }
+
+  // ── Filtre de catégorie ───────────────────────────────────
   const filtered = D.g.props
     .map((p, index) => ({ p, index, def: allDefs.find(l => l.id === p.id) }))
-.filter(({ p }) => {
-    if (propsFilterActive === 'tous') return true;
-    if (propsFilterActive === 'claude') return !!(D.propsPixels && D.propsPixels[p.id]);
-    return p.type === propsFilterActive;
-  })
-  .sort((a, b) => {
-    // Actifs en premier, puis ordre alphabétique dans chaque groupe
-    if (b.p.actif !== a.p.actif) return b.p.actif ? 1 : -1;
-    return a.p.nom.localeCompare(b.p.nom, 'fr');
-  });
-  listEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">` +
-    filtered.map(({ p, index, def }) => {
-      const isClaud = !!(D.propsPixels && D.propsPixels[p.id]);
-      const badgeId = `mini-${p.id}`;
-      return `<div onclick="toggleProp(${index})" style="background:${p.actif?'var(--mint)':'#fff'};border:2px solid ${p.actif?'var(--mint)':isClaud?'var(--lilac)':'var(--border)'};border-radius:var(--r-md);padding:6px 4px 8px;font-size:var(--fs-xs);font-weight:bold;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px;transition:.2s;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.05);position:relative;min-height:90px;">
-        ${isClaud ? `
-  <span style="position:absolute;top:3px;left:4px;font-size:14px;color:var(--lilac);">✦</span>
-  <span onclick="event.stopPropagation();supprimerObjetIA('${p.id}')" style="position:absolute;top:2px;right:4px;font-size:13px;cursor:pointer;opacity:.6">🗑️</span>
-` : ''}
-        <div style="flex:1;display:flex;align-items:center;justify-content:center;">
-          ${def && def.pixels ? `<canvas id="${badgeId}" style="image-rendering:pixelated;border-radius:3px"></canvas>` : `<span style="font-size:22px">${p.emoji||'🎁'}</span>`}
-        </div>
-        <div style="width:100%;">
-          <div>${p.nom}</div>
-          <div style="font-size:var(--fs-xs);text-transform:uppercase;opacity:.7;font-weight:normal;">${p.type}</div>
-        </div>
-      </div>`;
-    }).join('') + `</div>`;
+    .filter(({ p }) => {
+      if (propsFilterActive === 'tous')   return true;
+      if (propsFilterActive === 'claude') return !!(D.propsPixels && D.propsPixels[p.id]);
+      return p.type === propsFilterActive;
+    });
+
+  // ── Groupe "actifs dans l'env courant" (seulement cet env) ──
+  // POURQUOI : On ne montre que ce qui est actif dans l'environnement actuellement sélectionné
+  const sortAlpha  = arr => [...arr].sort((a, b) => a.p.nom.localeCompare(b.p.nom, 'fr'));
+  const groupActifs = sortAlpha(filtered.filter(({ p }) => p.actif && (p.env === envActif || !p.env)));
+
+  // ── Groupe "rangés" — récents en tête ────────────────────
+  // POURQUOI : Les nouveaux objets (< 48h) remontent pour être visibles sans scroller
+  const ranges = filtered.filter(({ p }) => !p.actif);
+  const rangesNew   = [...ranges].filter(({ p }) => (p.acquis || 0) > now48h)
+                                 .sort((a, b) => (b.p.acquis || 0) - (a.p.acquis || 0));
+  const rangesOld   = sortAlpha(ranges.filter(({ p }) => (p.acquis || 0) <= now48h));
+
+  // ── Génération des cartes ─────────────────────────────────
+  const toCards = (arr, markNew = false) =>
+    arr.map(({ p, index, def }) => _propCard(p, index, def, D, markNew && (p.acquis || 0) > now48h));
+
+  const aDesActifs = groupActifs.length > 0;
+
+  // ── Nom de la section active selon l'env ─────────────────
+  const envTitres = { parc: '🌳 Parc', chambre: '🛏️ Chambre', montagne: '⛰️ Montagne' };
+  const titreActif = envTitres[envActif] || '✨ Actifs';
+
+  // ── Bouton "Tout ranger" — en haut des rangés ────────────
+  // POURQUOI : Placé AVANT la liste des rangés pour rester accessible sans scroller
+  const btnRangerHTML = aDesActifs ? `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <button onclick="rangerTout('all')" class="btn btn-s"
+        style="font-size:var(--fs-xs);padding:3px 12px;">
+        📦 Tout ranger
+      </button>
+    </div>` : '';
+
+  listEl.innerHTML =
+    _propSection(titreActif, toCards(groupActifs)) +
+    btnRangerHTML +
+    _propSection('📦 Rangés', toCards(rangesNew, true).concat(toCards(rangesOld)));
+
+  // ── Dessiner les mini-sprites pixel art ──────────────────
   filtered.forEach(({ p, def }) => {
     if (def && def.pixels) renderPropMini(document.getElementById(`mini-${p.id}`), def);
   });
-  const wallet   = document.getElementById('xp-wallet');
-  if (wallet)  wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
+
+  const wallet = document.getElementById('xp-wallet');
+  if (wallet) wallet.textContent = `💜 ${D.g.totalXp} XP disponibles`;
 }
 
 function ouvrirBoutique() {
@@ -954,7 +1067,7 @@ function acheterProp(propId) {
   
   D.g.petales = (D.g.petales || 0) - prop.cout;
   if (!D.g.props) D.g.props = [];
-  D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false, pxSize:  prop.pxSize  || null, seen: false });
+  D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false, pxSize: prop.pxSize || null, seen: false, acquis: Date.now() });
 addEvent({
   type: 'cadeau',
   subtype: 'achat',
@@ -973,20 +1086,23 @@ addEvent({
 }
 function setPropsFilter(cat) { propsFilterActive = cat; renderProps(); }
 
-/**
- * Gère le clic sur un objet dans l'inventaire.
- * Active les accessoires directs, ou ouvre le sélecteur de position (Slots) pour les décors.
- */
+// RÔLE : Gère le clic sur un objet dans l'inventaire.
+// POURQUOI : Point d'entrée unique pour activer, désactiver ou reconfigurer un objet.
+//            L'environnement est automatiquement celui du switcher — plus de choix à faire.
 function toggleProp(index) {
-  const prop = D.g.props[index];
+  const prop    = window.D.g.props[index];
+  const envActif = window.D.g.activeEnv || 'parc'; // env du switcher = env cible
 
-  // --- Désactiver si déjà actif ---
+  // --- Désactiver / modifier si déjà actif ---
   if (prop.actif) {
     if (prop.type === 'decor') {
+      // Décor actif → modale de repositionnement (slot + ranger, env déjà fixé)
       openSlotPickerAvecRangement(index);
     } else {
+      // Accessoire ou ambiance → ranger directement (un clic = on range)
       prop.actif = false;
-      prop.slot = null;
+      prop.slot  = null;
+      prop.env   = null;
       save();
       renderProps();
       toast(`📦 ${prop.nom} rangé`);
@@ -995,58 +1111,18 @@ function toggleProp(index) {
     return;
   }
 
-  // --- Objets non-décor : activer direct ---
-  if (prop.type !== 'decor') {
-
-    // Désactiver ambiance avec même motion
-    if (prop.type === 'ambiance') {
-      const def = getPropDef(prop.id);
-      const motion = def?.motion || 'drift';
-      D.g.props.forEach(p => {
-        if (p !== prop && p.actif && p.type === 'ambiance') {
-          const pDef = getPropDef(p.id);
-          if ((pDef?.motion || 'drift') === motion) {
-            p.actif = false;
-            toast(`↩ ${p.nom} remplacé`);
-          }
-        }
-      });
-    }
-
-    // Désactiver accessoire avec même ancrage
-    if (prop.type === 'accessoire') {
-      const def = getPropDef(prop.id);
-      const ancrage = def?.ancrage || 'top';
-      D.g.props.forEach(p => {
-        if (p !== prop && p.actif && p.type === 'accessoire') {
-          const pDef = getPropDef(p.id);
-          if ((pDef?.ancrage || 'top') === ancrage) {
-            p.actif = false;
-            toast(`↩ ${p.nom} remplacé`);
-          }
-        }
-      });
-    }
-
-    prop.actif = true;
-    save();
-    renderProps();
-    toast(`✨ ${prop.nom} activé !`);
-    flashBubble(`Oh ! ${prop.nom} ! J'adore ! 💜`, 2500);
-    const gx = window._gotchiX || 100;
-    const gy = window._gotchiY || 100;
-    for (let i = 0; i < 15; i++) {
-      window.spawnP?.(gx + (Math.random() - 0.5) * 40, gy - 10,
-        ['#c8a0e8','#f0c0d8','#fff8b0','#88c8f0','#b0e8b0'][Math.floor(Math.random()*5)]);
-    }
-    window.triggerGotchiBounce?.();
-    return;
+  // --- Pas encore actif → activer dans l'env du switcher, sans modale ─────
+  if (prop.type === 'decor') {
+    // Les décors ont besoin d'un slot → modale de slot uniquement (env déjà connu)
+    openSlotPicker(index);
+  } else {
+    // Accessoires et ambiances : activation directe dans l'env actif
+    confirmEnvDirect(index, envActif);
   }
-
-  // --- Objet décor : ouvrir le picker de slot ---
-  openSlotPicker(index);
 }
 
+// RÔLE : Modale pour modifier l'env d'un accessoire/ambiance déjà actif, ou le ranger.
+// POURQUOI : Les non-décors n'ont pas de slot, donc pas besoin de l'étape 2 slots.
 function supprimerObjetIA(propId) {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
@@ -1066,14 +1142,21 @@ function confirmerSuppressionIA(propId) {
   toast(`🗑️ Objet supprimé`);
 }
 
-function makeSlotBtn(propIndex, slotId, label, arrow, occupied, currentSlot) {
-  const taken = occupied[slotId];
+// RÔLE : Génère un bouton de slot (position dans l'environnement).
+// POURQUOI : Réutilisé dans openSlotPickerAvecEnv.
+// envChoisi : transmis pour que confirmSlot sache dans quel env on place.
+function makeSlotBtn(propIndex, slotId, label, arrow, occupied, currentSlot, envChoisi) {
+  const taken     = occupied[slotId];
   const isCurrent = currentSlot === slotId;
-  return `<div onclick="confirmSlot(${propIndex},'${slotId}')" style="
-    border:2px solid ${isCurrent ? 'var(--lilac)' : 'var(--border)'}; 
+  // On stocke envChoisi dans _pendingPropEnv via le onclick (confirmSlot le lira)
+  const onclick   = envChoisi
+    ? `window._pendingPropEnv='${envChoisi}';confirmSlot(${propIndex},'${slotId}')`
+    : `confirmSlot(${propIndex},'${slotId}')`;
+  return `<div onclick="${onclick}" style="
+    border:2px solid ${isCurrent ? 'var(--lilac)' : 'var(--border)'};
     border-radius:var(--r-sm); padding:var(--sp-sm) 4px;
     cursor:pointer; text-align:center; font-size:var(--fs-sm); font-weight:bold;
-    background:${isCurrent ? 'rgba(176,144,208,.15)' : taken ? '#fff8f0' : '#fff'}; 
+    background:${isCurrent ? 'rgba(176,144,208,.15)' : taken ? '#fff8f0' : '#fff'};
     transition:.15s;"
     onmouseover="this.style.borderColor='var(--mint)'"
     onmouseout="this.style.borderColor='${isCurrent ? 'var(--lilac)' : 'var(--border)'}'">
@@ -1085,88 +1168,95 @@ function makeSlotBtn(propIndex, slotId, label, arrow, occupied, currentSlot) {
 }
 
 /**
- * Modale permettant de choisir visuellement la couche (Z-index) et la position du décor.
+ * Modale de placement d'un décor — slot seulement, env = activeEnv (pas de choix).
+ * RÔLE : Ouvre directement le choix de slot dans l'env actif du switcher.
+ * POURQUOI : L'env est déjà connu via le switcher — inutile de le redemander.
  */
 function openSlotPicker(propIndex) {
-  const prop = D.g.props[propIndex];
-
-  // Qui occupe quoi en ce moment ?
-  const occupied = {};
-  D.g.props.forEach(p => {
-    if (p.actif && p.slot) occupied[p.slot] = p.nom;
-  });
-
-const slots = [
-  { id: 'A',   label: 'Fond gauche',   desc: '↖ Arrière-plan' },
-  { id: 'B',   label: 'Fond droit',    desc: '↗ Arrière-plan' },
-  { id: 'C',   label: 'Devant gauche', desc: '↙ Premier plan' },
-  { id: 'SOL', label: 'Centre',        desc: '⬇ Devant Gotchi' },
-  { id: 'D',   label: 'Devant droit',  desc: '↘ Premier plan' },
-];
-
-  const slotHTML = slots.map(s => {
-    const taken = occupied[s.id];
-    const takenBadge = taken
-      ? `<span style="font-size:var(--fs-xs);color:var(--lilac);display:block">⚠ ${taken}</span>`
-      : '';
-    return `
-      <div onclick="confirmSlot(${propIndex},'${s.id}')" style="
-        border:2px solid var(--border); border-radius:var(--r-sm); padding:var(--sp-sm) 6px;
-        cursor:pointer; text-align:center; font-size:var(--fs-sm); font-weight:bold;
-        background:${taken ? '#fff8f0' : '#fff'};
-        transition:.15s;" onmouseover="this.style.borderColor='var(--mint)'"
-        onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:16px">📍</div>
-        <div>${s.label}</div>
-        <div style="font-size:var(--fs-xs);opacity:.6;font-weight:normal">${s.desc}</div>
-        ${takenBadge}
-      </div>`;
-  }).join('');
-
-  document.getElementById('modal').style.display = 'flex';
-document.getElementById('mbox').innerHTML = `
-  <h3 style="font-size:13px;margin-bottom:10px;color:var(--lilac)">
-    📍 Où placer ${prop.emoji || '🎁'} ${escape(prop.nom)} ?
-  </h3>
-
-  <div style="font-size:var(--fs-xs);opacity:.5;margin-bottom:4px;text-transform:uppercase">Fond</div>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:var(--sp-sm)">
-    ${makeSlotBtn(propIndex, 'A', 'Gauche',  '↖', occupied)}
-    ${makeSlotBtn(propIndex, 'B', 'Droite',  '↗', occupied)}
-  </div>
-
-  <div style="font-size:var(--fs-xs);opacity:.5;margin-bottom:4px;text-transform:uppercase">Devant</div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
-    ${makeSlotBtn(propIndex, 'C',   'Gauche', '↙', occupied)}
-    ${makeSlotBtn(propIndex, 'SOL', 'Centre', '⬇', occupied)}
-    ${makeSlotBtn(propIndex, 'D',   'Droite', '↘', occupied)}
-  </div>
-
-  <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:var(--fs-sm)">Annuler</button>
-`;
-animEl(document.getElementById('mbox'), 'bounceIn');
+  // L'env cible = l'env actuellement sélectionné dans le switcher de l'inventaire
+  const envChoisi = window.D.g.activeEnv || 'parc';
+  openSlotPickerAvecEnv(propIndex, envChoisi, false);
 }
 
-function confirmSlot(propIndex, slotId) {
-  const prop = D.g.props[propIndex];
+/**
+ * Modale de sélection du slot pour un décor dans un environnement donné.
+ * RÔLE : Affiche les 5 slots de position dans l'env envChoisi.
+ * avecRangement : true si on est en train de modifier un décor déjà placé (affiche bouton Ranger).
+ */
+function openSlotPickerAvecEnv(propIndex, envChoisi, avecRangement) {
+  const prop = window.D.g.props[propIndex];
 
-  // Désactiver l'éventuel occupant actuel du slot
-  D.g.props.forEach(p => {
-    if (p.actif && p.slot === slotId && p !== prop) {
+  // Qui occupe quoi dans CET environnement ?
+  const occupied = {};
+  window.D.g.props.forEach(p => {
+    if (p.actif && p.slot && p.env === envChoisi) occupied[p.slot] = p.nom;
+  });
+
+  const envLabel = { parc: '🌳 Parc', chambre: '🛏️ Chambre', montagne: '⛰️ Montagne' };
+
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <button onclick="${avecRangement ? `openSlotPickerAvecRangement(${propIndex})` : `openSlotPicker(${propIndex})`}"
+        style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2);padding:0">←</button>
+      <h3 style="font-size:13px;color:var(--lilac);margin:0">
+        📍 Emplacement — ${envLabel[envChoisi] || envChoisi}
+      </h3>
+    </div>
+    <p style="font-size:var(--fs-xs);opacity:.5;margin-bottom:8px">
+      ${prop.emoji || '🎁'} ${escape(prop.nom)}
+    </p>
+
+    <div style="font-size:var(--fs-xs);opacity:.5;margin-bottom:4px;text-transform:uppercase">Fond</div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:var(--sp-sm)">
+      ${makeSlotBtn(propIndex, 'A', 'Gauche', '↖', occupied, avecRangement ? prop.slot : null, envChoisi)}
+      ${makeSlotBtn(propIndex, 'B', 'Droite', '↗', occupied, avecRangement ? prop.slot : null, envChoisi)}
+    </div>
+
+    <div style="font-size:var(--fs-xs);opacity:.5;margin-bottom:4px;text-transform:uppercase">Devant</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+      ${makeSlotBtn(propIndex, 'C',   'Gauche', '↙', occupied, avecRangement ? prop.slot : null, envChoisi)}
+      ${makeSlotBtn(propIndex, 'SOL', 'Centre', '⬇', occupied, avecRangement ? prop.slot : null, envChoisi)}
+      ${makeSlotBtn(propIndex, 'D',   'Droite', '↘', occupied, avecRangement ? prop.slot : null, envChoisi)}
+    </div>
+
+    ${avecRangement ? `
+      <button class="btn btn-d" onclick="rangerProp(${propIndex})"
+        style="width:100%;font-size:var(--fs-sm);margin-bottom:6px">📦 Ranger</button>
+    ` : ''}
+    <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:var(--fs-sm)">Annuler</button>
+  `;
+  animEl(document.getElementById('mbox'), 'bounceIn');
+
+  // Stocker l'env choisi temporairement pour que confirmSlot puisse le lire
+  window._pendingPropEnv = envChoisi;
+}
+
+// RÔLE : Confirme la position d'un décor dans un slot ET un environnement.
+// POURQUOI : Remplace l'ancienne confirmSlot qui ne gérait pas l'env.
+function confirmSlot(propIndex, slotId) {
+  const prop     = window.D.g.props[propIndex];
+  const envCible = window._pendingPropEnv || prop.env || window.D.g.activeEnv || 'parc';
+
+  // Désactiver tout occupant actuel de ce slot dans le même environnement
+  window.D.g.props.forEach(p => {
+    if (p.actif && p.slot === slotId && p.env === envCible && p !== prop) {
       p.actif = false;
-      p.slot = null;
+      p.slot  = null;
+      p.env   = null;
       toast(`↩ ${p.nom} déplacé`);
     }
   });
 
   prop.actif = true;
-  prop.slot = slotId;
+  prop.slot  = slotId;
+  prop.env   = envCible;
+  window._pendingPropEnv = null; // nettoyer le temporaire
   save();
   clModal();
   renderProps();
-  toast(`✨ ${prop.nom} placé (${slotId}) !`);
+  toast(`✨ ${prop.nom} placé !`);
   flashBubble(`Oh ! ${prop.nom} ! J'adore ! 💜`, 2500);
-  // Confettis au moment du choix du slot
   const gx = window._gotchiX || 100;
   const gy = window._gotchiY || 100;
   for (let i = 0; i < 15; i++) {
@@ -1176,41 +1266,65 @@ function confirmSlot(propIndex, slotId) {
   window.triggerGotchiBounce?.();
 }
 
-function openSlotPickerAvecRangement(propIndex) {
-  const prop = D.g.props[propIndex];
-  const occupied = {};
-  D.g.props.forEach(p => { if (p.actif && p.slot) occupied[p.slot] = p.nom; });
+// RÔLE : Active directement un objet non-décor dans un environnement donné.
+// POURQUOI : Les accessoires et ambiances n'ont pas de slot — juste un env.
+function confirmEnvDirect(propIndex, envChoisi) {
+  const prop = window.D.g.props[propIndex];
+  const def  = window.PROPS_LIB?.find(p => p.id === prop.id);
 
-  // Réutilise makeSlotBtn existant
-  document.getElementById('modal').style.display = 'flex';
-  document.getElementById('mbox').innerHTML = `
-    <h3 style="font-size:13px;margin-bottom:6px;color:var(--lilac)">
-      📍 ${prop.emoji || '🎁'} ${escape(prop.nom)}
-    </h3>
-    <p style="font-size:var(--fs-sm);opacity:.6;margin-bottom:10px">
-      Changer d'emplacement ?
-    </p>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:var(--sp-sm)">
-      ${makeSlotBtn(propIndex, 'A',   'Gauche', '↖', occupied, prop.slot)}
-      ${makeSlotBtn(propIndex, 'B',   'Droite', '↗', occupied, prop.slot)}
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
-      ${makeSlotBtn(propIndex, 'C',   'Gauche', '↙', occupied, prop.slot)}
-      ${makeSlotBtn(propIndex, 'SOL', 'Centre', '⬇', occupied, prop.slot)}
-      ${makeSlotBtn(propIndex, 'D',   'Droite', '↘', occupied, prop.slot)}
-    </div>
-    <button class="btn btn-d" onclick="rangerProp(${propIndex})" style="width:100%;font-size:var(--fs-sm);margin-bottom:6px">
-      📦 Ranger
-    </button>
-    <button class="btn btn-s" onclick="clModal()" style="width:100%;font-size:var(--fs-sm)">Annuler</button>
-  `;
-  animEl(document.getElementById('mbox'), 'bounceIn');
+  // Désactiver les concurrents (même ancrage ou même motion) dans le même env
+  if (prop.type === 'ambiance') {
+    const motion = def?.motion || 'drift';
+    window.D.g.props.forEach(p => {
+      if (p !== prop && p.actif && p.type === 'ambiance' && p.env === envChoisi) {
+        const pDef = window.PROPS_LIB?.find(l => l.id === p.id);
+        if ((pDef?.motion || 'drift') === motion) { p.actif = false; p.env = null; toast(`↩ ${p.nom} remplacé`); }
+      }
+    });
+  }
+  if (prop.type === 'accessoire') {
+    const ancrage = def?.ancrage || 'top';
+    window.D.g.props.forEach(p => {
+      if (p !== prop && p.actif && p.type === 'accessoire' && p.env === envChoisi) {
+        const pDef = window.PROPS_LIB?.find(l => l.id === p.id);
+        if ((pDef?.ancrage || 'top') === ancrage) { p.actif = false; p.env = null; toast(`↩ ${p.nom} remplacé`); }
+      }
+    });
+  }
+
+  prop.actif = true;
+  prop.env   = envChoisi;
+  save();
+  clModal();
+  renderProps();
+  toast(`✨ ${prop.nom} activé !`);
+  flashBubble(`Oh ! ${prop.nom} ! J'adore ! 💜`, 2500);
+  const gx = window._gotchiX || 100;
+  const gy = window._gotchiY || 100;
+  for (let i = 0; i < 15; i++) {
+    window.spawnP?.(gx + (Math.random() - 0.5) * 40, gy - 10,
+      ['#c8a0e8','#f0c0d8','#fff8b0','#88c8f0','#b0e8b0'][Math.floor(Math.random()*5)]);
+  }
+  window.triggerGotchiBounce?.();
 }
 
+/**
+ * Modale de modification — décor déjà actif, repositionner dans le même env ou ranger.
+ * RÔLE : Ouvre directement les slots de l'env actif de la prop (pas de choix d'env).
+ * POURQUOI : Un décor actif est dans un env fixé — on repositionne dans ce même env.
+ *            Pour le déplacer vers un autre env, il faut d'abord le ranger puis le replacer.
+ */
+function openSlotPickerAvecRangement(propIndex) {
+  // Ouvre la modale de slots directement dans l'env de la prop (avec bouton Ranger)
+  openSlotPickerAvecEnv(propIndex, window.D.g.props[propIndex].env || window.D.g.activeEnv || 'parc', true);
+}
+
+// RÔLE : Range un objet (désactive + efface env et slot).
 function rangerProp(propIndex) {
-  const prop = D.g.props[propIndex];
+  const prop = window.D.g.props[propIndex];
   prop.actif = false;
-  prop.slot = null;
+  prop.slot  = null;
+  prop.env   = null;
   save();
   clModal();
   renderProps();
@@ -1225,7 +1339,8 @@ function rangerTout(type = 'all') {
     if (!p.actif) return;
     if (type === 'all' || p.type === type) {
       p.actif = false;
-      p.slot = null;
+      p.slot  = null;
+      p.env   = null; // nettoyage env (feature multi-env v3.49)
       count++;
     }
   });
@@ -1239,6 +1354,35 @@ function rangerTout(type = 'all') {
   toast(`📦 ${count} objet${count > 1 ? 's' : ''} rangé${count > 1 ? 's' : ''}`);
 }
 window.rangerTout = rangerTout;
+
+// ── SWITCHER D'ENV DEPUIS L'INVENTAIRE ────────────────────────────────
+
+// RÔLE : Change l'environnement du tama depuis l'onglet inventaire (preview en direct).
+// POURQUOI : Permet de visualiser les objets placés dans chaque univers sans quitter l'inventaire.
+//            Le changement est temporaire — quand on quitte l'onglet, la logique
+//            heure/onglet reprend (voir navTo dans ui.js).
+function invSetEnv(env) {
+  window.D.g.activeEnv = env;
+  window._invEnvForced = true; // flag : on est en mode preview inventaire
+  save();
+  _updInvEnvSwitcher();
+}
+window.invSetEnv = invSetEnv;
+
+// RÔLE : Met à jour l'apparence visuelle des 3 boutons du switcher.
+// POURQUOI : Surligne l'environnement actuellement actif.
+function _updInvEnvSwitcher() {
+  const activeEnv = window.D.g.activeEnv || 'parc';
+  ['parc', 'chambre', 'montagne'].forEach(env => {
+    const btn = document.getElementById(`inv-env-${env}`);
+    if (!btn) return;
+    const isActive = activeEnv === env;
+    btn.style.background    = isActive ? '#fff' : 'transparent';
+    btn.style.color          = isActive ? 'var(--lilac)' : 'var(--text2)';
+    btn.style.boxShadow      = isActive ? '0 1px 4px rgba(0,0,0,.1)' : 'none';
+  });
+}
+window._updInvEnvSwitcher = _updInvEnvSwitcher;
 
 /* ─── SYSTÈME 7 : INGÉNIERIE (Salle des Machines / Debug) ────────── */
  function debugProps() {
@@ -1591,7 +1735,7 @@ if (Array.isArray(data.bulles) && data.bulles.length) {
     if (giveGift && data.cadeau) {
       if (!D.g.props) D.g.props = [];
       if (!D.g.props.find(p => p.id === data.cadeau.id)) {
-        D.g.props.push({ id:data.cadeau.id, nom:data.cadeau.nom, type:data.cadeau.type, actif:false, pxSize: data.cadeau.pxSize || null, seen:false });
+        D.g.props.push({ id:data.cadeau.id, nom:data.cadeau.nom, type:data.cadeau.type, actif:false, pxSize: data.cadeau.pxSize || null, seen:false, acquis: Date.now() });
         D.propsPixels                = D.propsPixels || {};
         D.propsPixels[data.cadeau.id] = data.cadeau;
         window.PROPS_LOCAL           = Object.values(D.propsPixels);
@@ -1687,7 +1831,8 @@ async function acheterPropClaude() {
         slot:    obj.slot   || 'A',
         motion:  obj.motion || 'drift',
         ancrage: obj.ancrage || null,
-        seen:    false
+        seen:    false,
+        acquis:  Date.now()  // timestamp pour badge "nouveau"
       });
       D.propsPixels         = D.propsPixels || {};
       D.propsPixels[obj.id] = obj;

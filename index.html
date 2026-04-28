@@ -361,15 +361,20 @@ Ton bilan de la semaine apparaîtra ici...
   -->
 <div id="p-props" class="pnl">
   <div class="card">
-    <h2 style="display:flex;align-items:center;justify-content:space-between">
-      🎒 Mon Inventaire
-      <div id="btn-ranger-tout" style="display:none">
-        <button class="btn btn-s" onclick="rangerTout('all')"
-          style="font-size:var(--fs-sm);padding:3px 8px;opacity:0.6;border-style:dashed"> <!-- était 10px -->
-          📦 Tout ranger
-        </button>
-      </div>
-    </h2>
+    <h2>🎒 Mon Inventaire</h2>
+
+    <!-- Switcher d'environnement — preview en direct du tama -->
+    <!-- RÔLE : Permet de voir le tama dans chaque univers depuis l'inventaire -->
+    <!-- POURQUOI : Utile pour placer les objets et visualiser le résultat sans changer d'onglet -->
+    <div id="inv-env-switcher" style="display:flex;gap:4px;margin-bottom:10px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
+      <button onclick="invSetEnv('parc')"     id="inv-env-parc"     class="inv-env-btn" style="flex:1;padding:5px 4px;border-radius:999px;border:none;font-size:var(--fs-xs);cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">🌳 Parc</button>
+      <button onclick="invSetEnv('chambre')"  id="inv-env-chambre"  class="inv-env-btn" style="flex:1;padding:5px 4px;border-radius:999px;border:none;font-size:var(--fs-xs);cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">🛏️ Chambre</button>
+      <button onclick="invSetEnv('montagne')" id="inv-env-montagne" class="inv-env-btn" style="flex:1;padding:5px 4px;border-radius:999px;border:none;font-size:var(--fs-xs);cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">⛰️ Montagne</button>
+    </div>
+
+    <!-- div caché — conservé pour la compatibilité (renderProps le masque toujours) -->
+    <div id="btn-ranger-tout" style="display:none"></div>
+
     <div id="props-filters" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div>
     <div id="props-list" style="margin-top:6px"></div>
   </div>

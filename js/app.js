@@ -51,7 +51,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v3.48'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v3.50'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -233,7 +233,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 3; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 5; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -266,6 +266,33 @@ const MIGRATIONS = [
       d.g.poops = d.g.poops.map(poop => ({
         ...poop,
         y: (poop.y < 140) ? 150 + Math.floor(Math.random() * 8) : poop.y
+      }));
+    }
+    return d;
+  },
+  // Migration 3→4 : ajout du champ env sur les props actives
+  // RÔLE : Chaque objet actif peut maintenant appartenir à un environnement spécifique
+  //        (parc, chambre, montagne). Les objets déjà actifs sans env reçoivent
+  //        l'environnement par défaut 'parc' pour ne pas disparaître.
+  // POURQUOI : Nouvelle feature — objets différents selon l'environnement.
+  function m4(d) {
+    if (Array.isArray(d.g.props)) {
+      d.g.props = d.g.props.map(p => ({
+        ...p,
+        // Si l'objet était actif sans env défini → on lui assigne 'parc' par défaut
+        env: p.env ?? (p.actif ? 'parc' : null)
+      }));
+    }
+    return d;
+  },
+  // Migration 4→5 : ajout du timestamp d'acquisition sur chaque prop
+  // RÔLE : Permet d'identifier les objets récents (< 48h) pour les afficher en tête de liste.
+  // POURQUOI : Les objets existants reçoivent 0 → ils ne seront jamais considérés comme "nouveaux".
+  function m5(d) {
+    if (Array.isArray(d.g.props)) {
+      d.g.props = d.g.props.map(p => ({
+        ...p,
+        acquis: p.acquis ?? 0  // 0 = objet antérieur à la feature, jamais "new"
       }));
     }
     return d;

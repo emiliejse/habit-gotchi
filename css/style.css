@@ -36,10 +36,10 @@
   --focus-ring: var(--lilac);   /* Anneau de focus clavier (cf. :focus-visible) */
   
   /* Variables d'environnement PWA (Encoches iPhone / Android) */
-  --sat: env(safe-area-inset-top, 0px);
-  --sab: env(safe-area-inset-bottom, 0px);
-  --sal: env(safe-area-inset-left, 0px);
-  --sar: env(safe-area-inset-right, 0px);
+  --sat: 0px; /* POURQUOI : safe area iOS désactivée — encoche non gérée volontairement */
+  --sab: 0px;
+  --sal: 0px;
+  --sar: 0px;
 
   /* ─── ÉCHELLE TYPOGRAPHIQUE ───────────────────────────────────────── */
   /* RÔLE : Plancher de lisibilité — rien ne doit descendre sous --fs-xs */
@@ -190,7 +190,7 @@ body {
   padding: 2px;
   box-shadow: none;
   margin: 4px auto 0;
-  max-width: 260px; /* POURQUOI : était 340px — réduit pour que la console prenne moins de hauteur sur mobile */
+  max-width: 340px;
   position: relative;
   z-index: 1;
   /* Réduction dynamique de la console (quand on change d'onglet) */

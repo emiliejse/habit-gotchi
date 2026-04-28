@@ -132,15 +132,19 @@ function syncConsoleHeight() {
   if (!top || !zone) return;
 
   requestAnimationFrame(() => {
-    const sat = parseInt(getComputedStyle(document.documentElement)
-      .getPropertyValue('--sat')) || 0;
-    // RÔLE : En mode compact, #tama-bubble-wrap a margin-top: -48px qui réduit la hauteur
-    // visuelle du #console-top mais pas son offsetHeight. On compense manuellement.
-    const wrap = document.getElementById('tama-bubble-wrap');
-    const wrapMargin = wrap
-      ? parseInt(getComputedStyle(wrap).marginTop) || 0
-      : 0;
-    zone.style.paddingTop = (top.offsetHeight + wrapMargin - sat + 8) + 'px';
+    // RÔLE : Mesure la position du bas du dernier élément visible dans #console-top.
+    // POURQUOI : offsetHeight inclut les marges négatives de façon imprévisible.
+    //            getBoundingClientRect().bottom donne la vraie position visuelle du bas
+    //            du dernier enfant, indépendamment des margin-top négatifs.
+    const children = Array.from(top.children).filter(el =>
+      getComputedStyle(el).display !== 'none'
+    );
+    const lastChild = children[children.length - 1];
+    const bottomY = lastChild
+      ? lastChild.getBoundingClientRect().bottom
+      : top.getBoundingClientRect().bottom;
+
+    zone.style.paddingTop = (bottomY + 8) + 'px';
   });
 }
 

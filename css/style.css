@@ -211,11 +211,14 @@ body {
               soit visuellement aligné avec les boutons. */
 #console-top.compact #tama-bubble-wrap {
   margin-top: -48px; /* remonte de la hauteur du .hdr */
+  padding-top: 4px;  /* petit espace pour ne pas coller en haut */
 }
 
 /* Tama réduit en mode compact */
 #console-top.compact #tama-shell-main {
-  max-width: 180px;
+  max-width: 220px;  /* un peu plus grand, avec marge latérale pour ne pas coller aux boutons */
+  padding-left: 8px;
+  padding-right: 8px;
   margin-left: auto;
   margin-right: auto;
   transition: max-width 0.4s cubic-bezier(0.25, 1.15, 0.5, 1);

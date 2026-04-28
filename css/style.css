@@ -728,31 +728,28 @@ body {
 }
 
 /* Jauges d'Énergie et de Bonheur (Sliders) */
-.slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+/* POURQUOI : min-height = thumb (12px) + pétales (6px de chaque côté) = 24px minimum pour éviter le chevauchement */
+.slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; min-height: 28px; }
 .slider-row label { font-size: var(--fs-xs); font-weight: bold; width: 55px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); } /* était 9px */
-/* POURQUOI : padding horizontal pour que le thumb au niveau 0 et 5 ne soit pas rogné par le bord */
-.slider-row input[type=range] { flex: 1; -webkit-appearance: none; height: 8px; border-radius: 4px; outline: none; opacity: .85; overflow: visible; padding: 8px 10px; box-sizing: border-box; }
+/* POURQUOI : overflow visible + margin interne pour que le thumb ne soit pas rogné aux extrémités */
+.slider-row input[type=range] { flex: 1; -webkit-appearance: none; height: 8px; border-radius: 4px; outline: none; opacity: .85; overflow: visible; margin: 0 6px; }
 .slider-row input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  /* POURQUOI : taille augmentée pour une zone de tap confortable sur mobile (min 44px recommandé, on passe à 22px sur le thumb + zone invisible autour) */
-  width: 18px; height: 18px;
+  /* POURQUOI : 12px = plus facile à tapper qu'avant (6px) sans gonfler la hauteur du slider */
+  width: 12px; height: 12px;
   border-radius: 50%;
   cursor: pointer;
   border: none;
   /* POURQUOI : 8 pétales pixel art — proportions ajustées à la nouvelle taille du thumb */
   box-shadow:
-    0    -8px  0 3px currentColor,  /* haut         */
-    0     8px  0 3px currentColor,  /* bas          */
-    -8px  0    0 3px currentColor,  /* gauche       */
-    8px   0    0 3px currentColor,  /* droite       */
-    -6px -6px  0 2px currentColor,  /* haut-gauche  */
-    6px  -6px  0 2px currentColor,  /* haut-droite  */
-    -6px  6px  0 2px currentColor,  /* bas-gauche   */
-    6px   6px  0 2px currentColor;  /* bas-droite   */
-}
-/* POURQUOI : zone de tap agrandie sans changer l'apparence visuelle */
-.slider-row input[type=range]::-webkit-slider-thumb::before {
-  content: ''; position: absolute; inset: -12px; border-radius: 50%;
+    0    -6px  0 2px currentColor,  /* haut         */
+    0     6px  0 2px currentColor,  /* bas          */
+    -6px  0    0 2px currentColor,  /* gauche       */
+    6px   0    0 2px currentColor,  /* droite       */
+    -5px -5px  0 1px currentColor,  /* haut-gauche  */
+    5px  -5px  0 1px currentColor,  /* haut-droite  */
+    -5px  5px  0 1px currentColor,  /* bas-gauche   */
+    5px   5px  0 1px currentColor;  /* bas-droite   */
 }
 .slider-row .sv { font-size: 13px; font-weight: bold; width: 20px; text-align: center; }
 

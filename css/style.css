@@ -211,7 +211,6 @@ body {
               soit visuellement aligné avec les boutons. */
 #console-top.compact #tama-bubble-wrap {
   margin-top: -48px; /* remonte de la hauteur du .hdr */
-  padding-top: 4px;  /* petit espace pour ne pas coller en haut */
 }
 
 /* Tama réduit en mode compact */

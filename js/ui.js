@@ -144,7 +144,7 @@ function syncConsoleHeight() {
       ? lastChild.getBoundingClientRect().bottom
       : top.getBoundingClientRect().bottom;
 
-    zone.style.paddingTop = (bottomY + 8) + 'px';
+    zone.style.paddingTop = (bottomY + 16) + 'px';
   });
 }
 

@@ -132,20 +132,13 @@ function syncConsoleHeight() {
   if (!top || !zone) return;
 
   requestAnimationFrame(() => {
-    // RÔLE : Mesure la position du bas du dernier élément visible dans #console-top.
-    // POURQUOI : offsetHeight inclut les marges négatives de façon imprévisible.
-    //            getBoundingClientRect().bottom donne la vraie position visuelle du bas
-    //            du dernier enfant, indépendamment des margin-top négatifs.
-    const children = Array.from(top.children).filter(el =>
-      getComputedStyle(el).display !== 'none'
-    );
-    const lastChild = children[children.length - 1];
-    const bottomY = lastChild
-      ? lastChild.getBoundingClientRect().bottom
-      : top.getBoundingClientRect().bottom;
-
-    zone.style.paddingTop = (bottomY + 8) + 'px';
-    // POURQUOI : +8 = gap minimal entre le bas de la console et le premier élément scrollable
+    // RÔLE : Mesure la hauteur réelle de #console-top pour décaler la zone scrollable en dessous.
+    // POURQUOI : offsetHeight = hauteur visuelle réelle du bloc fixe, indépendante du scroll
+    //            et de la position dans le viewport. Plus fiable que getBoundingClientRect().bottom
+    //            qui variait selon les plateformes (safe area iOS, zoom navigateur...).
+    const h = top.offsetHeight;
+    zone.style.paddingTop = (h + 8) + 'px';
+    // POURQUOI : +8 = petit gap visuel entre la console et le premier élément
   });
 }
 

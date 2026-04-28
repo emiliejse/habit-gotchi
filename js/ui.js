@@ -1615,21 +1615,39 @@ function _showSoutienConfirm(onConfirm) {
   const D = window.D;
   const g = D.g;
 
+  // RÔLE : Convertit un score /5 en émojis pleins + cercles vides
+  // ex : energy=3 → "⚡⚡⚡○○"
+  const toEmojis = (val, full, empty) =>
+    full.repeat(Math.max(0, Math.min(5, val))) +
+    empty.repeat(Math.max(0, 5 - Math.min(5, val)));
+
+  const energyStr = toEmojis(g.energy,    '⚡', '○');
+  const happyStr  = toEmojis(g.happiness, '💜', '○');
+
   // ── Ouvre la modale avec le contenu de confirmation ──
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
     <div style="text-align:center;padding:12px 8px 8px">
 
-      <p style="font-size:var(--fs-sm);color:var(--lilac);font-weight:bold;margin-bottom:10px;text-align:left">
+      <p style="font-size:var(--fs-sm);color:var(--lilac);font-weight:bold;margin-bottom:10px">
         💜 Besoin de soutien
       </p>
 
-      <!-- RÔLE : Zone du mini canvas p5 — fond blanc, coins arrondis -->
-      <!-- Hauteur 90px : assez pour adult (oreilles -10px + corps 50px + marge 30px) -->
+      <!-- RÔLE : Zone du mini canvas p5 — fond blanc, coin arrondis -->
+      <!-- Le Gotchi se balade horizontalement à l'intérieur -->
       <div id="soutien-confirm-canvas"
-           style="width:160px;height:90px;margin:0 auto 12px;
+           style="width:140px;height:90px;margin:0 auto 10px;
                   border-radius:12px;overflow:hidden;background:#ffffff">
       </div>
+
+      <p style="font-size:13px;font-weight:bold;color:var(--text1);margin-bottom:4px">
+        ${g.name || 'Gotchi'}
+      </p>
+
+      <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:12px;line-height:1.8">
+        Énergie&nbsp;${energyStr}<br>
+        Humeur&nbsp;&nbsp;${happyStr}
+      </p>
 
       <div style="display:flex;flex-direction:column;gap:6px">
         <button id="btn-confirm-soutien" class="btn btn-p"
@@ -1652,21 +1670,12 @@ function _showSoutienConfirm(onConfirm) {
   //            qui acceptent une instance p en paramètre → réutilisables ici
   let _miniP5 = null;
 
-  const W = 160, H = 90;    // Dimensions du canvas (= la div ci-dessus)
-
-  // RÔLE : Calcule CY = Y du haut du sprite pour que le bas touche le "sol"
-  // Baby  : corps 30px (PX*6)   + 0px oreilles → cy = H - 30 - margeBasFond
-  // Teen  : corps 40px (PX*8)   + 10px oreilles → cy = H - 40 - margeBasFond
-  // Adult : corps 50px (PX*10)  + 10px oreilles → cy = H - 50 - margeBasFond
-  // margeBasFond = 8px pour laisser un peu d'air sous les pieds
-  const MARGE_BAS = 8;
-  const corpH = { egg: 25, baby: 30, teen: 40, adult: 50 };
-  const CY = H - (corpH[g.stage] || 50) - MARGE_BAS;
-
+  const W = 140, H = 90;    // Dimensions du canvas (= la div ci-dessus)
+  const CY = 62;             // Y du "sol" — Gotchi posé à cette hauteur
   let miniX    = W / 2;     // Position X courante du Gotchi
   let miniDir  = 1;          // Direction : 1 = droite, -1 = gauche
-  const XMIN_M = 28;         // Marge gauche (= demi-largeur adult : PX*5=25 + 3px)
-  const XMAX_M = W - 28;    // Marge droite
+  const XMIN_M = 30;         // Marge gauche
+  const XMAX_M = W - 30;    // Marge droite
   const SPEED  = 0.5;        // Vitesse de déplacement (px/frame)
   let miniBlink = false;     // État clignotement local (indépendant du canvas principal)
   let miniBlinkT = 0;        // Compteur avant prochain clignotement
@@ -1675,9 +1684,8 @@ function _showSoutienConfirm(onConfirm) {
   const miniSketch = (p) => {
     p.setup = () => {
       // RÔLE : Crée le canvas dans la div dédiée, fond blanc, pixel art net
-      // W et H sont capturés depuis la closure — ils correspondent à la div
       p.createCanvas(W, H).parent('soutien-confirm-canvas');
-      p.noSmooth();    // Rendu pixel art sans antialiasing
+      p.noSmooth();   // Rendu pixel art sans antialiasing
       p.frameRate(12); // 12 fps : fluide pour un sprite, économe en CPU
       miniBlinkT = 40 + Math.floor(Math.random() * 80);
     };
@@ -1855,7 +1863,7 @@ window._soutienHistory = [];
         onkeydown="if(event.key==='Enter')sendSoutienMsg()">
       <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:var(--sp-sm) 12px">→</button>
     </div>
-    <p id="soutien-count" style="font-size:var(--fs-xs);opacity:0.6;text-align:center;margin-top:4px;line-height:1.6">6 messages restants<br>conversation non sauvegardée</p>
+    <p id="soutien-count" style="font-size:var(--fs-xs);opacity:0.6;text-align:center;margin-top:4px">6 messages restants · session ${D.soutienCount}/3 aujourd'hui</p>
     <button id="btn-copier-soutien" class="btn btn-s" onclick="copierSoutien()"
             style="width:100%;font-size:var(--fs-sm);margin-top:6px;
                    display:none;opacity:0;transition:opacity 0.5s ease">
@@ -1872,29 +1880,27 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
 
   /* ── Limite 6 messages par session ── */
   if (!isInit) {
-    // RÔLE : On incrémente ICI, avant l'appel API, pour que le 6ème message
-    //        soit le dernier accepté (et non le 7ème).
-    window._soutienCount++;
-
-    // Met à jour le compteur affiché APRÈS le ++
-    const restants = 6 - window._soutienCount;
-    const countEl  = document.getElementById('soutien-count');
-    if (countEl) {
-      if (restants <= 0) {
-        countEl.innerHTML = 'Dernier message<br>conversation non sauvegardée';
-      } else {
-        countEl.innerHTML = `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''}<br>conversation non sauvegardée`;
-      }
-    }
-
-    // RÔLE : Bloque l'envoi si le quota est déjà atteint (appel suivant après le 6ème)
-    if (window._soutienCount > 6) {
+    if (window._soutienCount >= 6) {
       chat.innerHTML += `<div class="chat-bubble-system">Tu as atteint la limite de 6 messages pour cette session. Prends soin de toi 💜</div>`;
       chat.scrollTop = chat.scrollHeight;
       document.getElementById('soutien-inp').disabled = true;
       document.querySelector('#mbox .btn-p').disabled  = true;
+
+      // RÔLE : Révèle le bouton "Copier" avec une apparition douce (opacity 0→1)
+      // POURQUOI : Le bouton est inutile pendant la conversation — il n'a de sens
+      //            que quand il n'y a plus de messages disponibles
+      const btnCopier = document.getElementById('btn-copier-soutien');
+      if (btnCopier) {
+        btnCopier.style.display = 'block';          // Insère dans le flux
+        requestAnimationFrame(() => {               // Attend 1 frame pour que la transition CSS joue
+          btnCopier.style.opacity = '1';
+        });
+      }
       return;
     }
+    const restants = 6 - window._soutienCount;
+    const countEl  = document.getElementById('soutien-count');
+    if (countEl) countEl.textContent = `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''} · conversation non sauvegardée`;
   }
 
   if (!key) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
@@ -1967,7 +1973,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   try {
     const d = await callClaude({ messages, system: sysPrompt });
     const reply = d.content?.[0]?.text || 'Je suis là. 💜';
-    // NOTE : _soutienCount++ a été déplacé AVANT l'appel API (dans le bloc limite)
+    window._soutienCount++;
     stopThinkingAnim(animSoutien);
     document.getElementById(bubbleId)?.remove();
     chat.innerHTML += `<div class="chat-bubble-claude">${reply}</div>`;
@@ -1975,19 +1981,6 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
 
     if (isInit) window._soutienHistory.push({ role:'user', content:systemPrompt });
     window._soutienHistory.push({ role:'assistant', content:reply });
-
-    // RÔLE : Révèle le bouton "Copier" et bloque l'input après le 6ème message
-    // POURQUOI : On le fait ici (après réception) plutôt qu'avant l'envoi —
-    //            l'utilisatrice voit d'abord la réponse, puis le bouton apparaît
-    if (window._soutienCount >= 6) {
-      document.getElementById('soutien-inp').disabled = true;
-      document.querySelector('#mbox .btn-p').disabled  = true;
-      const btnCopier = document.getElementById('btn-copier-soutien');
-      if (btnCopier) {
-        btnCopier.style.display = 'block';
-        requestAnimationFrame(() => { btnCopier.style.opacity = '1'; });
-      }
-    }
 
   } catch(e) {
     stopThinkingAnim(animSoutien);
@@ -2888,9 +2881,9 @@ function applyCheatCode() {
     'petales50':  () => { D.g.petales = (D.g.petales || 0) + 50; toast('🌸 +50 pétales !'); },
     'petales200': () => { D.g.petales = (D.g.petales || 0) + 200; toast('🌸 +200 pétales !'); },
     'egg':        () => { D.g.totalXp = 0;   D.g.stage = 'egg';   toast('🥚 Stade → Œuf'); },
-    'baby':       () => { D.g.totalXp = 90;  D.g.stage = 'baby';  toast('🌱 Stade → Pousse'); },
-    'teen':       () => { D.g.totalXp = 240; D.g.stage = 'teen';  toast('🌿 Stade → Bouton'); },
-    'adult':      () => { D.g.totalXp = 500; D.g.stage = 'adult'; toast('🌸 Stade → Fleur'); },
+    'baby':       () => { D.g.totalXp = 90;  D.g.stage = 'baby';  toast('🌱 Stade → Baby'); },
+    'teen':       () => { D.g.totalXp = 240; D.g.stage = 'teen';  toast('🌿 Stade → Teen'); },
+    'adult':      () => { D.g.totalXp = 500; D.g.stage = 'adult'; toast('🌸 Stade → Adulte'); },
     'vent':       () => { window.meteoData = { windspeed: 50 }; toast('🌬️ Vent activé !'); },
     'calme':      () => { window.meteoData = { windspeed: 5 };  toast('☀️ Vent désactivé'); },
     'happy5':     () => { D.g.happiness = 5; toast('😊 Bonheur → 5'); },

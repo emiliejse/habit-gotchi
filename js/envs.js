@@ -187,10 +187,12 @@ function drawActiveEnv(p, env, n, h) {
     p.fill(tc(n, theme.wall));
     p.rect(0, 60, CS, 60);
 
-    // 2. FENÊTRE — vitre suit l'heure réelle (aube/jour/couchant/nuit)
-    let skyCol;
-    skyCol = (h>=20||h<6) ? C.skyN1 : (h>=17) ? C.skyK1 : (h>=7) ? C.skyD1 : C.skyA1;
-    p.fill(skyCol); p.rect(20, 68, 42, 42);
+    // 2. FENÊTRE — la vitre est un "trou" : on ne la dessine pas,
+    // le ciel déjà rendu en fond (drawSky) transparaît naturellement.
+    // POURQUOI : drawSky() est appelé avant drawActiveEnv(), donc la couleur
+    // du ciel réel (phases solaires, étoiles, transitions) est déjà là.
+    // On n'a plus besoin de recalculer une couleur approchée ici.
+    // (ancienne ligne supprimée : skyCol + p.rect de la vitre)
     p.fill(tc(n, theme.windowFrame));
     p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
     p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);

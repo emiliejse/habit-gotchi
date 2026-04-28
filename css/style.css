@@ -157,15 +157,17 @@ body {
   justify-content: center;
   flex: 1;
   align-self: stretch;
-  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* fondu + légère montée en sortant */
+  transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.35s ease;
   opacity: 1;
-  transform: scale(1) translateY(0);
-  transform-origin: top center;
+  transform: translateY(0);
+  max-height: 60px;
+  overflow: hidden;
 }
-/* titre qui rétrécit et remonte en partant */
-#hdr-title.hiding {
+#console-top.compact #hdr-title {
   opacity: 0;
-  transform: scale(0.7) translateY(-10px);
+  transform: translateY(-8px);
+  max-height: 0;
   pointer-events: none;
 }
 .hdr h1 { font-size: 12px; color: var(--lilac); letter-spacing: 2px; line-height: 1.2; }
@@ -197,39 +199,28 @@ body {
   transform-origin: top center;
 }
 
-/* RÔLE : Slot compact dans le .hdr — glissement + agrandissement avec bounce */
-#tama-slot {
-  display: none;
-  flex: 1;
-  align-self: flex-start;
-  padding: 1px 10px;
-  opacity: 0;
-  /* part petit et en haut — va grandir en rebondissant */
-  transform: scale(0.4) translateY(-20px);
-  transform-origin: top center;
-  transition: opacity 0.35s ease,
-              transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); /* bounce naturel */
+/* RÔLE : Wrapper tama + bulle — animé ensemble vers le haut en mode compact */
+#tama-bubble-wrap {
+  transition: transform 0.4s cubic-bezier(0.25, 1.15, 0.5, 1);
+  transform: translateY(0);
 }
-/* tama qui arrive en grandissant avec léger bounce */
-#tama-slot.showing {
-  opacity: 1;
-  transform: scale(1) translateY(0);
+#console-top.compact #tama-bubble-wrap {
+  transform: translateY(0); /* le wrapper monte naturellement car #hdr-title se réduit */
 }
 
-/* RÔLE : Mode compact — slot visible, grand tama masqué */
-#console-top.compact #tama-slot       { display: block; }
-#console-top.compact #tama-shell-main { display: none; }
-
-/* RÔLE : Mode compact — canvas dans le slot, carré, taille proportionnelle aux boutons */
-#tama-slot .tama-screen {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 6px;
+/* RÔLE : Tama en mode compact — rétrécit sans opacité */
+#tama-shell-main {
+  transition: max-width 0.4s cubic-bezier(0.25, 1.15, 0.5, 1),
+              margin 0.4s ease;
+}
+#console-top.compact #tama-shell-main {
+  max-width: 180px; /* réduit par rapport aux 340px normaux */
+  margin-top: 2px;
 }
 
-/* RÔLE : Grand tama (mode normal) — styles existants inchangés */
-.tama-shell.shrunk {
-  /* plus utilisé pour le positionnement — juste marqueur de classe pour syncDuringTransition */
+/* RÔLE : Bulle en mode compact — suit le tama, espace en bas */
+#console-top.compact .bubble {
+  margin-bottom: 8px;
 }
 
 /* L'écran Canvas (Le jeu en lui-même) */
@@ -704,9 +695,7 @@ body {
               La bulle descend sous le tama grâce à margin-top calculé sur la hauteur du tama compact.
               Les boutons restent dans .hdr, fixes, non affectés. */
 /* RÔLE : Mode compact — masque titre/sliders, espace sous la bulle */
-#console-top.compact #hdr-title    { display: none; }      /* titre + date masqués */
-#console-top.compact #sliders-wrap { display: none; }      /* sliders masqués */
-#console-top.compact .bubble       { margin-bottom: 8px; } /* espace sous la bulle */
+#console-top.compact #sliders-wrap { display: none; } /* sliders masqués en mode compact */
 
 /* Barre d'XP */
 .pbar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }

@@ -137,37 +137,31 @@ function clearDebugLogs() {
 -->
 <div id="console-top">
 
-  <!-- HEADER : Boutons boutique/tablette + titre (normal) ou tama (compact) -->
+  <!-- HEADER : Boutons boutique/tablette + titre -->
   <div class="hdr">
     <button id="btn-boutique-hdr" onclick="ouvrirBoutique()" class="menu-btn" style="position:relative" aria-label="Ouvrir la boutique">
       🛍️
       <span id="badge-boutique-hdr" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--pink);color:#fff;font-size:var(--fs-xs);border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
     </button>
-
-    <!-- Titre — visible en mode normal -->
     <div id="hdr-title">
       <h1>✿ Habit-Gotchi ✿</h1>
       <sub id="date-d" style="font-size:var(--fs-xs);color:var(--text2)">
         <span id="date-txt"></span>
       </sub>
     </div>
-
-    <!-- Slot compact — vide en mode normal, reçoit le canvas en mode compact via JS -->
-    <div id="tama-slot"></div>
-
     <button id="btn-tablet" onclick="openTablet()" class="menu-btn" style="position:relative" aria-label="Ouvrir la tablette">
       📟
       <span id="tablet-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--coral);color:#fff;font-size:var(--fs-xs);border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
     </button>
   </div>
 
-  <!-- SHELL : Grand tama — visible en mode normal, masqué en mode compact -->
-  <div class="tama-shell" id="tama-shell-main">
-    <div class="tama-screen" id="cbox"></div>
+  <!-- WRAPPER tama + bulle : animé ensemble en mode compact (glissement vers le haut) -->
+  <div id="tama-bubble-wrap">
+    <div class="tama-shell" id="tama-shell-main">
+      <div class="tama-screen" id="cbox"></div>
+    </div>
+    <div class="bubble" id="bubble">...</div>
   </div>
-
-  <!-- BULLE : Zone de dialogue dynamique -->
-  <div class="bubble" id="bubble">...</div>
 
   <!-- SLIDERS : Contrôlent les stats d'énergie et de bonheur (SYSTEM 1: Métabolisme) -->
   <div id="sliders-wrap" style="max-width:340px;margin:6px auto 4px;padding:0 4px">

@@ -1,9 +1,11 @@
 # AUDIT HabitGotchi — 2026-04-26
-## Mis à jour le 2026-04-28 — Sessions 1 à 9 complétées ✅
+## Mis à jour le 2026-04-28 — Sessions 1 à 10 complétées ✅
 
 > Audit de référence sur la branche `Annotation`, version `v3.02`. Lecture intégrale de `config.js`, `app.js`, `envs.js`, `render.js`, `sw.js`, `index.html`, `prompts/*.json`. Lecture quasi-intégrale de `ui.js` (3735 lignes — 100% des fonctions principales lues, quelques sections de rendu d'agenda parcourues). `data/props.json` et `data/personality.json` parcourus comme données pures (pas d'analyse de code).
 >
 > **Version courante : `hg-v3.28`** (bumped en session 5 — `app.js` + `sw.js` synchronisés).
+>
+> **Session 10 (2026-04-28)** : revue complète de l'audit, mise à jour de tous les statuts. Nouveaux items traités : `save()` warn, `CARD_BG`, namespace `window.HG_CONFIG` (15 occurrences migrées dans 3 fichiers). Voir Phase 4 pour les items ouverts restants.
 
 ---
 
@@ -13,29 +15,31 @@
 
 | Fichier | Score | Justification courte |
 |---|---|---|
-| `data/config.js` | **A** ✅ | Pure data, bien commentée. `AI_MODEL` ajouté (session 3). Constantes GAMEPLAY + SEUILS VISUELS centralisées (sessions 7–8). |
-| `js/app.js` | **A-** ✅ | `addEvent` unifié, `visibilitychange` fusionné, `reload(true)` corrigé, chemins morts supprimés, debounce sliders, constantes GAMEPLAY migrées, typo `maybySpawnPoop` corrigé, sommaire §1-§17 ajouté, SCHEMA_VERSION ajouté. |
-| `js/render.js` | **B** ✅ | Double pluie supprimée, `wcMeteo` renommé, seuils EN_*/HA_* centralisés, échelle 0-5 native (×20 supprimé), sommaire §1-§9 ajouté, sprites extraits dans `render-sprites.js`. Reste : `p.draw()` monolithique. |
-| `js/render-sprites.js` | **A** ✅ | Nouveau fichier (session 9). Contient drawDither, drawAccessoires, drawEgg, drawBaby, drawTeen, drawAdult. Sommaire §1-§6. |
-| `js/envs.js` | **B+** ✅ | `drawFrameMotif` simplifié, triangle doublonné supprimé, `drawRain` formula mise à jour (échelle 0-5), sommaire §1-§5 ajouté. |
-| `js/ui.js` | **B-** ✅ | `getWeekId` doublonnée supprimée, `AI_MODEL` centralisé, bug +16 corrigé, `addEvent` unifié, XSS sanitisé, code mort supprimé, `callClaude()` helper ajouté (session 6), constantes XP_NOTE/XP_HABITUDE utilisées, sommaire §1-§18 ajouté. Reste : globales agenda, refactoring modules. |
-| `index.html` | **B** | Script tag `render-sprites.js` ajouté (session 9) dans le bon ordre. Commentaire d'ordre chargement mis à jour. |
-| `sw.js` | **A** | Version synchronisée à `hg-v3.28` (session 5). Stratégie cache-first. |
+| `data/config.js` | **A** ✅ | `AI_MODEL`, GAMEPLAY, SEUILS VISUELS centralisés. `CARD_BG` factorisé. `window.HG_CONFIG` namespace ajouté (session 10). |
+| `js/app.js` | **A-** ✅ | `addEvent` unifié, `visibilitychange` fusionné, `reload(true)` corrigé, chemins morts supprimés, debounce sliders, constantes GAMEPLAY migrées, `save()` warn ajouté, SCHEMA_VERSION ajouté. |
+| `js/render.js` | **B** ✅ | Double pluie supprimée, `wcMeteo` renommé, seuils EN_*/HA_* centralisés, sprites extraits dans `render-sprites.js`. Reste : `p.draw()` monolithique, hitbox magiques, `_bounceT`/`_lastPetTime` morts. |
+| `js/render-sprites.js` | **A** ✅ | Nouveau fichier (session 9). Sprites + drawDither + drawAccessoires. |
+| `js/envs.js` | **B+** ✅ | `drawFrameMotif` simplifié, triangle doublonné supprimé. Reste : 2 mineurs documentaires. |
+| `js/ui.js` | **B-** ✅ | `getWeekId` doublonnée supprimée, `AI_MODEL` centralisé, `callClaude()` ajouté, XSS sanitisé, code mort supprimé. Reste : variables RDV, `_agendaJour`, `tabletLastSeenDate`. |
+| `index.html` | **B** | `render-sprites.js` ajouté dans le bon ordre. Reste : script debug inline, p5.js sans SRI. |
+| `sw.js` | **A** | Version synchronisée à `hg-v3.28`. Reste : cache sans `response.ok`. |
 | `TESTING.md` | **nouveau** ✅ | Checklist manuelle 11 sections + raccourcis console (session 9). |
 | `style.css` | non audité (643 lignes) | hors scope JS. |
-| `prompts/*.json` | **A** | Concis et structurés. |
+| `prompts/*.json` | **A** | Concis et structurés. README variables manquant. |
 
-### Les 3 problèmes les plus urgents
+### Tous les problèmes critiques et importants
 
-1. ✅ **Modèle Claude `claude-sonnet-4-5` hardcodé en 5 endroits** — résolu en session 3. Constante `AI_MODEL` dans `config.js`, 5 occurrences remplacées dans `ui.js`.
-2. ✅ **Doublon de `getWeekId`** — résolu en session 1. Version approximative supprimée de `ui.js`, version ISO d'`app.js` fait foi.
-3. ✅ **API `addEvent` double** — résolu en session 4. Les 3 appels en ancienne API migrés vers la forme objet (`app.js:589`, `ui.js:2136`, `ui.js:2561`).
-
-### Les 3 quick wins les plus faciles
-
-1. ✅ **Pluie dessinée 2×** — résolu en session 2. Double appel `drawRain` supprimé.
-2. ✅ **`drawFrameMotif` 4 branches identiques** — résolu en session 2. Réduit à un seul bloc.
-3. ✅ **Double `visibilitychange`** — résolu en session 1. Fusionné en un seul handler.
+1. ✅ **Modèle Claude hardcodé** — session 3 + 6. `AI_MODEL` + `callClaude()`.
+2. ✅ **Doublon `getWeekId`** — session 1.
+3. ✅ **API `addEvent` double** — session 4.
+4. ✅ **XSS `innerHTML`** — session 5. Fonction `escape()` créée.
+5. ✅ **Pluie dessinée 2×** — session 2.
+6. ✅ **`drawFrameMotif` 4 branches identiques** — session 2.
+7. ✅ **Double `visibilitychange`** — session 1.
+8. ✅ **`save()` swallow silencieux** — session 10. `console.warn` ajouté.
+9. ✅ **Constantes globales sans namespace** — session 10. `window.HG_CONFIG`.
+10. ⚠️ **Variables RDV non réinitialisées** — ouvert (Phase 4).
+11. ⚠️ **`_agendaJour` sans `window.`** — ouvert (Phase 4).
 
 ---
 

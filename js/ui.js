@@ -508,13 +508,17 @@ function updThoughtFlowers() {
  * POURQUOI : Même logique visuelle que les fleurs de pensée — 3 ✿ qui s'estompent au fil des bilans générés.
  *            N'affiche les fleurs que si on est sur la semaine en cours et en fin de semaine.
  */
+/**
+ * RÔLE : Met à jour les fleurs de quota dans #bilan-flowers (onglet Progrès)
+ * POURQUOI : Même logique visuelle que les fleurs de pensée — 3 ✿ qui s'estompent au fil des bilans générés.
+ *            Les fleurs ne s'affichent qu'à partir du vendredi (le bouton est actif).
+ */
 function updBilanFlowers() {
   const bf = document.getElementById('bilan-flowers');
   if (!bf) return;
-  // On n'affiche les fleurs que quand le bouton est actif (semaine en cours, fin de semaine)
-  const jourSemaine     = new Date().getDay();
-  const estSemaineEnCours = typeof wOff !== 'undefined' ? wOff === 0 : true;
-  const estFinSemaine     = estSemaineEnCours && (jourSemaine === 0 || jourSemaine === 5 || jourSemaine === 6);
+  // On n'affiche les fleurs que le vendredi/samedi/dimanche (quand le bouton est actif)
+  const jourSemaine   = new Date().getDay();
+  const estFinSemaine = jourSemaine === 0 || jourSemaine === 5 || jourSemaine === 6;
   if (!estFinSemaine) { bf.innerHTML = ''; return; }
   const used  = window.D.g.bilanCount || 0;
   const total = 3;
@@ -3016,6 +3020,13 @@ function renderProg() {
     return `<div class="cal-c" style="background:${bg};border:${border};cursor:pointer" onclick="showDayDetail('${ds}')">${day}</div>`;
   }).join('');
 
+  /* ── Visibilité de la card bilan selon la semaine ── */
+  // RÔLE : Cache toute la zone bilan IA quand on consulte une semaine passée.
+  // POURQUOI : Le bilan ne concerne que la semaine en cours — afficher la zone sur les
+  //            semaines passées est trompeur et inutile.
+  const cardBilan = document.getElementById('card-bilan');
+  if (cardBilan) cardBilan.style.display = wOff === 0 ? '' : 'none';
+
   /* ── Titre bilan ── */
   const bilanTitre = document.getElementById('bilan-titre');
   if (bilanTitre) {
@@ -3043,27 +3054,24 @@ function renderProg() {
   checkBilanReset();
   const btnBilan   = document.querySelector('[onclick="genBilanSemaine()"]');
   const lblBilan   = document.getElementById('bilan-btn-label');
+  // La card bilan est masquée sur les semaines passées (voir ci-dessus),
+  // donc on arrive ici uniquement quand wOff === 0.
   if (btnBilan && lblBilan) {
-    const jourSemaine       = new Date().getDay();
-    const estSemaineEnCours = wOff === 0;
-    const estFinSemaine     = estSemaineEnCours && (jourSemaine === 0 || jourSemaine === 5 || jourSemaine === 6);
-    const quotaOk           = (window.D.g.bilanCount || 0) < 3;
+    const jourSemaine   = new Date().getDay();
+    const estFinSemaine = jourSemaine === 0 || jourSemaine === 5 || jourSemaine === 6;
+    const quotaOk       = (window.D.g.bilanCount || 0) < 3;
 
-    if (!estSemaineEnCours) {
-      btnBilan.disabled     = true;
-      lblBilan.textContent  = '📅 Semaines passées';
-      btnBilan.style.opacity = '0.5';
-    } else if (!estFinSemaine) {
-      btnBilan.disabled     = true;
-      lblBilan.textContent  = '⏳ Disponible vendredi';
+    if (!estFinSemaine) {
+      btnBilan.disabled      = true;
+      lblBilan.textContent   = '⏳ Disponible vendredi';
       btnBilan.style.opacity = '0.5';
     } else if (!quotaOk) {
-      btnBilan.disabled     = true;
-      lblBilan.textContent  = '✓ 3 bilans générés cette semaine';
+      btnBilan.disabled      = true;
+      lblBilan.textContent   = '✓ 3 bilans générés cette semaine';
       btnBilan.style.opacity = '0.5';
     } else {
-      btnBilan.disabled     = false;
-      lblBilan.textContent  = '✿ Générer le bilan';
+      btnBilan.disabled      = false;
+      lblBilan.textContent   = '✿ Générer le bilan';
       btnBilan.style.opacity = '1';
     }
   }

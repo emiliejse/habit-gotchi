@@ -164,7 +164,8 @@ function clearDebugLogs() {
   </div>
 
   <!-- SLIDERS : Contrôlent les stats d'énergie et de bonheur (SYSTEM 1: Métabolisme) -->
-  <div id="sliders-wrap" style="margin:6px auto 4px;padding:0">
+  <!-- POURQUOI : padding vertical pour que les pétales du thumb ne soient pas rognés aux extrémités -->
+  <div id="sliders-wrap" style="margin:6px auto 4px;padding:6px 0">
     <div class="slider-row">
       <label>Énergie</label>
       <input type="range" id="sl-energy" min="0" max="5" step="1" value="3" oninput="setEnergy(this.value)">

@@ -628,21 +628,70 @@ function saveHabInline(catId, i, value) {
 }
 
 /**
- * RÔLE : Ouvre une modale centralisée pour renommer toutes les habitudes d'un coup
+ * RÔLE : Déplace une habitude vers le haut ou le bas dans D.habits, puis recharge la modale
+ * POURQUOI : Permet de réordonner sans drag-and-drop (plus fiable sur mobile)
+ */
+function deplacerHab(index, direction) {
+  const D = window.D;
+  const cible = index + direction; // direction : -1 (monter) ou +1 (descendre)
+
+  // Sécurité : on ne sort pas du tableau
+  if (cible < 0 || cible >= D.habits.length) return;
+
+  // Lecture des labels saisis avant de réordonner (pour ne pas perdre les modifications en cours)
+  D.habits.forEach((h, i) => {
+    const input = document.getElementById('hab-edit-' + h.catId);
+    if (input) {
+      const trimmed = input.value.trim();
+      if (trimmed) D.habits[i].label = trimmed;
+    }
+  });
+
+  // Échange les deux éléments dans le tableau
+  const tmp = D.habits[index];
+  D.habits[index] = D.habits[cible];
+  D.habits[cible] = tmp;
+
+  // Recharge la modale avec le nouvel ordre (pas de save() encore — l'utilisatrice valide d'abord)
+  ouvrirEditionHabitudes();
+}
+
+/**
+ * RÔLE : Ouvre une modale centralisée pour renommer et réordonner les habitudes
  * POURQUOI : Remplace les crayons individuels — une seule action, moins de bruit visuel
  */
 function ouvrirEditionHabitudes() {
   const D = window.D;
+  const total = D.habits.length;
   const champs = D.habits.map((h, i) => {
     const c = CATS.find(c => c.id === h.catId);
     const libelle = (h.label !== c?.label) ? h.label : (c?.def || h.label);
+    // Désactive ← en première position, → en dernière
+    const peutMonter = i > 0;
+    const peutDescendre = i < total - 1;
     return `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span style="font-size:18px;width:24px;text-align:center">${c.icon}</span>
-        <input class="inp" id="hab-edit-${h.catId}"
-          value="${libelle}"
-          style="flex:1;font-size:var(--fs-sm);padding:6px 10px"
-          onkeydown="if(event.key==='Enter') document.getElementById('hab-save-btn').click()">
+      <div style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-size:18px;width:24px;text-align:center">${c.icon}</span>
+          <input class="inp" id="hab-edit-${h.catId}"
+            value="${libelle}"
+            style="flex:1;font-size:var(--fs-sm);padding:6px 10px"
+            onkeydown="if(event.key==='Enter') document.getElementById('hab-save-btn').click()">
+        </div>
+        <div style="display:flex;gap:6px;padding-left:32px">
+          <button onclick="deplacerHab(${i}, -1)"
+            style="flex:1;padding:5px 0;font-size:13px;border:1px solid var(--c-border);
+                   border-radius:6px;background:transparent;color:var(--c-txt2);
+                   cursor:${peutMonter ? 'pointer' : 'default'};
+                   opacity:${peutMonter ? '0.6' : '0.2'}"
+            ${peutMonter ? '' : 'disabled'}>↑</button>
+          <button onclick="deplacerHab(${i}, 1)"
+            style="flex:1;padding:5px 0;font-size:13px;border:1px solid var(--c-border);
+                   border-radius:6px;background:transparent;color:var(--c-txt2);
+                   cursor:${peutDescendre ? 'pointer' : 'default'};
+                   opacity:${peutDescendre ? '0.6' : '0.2'}"
+            ${peutDescendre ? '' : 'disabled'}>↓</button>
+        </div>
       </div>`;
   }).join('');
   // POURQUOI : openModal() standard — même animation que toutes les autres modales
@@ -657,7 +706,7 @@ function ouvrirEditionHabitudes() {
 }
 
 /**
- * RÔLE : Lit tous les champs de la modale d'édition et sauvegarde les labels modifiés
+ * RÔLE : Lit tous les champs de la modale d'édition et sauvegarde les labels + l'ordre modifiés
  */
 function sauvegarderToutesHabitudes() {
   const D = window.D;
@@ -667,7 +716,7 @@ function sauvegarderToutesHabitudes() {
     const trimmed = input.value.trim();
     if (trimmed) D.habits[i].label = trimmed;
   });
-  save();
+  save(); // Sauvegarde l'ordre ET les labels dans D.habits
   clModal();
   renderHabs();
 }

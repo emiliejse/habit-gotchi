@@ -332,36 +332,36 @@
 
 ### 6.3 Problèmes identifiés
 
-#### 🟠 IMPORTANT
+#### ⚠️ IMPORTANT — ouvert
 **Script de debug PWA inline (~85 lignes)**
-- Lignes : `14-98`
-- Description : capteur d'erreurs + panneau debug définis directement dans index.html. Cohabite avec `toggleDebugPanel` global utilisé dans le panneau Outils dev.
-- Risque : non versionné par le SW (le HTML est cached, OK), mais difficile à tester unitairement.
-- Suggestion : déplacer dans `js/debug.js` et charger en premier.
+- Lignes : `14-98` — `toggleDebugPanel` toujours défini dans index.html.
+- Risque : difficile à tester unitairement, mais sans impact fonctionnel.
+- Suggestion : déplacer dans `js/debug.js` en session dédiée.
 
-#### 🟠 IMPORTANT
+#### ⚠️ IMPORTANT — ouvert (décision architecturale)
 **Tous les `onclick` sont inline**
-- Description : couplage fort avec les noms de fonctions globales JS. Tout refactor JS doit grep `onclick="`.
-- Risque : casse silencieuse, et CSP stricte impossible (si tu veux ajouter une politique de sécurité, `unsafe-inline` reste obligatoire).
-- Suggestion : à long terme, `addEventListener` + délégation.
+- Comportement assumé du projet vanilla. Migration vers `addEventListener` = refactoring massif sans gain immédiat.
+- À reconsidérer uniquement si une CSP stricte devient nécessaire.
 
-#### 🟡 MINEUR
-**p5.js chargé via CDN sans SRI**
-- Lignes : `124`
-- Description : pas de `integrity=` ni `crossorigin`.
-- Risque : compromise de la CDN = injection arbitraire.
-- Suggestion : ajouter `integrity="sha384-..." crossorigin="anonymous"`.
+#### ⚠️ MINEUR — ouvert
+**p5.js CDN sans SRI**
+- Ligne : `124` — pas d'`integrity=` ni `crossorigin`.
+- Risque : faible (CDN de confiance), mais bonne pratique à ajouter.
+- Suggestion : `integrity="sha384-..." crossorigin="anonymous"`.
 
-#### 🟡 MINEUR
+#### ✅ MINEUR — OK
 **`autocomplete="new-password"` sur la clé API**
-- Lignes : `420`
-- Description : OK pour ne pas auto-fill. Bonne pratique.
+- Bonne pratique confirmée.
+
+#### ✅ session 9
+**`render-sprites.js` ajouté dans le bon ordre**
+- L613, après `envs.js`, avant `ui.js`. Commentaire d'ordre mis à jour.
 
 ### 6.4 Code mort / redondances
-- Les commentaires « SYSTEM X » sont parfois doublés sur le même bloc.
+- ✅ Commentaires « SYSTEM X » dédoublonnés.
 
 ### 6.5 Annotations manquantes
-- `manifest.json` n'a pas été lu — vérifier qu'il pointe les bonnes icônes.
+- ✅ `manifest.json` vérifié — icônes correctement pointées.
 
 ---
 

@@ -137,73 +137,56 @@
 
 ### 3.3 Problèmes identifiés
 
-#### 🔴 CRITIQUE
-**Pluie dessinée 2× quand `ha < 40`**
-- Lignes : `776` (dans le `if (!sleeping)` block) et `781` (en dehors)
-- Description : `drawRain(p, ha)` est appelée deux fois consécutives quand `ha < 40` ; quand `ha === 40`, idem `drawRain(p, 35)` deux fois.
-- Risque : double densité de gouttes + double coût CPU dans la boucle de dessin (12fps mais quand même).
-- Suggestion : supprimer les deux lignes 781-782 — la branche du dessus couvre déjà.
+#### ✅ CRITIQUE — résolu (session 2)
+**Pluie dessinée 2×**
+- `drawRain` n'apparaît plus qu'une fois (L339), conditionné par `HA_MED`.
 
-#### 🟠 IMPORTANT
-**`p.draw()` est un bloc de 340+ lignes**
-- Lignes : `749-1092`
-- Description : 12 sections numérotées en commentaires, sans découpage en sous-fonctions. Chaque modification touche une fonction de 340 lignes.
-- Risque : refactor risqué, lecture fastidieuse, conflits de merge fréquents.
-- Suggestion : extraire `drawHud(p, g)`, `drawProps(p, layer)`, `updateLocomotion(p)`, `drawTouchReactions(p)`, `drawNightOverlay(p, darkAlpha)`. Garder `p.draw()` comme orchestrateur de 30-40 lignes.
+#### ⚠️ IMPORTANT — ouvert
+**`p.draw()` est un bloc monolithique**
+- Lignes : toujours ~340 lignes non découpées.
+- Suggestion : extraire `drawHud`, `drawProps`, `updateLocomotion`, `drawTouchReactions`, `drawNightOverlay`. À traiter en session dédiée.
 
-#### 🟠 IMPORTANT
-**`p.touchStarted` dans `p5s` accède à des coordonnées de hitbox basées sur des constantes magiques**
-- Lignes : `1132-1151`
-- Description : hitbox `±26` x `±35`, `mx-72`, `mx-128`, `my < 26`. Aucune constante nommée, copiée pour les boutons HUD (poop @ x=72, snack @ x=128).
-- Risque : si tu déplaces un emoji de HUD dans `p.draw()` (lignes 1074, 1081), tu casses la hitbox sans warning.
-- Suggestion : `const HUD_BTN_POOP_X = 72;` etc. au sommet du fichier.
+#### ⚠️ IMPORTANT — ouvert
+**`p.touchStarted` : hitbox avec constantes magiques**
+- Lignes : `692-695` — `72`, `128`, `14`, `26` hardcodés sans constante nommée.
+- Risque : si un bouton HUD est déplacé dans `p.draw`, la hitbox se désynchronise sans warning.
+- Suggestion : `const HUD_BTN_POOP_X = 72; const HUD_BTN_SNACK_X = 128;` etc. au sommet du fichier.
 
-#### 🟠 IMPORTANT
-**Mutation directe de `window.shakeTimer` depuis 4+ endroits**
-- Lignes : `44`, `730`, `908`, `916-917`
-- Description : variable globale décrémentée dans `p.draw()` mais initialisée et lue à plusieurs endroits sans contrat clair (qui peut écrire ?).
-- Risque : si une nouvelle réaction d'animation oublie d'incrémenter sans vérifier l'état précédent, le shake se cumule mal.
-- Suggestion : `window.triggerShake(duration)` qui prend `Math.max(current, duration)`.
+#### ✅ IMPORTANT — résolu (session 2)
+**Mutation directe de `window.shakeTimer`**
+- Encapsulé dans `window.triggerGotchiShake()` (L55). Un seul point d'écriture.
 
-#### 🟡 MINEUR
-**`updateParts` parse la couleur à chaque particule à chaque frame**
-- Lignes : `256`
-- Description : `p.color(pt.c)._array.slice(...)` à chaque tick pour chaque particule. Avec ~40 particules après confettis ça reste OK à 12fps mais c'est inutile : pourquoi ne pas pré-stocker `[r,g,b]` au moment du `spawnP`.
-- Suggestion : stocker `pt.rgb = [r,g,b]` au spawn.
+#### ⚠️ MINEUR — ouvert
+**`updateParts` parse la couleur à chaque frame**
+- Ligne : `267` — `p.color(pt.c)._array.slice(...)` toujours présent.
+- Suggestion : stocker `pt.rgb = [r,g,b]` au `spawnP`.
 
-#### 🟡 MINEUR
-**Seuil dithering `en < 10` dans 3 fonctions**
-- Lignes : `366`, `501`, `709`
-- Description : seuil identique mais hardcodé. La consigne mentionnait `en < 40` ; c'est le seuil **tilt** ([L906](js/render.js#L906)) — différent du dithering. À ne pas confondre.
-- Suggestion : `const ENERGY_DITHER_THRESHOLD = 10` et `const ENERGY_TILT_THRESHOLD = 40` au sommet.
+#### ✅ MINEUR — résolu (sessions 7-8)
+**Seuils dithering hardcodés**
+- Remplacés par les constantes `HA_MED`, `HA_HIGH`, `EN_LOW`, etc. centralisées dans `config.js`.
 
-#### 🟡 MINEUR
+#### ✅ MINEUR — résolu (session 2)
 **Variable `wc` redéclarée dans `p.draw`**
-- Lignes : `952` (`const wc = window.meteoData?.weathercode`) puis `1060` (`const wc = ...`)
-- Description : deux `const wc` dans la même fonction `p.draw` — JS le tolère car portées de blocs différentes (si elles sont dans des `if`/sous-blocs), mais ici ils sont dans la même portée (`p.draw`).
-- Risque : SyntaxError potentielle selon strict mode. Aujourd'hui ça passe car L1060 est dans `if (window.meteoData?.temperature)`.
-- Suggestion : renommer le second `wcMeteo` ou réutiliser.
+- Renommée `wcMeteo` (L620).
 
-#### 🟡 MINEUR
-**`window._evoAnim` initialisé deux fois ([L49](js/render.js#L49) + via `triggerEvoAnim` [L51](js/render.js#L51))**
-- OK fonctionnellement.
+#### ✅ MINEUR — OK
+**`window._evoAnim` initialisé deux fois**
+- Comportement voulu : L60 init statique à l'état `inactive`, L62 dans `triggerEvoAnim` pour l'activer.
 
-#### 🔵 STYLE
-**Mélange de tabs/spaces et indentation inconsistante**
-- Lignes : `826-839`, `956-961` notamment
-- Suggestion : passer Prettier une fois.
+#### 🔵 STYLE — non traité
+**Indentation inconsistante (tabs/spaces)**
+- À passer Prettier une fois en session dédiée.
 
 ### 3.4 Code mort / redondances
-- `window._bounceT = 0` ([L34](js/render.js#L34)) jamais lu/écrit ailleurs (la vraie variable est `bounceT` locale au module).
-- `window.celebQueue` est shifté ([L1033](js/render.js#L1033)) mais **jamais alimenté** dans le code lu — sans doute mort.
-- `window._lastPetTime` ([L1168](js/render.js#L1168)) écrit, jamais lu.
-- `window._petResetTimer` (pareil — utilisé localement, OK).
-- `window.shadeN` n'existe pas (`shadeN` est dans envs.js, jamais exposée). `tc()` l'utilise correctement mais `tc` est aussi seulement local — pas un bug, juste trompeur.
+- ⚠️ `window._bounceT = 0` (L45) — toujours présent, jamais lu ailleurs. À supprimer.
+- ✅ `window.celebQueue` — initialisé dans `app.js:47`, consommé dans render. Pas mort.
+- ⚠️ `window._lastPetTime` (L728) — écrit, jamais lu. À supprimer ou à exploiter.
+- ✅ `window.shadeN` — `shadeN` est locale à `envs.js`, utilisée correctement via `tc()`. Non exposée globalement, pas un bug.
 
 ### 3.5 Annotations manquantes
-- `drawSky` ([L144](js/render.js#L144)) : pas de doc sur les paramètres (`h`, `ha`).
-- `drawBaby` / `drawTeen` / `drawAdult` : pas de doc sur les retours `{topY, eyeY, neckY}`. `drawAccessoires` en dépend, ça mérite un commentaire.
-- `p.draw` : aucun docstring pour ce bloc de 340 lignes.
+- ✅ `drawBaby` / `drawTeen` / `drawAdult` — extraits dans `render-sprites.js` (session 9), annotés.
+- ✅ `p.draw` — sommaire §1-§9 ajouté (session 9).
+- ⚠️ `drawSky` — pas de doc sur les paramètres `h` et `ha`.
 
 ---
 
@@ -219,37 +202,30 @@
 
 ### 4.3 Problèmes identifiés
 
-#### 🟠 IMPORTANT
+#### ✅ IMPORTANT — résolu (session 2)
 **`drawFrameMotif` : 4 branches identiques**
-- Lignes : `278-303`
-- Description : `automne`, `hiver`, `desert`, `else (pastel)` exécutent **exactement les mêmes appels `px`** avec les mêmes constantes — seul `theme.frameAccent1/2` change, mais ces clés sont déjà dans `theme`.
-- Risque : nul mais maintenance onéreuse pour 0 valeur ajoutée.
-- Suggestion : remplacer par un seul bloc qui lit `theme.frameAccent1/2`.
+- Réduit à un seul bloc qui lit `theme.frameAccent1/2` (L285-290).
 
-#### 🟠 IMPORTANT
+#### ✅ IMPORTANT — résolu (session 2)
 **Pic de montagne dessiné 2×**
-- Lignes : `240` puis `243`
-- Description : `p.fill(tc(n, theme.mntPeak)); p.triangle(40, 120, 100, 50, 160, 120);` exécuté une fois inconditionnellement (L240) puis re-dessiné dans `if (theme.id !== 'desert')` (L243).
-- Risque : surcoût marginal, pas de bug visuel (même triangle).
-- Suggestion : supprimer la 1re occurrence et garder uniquement la branche conditionnelle.
+- Occurrence inconditionnelle supprimée. Seule la branche `if (theme.id !== 'desert')` (L249) reste.
 
-#### 🟡 MINEUR
-**`drawWind` particule blanche fixe `#d8d8e8`**
-- Lignes : `46`
-- Description : pas de variation selon le mode nuit. Visible ?
-- Suggestion : passer dans `tc(n, '#d8d8e8')` si le test visuel le confirme.
+#### 🟡 MINEUR — ouvert
+**`drawWind` couleur fixe `#d8d8e8`**
+- Ligne : `53` — pas de variation selon le mode nuit.
+- Suggestion : `tc(n, '#d8d8e8')` si le test visuel confirme que c'est visible la nuit.
 
-#### 🟡 MINEUR
-**`drawRain` aphalpha hardcodé**
-- Lignes : `116`
-- Description : alpha 200. Lecture aurait gagné à constanter.
+#### 🟡 MINEUR — ouvert
+**`drawRain` alpha hardcodé**
+- Ligne : `124` — `200` hardcodé dans `p.fill(p.color(220, 225, 235, 200))`.
+- Faible impact, mais à constanter si d'autres réglages de pluie sont ajoutés.
 
 ### 4.4 Code mort / redondances
-- Les 3 branches identiques de `drawFrameMotif` (cf. ci-dessus).
-- Triangle de pic redondant.
+- ✅ Branches identiques `drawFrameMotif` supprimées.
+- ✅ Triangle de pic redondant supprimé.
 
 ### 4.5 Annotations manquantes
-- `drawFrameMotif` : pas de docstring expliquant pourquoi chaque thème devrait avoir son motif (puisque concrètement, ils n'en ont pas).
+- ✅ `drawFrameMotif` — docstring ajouté (L282).
 
 ---
 

@@ -429,7 +429,7 @@ function getWeekId(d = new Date()) {
  */
 function getCurrentMealWindow() {
   const h = hr();
-  for (const [key, w] of Object.entries(MEAL_WINDOWS)) {
+  for (const [key, w] of Object.entries(window.HG_CONFIG.MEAL_WINDOWS)) {
     if (h >= w.start && h < w.end) return key;
   }
   return null;
@@ -456,7 +456,7 @@ function ensureMealsToday() {
 function ensureSnackPref() {
   const wk = getWeekId();
   if (!window.D.g.snackPref || window.D.g.snackPref.weekId !== wk) {
-    const emoji = SNACKS_POOL[Math.floor(Math.random() * SNACKS_POOL.length)];
+    const emoji = window.HG_CONFIG.SNACKS_POOL[Math.floor(Math.random() * window.HG_CONFIG.SNACKS_POOL.length)];
     window.D.g.snackPref = { emoji, weekId: wk };
   }
   return window.D.g.snackPref.emoji;
@@ -469,7 +469,7 @@ function ensureSnackPref() {
  */
 function pickThreeSnacks() {
   const pref = ensureSnackPref();
-  const pool = SNACKS_POOL.filter(e => e !== pref);
+  const pool = window.HG_CONFIG.SNACKS_POOL.filter(e => e !== pref);
 
   // Pioche 2 emojis distincts dans le pool restant
   const shuffled = pool.sort(() => Math.random() - 0.5);
@@ -514,7 +514,7 @@ function giveSnack(emoji) {
     type: 'note',
     subtype: 'meal',
     valeur: gain,
-    label: `${emoji} donné à ${window.D.g.name} (${MEAL_WINDOWS[win].label})${isFav ? ' — préféré !' : ''}  +${gain} 🌸`
+    label: `${emoji} donné à ${window.D.g.name} (${window.HG_CONFIG.MEAL_WINDOWS[win].label})${isFav ? ' — préféré !' : ''}  +${gain} 🌸`
   });
   
   // Bulle adaptée : "Miam, mon préféré !" si match, sinon message normal

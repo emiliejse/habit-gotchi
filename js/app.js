@@ -978,7 +978,13 @@ function updBubbleNow() {
   if (h >= 22 || h < 7) {
     const pool = src.nuit || ["Zzz... 🌙", "*ronfle* 💤", "...zzZZ... 🌛", "Dors bien ✿"];
     const el = document.getElementById('bubble');
-    if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+    if (el) {
+      // BUGFIX : appliquer le replace {{diminutif}} comme dans le chemin principal
+      // POURQUOI : sans ça, les bulles nuit contenant {{diminutif}} affichent le placeholder brut
+      let bulle = pool[Math.floor(Math.random() * pool.length)];
+      bulle = bulle.replace('{{diminutif}}', D.g.userNickname || D.g.userName || 'toi');
+      el.textContent = bulle;
+    }
     return;
   }
 

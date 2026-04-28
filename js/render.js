@@ -202,8 +202,20 @@ function drawSky(p, h, ha) {
     const starAlpha = skyPhase === 'nuit'        ? 255
       : skyPhase === 'aube'                      ? (1 - skyT / 0.25) * 255
       : ((skyT - 0.75) / 0.25) * 255;
+    // RÔLE : Dessine les étoiles réparties sur toute la hauteur du ciel (0–115px).
+    // POURQUOI : Avant, les 7 étoiles étaient toutes dans les 40px du haut.
+    // On en ajoute pour couvrir la zone basse du ciel, visible notamment
+    // à travers la fenêtre de la chambre.
+    // Chaque étoile : [x, y] — scintillement décalé via (frameCount + x) % cycle
     p.fill(p.color(255, 255, 200, Math.round(starAlpha)));
-    [[20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35]].forEach(s => {
+    [
+      // Zone haute (y 5–40) — étoiles d'origine
+      [20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35],
+      // Zone médiane (y 45–80) — nouvelles
+      [15,50],[75,55],[100,48],[145,62],[175,58],[35,72],[160,75],
+      // Zone basse (y 82–115) — visibles par la fenêtre de la chambre
+      [50,85],[90,92],[135,88],[170,98],[25,105],[120,112],[80,100],
+    ].forEach(s => {
       if ((p.frameCount + s[0]) % 35 < 25) px(p, s[0], s[1], PX, PX);
     });
 

@@ -1311,7 +1311,15 @@ function exportObjetIA(propId) {
     pixels:   src.pixels  || [],
   };
 
-  const json = JSON.stringify(entry, null, 2);
+  // RÔLE : Sérialise avec pixels compactés (une ligne par rangée) pour lisibilité
+  // POURQUOI : JSON.stringify met chaque chiffre sur sa propre ligne — illisible pour les grilles pixel art
+  const pixels = entry.pixels;
+  const cloneEntry = { ...entry };
+  delete cloneEntry.pixels;
+  let jsonBase = JSON.stringify(cloneEntry, null, 2);
+  jsonBase = jsonBase.slice(0, jsonBase.lastIndexOf('}')).trimEnd() + ',\n';
+  const pixelRows = pixels.map(row => '    [' + row.join(',') + ']');
+  const json = jsonBase + '  "pixels": [\n' + pixelRows.join(',\n') + '\n  ]\n}';
 
   document.getElementById('modal').style.display = 'flex';
   lockScroll();

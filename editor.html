@@ -1635,20 +1635,22 @@ function v(id) { return document.getElementById(id)?.value || ''; }
 // RÔLE : formate un tableau 2D de pixels en JSON compact (une ligne par rangée)
 // POURQUOI : JSON.stringify met chaque chiffre sur sa propre ligne, illisible pour les grilles pixel art
 function pixelsToCompactJson(pixels) {
-  const rows = pixels.map(row => '[' + row.join(',') + ']');
-  return '[\n  ' + rows.join(',\n  ') + '\n]';
+  const rows = pixels.map(row => '    [' + row.join(',') + ']');
+  return '[\n' + rows.join(',\n') + '\n  ]';
 }
 
 // RÔLE : sérialise un objet en JSON avec les pixels compactés sur une ligne par rangée
 function stringifyWithCompactPixels(obj) {
-  // On sérialise l'objet sans les pixels, puis on insère les pixels compactés
+  // On sérialise d'abord sans les pixels pour avoir le JSON de base bien indenté
   const clone = { ...obj };
   const pixels = clone.pixels;
   delete clone.pixels;
-  // JSON standard pour tout sauf pixels
+  // JSON standard pour tout sauf pixels — on retire l'accolade fermante finale
   let base = JSON.stringify(clone, null, 2);
-  // On retire la dernière accolade fermante pour insérer pixels
   base = base.slice(0, base.lastIndexOf('}'));
+  // base se termine par "\n" après le dernier champ — on ajoute la virgule manquante
+  base = base.trimEnd() + ',\n';
+  // On ajoute les pixels compactés et l'accolade fermante
   return base + '  "pixels": ' + pixelsToCompactJson(pixels) + '\n}';
 }
 

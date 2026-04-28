@@ -185,20 +185,20 @@ body {
   transform-origin: top center;
 }
 
-/* RÔLE : Mode compact — le tama se positionne en absolu à la place du titre masqué */
-/* POURQUOI : #hdr-title disparaît, le tama occupe visuellement cet espace central.
-              Les boutons boutique/tablette restent dans .hdr, non affectés.
-              La bulle reste juste en dessous dans le flux. */
+/* RÔLE : Mode compact — tama dans le .hdr, taille fixe pour ne pas pousser les boutons */
+/* POURQUOI : flex:1 laisse le tama prendre l'espace central entre les deux boutons.
+              height fixe à 40px empêche le .hdr de s'étirer et garde les boutons alignés.
+              aspect-ratio:1/1 sur le canvas s'adapte à cette hauteur automatiquement. */
 .tama-shell.shrunk {
-  max-width: 200px;
-  padding: 2px;
-  margin: 0 auto;
-  position: absolute;
-  /* top = safe area + padding #console-top (6px) — aligne sur le début du .hdr */
-  top: calc(var(--sat) + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2; /* au-dessus de #hdr-title masqué, sous les boutons (pas besoin de plus) */
+  flex: 1;
+  height: 38px;        /* légèrement plus petit que les boutons (44px) — tama discret */
+  max-width: none;
+  padding: 1px;
+  margin: 0;
+  align-self: center;  /* centré verticalement dans le .hdr sans le faire grandir */
+  position: relative;
+  z-index: 1;
+  overflow: visible;   /* laisse la flèche de la bulle dépasser en dessous */
 }
 
 /* L'écran Canvas (Le jeu en lui-même) */
@@ -672,23 +672,10 @@ body {
 /* POURQUOI : Le tama passe en position absolute à la place du titre masqué.
               La bulle descend sous le tama grâce à margin-top calculé sur la hauteur du tama compact.
               Les boutons restent dans .hdr, fixes, non affectés. */
-#console-top.compact #hdr-title    { visibility: hidden; } /* garde sa place dans .hdr → boutons fixes */
+/* RÔLE : Mode compact — masque les sliders, espace sous la bulle, flèche visible */
 #console-top.compact #sliders-wrap { display: none; }      /* masque les sliders énergie/bonheur */
-#console-top.compact .bubble       { margin: 0 auto 8px; } /* colle sous le placeholder, espace en bas */
-#console-top.compact .bubble::before { display: none; }    /* masque la flèche — espace inutile en compact */
-
-/* RÔLE : Placeholder qui reproduit la taille du tama compact dans le flux normal */
-/* POURQUOI : Le tama passe en position:absolute → sort du flux → la bulle remonte.
-              Le placeholder garde exactement la même taille pour que la bulle
-              se positionne naturellement juste en dessous, sur n'importe quel écran. */
-#tama-placeholder { display: none; }
-#console-top.compact #tama-placeholder {
-  display: block;
-  max-width: 200px;    /* même valeur que .tama-shell.shrunk */
-  width: 100%;
-  aspect-ratio: 1 / 1; /* carré comme le canvas du tama */
-  margin: 2px auto 0;  /* colle sous le .hdr */
-}
+#console-top.compact .bubble       { margin-bottom: 8px; } /* petit espace sous la bulle */
+/* POURQUOI : la flèche ::before reste visible — elle pointe vers le tama juste au-dessus */
 
 /* Barre d'XP */
 .pbar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }

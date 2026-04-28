@@ -349,8 +349,11 @@ const p5s = (p) => {
     if (window.meteoData && window.meteoData.windspeed > 20) drawWind(p);
 
     const estJour = h < 19;
-    // Nuit (21h–6h) → chambre systématiquement, quelle que soit la préférence stockée
-    let envActif = (nightRatio === 1) ? 'chambre' : (g.activeEnv || 'parc');
+    // RÔLE : Détermine l'environnement à afficher en fond.
+    // La nuit, on force la chambre — SAUF si on est en preview inventaire (_invEnvForced),
+    // auquel cas on respecte le choix de l'utilisatrice pour qu'elle puisse voir parc/montagne.
+    const enPreviewInv = !!window._invEnvForced;
+    let envActif = (!enPreviewInv && nightRatio === 1) ? 'chambre' : (g.activeEnv || 'parc');
     if (!sleeping) {
       if (ha < HA_MED)                    drawRain(p, ha);  // pluie si ha = 0 ou 1
       else if (ha === HA_HIGH && estJour) drawSun(p);       // soleil à ha = 4

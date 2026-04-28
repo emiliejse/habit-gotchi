@@ -186,15 +186,12 @@ function go(t) {
   // donnent l'effet de glissement/rétrécissement. syncConsoleHeight recalcule après.
   if (t === 'gotchi') {
     consoleTop.classList.remove('compact');
-    // Si on quitte l'inventaire (forçage temporaire actif), on remet l'env selon l'heure
-    if (window._invEnvForced) {
-      window._invEnvForced = false;
-      const h = hr();
-      window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
-    } else {
-      const h = hr();
-      window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
-    }
+    // RÔLE : En quittant l'onglet gotchi, on remet l'env selon l'heure.
+    // POURQUOI : le flag _invEnvForced est remis à false quelle que soit son état —
+    //            on sort de la preview inventaire, la logique heure reprend.
+    window._invEnvForced = false;
+    const h = hr();
+    window.D.g.activeEnv = (h >= 21 || h < 6) ? 'chambre' : 'parc';
   } else {
     consoleTop.classList.add('compact');
     if (t === 'props') {

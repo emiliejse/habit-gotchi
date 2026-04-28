@@ -148,8 +148,8 @@ function drawSky(p, h, ha) {
   const sol = window.getSolarPhase ? window.getSolarPhase() : { phase: 'jour', t: 0.5 };
   const skyPhase = sol.phase, skyT = sol.t;
 
-  if (skyPhase === 'jour' && ha <= 40) {
-    const blend = ha / 40;
+  if (skyPhase === 'jour' && ha <= HA_MED) { // ciel gris si ha ≤ 2
+    const blend = ha / HA_MED; // 0 = gris total, 1 = ciel normal
     c1 = p.lerpColor(p.color('#4a4a5c'), p.color(C.skyGray1), blend);
     c2 = p.lerpColor(p.color('#5a5a6c'), p.color(C.skyGray2), blend);
   } else if (skyPhase === 'jour') {
@@ -217,7 +217,7 @@ function drawSky(p, h, ha) {
   }
 
   // Nuages : jour, fin d'aube, début de crépuscule — et bonne humeur
-  const showClouds = ha > 40 && (
+  const showClouds = ha > HA_MED && ( // nuages seulement si ha > 2
     skyPhase === 'jour'
     || (skyPhase === 'aube'       && skyT > 0.5)
     || (skyPhase === 'crepuscule' && skyT < 0.5)
@@ -356,14 +356,14 @@ function drawBaby(p, cx, cy, sl, en, ha) {
     
     p.fill(C.mouth);
     if(!sl) { 
-      if(ha > 60) px(p,x+PX*2,y+PX*3,PX*2,PX); 
-      else if(ha < 25) px(p,x+PX*2,y+PX*3+2,PX*2,PX); 
+      if(ha > HA_HIGH) px(p,x+PX*2,y+PX*3,PX*2,PX);       // sourire bébé (ha > 3)
+      else if(ha < HA_SAD) px(p,x+PX*2,y+PX*3+2,PX*2,PX); // bouche triste (ha < 1.25)
       else px(p,x+PX*2,y+PX*3,PX,PX); 
     }
     
     p.fill(C.bodyDk); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*4,y+PX*5,PX,PX);
-    if(en < 25 && !sl) { px(p,x+PX*2,y+PX*5,PX*2,PX); } 
-    if (en < 10 && !sl) drawDither(p, x + PX, y + PX * 3, PX * 4, PX * 3, C.bodyDk);
+    if(en < EN_WARN && !sl) { px(p,x+PX*2,y+PX*5,PX*2,PX); }       // bras tombés (en < 1.25)
+    if (en < EN_CRIT && !sl) drawDither(p, x + PX, y + PX * 3, PX * 4, PX * 3, C.bodyDk); // épuisement (en < 0.5)
 
     // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
     drawAccessoires(p, cx, { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 }, 'baby');
@@ -477,17 +477,17 @@ px(p, x+PX*5+2, y-PX,   PX, PX);
         px(p, x+PX*3, mouthY, PX*2, PX*2);
       } else {
         // Humeurs normales
-        if      (ha > 70) { px(p,x+PX*3,mouthY,PX*2,PX); px(p,x+PX*2,mouthY,PX,PX); px(p,x+PX*5,mouthY,PX,PX); }
-        else if (ha > 40)   px(p,x+PX*3,mouthY,PX*2,PX);
-        else if (ha < 20)   px(p,x+PX*3,mouthY+2,PX*2,PX);
+        if      (ha > HA_HAPPY_TEEN) { px(p,x+PX*3,mouthY,PX*2,PX); px(p,x+PX*2,mouthY,PX,PX); px(p,x+PX*5,mouthY,PX,PX); } // grand sourire (ha > 3.5)
+        else if (ha > HA_MED)         px(p,x+PX*3,mouthY,PX*2,PX);   // sourire neutre (ha > 2)
+        else if (ha < HA_SAD)         px(p,x+PX*3,mouthY+2,PX*2,PX); // bouche triste (ha < 1.25)
         else                px(p,x+PX*3,mouthY,PX,PX);
       }
     }
 
     /* ─── PETITS BRAS SUR LES CÔTÉS ─── */
     p.fill(C.bodyDk);
-    if (en < 25 && !sl) {
-      px(p, x-PX,   y+PX*5, PX, PX);        // bras tombés
+    if (en < EN_WARN && !sl) {
+      px(p, x-PX,   y+PX*5, PX, PX);        // bras tombés (en < 1.25)
       px(p, x+PX*8, y+PX*5, PX, PX);
     } else {
       px(p, x-PX,   y+PX*4, PX, PX*2);      // bras normaux
@@ -497,8 +497,8 @@ px(p, x+PX*5+2, y-PX,   PX, PX);
     /* ─── PETITS PIEDS ─── */
     px(p, x+PX*2, y+PX*8, PX, PX);
     px(p, x+PX*5, y+PX*8, PX, PX);
-    
-    if (en < 10 && !sl) drawDither(p, x, y + PX * 4, PX * 8, PX * 5, C.bodyDk);
+
+    if (en < EN_CRIT && !sl) drawDither(p, x, y + PX * 4, PX * 8, PX * 5, C.bodyDk); // épuisement (en < 0.5)
 
     // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
     drawAccessoires(p, cx, { topY: y, eyeY: y + PX*2, neckY: y + PX*5 }, 'teen');
@@ -615,19 +615,19 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
         px(p, x+PX*4, mouthY, PX*2, PX*2);
       } else {
         // Humeurs normales
-        if      (ha > 80) { px(p,x+PX*3,mouthY+PX,PX*4,PX); px(p,x+PX*2,mouthY,PX,PX); px(p,x+PX*7,mouthY,PX,PX); }
-        else if (ha > 50)   px(p,x+PX*4,mouthY,PX*2,PX);
-        else if (ha < 20) { px(p,x+PX*4,mouthY+2,PX*2,PX); px(p,x+PX*3,mouthY,PX,PX); }
+        if      (ha > HA_HIGH)        { px(p,x+PX*3,mouthY+PX,PX*4,PX); px(p,x+PX*2,mouthY,PX,PX); px(p,x+PX*7,mouthY,PX,PX); } // grand sourire (ha > 4)
+        else if (ha > HA_MED_ADULT)     px(p,x+PX*4,mouthY,PX*2,PX);                                                               // sourire neutre (ha > 2.5)
+        else if (ha < HA_SAD)         { px(p,x+PX*4,mouthY+2,PX*2,PX); px(p,x+PX*3,mouthY,PX,PX); }                              // bouche triste (ha < 1.25)
         else                px(p,x+PX*4,mouthY,PX,PX);
       }
     }
 
 /* ─── PETITS BRAS SUR LES CÔTÉS ─── */
     p.fill(C.bodyDk);
-    if (en < 20 && !sl) {
-      px(p, x-PX,    y+PX*6, PX, PX*2);     // bras tombés
+    if (en < EN_WARN && !sl) {
+      px(p, x-PX,    y+PX*6, PX, PX*2);     // bras tombés (en < 1.25)
       px(p, x+PX*10, y+PX*6, PX, PX*2);
-    } else if (ha > 85 && !sl) {
+    } else if (ha > HA_ARMS_UP && !sl) {     // bras levés joie (ha > 4.25)
       px(p, x-PX,    y+PX*3, PX, PX*2);     // bras levés (joie)
       px(p, x+PX*10, y+PX*3, PX, PX*2);
       px(p, x-PX*2,  y+PX*2, PX, PX);
@@ -706,7 +706,7 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
       px(p, x+PX*3, y+PX*10, PX*2, PX);
       px(p, x+PX*6, y+PX*10, PX*2, PX);
     }
-    if (en < 10 && !sl) drawDither(p, x + PX, y + PX * 5, PX * 8, PX * 5, C.bodyDk);
+    if (en < EN_CRIT && !sl) drawDither(p, x + PX, y + PX * 5, PX * 8, PX * 5, C.bodyDk); // épuisement (en < 0.5)
 
     // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
     drawAccessoires(p, cx, { topY: y, eyeY: y + PX*3, neckY: y + PX*6 }, 'adult');
@@ -756,7 +756,9 @@ const p5s = (p) => {
     const ec = getEnvC();
     C.gnd = ec.gnd; C.gndDk = ec.gndDk; C.skyD1 = ec.sky1; C.skyD2 = ec.sky2;
 
-    const en = g.energy * 20, ha = g.happiness * 20;
+    // RÔLE : on lit directement les jauges en 0–5 (plus de ×20)
+    // POURQUOI : les seuils visuels sont désormais exprimés en 0–5 via les constantes EN_*/HA_* de config.js
+    const en = g.energy, ha = g.happiness;
     const n = (h >= 21 || h < 6);
 
     const sol = window.getSolarPhase ? window.getSolarPhase() : { phase: 'jour', t: 0 };
@@ -773,10 +775,10 @@ const p5s = (p) => {
     // Nuit (21h–6h) → chambre systématiquement, quelle que soit la préférence stockée
     let envActif = n ? 'chambre' : (g.activeEnv || 'parc');
     if (!sleeping) {
-      if (ha < 40)                    drawRain(p, ha);
-      else if (ha === 40)             drawRain(p, 35);
-      else if (ha === 80 && estJour)  drawSun(p);
-      else if (ha >= 100 && estJour)  drawRainbow(p);
+      if (ha < HA_MED)               drawRain(p, ha);          // pluie si ha < 2
+      else if (ha === HA_MED)        drawRain(p, HA_MED - 0.25); // pluie légère à ha = 2
+      else if (ha === HA_HIGH && estJour) drawSun(p);          // soleil à ha = 4
+      else if (ha >= 5 && estJour)   drawRainbow(p);           // arc-en-ciel à ha = 5 (max)
     }
 
     drawActiveEnv(p, envActif, n, h);
@@ -860,10 +862,10 @@ if (window._jumpTimer > 0) {
 }
 
 let amplitude = 15, vitesse = 0.02;
-if (!sleeping && ha >= 80 && en >= 80) {
+if (!sleeping && ha >= HA_HIGH && en >= HA_HIGH) {  // très heureux + plein d'énergie (≥ 4)
   amplitude = 40; vitesse = 0.06;
   if (p.frameCount % 20 < 10) bobY -= PX;
-} else if (!sleeping && ha >= 60 && en >= 60) {
+} else if (!sleeping && ha >= HA_WALK && en >= HA_WALK) { // état normal (≥ 3)
   amplitude = 25; vitesse = 0.04;
 }
 
@@ -871,10 +873,10 @@ const XMIN = 35, XMAX = CS - 35;
 
 if (!sleeping) {
   walkStep++;
-  const speed = (ha >= 80 && en >= 80) ? 1.4
-              : (ha >= 50 && en >= 60) ? 0.7
-              : (en >= 40) ? 0.35
-              : 0.12;
+  const speed = (ha >= HA_HIGH && en >= HA_HIGH)  ? 1.4  // vive (≥ 4/5)
+              : (ha >= HA_SLOW && en >= HA_WALK)  ? 0.7  // normale (ha≥2.5, en≥3)
+              : (en >= EN_TILT)                   ? 0.35 // lente (en≥2)
+              : 0.12;                                     // traîne (en < 2)
 
   if (walkPause > 0) {
     walkPause--;
@@ -901,7 +903,7 @@ window._gotchiX = walkX; // ← exposition de la position réelle
 const cx = walkX;
 const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
 window._gotchiY = by + (bobY || 0);
-const tilt = (!sleeping && en < 40) ? Math.sin(p.frameCount * 0.05) * 2 : 0;
+const tilt = (!sleeping && en < EN_TILT) ? Math.sin(p.frameCount * 0.05) * 2 : 0; // balancement si en < 2
 
 if (window.shakeTimer > 0) window.shakeTimer--;
 

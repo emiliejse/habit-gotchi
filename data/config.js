@@ -206,3 +206,24 @@ const PETALES_SNACK = 2;    // Pétales bonus accordés pour tout snack mangé
 const POOP_MIN_DELAY_MS      = 8  * 60 * 1000; // 8 min minimum entre deux spawns de crotte
 const POOP_SPAWN_DELAY_MS    = 10 * 60 * 1000; // délai avant apparition d'une crotte
 const POOP_CHECK_INTERVAL_MS = 30 * 60 * 1000; // intervalle de vérification périodique
+
+/* ─── SYSTÈME 2 : SEUILS VISUELS (échelle 0–5) ───────────────────── */
+// RÔLE : Seuils d'énergie et de bonheur qui déclenchent les changements
+//        d'apparence du Gotchi (bras, bouche, dithering, animation, météo).
+// ⚠️ Ces valeurs s'appliquent directement sur g.energy / g.happiness (0–5).
+//    render.js ne fait PLUS de ×20 — raisonner toujours en "jauge visible".
+
+// Énergie
+const EN_CRIT = 0.5;  // dithering corps (épuisement total) — tous stades
+const EN_WARN = 1.25; // bras tombés — tous stades (unifié)
+const EN_TILT = 2;    // balancement + vitesse d'animation minimale
+
+// Bonheur
+const HA_SAD        = 1.25; // bouche triste — tous stades (unifié)
+const HA_MED        = 2;    // nuages + pluie + seuil ciel gris
+const HA_MED_ADULT  = 2.5;  // sourire neutre adulte
+const HA_SLOW       = 2.5;  // vitesse marche lente
+const HA_WALK       = 3;    // animation marche normale
+const HA_HIGH       = 4;    // grand sourire bébé + animation vive + soleil
+const HA_HAPPY_TEEN = 3.5;  // grand sourire ado
+const HA_ARMS_UP    = 4.25; // bras levés adulte (joie intense)

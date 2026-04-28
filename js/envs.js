@@ -107,8 +107,9 @@ function drawRainbow(p) {
  */
 function drawRain(p, ha) {
   p.noStroke();
-  // Plus ha est bas, plus il y a de gouttes (20 à 80)
-  const count = Math.floor(80 - ha * 1.5);
+  // RÔLE : plus ha est bas (0–2), plus il y a de gouttes (entre ~20 et ~80)
+  // POURQUOI : ha est maintenant en 0–5 (plus de ×20), donc on multiplie par 30
+  const count = Math.floor(80 - ha * 30);
   for (let i = 0; i < count; i++) {
     const speed = 7 + (i % 3) * 2;
     const x = (i * 31 + p.frameCount) % CS;

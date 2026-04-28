@@ -204,12 +204,53 @@ if (cycles.length >= 2) {
 }
 window.getCyclePhase = getCyclePhase; // exposée globalement
 
+// ─────────────────────────────────────────────────────────────
+// RÔLE  : Système de migrations de la structure D.
+// POURQUOI : Quand la structure de D évolue (nouveau champ, champ renommé,
+//            champ supprimé), les utilisatrices avec une ancienne sauvegarde
+//            en LocalStorage peuvent avoir des bugs silencieux.
+//            migrate() met à jour D vers la version courante au chargement.
+// USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
+//         Ne jamais supprimer une migration existante.
+// ─────────────────────────────────────────────────────────────
+const SCHEMA_VERSION = 1; // ⚠️ incrémenter à chaque ajout de migration
+
+const MIGRATIONS = [
+  // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
+  // et ajout des champs manquants dans D.g
+  function m1(d) {
+    delete d.lat;   // supprimé en session 5
+    delete d.lng;   // supprimé en session 5
+    // Garantit que les nouveaux champs de D.g existent
+    d.g.bilanCount     = d.g.bilanCount     ?? 0;
+    d.g.bilanWeek      = d.g.bilanWeek      ?? '';
+    d.g.bilanText      = d.g.bilanText      ?? '';
+    d.g.cycleDuree     = d.g.cycleDuree     ?? 28;
+    d.g.birthdayShown  = d.g.birthdayShown  ?? false;
+    d.g.birthdayCodeUsed = d.g.birthdayCodeUsed ?? false;
+    d.g.poopDay        = d.g.poopDay        ?? '';
+    d.g.poopCount      = d.g.poopCount      ?? 0;
+    return d;
+  }
+];
+
+// RÔLE : Applique toutes les migrations manquantes sur D chargé depuis LocalStorage.
+function migrate(d) {
+  const from = d.schemaVersion ?? 0; // 0 = sauvegarde sans version (ancienne)
+  for (let i = from; i < MIGRATIONS.length; i++) {
+    d = MIGRATIONS[i](d);
+  }
+  d.schemaVersion = SCHEMA_VERSION; // marque la version atteinte
+  return d;
+}
+
 // Chargement avec fusion (Spread Operator) pour éviter de casser les anciennes sauvegardes
 function load() {
   try {
     const r = localStorage.getItem(SK);
     if (r) {
       const d = JSON.parse(r);
+      d = migrate(d);
       if (d.habits) d.habits = d.habits.map(h => {
         const cat = CATS.find(c => c.id === h.catId);
         const isBrut = cat && h.label === h.catId;

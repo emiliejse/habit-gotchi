@@ -863,7 +863,7 @@ function renderProps() {
     filterEl.innerHTML = cats.map(({ key, label }) => {
       const active = propsFilterActive === key;
       return `<button onclick="setPropsFilter('${key}')"
-        style="padding:5px 2px;border-radius:6px;
+        style="padding:5px 2px;border-radius:999px;
         border:2px solid ${active ? 'var(--lilac)' : 'var(--border)'};
         font:bold 9px 'Courier New',monospace;cursor:pointer;width:100%;
         background:${active ? 'var(--lilac)' : 'rgba(0,0,0,.03)'};
@@ -1249,7 +1249,7 @@ function exportObjetIA(propId) {
       <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
     </div>
     <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:10px;line-height:1.6">
-      Copie ce code et envoie-le à Émilie — elle pourra l'ajouter au jeu pour que tu aies cet objet dans ton inventaire à toi aussi 🌸
+      Copie ce code et envoie-le — l'autre personne pourra l'ajouter à son jeu pour avoir cet objet dans son inventaire aussi 🌸
     </p>
     <pre id="export-json" style="
       font-size:9px;line-height:1.5;background:rgba(0,0,0,.04);

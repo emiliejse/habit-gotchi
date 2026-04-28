@@ -778,11 +778,15 @@ function _propCard(p, index, def, D, isNew) {
         letter-spacing:.5px;line-height:1.4">NEW</span>`
     : '';
 
-  // Icône ✦ + corbeille pour les créations IA
+  // Icône ✦ + export + corbeille pour les créations IA
+  // POURQUOI : L'export 📤 permet de copier le JSON au format props.json pour l'envoyer ou l'intégrer au catalogue
   const claudBadge = isClaud ? `
     <span style="position:absolute;top:3px;${isNew ? 'left:32px' : 'left:4px'};font-size:14px;color:var(--lilac);">✦</span>
+    <span onclick="event.stopPropagation();exportObjetIA('${p.id}')"
+      style="position:absolute;bottom:2px;right:22px;font-size:11px;cursor:pointer;opacity:.55"
+      title="Exporter le JSON">📤</span>
     <span onclick="event.stopPropagation();supprimerObjetIA('${p.id}')"
-      style="position:absolute;top:2px;right:4px;font-size:13px;cursor:pointer;opacity:.6">🗑️</span>
+      style="position:absolute;bottom:2px;right:4px;font-size:11px;cursor:pointer;opacity:.55">🗑️</span>
   ` : '';
 
   return `<div onclick="toggleProp(${index})" style="
@@ -1159,6 +1163,87 @@ function confirmerSuppressionIA(propId) {
   renderProps();
   toast(`🗑️ Objet supprimé`);
 }
+
+// RÔLE : Affiche le JSON d'un objet IA formaté pour props.json, prêt à copier-coller.
+// POURQUOI : Permet d'exporter un objet généré par l'IA vers le catalogue permanent,
+//            ou de l'envoyer à quelqu'un d'autre pour qu'iel l'intègre dans son catalogue.
+function exportObjetIA(propId) {
+  const src = (window.D.propsPixels || {})[propId];
+  const inv = (window.D.g.props || []).find(p => p.id === propId);
+  if (!src) { toast('Objet introuvable 🤔'); return; }
+
+  // RÔLE : Construire le JSON au format exact du catalogue props.json
+  // POURQUOI : Prêt à coller dans "catalogue": [...] sans aucune retouche (sauf cout et categorie)
+  const entry = {
+    id:       src.id      || propId,
+    nom:      src.nom     || inv?.nom || '?',
+    type:     src.type    || inv?.type || 'decor',
+    emoji:    src.emoji   || inv?.emoji || '🎁',
+    categorie: src.type === 'accessoire' ? (src.ancrage || 'tete') : 'ia',
+    cout:     0,
+    ...(src.ancrage ? { ancrage: src.ancrage } : {}),
+    ...(src.slot    ? { slot:    src.slot    } : {}),
+    ...(src.motion  ? { motion:  src.motion  } : {}),
+    pxSize:   src.pxSize  || 3,
+    palette:  src.palette || [],
+    pixels:   src.pixels  || [],
+  };
+
+  const json = JSON.stringify(entry, null, 2);
+
+  document.getElementById('modal').style.display = 'flex';
+  lockScroll();
+  document.getElementById('mbox').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h3 style="font-size:13px;color:var(--lilac);margin:0">📤 ${escape(entry.nom)}</h3>
+      <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
+    </div>
+    <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:8px;line-height:1.5">
+      Copie ce JSON et colle-le dans <code style="background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px">data/props.json</code>
+      à l'intérieur du tableau <code style="background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px">"catalogue"</code>.<br>
+      Pense à ajuster <code style="background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px">cout</code> et
+      <code style="background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px">categorie</code> si besoin.
+    </p>
+    <pre id="export-json" style="
+      font-size:9px;line-height:1.5;background:rgba(0,0,0,.04);
+      border:1px solid var(--border);border-radius:var(--r-sm);
+      padding:8px;overflow-x:auto;white-space:pre;
+      max-height:220px;overflow-y:auto;
+      font-family:'Courier New',monospace;
+      user-select:all;cursor:text;">${escapeHtml(json)}</pre>
+    <button onclick="copierExportIA()" class="btn btn-p"
+      style="width:100%;margin-top:10px;font-size:var(--fs-sm)" id="btn-copier-export">
+      📋 Copier le JSON
+    </button>
+  `;
+  animEl(document.getElementById('mbox'), 'bounceIn');
+
+  // Stocker le JSON à copier dans une variable accessible depuis le bouton
+  window._exportJsonToCopy = json;
+}
+
+// RÔLE : Copie le JSON exporté dans le presse-papier et confirme visuellement.
+function copierExportIA() {
+  const json = window._exportJsonToCopy;
+  if (!json) return;
+  navigator.clipboard.writeText(json).then(() => {
+    const btn = document.getElementById('btn-copier-export');
+    if (btn) { btn.textContent = '✓ Copié !'; btn.style.background = 'var(--mint)'; }
+    setTimeout(() => {
+      if (btn) { btn.textContent = '📋 Copier le JSON'; btn.style.background = ''; }
+    }, 2000);
+  }).catch(() => {
+    // Fallback si clipboard API non disponible (contexte non sécurisé)
+    toast('Sélectionne le texte manuellement et copie-le ✿');
+  });
+}
+
+// RÔLE : Échappe les caractères HTML dans une chaîne pour affichage sécurisé dans innerHTML.
+// POURQUOI : Le JSON peut contenir des < > & qui casseraient le rendu HTML.
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 
 // RÔLE : Génère un bouton de slot (position dans l'environnement).
 // POURQUOI : Réutilisé dans openSlotPickerAvecEnv.

@@ -8,7 +8,7 @@ const CACHE_VERSION = 'v3.47';  // ⚠️ SYNC → app.js ligne 1 : window.APP_V
 
 const ASSETS = [
   './',
-  './index.html',
+  './index.html', 
   './manifest.json',
   './icon-192.png',
   './icon-512.png',

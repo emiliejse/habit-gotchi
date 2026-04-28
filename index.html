@@ -331,37 +331,19 @@ function clearDebugLogs() {
   <div class="card">
     <h2>Stats</h2>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-      <div style="text-align:center;padding:8px;background:rgba(255,255,255,0.5);border-radius:10px">
+      <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
         <div style="font-size:20px;font-weight:bold;color:var(--lilac)" id="s-str">0</div>
         <div class="slbl">série</div>
       </div>
-      <div style="text-align:center;padding:8px;background:rgba(255,255,255,0.5);border-radius:10px">
+      <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
         <div style="font-size:20px;font-weight:bold;color:var(--mint)" id="s-xp">0</div>
         <div class="slbl">XP total</div>
       </div>
-      <div style="text-align:center;padding:8px;background:rgba(255,255,255,0.5);border-radius:10px">
+      <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
         <div style="font-size:20px;font-weight:bold;color:var(--sky)" id="s-jrn">0</div>
         <div class="slbl">journal</div>
       </div>
     </div>
-  </div>
-
-    <!-- Bilan hebdomadaire généré par IA (SYSTEM 3: IA & Cognition) -->
-  <div class="card" id="card-bilan">
-    <h2 style="display:flex;justify-content:space-between;align-items:center;">
-      <span id="bilan-titre">🧠 Bilan Hebdo</span>
-      <button onclick="resetBilan()" style="background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;" title="Réinitialiser" aria-label="Réinitialiser le bilan">🔄</button>
-    </h2>
-    <div id="claude-summary" style="background:rgba(255,255,255,0.5);padding:12px;border-radius:8px;font-size:var(--fs-sm);border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);"> <!-- était 11px -->
-Ton bilan de la semaine apparaîtra ici...
-    </div>
-    <textarea id="bil-txt-hidden" style="display:none"></textarea>
-    <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%;font-size:var(--fs-sm);margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;"> <!-- était 10px -->
-      <span id="bilan-btn-label">✿ Générer le bilan</span><span id="bilan-flowers" class="thought-flowers"></span>
-    </button>
-    <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="width:100%;font-size:var(--fs-sm);display:none;"> <!-- était 10px -->
-      📋 Copier le bilan
-    </button>
   </div>
 
   <!-- Calendrier hebdomadaire interactif (SYSTEM 2: Écosystème) -->
@@ -381,6 +363,24 @@ Ton bilan de la semaine apparaîtra ici...
   <span style="font-size:var(--fs-xs);color:var(--text2);text-align:center">S</span>
   <span style="font-size:var(--fs-xs);color:var(--text2);text-align:center">D</span>
 </div>
+  </div>
+
+  <!-- Bilan hebdomadaire généré par IA (SYSTEM 3: IA & Cognition) -->
+  <div class="card" id="card-bilan">
+    <h2 style="display:flex;justify-content:space-between;align-items:center;">
+      <span id="bilan-titre">🧠 Bilan Hebdo</span>
+      <button onclick="resetBilan()" style="background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;" title="Réinitialiser" aria-label="Réinitialiser le bilan">🔄</button>
+    </h2>
+    <div id="claude-summary" style="background:rgba(176,144,208,.07);padding:12px;border-radius:8px;font-size:var(--fs-sm);border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);"> <!-- était 11px -->
+Ton bilan de la semaine apparaîtra ici...
+    </div>
+    <textarea id="bil-txt-hidden" style="display:none"></textarea>
+    <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%;font-size:var(--fs-sm);margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;"> <!-- était 10px -->
+      <span id="bilan-btn-label">✿ Générer le bilan</span><span id="bilan-flowers" class="thought-flowers"></span>
+    </button>
+    <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="width:100%;font-size:var(--fs-sm);display:none;"> <!-- était 10px -->
+      📋 Copier le bilan
+    </button>
   </div>
 
 </div><!-- fin p-progress -->

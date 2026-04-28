@@ -176,7 +176,21 @@ input.inp:focus,select.inp:focus{outline:none;border-color:var(--lilac2)}
 
 /* ─── Export ─── */
 .export-wrap{padding:10px;flex:1}
-textarea.jout{width:100%;height:110px;font:8.5px 'Courier New',monospace;background:var(--s2);border:1px solid var(--b1);color:var(--green);padding:5px;resize:vertical;border-radius:3px;margin-bottom:5px;line-height:1.4}
+textarea.jout{width:100%;height:110px;font:8.5px 'Courier New',monospace;background:var(--s2);border:1px solid var(--b1);color:var(--green);padding:5px;resize:vertical;border-radius:3px;margin-bottom:5px;line-height:1.4;-webkit-overflow-scrolling:touch;overflow-y:auto;touch-action:pan-y}
+
+/* ─── Modale JSON ─── */
+#json-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center}
+#json-modal-bg.open{display:flex}
+#json-modal{background:var(--s1);border:1px solid var(--b1);border-radius:6px;width:92vw;max-width:520px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
+#json-modal-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--b1);font-size:9px;letter-spacing:2px;color:var(--t2)}
+#json-modal-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px}
+#json-modal-text{width:100%;height:100%;min-height:200px;font:8.5px 'Courier New',monospace;background:transparent;border:none;color:var(--green);resize:none;outline:none;line-height:1.5;white-space:pre}
+#json-modal-foot{padding:8px 12px;border-top:1px solid var(--b1);display:flex;gap:6px}
+#json-modal-foot button{flex:1;padding:7px;font:9px 'Courier New',monospace;border-radius:3px;cursor:pointer;transition:all .15s}
+#btn-modal-copy{border:1px solid var(--amber);background:transparent;color:var(--amber)}
+#btn-modal-copy:hover{background:var(--amber);color:var(--bg)}
+#btn-modal-close{border:1px solid var(--b2);background:transparent;color:var(--t2)}
+#btn-modal-close:hover{color:var(--text);border-color:var(--text)}
 .xbtn{width:100%;padding:8px;font:10px 'Courier New',monospace;border:1px solid var(--lilac2);background:transparent;color:var(--lilac);cursor:pointer;border-radius:3px;letter-spacing:1px;transition:all .15s;margin-bottom:4px}
 .xbtn:hover{background:var(--lilac2);color:#fff}
 .xbtn.amber{border-color:var(--amber);color:var(--amber)}
@@ -478,6 +492,7 @@ textarea.jout{width:100%;height:110px;font:8.5px 'Courier New',monospace;backgro
     <div class="plabel">Export</div>
     <textarea class="jout" id="jout" readonly></textarea>
     <button class="xbtn amber" id="btn-copy" onclick="doCopy()">⊕ Copier l'export</button>
+    <button class="ibtn" onclick="openJsonModal()">⤢ Voir JSON complet</button>
     <button class="ibtn" onclick="doImport()">↓ Importer JSON</button>
   </div>
 </div>
@@ -1617,6 +1632,26 @@ function compact() {
 }
 function v(id) { return document.getElementById(id)?.value || ''; }
 
+// RÔLE : formate un tableau 2D de pixels en JSON compact (une ligne par rangée)
+// POURQUOI : JSON.stringify met chaque chiffre sur sa propre ligne, illisible pour les grilles pixel art
+function pixelsToCompactJson(pixels) {
+  const rows = pixels.map(row => '[' + row.join(',') + ']');
+  return '[\n  ' + rows.join(',\n  ') + '\n]';
+}
+
+// RÔLE : sérialise un objet en JSON avec les pixels compactés sur une ligne par rangée
+function stringifyWithCompactPixels(obj) {
+  // On sérialise l'objet sans les pixels, puis on insère les pixels compactés
+  const clone = { ...obj };
+  const pixels = clone.pixels;
+  delete clone.pixels;
+  // JSON standard pour tout sauf pixels
+  let base = JSON.stringify(clone, null, 2);
+  // On retire la dernière accolade fermante pour insérer pixels
+  base = base.slice(0, base.lastIndexOf('}'));
+  return base + '  "pixels": ' + pixelsToCompactJson(pixels) + '\n}';
+}
+
 function updateJSON() {
   const out = document.getElementById('jout');
   if (!out) return;
@@ -1638,7 +1673,7 @@ function updateJSON() {
     };
     if (type === 'accessoire') obj.ancrage = selAncrage;
     if (type === 'ambiance')   obj.motion  = selMotion;
-    text = JSON.stringify(obj, null, 2);
+    text = stringifyWithCompactPixels(obj);
   }
   else if (mode === 'env') {
     if (envSub === 'theme') {
@@ -1676,7 +1711,7 @@ function updateJSON() {
         palette: pal,
         pixels
       };
-      text = '// DATA JSON\n' + JSON.stringify(jsonPart, null, 2) + codeSnippet;
+      text = '// DATA JSON\n' + stringifyWithCompactPixels(jsonPart) + codeSnippet;
     }
   }
   else if (mode === 'gotchi') {
@@ -1690,16 +1725,16 @@ function updateJSON() {
       `// Ou dans la liste des variantes (avec label) :\n` +
       `{ id:'${gid}', label:'${glabel}', body:'${cc.body}', bodyLt:'${cc.lt}', bodyDk:'${cc.dk}' },\n\n` +
       `// DATA du dessin (stade : ${gotchiStage}) — référence pour retoucher render.js draw${gotchiStage[0].toUpperCase()+gotchiStage.slice(1)}()\n` +
-      JSON.stringify({ stage: gotchiStage, variant: gid, grid:{w:gW,h:gH}, palette: pal, pixels }, null, 2);
+      stringifyWithCompactPixels({ stage: gotchiStage, variant: gid, grid:{w:gW,h:gH}, palette: pal, pixels });
   }
   else {
     const {pal, pixels} = compact();
-    text = JSON.stringify({
+    text = stringifyWithCompactPixels({
       id: v('l-id') || 'custom01',
       nom: v('l-nom') || 'Création libre',
       palette: pal,
       pixels
-    }, null, 2);
+    });
   }
 
   out.value = text;
@@ -1720,6 +1755,36 @@ function doCopy() {
     ta.setAttribute('readonly', '');
   });
 }
+// RÔLE : ouvre la modale plein-écran pour lire et copier le JSON facilement sur mobile
+// POURQUOI : le textarea du panneau droit est trop petit pour scroller confortablement sur mobile
+function openJsonModal() {
+  const src = document.getElementById('jout').value;
+  const target = document.getElementById('json-modal-text');
+  const title = document.getElementById('json-modal-title');
+  target.value = src;
+  title.textContent = mode.toUpperCase();
+  document.getElementById('json-modal-bg').classList.add('open');
+  // Empêche le scroll du fond pendant que la modale est ouverte
+  document.body.style.overflow = 'hidden';
+}
+function closeJsonModal() {
+  document.getElementById('json-modal-bg').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function copyFromModal() {
+  const txt = document.getElementById('json-modal-text').value;
+  navigator.clipboard.writeText(txt).then(() => {
+    toast('✓ Copié depuis la modale');
+  }).catch(() => {
+    const ta = document.getElementById('json-modal-text');
+    ta.removeAttribute('readonly');
+    ta.select();
+    try { document.execCommand('copy'); toast('✓ Copié'); }
+    catch { toast('⚠ Sélectionne manuellement', 'warn'); }
+    ta.setAttribute('readonly', '');
+  });
+}
+
 function doImport() {
   const txt = prompt('Colle ton JSON ici :');
   if (!txt) return;
@@ -1954,5 +2019,21 @@ renderHistory();
 setTimeout(() => toast('✦ Editor prêt — bonne création !'), 300);
 
 </script>
+<!-- Modale JSON scrollable -->
+<div id="json-modal-bg" onclick="if(event.target===this)closeJsonModal()">
+  <div id="json-modal">
+    <div id="json-modal-head">
+      <span>JSON EXPORT</span>
+      <span id="json-modal-title" style="color:var(--lilac)"></span>
+    </div>
+    <div id="json-modal-body">
+      <textarea id="json-modal-text" readonly></textarea>
+    </div>
+    <div id="json-modal-foot">
+      <button id="btn-modal-copy" onclick="copyFromModal()">⊕ Copier</button>
+      <button id="btn-modal-close" onclick="closeJsonModal()">✕ Fermer</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

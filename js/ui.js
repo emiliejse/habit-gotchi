@@ -173,18 +173,30 @@ function go(t) {
   const activeCircle = document.querySelector(`.menu-line[onclick*="'${t}'"]`);
   if (activeCircle) activeCircle.classList.add('active');
 
-  const shell = document.querySelector('.tama-shell');
+  const shellMain = document.getElementById('tama-shell-main'); // grand tama (accueil)
+  const slot      = document.getElementById('tama-slot');        // slot compact dans .hdr
+  const screen    = document.getElementById('cbox');             // le canvas p5.js (unique)
   const consoleTop = document.getElementById('console-top');
 
-  // RÔLE : Mode compact — CSS seul gère l'affichage, pas de déplacement DOM.
-  // #hdr-title masqué via CSS, tama réduit dans le flux sous le .hdr, bulle juste en dessous.
+  // RÔLE : Déplace le canvas p5.js entre le grand tama (accueil) et le slot compact (.hdr).
+  // POURQUOI : Il n'y a qu'un seul canvas. En mode compact on le glisse dans #tama-slot
+  //            (dans le .hdr, aligné en haut avec les boutons). En mode normal on le remet
+  //            dans #tama-shell-main sous le .hdr.
   if (t === 'gotchi') {
-    shell.classList.remove('shrunk');
+    // RETOUR MODE NORMAL : canvas → grand tama
+    if (screen && screen.parentNode !== shellMain) {
+      shellMain.appendChild(screen);
+    }
+    shellMain.classList.remove('shrunk');
     consoleTop.classList.remove('compact');
     const h = hr();
     window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
   } else {
-    shell.classList.add('shrunk');
+    // MODE COMPACT : canvas → slot dans le .hdr
+    if (screen && screen.parentNode !== slot) {
+      slot.appendChild(screen);
+    }
+    shellMain.classList.add('shrunk');
     consoleTop.classList.add('compact');
     if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
     else if (t === 'perso')    window.D.g.activeEnv = 'parc';

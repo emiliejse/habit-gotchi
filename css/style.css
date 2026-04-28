@@ -147,7 +147,7 @@ body {
   padding: 2px 0;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start; /* boutons et slot tama alignés en haut */
 }
 /* RÔLE : Titre central du header (Habit-Gotchi + date) */
 #hdr-title {
@@ -185,22 +185,28 @@ body {
   transform-origin: top center;
 }
 
-/* RÔLE : En mode normal — masque le tama dans le .hdr (seul le titre est visible) */
-/* POURQUOI : Le canvas p5.js est unique (#cbox). Il est toujours dans .hdr,
-              mais en mode normal on le cache et en mode compact on affiche le tama à sa place. */
-.hdr .tama-shell {
-  display: none;  /* caché en mode normal */
+/* RÔLE : Slot compact dans le .hdr — vide en mode normal, contient le canvas en mode compact */
+#tama-slot {
+  display: none; /* invisible en mode normal */
   flex: 1;
-  align-self: stretch; /* occupe toute la hauteur du .hdr */
+  align-self: flex-start; /* aligné en haut comme les boutons */
+  padding: 1px;
 }
 
-/* RÔLE : Mode compact — tama visible dans le .hdr, centré entre les boutons */
+/* RÔLE : Mode compact — slot visible, grand tama masqué */
+#console-top.compact #tama-slot    { display: block; }
+#console-top.compact #tama-shell-main { display: none; }  /* grand tama masqué */
+
+/* RÔLE : Mode compact — canvas dans le slot, carré, taille proportionnelle aux boutons */
+#tama-slot .tama-screen {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+}
+
+/* RÔLE : Grand tama (mode normal) — styles existants inchangés */
 .tama-shell.shrunk {
-  display: flex !important; /* visible en mode compact */
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
-  margin: 0;
+  /* plus utilisé pour le positionnement — juste marqueur de classe pour syncDuringTransition */
 }
 
 /* L'écran Canvas (Le jeu en lui-même) */
@@ -674,11 +680,10 @@ body {
 /* POURQUOI : Le tama passe en position absolute à la place du titre masqué.
               La bulle descend sous le tama grâce à margin-top calculé sur la hauteur du tama compact.
               Les boutons restent dans .hdr, fixes, non affectés. */
-/* RÔLE : Mode compact — masque le titre, révèle le tama dans le .hdr */
-#console-top.compact #hdr-title    { display: none; }         /* titre + date masqués */
-#console-top.compact .hdr .tama-shell { display: flex; }      /* tama visible dans le .hdr */
-#console-top.compact #sliders-wrap { display: none; }         /* sliders masqués */
-#console-top.compact .bubble       { margin-bottom: 8px; }    /* espace sous la bulle */
+/* RÔLE : Mode compact — masque titre/sliders, espace sous la bulle */
+#console-top.compact #hdr-title    { display: none; }      /* titre + date masqués */
+#console-top.compact #sliders-wrap { display: none; }      /* sliders masqués */
+#console-top.compact .bubble       { margin-bottom: 8px; } /* espace sous la bulle */
 
 /* Barre d'XP */
 .pbar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }

@@ -137,19 +137,14 @@ function clearDebugLogs() {
 -->
 <div id="console-top">
 
-  <!-- HEADER : Boutons (boutique, menu) + titre OU tama selon le mode -->
-  <!-- POURQUOI : Le tama est ici dans le .hdr dès le départ.
-       En mode normal  → #hdr-title visible, .tama-shell masqué dans le .hdr
-       En mode compact → #hdr-title masqué, .tama-shell visible dans le .hdr
-       Tout géré par CSS via #console-top.compact, zéro déplacement DOM. -->
+  <!-- HEADER : Boutons boutique/tablette + titre (normal) ou tama (compact) -->
   <div class="hdr">
-    <!-- Bouton Boutique (SYSTEM 4: Habitudes) -->
     <button id="btn-boutique-hdr" onclick="ouvrirBoutique()" class="menu-btn" style="position:relative" aria-label="Ouvrir la boutique">
       🛍️
       <span id="badge-boutique-hdr" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--pink);color:#fff;font-size:var(--fs-xs);border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
     </button>
 
-    <!-- Titre central — visible en mode normal, masqué en mode compact -->
+    <!-- Titre — visible en mode normal -->
     <div id="hdr-title">
       <h1>✿ Habit-Gotchi ✿</h1>
       <sub id="date-d" style="font-size:var(--fs-xs);color:var(--text2)">
@@ -157,19 +152,21 @@ function clearDebugLogs() {
       </sub>
     </div>
 
-    <!-- Tama compact — masqué en mode normal, visible en mode compact dans le .hdr -->
-    <div class="tama-shell" id="tama-shell-hdr">
-      <div class="tama-screen" id="cbox"></div>
-    </div>
+    <!-- Slot compact — vide en mode normal, reçoit le canvas en mode compact via JS -->
+    <div id="tama-slot"></div>
 
-    <!-- Bouton Tablette (SYSTEM 3: IA & Cognition) -->
     <button id="btn-tablet" onclick="openTablet()" class="menu-btn" style="position:relative" aria-label="Ouvrir la tablette">
       📟
       <span id="tablet-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--coral);color:#fff;font-size:var(--fs-xs);border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
     </button>
   </div>
 
-  <!-- BULLE : Zone de dialogue dynamique (SYSTEM 3: IA & Cognition) -->
+  <!-- SHELL : Grand tama — visible en mode normal, masqué en mode compact -->
+  <div class="tama-shell" id="tama-shell-main">
+    <div class="tama-screen" id="cbox"></div>
+  </div>
+
+  <!-- BULLE : Zone de dialogue dynamique -->
   <div class="bubble" id="bubble">...</div>
 
   <!-- SLIDERS : Contrôlent les stats d'énergie et de bonheur (SYSTEM 1: Métabolisme) -->

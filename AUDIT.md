@@ -377,17 +377,16 @@
 
 ### 7.3 Problèmes identifiés
 
-#### 🟡 MINEUR
-**Mise en cache aveugle des fetchs runtime**
-- Lignes : `62-67`
-- Description : tout fetch same-origin est cached, y compris les réponses 404 ou les éventuels endpoints futurs.
-- Risque : faible aujourd'hui (pas d'API same-origin), mais à surveiller si ajout d'API locale.
-- Suggestion : tester `response.ok` avant de cacher.
+#### ⚠️ MINEUR — ouvert
+**Mise en cache aveugle sans `response.ok`**
+- Ligne : `65` — les réponses 404 ou erreurs sont cachées sans vérification.
+- Risque : faible (pas d'API same-origin), à surveiller si ajout d'endpoint local.
+- Suggestion : `if (response.ok) caches.open(...).then(cache => cache.put(...))`.
 
-#### 🟡 MINEUR
-**Pas de retry/timeout sur la promesse `cache.addAll(ASSETS)`**
-- Description : si un asset 404 à l'install, l'install échoue et le SW reste en attente.
-- Suggestion : OK pour l'instant (les assets sont locaux), mais documentaire.
+#### 🟡 MINEUR — documentaire
+**Pas de retry sur `cache.addAll(ASSETS)`**
+- Un asset 404 à l'install fait échouer le SW silencieusement.
+- Risque : nul (assets locaux stables), mais à noter si un asset est renommé sans mettre à jour la liste.
 
 ### 7.4 Code mort / redondances
 - RAS.

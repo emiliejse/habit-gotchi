@@ -1244,26 +1244,23 @@ function exportObjetIA(propId) {
   document.getElementById('modal').style.display = 'flex';
   lockScroll();
   document.getElementById('mbox').innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <h3 style="font-size:13px;color:var(--lilac);margin:0">📤 ${escape(entry.nom)}</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h3 style="font-size:13px;color:var(--lilac);margin:0">✦ ${escapeHtml(entry.nom)}</h3>
       <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
     </div>
-    <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:8px;line-height:1.5">
-      Copie ce JSON et colle-le dans <code style="background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px">data/props.json</code>
-      à l'intérieur du tableau <code style="background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px">"catalogue"</code>.<br>
-      Pense à ajuster <code style="background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px">cout</code> et
-      <code style="background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px">categorie</code> si besoin.
+    <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:10px;line-height:1.6">
+      Copie ce code et envoie-le à Émilie — elle pourra l'ajouter au jeu pour que tu aies cet objet dans ton inventaire à toi aussi 🌸
     </p>
     <pre id="export-json" style="
       font-size:9px;line-height:1.5;background:rgba(0,0,0,.04);
       border:1px solid var(--border);border-radius:var(--r-sm);
       padding:8px;overflow-x:auto;white-space:pre;
-      max-height:220px;overflow-y:auto;
+      max-height:200px;overflow-y:auto;
       font-family:'Courier New',monospace;
       user-select:all;cursor:text;">${escapeHtml(json)}</pre>
     <button onclick="copierExportIA()" class="btn btn-p"
       style="width:100%;margin-top:10px;font-size:var(--fs-sm)" id="btn-copier-export">
-      📋 Copier le JSON
+      📋 Copier le code
     </button>
   `;
   animEl(document.getElementById('mbox'), 'bounceIn');

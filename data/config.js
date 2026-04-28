@@ -190,3 +190,19 @@ const SNACKS_POOL = [
 
 // Modèle Claude utilisé pour tous les appels IA — changer ici suffit pour tout mettre à jour
 const AI_MODEL = 'claude-sonnet-4-5';
+
+/* ─── SYSTÈME 1 : CONSTANTES GAMEPLAY ────────────────────────────── */
+// RÔLE : Centralise toutes les valeurs numériques métier.
+// POURQUOI : Évite les "magic numbers" éparpillés dans app.js et ui.js —
+//            un seul endroit à modifier si on rééquilibre le jeu.
+
+// XP
+const XP_HABITUDE   = 15;   // XP gagné en cochant une habitude (aussi = pénalité absence / jour)
+const XP_NOTE       = 15;   // XP gagné en écrivant une note journal
+const XP_MAX        = 1200; // XP cap utilisé dans nxtTh() quand tous les seuils sont dépassés
+const PETALES_SNACK = 2;    // Pétales bonus accordés pour tout snack mangé
+
+// Crottes
+const POOP_MIN_DELAY_MS      = 8  * 60 * 1000; // 8 min minimum entre deux spawns de crotte
+const POOP_SPAWN_DELAY_MS    = 10 * 60 * 1000; // délai avant apparition d'une crotte
+const POOP_CHECK_INTERVAL_MS = 30 * 60 * 1000; // intervalle de vérification périodique

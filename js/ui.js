@@ -2117,8 +2117,8 @@ function saveJ() {
   }
   window.D.journal.push({ date: new Date().toISOString(), mood: selMood, text: t });
   addXp(15);
-  addEvent({ type: 'note', subtype: 'journal', valeur: 15, label: 'Note enregistrée  +15 XP' });
-  toast(`+15 XP 📓`);                                         // ← nouveau
+  addEvent({ type: 'note', subtype: 'journal', valeur: XP_NOTE, label: `Note enregistrée  +${XP_NOTE} XP` });
+  toast(`+${XP_NOTE} XP 📓`);
   save();
   document.getElementById('j-text').value = '';
   selMood = null;
@@ -2539,14 +2539,14 @@ function checkWelcome() {
 
   // ✏️ UNIFIÉ : pénalité unique pour toute absence ≥ 1 jour (-15 XP × jours)
   if (joursAbsence >= 1) {
-    const xpPerdu = joursAbsence * 15;
+    const xpPerdu = joursAbsence * XP_HABITUDE; // même valeur que l'XP d'une habitude
     addXp(-xpPerdu);
     addEvent({ type: 'xp', subtype: 'absence', valeur: -xpPerdu, label: `${joursAbsence} jour${joursAbsence > 1 ? 's' : ''} d'absence — -${xpPerdu} XP` });
 
     // Message doux pour 1 jour, plus marqué au-delà
     if (joursAbsence === 1) {
       titre = `Bienvenue 🌸`;
-      corps = `Tu as perdu <strong>15 XP</strong> hier — pas d'habitudes cochées.`;
+      corps = `Tu as perdu <strong>${XP_HABITUDE} XP</strong> hier — pas d'habitudes cochées.`;
       flashBubble("Tu m'avais oubliée... 💜", 3000);
     } else {
       titre = `Ça fait ${joursAbsence} jours... 💜`;

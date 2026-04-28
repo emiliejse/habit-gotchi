@@ -269,7 +269,7 @@ if ('serviceWorker' in navigator) {
    LOGIQUE XP & STADES
    ============================================================ */
 function getSt(xp)  { let s=STG[0]; for(const st of STG) if(xp>=st.th) s=st; return s; }
-function nxtTh(xp)  { for(const s of STG) if(xp<s.th) return s.th; return 1200; }
+function nxtTh(xp)  { for(const s of STG) if(xp<s.th) return s.th; return XP_MAX; }
 
 // Ajout d'expérience et vérification des niveaux (Level Up)
 function addXp(n) {
@@ -331,7 +331,7 @@ function maybeSpawnPoop() {
   const now = Date.now();
   window.D.g.lastTick = now; // heartbeat — persisté au prochain save() normal
   const last = window.D.g.lastPoopSpawn || 0;
-  const minDelay = 8 * 60 * 1000; // 8 minutes minimum entre 2 crottes
+  const minDelay = POOP_MIN_DELAY_MS; // 8 minutes minimum entre 2 crottes
 
   if (now - last < minDelay) return;
   if (Math.random() < 0.65) spawnPoop();
@@ -981,7 +981,7 @@ function initApp() {
 
   // 3. Spawn caca si 10 min écoulées
   const lastSpawn = window.D.g.lastPoopSpawn || 0;
-  if (Date.now() - lastSpawn > 10 * 60 * 1000) {
+  if (Date.now() - lastSpawn > POOP_SPAWN_DELAY_MS) {
     maybeSpawnPoop();
   }
 
@@ -1047,7 +1047,7 @@ async function bootstrap() {
   fetchMeteo();
   fetchSolarPhases();
   setInterval(fetchMeteo, 1800000);
-  setInterval(maybeSpawnPoop, 30 * 60 * 1000);
+  setInterval(maybySpawnPoop, POOP_CHECK_INTERVAL_MS);
 }
 
 /* ---------- Déclencheurs ---------- */

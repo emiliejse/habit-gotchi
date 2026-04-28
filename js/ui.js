@@ -896,18 +896,36 @@ function renderProps() {
   const envTitres = { parc: '🌳 Parc', chambre: '🛏️ Chambre', montagne: '⛰️ Montagne' };
   const titreActif = envTitres[envActif] || '✨ Actifs';
 
-  // ── Bouton "Tout ranger" — en haut des rangés ────────────
-  // POURQUOI : Placé AVANT la liste des rangés pour rester accessible sans scroller
-  const btnRangerHTML = aDesActifs ? `
+  // ── Section active : vide → message indicatif ────────────
+  // POURQUOI : On veut toujours afficher la section même si elle est vide,
+  //            pour que l'utilisatrice sache qu'il n'y a rien dans cet env.
+  const sectionActiveHTML = aDesActifs
+    ? _propSection(titreActif, toCards(groupActifs))
+    : `<div style="margin-bottom:12px">
+        <div style="font-size:var(--fs-xs);font-weight:bold;text-transform:uppercase;
+          letter-spacing:1px;color:var(--text2);padding:4px 0 6px;
+          border-bottom:1px solid var(--border);margin-bottom:6px">
+          ${titreActif} <span style="font-weight:normal;opacity:.6">(0)</span>
+        </div>
+        <p style="font-size:var(--fs-xs);color:var(--text2);text-align:center;
+          padding:10px 0;opacity:.6">Aucun objet dans cet univers ✿</p>
+      </div>`;
+
+  // ── Bouton "Tout ranger" — entre section active et rangés ─
+  // POURQUOI : Toujours visible, mais opaque si rien à ranger dans cet env.
+  //            Range uniquement les objets de l'env actif (pas tout l'inventaire).
+  const btnRangerHTML = `
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-      <button onclick="rangerTout('all')" class="btn btn-s"
-        style="font-size:var(--fs-xs);padding:3px 12px;">
+      <button onclick="rangerTout('${envActif}')" class="btn btn-s"
+        style="font-size:var(--fs-xs);padding:3px 12px;
+        opacity:${aDesActifs ? '1' : '0.35'};
+        pointer-events:${aDesActifs ? 'auto' : 'none'};">
         📦 Tout ranger
       </button>
-    </div>` : '';
+    </div>`;
 
   listEl.innerHTML =
-    _propSection(titreActif, toCards(groupActifs)) +
+    sectionActiveHTML +
     btnRangerHTML +
     _propSection('📦 Rangés', toCards(rangesNew, true).concat(toCards(rangesOld)));
 
@@ -1331,16 +1349,23 @@ function rangerProp(propIndex) {
   toast(`📦 ${prop.nom} rangé`);
 }
 
-function rangerTout(type = 'all') {
-  if (!confirm('📦 Ranger tous les objets actifs ?')) return;
+// RÔLE : Range tous les objets actifs d'un environnement donné (ou tous si env = 'all').
+// POURQUOI : Le bouton "Tout ranger" ne range que l'env actuellement sélectionné dans le switcher.
+function rangerTout(env = 'all') {
+  const envLabel = { parc: 'du Parc', chambre: 'de la Chambre', montagne: 'de la Montagne', all: '' };
+  const label = envLabel[env] || '';
+  if (!confirm(`📦 Ranger tous les objets actifs ${label} ?`.trim())) return;
   const D = window.D;
   let count = 0;
   D.g.props.forEach(p => {
     if (!p.actif) return;
-    if (type === 'all' || p.type === type) {
+    // Filtre par env : si env = 'all' on range tout, sinon seulement l'env ciblé
+    // Rétrocompat : un objet sans .env est traité comme 'parc'
+    const propEnv = p.env || 'parc';
+    if (env === 'all' || propEnv === env) {
       p.actif = false;
       p.slot  = null;
-      p.env   = null; // nettoyage env (feature multi-env v3.49)
+      p.env   = null;
       count++;
     }
   });
@@ -1365,7 +1390,8 @@ function invSetEnv(env) {
   window.D.g.activeEnv = env;
   window._invEnvForced = true; // flag : on est en mode preview inventaire
   save();
-  _updInvEnvSwitcher();
+  _updInvEnvSwitcher(); // met à jour les boutons du switcher
+  renderProps();         // recharge la liste pour afficher les objets du bon env
 }
 window.invSetEnv = invSetEnv;
 

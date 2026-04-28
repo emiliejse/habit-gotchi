@@ -183,9 +183,20 @@ function drawActiveEnv(p, env, n, h) {
   else if (env === 'chambre') {
     const bx = 138; // position x du bureau
 
-    // 1. MUR
+    // 1. MUR — dessiné en 4 morceaux pour laisser un trou à l'emplacement de la fenêtre.
+    // POURQUOI : p5.js ne permet pas de "trouer" un rect. On contourne la zone vitre
+    // (x=18..64, y=66..110) pour que le ciel dessiné en fond reste visible à travers.
+    // Zone vitre (intérieur entre montants) : x=20, y=68, w=42, h=42.
+    // Zone fenêtre (avec cadre) : x=18, y=66, w=46, h=44.
     p.fill(tc(n, theme.wall));
-    p.rect(0, 60, CS, 60);
+    // Bande au-dessus de la fenêtre (y=60 à y=66)
+    p.rect(0, 60, CS, 6);
+    // Bande à gauche de la fenêtre (y=66 à y=120, x=0 à x=18)
+    p.rect(0, 66, 18, 54);
+    // Bande à droite de la fenêtre (y=66 à y=120, x=64 à x=200)
+    p.rect(64, 66, CS - 64, 54);
+    // Bande en dessous de la fenêtre (y=110 à y=120, entre les deux bandes latérales)
+    p.rect(18, 110, 46, 10);
 
     // 2. FENÊTRE — la vitre est un "trou" : on ne la dessine pas,
     // le ciel déjà rendu en fond (drawSky) transparaît naturellement.

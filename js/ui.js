@@ -174,6 +174,16 @@ function go(t) {
   if (activeCircle) activeCircle.classList.add('active');
 
   const shell = document.querySelector('.tama-shell');
+  const consoleTop = document.getElementById('console-top'); // récupère le conteneur principal
+  if (t === 'gotchi') {
+  shell.classList.remove('shrunk');
+  consoleTop.classList.remove('compact'); // RÔLE : restore l'affichage complet onglet maison
+  const h = hr();
+  window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
+} else {
+  shell.classList.add('shrunk');
+  consoleTop.classList.add('compact'); // RÔLE : masque les sliders, remonte le tama sur le header
+  if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
   if (t === 'gotchi') {
     shell.classList.remove('shrunk');
     const h = hr();
@@ -1630,6 +1640,12 @@ function _showSoutienConfirm(onConfirm) {
            style="width:160px;height:90px;margin:0 auto 12px;
                   border-radius:12px;overflow:hidden;background:#ffffff">
       </div>
+
+      <!-- RÔLE : Indique les sessions restantes dans la journée -->
+      <!-- D.soutienCount est déjà incrémenté APRÈS confirmation — ici on affiche l'état actuel -->
+      <p style="font-size:var(--fs-xs);opacity:0.6;margin-bottom:10px;line-height:1.5">
+        ${3 - D.soutienCount} conversation${3 - D.soutienCount > 1 ? 's' : ''} restante${3 - D.soutienCount > 1 ? 's' : ''} aujourd'hui
+      </p>
 
       <div style="display:flex;flex-direction:column;gap:6px">
         <button id="btn-confirm-soutien" class="btn btn-p"

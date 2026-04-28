@@ -1615,15 +1615,6 @@ function _showSoutienConfirm(onConfirm) {
   const D = window.D;
   const g = D.g;
 
-  // RÔLE : Convertit un score /5 en émojis pleins + cercles vides
-  // ex : energy=3 → "⚡⚡⚡○○"
-  const toEmojis = (val, full, empty) =>
-    full.repeat(Math.max(0, Math.min(5, val))) +
-    empty.repeat(Math.max(0, 5 - Math.min(5, val)));
-
-  const energyStr = toEmojis(g.energy,    '⚡', '○');
-  const happyStr  = toEmojis(g.happiness, '💜', '○');
-
   // ── Ouvre la modale avec le contenu de confirmation ──
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
@@ -1633,21 +1624,12 @@ function _showSoutienConfirm(onConfirm) {
         💜 Besoin de soutien
       </p>
 
-      <!-- RÔLE : Zone du mini canvas p5 — fond blanc, coin arrondis -->
-      <!-- Le Gotchi se balade horizontalement à l'intérieur -->
+      <!-- RÔLE : Zone du mini canvas p5 — fond blanc, coins arrondis -->
+      <!-- Hauteur 90px : assez pour adult (oreilles -10px + corps 50px + marge 30px) -->
       <div id="soutien-confirm-canvas"
-           style="width:140px;height:90px;margin:0 auto 10px;
+           style="width:160px;height:90px;margin:0 auto 12px;
                   border-radius:12px;overflow:hidden;background:#ffffff">
       </div>
-
-      <p style="font-size:13px;font-weight:bold;color:var(--text1);margin-bottom:4px">
-        ${g.name || 'Gotchi'}
-      </p>
-
-      <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:12px;line-height:1.8">
-        Énergie&nbsp;${energyStr}<br>
-        Humeur&nbsp;&nbsp;${happyStr}
-      </p>
 
       <div style="display:flex;flex-direction:column;gap:6px">
         <button id="btn-confirm-soutien" class="btn btn-p"
@@ -1670,12 +1652,21 @@ function _showSoutienConfirm(onConfirm) {
   //            qui acceptent une instance p en paramètre → réutilisables ici
   let _miniP5 = null;
 
-  const W = 140, H = 90;    // Dimensions du canvas (= la div ci-dessus)
-  const CY = 62;             // Y du "sol" — Gotchi posé à cette hauteur
+  const W = 160, H = 90;    // Dimensions du canvas (= la div ci-dessus)
+
+  // RÔLE : Calcule CY = Y du haut du sprite pour que le bas touche le "sol"
+  // Baby  : corps 30px (PX*6)   + 0px oreilles → cy = H - 30 - margeBasFond
+  // Teen  : corps 40px (PX*8)   + 10px oreilles → cy = H - 40 - margeBasFond
+  // Adult : corps 50px (PX*10)  + 10px oreilles → cy = H - 50 - margeBasFond
+  // margeBasFond = 8px pour laisser un peu d'air sous les pieds
+  const MARGE_BAS = 8;
+  const corpH = { egg: 25, baby: 30, teen: 40, adult: 50 };
+  const CY = H - (corpH[g.stage] || 50) - MARGE_BAS;
+
   let miniX    = W / 2;     // Position X courante du Gotchi
   let miniDir  = 1;          // Direction : 1 = droite, -1 = gauche
-  const XMIN_M = 30;         // Marge gauche
-  const XMAX_M = W - 30;    // Marge droite
+  const XMIN_M = 28;         // Marge gauche (= demi-largeur adult : PX*5=25 + 3px)
+  const XMAX_M = W - 28;    // Marge droite
   const SPEED  = 0.5;        // Vitesse de déplacement (px/frame)
   let miniBlink = false;     // État clignotement local (indépendant du canvas principal)
   let miniBlinkT = 0;        // Compteur avant prochain clignotement
@@ -1684,8 +1675,9 @@ function _showSoutienConfirm(onConfirm) {
   const miniSketch = (p) => {
     p.setup = () => {
       // RÔLE : Crée le canvas dans la div dédiée, fond blanc, pixel art net
+      // W et H sont capturés depuis la closure — ils correspondent à la div
       p.createCanvas(W, H).parent('soutien-confirm-canvas');
-      p.noSmooth();   // Rendu pixel art sans antialiasing
+      p.noSmooth();    // Rendu pixel art sans antialiasing
       p.frameRate(12); // 12 fps : fluide pour un sprite, économe en CPU
       miniBlinkT = 40 + Math.floor(Math.random() * 80);
     };

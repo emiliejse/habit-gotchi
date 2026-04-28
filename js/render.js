@@ -775,10 +775,9 @@ const p5s = (p) => {
     // Nuit (21h–6h) → chambre systématiquement, quelle que soit la préférence stockée
     let envActif = n ? 'chambre' : (g.activeEnv || 'parc');
     if (!sleeping) {
-      if (ha < HA_MED)               drawRain(p, ha);          // pluie si ha < 2
-      else if (ha === HA_MED)        drawRain(p, HA_MED - 0.25); // pluie légère à ha = 2
-      else if (ha === HA_HIGH && estJour) drawSun(p);          // soleil à ha = 4
-      else if (ha >= 5 && estJour)   drawRainbow(p);           // arc-en-ciel à ha = 5 (max)
+      if (ha < HA_MED)                    drawRain(p, ha);  // pluie si ha = 0 ou 1
+      else if (ha === HA_HIGH && estJour) drawSun(p);       // soleil à ha = 4
+      else if (ha >= 5 && estJour)        drawRainbow(p);   // arc-en-ciel à ha = 5 (max)
     }
 
     drawActiveEnv(p, envActif, n, h);

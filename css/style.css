@@ -149,6 +149,13 @@ body {
   justify-content: space-between;
   align-items: center;
 }
+/* RÔLE : Titre central du header (Habit-Gotchi + date) */
+#hdr-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
 .hdr h1 { font-size: 12px; color: var(--lilac); letter-spacing: 2px; flex: 1; }
 .hdr sub { font-size: var(--fs-xs); color: var(--text2); }
 .hdr .menu-btn {
@@ -172,22 +179,21 @@ body {
   position: relative;
   z-index: 1;
   /* Réduction dynamique de la console (quand on change d'onglet) */
-  transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
-              padding 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
+  transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              padding 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
               margin 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   transform-origin: top center;
 }
+
+/* RÔLE : Mode compact — le tama reste dans le flux, prend la place du header masqué */
+/* POURQUOI : "Habit-Gotchi" et la date disparaissent, le tama occupe cet espace,
+              la bulle reste juste en dessous à largeur identique. Pas de superposition. */
 .tama-shell.shrunk {
-  max-width: 120px; 
+  max-width: 220px;  /* légèrement plus petit qu'à l'état normal (340px), mais lisible */
   padding: 2px;
-  margin-top: 0;
-  /* RÔLE : En mode compact, sort du flux normal et remonte par-dessus le header */
-  /* POURQUOI : Le tama passe au-dessus du titre "Habit-Gotchi" et de la date */
-  position: absolute;
-  top: calc(var(--sat) + 4px); /* aligne avec le haut du header, sous la safe area */
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 60; /* au-dessus du console-top (z-index: 50) */
+  margin-top: 2px;
+  position: relative; /* reste dans le flux normal */
+  z-index: 1;
 }
 
 /* L'écran Canvas (Le jeu en lui-même) */
@@ -657,14 +663,12 @@ body {
 #sl-happy { background: linear-gradient(90deg, var(--sky), var(--mint)); }
 #sl-happy::-webkit-slider-thumb { background: var(--mint); }
 
-/* RÔLE : Masque les sliders en mode compact (autres onglets) */
-/* POURQUOI : En dehors de l'onglet Gotchi, on garde seulement le tama et la bulle */
-#console-top.compact .slider-row { display: none; }
-#console-top.compact .bubble { 
-  max-width: 140px; 
-  margin: 2px auto 4px;
-  font-size: var(--fs-xs);
-}
+/* RÔLE : Mode compact — masque le titre/date, garde les boutons boutique et tablette */
+/* POURQUOI : Le tama prend la place du titre masqué, les boutons restent accessibles.
+              On ne masque que le centre du header, pas les actions latérales. */
+#console-top.compact #hdr-title    { display: none; }  /* masque "Habit-Gotchi" + date uniquement */
+#console-top.compact #sliders-wrap { display: none; }  /* masque les sliders énergie/bonheur */
+#console-top.compact .bubble       { margin-bottom: 8px; } /* petit espace sous la bulle */
 
 /* Barre d'XP */
 .pbar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }

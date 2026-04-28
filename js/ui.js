@@ -174,22 +174,18 @@ function go(t) {
   if (activeCircle) activeCircle.classList.add('active');
 
   const shell = document.querySelector('.tama-shell');
-  const consoleTop = document.getElementById('console-top'); // récupère le conteneur principal
-  if (t === 'gotchi') {
-  shell.classList.remove('shrunk');
-  consoleTop.classList.remove('compact'); // RÔLE : restore l'affichage complet onglet maison
-  const h = hr();
-  window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
-} else {
-  shell.classList.add('shrunk');
-  consoleTop.classList.add('compact'); // RÔLE : masque les sliders, remonte le tama sur le header
-  if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
+  const consoleTop = document.getElementById('console-top');
+
+  // RÔLE : Mode compact — masque les sliders et remonte le tama sur le header dans les autres onglets
+  // POURQUOI : Gagner de la place dans la dynamic-zone et garder un lien visuel avec le gotchi
   if (t === 'gotchi') {
     shell.classList.remove('shrunk');
+    consoleTop.classList.remove('compact');
     const h = hr();
     window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
   } else {
     shell.classList.add('shrunk');
+    consoleTop.classList.add('compact');
     if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
     else if (t === 'perso')    window.D.g.activeEnv = 'parc';
     else if (t === 'progress') window.D.g.activeEnv = 'montagne';
@@ -209,7 +205,7 @@ function go(t) {
   if (t === 'perso')   renderPerso();
   if (t === 'journal') { journalLocked = true; renderJ(); }
 
-    document.getElementById('dynamic-zone').scrollTop = 0;
+  document.getElementById('dynamic-zone').scrollTop = 0;
   syncDuringTransition(shell);
 }
 
@@ -4108,8 +4104,9 @@ window.initUI = function() {
   if (vEl) vEl.textContent = window.APP_VERSION || '';
   // Tap sur le tama depuis un autre onglet → retour accueil
   document.querySelector('.tama-screen')?.addEventListener('pointerdown', function() {
-  const modalEl = document.getElementById('modal');
-  const modalOuverte = modalEl && getComputedStyle(modalEl).display !== 'none';
-  if (!window._gotchiActif && !modalOuverte && typeof go === 'function') go('gotchi');
-});
-};
+    const modalEl = document.getElementById('modal');
+    const modalOuverte = modalEl && getComputedStyle(modalEl).display !== 'none';
+    if (!window._gotchiActif && !modalOuverte && typeof go === 'function') go('gotchi');
+  });
+}; // ferme window.initUI = function()
+// FIN ui.js

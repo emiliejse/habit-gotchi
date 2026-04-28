@@ -146,7 +146,7 @@ function clearDebugLogs() {
       <span id="badge-boutique-hdr" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--pink);color:#fff;font-size:var(--fs-xs);border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
     </button>
     <!-- Titre central (SYSTEM 5: UI/Design) -->
-    <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+    <div id="hdr-title">
       <h1>✿ Habit-Gotchi ✿</h1>
       <sub id="date-d" style="font-size:var(--fs-xs);color:var(--text2)"> <!-- était 10px -->
   <span id="date-txt"></span>
@@ -169,7 +169,7 @@ function clearDebugLogs() {
   <div class="bubble" id="bubble">...</div>
 
   <!-- SLIDERS : Contrôlent les stats d'énergie et de bonheur (SYSTEM 1: Métabolisme) -->
-  <div style="max-width:340px;margin:6px auto 4px;padding:0 4px">
+  <div id="sliders-wrap" style="max-width:340px;margin:6px auto 4px;padding:0 4px">
     <div class="slider-row">
       <label>Énergie</label>
       <input type="range" id="sl-energy" min="0" max="5" step="1" value="3" oninput="setEnergy(this.value)">

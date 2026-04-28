@@ -181,6 +181,7 @@ snackDone: '', snackEmoji: '',
     },
     habits: CATS.map(c => ({catId:c.id, label:c.label})),
     log:{}, journal:[], pin:null, apiKey:null,
+    propsPixels: {},  // objets achetés en boutique IA (clé = id prop)
     lastThoughtDate: null,
 thoughtCount: 0,
 lastSoutienDate: null,
@@ -232,7 +233,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 1; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 2; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -249,6 +250,11 @@ const MIGRATIONS = [
     d.g.birthdayCodeUsed = d.g.birthdayCodeUsed ?? false;
     d.g.poopDay        = d.g.poopDay        ?? '';
     d.g.poopCount      = d.g.poopCount      ?? 0;
+    return d;
+  },
+  // Migration 1→2 : ajout propsPixels à la racine de D
+  function m2(d) {
+    d.propsPixels = d.propsPixels ?? {};
     return d;
   }
 ];

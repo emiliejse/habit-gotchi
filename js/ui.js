@@ -3168,7 +3168,7 @@ function renderAgendaJour(el) {
   // Rendez-vous
   const rdvDuJour = getRdvDuJour(ds).sort((a,b) => (a.heure||'') > (b.heure||'') ? 1 : -1);
   const rdvHtml = rdvDuJour.map(r => `
-    <div style="display:flex;align-items:center;justify-content:space-between;
+    <div id="rdv-item-${r.id}" style="display:flex;align-items:center;justify-content:space-between;
       padding:var(--sp-sm) 10px;border-radius:var(--r-sm);background:#fff;
       border:1px solid var(--border);margin-bottom:5px">
       <span style="font-size:var(--fs-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;display:inline-block">${r.heure ? `<b>${escape(r.heure)}</b> · ` : '🗓️ Journée · '}${escape(r.label)}</span>
@@ -3409,8 +3409,22 @@ function annulerFormulaireRdv() {
 }
 
 function sauvegarderRdv() {
-  const label      = document.getElementById('rdv-label').value.trim();
-  if (!label) return;
+  const labelInput = document.getElementById('rdv-label');
+  const label      = labelInput.value.trim();
+  if (!label) {
+    // RÔLE : Signale visuellement que le champ titre est obligatoire
+    labelInput.style.borderColor = 'var(--coral)';
+    labelInput.placeholder = 'Obligatoire ✦';
+    labelInput.focus();
+    // POURQUOI : reset après 2s pour ne pas laisser l'erreur affichée indéfiniment
+    setTimeout(() => {
+      labelInput.style.borderColor = '';
+      labelInput.placeholder = 'Libellé du rendez-vous...';
+    }, 2000);
+    return;
+  }
+  // POURQUOI : reset la bordure si la validation passe après une erreur
+  labelInput.style.borderColor = '';
   const heure      = document.getElementById('rdv-heure').value || null;
   const emoji      = window._rdvEmoji || null;
   const recurrence = window._rdvRecurrence || 'aucune';
@@ -3460,18 +3474,22 @@ function supprimerRdv(id) {
 }
 
 function confirmerSuppressionRdv(id) {
-  const el  = document.getElementById('agenda-contenu');
+  // RÔLE : Ferme une confirmation déjà ouverte avant d'en ouvrir une nouvelle
+  document.getElementById('confirm-inline')?.remove();
+
   const rdv = (window.D.rdv || []).find(r => r.id === id);
   if (!rdv) return;
-
-  // AVANT : !!rdv.groupId
-  // APRÈS : on détecte la récurrence directement
   const isRecurrent = rdv.recurrence && rdv.recurrence !== 'aucune';
 
-  el.insertAdjacentHTML('afterbegin', `
-    <div id="confirm-inline" style="position:sticky;top:0;z-index:10;
-      background:#fff;border:2px solid var(--coral);border-radius:var(--r-md);
-      padding:10px;margin-bottom:10px;text-align:center">
+  // RÔLE : Insère la confirmation juste sous le bloc du RDV concerné
+  // POURQUOI : insertAdjacentHTML afterend = juste après l'élément, pas en haut de la liste
+  const anchor = document.getElementById(`rdv-item-${id}`);
+  const target = anchor || document.getElementById('agenda-contenu');
+  const method = anchor ? 'afterend' : 'afterbegin';
+
+  target.insertAdjacentHTML(method, `
+    <div id="confirm-inline" style="background:#fff8f8;border:2px solid var(--coral);
+      border-radius:var(--r-md);padding:10px;margin-bottom:6px;text-align:center">
       <div style="font-size:var(--fs-sm);margin-bottom:var(--sp-sm)">
         Supprimer <b>${rdv.label}</b> ?
       </div>
@@ -3499,17 +3517,22 @@ function supprimerRdvSuivants(id) {
   renderAgendaJour(document.getElementById('agenda-contenu'));
 }
 
-function confirmerSuppressionCycle(ds) {
-  // 🔒 Ferme une éventuelle confirmation déjà ouverte
+function confirmerSuppressionCycle(ds, btn) {
+  // RÔLE : Ferme une confirmation déjà ouverte avant d'en ouvrir une nouvelle
   document.getElementById('confirm-inline')?.remove();
 
-  const el = document.getElementById('agenda-contenu');
   const date = new Date(ds + 'T12:00');
   const fmt  = date.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
-  el.insertAdjacentHTML('afterbegin', `
-    <div id="confirm-inline" style="position:sticky;top:0;z-index:10;
-      background:#fff;border:2px solid var(--coral);border-radius:var(--r-md);
-      padding:10px;margin-bottom:10px;text-align:center">
+
+  // RÔLE : Insère la confirmation juste sous la ligne du cycle concerné
+  // POURQUOI : on remonte au parent de la ligne (.j1-ligne) via closest ou parentElement
+  const anchor = btn?.closest('[style*="border-bottom"]') || btn?.parentElement?.parentElement;
+  const target = anchor || document.getElementById('agenda-contenu');
+  const method = anchor ? 'afterend' : 'afterbegin';
+
+  target.insertAdjacentHTML(method, `
+    <div id="confirm-inline" style="background:#fff8f8;border:2px solid var(--coral);
+      border-radius:var(--r-md);padding:10px;margin-bottom:6px;text-align:center">
       <div style="font-size:var(--fs-sm);margin-bottom:var(--sp-sm)">
         Supprimer le cycle du <b>${fmt}</b> ?
       </div>
@@ -3773,7 +3796,7 @@ el.innerHTML = `
       </button>
       <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px">
         <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
-          text-transform:capitalize;text-align:center">
+          text-transform:capitalize;text-align:center;color:var(--lilac)">
           ${moisNom}
         </span>
         ${_agendaMoisOffset !== 0 ? `
@@ -3792,27 +3815,27 @@ el.innerHTML = `
 
     ${cells}
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 20px;
       margin-top:14px;padding:10px 14px;border-radius:var(--r-md);
       background:rgba(0,0,0,0.03);border:1px solid rgba(0,0,0,0.05)">
-      <div style="display:flex;align-items:center;gap:7px;font-size:var(--fs-sm);color:var(--text2)">
-        <span style="display:inline-block;width:28px;height:10px;border-radius:3px;flex-shrink:0;
+      <div style="display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--text2)">
+        <span style="display:inline-block;width:24px;height:8px;border-radius:3px;flex-shrink:0;
           background:linear-gradient(to right,rgba(80,180,120,0.1),rgba(80,180,120,0.85))"></span>
         Habitudes
       </div>
-      <div style="display:flex;align-items:center;gap:7px;font-size:var(--fs-sm);color:var(--text2)">
-        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;flex-shrink:0;
+      <div style="display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--text2)">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;
           background:#e07080"></span>
         Règles (J1)
       </div>
-      <div style="display:flex;align-items:center;gap:7px;font-size:var(--fs-sm);color:var(--text2)">
-        <span style="display:inline-block;width:10px;height:10px;border-radius:3px;flex-shrink:0;
-          border:2px solid #80b8e0"></span>
+      <div style="display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--text2)">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:3px;flex-shrink:0;
+          border:1.5px solid #80b8e0"></span>
         Ovulation
       </div>
-      <div style="display:flex;align-items:center;gap:7px;font-size:var(--fs-sm);color:var(--text2)">
-        <span style="display:inline-block;width:10px;height:10px;border-radius:3px;flex-shrink:0;
-          border:2px dashed #e07080"></span>
+      <div style="display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--text2)">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:3px;flex-shrink:0;
+          border:1px dashed #e07080"></span>
         Prédiction
       </div>
     </div>
@@ -3985,7 +4008,7 @@ const lignesJ1 = cycles.map((ds, i) => {
       justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
       <span style="font-size:var(--fs-sm);color:var(--text)">🩸 ${fmt}</span>
       <div style="display:flex;gap:4px">
-        <button onclick="confirmerSuppressionCycle('${ds}')"
+        <button onclick="confirmerSuppressionCycle('${ds}', this)"
           style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
       </div>
     </div>`;
@@ -4012,7 +4035,7 @@ const lignesJ1 = cycles.map((ds, i) => {
                 <input type="date" id="edit-j1-${idx}"
                   style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
                   value="${ds}" onchange="modifierCycle('${ds}', this.value)">
-                <button onclick="confirmerSuppressionCycle('${ds}')"
+                <button onclick="confirmerSuppressionCycle('${ds}', this)"
                   style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
               </div>
             </div>`;

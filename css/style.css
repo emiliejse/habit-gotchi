@@ -563,24 +563,24 @@ body {
   margin-bottom: var(--sp-lg); /* POURQUOI : espace généreux entre carte Gotchi et carte habitudes */
 }
 
-/* RÔLE : Bouton info discret — juste un petit "i" dans le coin, pas un bouton visible */
+/* RÔLE : Bouton info — cercle lilas discret mais lisible */
 .btn-info-discret {
-  background: none;
-  border: 1px solid rgba(176,144,208,0.4);
+  background: rgba(176,144,208,0.15);
+  border: 1.5px solid var(--lilac);
   border-radius: 50%;
-  width: 18px; height: 18px;
-  font-size: 10px;
-  color: var(--text2);
+  width: 22px; height: 22px;
+  font-size: 12px;
+  color: var(--lilac);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  font-family: serif; /* POURQUOI : le "i" en serif est plus lisible à petite taille */
+  font-family: serif;
   font-style: italic;
+  font-weight: bold;
   padding: 0;
-  opacity: 0.8;
-  transition: opacity .15s;
+  transition: background .15s;
 }
-.btn-info-discret:hover { opacity: 1; }
+.btn-info-discret:hover { background: rgba(176,144,208,0.3); }
 
 /* RÔLE : Fleurs de quota — indique visuellement combien de pensées il reste */
 .thought-flowers {

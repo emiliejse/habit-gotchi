@@ -371,14 +371,14 @@ const p5s = (p) => {
       });
     }
 
-    // 3. Gestion des Cacas
+    // 3. Détection proximité Gotchi/Crotte (calcul anticipé, dessin reporté après SOL)
+    // RÔLE : On calcule ici si le gotchi est près d'une crotte, mais on ne dessine PAS encore.
+    // POURQUOI : Les crottes doivent être dessinées APRÈS les props de fond/sol et AVANT le gotchi,
+    //            pour apparaître au même niveau visuel que lui (devant le fond, derrière le premier plan).
     const poops = window.D.g.poops || [];
     let gotchiNearPoop = false;
     poops.forEach(poop => {
       if (Math.abs(poop.x - walkX) < 25) gotchiNearPoop = true;
-      p.textAlign(p.CENTER, p.CENTER);
-      p.textSize(20);
-      p.text('💩', poop.x, poop.y);
     });
     window._gotchiNearPoop = gotchiNearPoop;
 
@@ -395,6 +395,20 @@ if (D.g.props) {
   D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot === 'SOL').forEach(prop => {
     const def = getPropDef(prop.id);
     if (def?.pixels) { const slot = PROP_SLOTS['SOL']; if (slot) drawProp(p, def, slot.x, slot.y); }
+  });
+}
+
+// 5b. Dessin des Cacas — APRÈS le sol, AVANT le Gotchi
+// RÔLE : Les crottes sont dessinées ici pour qu'elles apparaissent devant les objets du fond
+//         (slots A, B, SOL) mais derrière le gotchi lui-même et les slots de premier plan (C, D).
+// POURQUOI : Repositionner ici donne la bonne profondeur visuelle dans le tama :
+//            fond → sol → crottes → gotchi → premier plan
+{
+  const pxSize = 20; // taille emoji crotte
+  poops.forEach(poop => {
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(pxSize);
+    p.text('💩', poop.x, poop.y);
   });
 }
 

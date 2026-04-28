@@ -51,7 +51,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v3.45'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v3.46'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -233,7 +233,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 2; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 3; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -255,6 +255,19 @@ const MIGRATIONS = [
   // Migration 1→2 : ajout propsPixels à la racine de D
   function m2(d) {
     d.propsPixels = d.propsPixels ?? {};
+    return d;
+  },
+  // Migration 2→3 : recalage Y des crottes sauvegardées
+  // RÔLE : Les crottes existantes en LocalStorage ont un Y=118 (ancien spawn).
+  // POURQUOI : Le nouveau Y cible 150–158 pour coller aux pieds du gotchi.
+  //            Sans cette migration, les vieilles crottes restent trop hautes jusqu'au prochain nettoyage.
+  function m3(d) {
+    if (Array.isArray(d.g.poops)) {
+      d.g.poops = d.g.poops.map(poop => ({
+        ...poop,
+        y: (poop.y < 140) ? 150 + Math.floor(Math.random() * 8) : poop.y
+      }));
+    }
     return d;
   }
 ];

@@ -320,7 +320,23 @@ const p5s = (p) => {
     // RÔLE : on lit directement les jauges en 0–5 (plus de ×20)
     // POURQUOI : les seuils visuels sont désormais exprimés en 0–5 via les constantes EN_*/HA_* de config.js
     const en = g.energy, ha = g.happiness;
-    const n = (h >= 21 || h < 6);
+
+    // RÔLE : Calcule le ratio nuit (0 = jour, 1 = nuit pleine) pour une transition progressive
+    // POURQUOI : remplace l'ancien booléen n = (h >= 21) qui basculait brutalement d'un coup
+    // Transition soir : 20h → 21h (ratio monte de 0 à 1 sur 60 minutes)
+    // Transition matin : 5h → 6h (ratio descend de 1 à 0 sur 60 minutes)
+    const mins = new Date().getMinutes(); // minutes dans l'heure courante (0–59)
+    let nightRatio;
+    if (h === 20) {
+      nightRatio = mins / 60;            // 20h00 → 0, 20h59 → ~1
+    } else if (h === 5) {
+      nightRatio = 1 - (mins / 60);     // 5h00 → 1, 5h59 → ~0
+    } else if (h >= 21 || h < 5) {
+      nightRatio = 1;                    // nuit pleine
+    } else {
+      nightRatio = 0;                    // plein jour
+    }
+    const n = nightRatio; // alias court pour compatibilité avec drawActiveEnv(p, env, n, h)
 
     const sol = window.getSolarPhase ? window.getSolarPhase() : { phase: 'jour', t: 0 };
     const darkAlpha = sol.phase === 'nuit'       ? 100
@@ -334,7 +350,7 @@ const p5s = (p) => {
 
     const estJour = h < 19;
     // Nuit (21h–6h) → chambre systématiquement, quelle que soit la préférence stockée
-    let envActif = n ? 'chambre' : (g.activeEnv || 'parc');
+    let envActif = (nightRatio === 1) ? 'chambre' : (g.activeEnv || 'parc');
     if (!sleeping) {
       if (ha < HA_MED)                    drawRain(p, ha);  // pluie si ha = 0 ou 1
       else if (ha === HA_HIGH && estJour) drawSun(p);       // soleil à ha = 4

@@ -35,10 +35,12 @@ function pxFree(p, x, y, w, h) {
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME & TOPOGRAPHIE (Météo & Nuit) ────────── */
 
 /**
- * Raccourci Thème Color (tc) : Gère le mode Nuit
- * Retourne la couleur assombrie si n=true (nuit), sinon la couleur normale
+ * Raccourci Thème Color (tc) : Gère le mode Nuit avec transition progressive
+ * @param {number} n   - Ratio nuit entre 0 (jour) et 1 (nuit pleine) — anciennement booléen
+ * @param {string} col - Couleur hex à transformer
+ * POURQUOI : n=0 → couleur inchangée, n=1 → nuit pleine, valeurs intermédiaires → fondu doux
  */
-function tc(n, col) { return n ? shadeN(col) : col; }
+function tc(n, col) { return n > 0 ? shadeN(col, n) : col; }
 
 /**
  * Dessine des bourrasques de vent (Lignes horizontales mouvantes)
@@ -369,11 +371,12 @@ function drawFl(p, x, y, c) {
 
 /**
  * Assombrit une couleur hex pour générer le mode nuit dynamiquement.
- * @param {string} hex - Couleur au format "#RRGGBB"
- * @returns {string} - Couleur assombrie
+ * @param {string} hex   - Couleur au format "#RRGGBB"
+ * @param {number} ratio - Intensité de la nuit, entre 0 (jour) et 1 (nuit pleine)
+ * @returns {string} - Couleur résultante (interpolée entre jour et nuit)
  */
-function shadeN(hex) {
-  // Convertit hex → RGB → HSL
+function shadeN(hex, ratio = 1) {
+  // RÔLE : Convertit hex → RGB → HSL pour pouvoir manipuler luminosité et saturation
   let r = parseInt(hex.slice(1,3),16) / 255;
   let g = parseInt(hex.slice(3,5),16) / 255;
   let b = parseInt(hex.slice(5,7),16) / 255;
@@ -393,9 +396,13 @@ function shadeN(hex) {
     }
   }
 
-  // Assombrit la luminosité, boost léger de saturation pour garder la vibrance
-  l = l * 0.55;           // ← Luminosité réduite (ajuste entre 0.45–0.60)
-  s = Math.min(1, s * 1.1); // ← Légère compensation de saturation
+  // RÔLE : Applique l'assombrissement et la légère hausse de saturation proportionnellement au ratio
+  // POURQUOI : ratio=0 → aucun effet (couleur inchangée), ratio=1 → effet maximal
+  // La saturation monte doucement (+4% max) pour éviter l'effet "trop saturé d'un coup"
+  const lNuit = l * 0.55;              // luminosité cible en nuit pleine
+  const sNuit = Math.min(1, s * 1.04); // saturation cible en nuit pleine (réduite de 1.1 → 1.04)
+  l = l + (lNuit - l) * ratio;         // interpolation douce entre jour et nuit
+  s = s + (sNuit - s) * ratio;         // interpolation douce sur la saturation
 
   // Reconvertit HSL → RGB → hex
   function hue2rgb(p, q, t) {

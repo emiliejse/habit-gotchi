@@ -93,13 +93,13 @@ window.triggerExpr = function(mood, duration = 60) {
 
 function getGotchiC() {
   const id = window.D.g.gotchiColor || 'vert';
-  const gc = GOTCHI_COLORS.find(x => x.id === id) || GOTCHI_COLORS[0];
+  const gc = window.HG_CONFIG.GOTCHI_COLORS.find(x => x.id === id) || window.HG_CONFIG.GOTCHI_COLORS[0];
   return { body: gc.body, bodyLt: gc.bodyLt, bodyDk: gc.bodyDk };
 }
 
 function getEnvC() {
   const id = window.D.g.envTheme || 'pastel';
-  const et = ENV_THEMES.find(x => x.id === id) || ENV_THEMES[0];
+  const et = window.HG_CONFIG.ENV_THEMES.find(x => x.id === id) || window.HG_CONFIG.ENV_THEMES[0];
   return et;
 }
 

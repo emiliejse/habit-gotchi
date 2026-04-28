@@ -7,6 +7,41 @@
                CATS, STG, UI_PALETTES, GOTCHI_COLORS, ENV_THEMES, SK)
    ============================================================ */
 
+// ─────────────────────────────────────────────────────────────
+// RÔLE  : Helper centralisé pour tous les appels API Claude.
+// POURQUOI : Évite de répéter les headers, l'URL et le try/catch
+//            dans chaque fonction qui appelle l'IA (x5 dans ui.js).
+// USAGE : const data = await callClaude({ messages, max_tokens, system, temperature });
+//         Retourne le JSON Anthropic brut, ou lance une Error si échec.
+// ─────────────────────────────────────────────────────────────
+async function callClaude({ messages, max_tokens = 500, system, temperature }) {
+  const key = D.apiKey;
+  if (!key) throw new Error('Clé API manquante — vérifie les réglages');
+
+  // Construit le body : on n'inclut system et temperature que s'ils sont fournis
+  const body = { model: AI_MODEL, max_tokens, messages };
+  if (system      !== undefined) body.system      = system;
+  if (temperature !== undefined) body.temperature = temperature;
+
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify(body)
+  });
+
+  const d = await r.json();
+
+  // Si l'API renvoie une erreur structurée, on la propage proprement
+  if (d.error) throw new Error(d.error.message);
+
+  return d; // le try/catch reste dans chaque fonction appelante
+}
+
 /* ============================================================
    UTILITAIRES USER_CONFIG
    ============================================================ */
@@ -448,21 +483,7 @@ async function testApiKey() {
   statusEl.innerHTML = '⏳ Test en cours...';
   
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: 10,
-        messages: [{ role: 'user', content: 'Réponds juste OK' }]
-      })
-    });
-    const d = await r.json();
+    const d = await callClaude({ messages:[{ role:'user', content:prompt }] });
     
     if (d.error) {
       statusEl.innerHTML = `❌ <span style="color:var(--danger)">${d.error.message}</span>`; // était #e57373 hardcodé
@@ -1402,17 +1423,7 @@ async function askClaude() {
 
   /* ── Appel API ── */
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({ model:AI_MODEL, max_tokens:500, messages:[{ role:'user', content:prompt }] })
-    });
-    const d       = await r.json();
+    const d = await callClaude({ messages:[{ role:'user', content:prompt }] });
     const rawText = d.content[0].text;
     const match   = rawText.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('JSON introuvable dans la réponse IA');
@@ -1515,17 +1526,7 @@ async function acheterPropClaude() {
 
   /* ── Appel API ── */
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': D.apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({ model:AI_MODEL, max_tokens:500, temperature:1, messages:[{ role:'user', content:prompt }] })
-    });
-    const data  = await r.json();
+    const d = await callClaude({ messages:[{ role:'user', content:prompt }] });
     const match = data.content[0].text.match(/\{[\s\S]*\}/);
 
     stopThinkingAnim(animProp);
@@ -1763,17 +1764,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
 
   /* ── Appel API ── */
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({ model:AI_MODEL, max_tokens:500, system:sysPrompt, messages })
-    });
-    const d     = await r.json();
+    const d = await callClaude({ messages:[{ role:'user', content:prompt }] });
     const reply = d.content?.[0]?.text || 'Je suis là. 💜';
 
     stopThinkingAnim(animSoutien);
@@ -1902,17 +1893,7 @@ if (semaineEnCours) {
 
 /* ── Appel API ── */
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({ model:AI_MODEL, max_tokens:500, messages:[{role:'user',content:prompt}] })
-    });
-    const d = await r.json();
+    const d = await callClaude({ messages:[{ role:'user', content:prompt }] });
     const bilan = (d.content?.[0]?.text || 'Je n\'ai pas pu générer le bilan.')
       .replaceAll('{{nameGotchi}}', g.name)
       .replaceAll('{{userName}}',   D.g.userName || D.userName || 'toi');

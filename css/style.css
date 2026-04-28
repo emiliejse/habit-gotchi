@@ -36,7 +36,7 @@
   --focus-ring: var(--lilac);   /* Anneau de focus clavier (cf. :focus-visible) */
   
   /* Variables d'environnement PWA (Encoches iPhone / Android) */
-  --sat: 0px; /* POURQUOI : safe area iOS désactivée — encoche non gérée volontairement */
+  --sat: env(safe-area-inset-top, 0px); /* rétabli — protège l'encoche/Dynamic Island en haut */
   --sab: 0px;
   --sal: 0px;
   --sar: 0px;
@@ -323,7 +323,7 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 2px 32px max(var(--sab), 4px);
+  padding: 2px 40px max(var(--sab), 4px);
   font-size: 22px;
   color: #6a5a40;
   cursor: pointer;

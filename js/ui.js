@@ -1853,7 +1853,7 @@ window._soutienHistory = [];
         onkeydown="if(event.key==='Enter')sendSoutienMsg()">
       <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:var(--sp-sm) 12px">→</button>
     </div>
-    <p id="soutien-count" style="font-size:var(--fs-xs);opacity:0.6;text-align:center;margin-top:4px">6 messages restants · session ${D.soutienCount}/3 aujourd'hui</p>
+    <p id="soutien-count" style="font-size:var(--fs-xs);opacity:0.6;text-align:center;margin-top:4px;line-height:1.6">6 messages restants<br>conversation non sauvegardée</p>
     <button id="btn-copier-soutien" class="btn btn-s" onclick="copierSoutien()"
             style="width:100%;font-size:var(--fs-sm);margin-top:6px;
                    display:none;opacity:0;transition:opacity 0.5s ease">
@@ -1870,27 +1870,26 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
 
   /* ── Limite 6 messages par session ── */
   if (!isInit) {
-    if (window._soutienCount >= 6) {
+    // RÔLE : Incrémente AVANT l'appel API — le 6ème message est le dernier accepté
+    window._soutienCount++;
+
+    // RÔLE : Bloque si le quota était déjà atteint (7ème tentative et au-delà)
+    if (window._soutienCount > 6) {
       chat.innerHTML += `<div class="chat-bubble-system">Tu as atteint la limite de 6 messages pour cette session. Prends soin de toi 💜</div>`;
       chat.scrollTop = chat.scrollHeight;
       document.getElementById('soutien-inp').disabled = true;
       document.querySelector('#mbox .btn-p').disabled  = true;
-
-      // RÔLE : Révèle le bouton "Copier" avec une apparition douce (opacity 0→1)
-      // POURQUOI : Le bouton est inutile pendant la conversation — il n'a de sens
-      //            que quand il n'y a plus de messages disponibles
-      const btnCopier = document.getElementById('btn-copier-soutien');
-      if (btnCopier) {
-        btnCopier.style.display = 'block';          // Insère dans le flux
-        requestAnimationFrame(() => {               // Attend 1 frame pour que la transition CSS joue
-          btnCopier.style.opacity = '1';
-        });
-      }
       return;
     }
+
+    // RÔLE : Met à jour le compteur affiché sur deux lignes
     const restants = 6 - window._soutienCount;
     const countEl  = document.getElementById('soutien-count');
-    if (countEl) countEl.textContent = `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''} · conversation non sauvegardée`;
+    if (countEl) {
+      countEl.innerHTML = restants <= 0
+        ? `Dernier message<br>conversation non sauvegardée`
+        : `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''}<br>conversation non sauvegardée`;
+    }
   }
 
   if (!key) { toast(`*chuchote* J'ai besoin de ma clé API dans les Réglages 🔑`); return; }
@@ -1963,7 +1962,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   try {
     const d = await callClaude({ messages, system: sysPrompt });
     const reply = d.content?.[0]?.text || 'Je suis là. 💜';
-    window._soutienCount++;
+    // NOTE : _soutienCount++ est fait AVANT l'appel API (dans le bloc limite ci-dessus)
     stopThinkingAnim(animSoutien);
     document.getElementById(bubbleId)?.remove();
     chat.innerHTML += `<div class="chat-bubble-claude">${reply}</div>`;
@@ -1971,6 +1970,17 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
 
     if (isInit) window._soutienHistory.push({ role:'user', content:systemPrompt });
     window._soutienHistory.push({ role:'assistant', content:reply });
+
+    // RÔLE : Révèle le bouton "Copier" et bloque l'input après le 6ème message reçu
+    if (window._soutienCount >= 6) {
+      document.getElementById('soutien-inp').disabled = true;
+      document.querySelector('#mbox .btn-p').disabled  = true;
+      const btnCopier = document.getElementById('btn-copier-soutien');
+      if (btnCopier) {
+        btnCopier.style.display = 'block';
+        requestAnimationFrame(() => { btnCopier.style.opacity = '1'; });
+      }
+    }
 
   } catch(e) {
     stopThinkingAnim(animSoutien);

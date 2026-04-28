@@ -579,15 +579,14 @@ habHome.innerHTML = D.habits.map((h, i) => {
     <div class="hab ${d ? 'done' : ''} ${isNext ? 'hab--next' : ''}" style="position:relative">
       <div class="ck" onclick="toggleHab('${h.catId}')">${d ? '✓' : ''}</div>
       <span id="hab-label-${h.catId}" style="flex:1;font-size:12px;cursor:pointer"
-  onclick="toggleHab('${h.catId}')">${libelle}</span>
+        onclick="toggleHab('${h.catId}')">${libelle}</span>
       <span style="font-size:16px">${c.icon}</span>
-      <span style="width:1px;background:var(--border);height:14px;margin:0 4px"></span>
-      <span style="font-size:var(--fs-xs);color:var(--text2);cursor:pointer;padding:0 2px"
-        onclick="editHabInline('${h.catId}', ${i})">✏️</span>
     </div>`;
-}).join('') + `<p style="font-size:var(--fs-xs);color:var(--text2);text-align:center;margin-top:6px;opacity:0.7">
-  ✏️ Appuie sur le crayon pour personnaliser tes habitudes
-</p>`;
+}).join('') + `
+  <div style="text-align:center;margin-top:12px">
+    <button class="btn btn-s" style="font-size:var(--fs-xs);padding:6px 14px;opacity:0.7"
+      onclick="ouvrirEditionHabitudes()">✏️ Personnaliser mes habitudes</button>
+  </div>`;
   }
 
   // --- Compteur d'habitudes ---

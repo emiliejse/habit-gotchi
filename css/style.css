@@ -802,12 +802,11 @@ body {
 .slider-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; min-height: 44px; }
 
 /* RÔLE : Track du slider */
-/* POURQUOI : margin-right: 18px raccourcit le track côté droit.
-              Quand le thumb est à la valeur max (5), son centre est au bord droit du track.
-              Le thumb fait 28px donc son bord droit dépasse de 14px.
-              Les pétales (box-shadow) s'étendent encore de 6px au-delà = 20px au total.
-              18px de marge garantit que tout reste dans le conteneur sans être coupé.
-              margin-left: 0 car les pétales gauche sont couvertes par l'icône adjacente. */
+/* POURQUOI : margin-right: 28px compense le débordement du thumb sur iOS Safari.
+              iOS applique un padding interne natif (~8-10px) sur le track, ce qui pousse
+              le thumb vers la droite à la valeur max. Avec un thumb de 28px transparent
+              + pétales de 6px, le débordement total peut atteindre ~28px sur mobile.
+              margin-left: 6px pour que la pétale gauche (valeur 0) ne soit pas rognée non plus. */
 .slider-row input[type=range] {
   flex: 1;
   -webkit-appearance: none;
@@ -816,8 +815,16 @@ body {
   outline: none;
   opacity: .85;
   overflow: visible;
-  margin: 0 18px 0 0;
+  margin: 0 28px 0 6px;
   min-width: 0;
+}
+
+/* RÔLE : Neutraliser le padding natif iOS sur le track webkit */
+/* POURQUOI : sans cette règle, Safari ajoute du padding de chaque côté du track
+              ce qui décale le thumb et cause le débordement à droite sur iPhone */
+.slider-row input[type=range]::-webkit-slider-runnable-track {
+  margin: 0;
+  padding: 0;
 }
 
 /* RÔLE : Thumb du slider — 28×28px transparent pour une grande zone de tap */

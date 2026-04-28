@@ -5,7 +5,7 @@
    métier (XP, stats) — il se contente de LIRE window.D et de dessiner.
 
    DÉPENDANCES (doivent être chargées AVANT dans index.html) :
-     - config.js  → GOTCHI_COLORS, ENV_THEMES, EN_*/HA_* (seuils visuels)
+     - config.js  → GOTCHI_COLORS, ENV_THEMES, EN_xx/HA_xx (seuils visuels)
      - app.js     → window.D (données), window.PROPS_LIB, hr(),
                     window.meteoData, window.shakeTimer, window.celebQueue
      - envs.js    → drawActiveEnv() (chargé APRÈS render.js)

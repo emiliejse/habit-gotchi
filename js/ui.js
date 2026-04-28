@@ -503,7 +503,7 @@ async function testApiKey() {
   statusEl.innerHTML = '⏳ Test en cours...';
   
   try {
-    const d = await callClaude({ messages:[{ role:'user', content:prompt }] });
+    const d = await callClaude({ messages:[{ role:'user', content:'Test de connexion.' }], max_tokens:10 });
     
     if (d.error) {
       statusEl.innerHTML = `❌ <span style="color:var(--danger)">${d.error.message}</span>`; // était #e57373 hardcodé
@@ -1547,7 +1547,7 @@ async function acheterPropClaude() {
   /* ── Appel API ── */
   try {
     const d = await callClaude({ messages:[{ role:'user', content:prompt }] });
-    const match = data.content[0].text.match(/\{[\s\S]*\}/);
+    const match = d.content[0].text.match(/\{[\s\S]*\}/);
 
     stopThinkingAnim(animProp);
 
@@ -1710,7 +1710,6 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
       document.querySelector('#mbox .btn-p').disabled  = true;
       return;
     }
-    window._soutienCount++;
     const restants = 6 - window._soutienCount;
     const countEl  = document.getElementById('soutien-count');
     if (countEl) countEl.textContent = `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''} · conversation non sauvegardée`;
@@ -1784,9 +1783,9 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
 
   /* ── Appel API ── */
   try {
-    const d = await callClaude({ messages:[{ role:'user', content:prompt }] });
+    const d = await callClaude({ messages, system: sysPrompt });
     const reply = d.content?.[0]?.text || 'Je suis là. 💜';
-
+    window._soutienCount++;
     stopThinkingAnim(animSoutien);
     document.getElementById(bubbleId)?.remove();
     chat.innerHTML += `<div class="chat-bubble-claude">${reply}</div>`;

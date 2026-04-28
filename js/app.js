@@ -51,7 +51,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v3.44'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v3.45'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -387,7 +387,10 @@ function spawnPoop() {
   let x, y, attempts = 0, tooClose;
   do {
     x = 20 + Math.floor(Math.random() * 150);
-    y = 118 + Math.floor(Math.random() * 8);
+    // RÔLE : Y positionné au niveau du sol où marchent les pieds du gotchi
+    // POURQUOI : Les pieds des sprites (adult: y+PX*10=50px, with by=85+bobY≈20 → drawY≈105 → pieds à ~155)
+    //            → on cible 150–158 pour coller à la zone de marche réelle, quel que soit le stade.
+    y = 150 + Math.floor(Math.random() * 8);
     tooClose = (window.D.g.poops || []).some(p => Math.abs(p.x - x) < 28);
     attempts++;
   } while (tooClose && attempts < 20);

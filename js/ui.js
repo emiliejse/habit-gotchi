@@ -4138,13 +4138,6 @@ window.initUI = function() {
     return;
   }
 
-    // ── Feedback export journal ──
-  const lastExp = window.D.lastJournalExport;
-  const info = document.getElementById('last-journal-export');
-  if (info) info.textContent = lastExp
-    ? `📓 Journal exporté le ${lastExp}`
-    : '📓 Aucun export automatique encore';
-
   const h = hr();
   window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
 

@@ -793,11 +793,13 @@ body {
 #sliders-wrap.open #sliders-hint { display: block; }
 
 /* RÔLE : Corps dépliable */
-/* POURQUOI : overflow hidden coupe tout débordement horizontal (fleur à valeur 5 sur iOS).
-              padding vertical 14px = place pour les pétales hautes/basses sans clippage vertical. */
+/* POURQUOI : overflow-x hidden = coupe le débordement horizontal de la fleur sur iOS.
+              overflow-y visible = les pétales haut/bas restent visibles.
+              padding vertical = espace pour les pétales verticales (6px de chaque côté du thumb). */
 #sliders-body {
-  overflow: hidden;
-  padding: 14px 0;
+  overflow-x: hidden;
+  overflow-y: visible;
+  padding: 8px 0;
 }
 
 /* RÔLE : Icône dans la ligne de slider */
@@ -807,13 +809,9 @@ body {
 .slider-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; min-height: 44px; }
 
 /* RÔLE : Track du slider */
-/* POURQUOI : margin-right raccourcit physiquement le track pour que le centre du thumb
-              à la valeur max (5) soit assez loin du bord droit du conteneur.
-              Sur iOS Safari, le padding natif du track (~8px) décale le thumb vers la droite :
-              margin-right: 22px = 14px (demi-thumb) + 8px (padding iOS natif).
-              margin-left: 8px = symétrique pour la valeur 0 à gauche.
-              overflow: hidden sur l'input (pas visible) : on ne laisse plus rien déborder,
-              la contrainte est gérée par les marges. */
+/* POURQUOI : margin-right: 16px réserve l'espace pour le demi-thumb (10px) + pétale (6px).
+              Sur iOS Safari le padding natif du track décale le thumb — margin-right absorbe ce décalage.
+              overflow: visible indispensable pour que les pétales (box-shadow) soient visibles. */
 .slider-row input[type=range] {
   flex: 1;
   -webkit-appearance: none;
@@ -821,8 +819,8 @@ body {
   border-radius: 4px;
   outline: none;
   opacity: .85;
-  overflow: hidden;
-  margin: 0 22px 0 8px;
+  overflow: visible;
+  margin: 0 16px 0 6px;
   min-width: 0;
 }
 
@@ -833,12 +831,13 @@ body {
   border-radius: 4px;
 }
 
-/* RÔLE : Thumb du slider — 28×28px transparent pour une grande zone de tap */
-/* POURQUOI : le navigateur mobile calcule la zone de tap sur le thumb réel, pas les box-shadow.
-              Thumb transparent = zone de tap large sans modifier l'aspect des pétales. */
+/* RÔLE : Thumb du slider — transparent, zone de tap 20×20px */
+/* POURQUOI : 20px = zone de tap suffisante (la min-height: 44px de .slider-row complète la zone tactile).
+              Thumb transparent : la couleur vient uniquement des box-shadow (pétales).
+              20px réduit le débordement à droite vs 28px, ce qui aide sur iOS. */
 .slider-row input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 28px; height: 28px;
+  width: 20px; height: 20px;
   border-radius: 50%;
   cursor: pointer;
   border: none;

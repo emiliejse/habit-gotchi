@@ -1606,8 +1606,167 @@ function toastInfo() {
   toastModal("💬 Le Gotchi peut te partager une pensée jusqu'à 3 fois par jour.\n\n✍️ Si tu écris des notes dans ton journal, ses réponses seront personnalisées selon ton humeur du jour 💜");
 }
 
+// ─────────────────────────────────────────────────────────────────
+// RÔLE : Affiche une modale de confirmation avant d'ouvrir le chat
+//        de soutien. Gotchi animé sur fond blanc + état + 2 boutons.
+// POURQUOI : Évite de consommer 1/3 session par accident.
+// ─────────────────────────────────────────────────────────────────
+function _showSoutienConfirm(onConfirm) {
+  const D = window.D;
+  const g = D.g;
+
+  // RÔLE : Convertit un score /5 en émojis pleins + cercles vides
+  // ex : energy=3 → "⚡⚡⚡○○"
+  const toEmojis = (val, full, empty) =>
+    full.repeat(Math.max(0, Math.min(5, val))) +
+    empty.repeat(Math.max(0, 5 - Math.min(5, val)));
+
+  const energyStr = toEmojis(g.energy,    '⚡', '○');
+  const happyStr  = toEmojis(g.happiness, '💜', '○');
+
+  // ── Ouvre la modale avec le contenu de confirmation ──
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('mbox').innerHTML = `
+    <div style="text-align:center;padding:12px 8px 8px">
+
+      <p style="font-size:var(--fs-sm);color:var(--lilac);font-weight:bold;margin-bottom:10px">
+        💜 Besoin de soutien
+      </p>
+
+      <!-- RÔLE : Zone du mini canvas p5 — fond blanc, coin arrondis -->
+      <!-- Le Gotchi se balade horizontalement à l'intérieur -->
+      <div id="soutien-confirm-canvas"
+           style="width:140px;height:90px;margin:0 auto 10px;
+                  border-radius:12px;overflow:hidden;background:#ffffff">
+      </div>
+
+      <p style="font-size:13px;font-weight:bold;color:var(--text1);margin-bottom:4px">
+        ${g.name || 'Gotchi'}
+      </p>
+
+      <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:12px;line-height:1.8">
+        Énergie&nbsp;${energyStr}<br>
+        Humeur&nbsp;&nbsp;${happyStr}
+      </p>
+
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button id="btn-confirm-soutien" class="btn btn-p"
+                style="width:100%;font-size:var(--fs-sm)">
+          Parler à ${g.name || 'Gotchi'}
+        </button>
+        <button class="btn btn-s"
+                onclick="clModal()"
+                style="width:100%;font-size:var(--fs-sm)">
+          Annuler
+        </button>
+      </div>
+    </div>
+  `;
+  animEl(document.getElementById('mbox'), 'bounceIn');
+
+  // ── Mini canvas p5 : Gotchi animé sur fond blanc, sans décor ──
+  // RÔLE : Instance p5 temporaire, détruite dès que la modale se ferme
+  // POURQUOI : drawBaby/drawTeen/drawAdult sont des fonctions globales
+  //            qui acceptent une instance p en paramètre → réutilisables ici
+  let _miniP5 = null;
+
+  const W = 140, H = 90;    // Dimensions du canvas (= la div ci-dessus)
+  const CY = 62;             // Y du "sol" — Gotchi posé à cette hauteur
+  let miniX    = W / 2;     // Position X courante du Gotchi
+  let miniDir  = 1;          // Direction : 1 = droite, -1 = gauche
+  const XMIN_M = 30;         // Marge gauche
+  const XMAX_M = W - 30;    // Marge droite
+  const SPEED  = 0.5;        // Vitesse de déplacement (px/frame)
+  let miniBlink = false;     // État clignotement local (indépendant du canvas principal)
+  let miniBlinkT = 0;        // Compteur avant prochain clignotement
+  let miniBlinkD = 0;        // Durée du clignotement en cours
+
+  const miniSketch = (p) => {
+    p.setup = () => {
+      // RÔLE : Crée le canvas dans la div dédiée, fond blanc, pixel art net
+      p.createCanvas(W, H).parent('soutien-confirm-canvas');
+      p.noSmooth();   // Rendu pixel art sans antialiasing
+      p.frameRate(12); // 12 fps : fluide pour un sprite, économe en CPU
+      miniBlinkT = 40 + Math.floor(Math.random() * 80);
+    };
+
+    p.draw = () => {
+      const gd = window.D.g;
+      const en = gd.energy;
+      const ha = gd.happiness;
+
+      // Fond blanc pur
+      p.background(255);
+
+      // ── Déplacement horizontal ──
+      // RÔLE : Gotchi se balade de gauche à droite en rebondissant sur les marges
+      miniX += miniDir * SPEED;
+      if (miniX >= XMAX_M) { miniX = XMAX_M; miniDir = -1; }
+      if (miniX <= XMIN_M) { miniX = XMIN_M; miniDir  =  1; }
+
+      // ── Clignotement local (copie du comportement de render.js) ──
+      miniBlinkT--;
+      if (!miniBlink && miniBlinkT <= 0) {
+        miniBlink = true;
+        miniBlinkD = 3 + Math.floor(Math.random() * 4);
+      }
+      if (miniBlink) {
+        miniBlinkD--;
+        if (miniBlinkD <= 0) {
+          miniBlink = false;
+          miniBlinkT = 40 + Math.floor(Math.random() * 80);
+        }
+      }
+
+      // ── Injection temporaire de blink dans le scope global ──
+      // RÔLE : drawBaby/drawTeen/drawAdult lisent la variable globale `blink`
+      //        depuis render.js — on la surcharge temporairement pour ce frame
+      // POURQUOI : On ne peut pas modifier render.js pour exposer blink,
+      //            mais on peut écrire dessus le temps d'un draw()
+      const prevBlink = window._miniBlink_backup;
+      window.blink = miniBlink; // override temporaire
+
+      // ── Dessin du sprite via les fonctions globales de render-sprites.js ──
+      // `false` = sleeping:false (le Gotchi est éveillé dans la modale)
+      p.push(); // Isole les transformations
+      p.noStroke();
+      if      (gd.stage === 'egg')   drawEgg   && drawEgg(p, miniX, CY);
+      else if (gd.stage === 'baby')  drawBaby  && drawBaby(p, miniX, CY, false, en, ha);
+      else if (gd.stage === 'teen')  drawTeen  && drawTeen(p, miniX, CY, false, en, ha);
+      else                           drawAdult && drawAdult(p, miniX, CY, false, en, ha);
+      p.pop();
+
+      // Restaure blink pour que render.js ne soit pas perturbé
+      window.blink = window._blink_main ?? false;
+    };
+  };
+
+  // RÔLE : Sauvegarde la valeur courante de blink du canvas principal
+  //        pour pouvoir la restaurer après chaque frame du mini canvas
+  window._blink_main = window.blink ?? false;
+
+  _miniP5 = new p5(miniSketch);
+
+  // ── "Parler à [nom]" : détruit le mini p5 et lance le vrai chat ──
+  document.getElementById('btn-confirm-soutien').addEventListener('click', () => {
+    if (_miniP5) { _miniP5.remove(); _miniP5 = null; }
+    onConfirm();
+  });
+
+  // ── Patch clModal : nettoie le mini p5 si on ferme avec ✕ ou Annuler ──
+  // RÔLE : Évite une instance p5 zombie qui continue à tourner en arrière-plan
+  const _origClModal = window.clModal;
+  window.clModal = function() {
+    if (_miniP5) { _miniP5.remove(); _miniP5 = null; }
+    window.clModal = _origClModal; // Restaure clModal immédiatement après usage
+    _origClModal();
+  };
+}
+
 /**
  * Lance le chat d'urgence (limité à 6 messages non sauvegardés)
+ * RÔLE : Vérifie les gardes (clé API, limite journalière), puis
+ *        affiche la modale de confirmation avant d'ouvrir le chat.
  */
 function genSoutien() {
   const D = window.D, td = today();
@@ -1642,6 +1801,20 @@ function genSoutien() {
     toast("Le Gotchi a besoin de se reposer… Reviens demain 🌙");
     return;
   }
+
+  // RÔLE : Affiche la confirmation AVANT de décompter — si l'utilisatrice
+  //        annule, la session n'est pas consommée
+  _showSoutienConfirm(() => _genSoutienCore(D, td));
+}
+
+/**
+ * RÔLE : Cœur du lancement du chat — appelé uniquement après confirmation.
+ *        Construit le prompt, ouvre la modale de chat, lance le 1er message IA.
+ * POURQUOI : Séparé de genSoutien() pour que la modale de confirmation
+ *            reste propre et indépendante.
+ */
+function _genSoutienCore(D, td) {
+  // RÔLE : Décompte la session ici, APRÈS confirmation de l'utilisatrice
   D.soutienCount++;
   save();
 
@@ -1691,7 +1864,11 @@ window._soutienHistory = [];
       <button class="btn btn-p" onclick="sendSoutienMsg()" style="flex-shrink:0;padding:var(--sp-sm) 12px">→</button>
     </div>
     <p id="soutien-count" style="font-size:var(--fs-xs);opacity:0.6;text-align:center;margin-top:4px">6 messages restants · session ${D.soutienCount}/3 aujourd'hui</p>
-    <button id="btn-copier-soutien" class="btn btn-s" onclick="copierSoutien()" style="width:100%;font-size:var(--fs-sm);margin-top:6px">Copier la conversation</button>
+    <button id="btn-copier-soutien" class="btn btn-s" onclick="copierSoutien()"
+            style="width:100%;font-size:var(--fs-sm);margin-top:6px;
+                   display:none;opacity:0;transition:opacity 0.5s ease">
+      Copier la conversation
+    </button>
 `;
 animEl(document.getElementById('mbox'), 'bounceIn');
   sendSoutienMsg(promptInit, true);
@@ -1708,6 +1885,17 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
       chat.scrollTop = chat.scrollHeight;
       document.getElementById('soutien-inp').disabled = true;
       document.querySelector('#mbox .btn-p').disabled  = true;
+
+      // RÔLE : Révèle le bouton "Copier" avec une apparition douce (opacity 0→1)
+      // POURQUOI : Le bouton est inutile pendant la conversation — il n'a de sens
+      //            que quand il n'y a plus de messages disponibles
+      const btnCopier = document.getElementById('btn-copier-soutien');
+      if (btnCopier) {
+        btnCopier.style.display = 'block';          // Insère dans le flux
+        requestAnimationFrame(() => {               // Attend 1 frame pour que la transition CSS joue
+          btnCopier.style.opacity = '1';
+        });
+      }
       return;
     }
     const restants = 6 - window._soutienCount;

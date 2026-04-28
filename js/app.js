@@ -268,7 +268,7 @@ function load() {
   try {
     const r = localStorage.getItem(SK);
     if (r) {
-      const d = JSON.parse(r);
+      let d = JSON.parse(r);
       d = migrate(d);
       if (d.habits) d.habits = d.habits.map(h => {
         const cat = CATS.find(c => c.id === h.catId);

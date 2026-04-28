@@ -162,12 +162,6 @@ function syncDuringTransition(shell) {
 }
 
 
-// RÔLE : Références DOM stockées une fois — évite de perdre le nœud quand il sort du DOM
-// POURQUOI : getElementById retourne null si l'élément n'est plus dans le document.
-//            On stocke les refs au niveau du module pour les retrouver même hors DOM.
-let _hdrTitle = null; // référence à #hdr-title (titre + date)
-let _shellAnchor = null; // référence au nœud suivant le tama dans #console-top (pour réinsertion)
-
 function go(t) {
   window._gotchiActif = (t === 'gotchi');
   document.querySelectorAll('.pnl').forEach(p => p.classList.remove('on'));
@@ -181,29 +175,15 @@ function go(t) {
 
   const shell = document.querySelector('.tama-shell');
   const consoleTop = document.getElementById('console-top');
-  const hdr = consoleTop.querySelector('.hdr');
 
-  // RÔLE : Mode compact — déplace le tama dans .hdr à la place du titre masqué.
-  // POURQUOI : Le tama devient un élément flex dans .hdr, centré entre les deux boutons.
-  //            Sa taille est naturellement contrainte par la hauteur du .hdr.
-  //            La bulle reste juste en dessous dans le flux, sans calcul de marge.
+  // RÔLE : Mode compact — CSS seul gère l'affichage, pas de déplacement DOM.
+  // #hdr-title masqué via CSS, tama réduit dans le flux sous le .hdr, bulle juste en dessous.
   if (t === 'gotchi') {
-    // RETOUR MODE NORMAL : remet le titre dans .hdr et le tama à sa place dans #console-top
-    if (_hdrTitle && shell.parentNode === hdr) {
-      hdr.replaceChild(_hdrTitle, shell);           // remet le titre dans .hdr
-      consoleTop.insertBefore(shell, _shellAnchor); // remet le tama avant la bulle
-    }
     shell.classList.remove('shrunk');
     consoleTop.classList.remove('compact');
     const h = hr();
     window.D.g.activeEnv = (h >= 21 || h < 7) ? 'chambre' : 'parc';
   } else {
-    // MODE COMPACT : première fois → mémorise les refs, puis déplace le tama dans .hdr
-    if (shell.parentNode === consoleTop) {
-      _hdrTitle    = document.getElementById('hdr-title'); // mémorise avant de le retirer
-      _shellAnchor = shell.nextSibling;                    // mémorise le nœud suivant pour réinsertion
-      hdr.replaceChild(shell, _hdrTitle);                  // tama prend la place du titre dans .hdr
-    }
     shell.classList.add('shrunk');
     consoleTop.classList.add('compact');
     if      (t === 'journal')  window.D.g.activeEnv = 'chambre';

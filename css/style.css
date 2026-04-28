@@ -185,20 +185,22 @@ body {
   transform-origin: top center;
 }
 
-/* RÔLE : Mode compact — tama dans le .hdr, taille fixe pour ne pas pousser les boutons */
-/* POURQUOI : flex:1 laisse le tama prendre l'espace central entre les deux boutons.
-              height fixe à 40px empêche le .hdr de s'étirer et garde les boutons alignés.
-              aspect-ratio:1/1 sur le canvas s'adapte à cette hauteur automatiquement. */
-.tama-shell.shrunk {
+/* RÔLE : En mode normal — masque le tama dans le .hdr (seul le titre est visible) */
+/* POURQUOI : Le canvas p5.js est unique (#cbox). Il est toujours dans .hdr,
+              mais en mode normal on le cache et en mode compact on affiche le tama à sa place. */
+.hdr .tama-shell {
+  display: none;  /* caché en mode normal */
   flex: 1;
-  height: 38px;        /* légèrement plus petit que les boutons (44px) — tama discret */
-  max-width: none;
-  padding: 1px;
+  align-self: stretch; /* occupe toute la hauteur du .hdr */
+}
+
+/* RÔLE : Mode compact — tama visible dans le .hdr, centré entre les boutons */
+.tama-shell.shrunk {
+  display: flex !important; /* visible en mode compact */
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
   margin: 0;
-  align-self: center;  /* centré verticalement dans le .hdr sans le faire grandir */
-  position: relative;
-  z-index: 1;
-  overflow: visible;   /* laisse la flèche de la bulle dépasser en dessous */
 }
 
 /* L'écran Canvas (Le jeu en lui-même) */
@@ -672,10 +674,11 @@ body {
 /* POURQUOI : Le tama passe en position absolute à la place du titre masqué.
               La bulle descend sous le tama grâce à margin-top calculé sur la hauteur du tama compact.
               Les boutons restent dans .hdr, fixes, non affectés. */
-/* RÔLE : Mode compact — masque les sliders, espace sous la bulle, flèche visible */
-#console-top.compact #sliders-wrap { display: none; }      /* masque les sliders énergie/bonheur */
-#console-top.compact .bubble       { margin-bottom: 8px; } /* petit espace sous la bulle */
-/* POURQUOI : la flèche ::before reste visible — elle pointe vers le tama juste au-dessus */
+/* RÔLE : Mode compact — masque le titre, révèle le tama dans le .hdr */
+#console-top.compact #hdr-title    { display: none; }         /* titre + date masqués */
+#console-top.compact .hdr .tama-shell { display: flex; }      /* tama visible dans le .hdr */
+#console-top.compact #sliders-wrap { display: none; }         /* sliders masqués */
+#console-top.compact .bubble       { margin-bottom: 8px; }    /* espace sous la bulle */
 
 /* Barre d'XP */
 .pbar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }

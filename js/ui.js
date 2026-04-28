@@ -335,12 +335,13 @@ function openModal(html) {
   const mbox  = document.getElementById('mbox');
   modal.style.display = 'flex';
   lockScroll();
-  mbox.innerHTML = `${_modalCloseBtn()}${html}`;
-  // RÔLE : Rejoue l'animation CSS sur #mbox à chaque ouverture
-  // POURQUOI : On retire/remet la classe pour forcer le reflow et relancer @keyframes modalPop
-  //            Le backdrop #modal n'est pas animé — il apparaît instantanément (comportement attendu)
+  // RÔLE : Retire la classe avant d'injecter le contenu, force le reflow, puis remet la classe
+  // POURQUOI : L'ordre est critique — si on injecte le HTML après le remove/add, le navigateur
+  //            batchera les mutations DOM et ignorera le reflow entre les deux, cassant l'animation
+  //            à la deuxième ouverture. Retirer d'abord garantit un cycle d'animation propre.
   mbox.classList.remove('modal-pop');
-  void mbox.offsetWidth; // force reflow
+  void mbox.offsetWidth; // force reflow — le navigateur recalcule avant d'appliquer la classe
+  mbox.innerHTML = `${_modalCloseBtn()}${html}`;
   mbox.classList.add('modal-pop');
 }
 

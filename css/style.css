@@ -414,7 +414,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start; /* ← nécessaire pour que --indent fonctionne */
-  gap: 2px;
+  gap: 8px; /* POURQUOI : était 2px — plus d'air entre les lignes de nav */
   margin-bottom: 12px;
   position: relative;
   z-index: 1;
@@ -471,15 +471,15 @@ body {
 /* POURQUOI rotate léger : effet post-it à la va-vite, comme dans un vrai cahier d'ado */
 .menu-postit {
   width: 100%;
-  padding: 10px 12px;
-  font-size: var(--fs-sm);
+  padding: 12px 14px; /* POURQUOI : plus d'air interne pour mieux respirer */
+  font-size: var(--fs-md); /* POURQUOI : était fs-sm — plus lisible, plus présent */
   font-weight: bold;
   font-family: 'Courier New', monospace;
   cursor: pointer;
   border-radius: 2px;
   border: none;
   letter-spacing: 0.3px;
-  box-shadow: 2px 2px 4px rgba(0,0,0,0.12);
+  box-shadow: 3px 3px 6px rgba(0,0,0,0.16); /* POURQUOI : ombre légèrement plus marquée */
   transition: transform .12s;
   text-align: center;
   box-sizing: border-box;
@@ -487,15 +487,15 @@ body {
 .menu-postit:active { transform: scale(.95); }
 
 .menu-postit--rose {
-  background: #fde8f0;
-  color: #904060;
+  background: #f9c8dc; /* POURQUOI : était #fde8f0 trop pâle — fond plus soutenu */
+  color: #7a2848;
   transform: rotate(-1deg);
 }
 .menu-postit--rose:active { transform: rotate(-1deg) scale(.95); }
 
 .menu-postit--lilac {
-  background: #ede0f8;
-  color: #5a3a80;
+  background: #d8bef5; /* POURQUOI : était #ede0f8 trop pâle — fond plus soutenu */
+  color: #3d1f6e;
   transform: rotate(0.8deg);
 }
 .menu-postit--lilac:active { transform: rotate(0.8deg) scale(.95); }

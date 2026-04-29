@@ -715,28 +715,37 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
       // Fond semi-transparent identique au bandeau HUD
       p.noStroke();
       p.textStyle(p.NORMAL);
+      p.textSize(9);
+
+      // POURQUOI : largeur fixe identique pour les deux badges
+      //            + icône et chiffre positionnés séparément avec gap fixe,
+      //            pour que ⚡ et ✿ (métriques d'emoji différentes) n'affectent pas l'alignement.
+      const badgeW   = 30;   // largeur fixe des deux badges (px canvas)
+      const iconW    = 10;   // zone réservée à l'icône (px)
+      const gap      = 3;    // espace fixe entre icône et chiffre (px)
+      const gap2     = 3;    // gap entre les deux badges (px)
 
       // ── Badge ⚡ (énergie) ──
-      const enStr = '⚡' + en;
-      p.textSize(9);
-      const enW = p.textWidth(enStr) + badgePadX * 2;
-      p.fill(0, 0, 0, 90);          // fond sombre semi-transparent
-      p.rect(4, badgeY - 1, enW, badgeH, badgeR);
+      const enX = 4;
+      p.fill(0, 0, 0, 90);
+      p.rect(enX, badgeY - 1, badgeW, badgeH, badgeR);
       p.fill(255);
       p.textAlign(p.LEFT, p.TOP);
-      p.text(enStr, 4 + badgePadX, badgeY + 1);
+      p.text('⚡', enX + badgePadX, badgeY + 1);                          // icône à gauche
+      p.textAlign(p.LEFT, p.TOP);
+      p.text(String(en), enX + badgePadX + iconW + gap, badgeY + 1);     // chiffre décalé fixe
 
       // ── Badge ✿ (bonheur) ──
-      const haStr = '✿' + ha;
-      const haX = 4 + enW + 3;      // 3px de gap entre les deux badges
-      const haW = p.textWidth(haStr) + badgePadX * 2;
+      const haX = enX + badgeW + gap2;
       p.fill(0, 0, 0, 90);
-      p.rect(haX, badgeY - 1, haW, badgeH, badgeR);
+      p.rect(haX, badgeY - 1, badgeW, badgeH, badgeR);
       p.fill(255);
-      p.text(haStr, haX + badgePadX, badgeY + 1);
+      p.textAlign(p.LEFT, p.TOP);
+      p.text('✿', haX + badgePadX, badgeY + 1);                          // icône à gauche
+      p.text(String(ha), haX + badgePadX + iconW + gap, badgeY + 1);     // chiffre décalé fixe
 
       // ── Triangle ▲ interactivité ──
-      const triX = haX + haW + 4;
+      const triX = haX + badgeW + 4;
       p.textSize(8);
       p.fill(255, 255, 255, 160);
       p.text('▲', triX, badgeY + 1);

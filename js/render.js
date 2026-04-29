@@ -690,13 +690,13 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     //            🛁 et 🍽️ sont symétriques à ±28px de ce centre.
     //            Taille 16 identique à l'ancien HUD.
     //            Opacité : 1.0 = action dispo, 0.25 = rien à faire (icône toujours visible).
-    p.textSize(16);
+    p.textSize(20);
     p.textAlign(p.CENTER, p.TOP);
 
     // 🛁 Bain (gauche du centre, x=72) : opaque si salete >= 5, estompé si propre
     const salete = window.D?.g?.salete || 0;
     p.drawingContext.globalAlpha = salete >= 5 ? 1.0 : 0.25;
-    p.text('🛁', 72, 3);
+    p.text('🛁', 70, 3);
 
     // 🧹 Balai (centre exact, x=100) : opaque si des crottes sont présentes
     const hasPoops = (window.D.g.poops || []).length > 0;
@@ -708,7 +708,7 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     const meals   = (typeof ensureMealsToday === 'function') ? ensureMealsToday() : null;
     const mealAvailable = mealWin && meals && !meals[mealWin];
     p.drawingContext.globalAlpha = mealAvailable ? 1.0 : 0.25;
-    p.text('🍽️', 128, 3);
+    p.text('🍽️', 130, 3);
 
     p.drawingContext.globalAlpha = 1.0;
 

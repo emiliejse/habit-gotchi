@@ -105,6 +105,34 @@ function showRDV() {
   return window.USER_CONFIG?.ui?.showRDVFeature !== false;
 }
 
+// RÔLE : Génère un chevron SVG orientable (left ou right) utilisé dans toute l'app.
+// POURQUOI : Placé ici en §2 pour être disponible partout dans ui.js —
+//            les accordéons, l'agenda et la progression l'utilisent tous.
+//            Un SVG est plus propre et cohérent que des emojis ◀▶ ou des caractères ▾.
+function chevron(dir) {
+  // dir = 'left' → pointe à gauche (<), 'right' → pointe à droite (>), 'down' → pointe vers le bas (v)
+  let points;
+  if (dir === 'left')  points = '15 18 9 12 15 6';
+  else if (dir === 'down') points = '6 9 12 15 18 9';
+  else                 points = '9 18 15 12 9 6'; // right par défaut
+  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+    stroke="var(--text2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+    style="display:block">
+    <polyline points="${points}"/>
+  </svg>`;
+}
+
+// RÔLE : Identique à chevron() mais avec la couleur lilac — pour les navigations principales (agenda, progression).
+// POURQUOI : Les accordéons utilisent --text2 (discret), les navigations utilisent --lilac (mis en valeur).
+function chevronNav(dir) {
+  const points = dir === 'left' ? '15 18 9 12 15 6' : '9 18 15 12 9 6';
+  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+    stroke="var(--lilac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+    style="display:block">
+    <polyline points="${points}"/>
+  </svg>`;
+}
+
 /**
  * UTILITAIRE GLOBAL (Système 7 : Ingénierie)
  * animEl() : applique une animation Animate.css sur un élément.
@@ -235,14 +263,16 @@ function go(t) {
   syncDuringTransition(wrap);
 }
 
-function _preventScroll(e) { e.preventDefault(); }
+// RÔLE : Bloque le scroll du fond quand une modale ou le menu est ouvert.
+// POURQUOI : L'ancienne version ajoutait un listener touchmove → preventDefault sur document,
+//            ce qui bloquait aussi le scroll DANS les modales. La nouvelle version utilise
+//            overflow:hidden sur body — le .modal-box est en position fixed, hors du flux,
+//            donc son touch-action:pan-y + overflow-y:auto fonctionnent nativement.
 function lockScroll() {
-  document.getElementById('dynamic-zone').style.overflowY = 'hidden';
-  document.addEventListener('touchmove', _preventScroll, { passive: false });
+  document.body.style.overflow = 'hidden';
 }
 function unlockScroll() {
-  document.getElementById('dynamic-zone').style.overflowY = '';
-  document.removeEventListener('touchmove', _preventScroll);
+  document.body.style.overflow = '';
 }
 
 function toggleMenu() {
@@ -1065,7 +1095,8 @@ function ouvrirBoutique() {
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="color:var(--lilac);">🛍️ Boutique</h2>
-<button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>    </div>
+      <button onclick="clModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0">✕</button>
+    </div>
 
     <div style="text-align:center;margin-bottom:16px">
       <p style="font-size:var(--fs-sm);color:var(--text2);text-align:center">
@@ -1320,7 +1351,7 @@ function exportObjetIA(propId) {
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
       <h3 style="font-size:13px;color:var(--lilac);margin:0">✦ ${escapeHtml(entry.nom)}</h3>
-      <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
+      <button onclick="clModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0">✕</button>
     </div>
     <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:10px;line-height:1.6">
       📜 <strong>Notice de fabrication</strong><br>
@@ -3681,7 +3712,7 @@ function ouvrirAgenda(dateStr) {
 mbox.innerHTML = `
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
     <h2 style="color:var(--lilac)">🗓️ Mon Agenda</h2>
-    <button onclick="fermerAgenda()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
+      <button onclick="fermerAgenda()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0">✕</button>
   </div>
   <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
     <button onclick="switchAgenda('jour')" id="atab-jour"
@@ -3715,19 +3746,11 @@ switchAgenda('jour');
 }
 
 function fermerAgenda() {
-  document.getElementById('dynamic-zone').style.overflowY = '';
+  // POURQUOI : On passe par clModal() qui appelle unlockScroll() — pas de manipulation directe.
   clModal();
 }
 
-function chevron(dir) {
-  // Points du chevron : "droite" pointe vers la droite (>), "gauche" pointe vers la gauche (<)
-  const points = dir === 'left' ? '15 18 9 12 15 6' : '9 18 15 12 9 6';
-  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-    stroke="var(--lilac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-    style="display:block">
-    <polyline points="${points}"/>
-  </svg>`;
-}
+// chevron() et chevronNav() sont définis en §2 (utilitaires) — déplacés pour être disponibles partout.
 
 function switchAgenda(onglet) {
   ['jour','mois', ...(showCycle() ? ['cycle'] : [])].forEach(o => {
@@ -3840,7 +3863,7 @@ function renderAgendaJour(el) {
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <button onclick="navAgendaJour(-1)"
         style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
-        ${chevron('left')}
+        ${chevronNav('left')}
       </button>
       <span style="font-size:12px;font-weight:bold;font-family:var(--font-body);
         text-align:center;color:var(--lilac);flex:1">
@@ -3848,7 +3871,7 @@ function renderAgendaJour(el) {
       </span>
       <button onclick="navAgendaJour(1)"
         style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
-        ${chevron('right')}
+        ${chevronNav('right')}
       </button>
     </div>
 
@@ -4449,7 +4472,7 @@ el.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <button onclick="navAgendaMois(-1)"
         style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
-        ${chevron('left')}
+        ${chevronNav('left')}
       </button>
       <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px">
         <span style="font-size:12px;font-weight:bold;font-family:var(--font-body);
@@ -4466,7 +4489,7 @@ el.innerHTML = `
       </div>
       <button onclick="navAgendaMois(1)"
         style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
-        ${chevron('right')}
+        ${chevronNav('right')}
       </button>
     </div>
 
@@ -4631,7 +4654,7 @@ const descriptions = {
         cursor:pointer;display:flex;align-items:center;justify-content:space-between;
         font-family:var(--font-body);font-size:var(--fs-sm);color:var(--text)">
         <span>🩸 Déclarer un début de cycle</span>
-        <span id="acc-saisie-chevron" style="color:var(--text2);transition:transform .2s">▾</span>
+        <span id="acc-saisie-chevron" style="display:flex;transition:transform .2s">${chevron('down')}</span>
       </button>
       <div id="acc-saisie" style="max-height:0;overflow:hidden;transition:max-height .3s ease">
         <div style="padding:var(--sp-md) 14px;border-top:1px solid var(--border)">
@@ -4730,7 +4753,7 @@ const lignesJ1 = cycles.map((ds, i) => {
         cursor:pointer;display:flex;align-items:center;justify-content:space-between;
         font-family:var(--font-body);font-size:var(--fs-sm);color:var(--text)">
         <span>📋 Historique (${cycles.length} J1 enregistré${cycles.length > 1 ? 's' : ''})</span>
-        <span id="acc-historique-chevron" style="color:var(--text2);transition:transform .2s">▾</span>
+        <span id="acc-historique-chevron" style="display:flex;transition:transform .2s">${chevron('down')}</span>
       </button>
       <div id="acc-historique" style="max-height:0;overflow:hidden;transition:max-height .3s ease">
         ${historiqueContenu}
@@ -4745,12 +4768,12 @@ const lignesJ1 = cycles.map((ds, i) => {
 
 // ── Accordéon générique ──
 function toggleAccordeon(id) {
-  const panel   = document.getElementById(id);
-  const chevron = document.getElementById(id + '-chevron');
+  const panel      = document.getElementById(id);
+  const chevronEl  = document.getElementById(id + '-chevron'); // renommé pour éviter de shadower la fonction globale chevron()
   if (!panel) return;
   const ouvert = panel.style.maxHeight && panel.style.maxHeight !== '0px';
   panel.style.maxHeight = ouvert ? '0px' : '600px';
-  if (chevron) chevron.style.transform = ouvert ? '' : 'rotate(180deg)';
+  if (chevronEl) chevronEl.style.transform = ouvert ? '' : 'rotate(180deg)';
 }
 
 function toggleJ1Liste() {
@@ -4845,6 +4868,27 @@ window.initUI = function() {
 
   const vEl = document.getElementById('APP_VERSION');
   if (vEl) vEl.textContent = window.APP_VERSION || '';
+
+  // RÔLE : Injecte le SVG chevron dans les boutons .nav-a (◀▶ journal + progression)
+  // POURQUOI : Ces boutons sont dans le HTML statique (index.html) — on ne peut pas appeler
+  //            chevronNav() directement dans le template. On remplace le contenu à l'init,
+  //            ce qui garantit la cohérence même si de nouveaux .nav-a apparaissent plus tard.
+  document.querySelectorAll('.nav-a').forEach(btn => {
+    const label = btn.getAttribute('aria-label') || '';
+    const isLeft = label.toLowerCase().includes('précédente') || label.toLowerCase().includes('gauche');
+    btn.innerHTML = isLeft ? chevronNav('left') : chevronNav('right');
+  });
+
+  // RÔLE : Injecte le SVG chevron dans les <summary> des sections Réglages
+  // POURQUOI : Le ::after CSS a été remplacé par du SVG pour harmoniser avec le reste.
+  //            On ajoute un <span class="settings-chevron"> à la fin de chaque summary.
+  document.querySelectorAll('details.settings-section > summary').forEach(summary => {
+    const span = document.createElement('span');
+    span.className = 'settings-chevron';
+    span.innerHTML = chevron('down');
+    summary.appendChild(span);
+  });
+
   // Tap sur le tama depuis un autre onglet → retour accueil
   document.querySelector('.tama-screen')?.addEventListener('pointerdown', function() {
     const modalEl = document.getElementById('modal');

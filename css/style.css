@@ -46,7 +46,7 @@
   /* POURQUOI : Chaque police joue un rôle narratif précis — le terminal reste rétro,
                 les titres sont chaleureux, la voix du gotchi est reconnaissable,
                 le reste est lisible et doux */
-  --font-terminal: var(--font-terminal); /* Terminal, pixel art, boutons boutique */
+  --font-terminal: 'Courier New', monospace; /* Terminal, pixel art, boutons boutique */
   --font-title:    'Caveat', cursive;        /* Stade du gotchi, titres importants, accents cocooning */
   --font-gotchi:   'Nunito', sans-serif;     /* Voix du gotchi — toujours utilisé en italic 300 */
   --font-body:     'Nunito', sans-serif;     /* Tout le reste : labels, stats, modales, corps de texte */
@@ -277,6 +277,7 @@ body {
   font-weight: 300;
   font-size: var(--fs-sm);
   line-height: 1.4;
+  margin-bottom: 10px;
   text-align: center;
   height: auto;
   display: flex;
@@ -558,6 +559,15 @@ body {
   margin-bottom: 0;
 }
 
+/* RÔLE : Titre "Mes intentions du jour" — Caveat pour un accent chaleureux */
+.card-primary-header h2 {
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0;
+  margin-bottom: 0;
+}
+
 /* RÔLE : Badge compteur habitudes — masqué, remplacé par la mini-bar visuelle */
 #hab-count {
   display: none !important;
@@ -589,7 +599,7 @@ body {
 #g-name {
   font-family: var(--font-title);
   font-weight: 700;
-  font-size: 19px;
+  font-size: 24px;
 }
 
 /* RÔLE : Stade du gotchi — Caveat pour marquer l'importance du moment */
@@ -597,7 +607,7 @@ body {
 #g-stage {
   font-family: var(--font-title);
   font-weight: 600;
-  font-size: 18px;
+  font-size: 22px;
 }
 
 /* RÔLE : Bouton info — cercle lilas discret mais lisible */
@@ -876,6 +886,20 @@ body {
   font-size: var(--fs-sm); text-align: center; border-bottom: 2px dashed var(--paper-border);
   padding-bottom: var(--sp-xs); margin-bottom: var(--sp-sm); letter-spacing: 2px; color: var(--paper-text);
 }
+/* RÔLE : Zone de saisie du journal — italic Nunito pour une écriture plus intime */
+#j-text, #edit-j-txt {
+  font-family: var(--font-gotchi);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* RÔLE : Texte des entrées affichées — même registre italic doux */
+.j-entry .j-text-content {
+  font-family: var(--font-gotchi);
+  font-style: italic;
+  font-weight: 400;
+}
+
 /* RÔLE : Entrée de journal — fond légèrement teinté selon l'humeur, fade-in à l'apparition */
 /* POURQUOI : Rend chaque note visuellement distincte et donne un retour immédiat de l'humeur choisie */
 .j-entry {

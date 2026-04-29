@@ -324,7 +324,7 @@ function toastSnack(msg) {
     el = document.createElement('div'); el.id = 'snack';
     el.style.cssText = `position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
       background:#38304a;color:#fff;padding:var(--sp-sm) 16px;border-radius:20px;font-size:var(--fs-sm);
-      font-family:'Courier New',monospace;z-index:500;opacity:0;transition:opacity .2s;
+      font-family:var(--font-body);z-index:500;opacity:0;transition:opacity .2s;
       pointer-events:none;white-space:nowrap;`;
     document.body.appendChild(el);
   }
@@ -928,7 +928,7 @@ function renderProps() {
       return `<button onclick="setPropsFilter('${key}')"
         style="padding:5px 2px;border-radius:999px;
         border:2px solid ${active ? 'var(--lilac)' : 'var(--border)'};
-        font:bold 9px 'Courier New',monospace;cursor:pointer;width:100%;
+        font-size:var(--fs-xs);font-weight:bold;font-family:var(--font-body);cursor:pointer;width:100%;
         background:${active ? 'var(--lilac)' : 'rgba(0,0,0,.03)'};
         color:${active ? '#fff' : 'var(--text2)'};
         transition:.15s;">${label}</button>`;
@@ -989,7 +989,7 @@ function renderProps() {
 
   // Style partagé pour les boutons d'action de bandeau (pill-shape, distinct des filtres carrés)
   const btnActionStyle = `border-radius:999px;border:1.5px solid var(--border);
-    font:bold 9px 'Courier New',monospace;cursor:pointer;padding:3px 10px;
+    font-size:var(--fs-xs);font-weight:bold;font-family:var(--font-body);cursor:pointer;padding:3px 10px;
     background:#fff;color:var(--text2);transition:.15s;white-space:nowrap;`;
 
   // Bandeau section env actif — avec "Tout ranger" à droite
@@ -1072,7 +1072,7 @@ function ouvrirBoutique() {
 
     <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px;margin-right:2px">
       <button onclick="switchBoutiqueOnglet('catalogue')"
-        style="flex:1;padding:7px;border-radius:var(--r-xl);border:none;font-size:var(--fs-xs);cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;
+        style="flex:1;padding:7px;border-radius:var(--r-xl);border:none;font-size:var(--fs-xs);cursor:pointer;font-weight:bold;font-family:var(--font-body);
         background:${onglet==='catalogue'?'#fff':'transparent'};
         color:${onglet==='catalogue'?'var(--lilac)':'var(--text2)'};
         box-shadow:${onglet==='catalogue'?'0 1px 4px rgba(0,0,0,.1)':'none'};
@@ -1080,7 +1080,7 @@ function ouvrirBoutique() {
         🌸 Catalogue
       </button>
       <button onclick="switchBoutiqueOnglet('claude')"
-        style="flex:1;padding:7px;border-radius:var(--r-xl);border:none;font-size:var(--fs-xs);cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;
+        style="flex:1;padding:7px;border-radius:var(--r-xl);border:none;font-size:var(--fs-xs);cursor:pointer;font-weight:bold;font-family:var(--font-body);
         background:${onglet==='claude'?'#fff':'transparent'};
         color:${onglet==='claude'?'var(--lilac)':'var(--text2)'};
         box-shadow:${onglet==='claude'?'0 1px 4px rgba(0,0,0,.1)':'none'};
@@ -1126,7 +1126,7 @@ function renderBoutiqueOnglet(onglet) {
           <span style="font-size:18px">${prop.emoji}</span>
           <span style="font-size:var(--fs-sm);font-weight:bold;flex:1;margin:0 8px">${escape(prop.nom)}</span>
           <button onclick="acheterProp('${prop.id}')"
-            style="padding:5px 12px;border-radius:20px;border:none;font-size:var(--fs-xs);font-weight:bold;font-family:'Courier New',monospace;
+            style="padding:5px 12px;border-radius:20px;border:none;font-size:var(--fs-xs);font-weight:bold;font-family:var(--font-body);
             cursor:${peutAcheter?'pointer':'not-allowed'};
             background:${peutAcheter?'linear-gradient(135deg,var(--lilac),var(--pink))':'#ddd'};
             color:${peutAcheter?'#fff':'#aaa'};
@@ -1148,7 +1148,7 @@ function renderBoutiqueOnglet(onglet) {
       </p>
       <div style="text-align:center">
         <button onclick="acheterPropClaude()"
-          style="padding:var(--sp-md) 28px;border-radius:999px;border:none;font-size:var(--fs-sm);font-weight:bold;font-family:'Courier New',monospace;
+          style="padding:var(--sp-md) 28px;border-radius:999px;border:none;font-size:var(--fs-sm);font-weight:bold;font-family:var(--font-body);
           cursor:${peutGenerer?'pointer':'not-allowed'};
           background:${peutGenerer?'linear-gradient(135deg,var(--lilac),var(--pink))':'#ddd'};
           color:${peutGenerer?'#fff':'#aaa'};
@@ -2965,7 +2965,7 @@ function renderJEntries() {
         <span class="j-date">${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
         <span style="font-size:16px">${me[e.mood] || '😐'}</span>
       </div>
-      <div style="font-size:var(--fs-sm);margin-top:3px">${e.text || '—'}</div>
+      <div class="j-text-content" style="font-size:var(--fs-sm);margin-top:3px">${e.text || '—'}</div>
       <div class="j-actions">
         <button onclick="editJEntry(${gi})">✏️</button>
         <button onclick="delJEntry(${gi})">🗑️</button>
@@ -3584,7 +3584,7 @@ function ouvrirModalEtats() {
 
       <!-- Titre principal — plus grand que les labels énergie/bonheur -->
       <h3 style="font-size:16px;color:var(--lilac);margin-bottom:24px;
-        font-family:'Courier New',monospace;text-align:center;letter-spacing:1px">
+        font-family:var(--font-body);text-align:center;letter-spacing:1px">
         Comment tu te sens là ?
       </h3>
 
@@ -3665,18 +3665,18 @@ mbox.innerHTML = `
   <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
     <button onclick="switchAgenda('jour')" id="atab-jour"
       style="flex:1;padding:7px;border-radius:var(--r-lg);border:none;font-size:var(--fs-sm);
-      cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
+      cursor:pointer;font-weight:bold;font-family:var(--font-body);transition:.15s">
       📅 Jour
     </button>
     <button onclick="switchAgenda('mois')" id="atab-mois"
       style="flex:1;padding:7px;border-radius:var(--r-lg);border:none;font-size:var(--fs-sm);
-      cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
+      cursor:pointer;font-weight:bold;font-family:var(--font-body);transition:.15s">
       🗓️ Mois
     </button>
     ${showCycle() ? `
     <button onclick="switchAgenda('cycle')" id="atab-cycle"
       style="flex:1;padding:7px;border-radius:var(--r-lg);border:none;font-size:var(--fs-sm);
-      cursor:pointer;font-weight:bold;font-family:'Courier New',monospace;transition:.15s">
+      cursor:pointer;font-weight:bold;font-family:var(--font-body);transition:.15s">
       🌸 Cycle
     </button>` : ''}
   </div>
@@ -3794,7 +3794,7 @@ function renderAgendaJour(el) {
     ? `<button onclick="ouvrirJournalAuJour('${ds}')"
         style="width:100%;text-align:left;padding:10px 12px;border-radius:var(--r-md);
         border:1.5px solid var(--lilac);background:rgba(var(--lilac-rgb, 180,160,230),0.07);
-        font-size:var(--fs-sm);cursor:pointer;color:var(--lilac);font-family:'Courier New',monospace;
+        font-size:var(--fs-sm);cursor:pointer;color:var(--lilac);font-family:var(--font-body);
         display:flex;align-items:center;justify-content:space-between">
         <span>📓 Voir la note du journal</span>
         <span style="opacity:.6">→</span>
@@ -3821,7 +3821,7 @@ function renderAgendaJour(el) {
         style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
         ${chevron('left')}
       </button>
-      <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
+      <span style="font-size:12px;font-weight:bold;font-family:var(--font-body);
         text-align:center;color:var(--lilac);flex:1">
         ${titre}
       </span>
@@ -3853,7 +3853,7 @@ function renderAgendaJour(el) {
         style="width:100%;padding:9px;border-radius:var(--r-md);
         border:1.5px solid var(--lilac);background:transparent;
         font-size:var(--fs-sm);cursor:pointer;color:var(--lilac);
-        font-family:'Courier New',monospace;margin-top:4px;
+        font-family:var(--font-body);margin-top:4px;
         opacity:0.75;transition:opacity .15s"
         onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.75'">
         + Ajouter un rendez-vous
@@ -3904,7 +3904,7 @@ function afficherFormulaireRdv() {
       <div style="width:36px;height:4px;background:var(--border);
         border-radius:2px;margin:0 auto 16px;opacity:.5"></div>
       <h3 style="font-size:12px;color:var(--lilac);margin-bottom:14px;
-        font-family:'Courier New',monospace">📅 Nouveau rendez-vous</h3>
+        font-family:var(--font-body)">📅 Nouveau rendez-vous</h3>
 
       <!-- Emojis sur 2 lignes -->
       <div style="display:grid;grid-template-columns:repeat(9,1fr);gap:5px;margin-bottom:var(--sp-md)">
@@ -3945,7 +3945,7 @@ function afficherFormulaireRdv() {
       <button onclick="selectionnerRecurrence('${r.v}', this)"
         data-rec="${r.v}"
         style="flex:1;padding:7px;border-radius:var(--r-sm);font-size:var(--fs-sm);
-        font-family:'Courier New',monospace;cursor:pointer;transition:.15s;
+        font-family:var(--font-body);cursor:pointer;transition:.15s;
         border:1.5px solid var(--border);background:#fff;color:var(--text2)">
         ${r.l}
       </button>
@@ -3968,7 +3968,7 @@ function afficherFormulaireRdv() {
             <button onclick="selectionnerDuree('${d.v}', this)"
               data-duree="${d.v}"
               style="flex:1;padding:7px;border-radius:var(--r-sm);font-size:var(--fs-sm);
-              font-family:'Courier New',monospace;cursor:pointer;transition:.15s;
+              font-family:var(--font-body);cursor:pointer;transition:.15s;
               border:1.5px solid var(--border);background:#fff;color:var(--text2)">
               ${d.l}
             </button>
@@ -4207,7 +4207,7 @@ function editerRdv(id) {
       <div style="width:36px;height:4px;background:var(--border);
         border-radius:2px;margin:0 auto 16px;opacity:.5"></div>
       <h3 style="font-size:12px;color:var(--lilac);margin-bottom:14px;
-        font-family:'Courier New',monospace">✏️ Modifier le rendez-vous</h3>
+        font-family:var(--font-body)">✏️ Modifier le rendez-vous</h3>
 
       <input id="rdv-label" class="inp"
         value="${rdv.label}"
@@ -4431,7 +4431,7 @@ el.innerHTML = `
         ${chevron('left')}
       </button>
       <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px">
-        <span style="font-size:12px;font-weight:bold;font-family:'Courier New',monospace;
+        <span style="font-size:12px;font-weight:bold;font-family:var(--font-body);
           text-transform:capitalize;text-align:center;color:var(--lilac)">
           ${moisNom}
         </span>
@@ -4439,7 +4439,7 @@ el.innerHTML = `
           <button onclick="revenirAujourdhuiMois()"
             style="padding:2px 12px;border-radius:20px;border:none;
             background:var(--lilac);color:#fff;font-size:var(--fs-xs);cursor:pointer;
-            font-family:'Courier New',monospace;font-weight:bold">
+            font-family:var(--font-body);font-weight:bold">
             ↩ Aujourd'hui
           </button>` : ''}
       </div>
@@ -4608,7 +4608,7 @@ const descriptions = {
       <button onclick="toggleAccordeon('acc-saisie')"
         style="width:100%;padding:var(--sp-md) 14px;background:var(--card);border:none;
         cursor:pointer;display:flex;align-items:center;justify-content:space-between;
-        font-family:'Courier New',monospace;font-size:var(--fs-sm);color:var(--text)">
+        font-family:var(--font-body);font-size:var(--fs-sm);color:var(--text)">
         <span>🩸 Déclarer un début de cycle</span>
         <span id="acc-saisie-chevron" style="color:var(--text2);transition:transform .2s">▾</span>
       </button>
@@ -4655,7 +4655,7 @@ const lignesJ1 = cycles.map((ds, i) => {
         style="width:100%;margin-top:6px;padding:6px;border-radius:var(--r-sm);
         border:1px solid var(--border);background:transparent;
         font-size:var(--fs-sm);cursor:pointer;color:var(--lilac);
-        font-family:'Courier New',monospace">
+        font-family:var(--font-body)">
         Voir tout (${cycles.length - MAX_VISIBLE} de plus) ▾
       </button>
       <div id="j1-voir-tout" style="max-height:0;overflow:hidden;transition:max-height .3s ease">
@@ -4695,7 +4695,7 @@ const lignesJ1 = cycles.map((ds, i) => {
   style="width:100%;margin-top:12px;padding:var(--sp-sm);border-radius:var(--r-md);
   border:1px solid var(--border);background:transparent;
   font-size:var(--fs-sm);cursor:pointer;color:var(--text2);
-  font-family:'Courier New',monospace">
+  font-family:var(--font-body)">
   📋 Copier l'historique
 </button>
       </div>`;
@@ -4707,7 +4707,7 @@ const lignesJ1 = cycles.map((ds, i) => {
       <button onclick="toggleAccordeon('acc-historique')"
         style="width:100%;padding:var(--sp-md) 14px;background:var(--card);border:none;
         cursor:pointer;display:flex;align-items:center;justify-content:space-between;
-        font-family:'Courier New',monospace;font-size:var(--fs-sm);color:var(--text)">
+        font-family:var(--font-body);font-size:var(--fs-sm);color:var(--text)">
         <span>📋 Historique (${cycles.length} J1 enregistré${cycles.length > 1 ? 's' : ''})</span>
         <span id="acc-historique-chevron" style="color:var(--text2);transition:transform .2s">▾</span>
       </button>

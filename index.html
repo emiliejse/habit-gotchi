@@ -336,7 +336,7 @@ function clearDebugLogs() {
   <div class="card" id="card-bilan" style="position:relative">
     <h2 id="bilan-titre">🧠 Bilan Hebdo</h2>
     <button onclick="resetBilan()" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;" title="Réinitialiser" aria-label="Réinitialiser le bilan">🔄</button>
-    <div id="claude-summary" style="background:rgba(176,144,208,.07);padding:12px;border-radius:8px;font-size:var(--fs-sm);border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);"> <!-- était 11px -->
+    <div id="claude-summary" style="background:rgba(176,144,208,.07);padding:12px;border-radius:8px;font-size:var(--fs-sm);border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);font-family:var(--font-gotchi);font-style:italic;font-weight:300;"> <!-- était 11px -->
 Ton bilan de la semaine apparaîtra ici...
     </div>
     <textarea id="bil-txt-hidden" style="display:none"></textarea>
@@ -356,7 +356,7 @@ Ton bilan de la semaine apparaîtra ici...
   -->
 <div id="p-props" class="pnl">
   <div class="card">
-    <h2>🎒 Mon Inventaire</h2>
+    <h2>Mon Inventaire</h2>
 
     <!-- Switcher d'environnement — preview en direct du tama -->
     <!-- RÔLE : Permet de voir le tama dans chaque univers depuis l'inventaire -->

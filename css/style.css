@@ -331,6 +331,9 @@ body {
   align-self: flex-end; background: var(--lilac); color: #fff;
   border-radius: 12px 12px 2px 12px; padding: 8px 12px;
   font-size: var(--fs-sm); max-width: 85%; line-height: 1.5; /* était 11px */
+  font-family: var(--font-gotchi);
+  font-style: italic;
+  font-weight: 300;
 }
 .chat-bubble-claude {
   align-self: flex-start; background: #f0e8ff; color: var(--text);

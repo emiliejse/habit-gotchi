@@ -41,6 +41,16 @@
   --sal: 0px;
   --sar: 0px;
 
+  /* ─── FAMILLES TYPOGRAPHIQUES ─────────────────────────────────────── */
+  /* RÔLE : 4 rôles distincts pour 4 registres visuels de l'app */
+  /* POURQUOI : Chaque police joue un rôle narratif précis — le terminal reste rétro,
+                les titres sont chaleureux, la voix du gotchi est reconnaissable,
+                le reste est lisible et doux */
+  --font-terminal: var(--font-terminal); /* Terminal, pixel art, boutons boutique */
+  --font-title:    'Caveat', cursive;        /* Stade du gotchi, titres importants, accents cocooning */
+  --font-gotchi:   'Nunito', sans-serif;     /* Voix du gotchi — toujours utilisé en italic 300 */
+  --font-body:     'Nunito', sans-serif;     /* Tout le reste : labels, stats, modales, corps de texte */
+
   /* ─── ÉCHELLE TYPOGRAPHIQUE ───────────────────────────────────────── */
   /* RÔLE : Plancher de lisibilité — rien ne doit descendre sous --fs-xs */
   /* POURQUOI : Les tailles 8/9/10px épuisent la lecture, surtout sur iPhone avec TDAH */
@@ -100,7 +110,11 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Courier New', monospace;
+  /* RÔLE : Police de base de toute l'app — Nunito remplace Courier New comme police par défaut */
+  /* POURQUOI : Courier New était un héritage du style terminal appliqué partout par défaut.
+                Nunito est plus lisible, plus douce, mieux adaptée au quotidien sur mobile.
+                Les éléments "terminal" conservent --font-terminal explicitement. */
+  font-family: var(--font-body);
   min-height: 100dvh;
   padding-top: var(--sat);
   padding-left: var(--sal);
@@ -171,7 +185,8 @@ body {
   max-height: 0;
   pointer-events: none;
 }
-.hdr h1 { font-size: 12px; color: var(--lilac); letter-spacing: 2px; line-height: 1.2; }
+/* RÔLE : Titre "Habit-Gotchi" dans le header — --font-terminal conservé pour l'identité pixel */
+.hdr h1 { font-size: 12px; color: var(--lilac); letter-spacing: 2px; line-height: 1.2; font-family: var(--font-terminal); }
 .hdr sub { font-size: var(--fs-xs); color: var(--text2); }
 .hdr .menu-btn {
   width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--border); /* était 36×36 — Apple HIG : 44pt minimum */
@@ -255,6 +270,11 @@ body {
   border: none;
   border-radius: 8px;
   padding: 10px 16px;
+  /* RÔLE : Police du gotchi — italic fin pour marquer que c'est SA voix */
+  /* POURQUOI : On veut que le lecteur·ice sente immédiatement que c'est le gotchi qui s'exprime */
+  font-family: var(--font-gotchi);
+  font-style: italic;
+  font-weight: 300;
   font-size: var(--fs-sm);
   line-height: 1.4;
   text-align: center;
@@ -354,7 +374,7 @@ body {
   padding: var(--sp-md) var(--sp-md) var(--sp-sm) 28px; /* 28px à gauche = espace reliure */
   width: 300px;
   box-shadow: 4px 4px 0 var(--paper-book-shadow), inset 0 0 20px rgba(0,0,0,.05);
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-terminal);
   position: relative;
   /* POURQUOI repeating-linear-gradient : simule les lignes d'un cahier, sans image à charger */
   background-image: repeating-linear-gradient(
@@ -474,7 +494,7 @@ body {
   padding: 12px 14px; /* POURQUOI : plus d'air interne pour mieux respirer */
   font-size: var(--fs-md); /* POURQUOI : était fs-sm — plus lisible, plus présent */
   font-weight: bold;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-terminal);
   cursor: pointer;
   border-radius: 2px;
   border: none;
@@ -564,6 +584,22 @@ body {
   margin-bottom: var(--sp-lg); /* POURQUOI : espace généreux entre carte Gotchi et carte habitudes */
 }
 
+/* RÔLE : Nom du gotchi — police Caveat, chaleureuse et personnelle */
+/* POURQUOI : Le nom est un élément d'attachement fort — Caveat lui donne un côté manuscrit/doux */
+#g-name {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 19px;
+}
+
+/* RÔLE : Stade du gotchi — Caveat pour marquer l'importance du moment */
+/* POURQUOI : Le stade (Œuf → Bébé → Enfant…) est un des moments forts de l'app */
+#g-stage {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 18px;
+}
+
 /* RÔLE : Bouton info — cercle lilas discret mais lisible */
 .btn-info-discret {
   background: rgba(176,144,208,0.15);
@@ -616,12 +652,15 @@ body {
 
 .inp {
   width: 100%; padding: var(--sp-sm) var(--sp-md); border: 2px solid var(--border); border-radius: var(--r-md);
-  background: #fff; font: var(--fs-sm) 'Courier New', monospace; color: var(--text); outline: none; transition: .2s;
+  /* RÔLE : Champs de saisie — police terminal pour cohérence avec le style rétro des inputs */
+  background: #fff; font-size: var(--fs-sm); font-family: var(--font-terminal); color: var(--text); outline: none; transition: .2s;
 }
 .inp:focus { border-color: var(--lilac); }
 
 .btn {
-  padding: var(--sp-sm) var(--sp-lg); border: none; border-radius: var(--r-md); font: bold var(--fs-sm)/1 'Courier New', monospace; /* font-size 11px → var(--fs-sm) */
+  /* RÔLE : Boutons globaux — police terminal, ton rétro assumé */
+  padding: var(--sp-sm) var(--sp-lg); border: none; border-radius: var(--r-md);
+  font-size: var(--fs-sm); font-weight: bold; font-family: var(--font-terminal); line-height: 1; /* font-size 11px → var(--fs-sm) */
   cursor: pointer; transition: .12s;
 }
 .btn:active { transform: scale(.94); }
@@ -859,13 +898,13 @@ body {
 .j-entry .j-actions { display: flex; gap: 4px; margin-top: 4px; }
 .j-entry .j-actions button {
   font-size: var(--fs-xs); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--paper-border);
-  background: var(--paper-entry-btn); cursor: pointer; font-family: 'Courier New', monospace;
+  background: var(--paper-entry-btn); cursor: pointer; font-family: var(--font-terminal);
 }
 
 /* RÔLE : Séparateur visuel de date dans la liste des entrées — distingue les notes du même jour */
 /* POURQUOI : Quand plusieurs notes sont écrites le même jour, il faut un repère visuel clair */
 .j-day-sep {
-  font-size: var(--fs-xs); color: var(--paper-text); font-family: 'Courier New', monospace;
+  font-size: var(--fs-xs); color: var(--paper-text); font-family: var(--font-terminal);
   text-align: center; letter-spacing: 1px; margin: 10px 0 6px;
   display: flex; align-items: center; gap: 6px;
 }
@@ -876,7 +915,7 @@ body {
 /* RÔLE : Boutons export discrets — pill léger, moins encombrants que les btn-s standard */
 /* POURQUOI : Les grands btn-s blancs attiraient trop l'attention pour une action secondaire */
 .btn-export {
-  font: bold var(--fs-xs)/1 'Courier New', monospace;
+  font-size: var(--fs-xs); font-weight: bold; font-family: var(--font-terminal); line-height: 1;
   padding: 5px 14px; border-radius: 20px;
   border: 1px solid var(--paper-border);
   background: var(--paper-entry-btn); color: var(--paper-text);
@@ -892,7 +931,7 @@ body {
 .pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 200px; margin: 0 auto; }
 .pin-k {
   aspect-ratio: 1; border-radius: 12px; border: 2px solid var(--border); background: #fff;
-  font: bold 18px 'Courier New', monospace; color: var(--text); cursor: pointer;
+  font-size: 18px; font-weight: bold; font-family: var(--font-terminal); color: var(--text); cursor: pointer;
   display: flex; align-items: center; justify-content: center; transition: .12s;
 }
 .pin-k:active { background: var(--border); transform: scale(.9); }
@@ -1052,7 +1091,7 @@ details.settings-section.danger > summary { color: var(--danger); }
   padding: 8px 18px;
   border-radius: 20px;
   font-size: var(--fs-sm); /* était 11px — les toasts sont des messages à lire */
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-terminal);
   z-index: 500;
   opacity: 0;
   transition: opacity .3s, transform .3s;
@@ -1081,14 +1120,14 @@ details.settings-section.danger > summary { color: var(--danger); }
 #tablet-screen {
   background: var(--terminal-screen); margin: 10px; border-radius: 6px; border: 1px solid var(--terminal-screen-border);
   padding: 10px; overflow-y: auto; flex: 1;
-  font-family: 'Courier New', monospace; font-size: var(--fs-sm); color: var(--terminal-text);
+  font-family: var(--font-terminal); font-size: var(--fs-sm); color: var(--terminal-text);
 }
 .tablet-line { margin-bottom: 6px; line-height: 1.4; border-bottom: 1px solid var(--terminal-line-div); padding-bottom: 6px; }
 .tablet-line .tl-time { color: var(--terminal-text-dim); font-size: var(--fs-xs); display: block; }
 .tablet-line .tl-icon { margin-right: 4px; }
 #tablet-header {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 8px 12px 4px; color: var(--terminal-text); font-family: 'Courier New', monospace;
+  padding: 8px 12px 4px; color: var(--terminal-text); font-family: var(--font-terminal);
   font-size: var(--fs-sm); border-bottom: 1px solid var(--terminal-border);
 }
 

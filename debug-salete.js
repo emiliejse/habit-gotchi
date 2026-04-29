@@ -1,103 +1,87 @@
 /**
- * debug-salete.js — Outil de test du système de saleté HabitGotchi
- * ================================================================
- * À coller dans la console du navigateur (F12 → Console) pendant que
- * l'app est ouverte. Fonctionne en live sans recharger la page.
+ * debug-salete.js — Test du système de saleté HabitGotchi
+ * =========================================================
+ * UTILISATION :
+ *   1. Ouvre l'app dans Chrome/Safari
+ *   2. F12 → onglet Console
+ *   3. Copie-colle TOUT ce fichier d'un coup (Ctrl+A puis Ctrl+C)
+ *   4. Colle dans la console (Ctrl+V) et appuie sur Entrée
+ *   5. Les commandes sont maintenant disponibles dans la console
  *
- * COMMANDES DISPONIBLES après avoir collé ce code :
- *   dbgSalete.set(7)      → force la saleté à 7/10 (teste l'effet visuel)
- *   dbgSalete.max()       → saleté à 10/10 (boue maximale)
- *   dbgSalete.clean()     → remet à 0 (Gotchi propre)
- *   dbgSalete.status()    → affiche le niveau actuel
- *   dbgSalete.simulPoop() → simule une crotte apparue (+1 saleté)
- *   dbgSalete.simulTime(h)→ simule h heures d'absence (ex: 18h = +3)
- *   dbgSalete.demo()      → boucle auto 0→10→0 pour voir la progression
- *   dbgSalete.stopDemo()  → arrête la boucle de démo
+ * COMMANDES :
+ *   set(5)        → force salete à 5/10 (seuil — 🛁 devient opaque)
+ *   max()         → salete à 10/10 (boue maximale)
+ *   clean()       → salete à 0 (Gotchi propre, 🛁 estompé)
+ *   status()      → affiche le niveau actuel
+ *   simulPoop()   → +1 crotte apparue (+1 salete)
+ *   simulTime(12) → simule 12h d'absence (+2 salete)
+ *   demo()        → boucle 0→10→0 pour voir la progression visuelle
+ *   stopDemo()    → arrête la démo
  */
 
-window.dbgSalete = (() => {
-  let _demoTimer = null;
+var _dbgTimer = null;
 
-  function _apply(val) {
-    if (!window.D?.g) { console.warn('[dbgSalete] window.D non disponible'); return; }
-    window.D.g.salete = Math.max(0, Math.min(10, val));
-    if (typeof save === 'function') save();
-    console.log(`[dbgSalete] salete → ${window.D.g.salete}/10`);
-  }
+function set(val) {
+  if (!window.D?.g) { console.warn('window.D non disponible'); return; }
+  window.D.g.salete = Math.max(0, Math.min(10, val));
+  if (typeof save === 'function') save();
+  status();
+}
 
-  return {
-    set(val) {
-      _apply(val);
-    },
+function max() { set(10); }
+function clean() { set(0); }
 
-    max() {
-      _apply(10);
-      console.log('[dbgSalete] Gotchi au max de saleté — tu devrais voir le dithering brun.');
-    },
+function status() {
+  var s = window.D?.g?.salete ?? '?';
+  console.log('🛁 salete = ' + s + '/10 | ' + (s >= 5 ? 'ICÔNE OPAQUE + dithering actif' : 'icône estompée, Gotchi propre'));
+}
 
-    clean() {
-      _apply(0);
-      console.log('[dbgSalete] Gotchi propre — 🛁 doit être estompé dans le HUD.');
-    },
+function simulPoop() {
+  if (!window.D?.g) return;
+  window.D.g.salete = Math.min(10, (window.D.g.salete || 0) + 1);
+  if (typeof save === 'function') save();
+  console.log('💩 +1 crotte → salete = ' + window.D.g.salete + '/10');
+}
 
-    status() {
-      const s = window.D?.g?.salete ?? '?';
-      const hudIcon = s >= 5 ? '🛁 VISIBLE (opaque)' : '🛁 estompé (0.25)';
-      const dither  = s >= 5 ? '🟤 dithering actif' : '✨ pas de dithering';
-      console.log(`[dbgSalete] Niveau : ${s}/10 | ${hudIcon} | ${dither}`);
-      return s;
-    },
+function simulTime(heures) {
+  if (!window.D?.g) return;
+  var points = Math.floor(heures / 6);
+  window.D.g.salete = Math.min(10, (window.D.g.salete || 0) + points);
+  if (typeof save === 'function') save();
+  console.log(heures + 'h d\'absence → +' + points + ' pts → salete = ' + window.D.g.salete + '/10');
+}
 
-    simulPoop() {
-      if (!window.D?.g) return;
-      window.D.g.salete = Math.min(10, (window.D.g.salete || 0) + 1);
-      if (typeof save === 'function') save();
-      console.log(`[dbgSalete] +1 crotte → salete = ${window.D.g.salete}/10`);
-    },
+function demo() {
+  if (_dbgTimer) { console.log('Démo déjà en cours. Appelle stopDemo() d\'abord.'); return; }
+  var val = 0, dir = 1;
+  console.log('▶ Démo lancée : 0 → 10 → 0, toutes les 700ms. Regarde le Gotchi !');
+  _dbgTimer = setInterval(function() {
+    set(val);
+    val += dir;
+    if (val > 10) { dir = -1; val = 9; }
+    if (val < 0)  { dir =  1; val = 1; }
+  }, 700);
+}
 
-    simulTime(heures) {
-      if (!window.D?.g) return;
-      const points = Math.floor(heures / 6);
-      window.D.g.salete = Math.min(10, (window.D.g.salete || 0) + points);
-      if (typeof save === 'function') save();
-      console.log(`[dbgSalete] ${heures}h d'absence → +${points} pts → salete = ${window.D.g.salete}/10`);
-    },
+function stopDemo() {
+  clearInterval(_dbgTimer);
+  _dbgTimer = null;
+  console.log('⏹ Démo arrêtée. salete = ' + (window.D?.g?.salete ?? '?'));
+}
 
-    demo() {
-      if (_demoTimer) { console.log('[dbgSalete] Démo déjà en cours. Appelle stopDemo() d\'abord.'); return; }
-      let val = 0;
-      let dir = 1;
-      console.log('[dbgSalete] Démo lancée : progression 0→10→0, toutes les 600ms.');
-      _demoTimer = setInterval(() => {
-        _apply(val);
-        val += dir;
-        if (val > 10) { dir = -1; val = 9; }
-        if (val < 0)  { dir = 1;  val = 1; }
-      }, 600);
-    },
+console.log([
+  '',
+  '🛁 HabitGotchi — Debug Saleté chargé !',
+  '─────────────────────────────────────',
+  '  set(5)         → force salete à 5',
+  '  max()          → salete 10/10',
+  '  clean()        → salete 0 (propre)',
+  '  status()       → état actuel',
+  '  simulPoop()    → +1 saleté (crotte)',
+  '  simulTime(12)  → simule 12h d\'absence',
+  '  demo()         → boucle visuelle 0→10→0',
+  '  stopDemo()     → arrête la démo',
+  '',
+].join('\n'));
 
-    stopDemo() {
-      clearInterval(_demoTimer);
-      _demoTimer = null;
-      console.log('[dbgSalete] Démo arrêtée.');
-    }
-  };
-})();
-
-// Affiche le guide au chargement
-console.log(`
-╔══════════════════════════════════════════╗
-║  🛁  HabitGotchi — Debug Saleté          ║
-╠══════════════════════════════════════════╣
-║  dbgSalete.status()      → état actuel   ║
-║  dbgSalete.set(5)        → forcer à 5    ║
-║  dbgSalete.max()         → max (10)      ║
-║  dbgSalete.clean()       → remet à 0     ║
-║  dbgSalete.simulPoop()   → +1 crotte     ║
-║  dbgSalete.simulTime(12) → 12h d'absence ║
-║  dbgSalete.demo()        → boucle visuelle║
-║  dbgSalete.stopDemo()    → stop           ║
-╚══════════════════════════════════════════╝
-`);
-
-dbgSalete.status();
+status();

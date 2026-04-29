@@ -684,33 +684,31 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
       p.textSize(11);
     }
 
-    // ── ZONE CENTRE : 3 icônes d'action réparties sur 200px ───────
-    // Positions : 🧹 x=88  🛁 x=108  🍽️ x=128  (espacement de 20px)
-    // POURQUOI : Les icônes sont centrées ensemble dans la zone entre pétales et météo.
-    //            Chaque icône a une opacité qui indique si l'action est disponible ou non :
-    //            - opaque (1.0) = action disponible / nécessaire
-    //            - estompée (0.25) = rien à faire pour l'instant
-    p.textSize(14);
+    // ── ZONE CENTRE : 3 icônes d'action ───────────────────────────
+    // Disposition : 🛁 (gauche) — 🧹 (centre exact) — 🍽️ (droite)
+    // POURQUOI : Le balai (action la plus fréquente) est au centre exact du canvas.
+    //            🛁 et 🍽️ sont symétriques à ±28px de ce centre.
+    //            Taille 16 identique à l'ancien HUD.
+    //            Opacité : 1.0 = action dispo, 0.25 = rien à faire (icône toujours visible).
+    p.textSize(16);
     p.textAlign(p.CENTER, p.TOP);
 
-    // 🧹 Balai : opaque si des crottes sont présentes
-    const hasPoops = (window.D.g.poops || []).length > 0;
-    p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.25;
-    p.text('🧹', 88, 4);
-
-    // 🛁 Bain : opaque si le Gotchi est sale (salete >= 5), estompé sinon
-    // POURQUOI : Toujours visible pour que l'utilisatrice sache que ça existe,
-    //            mais discret quand le Gotchi est propre.
+    // 🛁 Bain (gauche du centre, x=72) : opaque si salete >= 5, estompé si propre
     const salete = window.D?.g?.salete || 0;
     p.drawingContext.globalAlpha = salete >= 5 ? 1.0 : 0.25;
-    p.text('🛁', 108, 4);
+    p.text('🛁', 72, 3);
 
-    // 🍽️ Assiette : opaque si un repas est disponible dans la fenêtre active
+    // 🧹 Balai (centre exact, x=100) : opaque si des crottes sont présentes
+    const hasPoops = (window.D.g.poops || []).length > 0;
+    p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.25;
+    p.text('🧹', 100, 3);
+
+    // 🍽️ Assiette (droite du centre, x=128) : opaque si repas disponible
     const mealWin = (typeof getCurrentMealWindow === 'function') ? getCurrentMealWindow() : null;
     const meals   = (typeof ensureMealsToday === 'function') ? ensureMealsToday() : null;
     const mealAvailable = mealWin && meals && !meals[mealWin];
     p.drawingContext.globalAlpha = mealAvailable ? 1.0 : 0.25;
-    p.text('🍽️', 128, 4);
+    p.text('🍽️', 128, 3);
 
     p.drawingContext.globalAlpha = 1.0;
 
@@ -826,17 +824,16 @@ if (!window._gotchiActif) return true;
     const mx = p.touches[0]?.x ?? p.mouseX;
     const my = p.touches[0]?.y ?? p.mouseY;
 
-    // 🧹 Balai (x=88) — nettoyer les crottes
-    if (Math.abs(mx - 88) < 14 && my < 26) {
-      setTimeout(() => cleanPoops(), 0); return false;
-    }
-    // 🛁 Bain (x=108) — tap = petit rappel si propre, rien si sale (le frottement fait le nettoyage)
-    if (Math.abs(mx - 108) < 14 && my < 26) {
+    // 🛁 Bain (x=72) — tap = expression surprise si sale (rappel de frotter)
+    if (Math.abs(mx - 72) < 14 && my < 26) {
       if ((window.D?.g?.salete || 0) >= 5) {
-        // Signal visuel : expression surprise pour indiquer "frotte-moi !"
         if (typeof window.triggerExpr === 'function') window.triggerExpr('surprise', 40);
       }
       return false;
+    }
+    // 🧹 Balai (x=100) — nettoyer les crottes
+    if (Math.abs(mx - 100) < 14 && my < 26) {
+      setTimeout(() => cleanPoops(), 0); return false;
     }
     // 🍽️ Assiette (x=128) — ouvrir le snack
     if (Math.abs(mx - 128) < 14 && my < 26) {

@@ -3582,8 +3582,11 @@ function ouvrirModalEtats() {
       <div style="margin-bottom:28px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <!-- POURQUOI : --fs-sm (13px) < titre (16px) — hiérarchie titre > labels maintenue -->
-          <span style="font-size:var(--fs-sm);font-weight:bold;text-transform:uppercase;
-            letter-spacing:0.5px;color:var(--text2)">⚡ Énergie</span>
+          <!-- POURQUOI : l'emoji est dans un span séparé sans color/text-transform pour rester en couleur native -->
+          <span style="font-size:var(--fs-sm);font-weight:bold;color:var(--text2)">
+            <span style="font-size:var(--fs-sm)">⚡</span>
+            <span style="text-transform:uppercase;letter-spacing:0.5px"> Énergie</span>
+          </span>
           <span id="modal-sv-energy" style="font-size:var(--fs-sm);font-weight:bold;
             color:var(--lilac);min-width:20px;text-align:right">${g.energy}</span>
         </div>

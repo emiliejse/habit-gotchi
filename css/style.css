@@ -530,7 +530,7 @@ body {
 /* RÔLE : Header coloré de la carte habitudes */
 .card-primary-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   background: rgba(176,144,208,0.12);
   border-bottom: 1px solid var(--lilac);
@@ -538,8 +538,9 @@ body {
   margin-bottom: 0;
 }
 
-/* RÔLE : Badge compteur habitudes */
+/* RÔLE : Badge compteur habitudes — masqué, remplacé par la mini-bar visuelle */
 #hab-count {
+  display: none !important;
   font-size: var(--fs-sm);
   background: var(--lilac);
   color: #fff;
@@ -671,7 +672,7 @@ body {
   display: flex;
   justify-content: center;
   gap: 10px;
-  padding: 10px 0 20px;
+  padding: 4px 0 20px;
 }
 
 /* RÔLE : Badge individuel — cercle avec icône centré */

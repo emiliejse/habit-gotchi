@@ -926,7 +926,7 @@ function renderProps() {
     filterEl.innerHTML = cats.map(({ key, label }) => {
       const active = propsFilterActive === key;
       return `<button onclick="setPropsFilter('${key}')"
-        style="padding:5px 2px;border-radius:999px;
+        style="padding:5px 2px;border-radius:var(--r-md);
         border:2px solid ${active ? 'var(--lilac)' : 'var(--border)'};
         font-size:var(--fs-xs);font-weight:bold;font-family:var(--font-body);cursor:pointer;width:100%;
         background:${active ? 'var(--lilac)' : 'rgba(0,0,0,.03)'};
@@ -988,7 +988,7 @@ function renderProps() {
   const titreActif = envTitres[envActif] || '✨ Actifs';
 
   // Style partagé pour les boutons d'action de bandeau (pill-shape, distinct des filtres carrés)
-  const btnActionStyle = `border-radius:999px;border:1.5px solid var(--border);
+  const btnActionStyle = `border-radius:var(--r-md);border:1.5px solid var(--border);
     font-size:var(--fs-xs);font-weight:bold;font-family:var(--font-body);cursor:pointer;padding:3px 10px;
     background:#fff;color:var(--text2);transition:.15s;white-space:nowrap;`;
 
@@ -1126,7 +1126,7 @@ function renderBoutiqueOnglet(onglet) {
           <span style="font-size:18px">${prop.emoji}</span>
           <span style="font-size:var(--fs-sm);font-weight:bold;flex:1;margin:0 8px">${escape(prop.nom)}</span>
           <button onclick="acheterProp('${prop.id}')"
-            style="padding:5px 12px;border-radius:20px;border:none;font-size:var(--fs-xs);font-weight:bold;font-family:var(--font-body);
+            style="padding:5px 12px;border-radius:var(--r-md);border:none;font-size:var(--fs-xs);font-weight:bold;font-family:var(--font-body);
             cursor:${peutAcheter?'pointer':'not-allowed'};
             background:${peutAcheter?'linear-gradient(135deg,var(--lilac),var(--pink))':'#ddd'};
             color:${peutAcheter?'#fff':'#aaa'};
@@ -1148,7 +1148,7 @@ function renderBoutiqueOnglet(onglet) {
       </p>
       <div style="text-align:center">
         <button onclick="acheterPropClaude()"
-          style="padding:var(--sp-md) 28px;border-radius:999px;border:none;font-size:var(--fs-sm);font-weight:bold;font-family:var(--font-body);
+          style="padding:var(--sp-md) 28px;border-radius:var(--r-md);border:none;font-size:var(--fs-sm);font-weight:bold;font-family:var(--font-body);
           cursor:${peutGenerer?'pointer':'not-allowed'};
           background:${peutGenerer?'linear-gradient(135deg,var(--lilac),var(--pink))':'#ddd'};
           color:${peutGenerer?'#fff':'#aaa'};
@@ -3105,7 +3105,7 @@ function renderProg() {
     const fin   = new Date(wd[6] + 'T12:00');
     const fmt   = d => `${d.getDate()} ${d.toLocaleDateString('fr-FR', { month: 'short' })}`;
     const prenom = D.g.userName || D.userName || 'toi';
-    bilanTitre.innerHTML = `🌼 Bilan pour ${prenom}<br><span style="font-size:var(--fs-xs);font-weight:normal;color:var(--text2)">semaine du ${fmt(debut)} au ${fmt(fin)}</span>`;
+    bilanTitre.innerHTML = `🌼 Bilan pour ${prenom}<br><span style="font-size:var(--fs-sm);font-weight:normal;color:var(--text2)">semaine du ${fmt(debut)} au ${fmt(fin)}</span>`;
   }
 
   /* ── Restauration bilan persisté ── */
@@ -4437,7 +4437,7 @@ el.innerHTML = `
         </span>
         ${_agendaMoisOffset !== 0 ? `
           <button onclick="revenirAujourdhuiMois()"
-            style="padding:2px 12px;border-radius:20px;border:none;
+            style="padding:2px 12px;border-radius:var(--r-md);border:none;
             background:var(--lilac);color:#fff;font-size:var(--fs-xs);cursor:pointer;
             font-family:var(--font-body);font-weight:bold">
             ↩ Aujourd'hui

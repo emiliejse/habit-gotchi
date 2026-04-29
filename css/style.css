@@ -973,7 +973,7 @@ body {
 /* POURQUOI : Les grands btn-s blancs attiraient trop l'attention pour une action secondaire */
 .btn-export {
   font-size: var(--fs-xs); font-weight: bold; font-family: var(--font-body); line-height: 1;
-  padding: 5px 14px; border-radius: 20px;
+  padding: 5px 14px; border-radius: var(--r-md);
   border: 1px solid var(--paper-border);
   background: var(--paper-entry-btn); color: var(--paper-text);
   cursor: pointer; transition: .12s; letter-spacing: .5px;

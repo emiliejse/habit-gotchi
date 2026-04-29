@@ -3813,6 +3813,7 @@ function applyCheatCode() {
   input.value = '';
 
   const codes = {
+    'sale10':     () => { D.g.salete = 10; toast('🛁 Gotchi tout sale ! (salete → 10)'); },
     'petales50':  () => { D.g.petales = (D.g.petales || 0) + 50; toast('🌸 +50 pétales !'); },
     'petales200': () => { D.g.petales = (D.g.petales || 0) + 200; toast('🌸 +200 pétales !'); },
     'egg':        () => { D.g.totalXp = 0;   D.g.stage = 'egg';   toast('🥚 Stade → Œuf'); },

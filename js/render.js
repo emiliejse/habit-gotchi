@@ -655,6 +655,14 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
       p.rect(0, 0, p.width, p.height);
     }
 
+    // 12. HUD (Bandeau supérieur) + 13. Badges énergie/bonheur
+    // RÔLE : Masqués en mode compact (tama réduit sur les onglets secondaires).
+    // POURQUOI : En mode compact, le canvas est réduit à ~110px de large — le HUD et les
+    //            badges n'ont plus assez de place et visuellement ils ne servent à rien
+    //            puisque l'utilisatrice n'est pas sur l'onglet Gotchi.
+    const isCompact = document.getElementById('console-top')?.classList.contains('compact');
+    if (!isCompact) {
+
     // 12. HUD (Bandeau supérieur)
     // RÔLE : Bandeau translucide en haut du canvas avec 3 zones : pétales | actions | météo
     // POURQUOI : Répartition symétrique sur 200px — chaque zone a son espace dédié.
@@ -693,15 +701,15 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     p.textSize(20);
     p.textAlign(p.CENTER, p.TOP);
 
-    // 🛁 Bain (gauche du centre, x=72) : opaque si salete >= 5, estompé si propre
-    const salete = window.D?.g?.salete || 0;
-    p.drawingContext.globalAlpha = salete >= 5 ? 1.0 : 0.25;
-    p.text('🛁', 70, 3);
-
     // 🧹 Balai (centre exact, x=100) : opaque si des crottes sont présentes
     const hasPoops = (window.D.g.poops || []).length > 0;
     p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.25;
-    p.text('🧹', 100, 3);
+    p.text('🧹', 70, 3);
+
+        // 🛁 Bain (gauche du centre, x=72) : opaque si salete >= 5, estompé si propre
+    const salete = window.D?.g?.salete || 0;
+    p.drawingContext.globalAlpha = salete >= 5 ? 1.0 : 0.25;
+    p.text('🛁', 100, 3);
 
     // 🍽️ Assiette (droite du centre, x=128) : opaque si repas disponible
     const mealWin = (typeof getCurrentMealWindow === 'function') ? getCurrentMealWindow() : null;
@@ -783,6 +791,11 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
 
       p.textSize(11); // ← remet la taille par défaut après les badges
     }
+
+    } else {
+      // Mode compact : désactiver la zone de tap des badges
+      window._badgeHitZone = null;
+    } // ← fin if (!isCompact)
 
   }; // ← fin p.draw()
 

@@ -290,6 +290,13 @@ function toggleMenu() {
   ov.classList.toggle('open');
 }
 
+// RÔLE : Ferme silencieusement le menu-overlay s'il est ouvert, sans appeler unlockScroll()
+// POURQUOI : Quand une modale s'ouvre par-dessus, le menu-overlay (z-index:200) reste dans le DOM
+//            et capte les clics sur le fond même si la modale (z-index:300) est visuellement au-dessus.
+//            On retire juste la classe .open — lockScroll() reste géré par la modale qui s'ouvre.
+function _fermerMenuSiOuvert() {
+  document.getElementById('menu-overlay')?.classList.remove('open');
+}
 
 function goMenu(t) { toggleMenu(); go(t); }
 
@@ -388,6 +395,7 @@ function clModal(e) {
 function openModal(html) {
   const modal = document.getElementById('modal');
   const mbox  = document.getElementById('mbox');
+  _fermerMenuSiOuvert(); // ferme le menu-overlay s'il était ouvert (évite qu'il capte les clics sous la modale)
   modal.style.display = 'flex';
   lockScroll();
   // RÔLE : Retire la classe avant d'injecter le contenu, force le reflow, puis remet la classe
@@ -1093,6 +1101,7 @@ function renderProps() {
 
 function ouvrirBoutique() {
   const onglet = window._boutiqueOnglet || 'catalogue';
+  _fermerMenuSiOuvert(); // ferme le menu-overlay s'il était ouvert
   document.getElementById('modal').style.display = 'flex';
   lockScroll();
   document.getElementById('mbox').innerHTML = `
@@ -3974,6 +3983,7 @@ window._agendaJour = null;
 
 function ouvrirAgenda(dateStr) {
   window._agendaJour = dateStr || today();
+  _fermerMenuSiOuvert(); // ferme le menu-overlay s'il était ouvert
 
   const mbox = document.getElementById('mbox');
   const modal = document.getElementById('modal');

@@ -151,7 +151,8 @@ function clearDebugLogs() {
       🛍️
       <span id="badge-boutique-hdr" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--pink);color:#fff;font-size:var(--fs-xs);border-radius:50%;width:12px;height:12px;line-height:12px;text-align:center">!</span>
     </button>
-    <div id="hdr-title">
+    <!-- RÔLE : Titre + date cliquables → ouvre l'agenda sur aujourd'hui -->
+    <div id="hdr-title" onclick="ouvrirAgenda()" style="cursor:pointer" role="button" aria-label="Ouvrir l'agenda du jour">
       <h1>✿ Habit-Gotchi ✿</h1>
       <sub id="date-d" style="font-size:var(--fs-xs);color:var(--text2)">
         <span id="date-txt"></span>

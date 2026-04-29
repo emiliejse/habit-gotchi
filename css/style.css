@@ -147,7 +147,7 @@ body {
   right: 0;
   z-index: 50;
   background: var(--bg);
-  padding: calc(var(--sat) + 6px) var(--app-gutter) 10px;
+  padding: calc(var(--sat) + 6px) var(--app-gutter) 0;
   border-bottom: 2px solid var(--border);
   box-shadow: 0 2px 10px var(--shadow);
 }
@@ -180,13 +180,16 @@ body {
   justify-content: center;
   flex: 1;
   align-self: stretch;
+  border-radius: var(--r-sm);
   /* fondu + légère montée en sortant */
-  transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.35s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.35s ease, background 0.15s;
   opacity: 1;
   transform: translateY(0);
   max-height: 60px;
   overflow: hidden;
 }
+/* RÔLE : Feedback tap sur le titre → ouvre l'agenda */
+#hdr-title:active { background: rgba(176,144,208,0.15); }
 #console-top.compact #hdr-title {
   opacity: 0;
   transform: translateY(-8px);
@@ -194,7 +197,7 @@ body {
   pointer-events: none;
 }
 /* RÔLE : Titre "Habit-Gotchi" dans le header — --font-terminal conservé pour l'identité pixel */
-.hdr h1 { font-size: 12px; color: var(--lilac); letter-spacing: 2px; line-height: 1.2; font-family: var(--font-terminal); }
+.hdr h1 { font-size: 20px; color: var(--lilac); letter-spacing: 0.5px; line-height: 1.1; font-family: var(--font-title); font-weight: 700; }
 .hdr sub { font-size: var(--fs-xs); color: var(--text2); }
 .hdr .menu-btn {
   width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--border); /* était 36×36 — Apple HIG : 44pt minimum */
@@ -247,6 +250,12 @@ body {
   transition: max-width 0.4s cubic-bezier(0.25, 1.15, 0.5, 1);
 }
 #console-top.compact .bubble { margin-bottom: 8px; }
+
+/* RÔLE : Padding sous la bulle uniquement sur l'onglet accueil (mode non-compact) */
+/* POURQUOI : En mode compact (autres onglets), la bulle est masquée — pas de padding nécessaire */
+#console-top:not(.compact) {
+  padding-bottom: 10px;
+}
 
 /* L'écran Canvas (Le jeu en lui-même) */
 .tama-screen {
@@ -382,7 +391,7 @@ body {
   padding: var(--sp-md) var(--sp-md) var(--sp-sm) 28px; /* 28px à gauche = espace reliure */
   width: 300px;
   box-shadow: 4px 4px 0 var(--paper-book-shadow), inset 0 0 20px rgba(0,0,0,.05);
-  font-family: var(--font-terminal);
+  font-family: var(--font-title);
   position: relative;
   /* POURQUOI repeating-linear-gradient : simule les lignes d'un cahier, sans image à charger */
   background-image: repeating-linear-gradient(
@@ -456,14 +465,15 @@ body {
   align-items: center;
   justify-content: center; /* centré horizontalement */
   gap: 12px;
-  height: 44px; /* grande zone de tap iOS recommandée */
+  /* RÔLE : hauteur = 2× le pas des lignes du cahier (28px) pour que le texte tombe sur les lignes */
+  height: 56px;
   padding: 0 12px;
   cursor: pointer;
   border-radius: 6px;
   border: 2px solid rgba(200,184,160,0.4);
   transition: background .12s, border-color .12s;
   color: var(--paper-text);
-  font-size: var(--fs-lg); /* 18px — même taille pour tous */
+  font-size: 22px;
   font-weight: bold;
   width: 70%; /* largeur fixe pour que le quinconce soit visible */
 }
@@ -484,8 +494,8 @@ body {
   color: var(--lilac);
 }
 
-.ml-icon  { font-size: 26px; line-height: 1; flex-shrink: 0; }
-.ml-label { font-size: var(--fs-lg); letter-spacing: 0.5px; }
+.ml-icon  { font-size: 28px; line-height: 1; flex-shrink: 0; }
+.ml-label { font-size: 22px; letter-spacing: 0.3px; }
 
 /* RÔLE : Post-its empilés verticalement */
 .menu-postits {
@@ -671,15 +681,15 @@ body {
 
 .inp {
   width: 100%; padding: var(--sp-sm) var(--sp-md); border: 2px solid var(--border); border-radius: var(--r-md);
-  /* RÔLE : Champs de saisie — police terminal pour cohérence avec le style rétro des inputs */
-  background: #fff; font-size: var(--fs-sm); font-family: var(--font-terminal); color: var(--text); outline: none; transition: .2s;
+  /* RÔLE : Champs de saisie — police body pour lisibilité */
+  background: #fff; font-size: var(--fs-sm); font-family: var(--font-body); color: var(--text); outline: none; transition: .2s;
 }
 .inp:focus { border-color: var(--lilac); }
 
 .btn {
-  /* RÔLE : Boutons globaux — police terminal, ton rétro assumé */
+  /* RÔLE : Boutons globaux — police body, lisible et douce */
   padding: var(--sp-sm) var(--sp-lg); border: none; border-radius: var(--r-md);
-  font-size: var(--fs-sm); font-weight: bold; font-family: var(--font-terminal); line-height: 1; /* font-size 11px → var(--fs-sm) */
+  font-size: var(--fs-sm); font-weight: bold; font-family: var(--font-body); line-height: 1;
   cursor: pointer; transition: .12s;
 }
 .btn:active { transform: scale(.94); }
@@ -931,13 +941,13 @@ body {
 .j-entry .j-actions { display: flex; gap: 4px; margin-top: 4px; }
 .j-entry .j-actions button {
   font-size: var(--fs-xs); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--paper-border);
-  background: var(--paper-entry-btn); cursor: pointer; font-family: var(--font-terminal);
+  background: var(--paper-entry-btn); cursor: pointer; font-family: var(--font-body);
 }
 
 /* RÔLE : Séparateur visuel de date dans la liste des entrées — distingue les notes du même jour */
 /* POURQUOI : Quand plusieurs notes sont écrites le même jour, il faut un repère visuel clair */
 .j-day-sep {
-  font-size: var(--fs-xs); color: var(--paper-text); font-family: var(--font-terminal);
+  font-size: var(--fs-xs); color: var(--paper-text); font-family: var(--font-body);
   text-align: center; letter-spacing: 1px; margin: 10px 0 6px;
   display: flex; align-items: center; gap: 6px;
 }
@@ -948,7 +958,7 @@ body {
 /* RÔLE : Boutons export discrets — pill léger, moins encombrants que les btn-s standard */
 /* POURQUOI : Les grands btn-s blancs attiraient trop l'attention pour une action secondaire */
 .btn-export {
-  font-size: var(--fs-xs); font-weight: bold; font-family: var(--font-terminal); line-height: 1;
+  font-size: var(--fs-xs); font-weight: bold; font-family: var(--font-body); line-height: 1;
   padding: 5px 14px; border-radius: 20px;
   border: 1px solid var(--paper-border);
   background: var(--paper-entry-btn); color: var(--paper-text);
@@ -1124,7 +1134,7 @@ details.settings-section.danger > summary { color: var(--danger); }
   padding: 8px 18px;
   border-radius: 20px;
   font-size: var(--fs-sm); /* était 11px — les toasts sont des messages à lire */
-  font-family: var(--font-terminal);
+  font-family: var(--font-body);
   z-index: 500;
   opacity: 0;
   transition: opacity .3s, transform .3s;

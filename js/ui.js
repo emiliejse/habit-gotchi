@@ -654,7 +654,17 @@ function renderHabs() {
     // POURQUOI : Offrir un point d'entrée immédiat → réduit le coût décisionnel au démarrage
     const firstUndoneIndex = D.habits.findIndex(h => !log.includes(h.catId));
 
-habHome.innerHTML = D.habits.map((h, i) => {
+// RÔLE : Mini-bar visuelle — 6 badges ronds avec icône, verts si l'habitude est cochée
+    // POURQUOI : Vue d'ensemble instantanée en haut du bloc, non-cliquable (lecture seule)
+    const miniBar = `<div class="hab-mini-bar">
+      ${D.habits.map(h => {
+        const c = CATS.find(c => c.id === h.catId);
+        const isDone = log.includes(h.catId);
+        return `<div class="hab-mini ${isDone ? 'done' : ''}" title="${h.label || c?.label || ''}">${c?.icon || '✿'}</div>`;
+      }).join('')}
+    </div>`;
+    habHome.innerHTML = miniBar;
+    habHome.innerHTML += D.habits.map((h, i) => {
   const c = CATS.find(c => c.id === h.catId);
   const d = log.includes(h.catId);
   const libelle = (h.label !== c?.label) ? h.label : (c?.def || h.label);

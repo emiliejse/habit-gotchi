@@ -62,6 +62,14 @@ window.triggerEvoAnim = function(from, to) {
   window._evoAnim = { active: true, timer: 45, fromStage: from, toStage: to };
 };
 
+// ─── Sélecteur d'environnement canvas ───
+// RÔLE : Permet de changer d'environnement directement depuis l'écran Gotchi,
+//        sans passer par l'inventaire. Dessiné dans p.draw(), géré dans touchStarted.
+// POURQUOI : Accès rapide et intuitif, cohérent avec le style pixel art du canvas.
+window._envSelectorOpen  = false;  // true = les 2 cercles flottants sont visibles
+window._envFadeState     = null;   // { from:'parc', to:'chambre', frames:0 } pendant le fondu
+window._envSelectorHits  = [];     // zones de tap calculées à chaque frame (tableau d'objets {env,cx,cy,r})
+
 // Variations de bras de l'adulte (animations idle)
 window._adultPose = {
   current: 'normal',     // 'normal' | 'hanche_g' (étape A) | (à enrichir étape B)
@@ -792,6 +800,81 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
       p.textSize(11); // ← remet la taille par défaut après les badges
     }
 
+    // ── 14. Sélecteur d'environnement canvas ──────────────────────────
+    // RÔLE : Dessine un petit cercle emoji en bas à droite représentant l'env actif.
+    //        Au tap, 2 cercles supplémentaires apparaissent pour choisir un autre env.
+    //        La nuit (sleeping), affiche 💤 et désactive toute interaction.
+    // POURQUOI : Accès rapide à l'env sans passer par l'inventaire.
+    //            Même margin (4px) et hauteur double des badges pour rester discret.
+    {
+      // ── Géométrie (miroir droit des badges) ──
+      const envR   = 13;                   // rayon du cercle = badgeH (13) = hauteur badge
+      const envCX  = CS - 4 - envR;        // centre X : margin droit 4px + rayon
+      const envCY  = CS - 18 - envR;       // centre Y : même baseline que les badges
+      const envGap = envR * 2 + 5;         // espacement entre cercles empilés (diamètre + 5px)
+
+      // ── Mapping emoji par env ──
+      const ENV_EMOJI = { parc: '🌳', chambre: '🛏️', montagne: '⛰️' };
+      const activeEnv = window.D.g.activeEnv || 'parc';
+
+      // ── Gestion du fondu d'environnement (crossfade ~18 frames ≈ 0,3s) ──
+      // RÔLE : Interpole progressivement entre l'ancien et le nouvel env pendant le changement.
+      // POURQUOI : Transition douce — évite le saut brutal de décor.
+      const FADE_FRAMES = 18;
+      if (window._envFadeState) {
+        window._envFadeState.frames++;
+        if (window._envFadeState.frames >= FADE_FRAMES) {
+          window._envFadeState = null; // fondu terminé, on nettoie
+        }
+        // NB : l'interpolation visuelle du fond est gérée par drawActiveEnv via envActif
+        // Ici on laisse le changement immédiat de D.g.activeEnv faire son effet dans le draw suivant.
+      }
+
+      // ── Réinitialise les zones de tap à chaque frame ──
+      window._envSelectorHits = [];
+
+      // ── Cercle principal (env actif, ou 💤 la nuit) ──
+      p.noStroke();
+      p.fill(0, 0, 0, 50);           // même fond semi-transparent que les badges
+      p.circle(envCX, envCY, envR * 2);
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(14);
+      p.fill(255);
+      const mainEmoji = sleeping ? '💤' : ENV_EMOJI[activeEnv] || '🌳';
+      p.text(mainEmoji, envCX, envCY);
+      p.textSize(11); // ← reset taille texte
+
+      // ── Zone de tap du cercle principal (toujours exposée, vérification sleeping dans touchStarted) ──
+      window._envSelectorHits.push({ env: '__main__', cx: envCX, cy: envCY, r: envR });
+
+      // ── Cercles flottants (seulement si ouvert et non nuit) ──
+      if (window._envSelectorOpen && !sleeping) {
+        // RÔLE : Affiche les 2 environnements alternatifs au-dessus du cercle principal.
+        // POURQUOI : Empilés verticalement, même style, tap = changement d'env + fermeture.
+        const otherEnvs = ['parc', 'chambre', 'montagne'].filter(e => e !== activeEnv);
+
+        otherEnvs.forEach((env, i) => {
+          // i=0 → juste au-dessus du principal | i=1 → encore plus haut
+          const floatCY = envCY - envGap * (i + 1);
+
+          // Fond du cercle flottant
+          p.fill(0, 0, 0, 65);       // légèrement plus opaque pour se distinguer
+          p.circle(envCX, floatCY, envR * 2);
+
+          // Emoji de l'env alternatif
+          p.fill(255);
+          p.textAlign(p.CENTER, p.CENTER);
+          p.textSize(14);
+          p.text(ENV_EMOJI[env] || '?', envCX, floatCY);
+          p.textSize(11); // ← reset
+
+          // Exposer la zone de tap
+          window._envSelectorHits.push({ env, cx: envCX, cy: floatCY, r: envR });
+        });
+      }
+    }
+    // ── Fin sélecteur d'environnement ─────────────────────────────────
+
     } else {
       // Mode compact : désactiver la zone de tap des badges
       window._badgeHitZone = null;
@@ -863,6 +946,49 @@ if (!window._gotchiActif) return true;
       }, 0);
       return false;
     }
+
+    // ── Sélecteur d'environnement : détection de tap ──────────────────
+    // RÔLE : Gère l'ouverture/fermeture du sélecteur et le changement d'env.
+    // POURQUOI : Doit être testé AVANT la hitbox Gotchi pour ne pas la confondre.
+    {
+      const hits = window._envSelectorHits || [];
+      let tappedEnvSelector = false;
+
+      for (const zone of hits) {
+        const dist = Math.sqrt((mx - zone.cx) ** 2 + (my - zone.cy) ** 2);
+        if (dist <= zone.r + 4) { // +4px de tolérance tactile
+          tappedEnvSelector = true;
+
+          if (zone.env === '__main__') {
+            // RÔLE : Tap sur le cercle principal → ouvre si jour, inerte si nuit.
+            const hNow = hr();
+            const isNight = hNow >= 22 || hNow < 7;
+            if (!isNight) {
+              window._envSelectorOpen = !window._envSelectorOpen; // toggle ouvert/fermé
+            }
+            // La nuit : on ne fait rien (💤 inerte)
+
+          } else {
+            // RÔLE : Tap sur un cercle flottant → change d'env, referme le sélecteur, déclenche le fondu.
+            const prevEnv = window.D.g.activeEnv || 'parc';
+            window._envFadeState = { from: prevEnv, to: zone.env, frames: 0 };
+            if (typeof changeEnv === 'function') changeEnv(zone.env);
+            window._envSelectorOpen = false;
+          }
+          break; // un seul hit traité par tap
+        }
+      }
+
+      if (!tappedEnvSelector && window._envSelectorOpen) {
+        // RÔLE : Tap ailleurs sur le canvas → referme le sélecteur automatiquement.
+        // POURQUOI : Comportement attendu — on ne laisse pas le menu flotter indéfiniment.
+        window._envSelectorOpen = false;
+      }
+
+      // Si on a touché le sélecteur (principal ou flottant), on stoppe la propagation
+      if (tappedEnvSelector) return false;
+    }
+    // ── Fin sélecteur d'environnement ─────────────────────────────────
 
     const h = hr();
     // Position du Gotchi à l'écran = by + bobY (le bobY contient déjà GOTCHI_OFFSET_Y)

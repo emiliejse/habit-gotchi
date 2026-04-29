@@ -107,6 +107,14 @@
   padding: 0;
 }
 
+/* RÔLE : Reset typographique — force l'héritage de font sur les éléments de formulaire */
+/* POURQUOI : Par défaut, button/input/select/textarea ignorent font-family du body en CSS.
+              Sans ce reset, ils affichent la police système du navigateur (souvent monospace).
+              Les éléments qui doivent rester terminal ont font-family: var(--font-terminal) explicitement. */
+button, input, select, textarea {
+  font-family: inherit;
+}
+
 body {
   background: var(--bg);
   color: var(--text);

@@ -1111,6 +1111,7 @@ details.settings-section.danger > summary { color: var(--danger); }
   box-shadow: 0 16px 40px rgba(56, 48, 74, 0.2);
   position: relative; /* POURQUOI : nécessaire pour positionner le .modal-close en absolute */
   max-height: 85dvh; overflow-y: auto; /* POURQUOI : empêche les modales longues de déborder hors écran */
+  touch-action: pan-y; /* POURQUOI : autorise le scroll tactile vertical — sinon p5.js intercepte les touch events et bloque le scroll sur mobile */
 }
 
 /* RÔLE : Bouton ✕ de fermeture persistant sur toutes les modales */
@@ -1228,6 +1229,7 @@ details.settings-section.danger > summary { color: var(--danger); }
   min-height: 0;
   padding-right: 4px;
   scrollbar-width: none; /* Firefox */
+  touch-action: pan-y; /* POURQUOI : autorise le scroll tactile vertical dans la boutique sur mobile */
 }
 
 #boutique-contenu::-webkit-scrollbar {
@@ -1248,6 +1250,7 @@ details.settings-section.danger > summary { color: var(--danger); }
   min-height: 0;
   padding-right: 4px;
   scrollbar-width: none;
+  touch-action: pan-y; /* POURQUOI : autorise le scroll tactile vertical dans l'agenda sur mobile */
 }
 
 #agenda-contenu::-webkit-scrollbar {

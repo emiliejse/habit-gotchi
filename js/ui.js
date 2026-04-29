@@ -1323,13 +1323,16 @@ function exportObjetIA(propId) {
       <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
     </div>
     <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:10px;line-height:1.6">
-      Copie ce code et envoie-le — l'autre personne pourra l'ajouter à son jeu pour avoir cet objet dans son inventaire aussi 🌸
+      📜 <strong>Notice de fabrication</strong><br>
+      Ce code contient la recette complète de cet objet — ses couleurs, sa forme, ses propriétés.
+      Tu peux le garder précieusement, ou l'envoyer à quelqu'un·e pour qu'iel l'ajoute à son jeu 🌸
     </p>
     <pre id="export-json" style="
       font-size:9px;line-height:1.5;background:rgba(0,0,0,.04);
       border:1px solid var(--border);border-radius:var(--r-sm);
       padding:8px;overflow-x:auto;white-space:pre;
-      max-height:200px;overflow-y:auto;
+      max-height:220px;overflow-y:auto;
+      touch-action:pan-y;
       font-family:'Courier New',monospace;
       user-select:all;cursor:text;">${escapeHtml(json)}</pre>
     <button onclick="copierExportIA()" class="btn btn-p"

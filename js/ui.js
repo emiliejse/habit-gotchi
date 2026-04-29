@@ -967,7 +967,10 @@ function renderProps() {
     filterEl.style.cssText = 'display:flex;justify-content:center;gap:12px;align-items:center;width:100%;margin:8px 0 10px';
     filterEl.innerHTML = cats.map(({ key, label }) => {
       const active = propsFilterActive === key;
-      const icon = [...label][0]; // RÔLE : extrait l'emoji seul
+      // RÔLE : extrait le premier caractère du label comme icône du bouton rond.
+      // POURQUOI : Le suffixe ︎ (variation selector-15 "text") force le rendu en glyphe texte
+      //            et évite que ✿ s'affiche en bleu (rendu emoji couleur) sur iOS/Safari.
+      const icon = [...label][0] + '︎';
       const nom  = label.replace(/^\S+\s*/, '');
       return `<button onclick="setPropsFilter('${key}')"
         title="${nom}"
@@ -3999,18 +4002,18 @@ mbox.innerHTML = `
   </div>
   <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
     <button onclick="switchAgenda('jour')" id="atab-jour"
-      style="flex:1;padding:7px;border-radius:var(--r-lg);border:none;font-size:var(--fs-sm);
+      style="flex:1;padding:7px;border-radius:999px;border:none;font-size:var(--fs-sm);
       cursor:pointer;font-weight:bold;font-family:var(--font-body);transition:.15s">
       📅 Jour
     </button>
     <button onclick="switchAgenda('mois')" id="atab-mois"
-      style="flex:1;padding:7px;border-radius:var(--r-lg);border:none;font-size:var(--fs-sm);
+      style="flex:1;padding:7px;border-radius:999px;border:none;font-size:var(--fs-sm);
       cursor:pointer;font-weight:bold;font-family:var(--font-body);transition:.15s">
       🗓️ Mois
     </button>
     ${showCycle() ? `
     <button onclick="switchAgenda('cycle')" id="atab-cycle"
-      style="flex:1;padding:7px;border-radius:var(--r-lg);border:none;font-size:var(--fs-sm);
+      style="flex:1;padding:7px;border-radius:999px;border:none;font-size:var(--fs-sm);
       cursor:pointer;font-weight:bold;font-family:var(--font-body);transition:.15s">
       🌸 Cycle
     </button>` : ''}

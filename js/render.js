@@ -807,15 +807,24 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     // POURQUOI : Accès rapide à l'env sans passer par l'inventaire.
     //            Même margin (4px) et hauteur double des badges pour rester discret.
     {
-      // ── Géométrie (miroir droit des badges) ──
-      const envR   = 13;                   // rayon du cercle = badgeH (13) = hauteur badge
+      // ── Géométrie (aligné sur le bas des badges) ──
+      // POURQUOI : badgeY = CS-18, bas des badges = badgeY - 1 + badgeH = CS - 6.
+      //            On aligne le bas du cercle sur ce même bas → centre = CS - 6 - envR.
+      const envR   = 13;                   // rayon = badgeH (13) → diamètre 26px = 2× hauteur badge
       const envCX  = CS - 4 - envR;        // centre X : margin droit 4px + rayon
-      const envCY  = CS - 18 - envR;       // centre Y : même baseline que les badges
+      const envCY  = CS - 6 - envR;        // centre Y : bas aligné sur le bas des badges (CS - 6)
       const envGap = envR * 2 + 5;         // espacement entre cercles empilés (diamètre + 5px)
 
       // ── Mapping emoji par env ──
       const ENV_EMOJI = { parc: '🌳', chambre: '🛏️', montagne: '⛰️' };
       const activeEnv = window.D.g.activeEnv || 'parc';
+
+      // ── Détermination du mode nuit pour le sélecteur ──
+      // RÔLE : On bloque le sélecteur dès que nightRatio === 1 (à partir de 21h),
+      //        car l'env est forcé chambre et l'utilisatrice ne peut pas changer d'env.
+      // POURQUOI : sleeping (>= 22h) est trop tardif — à 21h l'env est déjà verrouillé.
+      const envLocked = nightRatio === 1;
+      window._envLocked = envLocked; // exposé pour touchStarted (pas accès à nightRatio là-bas)
 
       // ── Gestion du fondu d'environnement (crossfade ~18 frames ≈ 0,3s) ──
       // RÔLE : Interpole progressivement entre l'ancien et le nouvel env pendant le changement.
@@ -840,15 +849,19 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(14);
       p.fill(255);
-      const mainEmoji = sleeping ? '💤' : ENV_EMOJI[activeEnv] || '🌳';
+      // RÔLE : Affiche 💤 dès que l'env est verrouillé (nightRatio === 1, soit dès 21h).
+      // POURQUOI : Cohérent avec la logique qui force la chambre — pas la peine d'attendre 22h.
+      const mainEmoji = envLocked ? '💤' : ENV_EMOJI[activeEnv] || '🌳';
       p.text(mainEmoji, envCX, envCY);
       p.textSize(11); // ← reset taille texte
 
-      // ── Zone de tap du cercle principal (toujours exposée, vérification sleeping dans touchStarted) ──
-      window._envSelectorHits.push({ env: '__main__', cx: envCX, cy: envCY, r: envR });
+      // ── Zone de tap : n'exposer que si pas verrouillé (nuit = inerte) ──
+      if (!envLocked) {
+        window._envSelectorHits.push({ env: '__main__', cx: envCX, cy: envCY, r: envR });
+      }
 
-      // ── Cercles flottants (seulement si ouvert et non nuit) ──
-      if (window._envSelectorOpen && !sleeping) {
+      // ── Cercles flottants (seulement si ouvert et env non verrouillé) ──
+      if (window._envSelectorOpen && !envLocked) {
         // RÔLE : Affiche les 2 environnements alternatifs au-dessus du cercle principal.
         // POURQUOI : Empilés verticalement, même style, tap = changement d'env + fermeture.
         const otherEnvs = ['parc', 'chambre', 'montagne'].filter(e => e !== activeEnv);
@@ -893,6 +906,25 @@ function isOverlayActive() {
 
   // 13. Gestionnaire d'événements tactiles (Garde l'accès à "p.")
     p.touchStarted = function() {
+    // 🔒 GARDE 0 : tap hors du canvas → laisser le DOM gérer (ex : #hdr-title, boutons header)
+    // RÔLE : p5.js attache ses listeners touchstart sur le document entier, pas sur le canvas.
+    //        Un tap sur #hdr-title déclenche donc touchStarted, qui empêche le onclick de se déclencher.
+    //        On vérifie que le tap est bien dans les bounds du canvas avant d'aller plus loin.
+    // POURQUOI : Résout le bug "tap sur le titre n'ouvre pas l'agenda".
+    {
+      const canvasEl = document.querySelector('#cbox canvas');
+      if (canvasEl) {
+        const rect = canvasEl.getBoundingClientRect();
+        const touch = p.touches[0];
+        // p.touches[0].x/.y sont en coordonnées canvas (0→CS) — on compare avec les bounds réels
+        const clientX = touch ? (rect.left + touch.x * (rect.width  / CS)) : -9999;
+        const clientY = touch ? (rect.top  + touch.y * (rect.height / CS)) : -9999;
+        const inCanvas = clientX >= rect.left && clientX <= rect.right
+                      && clientY >= rect.top  && clientY <= rect.bottom;
+        if (!inCanvas) return true; // rend la main au DOM
+      }
+    }
+
     // 🔒 GARDE 1 : menu principal ouvert
     const menuOverlay = document.getElementById('menu-overlay');
     if (menuOverlay && menuOverlay.classList.contains('open')) return true;
@@ -960,13 +992,13 @@ if (!window._gotchiActif) return true;
           tappedEnvSelector = true;
 
           if (zone.env === '__main__') {
-            // RÔLE : Tap sur le cercle principal → ouvre si jour, inerte si nuit.
-            const hNow = hr();
-            const isNight = hNow >= 22 || hNow < 7;
-            if (!isNight) {
+            // RÔLE : Tap sur le cercle principal → ouvre si env disponible, inerte si verrouillé.
+            // POURQUOI : On utilise window._envLocked (calculé dans draw() via nightRatio)
+            //            plutôt que h >= 22, pour être cohérent avec le vrai seuil de verrouillage (21h).
+            if (!window._envLocked) {
               window._envSelectorOpen = !window._envSelectorOpen; // toggle ouvert/fermé
             }
-            // La nuit : on ne fait rien (💤 inerte)
+            // Verrouillé (nuit dès 21h) : on ne fait rien
 
           } else {
             // RÔLE : Tap sur un cercle flottant → change d'env, referme le sélecteur, déclenche le fondu.

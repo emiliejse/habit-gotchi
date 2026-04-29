@@ -977,7 +977,7 @@ if (!window._gotchiActif) return true;
         if (D.g.salete === 0) {
           D.g.petales = (D.g.petales || 0) + 2;
           if (typeof addEvent === 'function') {
-            addEvent({ type: 'soin', subtype: 'bain', valeur: 2, label: 'Bain donné — Gotchi tout propre ✿' });
+            addEvent({ type: 'soin', subtype: 'bain', valeur: 2, label: 'Bain donné — +2 🌸' });
           }
           clearInterval(window._scrubTimer);
           window._scrubTimer = null;

@@ -3429,6 +3429,7 @@ function openTablet() {
   if (ev.subtype === 'snack') return '🍽️';
   if (ev.subtype === 'poop')  return '💩';
   if (ev.subtype === 'stade') return '🌱';
+  if (ev.subtype === 'bain')  return '🛁';
   
   // Sinon, fallback sur le type
   if (ev.type === 'xp')       return (ev.valeur < 0) ? '💤' : '⭐';

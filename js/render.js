@@ -716,7 +716,7 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     const meals   = (typeof ensureMealsToday === 'function') ? ensureMealsToday() : null;
     const mealAvailable = mealWin && meals && !meals[mealWin];
     p.drawingContext.globalAlpha = mealAvailable ? 1.0 : 0.25;
-    p.text('🍽️', 130, 12);
+    p.text('🍽️', 130, 14);
 
     p.drawingContext.globalAlpha = 1.0;
 

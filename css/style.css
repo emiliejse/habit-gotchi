@@ -557,7 +557,18 @@ body {
   border-radius: var(--r-lg); padding: var(--sp-md); margin-bottom: var(--sp-lg); box-shadow: 0 2px 8px var(--shadow);
   /* POURQUOI : sp-lg (16px) uniformise l'espace entre tous les blocs de l'accueil */
 }
-.card h2 { font-size: var(--fs-sm); margin-bottom: var(--sp-sm); letter-spacing: 1px; }
+/* RÔLE : Titre de section — toutes les cartes et panneaux de l'app */
+/* POURQUOI : Caveat est plus grande visuellement que Nunito à taille égale — 20px compense
+              et donne un rendu cohérent avec les autres titres Caveat de l'app */
+.card h2,
+.j90 h2 {
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: var(--sp-sm);
+  letter-spacing: 0.3px;
+}
 
 /* RÔLE : Carte action principale — visuellement dominante, header coloré bord à bord */
 .card-primary {
@@ -901,9 +912,11 @@ body {
   background: var(--paper-bg); border: 3px solid var(--paper-border); border-radius: var(--r-sm); padding: var(--sp-md);
   box-shadow: inset 0 2px 8px rgba(0,0,0,.06);
 }
+/* RÔLE : Override spécifique au journal — garde le style papier (bordure, couleur) sans redéfinir font/size/align */
 .j90 h2 {
-  font-size: var(--fs-sm); text-align: center; border-bottom: 2px dashed var(--paper-border);
-  padding-bottom: var(--sp-xs); margin-bottom: var(--sp-sm); letter-spacing: 2px; color: var(--paper-text);
+  border-bottom: 2px dashed var(--paper-border);
+  padding-bottom: var(--sp-xs);
+  color: var(--paper-text);
 }
 /* RÔLE : Zone de saisie du journal — italic Nunito pour une écriture plus intime */
 #j-text, #edit-j-txt {
@@ -1078,6 +1091,13 @@ details.settings-section.danger > summary { color: var(--danger); }
 }
 .modal-box.modal-pop {
   animation: modalPop .22s cubic-bezier(0.25, 1.15, 0.5, 1) both;
+}
+
+/* RÔLE : Centrage des titres h3 dans toutes les modales */
+/* POURQUOI : Les h3 sont générés dynamiquement dans ui.js avec des styles inline variés —
+              une règle CSS globale évite de modifier chaque occurrence en JS */
+.modal-box h3 {
+  text-align: center;
 }
 
 /* Modale Principale (Alertes, Boutique) */

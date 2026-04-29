@@ -5146,6 +5146,7 @@ window.initUI = function() {
   //            chevronNav() directement dans le template. On remplace le contenu à l'init,
   //            ce qui garantit la cohérence même si de nouveaux .nav-a apparaissent plus tard.
   document.querySelectorAll('.nav-a').forEach(btn => {
+    if (btn.querySelector('svg')) return; // déjà injecté
     const label = btn.getAttribute('aria-label') || '';
     const isLeft = label.toLowerCase().includes('précédente') || label.toLowerCase().includes('gauche');
     btn.innerHTML = isLeft ? chevronNav('left') : chevronNav('right');
@@ -5155,6 +5156,7 @@ window.initUI = function() {
   // POURQUOI : Le ::after CSS a été remplacé par du SVG pour harmoniser avec le reste.
   //            On ajoute un <span class="settings-chevron"> à la fin de chaque summary.
   document.querySelectorAll('details.settings-section > summary').forEach(summary => {
+    if (summary.querySelector('.settings-chevron')) return; // ← garde-fou anti-doublon
     const span = document.createElement('span');
     span.className = 'settings-chevron';
     span.innerHTML = chevron('down');

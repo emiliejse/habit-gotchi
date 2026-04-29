@@ -260,34 +260,9 @@ function toggleMenu() {
 
 function goMenu(t) { toggleMenu(); go(t); }
 
-/**
- * RÔLE : Déplier / replier le bloc sliders (énergie + bonheur).
- * POURQUOI : Les sliders sont masqués par défaut pour économiser la hauteur du #console-top.
- *            Un tap sur la barre résumée les révèle. Un second tap les masque à nouveau.
- */
-function toggleSliders() {
-  const btn  = document.getElementById('sliders-toggle');
-  const body = document.getElementById('sliders-body');
-  const wrap = document.getElementById('sliders-wrap');
-  if (!btn || !body || !wrap) return;
-
-  const isOpen = btn.getAttribute('aria-expanded') === 'true';
-
-  if (isOpen) {
-    // RÔLE : Replier — masquer le corps, retirer la classe open (masque le hint)
-    body.hidden = true;
-    btn.setAttribute('aria-expanded', 'false');
-    wrap.classList.remove('open');
-  } else {
-    // RÔLE : Déplier — afficher le corps, ajouter la classe open (affiche le hint)
-    body.hidden = false;
-    btn.setAttribute('aria-expanded', 'true');
-    wrap.classList.add('open');
-  }
-
-  // RÔLE : Recalculer la hauteur du #console-top après le changement de taille
-  syncConsoleHeight();
-}
+// RÔLE : toggleSliders() supprimée — les sliders sont désormais dans la bottom sheet ouvrirModalEtats()
+// POURQUOI : Le bloc #sliders-wrap du #console-top a été supprimé (badges dessinés dans le canvas).
+function toggleSliders() { /* supprimée — conservée vide pour ne pas casser d'éventuels appels résiduels */ }
 
 function updDate() {
   const d = new Date();
@@ -561,11 +536,17 @@ function updUI() {
   if (document.getElementById('g-stage'))  document.getElementById('g-stage').textContent = s.l;
   if (document.getElementById('xp-l'))     document.getElementById('xp-l').textContent = nt > pt ? `${g.totalXp - pt}/${nt - pt} XP` : `MAX ✿`;
   if (document.getElementById('xp-b'))     document.getElementById('xp-b').style.width = pct + '%';
-  if (document.getElementById('sl-energy'))  { document.getElementById('sl-energy').value = g.energy; document.getElementById('sv-energy').textContent = g.energy; }
-  if (document.getElementById('sl-happy'))   { document.getElementById('sl-happy').value = g.happiness; document.getElementById('sv-happy').textContent = g.happiness; }
-  // RÔLE : Mettre à jour les valeurs résumées dans la barre compacte du toggle
-  if (document.getElementById('sv-energy-compact')) document.getElementById('sv-energy-compact').textContent = g.energy;
-  if (document.getElementById('sv-happy-compact'))  document.getElementById('sv-happy-compact').textContent  = g.happiness;
+  // RÔLE : Synchroniser les sliders de la modale d'états si elle est ouverte
+  // POURQUOI : Les sliders sont dans une bottom sheet dynamique, pas dans le DOM permanent.
+  //            On met à jour les inputs s'ils existent au moment de updateUI().
+  if (document.getElementById('modal-sl-energy')) {
+    document.getElementById('modal-sl-energy').value = g.energy;
+    document.getElementById('modal-sv-energy').textContent = g.energy;
+  }
+  if (document.getElementById('modal-sl-happy')) {
+    document.getElementById('modal-sl-happy').value = g.happiness;
+    document.getElementById('modal-sv-happy').textContent = g.happiness;
+  }
   if (document.getElementById('s-xp'))    document.getElementById('s-xp').textContent = g.totalXp;
   if (document.getElementById('s-str'))   document.getElementById('s-str').textContent = calcStr();
   if (document.getElementById('s-jrn'))   document.getElementById('s-jrn').textContent = D.journal.length;
@@ -3543,6 +3524,108 @@ function applyCheatCode() {
     toast('❓ Code inconnu');
   }
 }
+
+/* ============================================================
+   BOTTOM SHEET — "COMMENT TU TE SENS ?"
+   RÔLE : Ouvre une bottom sheet (même style que le formulaire RDV) permettant
+          de régler l'énergie et le bonheur via deux sliders ronds.
+   POURQUOI : Remplace le bloc #sliders-wrap supprimé du #console-top.
+              Accessible uniquement depuis l'écran d'accueil (tap sur les badges canvas).
+   ============================================================ */
+
+function ouvrirModalEtats() {
+  // RÔLE : Sécurité — ne s'ouvre que si on est sur l'onglet Gotchi (écran d'accueil)
+  if (!window._gotchiActif) return;
+
+  // RÔLE : Empêche l'ouverture en doublon si la sheet est déjà visible
+  if (document.getElementById('etats-overlay')) return;
+
+  const g = window.D.g;
+
+  // RÔLE : Crée l'overlay semi-transparent qui capture les taps extérieurs pour fermer
+  const overlay = document.createElement('div');
+  overlay.id = 'etats-overlay';
+  overlay.style.cssText = `
+    position:fixed;inset:0;z-index:1000;
+    background:rgba(0,0,0,0.35);
+    display:flex;align-items:flex-end;justify-content:center;
+  `;
+
+  // RÔLE : Ferme la sheet si on tape sur l'overlay (hors de la sheet)
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) fermerModalEtats();
+  });
+
+  // RÔLE : Contenu de la bottom sheet
+  overlay.innerHTML = `
+    <div id="etats-sheet" style="
+      background:var(--bg,#fff);
+      border-radius:16px 16px 0 0;
+      padding:20px 16px 40px;
+      width:100%;max-width:420px;
+      animation:slideUp .25s ease-out;
+      box-sizing:border-box;
+    ">
+      <!-- Poignée de glissement (décorative) -->
+      <div style="width:36px;height:4px;background:var(--border);
+        border-radius:2px;margin:0 auto 16px;opacity:.5"></div>
+
+      <h3 style="font-size:12px;color:var(--lilac);margin-bottom:20px;
+        font-family:'Courier New',monospace;text-align:center;letter-spacing:1px">
+        Comment tu te sens là ?
+      </h3>
+
+      <!-- Slider Énergie -->
+      <div style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:var(--fs-xs);font-weight:bold;text-transform:uppercase;
+            letter-spacing:0.5px;color:var(--text2)">⚡ Énergie</span>
+          <span id="modal-sv-energy" style="font-size:var(--fs-sm);font-weight:bold;
+            color:var(--text2);min-width:20px;text-align:right">${g.energy}</span>
+        </div>
+        <input type="range" id="modal-sl-energy"
+          min="0" max="5" step="1" value="${g.energy}"
+          oninput="setEnergy(this.value); document.getElementById('modal-sv-energy').textContent=this.value"
+          style="width:100%;-webkit-appearance:none;height:8px;border-radius:4px;
+            background:var(--border);outline:none;cursor:pointer">
+      </div>
+
+      <!-- Slider Bonheur -->
+      <div style="margin-bottom:24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:var(--fs-xs);font-weight:bold;text-transform:uppercase;
+            letter-spacing:0.5px;color:var(--text2)">✿ Bonheur</span>
+          <span id="modal-sv-happy" style="font-size:var(--fs-sm);font-weight:bold;
+            color:var(--text2);min-width:20px;text-align:right">${g.happiness}</span>
+        </div>
+        <input type="range" id="modal-sl-happy"
+          min="0" max="5" step="1" value="${g.happiness}"
+          oninput="setHappy(this.value); document.getElementById('modal-sv-happy').textContent=this.value"
+          style="width:100%;-webkit-appearance:none;height:8px;border-radius:4px;
+            background:var(--border);outline:none;cursor:pointer">
+      </div>
+
+      <!-- Bouton fermeture -->
+      <button onclick="fermerModalEtats()" class="btn btn-p"
+        style="width:100%;font-size:var(--fs-sm)">
+        ✓ Enregistrer
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+}
+
+// RÔLE : Ferme et supprime la bottom sheet des états
+function fermerModalEtats() {
+  const overlay = document.getElementById('etats-overlay');
+  if (overlay) overlay.remove();
+}
+
+// RÔLE : Expose les fonctions pour y accéder depuis render.js (tap canvas)
+window.ouvrirModalEtats  = ouvrirModalEtats;
+window.fermerModalEtats  = fermerModalEtats;
+
 
 /* ============================================================
    MODALE AGENDA

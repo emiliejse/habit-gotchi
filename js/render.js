@@ -699,6 +699,60 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
       });
       window._cleanPositions = null;
     }
+
+    // 13. BADGES ÉNERGIE + BONHEUR (bas-gauche du canvas)
+    // RÔLE : Affiche deux capsules compactes ⚡N et ✿N en bas à gauche,
+    //        toujours visibles, cliquables pour ouvrir la modale d'état.
+    // POURQUOI : Dessinés dans le canvas pour suivre le rétrécissement/agitation du tama.
+    {
+      const en = g.energy;
+      const ha = g.happiness;
+      const badgeY = CS - 18;       // position verticale : 18px du bas
+      const badgeH = 13;            // hauteur de la capsule
+      const badgeR = 3;             // rayon des coins arrondis
+      const badgePadX = 4;          // padding interne horizontal
+
+      // Fond semi-transparent identique au bandeau HUD
+      p.noStroke();
+      p.textStyle(p.NORMAL);
+
+      // ── Badge ⚡ (énergie) ──
+      const enStr = '⚡' + en;
+      p.textSize(9);
+      const enW = p.textWidth(enStr) + badgePadX * 2;
+      p.fill(0, 0, 0, 90);          // fond sombre semi-transparent
+      p.rect(4, badgeY - 1, enW, badgeH, badgeR);
+      p.fill(255);
+      p.textAlign(p.LEFT, p.TOP);
+      p.text(enStr, 4 + badgePadX, badgeY + 1);
+
+      // ── Badge ✿ (bonheur) ──
+      const haStr = '✿' + ha;
+      const haX = 4 + enW + 3;      // 3px de gap entre les deux badges
+      const haW = p.textWidth(haStr) + badgePadX * 2;
+      p.fill(0, 0, 0, 90);
+      p.rect(haX, badgeY - 1, haW, badgeH, badgeR);
+      p.fill(255);
+      p.text(haStr, haX + badgePadX, badgeY + 1);
+
+      // ── Triangle ▲ interactivité ──
+      const triX = haX + haW + 4;
+      p.textSize(8);
+      p.fill(255, 255, 255, 160);
+      p.text('▲', triX, badgeY + 1);
+
+      // Exposer la zone de hit pour touchStarted (en px canvas)
+      // POURQUOI : calculé ici pour rester synchronisé si les badges changent de taille
+      window._badgeHitZone = {
+        x1: 4,
+        x2: triX + 10,
+        y1: badgeY - 2,
+        y2: badgeY + badgeH + 2
+      };
+
+      p.textSize(11); // ← remet la taille par défaut après les badges
+    }
+
   }; // ← fin p.draw()
 
   // Vérifie si un overlay actif bloque les interactions canvas
@@ -739,11 +793,22 @@ if (!window._gotchiActif) return true;
     const mx = p.touches[0]?.x ?? p.mouseX;
     const my = p.touches[0]?.y ?? p.mouseY;
 
-    if (Math.abs(mx - 72) < 14 && my < 26) { 
-      setTimeout(() => cleanPoops(), 0); return false; 
+    if (Math.abs(mx - 72) < 14 && my < 26) {
+      setTimeout(() => cleanPoops(), 0); return false;
     }
-    if (Math.abs(mx - 128) < 14 && my < 26) { 
-      setTimeout(() => ouvrirSnack(), 0); return false; 
+    if (Math.abs(mx - 128) < 14 && my < 26) {
+      setTimeout(() => ouvrirSnack(), 0); return false;
+    }
+
+    // RÔLE : Tap sur les badges énergie/bonheur → ouvre la modale "Comment tu te sens ?"
+    // POURQUOI : La zone de hit est calculée dynamiquement dans draw() et stockée dans _badgeHitZone.
+    //            On vérifie aussi _gotchiActif pour n'ouvrir la modale que sur l'écran d'accueil.
+    const bz = window._badgeHitZone;
+    if (bz && mx >= bz.x1 && mx <= bz.x2 && my >= bz.y1 && my <= bz.y2 && window._gotchiActif) {
+      setTimeout(() => {
+        if (typeof ouvrirModalEtats === 'function') ouvrirModalEtats();
+      }, 0);
+      return false;
     }
 
     const h = hr();

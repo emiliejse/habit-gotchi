@@ -731,132 +731,29 @@ body {
   border-radius: 3px;
 }
 
-/* ─── JAUGES D'ÉNERGIE ET DE BONHEUR (Sliders dépliables) ──────── */
+/* ─── SLIDERS DE LA BOTTOM SHEET "COMMENT TU TE SENS ?" ─────────── */
+/* RÔLE : Thumb rond et discret pour les sliders énergie/bonheur dans la modale d'états.
+   POURQUOI : Les sliders sont dans une bottom sheet dynamique (ouvrirModalEtats),
+              pas dans le DOM permanent. Ces styles s'appliquent aux inputs inline. */
 
-/* RÔLE : Wrapper global */
-#sliders-wrap { margin: 4px auto 2px; }
-
-/* RÔLE : Barre résumée cliquable (toujours visible) */
-#sliders-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 4px 0;
+#etats-sheet input[type=range] {
   cursor: pointer;
-  color: var(--text2);
-  font-family: 'Courier New', monospace;
-  min-height: 40px;
 }
-
-/* RÔLE : Groupe des deux capsules */
-#slider-summary { display: flex; gap: 8px; align-items: center; }
-
-/* RÔLE : Capsule individuelle — taille fixe pour que les deux soient identiques */
-/* POURQUOI : width fixe = même largeur quelle que soit la taille des emojis ⚡ vs ✿ */
-.stat-capsule {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: 110px;          /* POURQUOI : largeur fixe = capsules toujours identiques */
-  background: var(--card);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  padding: 4px 8px;
-  line-height: 1;
-}
-.capsule-icon  { font-size: 12px; flex-shrink: 0; }
-.capsule-label { font-size: var(--fs-xs); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); flex: 1; }
-.capsule-val   { font-size: var(--fs-sm); font-weight: bold; color: var(--text2); min-width: 14px; text-align: right; }
-
-/* RÔLE : Flèche dépliante */
-/* POURQUOI : 22px = suffisamment grand pour être vu et tapoté facilement */
-#sliders-arrow {
-  font-size: 22px;
-  opacity: 0.8;
-  line-height: 1;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-#sliders-toggle[aria-expanded="true"] #sliders-arrow { transform: rotate(180deg); }
-
-/* RÔLE : Message d'invite — visible uniquement quand le bloc est ouvert */
-#sliders-hint {
-  display: none;
-  font-size: var(--fs-xs);
-  color: var(--text2);       /* POURQUOI : text2 au lieu de lilac — plus lisible sur le fond */
-  font-weight: bold;
-  font-style: italic;
-  text-align: center;
-  margin: 0 0 4px;
-  letter-spacing: 0.5px;
-}
-#sliders-wrap.open #sliders-hint { display: block; }
-
-/* RÔLE : Corps dépliable */
-/* POURQUOI : overflow-x hidden = coupe le débordement horizontal de la fleur sur iOS.
-              overflow-y visible = les pétales haut/bas restent visibles.
-              padding vertical = espace pour les pétales verticales (6px de chaque côté du thumb). */
-#sliders-body {
-  overflow-x: hidden;
-  overflow-y: visible;
-  padding: 8px 0;
-}
-
-/* RÔLE : Icône dans la ligne de slider */
-.slider-icon { font-size: 14px; width: 22px; text-align: center; flex-shrink: 0; }
-
-/* RÔLE : Une ligne de slider */
-.slider-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; min-height: 44px; }
-
-/* RÔLE : Track du slider */
-/* POURQUOI : overflow: visible nécessaire pour que le thumb (28px) dépasse du track (8px) verticalement */
-.slider-row input[type=range] {
-  flex: 1;
-  -webkit-appearance: none;
-  height: 8px;
-  border-radius: 4px;
-  outline: none;
-  opacity: .85;
-  overflow: visible;
-  margin: 0;
-  min-width: 0;
-}
-
-/* RÔLE : Neutraliser le padding natif iOS sur le track webkit */
-.slider-row input[type=range]::-webkit-slider-runnable-track {
+#etats-sheet input[type=range]::-webkit-slider-runnable-track {
   margin: 0;
   padding: 0;
   border-radius: 4px;
 }
-
-/* RÔLE : Thumb du slider — fleur pixel art dessinée en gradient, tout contenu dans le thumb */
-/* POURQUOI : les box-shadow débordent du thumb et sont clippées par iOS Safari.
-              Avec radial-gradient, tout est dessiné À L'INTÉRIEUR du thumb — rien ne dépasse.
-              28×28px = grande zone de tap, la fleur occupe toute la surface. */
-.slider-row input[type=range]::-webkit-slider-thumb {
+#etats-sheet input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 35px; height: 35px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   cursor: pointer;
   border: none;
-  /* POURQUOI : simple cercle plein — propre, lisible, pas de fond parasite.
-     radial-gradient du centre vers l'extérieur : couleur jusqu'à 45% du rayon, transparent au-delà.
-     Résultat : un disque coloré centré dans le thumb, fond transparent autour. */
-  background: radial-gradient(circle at 50% 50%, var(--text2) 45%, transparent 46%);
+  /* POURQUOI : disque plein centré — lisible, tap-friendly (Apple HIG ≥ 44pt recommandé) */
+  background: radial-gradient(circle at 50% 50%, var(--lilac) 45%, transparent 46%);
+  margin-top: -10px; /* centre le thumb sur le track 8px */
 }
-.slider-row .sv { font-size: 13px; font-weight: bold; width: 20px; text-align: center; flex-shrink: 0; }
-
-/* POURQUOI : sliders neutres — couleur du track uniforme discrète */
-/* Les thumbs héritent du gradient fleur défini dans .slider-row input::-webkit-slider-thumb */
-#sl-energy { background: var(--border); }
-#sl-happy  { background: var(--border); }
-
-/* RÔLE : Mode compact — masque les sliders */
-#console-top.compact #sliders-wrap { display: none; }
 
 /* Barre d'XP */
 .pbar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }

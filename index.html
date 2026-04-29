@@ -127,13 +127,14 @@ function clearDebugLogs() {
 
 <!--
   ============================================================
-  SYSTEM 5: UI/Design — CONSOLE TOP (Header + Shell + Bulle + Sliders)
+  SYSTEM 5: UI/Design — CONSOLE TOP (Header + Shell + Bulle)
   ============================================================
   Structure centrale de l'interface utilisateur.
   - Contient le header (boutons + titre + date)
   - Le shell (écran du Tamagotchi)
   - La bulle de dialogue (texte dynamique)
-  - Les sliders d'énergie et de bonheur (contrôlent les stats du Gotchi)
+  Les badges énergie/bonheur sont désormais dessinés dans le canvas p5.js (render.js).
+  La modale "Comment tu te sens ?" s'ouvre via ouvrirModalEtats() au tap sur ces badges.
 -->
 <div id="console-top">
 
@@ -161,51 +162,6 @@ function clearDebugLogs() {
       <div class="tama-screen" id="cbox"></div>
     </div>
     <div class="bubble" id="bubble">...</div>
-  </div>
-
-  <!-- SLIDERS : Contrôlent les stats d'énergie et de bonheur (SYSTEM 1: Métabolisme) -->
-  <!-- POURQUOI : bloc dépliable — fermé au chargement pour économiser la hauteur du #console-top -->
-  <div id="sliders-wrap">
-
-    <!-- BARRE RÉSUMÉE : toujours visible, tap pour déplier/replier -->
-    <button id="sliders-toggle" onclick="toggleSliders()" aria-expanded="false" aria-controls="sliders-body">
-
-      <!-- Capsules énergie + bonheur -->
-      <span id="slider-summary">
-        <span class="stat-capsule">
-          <span class="capsule-icon">⚡</span>
-          <span class="capsule-label">Énergie</span>
-          <span class="capsule-val" id="sv-energy-compact">3</span>
-        </span>
-        <span class="stat-capsule">
-          <span class="capsule-icon">✿</span>
-          <span class="capsule-label">Bonheur</span>
-          <span class="capsule-val" id="sv-happy-compact">3</span>
-        </span>
-      </span>
-
-      <!-- Flèche dépliante -->
-      <span id="sliders-arrow">▾</span>
-
-    </button>
-
-    <!-- Message d'invite : visible uniquement quand le bloc est déroulé -->
-    <p id="sliders-hint">Comment tu te sens là ?</p>
-
-    <!-- CORPS DÉPLIABLE : masqué par défaut -->
-    <div id="sliders-body" hidden>
-      <div class="slider-row">
-        <span class="slider-icon">⚡</span>
-        <span class="sv" id="sv-energy">3</span>
-        <input type="range" id="sl-energy" min="0" max="5" step="1" value="3" oninput="setEnergy(this.value)">
-      </div>
-      <div class="slider-row">
-        <span class="slider-icon">✿</span>
-        <span class="sv" id="sv-happy">3</span>
-        <input type="range" id="sl-happy" min="0" max="5" step="1" value="3" oninput="setHappy(this.value)">
-      </div>
-    </div>
-
   </div>
 
 </div>

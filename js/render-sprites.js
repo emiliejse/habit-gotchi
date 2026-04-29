@@ -35,6 +35,99 @@ function drawDither(p, x, y, w, h, color) {
   }
 }
 
+/* ─── §1b DITHERING SALETÉ ──────────────────────────────────────── */
+
+// RÔLE : Dessine un effet de saleté (taches de boue) par-dessus le sprite du Gotchi.
+// POURQUOI : Reproduit manuellement les px() du sprite correspondant pour rester dans
+//            les limites exactes de la silhouette, sans utiliser p.get() (trop lent sur mobile).
+//            La densité des taches augmente avec le niveau de saleté (5 → 10).
+//            Couleur boue : marron transparent, opacité progressive.
+//
+// @param {Object} p       - Instance p5
+// @param {string} stage   - 'egg' | 'baby' | 'teen' | 'adult'
+// @param {number} cx      - Centre X du Gotchi (même valeur que drawBaby/Teen/Adult)
+// @param {number} cy      - Y haut du Gotchi (même valeur que draw*)
+// @param {number} salete  - Niveau de saleté 0-10 (rien dessiné si < 5)
+// @param {boolean} sl     - true si le Gotchi dort (pour décalage breathX = 0)
+function drawSaleteDither(p, stage, cx, cy, salete, sl) {
+  if (!salete || salete < 5) return;
+
+  // RÔLE : Calculer l'intensité visuelle selon le niveau de saleté.
+  // POURQUOI : On veut une progression douce de 5 à 10 : quelques taches → Gotchi tout boueux.
+  //            ratio va de 0.0 (saleté=5) à 1.0 (saleté=10).
+  const ratio  = (salete - 5) / 5;          // 0 → 1
+  const alpha  = Math.round(40 + ratio * 120); // opacité 40 → 160
+  const stride = ratio < 0.5 ? 3 : 2;         // pas du damier : 1 case / 3 puis 1 / 2
+
+  // Couleur boue
+  const boue = p.color(101, 67, 33, alpha);
+  p.fill(boue);
+  p.noStroke();
+
+  // RÔLE : Helper local — applique le damier de saleté sur un rectangle px-aligné.
+  // POURQUOI : Même logique que drawDither(), mais avec le stride variable.
+  function ditherRect(rx, ry, rw, rh) {
+    for (let row = 0; row < rh; row += PX * stride) {
+      const offset = (row / PX % 2 === 0) ? 0 : PX;
+      for (let col = offset; col < rw; col += PX * stride) {
+        p.rect(rx + col, ry + row, PX, PX);
+      }
+    }
+  }
+
+  // RÔLE : Pour chaque stade, reproduire les px() principaux du corps (silhouette uniquement).
+  // POURQUOI : On ne fait pas de capture canvas (p.get()) → on code la forme manuellement.
+  //            On couvre le corps et les oreilles, pas les yeux ni la bouche.
+
+  if (stage === 'egg') {
+    const x = cx - PX * 3, y = cy;
+    ditherRect(x + PX*2, y,        PX*3, PX);
+    ditherRect(x + PX,   y+PX,     PX*5, PX);
+    ditherRect(x,        y+PX*2,   PX*7, PX*3);
+    ditherRect(x + PX,   y+PX*5,   PX*5, PX);
+    ditherRect(x + PX*2, y+PX*6,   PX*3, PX);
+
+  } else if (stage === 'baby') {
+    const x = cx - PX * 3, y = cy;
+    ditherRect(x+PX,   y,        PX*4, PX);
+    ditherRect(x,      y+PX,     PX*6, PX*3);
+    ditherRect(x+PX,   y+PX*4,   PX*4, PX);
+
+  } else if (stage === 'teen') {
+    const breath  = getBreath(p);
+    const breathX = sl ? 0 : Math.round(breath * 2 - 1);
+    const x = cx - PX * 4 - breathX, y = cy;
+    // Corps principal
+    ditherRect(x+PX*2, y,        PX*4, PX);
+    ditherRect(x+PX,   y+PX,     PX*6, PX);
+    ditherRect(x,      y+PX*2,   PX*8, PX*4);
+    ditherRect(x+PX,   y+PX*6,   PX*6, PX);
+    ditherRect(x+PX*2, y+PX*7,   PX*4, PX);
+    // Oreilles
+    ditherRect(x+PX,   y-PX,     PX*2, PX*2);
+    ditherRect(x+PX*5, y-PX,     PX*2, PX*2);
+    // Pieds
+    ditherRect(x+PX*2, y+PX*8,   PX,   PX);
+    ditherRect(x+PX*5, y+PX*8,   PX,   PX);
+
+  } else if (stage === 'adult') {
+    const breath  = getBreath(p);
+    const breathX = sl ? 0 : Math.round(breath * 2 - 1);
+    const x = cx - PX * 5 - breathX, y = cy;
+    // Corps principal
+    ditherRect(x+PX*3, y,        PX*4, PX);
+    ditherRect(x+PX*2, y+PX,     PX*6, PX);
+    ditherRect(x+PX,   y+PX*2,   PX*8, PX);
+    ditherRect(x,      y+PX*3,   PX*10, PX*4);
+    ditherRect(x+PX,   y+PX*7,   PX*8, PX);
+    ditherRect(x+PX*2, y+PX*8,   PX*6, PX);
+    ditherRect(x+PX*3, y+PX*9,   PX*4, PX);
+    // Oreilles
+    ditherRect(x+PX*2, y-PX,     PX*2, PX*2);
+    ditherRect(x+PX*6, y-PX,     PX*2, PX*2);
+  }
+}
+
 /* ─── §2 ACCESSOIRES ─────────────────────────────────────────────── */
 
 /**
@@ -129,6 +222,8 @@ if (totalXp > 45) {
   px(p, x + PX*4 + wobble, y + PX*2, PX, PX);
   px(p, x + PX*3 + wobble, y + PX*3, PX, PX);
 }
+  // Couche de saleté par-dessus le sprite (si salete >= 5)
+  drawSaleteDither(p, 'egg', cx, cy, window.D?.g?.salete || 0, false);
   return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
 }
 
@@ -164,6 +259,9 @@ function drawBaby(p, cx, cy, sl, en, ha) {
 
     // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
     drawAccessoires(p, cx, { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 }, 'baby', sl);
+
+    // Couche de saleté par-dessus le sprite (si salete >= 5)
+    drawSaleteDither(p, 'baby', cx, cy, window.D?.g?.salete || 0, sl);
 
     return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
 }
@@ -301,6 +399,9 @@ px(p, x+PX*5+2, y-PX,   PX, PX);
 
     // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
     drawAccessoires(p, cx, { topY: y, eyeY: y + PX*2, neckY: y + PX*5 }, 'teen', sl);
+
+    // Couche de saleté par-dessus le sprite (si salete >= 5)
+    drawSaleteDither(p, 'teen', cx, cy, window.D?.g?.salete || 0, sl);
 
     return { topY: y, eyeY: y+PX*2, neckY: y+PX*5 };
 }
@@ -511,6 +612,9 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
 
     // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
     drawAccessoires(p, cx, { topY: y, eyeY: y + PX*3, neckY: y + PX*6 }, 'adult', sl);
+
+    // Couche de saleté par-dessus le sprite (si salete >= 5)
+    drawSaleteDither(p, 'adult', cx, cy, window.D?.g?.salete || 0, sl);
 
     return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
 }

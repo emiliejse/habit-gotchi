@@ -681,7 +681,14 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     p.textSize(16);
     p.textAlign(p.CENTER, p.TOP);
     p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.3;
-    p.text('🧹', 72, 3);
+    p.text('🧹', 60, 3);
+
+    // 🛁 Bain : affiché (opaque) seulement si le Gotchi est sale (salete >= 5)
+    // POURQUOI : Signal discret que le Gotchi a besoin d'être nettoyé.
+    //            En-dessous du seuil → invisible (alpha 0) pour ne pas polluer le HUD.
+    const salete = window.D?.g?.salete || 0;
+    p.drawingContext.globalAlpha = salete >= 5 ? 1.0 : 0.0;
+    p.text('🛁', 88, 3);
 
 // 🍽️ Assiette : opaque si hors fenêtre repas OU repas déjà fait sur la fenêtre active
     const mealWin = (typeof getCurrentMealWindow === 'function') ? getCurrentMealWindow() : null;
@@ -803,7 +810,7 @@ if (!window._gotchiActif) return true;
     const mx = p.touches[0]?.x ?? p.mouseX;
     const my = p.touches[0]?.y ?? p.mouseY;
 
-    if (Math.abs(mx - 72) < 14 && my < 26) {
+    if (Math.abs(mx - 60) < 14 && my < 26) {
       setTimeout(() => cleanPoops(), 0); return false;
     }
     if (Math.abs(mx - 128) < 14 && my < 26) {
@@ -868,6 +875,102 @@ if (!window._gotchiActif) return true;
   return false;
 }
   };
+
+  // ─── Frottement prolongé pour nettoyer le Gotchi (touchMoved) ───
+  // RÔLE : Détecte un geste de frottement continu sur le Gotchi et décrémente sa saleté.
+  // POURQUOI : Le nettoyage est progressif — il faut frotter pendant ~2 secondes par point de saleté.
+  //            On utilise un timer interne (_scrubTimer) pour n'enlever 1 point que toutes les 500ms.
+  p.touchMoved = function() {
+    // Gardes : mêmes conditions que touchStarted
+    if (!window._gotchiActif) return true;
+    const modalEl = document.getElementById('modal');
+    if (modalEl && getComputedStyle(modalEl).display !== 'none') return true;
+
+    const salete = window.D?.g?.salete || 0;
+    if (salete < 5) return true; // Rien à nettoyer
+
+    const mx = p.touches[0]?.x ?? p.mouseX;
+    const my = p.touches[0]?.y ?? p.mouseY;
+
+    // Recalcule la hitbox Gotchi (même logique que touchStarted)
+    const by = window.D.g.stage === 'egg'  ? 115
+             : window.D.g.stage === 'baby' ? 108
+             : window.D.g.stage === 'teen' ? 98
+             :                               85;
+    const gotchiCenterY = by + GOTCHI_OFFSET_Y + 30;
+    const hit = Math.abs(mx - walkX) < 26 && Math.abs(my - gotchiCenterY) < 35;
+
+    if (!hit) {
+      // Doigt sorti de la zone → on arrête le frottement
+      clearInterval(window._scrubTimer);
+      window._scrubTimer = null;
+      return true;
+    }
+
+    // RÔLE : Démarrer le timer de frottement si ce n'est pas déjà fait.
+    // POURQUOI : touchMoved est appelé à chaque frame de mouvement — on ne veut pas
+    //            créer des dizaines de timers. Un seul est actif à la fois.
+    if (!window._scrubTimer) {
+      window._scrubTimer = setInterval(() => {
+        const D = window.D;
+        if (!D?.g || D.g.salete < 1) {
+          clearInterval(window._scrubTimer);
+          window._scrubTimer = null;
+          return;
+        }
+
+        // Décrémente de 1 point de saleté
+        D.g.salete = Math.max(0, D.g.salete - 1);
+
+        // Particules de nettoyage (bulles bleues/blanches)
+        for (let i = 0; i < 5; i++) {
+          spawnP(
+            walkX + (Math.random() - 0.5) * 30,
+            by + GOTCHI_OFFSET_Y + (Math.random() * 40),
+            Math.random() < 0.5 ? '#88c8e8' : '#ffffff'
+          );
+        }
+
+        // Expression surprise à chaque point retiré
+        if (typeof window.triggerExpr === 'function') {
+          window.triggerExpr('surprise', 30);
+        }
+
+        // RÔLE : Récompense finale quand le Gotchi est parfaitement propre.
+        // POURQUOI : Renforce le comportement : nettoyer = gratification (pétales + event).
+        if (D.g.salete === 0) {
+          D.g.petales = (D.g.petales || 0) + 2;
+          if (typeof addEvent === 'function') {
+            addEvent({ type: 'soin', subtype: 'bain', valeur: 2, label: 'Bain donné — Gotchi tout propre ✿' });
+          }
+          clearInterval(window._scrubTimer);
+          window._scrubTimer = null;
+
+          // Particules de célébration (étoiles dorées)
+          for (let i = 0; i < 10; i++) {
+            spawnP(
+              walkX + (Math.random() - 0.5) * 40,
+              gotchiCenterY + (Math.random() - 0.5) * 30,
+              C.star
+            );
+          }
+        }
+
+        save();
+      }, 500); // 1 point de saleté retiré toutes les 500ms
+    }
+
+    return false; // empêche le scroll de la page pendant le frottement
+  };
+
+  // RÔLE : Nettoie le timer de frottement quand le doigt est levé.
+  // POURQUOI : Sans ça, le timer continuerait à tourner en arrière-plan.
+  p.touchEnded = function() {
+    clearInterval(window._scrubTimer);
+    window._scrubTimer = null;
+    return true;
+  };
+
 }; // ← fin p5s
 
 // DÉMARRAGE DE L'INSTANCE P5

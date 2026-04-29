@@ -51,7 +51,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v4.36'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v4.37'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -169,6 +169,7 @@ function defs() {
 envLv:0, activeEnv:'parc', petales:0,poops: [], poopDay: '',    // date du dernier comptage
 poopCount: 0,  // nb de cacas spawné aujourd'hui
 snackDone: '', snackEmoji: '',
+salete: 0,       // niveau de saleté du Gotchi — 0 (propre) à 10 (très sale)
       props:[], customBubbles:[],
       bilanCount: 0,
       bilanWeek: '',
@@ -233,7 +234,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 5; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 6; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -295,6 +296,14 @@ const MIGRATIONS = [
         acquis: p.acquis ?? 0  // 0 = objet antérieur à la feature, jamais "new"
       }));
     }
+    return d;
+  },
+  // Migration 5→6 : ajout du champ salete
+  // RÔLE : Niveau de saleté du Gotchi (0 = propre, 10 = très sale).
+  // POURQUOI : Nouvelle feature — saleté passive + nettoyage par frottement.
+  //            Les utilisatrices existantes démarrent propres (salete = 0).
+  function m6(d) {
+    d.g.salete = d.g.salete ?? 0;
     return d;
   }
 ];
@@ -438,9 +447,28 @@ function spawnPoop() {
   window.D.g.poops.push({ id: Date.now(), x, y });
   window.D.g.poopCount++;
   window.D.g.lastPoopSpawn = Date.now();
+  // RÔLE : Chaque nouvelle crotte ajoute 1 point de saleté (plafonné à 10)
+  // POURQUOI : La saleté est liée aux poops — cohérent avec le comportement du Gotchi
+  window.D.g.salete = Math.min(10, (window.D.g.salete || 0) + 1);
   save();
   if (typeof updUI === 'function') updUI();
 }
+
+/* ─── SALETÉ PASSIVE ──────────────────────────────────────────────── */
+// RÔLE : Calcule la saleté accumulée par le temps depuis la dernière visite.
+// POURQUOI : Appelée au bootstrap, comme la pénalité d'absence.
+//            +1 point toutes les 6h d'absence (plafonné à 10).
+//            La saleté liée aux poops est gérée dans spawnPoop().
+window.checkSalete = function checkSalete() {
+  const D = window.D;
+  if (!D.lastActive) return; // premier lancement : rien à calculer
+  const heuresAbsence = (Date.now() - new Date(D.lastActive)) / (1000 * 60 * 60);
+  const pointsTemps   = Math.floor(heuresAbsence / 6); // +1 par tranche de 6h
+  if (pointsTemps > 0) {
+    D.g.salete = Math.min(10, (D.g.salete || 0) + pointsTemps);
+    // pas de save() ici — le bootstrap appellera save() après checkWelcome()
+  }
+};
 
 // Probabilité d'apparition
 function maybeSpawnPoop() {
@@ -1166,6 +1194,9 @@ async function bootstrap() {
       save();
     }
     if (typeof updBadgeBoutique === 'function') updBadgeBoutique();
+    // RÔLE : Met à jour la saleté du Gotchi selon le temps écoulé depuis la dernière session.
+    // POURQUOI : La saleté augmente passivement (+1 par 6h d'absence) — on calcule le rattrapage ici.
+    if (typeof window.checkSalete === 'function') window.checkSalete();
     catchUpPoops();
     initApp();
     _appInitialized = true;

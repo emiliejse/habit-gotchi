@@ -21,7 +21,7 @@
   --gold: #e8d088;
   --tama: #c8d8c0;
   
-  --text: #38304a;
+  --text: #5a5070; /* était #38304a — adouci, même teinte prune, moins contrasté */
   --text2: #6e5e8c; /* était #887ea0 — foncé pour passer WCAG AA (ratio > 5:1 sur --card) */
   --border: #ccc4d8;
   --shadow: rgba(56, 48, 74, 0.08);
@@ -337,6 +337,9 @@ body {
   border-radius: 12px 12px 12px 2px; padding: 8px 12px;
   font-size: var(--fs-sm); max-width: 90%; line-height: 1.5; /* était 11px */
   border: 1px solid var(--border);
+  font-family: var(--font-gotchi); /* POURQUOI : voix du gotchi — même registre que la bulle principale */
+  font-style: italic;
+  font-weight: 300;
 }
 .chat-bubble-system {
   text-align: center; font-size: var(--fs-xs); color: var(--text2); /* était 9px — messages système = secondaires */
@@ -612,8 +615,8 @@ body {
 
 /* RÔLE : Zone liste des habitudes — padding interne après le header */
 #hab-home {
-  padding: var(--sp-md) var(--sp-sm) var(--sp-lg);
-  /* POURQUOI : padding latéral var(--sp-sm) pour que les habitudes ne collent pas aux bords du bloc */
+  padding: var(--sp-md) var(--sp-md) var(--sp-lg);
+  /* POURQUOI : padding latéral var(--sp-md) — aligné sur le padding latéral standard des .card */
 }
 
 /* RÔLE : Carte principale Gotchi — stat + pensée IA réunies */
@@ -752,18 +755,18 @@ body {
   display: flex;
   justify-content: center;
   gap: 12px;
-  padding: 4px 0 20px;
+  padding: 4px var(--sp-md) 20px; /* POURQUOI : même padding latéral que .card et #hab-home */
 }
 
 /* RÔLE : Badge individuel — cercle avec icône centré */
 .hab-mini {
-  width: 52px;
-  height: 52px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 19px;
   background: rgba(176, 144, 208, 0.1);
   border: 2px solid var(--border);
   transition: background 0.3s ease, border-color 0.3s ease;

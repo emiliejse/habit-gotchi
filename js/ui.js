@@ -3120,7 +3120,7 @@ function renderProg() {
     const fin   = new Date(wd[6] + 'T12:00');
     const fmt   = d => `${d.getDate()} ${d.toLocaleDateString('fr-FR', { month: 'short' })}`;
     const prenom = D.g.userName || D.userName || 'toi';
-    bilanTitre.innerHTML = `🌼 Bilan pour ${prenom}<br><span style="font-size:var(--fs-sm);font-weight:normal;color:var(--text2)">semaine du ${fmt(debut)} au ${fmt(fin)}</span>`;
+    bilanTitre.innerHTML = `🌼 Bilan pour ${prenom}<br><span style="font-size:11px;font-weight:400;font-family:var(--font-body);color:var(--text2)">semaine du ${fmt(debut)} au ${fmt(fin)}</span>`;
   }
 
   /* ── Restauration bilan persisté ── */

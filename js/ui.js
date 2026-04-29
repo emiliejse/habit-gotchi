@@ -922,16 +922,19 @@ function renderProps() {
   ];
   const filterEl = document.getElementById('props-filters');
   if (filterEl) {
-    filterEl.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:8px 0';
+    // RÔLE : Filtres en cercles — alignés sur toute la largeur comme le switcher env au-dessus
+    filterEl.style.cssText = 'display:flex;justify-content:center;gap:12px;align-items:center;width:100%;margin:8px 0 10px';
     filterEl.innerHTML = cats.map(({ key, label }) => {
       const active = propsFilterActive === key;
+      const icon = [...label][0]; // RÔLE : extrait l'emoji seul
+      const nom  = label.replace(/^\S+\s*/, '');
       return `<button onclick="setPropsFilter('${key}')"
-        style="padding:5px 2px;border-radius:var(--r-md);
+        title="${nom}"
+        style="width:52px;height:52px;border-radius:50%;padding:0;flex-shrink:0;
         border:2px solid ${active ? 'var(--lilac)' : 'var(--border)'};
-        font-size:var(--fs-xs);font-weight:bold;font-family:var(--font-body);cursor:pointer;width:100%;
+        font-size:22px;cursor:pointer;
         background:${active ? 'var(--lilac)' : 'rgba(0,0,0,.03)'};
-        color:${active ? '#fff' : 'var(--text2)'};
-        transition:.15s;">${label}</button>`;
+        transition:.15s;">${icon}</button>`;
     }).join('');
   }
 

@@ -139,7 +139,7 @@ body {
   right: 0;
   z-index: 50;
   background: var(--bg);
-  padding: calc(var(--sat) + 6px) var(--app-gutter) 0;
+  padding: calc(var(--sat) + 6px) var(--app-gutter) 10px;
   border-bottom: 2px solid var(--border);
   box-shadow: 0 2px 10px var(--shadow);
 }
@@ -277,7 +277,6 @@ body {
   font-weight: 300;
   font-size: var(--fs-sm);
   line-height: 1.4;
-  margin-bottom: 10px;
   text-align: center;
   height: auto;
   display: flex;
@@ -414,8 +413,10 @@ body {
 /* Titre du cahier */
 .menu-book h2 {
   text-align: center;
-  font-size: 13px;
-  letter-spacing: 2px;
+  font-size: 16px;
+  font-family: var(--font-title);
+  font-weight: 700;
+  letter-spacing: 0.5px;
   margin-bottom: 12px;
   color: var(--paper-text);
   position: relative; /* passe au-dessus des lignes */
@@ -495,7 +496,7 @@ body {
   padding: 12px 14px; /* POURQUOI : plus d'air interne pour mieux respirer */
   font-size: var(--fs-md); /* POURQUOI : était fs-sm — plus lisible, plus présent */
   font-weight: bold;
-  font-family: var(--font-terminal);
+  font-family: var(--font-body);
   cursor: pointer;
   border-radius: 2px;
   border: none;

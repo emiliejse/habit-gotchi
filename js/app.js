@@ -656,7 +656,7 @@ function calcStr() {
     left:${rect.left + rect.width / 2}px;
     top:${rect.top}px;
     transform:translateX(-50%);
-    font:bold 11px 'Courier New',monospace;
+    font-size:11px;font-weight:bold;font-family:var(--font-body);
     color:var(--lilac);
     pointer-events:none;
     z-index:9999;

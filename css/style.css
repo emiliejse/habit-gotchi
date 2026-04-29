@@ -115,6 +115,22 @@ button, input, select, textarea {
   font-family: inherit;
 }
 
+/* RÔLE : Force le rendu texte du caractère ✿ (U+273F) sur iOS/Android
+   POURQUOI : Certains systèmes l'interprètent comme emoji et l'affichent en bleu.
+              @font-face avec unicode-range intercepte ce seul caractère et le force
+              en rendu texte (pas de variation selector FE0E nécessaire dans le HTML). */
+@font-face {
+  font-family: 'NunitoFleur';
+  src: local('Nunito');
+  unicode-range: U+273F; /* ✿ uniquement */
+}
+
+/* Application ciblée : boutons et éléments de l'app — pas les emojis vrais */
+button, .btn, .btn-p, .btn-s, .btn-d, .thought-flowers, .bilan-flowers,
+#bilan-flowers, #journal-flowers, #thought-count {
+  font-family: 'NunitoFleur', var(--font-body);
+}
+
 body {
   background: var(--bg);
   color: var(--text);

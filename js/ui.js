@@ -1097,7 +1097,7 @@ function ouvrirBoutique() {
   lockScroll();
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h2 style="color:var(--lilac);">🛍️ Boutique</h2>
+      <h2 style="color:var(--text);">🛍️ Boutique</h2>
       <button onclick="clModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0">✕</button>
     </div>
 
@@ -3153,16 +3153,87 @@ function renderProg() {
     wt.textContent = `${a.getDate()}/${a.getMonth()+1} — ${b.getDate()}/${b.getMonth()+1}`;
   }
 
-  /* ── Calendrier hebdomadaire ── */
+  /* ── Calendrier hebdomadaire — rendu enrichi identique à agenda/mois ── */
+  // RÔLE : Chaque case affiche le jour, la couleur habitudes, les indicateurs cycle et les icônes RDV/journal
+  // POURQUOI : Cohérence visuelle avec la vue agenda/mois — même police, même structure par case
   const total = D.habits.length || 6;
 
-  document.getElementById('w-view').innerHTML = wd.map(ds => {
-    const log   = D.log[ds] || [];
-    const isT   = ds === today();
-    const { bg, border } = calColor(log.length, total, isT);
-    const day   = new Date(ds + 'T12:00').getDate();
-    return `<div class="cal-c" style="background:${bg};border:${border};cursor:pointer" onclick="showDayDetail('${ds}')">${day}</div>`;
-  }).join('');
+  // Données cycle — même logique que renderAgendaMois
+  const cycleEntries = D.cycle || [];
+  const j1Dates = cycleEntries
+    .filter(e => e.type === 'regles')
+    .map(e => e.date)
+    .sort().reverse();
+
+  // En-têtes L M M J V S D
+  let wHtml = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px">';
+  ['L','M','M','J','V','S','D'].forEach(j => {
+    wHtml += `<div style="text-align:center;font-size:var(--fs-xs);color:var(--text2);
+      font-weight:bold;font-family:var(--font-body);padding:2px 0">${j}</div>`;
+  });
+  wHtml += '</div>';
+
+  // Cases des 7 jours
+  wHtml += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+  wd.forEach(ds => {
+    const log    = D.log[ds] || [];
+    const isT    = ds === today();
+    const pct    = total > 0 ? log.length / total : 0;
+    const day    = new Date(ds + 'T12:00').getDate();
+
+    // Fond couleur habitudes — même calcul que renderAgendaMois
+    const g       = Math.round(180 + pct * 60);
+    const alpha   = pct > 0 ? 0.15 + pct * 0.6 : 0;
+    const bgColor = pct > 0 ? `rgba(80,${g},120,${alpha})` : 'rgba(0,0,0,0.03)';
+    const border  = isT ? '2px solid var(--lilac)' : '1px solid transparent';
+
+    // Indicateurs cycle
+    const estJ1     = j1Dates.includes(ds);
+    let   estOvul   = false;
+    let   estPredic = false;
+    j1Dates.forEach(j1 => {
+      const diff = Math.round((new Date(ds+'T12:00') - new Date(j1+'T12:00')) / 86400000);
+      if (diff >= 12 && diff <= 16) estOvul   = true;
+      if (diff >= 25 && diff <= 30) estPredic = true;
+    });
+
+    // RDV du jour (récurrents inclus) + note journal
+    const rdvDuJour = getRdvDuJour(ds);
+    const aNote     = (D.journal || []).some(n => n.date && n.date.startsWith(ds));
+    let rdvEmoji = '';
+    if (rdvDuJour.length) {
+      const match = rdvDuJour[0].label.match(/^\p{Emoji}/u);
+      rdvEmoji = match ? match[0] : '📌';
+      if (rdvDuJour.length > 1) rdvEmoji += `<span style="font-size:7px;vertical-align:super">+${rdvDuJour.length - 1}</span>`;
+    }
+
+    wHtml += `
+      <button onclick="showDayDetail('${ds}')"
+        style="position:relative;aspect-ratio:1;border-radius:6px;cursor:pointer;
+        background:${bgColor};border:${border};
+        display:flex;flex-direction:column;align-items:center;
+        justify-content:space-between;padding:2px 1px;
+        font-family:var(--font-body)">
+
+        ${estOvul ? `<div style="position:absolute;inset:1px;border-radius:5px;
+          border:2px solid #80b8e066;pointer-events:none"></div>` : ''}
+        ${estJ1 ? `<div style="position:absolute;top:2px;right:2px;width:6px;height:6px;
+          border-radius:50%;background:#e07080"></div>` : ''}
+        ${estPredic && !estJ1 ? `<div style="position:absolute;inset:1px;border-radius:5px;
+          border:2px dashed #e0708066;pointer-events:none"></div>` : ''}
+
+        <span style="font-size:var(--fs-sm);font-weight:${isT?'bold':'normal'};
+          color:${isT?'var(--lilac)':'var(--text)'};margin-top:2px">${day}</span>
+
+        <div style="display:flex;gap:1px;font-size:var(--fs-xs);line-height:1;margin-bottom:1px">
+          ${rdvEmoji}
+          ${aNote ? '📓' : ''}
+        </div>
+      </button>`;
+  });
+  wHtml += '</div>';
+
+  document.getElementById('w-view').innerHTML = wHtml;
 
   /* ── Titre bilan ── */
   const bilanTitre = document.getElementById('bilan-titre');
@@ -3911,7 +3982,7 @@ function ouvrirAgenda(dateStr) {
   // 2. Prépare le contenu
 mbox.innerHTML = `
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-    <h2 style="color:var(--lilac)">🗓️ Mon Agenda</h2>
+    <h2 style="color:var(--text)">🗓️ Mon Agenda</h2>
       <button onclick="fermerAgenda()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0">✕</button>
   </div>
   <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
@@ -4065,8 +4136,8 @@ function renderAgendaJour(el) {
         style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center">
         ${chevronNav('left')}
       </button>
-      <span style="font-size:12px;font-weight:bold;font-family:var(--font-body);
-        text-align:center;color:var(--lilac);flex:1">
+      <span style="font-size:var(--fs-lg);font-weight:bold;font-family:var(--font-body);
+        text-align:center;color:var(--lilac);flex:1;line-height:1.2">
         ${titre}
       </span>
       <button onclick="navAgendaJour(1)"
@@ -4675,8 +4746,8 @@ el.innerHTML = `
         ${chevronNav('left')}
       </button>
       <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px">
-        <span style="font-size:12px;font-weight:bold;font-family:var(--font-body);
-          text-transform:capitalize;text-align:center;color:var(--lilac)">
+        <span style="font-size:var(--fs-lg);font-weight:bold;font-family:var(--font-body);
+          text-transform:capitalize;text-align:center;color:var(--lilac);line-height:1.2">
           ${moisNom}
         </span>
         ${_agendaMoisOffset !== 0 ? `

@@ -1877,7 +1877,8 @@ function stopThinkingAnim(interval) {
 
 // RÔLE : Choisit un registre d'expression selon l'état du gotchi + aléatoire
 // POURQUOI : Force la variété réelle des pensées sans dépendre du modèle seul
-function getRegistre(energy, happiness, h) {
+// POURQUOI : Le paramètre h (heure) a été retiré — les registres temporels ne sont plus utilisés.
+function getRegistre(energy, happiness) {
   const registres = [];
 
   // Selon l'énergie
@@ -1900,10 +1901,9 @@ function getRegistre(energy, happiness, h) {
     "fierté un peu excessive pour quelque chose de minuscule"
   );
 
-  // Selon l'heure
-  if (h >= 7  && h < 11) registres.push("optimisme du matin légèrement naïf");
-  if (h >= 13 && h < 16) registres.push("constat un peu blasé mais affectueux sur l'après-midi");
-  if (h >= 21)           registres.push("pensée flottante, un peu philosophique, légèrement fatiguée");
+  // POURQUOI : Les registres temporels (matin, après-midi, nuit) ont été retirés.
+  // Les bulles sont rejouées n'importe quand → un registre "matin naïf" lu à 23h est incohérent.
+  // Le ton est désormais ancré uniquement sur l'énergie et l'humeur du Gotchi.
 
   // Registres universels (toujours disponibles)
   registres.push(
@@ -1988,16 +1988,16 @@ async function askClaude() {
     nameGotchi:    D.g.name         || P?.nom    || 'Petit·e Gotchi',
     userName:      D.g.userName     || D.userName || 'ton utilisatrice',
     diminutif:     D.g.userNickname || D.g.userName || D.userName || 'toi',
-    registre:      getRegistre(g.energy, g.happiness, hr()),
+    registre:      getRegistre(g.energy, g.happiness),
     style:         P?.style         || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
     traits:        P?.traits?.join(', ') || 'doux, joueur, curieux',
     energy:        g.energy,
     happiness:     g.happiness,
-    heure:         new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-    date:          todayFr(),
+    // POURQUOI : heure et date retirées — les bulles sont rejouées n'importe quand,
+    // une référence temporelle précise les rendrait incohérentes.
     notesRecentes: notesRecentes
-      ? `Aujourd'hui : ${todayFr()}. Ambiance récente : ${notesRecentes}`
-      : `Aujourd'hui : ${todayFr()}.`,
+      ? `Ambiance récente : ${notesRecentes}`
+      : '',
     exemples:      getExemples(D.journal, P),
     nomsExistants: [...new Set([
       ...(D.g.props || []).map(p => `${p.nom} (${p.type})`),

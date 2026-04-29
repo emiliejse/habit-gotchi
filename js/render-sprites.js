@@ -46,31 +46,59 @@ function drawDither(p, x, y, w, h, color) {
  * @param {number} cx - Centre X du Gotchi (= cx reçu par drawBaby/Teen/Adult)
  * @param {Object} anchors - { topY, eyeY, neckY } en coordonnées locales du sprite
  * @param {string} stage - 'baby' | 'teen' | 'adult' (pour calculer les offsets verticaux)
+ * @param {boolean} sl - true si le Gotchi dort (sleeping), pour ajuster la position des yeux fermés
  */
-function drawAccessoires(p, cx, anchors, stage) {
+function drawAccessoires(p, cx, anchors, stage, sl) {
   if (!window.D?.g?.props) return;
 
   // RÔLE : Filtrer les accessoires par environnement actif.
   // POURQUOI : Feature multi-env v3.49 — chaque env peut avoir ses propres accessoires.
   //            Rétrocompat : si prop.env non défini (ancienne sauvegarde), on affiche quand même.
   const envActif = window.D.g.activeEnv || 'parc';
+
+  // RÔLE : Déduplication par ancrage — un seul accessoire dessiné par slot (tete, yeux, cou).
+  // POURQUOI : Guard défensif au cas où la sauvegarde contiendrait deux accessoires actifs
+  //            sur le même ancrage dans le même env (ne devrait pas arriver, mais on se protège).
+  const dejaDessines = new Set(); // mémorise les ancrages déjà rendus cette frame
+
   window.D.g.props
     .filter(pr => pr.actif && pr.type === 'accessoire' && (pr.env === envActif || !pr.env))
     .forEach(prop => {
       const def = getPropDef(prop.id);
       if (!def || !def.pixels) return;
 
+      const ancrage = def.ancrage || 'tete';
+
+      // RÔLE : Si un accessoire sur ce slot a déjà été dessiné, on ignore celui-ci.
+      // POURQUOI : Évite la superposition visuelle si deux props actifs partagent le même ancrage.
+      if (dejaDessines.has(ancrage)) return;
+      dejaDessines.add(ancrage);
+
       const ps = def.pxSize || PX;
-      // Centre Gotchi aligné sur la grille PX (même phase que le corps)
-      const cxSnapped = Math.floor(cx / PX) * PX;
-      const accX = cxSnapped - Math.floor(def.pixels[0].length * ps / 2 / PX) * PX;
 
-      // Snap des ancrages sur la grille PX (même phase verticale que le corps)
-      const baseYraw = def.ancrage === 'yeux' ? anchors.eyeY
-                     : def.ancrage === 'cou'  ? anchors.neckY
-                     :                          anchors.topY;
-      const baseY = Math.floor(baseYraw / PX) * PX;
+      // RÔLE : Centrer l'accessoire sur cx sans snap grille — drawProp gère le rendu pixel.
+      // POURQUOI : Le snap Math.floor(cx/PX)*PX désynchronisait l'accessoire du corps quand
+      //            le Gotchi respirait (breathX) ou rebondissait (bobY flottant) → glissement visible.
+      const accX = cx - (def.pixels[0].length * ps) / 2;
 
+      // RÔLE : Choisir l'ancrage Y selon le slot, en tenant compte des yeux fermés (sl).
+      // POURQUOI : La nuit, les yeux fermés sont dessinés 1 rangée plus bas que les yeux ouverts
+      //            sur teen et adult. Sans cette correction, les lunettes/accessoires yeux
+      //            apparaissaient 1px trop haut.
+      let baseYraw;
+      if (def.ancrage === 'yeux') {
+        // Décalage +PX si sleeping sur teen et adult (yeux fermés = une rangée plus bas)
+        const sleepShift = sl && (stage === 'teen' || stage === 'adult') ? PX : 0;
+        baseYraw = anchors.eyeY + sleepShift;
+      } else if (def.ancrage === 'cou') {
+        baseYraw = anchors.neckY;
+      } else {
+        baseYraw = anchors.topY;
+      }
+
+      // RÔLE : Pas de snap grille sur Y non plus — on utilise la valeur flottante directement.
+      // POURQUOI : Math.floor(baseYraw/PX)*PX faisait "sauter" l'accessoire d'une case entière
+      //            quand bobY franchissait un palier de 5px → glissement vertical le jour.
       const offsetY = def.ancrage === 'yeux'
                     ? (stage === 'teen' ? ps * 3
                      : stage === 'adult' ? ps * 3
@@ -79,7 +107,7 @@ function drawAccessoires(p, cx, anchors, stage) {
                     ? (stage === 'baby' ? ps * 3 : ps * 5)
                     : ps;
 
-      const accY = baseY - def.pixels.length * ps + offsetY;
+      const accY = baseYraw - def.pixels.length * ps + offsetY;
       drawProp(p, def, accX, accY);
     });
 }
@@ -135,7 +163,7 @@ function drawBaby(p, cx, cy, sl, en, ha) {
     if (en < EN_CRIT && !sl) drawDither(p, x + PX, y + PX * 3, PX * 4, PX * 3, C.bodyDk); // épuisement (en < 1)
 
     // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
-    drawAccessoires(p, cx, { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 }, 'baby');
+    drawAccessoires(p, cx, { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 }, 'baby', sl);
 
     return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
 }
@@ -272,7 +300,7 @@ px(p, x+PX*5+2, y-PX,   PX, PX);
     if (en < EN_CRIT && !sl) drawDither(p, x, y + PX * 4, PX * 8, PX * 5, C.bodyDk); // épuisement (en < 1)
 
     // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
-    drawAccessoires(p, cx, { topY: y, eyeY: y + PX*2, neckY: y + PX*5 }, 'teen');
+    drawAccessoires(p, cx, { topY: y, eyeY: y + PX*2, neckY: y + PX*5 }, 'teen', sl);
 
     return { topY: y, eyeY: y+PX*2, neckY: y+PX*5 };
 }
@@ -482,7 +510,7 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
     if (en < EN_CRIT && !sl) drawDither(p, x + PX, y + PX * 5, PX * 8, PX * 5, C.bodyDk); // épuisement (en < 1)
 
     // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
-    drawAccessoires(p, cx, { topY: y, eyeY: y + PX*3, neckY: y + PX*6 }, 'adult');
+    drawAccessoires(p, cx, { topY: y, eyeY: y + PX*3, neckY: y + PX*6 }, 'adult', sl);
 
     return { topY: y, eyeY: y+PX*3, neckY: y+PX*6 };
 }

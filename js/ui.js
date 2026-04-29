@@ -1529,24 +1529,30 @@ function confirmSlot(propIndex, slotId) {
 // POURQUOI : Les accessoires et ambiances n'ont pas de slot — juste un env.
 function confirmEnvDirect(propIndex, envChoisi) {
   const prop = window.D.g.props[propIndex];
-  const def  = window.PROPS_LIB?.find(p => p.id === prop.id);
+  // RÔLE : getPropDef cherche dans le catalogue ET dans D.propsPixels (objets IA).
+  // POURQUOI : window.PROPS_LIB?.find() manquait les objets générés par l'IA, ce qui
+  //            empêchait la déduplication par ancrage pour ces objets.
+  const def  = getPropDef(prop.id);
 
-  // Désactiver les concurrents (même ancrage ou même motion) dans le même env
+  // RÔLE : Désactiver les concurrents (même ancrage ou même motion) dans le même env.
+  // POURQUOI : On utilise getPropDef() au lieu de window.PROPS_LIB?.find() pour couvrir
+  //            aussi les objets générés par l'IA (stockés dans D.propsPixels, pas dans PROPS_LIB).
+  //            Sans ça, deux accessoires IA sur le même ancrage pouvaient rester actifs simultanément.
   if (prop.type === 'ambiance') {
     const motion = def?.motion || 'drift';
     window.D.g.props.forEach(p => {
       if (p !== prop && p.actif && p.type === 'ambiance' && p.env === envChoisi) {
-        const pDef = window.PROPS_LIB?.find(l => l.id === p.id);
+        const pDef = getPropDef(p.id); // couvre catalogue ET objets IA
         if ((pDef?.motion || 'drift') === motion) { p.actif = false; p.env = null; toast(`↩ ${p.nom} remplacé`); }
       }
     });
   }
   if (prop.type === 'accessoire') {
-    const ancrage = def?.ancrage || 'top';
+    const ancrage = def?.ancrage || 'tete';
     window.D.g.props.forEach(p => {
       if (p !== prop && p.actif && p.type === 'accessoire' && p.env === envChoisi) {
-        const pDef = window.PROPS_LIB?.find(l => l.id === p.id);
-        if ((pDef?.ancrage || 'top') === ancrage) { p.actif = false; p.env = null; toast(`↩ ${p.nom} remplacé`); }
+        const pDef = getPropDef(p.id); // couvre catalogue ET objets IA
+        if ((pDef?.ancrage || 'tete') === ancrage) { p.actif = false; p.env = null; toast(`↩ ${p.nom} remplacé`); }
       }
     });
   }

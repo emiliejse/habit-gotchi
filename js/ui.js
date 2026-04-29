@@ -4151,16 +4151,22 @@ function renderAgendaJour(el) {
     ${phaseHtml}
 
     <!-- Habitudes -->
-    <div style="margin-bottom:20px">
+    <div style="margin-bottom:16px">
       <h3 style="font-size:var(--fs-sm);color:var(--text2);letter-spacing:1.5px;margin-bottom:var(--sp-sm);text-transform:uppercase">Habitudes</h3>
       ${habsHtml}
     </div>
 
+    <!-- Séparateur Habitudes / Journal -->
+    <hr style="border:none;border-top:1px solid var(--border);margin:0 0 16px 0;opacity:0.6">
+
     <!-- Note journal -->
-    <div style="margin-bottom:20px">
+    <div style="margin-bottom:16px">
       <h3 style="font-size:var(--fs-sm);color:var(--text2);letter-spacing:1.5px;margin-bottom:var(--sp-sm);text-transform:uppercase">Journal</h3>
       ${noteHtml}
     </div>
+
+    <!-- Séparateur Journal / Rendez-vous -->
+    <hr style="border:none;border-top:1px solid var(--border);margin:0 0 16px 0;opacity:0.6">
 
     <!-- Rendez-vous -->
     <div style="margin-bottom:var(--sp-md)">

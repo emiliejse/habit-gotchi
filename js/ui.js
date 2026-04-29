@@ -1937,9 +1937,12 @@ async function askClaude() {
   const P   = window.PERSONALITY;
   const CTX = window.AI_CONTEXTS?.askClaude;
 
-  // RÔLE : Notes écrites aujourd'hui uniquement
+  // RÔLE : Notes écrites dans les dernières 24h (fenêtre glissante, pas uniquement le jour calendaire)
+  // POURQUOI : Une note écrite à 23h hier est encore pertinente à 10h ce matin — le filtre par date coupait ce contexte
+  // NOTE : j.date est une string ISO complète (ex: "2026-04-28T23:45:00.000Z") → new Date(j.date).getTime() pour comparer
+  const cutoff24h = Date.now() - 24 * 60 * 60 * 1000; // timestamp il y a 24h
   const notesRecentes = D.journal
-    .filter(j => j.date && j.date.startsWith(td))
+    .filter(j => j.date && new Date(j.date).getTime() >= cutoff24h)
     .map(j => j.text.slice(0, 40))
     .filter(t => t.length > 0)
     .join(' / ');
@@ -2352,7 +2355,13 @@ function _genSoutienCore(D, td) {
   save();
 
   const habsDuJour  = D.habits.map(h => ({ label:h.label, faite:(D.log[td]||[]).includes(h.catId) }));
-  const notesDuJour = D.journal.filter(j => j.date.startsWith(td)).map(j => ({ humeur:j.mood, texte:j.text }));
+  // RÔLE : Notes des dernières 24h (fenêtre glissante)
+  // POURQUOI : Même logique que askClaude — évite de perdre le contexte d'une note écrite hier soir
+  // NOTE : j.date est une string ISO complète → new Date(j.date).getTime() pour comparer au cutoff
+  const cutoff24h = Date.now() - 24 * 60 * 60 * 1000;
+  const notesDuJour = D.journal
+    .filter(j => j.date && new Date(j.date).getTime() >= cutoff24h)
+    .map(j => ({ humeur: j.mood, texte: j.text }));
   
   const ctx = window.AI_CONTEXTS;
 const P = window.PERSONALITY;

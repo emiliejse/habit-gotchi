@@ -767,6 +767,7 @@ body {
   background: rgba(176, 144, 208, 0.1);
   border: 2px solid var(--border);
   transition: background 0.3s ease, border-color 0.3s ease;
+  flex-shrink: 0; /* POURQUOI : empêche l'écrasement en ovale dans un conteneur flex */
   pointer-events: none; /* Non-cliquable */
   user-select: none;
 }

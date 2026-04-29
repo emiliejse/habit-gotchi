@@ -656,46 +656,62 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     }
 
     // 12. HUD (Bandeau supérieur)
+    // RÔLE : Bandeau translucide en haut du canvas avec 3 zones : pétales | actions | météo
+    // POURQUOI : Répartition symétrique sur 200px — chaque zone a son espace dédié.
     p.noStroke();
     p.textStyle(p.NORMAL);
     p.fill(0, 0, 0, 50);
     p.rect(0, 0, CS, 26);
 
+    // ── ZONE GAUCHE : pétales ──────────────────────────────────────
     p.fill(255);
     p.textSize(11);
     p.textAlign(p.LEFT, p.TOP);
-    p.text('🌸 ' + (g.petales || 0), 6, 6);
+    p.drawingContext.globalAlpha = 1.0;
+    p.text('🌸 ' + (g.petales || 0), 5, 6);
 
+    // ── ZONE DROITE : météo ────────────────────────────────────────
     if (window.meteoData?.temperature) {
-  const wcMeteo = window.meteoData?.weathercode;
-  const wind = window.meteoData?.windspeed || 0;
-  let hudMeteo = Math.round(window.meteoData.temperature) + '°C';
-  if (wcMeteo === 45 || wcMeteo === 48) hudMeteo += ' 😶‍🌫️';
-  if (wind > 20) hudMeteo += ' 🌬️';
-  p.textSize(hudMeteo.length > 9 ? 9 : 11); // ← réduit si texte long
-  p.textAlign(p.RIGHT, p.TOP);
-  p.text(hudMeteo, CS - 6, 6);
-  p.textSize(11); // ← remet la taille normale
-}
-    const hasPoops = (window.D.g.poops || []).length > 0;
-    p.textSize(16);
+      const wcMeteo = window.meteoData?.weathercode;
+      const wind    = window.meteoData?.windspeed || 0;
+      let hudMeteo  = Math.round(window.meteoData.temperature) + '°C';
+      if (wcMeteo === 45 || wcMeteo === 48) hudMeteo += ' 😶‍🌫️';
+      if (wind > 20) hudMeteo += ' 🌬️';
+      p.textSize(hudMeteo.length > 9 ? 9 : 11);
+      p.textAlign(p.RIGHT, p.TOP);
+      p.drawingContext.globalAlpha = 1.0;
+      p.text(hudMeteo, CS - 5, 6);
+      p.textSize(11);
+    }
+
+    // ── ZONE CENTRE : 3 icônes d'action réparties sur 200px ───────
+    // Positions : 🧹 x=88  🛁 x=108  🍽️ x=128  (espacement de 20px)
+    // POURQUOI : Les icônes sont centrées ensemble dans la zone entre pétales et météo.
+    //            Chaque icône a une opacité qui indique si l'action est disponible ou non :
+    //            - opaque (1.0) = action disponible / nécessaire
+    //            - estompée (0.25) = rien à faire pour l'instant
+    p.textSize(14);
     p.textAlign(p.CENTER, p.TOP);
-    p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.3;
-    p.text('🧹', 60, 3);
 
-    // 🛁 Bain : affiché (opaque) seulement si le Gotchi est sale (salete >= 5)
-    // POURQUOI : Signal discret que le Gotchi a besoin d'être nettoyé.
-    //            En-dessous du seuil → invisible (alpha 0) pour ne pas polluer le HUD.
+    // 🧹 Balai : opaque si des crottes sont présentes
+    const hasPoops = (window.D.g.poops || []).length > 0;
+    p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.25;
+    p.text('🧹', 88, 4);
+
+    // 🛁 Bain : opaque si le Gotchi est sale (salete >= 5), estompé sinon
+    // POURQUOI : Toujours visible pour que l'utilisatrice sache que ça existe,
+    //            mais discret quand le Gotchi est propre.
     const salete = window.D?.g?.salete || 0;
-    p.drawingContext.globalAlpha = salete >= 5 ? 1.0 : 0.0;
-    p.text('🛁', 88, 3);
+    p.drawingContext.globalAlpha = salete >= 5 ? 1.0 : 0.25;
+    p.text('🛁', 108, 4);
 
-// 🍽️ Assiette : opaque si hors fenêtre repas OU repas déjà fait sur la fenêtre active
+    // 🍽️ Assiette : opaque si un repas est disponible dans la fenêtre active
     const mealWin = (typeof getCurrentMealWindow === 'function') ? getCurrentMealWindow() : null;
-    const meals = (typeof ensureMealsToday === 'function') ? ensureMealsToday() : null;
+    const meals   = (typeof ensureMealsToday === 'function') ? ensureMealsToday() : null;
     const mealAvailable = mealWin && meals && !meals[mealWin];
-    p.drawingContext.globalAlpha = mealAvailable ? 1.0 : 0.35;
-    p.text('🍽️', 128, 3);
+    p.drawingContext.globalAlpha = mealAvailable ? 1.0 : 0.25;
+    p.text('🍽️', 128, 4);
+
     p.drawingContext.globalAlpha = 1.0;
 
     if (window._cleanPositions && window._cleanPositions.length) {
@@ -810,9 +826,19 @@ if (!window._gotchiActif) return true;
     const mx = p.touches[0]?.x ?? p.mouseX;
     const my = p.touches[0]?.y ?? p.mouseY;
 
-    if (Math.abs(mx - 60) < 14 && my < 26) {
+    // 🧹 Balai (x=88) — nettoyer les crottes
+    if (Math.abs(mx - 88) < 14 && my < 26) {
       setTimeout(() => cleanPoops(), 0); return false;
     }
+    // 🛁 Bain (x=108) — tap = petit rappel si propre, rien si sale (le frottement fait le nettoyage)
+    if (Math.abs(mx - 108) < 14 && my < 26) {
+      if ((window.D?.g?.salete || 0) >= 5) {
+        // Signal visuel : expression surprise pour indiquer "frotte-moi !"
+        if (typeof window.triggerExpr === 'function') window.triggerExpr('surprise', 40);
+      }
+      return false;
+    }
+    // 🍽️ Assiette (x=128) — ouvrir le snack
     if (Math.abs(mx - 128) < 14 && my < 26) {
       setTimeout(() => ouvrirSnack(), 0); return false;
     }

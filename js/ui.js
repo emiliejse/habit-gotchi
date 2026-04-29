@@ -3557,52 +3557,51 @@ function ouvrirModalEtats() {
   });
 
   // RÔLE : Contenu de la bottom sheet
+  // POURQUOI : Les inputs n'ont pas de style inline — tout le rendu du slider est géré par
+  //            #etats-sheet input[type=range] dans style.css pour éviter les conflits webkit.
   overlay.innerHTML = `
     <div id="etats-sheet" style="
       background:var(--bg,#fff);
       border-radius:16px 16px 0 0;
-      padding:20px 16px 40px;
+      padding:20px 20px 40px;
       width:100%;max-width:420px;
       animation:slideUp .25s ease-out;
       box-sizing:border-box;
     ">
-      <!-- Poignée de glissement (décorative) -->
+      <!-- Poignée décorative -->
       <div style="width:36px;height:4px;background:var(--border);
-        border-radius:2px;margin:0 auto 16px;opacity:.5"></div>
+        border-radius:2px;margin:0 auto 18px;opacity:.5"></div>
 
-      <h3 style="font-size:12px;color:var(--lilac);margin-bottom:20px;
+      <h3 style="font-size:12px;color:var(--lilac);margin-bottom:24px;
         font-family:'Courier New',monospace;text-align:center;letter-spacing:1px">
         Comment tu te sens là ?
       </h3>
 
       <!-- Slider Énergie -->
-      <div style="margin-bottom:20px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="margin-bottom:28px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <span style="font-size:var(--fs-xs);font-weight:bold;text-transform:uppercase;
             letter-spacing:0.5px;color:var(--text2)">⚡ Énergie</span>
           <span id="modal-sv-energy" style="font-size:var(--fs-sm);font-weight:bold;
-            color:var(--text2);min-width:20px;text-align:right">${g.energy}</span>
+            color:var(--lilac);min-width:20px;text-align:right">${g.energy}</span>
         </div>
+        <!-- POURQUOI : pas de style inline sur l'input — géré entièrement par #etats-sheet input[type=range] -->
         <input type="range" id="modal-sl-energy"
           min="0" max="5" step="1" value="${g.energy}"
-          oninput="setEnergy(this.value); document.getElementById('modal-sv-energy').textContent=this.value"
-          style="width:100%;-webkit-appearance:none;height:8px;border-radius:4px;
-            background:var(--border);outline:none;cursor:pointer">
+          oninput="setEnergy(this.value)">
       </div>
 
       <!-- Slider Bonheur -->
-      <div style="margin-bottom:24px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="margin-bottom:28px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <span style="font-size:var(--fs-xs);font-weight:bold;text-transform:uppercase;
             letter-spacing:0.5px;color:var(--text2)">✿ Bonheur</span>
           <span id="modal-sv-happy" style="font-size:var(--fs-sm);font-weight:bold;
-            color:var(--text2);min-width:20px;text-align:right">${g.happiness}</span>
+            color:var(--lilac);min-width:20px;text-align:right">${g.happiness}</span>
         </div>
         <input type="range" id="modal-sl-happy"
           min="0" max="5" step="1" value="${g.happiness}"
-          oninput="setHappy(this.value); document.getElementById('modal-sv-happy').textContent=this.value"
-          style="width:100%;-webkit-appearance:none;height:8px;border-radius:4px;
-            background:var(--border);outline:none;cursor:pointer">
+          oninput="setHappy(this.value)">
       </div>
 
       <!-- Bouton fermeture -->

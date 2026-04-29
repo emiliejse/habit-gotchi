@@ -51,7 +51,7 @@ window._gotchiActif = true;
 
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v3.8'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v3.9'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -793,20 +793,19 @@ function saveDebounced() {
 }
 
 // Mise à jour des jauges vitales (0-5)
+// RÔLE : Modifie D.g.energy, sauvegarde, et met à jour les labels si présents dans le DOM.
+// POURQUOI : Les anciens IDs (#sv-energy, #sv-energy-compact) ont été supprimés avec le #console-top.
+//            Les nouveaux IDs (#modal-sv-energy) sont dans la bottom sheet dynamique — vérification défensive.
 function setEnergy(v) {
   window.D.g.energy = +v;
-  document.getElementById('sv-energy').textContent = v;
-  // RÔLE : mettre à jour la capsule compacte en temps réel pendant le glissement
-  const c = document.getElementById('sv-energy-compact');
-  if (c) c.textContent = v;
+  const el = document.getElementById('modal-sv-energy');
+  if (el) el.textContent = v;
   saveDebounced();
 }
 function setHappy(v) {
   window.D.g.happiness = +v;
-  document.getElementById('sv-happy').textContent = v;
-  // RÔLE : mettre à jour la capsule compacte en temps réel pendant le glissement
-  const c = document.getElementById('sv-happy-compact');
-  if (c) c.textContent = v;
+  const el = document.getElementById('modal-sv-happy');
+  if (el) el.textContent = v;
   saveDebounced(); updBubbleNow();
 }
 

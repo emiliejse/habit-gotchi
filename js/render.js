@@ -712,43 +712,44 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
       const badgeR = 3;             // rayon des coins arrondis
       const badgePadX = 4;          // padding interne horizontal
 
-      // Fond semi-transparent identique au bandeau HUD
       p.noStroke();
       p.textStyle(p.NORMAL);
       p.textSize(9);
 
-      // POURQUOI : largeur fixe identique pour les deux badges
-      //            + icône et chiffre positionnés séparément avec gap fixe,
-      //            pour que ⚡ et ✿ (métriques d'emoji différentes) n'affectent pas l'alignement.
-      const badgeW   = 30;   // largeur fixe des deux badges (px canvas)
-      const iconW    = 10;   // zone réservée à l'icône (px)
-      const gap      = 3;    // espace fixe entre icône et chiffre (px)
-      const gap2     = 3;    // gap entre les deux badges (px)
+      // POURQUOI : largeur fixe identique pour les deux badges + icône/chiffre positionnés
+      //            séparément avec gap fixe, pour que ⚡ et ✿ n'affectent pas l'alignement.
+      const badgeW   = 30;           // largeur fixe identique pour les deux badges
+      const iconW    = 10;           // zone réservée à l'icône
+      const gap      = 3;            // espace fixe entre icône et chiffre
+      const gap2     = 3;            // espace entre les deux badges
+      // Centre vertical du badge — textAlign CENTER sur Y centre le texte dans la capsule
+      // POURQUOI : p.CENTER sur Y + midY évite le décalage manuel qui variait selon textSize
+      const midY     = badgeY - 1 + badgeH / 2;
 
       // ── Badge ⚡ (énergie) ──
       const enX = 4;
-      p.fill(0, 0, 0, 90);
+      p.fill(0, 0, 0, 50);          // même alpha que le bandeau HUD supérieur
       p.rect(enX, badgeY - 1, badgeW, badgeH, badgeR);
       p.fill(255);
-      p.textAlign(p.LEFT, p.TOP);
-      p.text('⚡', enX + badgePadX, badgeY + 1);                          // icône à gauche
-      p.textAlign(p.LEFT, p.TOP);
-      p.text(String(en), enX + badgePadX + iconW + gap, badgeY + 1);     // chiffre décalé fixe
+      p.textAlign(p.LEFT, p.CENTER); // CENTER sur Y = centrage vertical automatique
+      p.text('⚡', enX + badgePadX, midY);
+      p.text(String(en), enX + badgePadX + iconW + gap, midY);
 
       // ── Badge ✿ (bonheur) ──
       const haX = enX + badgeW + gap2;
-      p.fill(0, 0, 0, 90);
+      p.fill(0, 0, 0, 50);
       p.rect(haX, badgeY - 1, badgeW, badgeH, badgeR);
       p.fill(255);
-      p.textAlign(p.LEFT, p.TOP);
-      p.text('✿', haX + badgePadX, badgeY + 1);                          // icône à gauche
-      p.text(String(ha), haX + badgePadX + iconW + gap, badgeY + 1);     // chiffre décalé fixe
+      p.textAlign(p.LEFT, p.CENTER);
+      p.text('✿', haX + badgePadX, midY);
+      p.text(String(ha), haX + badgePadX + iconW + gap, midY);
 
       // ── Triangle ▲ interactivité ──
       const triX = haX + badgeW + 4;
       p.textSize(8);
       p.fill(255, 255, 255, 160);
-      p.text('▲', triX, badgeY + 1);
+      p.textAlign(p.LEFT, p.CENTER);
+      p.text('▲', triX, midY);
 
       // Exposer la zone de hit pour touchStarted (en px canvas)
       // POURQUOI : calculé ici pour rester synchronisé si les badges changent de taille

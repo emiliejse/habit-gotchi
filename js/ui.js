@@ -3572,7 +3572,8 @@ function ouvrirModalEtats() {
       <div style="width:36px;height:4px;background:var(--border);
         border-radius:2px;margin:0 auto 18px;opacity:.5"></div>
 
-      <h3 style="font-size:12px;color:var(--lilac);margin-bottom:24px;
+      <!-- Titre principal — plus grand que les labels énergie/bonheur -->
+      <h3 style="font-size:16px;color:var(--lilac);margin-bottom:24px;
         font-family:'Courier New',monospace;text-align:center;letter-spacing:1px">
         Comment tu te sens là ?
       </h3>
@@ -3580,7 +3581,8 @@ function ouvrirModalEtats() {
       <!-- Slider Énergie -->
       <div style="margin-bottom:28px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <span style="font-size:var(--fs-xs);font-weight:bold;text-transform:uppercase;
+          <!-- POURQUOI : --fs-sm (13px) < titre (16px) — hiérarchie titre > labels maintenue -->
+          <span style="font-size:var(--fs-sm);font-weight:bold;text-transform:uppercase;
             letter-spacing:0.5px;color:var(--text2)">⚡ Énergie</span>
           <span id="modal-sv-energy" style="font-size:var(--fs-sm);font-weight:bold;
             color:var(--lilac);min-width:20px;text-align:right">${g.energy}</span>
@@ -3594,7 +3596,7 @@ function ouvrirModalEtats() {
       <!-- Slider Bonheur -->
       <div style="margin-bottom:28px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <span style="font-size:var(--fs-xs);font-weight:bold;text-transform:uppercase;
+          <span style="font-size:var(--fs-sm);font-weight:bold;text-transform:uppercase;
             letter-spacing:0.5px;color:var(--text2)">✿ Bonheur</span>
           <span id="modal-sv-happy" style="font-size:var(--fs-sm);font-weight:bold;
             color:var(--lilac);min-width:20px;text-align:right">${g.happiness}</span>

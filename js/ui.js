@@ -1061,7 +1061,7 @@ function ouvrirBoutique() {
   lockScroll();
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h3 style="font-size:13px;color:var(--lilac);">🛍️ Boutique</h3>
+      <h2 style="color:var(--lilac);">🛍️ Boutique</h2>
 <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>    </div>
 
     <div style="text-align:center;margin-bottom:16px">
@@ -3659,7 +3659,7 @@ function ouvrirAgenda(dateStr) {
   // 2. Prépare le contenu
 mbox.innerHTML = `
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-    <h3 style="font-size:13px;color:var(--lilac)">🗓️ Mon Agenda</h3>
+    <h2 style="color:var(--lilac)">🗓️ Mon Agenda</h2>
     <button onclick="fermerAgenda()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
   </div>
   <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">

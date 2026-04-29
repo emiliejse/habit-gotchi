@@ -557,11 +557,12 @@ body {
   border-radius: var(--r-lg); padding: var(--sp-md); margin-bottom: var(--sp-lg); box-shadow: 0 2px 8px var(--shadow);
   /* POURQUOI : sp-lg (16px) uniformise l'espace entre tous les blocs de l'accueil */
 }
-/* RÔLE : Titre de section — toutes les cartes et panneaux de l'app */
+/* RÔLE : Titre de section — cartes, panneaux et modales de l'app */
 /* POURQUOI : Caveat est plus grande visuellement que Nunito à taille égale — 20px compense
               et donne un rendu cohérent avec les autres titres Caveat de l'app */
 .card h2,
-.j90 h2 {
+.j90 h2,
+.modal-box h2 {
   font-family: var(--font-title);
   font-size: 20px;
   font-weight: 700;

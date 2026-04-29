@@ -270,7 +270,7 @@ function clearDebugLogs() {
           <button class="nav-a" onclick="navJWeek(-1)" aria-label="Semaine précédente">◀</button>
           <!-- RÔLE : Titre semaine + compteur de notes — info contextuelle rapide -->
           <div style="text-align:center">
-            <h2 style="margin:0;font-size:12px" id="j-week-title">Cette semaine</h2>
+            <h2 style="margin:0" id="j-week-title">Cette semaine</h2>
             <span id="j-week-count" style="font-size:var(--fs-xs);color:var(--paper-entry-ts)"></span>
           </div>
           <button class="nav-a" onclick="navJWeek(1)" aria-label="Semaine suivante">▶</button>
@@ -317,7 +317,7 @@ function clearDebugLogs() {
   <div class="card">
     <div class="nav-r">
       <button class="nav-a" onclick="navW(-1)" aria-label="Semaine précédente">◀</button>
-      <h2 style="margin:0" id="w-title">Cette semaine</h2>
+      <h2 id="w-title">Cette semaine</h2>
       <button class="nav-a" onclick="navW(1)" aria-label="Semaine suivante">▶</button>
     </div>
     <div id="w-view" class="cal"></div>
@@ -333,11 +333,9 @@ function clearDebugLogs() {
   </div>
 
   <!-- Bilan hebdomadaire généré par IA (SYSTEM 3: IA & Cognition) -->
-  <div class="card" id="card-bilan">
-    <h2 style="display:flex;justify-content:center;align-items:center;gap:8px;">
-      <span id="bilan-titre">🧠 Bilan Hebdo</span>
-      <button onclick="resetBilan()" style="background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;" title="Réinitialiser" aria-label="Réinitialiser le bilan">🔄</button>
-    </h2>
+  <div class="card" id="card-bilan" style="position:relative">
+    <h2 id="bilan-titre">🧠 Bilan Hebdo</h2>
+    <button onclick="resetBilan()" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;" title="Réinitialiser" aria-label="Réinitialiser le bilan">🔄</button>
     <div id="claude-summary" style="background:rgba(176,144,208,.07);padding:12px;border-radius:8px;font-size:var(--fs-sm);border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);"> <!-- était 11px -->
 Ton bilan de la semaine apparaîtra ici...
     </div>
@@ -383,16 +381,16 @@ Ton bilan de la semaine apparaîtra ici...
   <div id="p-perso" class="pnl">
     <!-- Palette de couleurs de l'interface (SYSTEM 5: UI/Design) -->
     <div class="card">
-      <h2>🎨 Couleurs de l'interface</h2>
+      <h2>Couleurs de l'interface</h2>
       <div id="palette-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px"></div>
     </div>
     <!-- Palette de couleurs du Gotchi (SYSTEM 5: UI/Design) -->
 <div class="card">
-  <h2>🐣 Couleur du Gotchi</h2>
+  <h2>Couleur du Gotchi</h2>
   <div id="gotchi-colors" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:4px"></div>
 </div>
 <div class="card">
-  <h2>🌍 Ambiance des univers</h2>
+  <h2>Ambiance des univers</h2>
   <div id="env-themes" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px"></div>
 </div>
   </div><!-- fin p-perso -->

@@ -975,6 +975,12 @@ body {
 .j-day-sep::before, .j-day-sep::after {
   content: ''; flex: 1; height: 1px; background: var(--paper-border);
 }
+/* RÔLE : Retirer les pseudo-éléments ::before/::after quand le séparateur est un accordéon cliquable */
+/* POURQUOI : Le header accordéon a déjà un layout flex avec label + compteur + chevron —
+              les lignes décoratives before/after entreraient en conflit avec le text-align:left */
+.j-day-sep.j-day-toggle::before, .j-day-sep.j-day-toggle::after { display: none; }
+/* RÔLE : Feedback visuel hover sur le header d'accordéon */
+.j-day-sep.j-day-toggle:hover { opacity: 0.75; }
 
 /* RÔLE : Boutons export discrets — pill léger, moins encombrants que les btn-s standard */
 /* POURQUOI : Les grands btn-s blancs attiraient trop l'attention pour une action secondaire */

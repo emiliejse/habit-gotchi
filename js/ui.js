@@ -110,11 +110,14 @@ function showRDV() {
 //            les accordéons, l'agenda et la progression l'utilisent tous.
 //            Un SVG est plus propre et cohérent que des emojis ◀▶ ou des caractères ▾.
 function chevron(dir) {
-  // dir = 'left' → pointe à gauche (<), 'right' → pointe à droite (>), 'down' → pointe vers le bas (v)
+  // dir = 'left' → pointe à gauche (<), 'right' → pointe à droite (>)
+  //       'down'  → pointe vers le bas (∨) — accordéon ouvert
+  //       'up'    → pointe vers le haut (∧) — accordéon fermé (utilisé dans le journal)
   let points;
-  if (dir === 'left')  points = '15 18 9 12 15 6';
-  else if (dir === 'down') points = '6 9 12 15 18 9';
-  else                 points = '9 18 15 12 9 6'; // right par défaut
+  if      (dir === 'left')  points = '15 18 9 12 15 6';
+  else if (dir === 'down')  points = '6 9 12 15 18 9';
+  else if (dir === 'up')    points = '18 15 12 9 6 15';
+  else                      points = '9 18 15 12 9 6'; // right par défaut
   return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"
     stroke="var(--text2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
     style="display:block">
@@ -2725,16 +2728,7 @@ function copyBilanSemaine() {
     if (b) { b.textContent = '✓ Copié !'; setTimeout(() => b.textContent = '📋 Copier le bilan', 1500); }
   });
 }
-function resetBilan() {
-  // On garde le compteur intact — juste le texte est effacé
-  const el = document.getElementById('claude-summary');
-  if (el) el.textContent = 'Ton bilan de la semaine apparaîtra ici...';
-  document.getElementById('btn-copy-bilan').style.display = 'none';
-  window.D.g.bilanText = '';
-  save();
-  renderProg();
-  toast(_noOrphan('Bilan effacé 🌸'));
-}
+// resetBilan() supprimée — un nouveau bilan écrase automatiquement l'ancien via genBilanSemaine()
 
 /* ─── SYSTÈME 5 : INVENTAIRE & PERSONNALISATION (Esthétique) ────── */
 
@@ -2991,41 +2985,68 @@ function renderJEntries() {
     return;
   }
 
-  // RÔLE : Générer les entrées avec séparateurs de date entre chaque groupe du même jour
-  // POURQUOI : Plusieurs notes le même jour s'enchaînaient sans repère visuel
-  let html = '';
-  let lastDate = '';
+  // RÔLE : Regrouper les entrées par jour dans un objet { dateKey → [entrées] }
+  // POURQUOI : On génère ensuite un accordéon par jour — ouvert pour aujourd'hui, fermé pour les autres
+  const groups = {}; // { "YYYY-MM-DD": [ { entry, globalIndex } ] }
   entries.forEach(e => {
-    const d   = new Date(e.date);
-    const gi  = D.journal.indexOf(e);
-    const dateKey = e.date.split('T')[0]; // "YYYY-MM-DD" — clé de groupement
+    const dateKey = e.date.split('T')[0];
+    const gi      = D.journal.indexOf(e);
+    if (!groups[dateKey]) groups[dateKey] = [];
+    groups[dateKey].push({ e, gi });
+  });
 
-    // ── Insérer un séparateur si on change de jour
-    if (dateKey !== lastDate) {
-      lastDate = dateKey;
-      // Format : "Lundi 28 avril" (ou "aujourd'hui" si c'est le jour courant)
-      const estAujd = dateKey === todayStr;
-      const labelDate = estAujd
-        ? `Aujourd'hui`
-        : d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-      html += `<div class="j-day-sep">${labelDate}</div>`;
-    }
+  // RÔLE : Générer le HTML de l'accordéon — un bloc par jour, avec header cliquable
+  let html = '';
+  Object.keys(groups).forEach(dateKey => {
+    const group    = groups[dateKey];
+    const estAujd  = dateKey === todayStr;
+    const ouvert   = estAujd; // aujourd'hui ouvert par défaut, autres jours fermés
+    const d0       = new Date(group[0].e.date);
+    const labelDate = estAujd
+      ? `Aujourd'hui`
+      : d0.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const nb       = group.length;
+    const nbLabel  = nb > 1 ? `${nb} notes` : `1 note`;
 
-    // ── Carte de note avec teinte d'humeur et heure seulement (la date est dans le séparateur)
-    html += `<div class="j-entry mood-${e.mood || 'ok'}">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span class="j-date">${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-        <span style="font-size:16px">${me[e.mood] || '😐'}</span>
-      </div>
-      <div class="j-text-content" style="font-size:var(--fs-sm);margin-top:3px">${e.text || '—'}</div>
-      <div class="j-actions">
-        <button onclick="editJEntry(${gi})">✏️</button>
-        <button onclick="delJEntry(${gi})">🗑️</button>
-      </div>
+    // Header accordéon : label date + compteur + chevron
+    html += `<div class="j-day-sep j-day-toggle" onclick="toggleJDay('${dateKey}')" style="cursor:pointer;user-select:none">
+      <span style="flex:1;text-align:left;padding-left:2px">${labelDate}</span>
+      <span style="font-size:10px;color:var(--text2);margin-right:4px">${nbLabel}</span>
+      <span id="j-chv-${dateKey}" style="display:flex;align-items:center">${chevron(ouvert ? 'down' : 'up')}</span>
     </div>`;
+
+    // Groupe d'entrées — masqué par défaut sauf aujourd'hui
+    html += `<div id="j-group-${dateKey}" style="display:${ouvert ? 'block' : 'none'}">`;
+    group.forEach(({ e, gi }) => {
+      const d = new Date(e.date);
+      html += `<div class="j-entry mood-${e.mood || 'ok'}">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="j-date">${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+          <span style="font-size:16px">${me[e.mood] || '😐'}</span>
+        </div>
+        <div class="j-text-content" style="font-size:var(--fs-sm);margin-top:3px">${e.text || '—'}</div>
+        <div class="j-actions">
+          <button onclick="editJEntry(${gi})">✏️</button>
+          <button onclick="delJEntry(${gi})">🗑️</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`; // fin j-group
   });
   c.innerHTML = html;
 }
+// RÔLE : Ouvre ou ferme un groupe de notes dans l'accordéon du journal
+// POURQUOI : Appelé au clic sur le header de date — bascule display et tourne le chevron
+function toggleJDay(dateKey) {
+  const group = document.getElementById(`j-group-${dateKey}`);
+  const chv   = document.getElementById(`j-chv-${dateKey}`);
+  if (!group || !chv) return;
+  const ouvert = group.style.display !== 'none';
+  group.style.display = ouvert ? 'none' : 'block';
+  // ouvert → on va fermer → montrer 'up' (replié) ; fermé → on va ouvrir → montrer 'down' (déplié)
+  chv.innerHTML = chevron(ouvert ? 'up' : 'down');
+}
+
 function editJEntry(i) {
   const e = window.D.journal[i]; if (!e) return;
   document.getElementById('modal').style.display = 'flex';
@@ -3143,62 +3164,94 @@ function renderProg() {
     return `<div class="cal-c" style="background:${bg};border:${border};cursor:pointer" onclick="showDayDetail('${ds}')">${day}</div>`;
   }).join('');
 
-  /* ── Visibilité de la card bilan selon la semaine ── */
-  // RÔLE : Cache toute la zone bilan IA quand on consulte une semaine passée.
-  // POURQUOI : Le bilan ne concerne que la semaine en cours — afficher la zone sur les
-  //            semaines passées est trompeur et inutile.
-  const cardBilan = document.getElementById('card-bilan');
-  if (cardBilan) cardBilan.style.display = wOff === 0 ? '' : 'none';
-
   /* ── Titre bilan ── */
   const bilanTitre = document.getElementById('bilan-titre');
   if (bilanTitre) {
-    const debut = new Date(wd[0] + 'T12:00');
-    const fin   = new Date(wd[6] + 'T12:00');
-    const fmt   = d => `${d.getDate()} ${d.toLocaleDateString('fr-FR', { month: 'short' })}`;
+    const debut  = new Date(wd[0] + 'T12:00');
+    const fin    = new Date(wd[6] + 'T12:00');
+    const fmt    = d => `${d.getDate()} ${d.toLocaleDateString('fr-FR', { month: 'short' })}`;
     const prenom = D.g.userName || D.userName || 'toi';
     bilanTitre.innerHTML = `🌼 Bilan pour ${prenom}<br><span style="font-size:11px;font-weight:400;font-family:var(--font-body);color:var(--text2)">semaine du ${fmt(debut)} au ${fmt(fin)}</span>`;
   }
 
-  /* ── Restauration bilan persisté ── */
-  const savedBilan = window.D.g.bilanText || '';
-  const summaryRestore = document.getElementById('claude-summary');
-  if (summaryRestore && savedBilan) {
-    summaryRestore.textContent = savedBilan;
-    const hidRestore = document.getElementById('bil-txt-hidden');
-    if (hidRestore) hidRestore.value = savedBilan;
-    document.getElementById('btn-copy-bilan').style.display = 'block';
-  }
+  /* ── Gestion de la card bilan selon la semaine (passée / en cours / future) ──
+     RÔLE : Adapte le contenu et l'état du bouton selon le contexte temporel.
+     POURQUOI : Trois états distincts remplacent l'ancien display:none brutal sur les semaines passées.
+       wOff < 0  → semaine passée   : bilan archivé affiché en lecture seule, bouton désactivé
+       wOff = 0  → semaine en cours : comportement normal (génération possible selon quota/jour)
+       wOff > 0  → semaine future   : placeholder "pas encore disponible", bouton désactivé
+  ── */
+  const cardBilan    = document.getElementById('card-bilan');
+  const summaryEl    = document.getElementById('claude-summary');
+  const hidEl        = document.getElementById('bil-txt-hidden');
+  const btnCopier    = document.getElementById('btn-copy-bilan');
+  const btnBilan     = document.querySelector('[onclick="genBilanSemaine()"]');
+  const lblBilan     = document.getElementById('bilan-btn-label');
+  const bilanFlowers = document.getElementById('bilan-flowers');
 
-  /* ── État bouton bilan ── */
-  // RÔLE : Met à jour le label et l'état du bouton bilan selon la semaine et le quota.
-  // POURQUOI : Le bouton utilise deux spans (#bilan-btn-label + #bilan-flowers) pour séparer
-  //            le texte des fleurs — on ne touche jamais à textContent du bouton entier.
-  checkBilanReset();
-  const btnBilan   = document.querySelector('[onclick="genBilanSemaine()"]');
-  const lblBilan   = document.getElementById('bilan-btn-label');
-  // La card bilan est masquée sur les semaines passées (voir ci-dessus),
-  // donc on arrive ici uniquement quand wOff === 0.
-  if (btnBilan && lblBilan) {
-    const jourSemaine   = new Date().getDay();
-    const estFinSemaine = jourSemaine === 0 || jourSemaine === 5 || jourSemaine === 6;
-    const quotaOk       = (window.D.g.bilanCount || 0) < 3;
+  if (!cardBilan) { updUI(); return; }
+  cardBilan.style.display = ''; // toujours visible, peu importe la semaine
 
-    if (!estFinSemaine) {
-      btnBilan.disabled      = true;
-      lblBilan.textContent   = '⏳ Disponible vendredi';
-      btnBilan.style.opacity = '0.5';
-    } else if (!quotaOk) {
-      btnBilan.disabled      = true;
-      lblBilan.textContent   = '✓ 3 bilans générés cette semaine';
-      btnBilan.style.opacity = '0.5';
-    } else {
-      btnBilan.disabled      = false;
-      lblBilan.textContent   = '✿ Générer le bilan';
-      btnBilan.style.opacity = '1';
+  if (wOff > 0) {
+    // ── Semaine future : section visible mais désactivée
+    if (summaryEl) {
+      summaryEl.textContent  = 'Pas encore disponible ✿';
+      summaryEl.style.opacity = '0.45';
     }
+    if (btnCopier) btnCopier.style.display = 'none';
+    if (btnBilan)  { btnBilan.disabled = true; btnBilan.style.opacity = '0.4'; }
+    if (lblBilan)  lblBilan.textContent = '⏳ Pas encore disponible';
+    if (bilanFlowers) bilanFlowers.innerHTML = '';
+
+  } else if (wOff < 0) {
+    // ── Semaine passée : afficher le dernier bilan archivé en lecture seule
+    const savedBilan = window.D.g.bilanText || '';
+    if (summaryEl) {
+      summaryEl.textContent  = savedBilan || 'Aucun bilan généré pour cette semaine ✿';
+      summaryEl.style.opacity = '1';
+    }
+    if (hidEl) hidEl.value = savedBilan;
+    if (btnCopier) btnCopier.style.display = savedBilan ? 'block' : 'none';
+    if (btnBilan)  { btnBilan.disabled = true; btnBilan.style.opacity = '0.4'; }
+    if (lblBilan)  lblBilan.textContent = '📁 Bilan archivé';
+    if (bilanFlowers) bilanFlowers.innerHTML = '';
+
+  } else {
+    // ── Semaine en cours : comportement normal
+    if (summaryEl) summaryEl.style.opacity = '1';
+    const savedBilan = window.D.g.bilanText || '';
+    if (summaryEl && savedBilan) {
+      summaryEl.textContent = savedBilan;
+      if (hidEl) hidEl.value = savedBilan;
+      if (btnCopier) btnCopier.style.display = 'block';
+    } else if (summaryEl && !summaryEl.textContent.trim()) {
+      summaryEl.textContent = 'Ton bilan de la semaine apparaîtra ici...';
+    }
+
+    // RÔLE : Met à jour le label et l'état du bouton bilan selon le quota et le jour de la semaine.
+    // POURQUOI : Le bouton n'est actif que le vendredi, samedi ou dimanche.
+    checkBilanReset();
+    if (btnBilan && lblBilan) {
+      const jourSemaine   = new Date().getDay();
+      const estFinSemaine = jourSemaine === 0 || jourSemaine === 5 || jourSemaine === 6;
+      const quotaOk       = (window.D.g.bilanCount || 0) < 3;
+
+      if (!estFinSemaine) {
+        btnBilan.disabled      = true;
+        lblBilan.textContent   = '⏳ Disponible vendredi';
+        btnBilan.style.opacity = '0.5';
+      } else if (!quotaOk) {
+        btnBilan.disabled      = true;
+        lblBilan.textContent   = '✓ 3 bilans générés cette semaine';
+        btnBilan.style.opacity = '0.5';
+      } else {
+        btnBilan.disabled      = false;
+        lblBilan.textContent   = '✿ Générer le bilan';
+        btnBilan.style.opacity = '1';
+      }
+    }
+    updBilanFlowers(); // met à jour les 3 fleurs de quota
   }
-  updBilanFlowers(); // met à jour les 3 fleurs de quota
 
   updUI();
 }
@@ -3450,10 +3503,14 @@ function checkWelcome() {
     titre = `*chuchote* 🌙`;
     corps = getNightMsg();
   } else if (h < 12) {
-    titre = `Bon matin ☀️`;
+    titre = getMorningTitle();
     corps = getMorningMsg();
+  } else if (h < 14) {
+    // RÔLE : Créneau midi (12h–14h) — message distinct du reste de l'après-midi
+    titre = getMidiTitle();
+    corps = getMidiMsg();
   } else if (h < 18) {
-    titre = `Bon après-midi ✿`;
+    titre = getAfternoonTitle();
     corps = getAfternoonMsg();
   } else {
     titre = `Bonne soirée 🌙`;
@@ -3464,11 +3521,14 @@ function checkWelcome() {
     extra = `<p style="margin-top:8px;font-size:12px;text-align:center">🎁 ${nouveauxCadeaux} nouveau${nouveauxCadeaux > 1 ? 'x cadeaux' : ' cadeau'} depuis ta dernière visite !</p>`;
   }
 
+  // RÔLE : Les messages du Gotchi (corps en italique) sont stylés différemment des messages système
+  // POURQUOI : Quand c'est le Gotchi qui parle, on enveloppe le corps dans <em> pour l'italique
+  //            Tous les corps de message retournent déjà du texte — l'italique est appliqué ici globalement
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('mbox').innerHTML = `
     <div style="text-align:center">
       <h3>${titre}</h3>
-      <p style="font-size:12px;margin:8px 0">${corps}</p>
+      <p style="font-size:12px;margin:8px 0;font-style:italic;font-family:var(--font-gotchi);line-height:1.6">${corps}</p>
       ${extra}
       <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="clModal()">C'est parti ✿</button>
     </div>
@@ -3476,40 +3536,180 @@ function checkWelcome() {
   animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
-function getMorningMsg() {
+// ── Utilitaire interne : prénom de l'utilisatrice ou fallback
+// POURQUOI : Mutualisé pour éviter la répétition dans chaque fonction de message
+function _prenom() {
   const D = window.D;
+  return D.g.userNickname || D.g.userName || D.userName || 'toi';
+}
+
+// ── Utilitaire interne : pioche aléatoirement dans un tableau
+function _pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* ─── TITRES des modales welcome ─────────────────────────────────── */
+// RÔLE : Retourne le titre de la modale selon le créneau — peut varier selon le jour
+// POURQUOI : Séparé du corps pour pouvoir évoluer indépendamment (emoji, ton)
+
+function getMorningTitle() {
+  const jour = new Date().getDay(); // 0=dim, 1=lun, …, 5=ven, 6=sam
+  if (jour === 1) return `Bon lundi ☀️`;  // lundi spécial
+  if (jour === 5) return `Bon vendredi ✨`;
+  if (jour === 0 || jour === 6) return `Bonne matinée 🌸`;
+  return `Bon matin ☀️`;
+}
+
+function getMidiTitle() {
+  return _pick([`C'est l'heure du midi 🍵`, `Pause déjeuner ✿`, `Midi déjà ☀️`]);
+}
+
+function getAfternoonTitle() {
+  const jour = new Date().getDay();
+  if (jour === 3) return `Milieu de semaine ✿`; // mercredi
+  if (jour === 5) return `Vendredi après-midi 🎉`;
+  return `Bon après-midi ✿`;
+}
+
+/* ─── CORPS des modales welcome ──────────────────────────────────── */
+// RÔLE : Retourne le message du Gotchi selon l'heure, le jour, le streak, les habitudes
+// CONVENTION : Les textes en *astérisques* sont les actions du Gotchi (gestuelles, sons)
+
+function getMorningMsg() {
+  const D   = window.D;
   const str = calcStr();
-  const name = D.g.name;
-  if (str >= 7) return `*s'étire* ${str} jours de suite... tu m'impressionnes 🔥`;
-  if (str >= 3) return `${str} jours d'affilée ! On continue ? 💜`;
-  return `Coucou ${D.g.userNickname || D.userName || 'toi'} ! Je t'attendais 🌸`;
+  const prenom = _prenom();
+  const jour   = new Date().getDay();
+  const done   = (D.log[today()] || []).length;
+  const name   = D.g.name;
+
+  // Streak élevé — priorité sur tout
+  if (str >= 10) return `${str} jours d'affilée, ${prenom}... *fait des bonds* On est inarrêtables 🔥`;
+  if (str >= 7)  return `*s'étire* ${str} jours de suite. Tu m'impressionnes vraiment 💜`;
+  if (str >= 3)  return `${str} jours d'affilée ! On continue ? *agite les pattes* ✿`;
+
+  // Lundi matin — message motivant pour la semaine
+  if (jour === 1) return _pick([
+    `*saute sur place* Nouvelle semaine, ${prenom} ! On repart à zéro 🌱`,
+    `*frotte les yeux* Lundi... mais avec toi c'est pas si dur 💜`
+  ]);
+
+  // Vendredi matin — on sent la fin de semaine
+  if (jour === 5) return _pick([
+    `*chante* Vendredi ! Plus qu'une journée, ${prenom} 🎉`,
+    `Dernier effort, ${prenom} — le week-end est tout proche ✿`
+  ]);
+
+  // Week-end
+  if (jour === 0 || jour === 6) return _pick([
+    `*bâille doucement* Week-end ! Prends soin de toi aujourd'hui 🌸`,
+    `${name} est content·e de te voir ce ${jour === 6 ? 'samedi' : 'dimanche'} ✿`
+  ]);
+
+  // Déjà des habitudes cochées ce matin
+  if (done >= 1) return `*sautille* ${done} déjà cochée${done > 1 ? 's' : ''} ce matin — tu démarres fort 🌟`;
+
+  // Fallback varié
+  return _pick([
+    `*s'étire* Coucou ${prenom} ! Je t'attendais 🌸`,
+    `${name} est réveillé·e et prêt·e — et toi ? ☀️`,
+    `*bâille* Bonjour ${prenom}... on va bien commencer cette journée 💜`
+  ]);
+}
+
+function getMidiMsg() {
+  // RÔLE : Messages spécifiques au créneau midi (12h–14h)
+  const D    = window.D;
+  const done = (D.log[today()] || []).length;
+  const prenom = _prenom();
+  const name   = D.g.name;
+  const ha     = D.g.happiness;
+
+  if (done >= 4) return `*admire* ${done} habitudes avant midi, ${prenom} ! ${name} est très fier·e 🌟`;
+  if (done >= 2) return `*approuve* ${done} de cochées ce matin — pause méritée ✿`;
+  if (done === 1) return `1 habitude ce matin, c'est un début ! *encourage* L'après-midi est encore là 💜`;
+  if (ha <= 2)  return `*te regarde avec douceur* Tu sembles peu en forme ce midi... prends une vraie pause 💜`;
+  return _pick([
+    `*renifle* Ça sent le repas de midi... tu prends soin de toi ? 🍵`,
+    `Coucou ${prenom} ! ${name} surveille que tu manges bien à midi 🌸`,
+    `*s'installe confortablement* Profite de ta pause — l'après-midi arrive vite ✿`
+  ]);
 }
 
 function getAfternoonMsg() {
-  const D = window.D;
+  const D    = window.D;
   const done = (D.log[today()] || []).length;
-  const name = D.g.name;
-  if (done >= 4) return `${done} habitudes déjà ! Je suis fier·e de toi 🌟`;
-  if (done >= 1) return `${done} cochée${done > 1 ? 's' : ''} — tu avances bien ✿`;
-  return `*te regarde* Il reste encore du temps pour aujourd'hui 💜`;
+  const prenom = _prenom();
+  const name   = D.g.name;
+  const jour   = new Date().getDay();
+  const total  = D.habits.length || 6;
+
+  // Mercredi après-midi — milieu de semaine
+  if (jour === 3) return _pick([
+    `*souffle* Milieu de semaine... tu gères vraiment bien, ${prenom} 💜`,
+    `Mercredi déjà ! ${done}/${total} aujourd'hui — continue comme ça ✿`
+  ]);
+
+  // Vendredi après-midi — fin de semaine imminente
+  if (jour === 5) return _pick([
+    `*trépigne* Presque le week-end, ${prenom} ! ${done}/${total} aujourd'hui 🎉`,
+    `Vendredi après-midi — ${name} est fier·e de cette semaine 💜`
+  ]);
+
+  if (done >= total) return `*danse* Tu as tout coché aujourd'hui, ${prenom} ! Je suis aux anges 🌟`;
+  if (done >= 4)     return `${done} habitudes déjà ! *applaudit* Je suis fier·e de toi ✿`;
+  if (done >= 1)     return `${done} cochée${done > 1 ? 's' : ''} — tu avances bien, ${prenom} ✿`;
+  return _pick([
+    `*te regarde* Il reste encore du temps pour aujourd'hui 💜`,
+    `${name} croit en toi — l'après-midi est encore longue ✿`,
+    `*pointe les habitudes* Allez ${prenom}, on peut encore en cocher quelques-unes 🌱`
+  ]);
 }
 
 function getEveningMsg() {
-  const D = window.D;
+  const D    = window.D;
   const done = (D.log[today()] || []).length;
-  const ha = D.g.happiness;
-  if (done === 6) return `6/6 !! Tu as tout fait aujourd'hui, je suis aux anges 🎉`;
-  if (ha <= 2) return `*câlin pixel* Tu sembles fatiguée ce soir. Prends soin de toi 💜`;
-  if (done === 0) return `*te regarde doucement* Pas d'habitudes aujourd'hui... c'est ok. Demain ✿`;
-  return `${done}/6 aujourd'hui. Pose-toi maintenant 💜`;
+  const prenom = _prenom();
+  const name   = D.g.name;
+  const ha     = D.g.happiness;
+  const jour   = new Date().getDay();
+  const total  = D.habits.length || 6;
+
+  // Dimanche soir — fin de semaine
+  if (jour === 0) return _pick([
+    `*soupire doucement* Dimanche soir déjà... tu as bien géré cette semaine, ${prenom} 💜`,
+    `Fin de semaine. ${done}/${total} aujourd'hui. ${name} est content·e de t'avoir eu·e 🌸`
+  ]);
+
+  if (done >= total) return `*rayonne* ${total}/${total} aujourd'hui !! Tu as tout fait, je suis aux anges 🎉`;
+  if (ha <= 2)       return `*câlin pixel* Tu sembles fatiguée ce soir, ${prenom}. Prends soin de toi 💜`;
+  if (done === 0)    return _pick([
+    `*te regarde doucement* Pas d'habitudes aujourd'hui... c'est ok. Demain ✿`,
+    `0 aujourd'hui — et c'est pas grave. ${name} t'aime quand même 💜`
+  ]);
+  return _pick([
+    `${done}/${total} aujourd'hui. Bien joué, ${prenom} — pose-toi maintenant 💜`,
+    `*s'étire* Belle soirée, ${prenom}. Tu as fait de ton mieux ✿`,
+    `${done} cochées — ${name} est fier·e. Repose-toi bien 🌙`
+  ]);
 }
 
 function getNightMsg() {
-  const D = window.D;
+  const D    = window.D;
   const done = (D.log[today()] || []).length;
-  if (done === 6) return `*ronronne* Journée parfaite... dors bien 🌙`;
-  if (done >= 3) return `*bâille* Bonne nuit ${D.g.userNickname || D.userName || 'toi'}... à demain 💜`;
-  return `*murmure* Je veille. Dors bien 🌙`;
+  const prenom = _prenom();
+  const name   = D.g.name;
+  const total  = D.habits.length || 6;
+
+  if (done >= total) return `*ronronne* Journée parfaite, ${prenom}... dors bien 🌙`;
+  if (done >= 3)     return _pick([
+    `*bâille* Bonne nuit ${prenom}... à demain 💜`,
+    `*éteint une bougie* ${done}/${total} aujourd'hui. Dors bien 🌙`,
+    `*chuchote* ${name} veille. Bonne nuit 💜`
+  ]);
+  return _pick([
+    `*murmure* Je veille. Dors bien 🌙`,
+    `*chuchote* C'est tard, ${prenom}... repose-toi 💜`,
+    `*s'allonge* Bonne nuit. Demain sera une nouvelle journée ✿`
+  ]);
 }
 
 function showWelcomeModal() {

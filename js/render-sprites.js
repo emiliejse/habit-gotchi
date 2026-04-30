@@ -14,6 +14,7 @@
                         // Note : .step supprimé de _walk (variable morte, v4.5 — seul .pause est utilisé ici)
 
    NAVIGATION RAPIDE :
+   §0  renderSprite()     — moteur DSL générique (calques → px())
    §1  drawDither()       — effet épuisement style Gameboy
    §2  drawAccessoires()  — accessoires équipés sur le sprite
    §3  drawEgg()          — stade œuf
@@ -21,6 +22,96 @@
    §5  drawTeen()         — stade ado
    §6  drawAdult()        — stade adulte (avec poses idle)
    ============================================================ */
+
+/* ─── §0 MOTEUR DSL ─────────────────────────────────────────────── */
+
+// RÔLE : Résoudre une couleur DSL vers une valeur p5 utilisable par p.fill().
+// POURQUOI : Les calques stockent des clés comme 'C.body' ou des hex littérales '#fff'.
+//            Cette fonction fait le pont entre la définition déclarative et le moteur p5.
+//            Centraliser ici permet de changer la résolution (thème saisonnier, palette
+//            alternative) sans toucher aux définitions de sprites.
+// @param {Object} p         - Instance p5
+// @param {string} fillKey   - Clé de palette ('C.body', 'C.eye', etc.) ou hex littérale
+// @param {Object} palette   - Objet de couleurs courant (C par défaut, remplaçable pour les thèmes)
+// @returns {p5.Color}
+function _resolveFill(p, fillKey, palette) {
+  // RÔLE : Supporter les clés 'C.xxx' (couleur du Gotchi) et les hex littérales.
+  // POURQUOI : 'C.body' → palette['body'] ; '#fff' → passé tel quel à p.color().
+  //            Si la clé est inconnue, on retourne un magenta visible pour déboguer.
+  if (typeof fillKey !== 'string') return p.color('#ff00ff');
+  if (fillKey.startsWith('C.')) {
+    const key = fillKey.slice(2); // retire le préfixe 'C.'
+    return p.color(palette[key] || '#ff00ff');
+  }
+  return p.color(fillKey);
+}
+
+// RÔLE : Moteur générique qui itère les calques d'une définition sprite et appelle px().
+// POURQUOI : Remplace les suites px() manuelles par des données déclaratives (tableaux de calques).
+//            Un nouveau Gotchi ou un nouveau stade = une nouvelle définition d'objet,
+//            sans dupliquer la logique de dessin.
+//            Un thème saisonnier = une palette alternative passée en paramètre.
+//
+// Structure d'un calque (layer) :
+//   {
+//     id:      string,              // identifiant lisible (debug, variantes)
+//     fill:    string,              // clé 'C.xxx' ou hex littérale '#rrggbb'
+//     alpha:   number (opt),        // opacité globale 0.0–1.0, défaut 1.0
+//     when:    function (opt),      // (params) => bool — calque affiché uniquement si true
+//     rects:   [                    // liste de rectangles
+//       { x, y, w, h,              //   coordonnées en multiples de PX, relatifs à cx/cy
+//         rawDx, rawDy }           //   décalages sub-pixel optionnels (défaut 0)
+//     ]
+//   }
+//
+// @param {Object}   p          - Instance p5
+// @param {Array}    layers     - Tableau de calques (définition du sprite)
+// @param {number}   cx         - Centre X du Gotchi (pixels canvas)
+// @param {number}   cy         - Y haut du Gotchi (pixels canvas)
+// @param {Object}   params     - État courant transmis aux fonctions `when` et aux offsets dynamiques :
+//                                { sl, en, ha, breath, breathX, blink, expr, pose, walkX, isMoving, totalXp }
+// @param {Object}   palette    - Palette de couleurs courante (C de render.js par défaut)
+function renderSprite(p, layers, cx, cy, params, palette) {
+  // RÔLE : Utiliser C (l'objet global de render.js) si aucune palette alternative n'est fournie.
+  // POURQUOI : En usage normal, C est défini globalement — pas besoin de le passer à chaque appel.
+  //            Pour un thème alternatif, on passe une palette custom qui remplace C.
+  const pal = palette || C;
+
+  p.noStroke();
+
+  for (const layer of layers) {
+    // RÔLE : Évaluer la condition du calque avant de dessiner.
+    // POURQUOI : `when` est une fonction pure (params) => bool.
+    //            Si absent, le calque est toujours affiché.
+    if (layer.when && !layer.when(params)) continue;
+
+    // RÔLE : Appliquer l'opacité globale du calque si définie.
+    // POURQUOI : Certains calques (joues débordantes joie) ont une transparence partielle.
+    //            On utilise globalAlpha plutôt que setAlpha() pour rester cohérent avec le code existant.
+    const hasAlpha = typeof layer.alpha === 'number' && layer.alpha !== 1.0;
+    if (hasAlpha) p.drawingContext.globalAlpha = layer.alpha;
+
+    // RÔLE : Résoudre la couleur et l'appliquer.
+    p.fill(_resolveFill(p, layer.fill, pal));
+
+    // RÔLE : Dessiner chaque rectangle du calque.
+    // POURQUOI : x/y sont en multiples de PX, relatifs à cx/cy.
+    //            rawDx/rawDy portent les décalages sub-pixel (ex. +2 dans les oreilles).
+    for (const r of layer.rects) {
+      const rx = cx + r.x * PX + (r.rawDx || 0);
+      const ry = cy + r.y * PX + (r.rawDy || 0);
+      px(p, rx, ry, r.w * PX, r.h * PX);
+    }
+
+    // RÔLE : Restaurer l'opacité normale après un calque semi-transparent.
+    if (hasAlpha) p.drawingContext.globalAlpha = 1.0;
+  }
+}
+
+// RÔLE : Exposer renderSprite sur window pour permettre l'accès depuis d'autres modules.
+// POURQUOI : Cohérent avec la convention du projet (toute nouvelle globale → window.*).
+//            Permet à un futur module de définir ses propres sprites sans modifier ce fichier.
+window.renderSprite = renderSprite;
 
 /* ─── §1 DITHERING ───────────────────────────────────────────────── */
 

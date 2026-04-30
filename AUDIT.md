@@ -21,27 +21,22 @@
 | `js/envs.js` | **B+** | Cohérent et factorisé (`tc`, `shadeN`), seul reproche : `drawActiveEnv` mélange parc/chambre/montagne dans une seule fonction de 130 lignes. |
 | `js/ui.js` | **C+** | 5192 lignes, 5 manières différentes d'ouvrir une modale (`openModal`, accès direct `mbox.innerHTML`, `etats-overlay` créé en JS, `tablet-overlay` HTML, agenda `shop-open`), code dupliqué massif sur les en-têtes de modales, gestion scroll-lock incohérente. |
 | `index.html` | **B** | Ordre des scripts correct, debug-panel inline volumineux (~85 l), p5.js CDN sans `integrity`, masquage features RDV/Cycle dans script séparé en bas. |
-| `sw.js` | **C** | ⚠️ `./js/render-sprites.js` **manquant** dans `ASSETS` — bug critique en mode hors-ligne (sprites du Gotchi non cachés). Stratégie cache-first sans `response.ok` (cache des 404). Pas de gestion des updates côté client (pas de `controllerchange`). |
+| `sw.js` | **C+** | ✅ `render-sprites.js` ajouté dans `ASSETS` (fix session 2026-04-30). Reste : stratégie cache-first sans `response.ok` (cache des 404), pas de gestion des updates côté client. |
 
 ### Top 3 problèmes critiques
 
-1. 🔴 **`render-sprites.js` absent du Service Worker**
-   - Fichier : `sw.js` [L9-L31]
-   - Description : Le tableau `ASSETS` ne liste pas `./js/render-sprites.js`, alors que ce fichier est essentiel au rendu (drawEgg/Baby/Teen/Adult). Il est référencé dans `index.html` [L610] et chargé après `envs.js`.
-   - Risque : En mode hors-ligne (PWA installée, perte réseau), le fichier ne sera pas servi par le cache → écran noir / Gotchi non rendu jusqu'à ce que le navigateur le recharge depuis le réseau (impossible sans connexion). La stratégie cache-first du fetch handler ([L60-L67]) le mettra finalement en cache au premier hit en ligne, mais le bug existe au tout premier lancement offline.
-   - Suggestion : Ajouter `'./js/render-sprites.js'` dans la liste `ASSETS` de `sw.js`.
+1. ✅ **`render-sprites.js` absent du Service Worker** — RÉSOLU (session split ui.js, 2026-04-30)
+   - Fichier : `sw.js` [L25]
+   - `'./js/render-sprites.js'` ajouté dans `ASSETS`. Vérifié présent.
 
-2. 🔴 **Modale non-bloquante : interactions passent à travers (cf. section dédiée plus bas)**
-   - Fichier : `js/ui.js` [L380-L409] + `css/style.css` [L1131-L1141]
-   - Description : Le sélecteur `.modal` est `position:fixed; inset:0; z-index:300` — il devrait bloquer les clics. Or, `p5.js` attache ses listeners `touchstart` au `document` (et non au canvas), et dans `render.js` les GARDEs vérifient effectivement la modale (lignes [932-938]). Mais : (a) le mécanisme de fermeture `clModal` est piloté par `e.target.id === 'modal'` — un click dont la cible est un enfant du modal-box mais qui a `event.stopPropagation()` ne ferme PAS, OK ; (b) en revanche, **les éléments HTML de `#dynamic-zone` peuvent rester cliquables si une modale est ouverte alors que `display:flex` n'a jamais été appliqué** (ex: `etats-overlay` créé dynamiquement avec `inset:0;z-index:1000` se superpose mais `clModal` n'est pas concerné — voir détails section spéciale).
-   - Risque : Confusion utilisatrice, double action (ex : tap derrière la modale ouvre l'agenda en plus du snack), corruption d'état (snack consommé ET autre action déclenchée).
-   - Suggestion : Centraliser TOUTES les modales via `openModal()`, ajouter `pointer-events:auto` sur `.modal`, vérifier que les overlays créés en JS (`etats-overlay`) utilisent le même z-index que `.modal` ou un `data-modal-open` partagé.
+2. ✅ **Modale non-bloquante : interactions passent à travers** — RÉSOLU (2026-04-30)
+   - Cf. section spéciale "Bug modale non-bloquante" plus bas pour le détail complet.
 
-3. 🔴 **`addEvent` accepte deux signatures incompatibles**
-   - Fichier : `js/app.js` [L648-L660]
-   - Description : Si premier argument = objet → forme objet ; sinon → forme legacy `(type, valeur, label)`. Le commentaire dit "ancienne API supprimée en session 4" mais le code la conserve (déjà identifié en v3.02 dans une autre formulation, **non résolu**). La forme legacy est appelée nulle part dans le code lu, mais le branchement reste — risque qu'un nouvel appelant la ressuscite par accident.
-   - Risque : Inconsistance des entrées de `eventLog` selon l'appelant, pas de typage compile-time, code mort branché.
-   - Suggestion : Supprimer la branche `else` et n'accepter que la forme objet, vérifier les 0 appels legacy avant suppression.
+3. ✅ **`addEvent` accepte deux signatures incompatibles** — RÉSOLU (2026-04-30)
+   - Fichier : `js/app.js` [L648-L659]
+   - La branche legacy `else` a été supprimée. `addEvent` n'accepte désormais qu'un objet `{ type, subtype, valeur, label }`.
+   - Tous les appelants vérifiés : 0 appel legacy dans l'ensemble du codebase (app.js, ui-*.js, render.js).
+   - Signature finale : `function addEvent(ev)` — horodatage automatique + spread.
 
 ### Top 3 quick wins
 

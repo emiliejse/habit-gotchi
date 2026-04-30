@@ -644,18 +644,17 @@ function cleanPoops() {
 
 /* ─── SYSTÈME 6 : INTROSPECTION & MÉMOIRE ──────────────────────── */
 
-// Journal des événements (Terminal) avec file FIFO (max 40)
-function addEvent(type, valeur, label) {
+// RÔLE : Ajoute un événement dans le journal (Terminal), file FIFO limitée à 40 entrées.
+// POURQUOI : Signature unique objet — la forme legacy (type, valeur, label) a été supprimée
+// en session 5 (2026-04-30). Tous les appelants utilisent la forme { type, subtype, valeur, label }.
+function addEvent(ev) {
   if (!window.D.eventLog) window.D.eventLog = [];
-  
-  // Si le premier argument est un objet, on l'utilise tel quel (nouvelle API)
-  // Sinon, on construit l'event à partir des arguments classiques (ancienne API)
-  const ev = (typeof type === 'object' && type !== null)
-    ? { date: new Date().toISOString(), ...type }
-    : { date: new Date().toISOString(), type, valeur, label };
-  
-  window.D.eventLog.unshift(ev);
-  if (window.D.eventLog.length > 40) window.D.eventLog.length = 40;
+
+  // Horodatage systématique + spread des propriétés fournies
+  const entry = { date: new Date().toISOString(), ...ev };
+
+  window.D.eventLog.unshift(entry);
+  if (window.D.eventLog.length > 40) window.D.eventLog.length = 40; // FIFO : garde les 40 plus récents
   if (typeof updTabletBadge === 'function') updTabletBadge();
 }
 

@@ -459,8 +459,8 @@ function drawAccessoires(p, cx, anchors, stage, sl) {
       //   'tete'  → tous stades : ps*1
       //                                          ↓ modifier ici
       const offsetY = def.ancrage === 'yeux'
-                    ? (stage === 'teen'  ? ps * 2   // ← lunettes teen  : monter = +1, descendre = -1
-                     : stage === 'adult' ? ps * 2   // ← lunettes adult
+                    ? (stage === 'teen'  ? ps * 3   // ← lunettes teen  : monter = +1, descendre = -1
+                     : stage === 'adult' ? ps * 3   // ← lunettes adult
                      :                    ps * 2)   // ← lunettes baby
                     : def.ancrage === 'cou'
                     ? (stage === 'baby'  ? ps * 2   // ← collier baby

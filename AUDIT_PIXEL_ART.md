@@ -81,88 +81,57 @@ const accY    = Math.floor(accYraw / PX) * PX;
 
 ---
 
-## 2. Architecture animations — état actuel et proposition
+## 2. Architecture animations — état actuel (après migration Temps 1–3)
 
-### État actuel
+### ✅ Implémenté — moteur animator déclaratif
 
-Aucune couche d'abstraction. Chaque animation = (1) variable module, (2) bloc impératif dans `p.draw()`, (3) parfois calque DSL conditionnel. Sources éparpillées :
+Architecture en 3 couches, sans dépendance externe, opérationnelle depuis la session du 2026-04-30.
 
-| Mécanisme | Localisation | Type |
-|---|---|---|
-| `bounceT`, `bobY` | `render.js:51, 781-782` | global + sinus |
-| `walkX`, `walkPause` | `render.js:57-62, 824-843` | machine d'état inline |
-| `_jumpTimer` | `render.js:63, 796-800` | timer inline |
-| `shakeTimer` | `render.js:64, 866-867` | timer inline |
-| `eatAnim` (snack) | `render.js:56, 943-959` | objet ad hoc |
-| `_evoAnim` (chrysalide) | `render.js:69-72, 871-890` | objet ad hoc |
-| `_adultPose` | `render.js:87-91, render-sprites.js:1362-1388` | machine rudimentaire |
-| `_expr` (humeurs) | `render.js:93-113` | objet `{ mood, timer }` |
-| `touchReactions` | `render.js:55, 910-938` | tableau de timers |
-
-### Proposition (pseudo-code, sans dépendance externe)
+**`ANIM_DEFS`** — catalogue déclaratif dans `render.js` :
 
 ```js
-// 1. CATALOGUE — déclaratif, JSON-extensible
-const ANIM_DEFS = {
-  bras_hanche_g: {
-    stages: ['adult'],
-    duration: 72,
-    cooldown: [60, 120],
-    triggers: ['idle'],
-    poses: {
-      'bras-normal':   { hidden: true },
-      'bras-hanche-g': { visible: true }
-    }
-  },
-  saut_joie: {
-    stages: ['baby','teen','adult'],
-    duration: 20,
-    triggers: ['habit_done','xp_gain'],
-    bodyOffset: {
-      yFn: (t) => -Math.floor(Math.sin(t/20 * Math.PI) * 22 / PX) * PX
-    }
-  },
-};
-
-// 2. ANIMATOR — pile légère, snap PX
-const animator = {
-  active: [],
-  trigger(id, def = ANIM_DEFS[id]) {
-    if (!def) return;
-    this.active.push({ id, t: def.duration, def });
-  },
-  tick() { this.active = this.active.filter(a => --a.t > 0); },
-  resolve(stage) {
-    const out = { hidden: new Set(), visible: new Set(), dx: 0, dy: 0 };
-    for (const a of this.active) {
-      if (!a.def.stages.includes(stage)) continue;
-      const elapsed = a.def.duration - a.t;
-      if (a.def.poses) {
-        for (const [layerId, ov] of Object.entries(a.def.poses)) {
-          if (ov.hidden)  out.hidden.add(layerId);
-          if (ov.visible) out.visible.add(layerId);
-        }
-      }
-      if (a.def.bodyOffset?.yFn)
-        out.dy += Math.floor(a.def.bodyOffset.yFn(elapsed) / PX) * PX;
-      if (a.def.bodyOffset?.xFn)
-        out.dx += Math.floor(a.def.bodyOffset.xFn(elapsed) / PX) * PX;
-    }
-    return out;
-  }
-};
-
-// 3. INTÉGRATION — dans renderSprite() (render-sprites.js:82)
-//    pour chaque layer : skip si overrides.hidden.has(layer.id)
-//                       force draw si overrides.visible.has(layer.id)
-//    appliquer dx,dy snappés à cx,cy avant les rects
-
-// 4. DÉCLENCHEMENT — depuis app.js (gameplay)
-//    toggleHab() → animator.trigger('saut_joie')
-//    poseScheduler.tick() → idle long → animator.trigger('bras_hanique_g')
+// Chaque entrée décrit une animation : stades, durée, poses de calques, offset corps.
+// stages: '*' = tous stades ; stages: ['adult'] = adulte uniquement.
+// poses: { [layerId]: { hidden?, visible? } } → pilote aov.hidden / aov.visible dans renderSprite().
+// bodyOffset.yFn(elapsed) → offset Y snappé PX, appliqué sur drawY dans p.draw().
 ```
 
-**Avantages :** 0 dépendance externe, snap PX systématique, format JSON-extensible (`data/anims.json` à terme), réutilise les id de calques DSL existants. Migration progressive : `_adultPose` devient un trigger.
+Animations cataloguées :
+
+| id | stages | durée | mécanisme |
+|---|---|---|---|
+| `saut_joie` | `'*'` | 20f | `bodyOffset.yFn` — cloche sin × 22px |
+| `pose_hanche_g` | `['adult']` | 60f + aléa | `poses` hidden/visible |
+| `pose_hanche_d` | `['adult']` | 60f + aléa | `poses` hidden/visible |
+| `pose_croises` | `['adult']` | 72f + aléa | `poses` hidden/visible |
+| `pose_salut` | `['adult']` | 12f + aléa | `poses` hidden/visible |
+
+**`animator`** — `render.js`, exposé sur `window.animator` :
+- `trigger(id, options?)` — empile une animation ; `options.duration` surcharge la durée catalogue
+- `tick()` — décrémente les timers, purge les terminées ; appelé une fois par frame dans `p.draw()`
+- `resolve(stage)` — retourne `{ hidden: Set, visible: Set, dx, dy }` ; calculé une fois par frame, exposé sur `window._animOverrides`
+
+**`renderSprite()`** — `render-sprites.js:74` :
+- Lit `window._animOverrides` en début de fonction
+- `aov.hidden.has(layer.id)` → skip le calque
+- `aov.visible.has(layer.id)` → force le calque (ignore `when`)
+- `aov.dy` absorbé sur `drawY` dans `p.draw()` (décale le Gotchi entier)
+
+### État des mécanismes après migration
+
+| Mécanisme | Avant | Après |
+|---|---|---|
+| `_jumpTimer` | timer inline dans `p.draw()` | → `animator.trigger('saut_joie')` via `triggerGotchiBounce()` |
+| `_adultPose` | machine d'état + `pm.pose` dans `params` | → scheduler pur (cooldown/random) + `animator.trigger('pose_*')` |
+| Calques bras idle | `when: pm.pose === '...'` | → `when: () => false` + `aov.visible` |
+| `bras-normal` | `when: pm.pose === 'normal'` | → `when: énergie/humeur/sommeil` + masqué par `aov.hidden` |
+| `bounceT`, `bobY` | global + sinus | inchangé (locomotion continue, hors animator) |
+| `walkX`, `walkPause` | machine d'état inline | inchangé (locomotion continue, hors animator) |
+| `shakeTimer` | timer inline | inchangé (candidat futur migration) |
+| `eatAnim` | objet ad hoc | inchangé (candidat futur migration) |
+| `_evoAnim` | objet ad hoc | inchangé (candidat futur migration) |
+| `_expr` | objet `{ mood, timer }` | inchangé (candidat futur migration) |
+| `touchReactions` | tableau de timers | inchangé (candidat futur migration) |
 
 ---
 
@@ -174,7 +143,7 @@ const animator = {
 | Marche `walkX` | tous (sauf egg) | éveillé + non pause | 30–120f de pause | `render.js:824-838` |
 | Sommeil Zzz | baby/teen/adult | h≥22 ou h<7 | continu | `render.js:897` |
 | Clignement | tous animés | timer aléa 40–120f | 3–6f | `render.js:961-973` |
-| Saut `_jumpTimer` | tous | habitude validée | 20f | `render.js:796-800` |
+| Saut `saut_joie` | tous | habitude validée, achat boutique | 20f | `animator` — `render.js ANIM_DEFS` |
 | Shake | tous | tap canvas | 8–12f | `render.js:343, 866` |
 | Snack `eatAnim` | tous | `ouvrirSnack()` | 50f | `render.js:943-959` |
 | Évolution chrysalide | transition | `triggerEvoAnim()` | 45f | `render.js:871-890` |
@@ -183,7 +152,7 @@ const animator = {
 | Étoile filante | ciel | aléa nuit | 12f | `render.js:262-278` |
 | Respiration sub-pixel `breathX` | teen/adult | continu | infinie | `render-sprites.js:955, 1392` |
 | Pulsation joues | teen/adult | continu | infinie | `render-sprites.js:967, 1406` |
-| Pose hanche_g/d/croisés/salut | adult | timer cooldown | 60–96f | `render-sprites.js:1380-1383` |
+| Pose hanche_g/d/croisés/salut | adult | scheduler cooldown dans `drawAdult` | 60–96f | `animator` — `render.js ANIM_DEFS` + scheduler `render-sprites.js:drawAdult` |
 | Marche pieds `stepPhase` | adult | en mouvement | continu | `render-sprites.js:1396-1398` |
 | Bras tombés (en faible) | baby/teen/adult | énergie | continu | `render-sprites.js:627, 931, 1242` |
 | Bras levés joie | adult | bonheur | continu | `render-sprites.js:1253` |
@@ -285,4 +254,4 @@ Seules vraies fuites non maîtrisées : accessoires (Bug 2, `render-sprites.js:3
 | 2 | Snap PX accessoires | `render-sprites.js:398, 426` |
 | 3 | `Math.round` → `Math.floor` géométrie | `render-sprites.js:324, 955, 961, 1392, 1400` |
 | 4 | `pixelDensity(1)` retina | `render.js:681` |
-| 5 | Architecture animator | Absorber `_adultPose`, `_jumpTimer`, `eatAnim`, `_evoAnim`, `_expr` dans un format déclaratif, ouvert à `data/anims.json` |
+| 5 | ✅ Architecture animator | `_adultPose` et `_jumpTimer` migrés (session 2026-04-30). Candidats suivants : `shakeTimer`, `eatAnim`, `_evoAnim`, `_expr` |

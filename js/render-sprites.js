@@ -385,7 +385,7 @@ function drawAccessoires(p, cx, anchors, stage, sl) {
   if (!window.D?.g?.props) return;
 
   // RÔLE : Snapper cx sur la grille PX dès l'entrée dans drawAccessoires.
-  // POURQUOI : cx (= cxB pour teen/adult) est flottant car walkX accumule des vitesses
+  // POURQUOI : cx (= walkX, centre de marche) est flottant car walkX accumule des vitesses
   //            non-entières (1.4, 0.7, 0.35…). Dans renderSprite, chaque rect du corps
   //            est snappé par px() depuis ce même cx flottant — résultat : le premier
   //            pixel du corps tombe sur Math.floor(cx + r.x*PX / PX)*PX.
@@ -748,11 +748,11 @@ function isMood(name) {
 
 // RÔLE : Définition DSL du sprite Ado — tableau de calques pour renderSprite().
 // POURQUOI : Remplace les px() manuels de l'ancienne drawTeen().
-//            Coordonnées en multiples de PX, relatives au cx effectif (après breathX).
-//            drawTeen() calcule cxB = cx - PX*4 - breathX et passe cxB au moteur,
-//            donc tous les x DSL sont relatifs à cxB : x_dsl = offset_original + (-4).
+//            Coordonnées en multiples de PX, relatives à cx (centre de marche = walkX).
+//            drawTeen() passe cx directement à renderSprite().
 //
 // Repère : x_dsl = offset_depuis_x_original + (-4)
+//          (car l'ancien code faisait x = cx - PX*4, donc offset_original était relatif à x)
 //          ex. x+PX*2 → 2 + (-4) = -2  |  x+PX*5 → 5 + (-4) = 1  |  x-PX → -1 + (-4) = -5
 //
 // Abréviations params : pm.sl=sommeil, pm.en=énergie, pm.ha=bonheur,
@@ -1012,13 +1012,13 @@ const LAYERS_TEEN = [
 ];
 
 function drawTeen(p, cx, cy, sl, en, ha) {
-  // RÔLE : Calculer la respiration et décaler cx pour que le sprite respire.
-  // POURQUOI : breathX décale toute la géométrie du sprite d'±1px — on l'applique
-  //            au cx transmis au moteur (cxB), pas dans chaque rect individuellement.
-  //            Ainsi, tous les calques de LAYERS_TEEN respirent automatiquement.
+  // RÔLE : Calculer la respiration pour les reflets oculaires et le dither.
+  // POURQUOI : breathX n'est pas appliqué à cx avant renderSprite() — les x DSL intègrent
+  //            déjà le décalage de base (-4). breathX est conservé séparément pour les
+  //            reflets (p.rect) et le dither qui utilisent cxB comme référence absolue.
   const breath  = getBreath(p);
   const breathX = sl ? 0 : Math.round(breath * 2 - 1);
-  const cxB     = cx - PX * 4 - breathX; // cx effectif : décalage base + respiration
+  const cxB     = cx - PX * 4 - breathX; // référence absolue pour reflets + dither uniquement
 
   // RÔLE : mouthBaseY est la position Y de base de la bouche, animée par la respiration.
   // POURQUOI : Les calques bouche utilisent yFn qui lit pm.mouthBaseY — calculé une seule
@@ -1033,7 +1033,12 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     mouthBaseY,
   };
 
-  renderSprite(p, LAYERS_TEEN, cxB, cy, params);
+  // RÔLE : Passer cx (centre de marche) à renderSprite, pas cxB.
+  // POURQUOI : Les x DSL dans LAYERS_TEEN sont déjà calculés avec la formule
+  //            x_dsl = offset_original + (-4), ce qui intègre le décalage -4*PX.
+  //            Passer cxB (= cx - PX*4) doublerait ce décalage et décalerait
+  //            le sprite de 4*PX = 20px vers la gauche — c'est le bug du décalage.
+  renderSprite(p, LAYERS_TEEN, cx, cy, params);
 
   // RÔLE : Reflet blanc flottant — même logique que drawBaby.
   // POURQUOI : p.rect() accepte des flottants — le reflet ne snappe pas comme px(),
@@ -1058,14 +1063,12 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     drawDither(p, cxB, cy + PX * 4, PX * 8, PX * 5, C.bodyDk);
   }
 
-  // RÔLE : Passer cxB (centre visuel du sprite teen) à drawAccessoires.
-  // POURQUOI : Le sprite teen est centré sur cxB = cx - PX*4 - breathX.
-  //            drawAccessoires calcule accX = cx - largeur/2, donc le "cx" qu'il reçoit
-  //            doit être le centre visuel du sprite, pas le centre de marche (cx).
-  //            En passant cx (ancien code), l'accessoire était décalé de ~4*PX = 20px
-  //            vers la droite du gotchi — c'est le bug "accessoires dans le vide à droite".
-  //            cxB est le bon centre : le corps de LAYERS_TEEN est centré sur cxB.
-  drawAccessoires(p, cxB, { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 5 }, 'teen', sl);
+  // RÔLE : Passer cx (centre de marche = walkX) à drawAccessoires.
+  // POURQUOI : drawAccessoires calcule accX = cx - largeur/2 pour centrer l'accessoire.
+  //            Le centre visuel réel du corps teen est cxB + 4*PX = cx.
+  //            Passer cx est donc correct — l'accessoire est centré sur le gotchi.
+  //            (Passer cxB décalerait les accessoires de 20px vers la gauche.)
+  drawAccessoires(p, cx, { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 5 }, 'teen', sl);
   drawSaleteDither(p, 'teen', cx, cy, window.D?.g?.salete || 0, sl);
 
   return { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 5 };
@@ -1075,11 +1078,11 @@ function drawTeen(p, cx, cy, sl, en, ha) {
 
 // RÔLE : Définition DSL du sprite Adulte — tableau de calques pour renderSprite().
 // POURQUOI : Remplace les px() manuels de l'ancienne drawAdult().
-//            Coordonnées en multiples de PX, relatives au cx effectif (après breathX).
-//            drawAdult() calcule cxB = cx - PX*5 - breathX et passe cxB au moteur,
-//            donc tous les x DSL sont relatifs à cxB : x_dsl = offset_original + (-5).
+//            Coordonnées en multiples de PX, relatives à cx (centre de marche = walkX).
+//            drawAdult() passe cx directement à renderSprite().
 //
 // Repère : x_dsl = offset_depuis_x_original + (-5)
+//          (car l'ancien code faisait x = cx - PX*5, donc offset_original était relatif à x)
 //          ex. x+PX*3 → -2  |  x+PX*6 → 1  |  x-PX → -6  |  x+PX*10 → 5  |  x+PX*11 → 6
 //
 // params spécifiques adult : pm.stepPhase (0|1|-1), pm.pulse, pm.mouthBaseY,
@@ -1467,10 +1470,12 @@ function drawAdult(p, cx, cy, sl, en, ha) {
     }
   }
 
-  // RÔLE : Calculer la respiration et le cx effectif (comme drawTeen).
+  // RÔLE : Calculer la respiration pour les reflets oculaires et le dither.
+  // POURQUOI : Même logique que drawTeen — cxB sert uniquement aux p.rect() de reflets
+  //            et à drawDither(), pas à renderSprite() qui reçoit cx directement.
   const breath  = getBreath(p);
   const breathX = sl ? 0 : Math.round(breath * 2 - 1);
-  const cxB     = cx - PX * 5 - breathX;
+  const cxB     = cx - PX * 5 - breathX; // référence absolue pour reflets + dither uniquement
 
   // RÔLE : stepPhase pour l'animation de marche des pieds.
   // POURQUOI : window._walk.pause === 0 = en mouvement ; Math.floor(walkX/PX)%2 = phase gauche/droit.
@@ -1491,7 +1496,11 @@ function drawAdult(p, cx, cy, sl, en, ha) {
     stepPhase,
   };
 
-  renderSprite(p, LAYERS_ADULT, cxB, cy, params);
+  // RÔLE : Passer cx (centre de marche) à renderSprite, pas cxB.
+  // POURQUOI : Les x DSL dans LAYERS_ADULT sont calculés avec x_dsl = offset_original + (-5),
+  //            ce qui intègre déjà le décalage -5*PX. Passer cxB (= cx - PX*5) doublerait
+  //            ce décalage et décalerait le sprite de 5*PX = 25px vers la gauche.
+  renderSprite(p, LAYERS_ADULT, cx, cy, params);
 
   // RÔLE : Reflet blanc flottant — même logique que drawBaby.
   // POURQUOI : p.rect() accepte des flottants — le reflet ne snappe pas comme px(),
@@ -1516,12 +1525,11 @@ function drawAdult(p, cx, cy, sl, en, ha) {
     drawDither(p, cxB + PX, cy + PX * 5, PX * 8, PX * 5, C.bodyDk);
   }
 
-  // RÔLE : Passer cxB (centre visuel du sprite adulte) à drawAccessoires.
-  // POURQUOI : Le sprite adulte est centré sur cxB = cx - PX*5 - breathX.
-  //            Passer cx (ancien code) créait un décalage de ~5*PX = 25px vers la droite
-  //            — c'est le bug "accessoires dans le vide à droite du gotchi".
-  //            cxB est le vrai centre : le corps de LAYERS_ADULT (x: -5 → +5) est centré sur cxB.
-  drawAccessoires(p, cxB, { topY: cy, eyeY: cy + PX * 3, neckY: cy + PX * 6 }, 'adult', sl);
+  // RÔLE : Passer cx (centre de marche = walkX) à drawAccessoires.
+  // POURQUOI : Le centre visuel réel du corps adult est cxB + 5*PX = cx.
+  //            drawAccessoires centre l'accessoire sur le cx reçu (accX = cx - largeur/2).
+  //            Passer cx est donc correct — passer cxB décalerait les accessoires de 25px à gauche.
+  drawAccessoires(p, cx, { topY: cy, eyeY: cy + PX * 3, neckY: cy + PX * 6 }, 'adult', sl);
   drawSaleteDither(p, 'adult', cx, cy, window.D?.g?.salete || 0, sl);
 
   return { topY: cy, eyeY: cy + PX * 3, neckY: cy + PX * 6 };

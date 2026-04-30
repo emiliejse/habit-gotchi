@@ -742,12 +742,11 @@ function openTablet() {
 
   document.getElementById('tablet-overlay').classList.add('open');
 
-  // RÔLE : Bloque les interactions derrière la tablette (même logique que openModal)
+  // RÔLE : Bloque scroll + inert sur les zones derrière (lockScroll gère les deux — cf. ui-core.js)
   // POURQUOI : #tablet-overlay est à z-index:400 — au-dessus de .modal (300).
-  //            Sans lockScroll + inert, le fond reste scrollable et les éléments
-  //            de #console-top restent cliquables sous la zone de padding.
+  //            Sans lockScroll, le fond reste scrollable et les éléments de #console-top
+  //            restent cliquables sous la zone de padding en haut de l'overlay.
   lockScroll();
-  _setInert(true);
 
   // RÔLE : Fermeture par la touche Escape (accessibilité clavier + cohérence avec les modales)
   // POURQUOI : Les modales standards se ferment sur Escape via le navigateur — la tablette doit
@@ -762,9 +761,7 @@ function closeTablet(e) {
   // Ferme seulement si on clique sur le fond, pas sur la tablette
   if (e.target === document.getElementById('tablet-overlay')) {
     document.getElementById('tablet-overlay').classList.remove('open');
-    // RÔLE : Restitue le scroll et l'interactivité des zones derrière
-    unlockScroll();
-    _setInert(false);
+    unlockScroll(); // RÔLE : restitue scroll + inert via unlockScroll (cf. ui-core.js)
   }
 }
 
@@ -1264,20 +1261,15 @@ function ouvrirModalEtats() {
 
   document.body.appendChild(overlay);
 
-  // RÔLE : Bloque le scroll du fond et les interactions derrière la bottom sheet
-  // POURQUOI : Même logique que openModal() — sans ça, le fond reste scrollable
-  //            et les éléments de #console-top restent cliquables sous la sheet.
+  // RÔLE : Bloque scroll + inert sur les zones derrière (lockScroll gère les deux — cf. ui-core.js)
   lockScroll();
-  _setInert(true);
 }
 
 // RÔLE : Ferme et supprime la bottom sheet des états
 function fermerModalEtats() {
   const overlay = document.getElementById('etats-overlay');
   if (overlay) overlay.remove();
-  // RÔLE : Restitue le scroll et l'interactivité des zones derrière
-  unlockScroll();
-  _setInert(false);
+  unlockScroll(); // RÔLE : restitue scroll + inert via unlockScroll (cf. ui-core.js)
 }
 
 // RÔLE : Expose les fonctions pour y accéder depuis render.js (tap canvas)

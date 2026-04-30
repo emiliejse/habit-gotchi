@@ -220,8 +220,7 @@ function toastSnack(msg) {
    - openModalRaw(html) → sans ✕ auto (boutique/agenda qui gèrent leur propre bouton)
    - clModal(e)         → ferme, unlockScroll, retire inert
    Les overlays séparés (tablet-overlay, etats-overlay) doivent appeler
-   lockScroll() + _setInert(true) à l'ouverture, et unlockScroll() + _setInert(false)
-   à la fermeture.
+   lockScroll() à l'ouverture (il gère inert automatiquement) et unlockScroll() à la fermeture.
    ============================================================ */
 let modalLocked = false; // ← true pendant le soutien IA (empêche la fermeture accidentelle)
 
@@ -255,8 +254,7 @@ function clModal(e) {
   // POURQUOI : on ferme si : (a) clic direct sur le fond #modal, (b) appel sans event (depuis bouton OK/Annuler), (c) bouton .modal-close
   if (!e || e.target.id === 'modal' || e.currentTarget?.classList?.contains('modal-close')) {
     document.getElementById('modal').style.display = 'none';
-    unlockScroll();
-    _setInert(false); // RÔLE : remet #console-top et #dynamic-zone interactifs après fermeture
+    unlockScroll(); // RÔLE : retire aussi inert via unlockScroll (cf. scroll lock section)
   }
 }
 
@@ -271,8 +269,7 @@ function openModal(html) {
   const mbox  = document.getElementById('mbox');
   _fermerMenuSiOuvert(); // ferme le menu-overlay s'il était ouvert (évite qu'il capte les clics sous la modale)
   modal.style.display = 'flex';
-  lockScroll();
-  _setInert(true); // RÔLE : bloque toute interaction derrière la modale (#console-top, #dynamic-zone)
+  lockScroll(); // RÔLE : bloque scroll + inert sur les zones derrière (cf. scroll lock section)
   // RÔLE : Retire la classe avant d'injecter le contenu, force le reflow, puis remet la classe
   // POURQUOI : L'ordre est critique — si on injecte le HTML après le remove/add, le navigateur
   //            batchera les mutations DOM et ignorera le reflow entre les deux, cassant l'animation
@@ -295,8 +292,7 @@ function openModalRaw(html) {
   const mbox  = document.getElementById('mbox');
   _fermerMenuSiOuvert();
   modal.style.display = 'flex';
-  lockScroll();
-  _setInert(true); // même protection que openModal()
+  lockScroll(); // RÔLE : bloque scroll + inert sur les zones derrière (cf. scroll lock section)
   mbox.classList.remove('modal-pop');
   void mbox.offsetWidth;
   mbox.innerHTML = html; // pas de ✕ injecté automatiquement
@@ -306,16 +302,21 @@ function openModalRaw(html) {
 /* ============================================================
    SCROLL LOCK
    ============================================================ */
-// RÔLE : Bloque le scroll du fond quand une modale ou le menu est ouvert.
-// POURQUOI : L'ancienne version ajoutait un listener touchmove → preventDefault sur document,
-//            ce qui bloquait aussi le scroll DANS les modales. La nouvelle version utilise
-//            overflow:hidden sur body — le .modal-box est en position fixed, hors du flux,
-//            donc son touch-action:pan-y + overflow-y:auto fonctionnent nativement.
+// RÔLE : Bloque le scroll du fond ET les interactions derrière, pour toute modale ou overlay.
+// POURQUOI : On centralise _setInert() ici plutôt que dans chaque fonction d'ouverture,
+//            parce que toutes les ouvertures qui bypassent openModal() appellent quand même
+//            lockScroll() (boutique, agenda, tablet, etats-overlay...). En couplant inert
+//            à lockScroll, on couvre tous les cas en un seul endroit sans modifier
+//            les 14+ fonctions d'ouverture individuellement.
+//            unlockScroll() retire systématiquement inert — safe car _fermerMenuSiOuvert()
+//            garantit qu'on ne superpose jamais menu + modale.
 function lockScroll() {
   document.body.style.overflow = 'hidden';
+  _setInert(true); // RÔLE : rend #console-top et #dynamic-zone inertes (plus de scroll ni de tap derrière)
 }
 function unlockScroll() {
   document.body.style.overflow = '';
+  _setInert(false); // RÔLE : restitue l'interactivité des zones derrière
 }
 
 /* ============================================================

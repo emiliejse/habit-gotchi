@@ -296,7 +296,7 @@ function ouvrirBoutique() {
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h2 style="color:var(--text);">🛍️ Boutique</h2>
-      <button onclick="clModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0">✕</button>
+      ${window._modalCloseBtn()} <!-- RÔLE : bouton ✕ standardisé via ui-core.js -->
     </div>
 
     <div style="text-align:center;margin-bottom:16px">
@@ -552,7 +552,7 @@ function exportObjetIA(propId) {
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
       <h3 style="font-size:13px;color:var(--lilac);margin:0">✦ ${escapeHtml(entry.nom)}</h3>
-      <button onclick="clModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0">✕</button>
+      ${window._modalCloseBtn()} <!-- RÔLE : bouton ✕ standardisé via ui-core.js -->
     </div>
     <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:10px;line-height:1.6">
       📜 <strong>Notice de fabrication</strong><br>
@@ -941,7 +941,7 @@ r += `🌡️ ${meteo ? `${meteo.temperature}°C · vent ${meteo.windspeed} km/h
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <h3 style="font-size:13px;color:var(--lilac);">🔍 État système</h3>
-      <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button>
+      ${window._modalCloseBtn()} <!-- RÔLE : bouton ✕ standardisé via ui-core.js -->
     </div>
     <pre id="debug-contenu" style="font-size:var(--fs-sm);line-height:1.6;white-space:pre-wrap;color:var(--text2);margin:0 0 10px 0">${r}</pre>
     <button onclick="navigator.clipboard.writeText(document.getElementById('debug-contenu').textContent).then(()=>toast('Copié ✓'))"
@@ -979,7 +979,7 @@ const contenu = cb.map((p, i) => `  ${i + 1}. ${p}`).join('\n');
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <h3 style="font-size:13px;color:var(--lilac);">💬 Bulles personnalisées</h3>
-      <button onclick="clModal()" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button>
+      ${window._modalCloseBtn()} <!-- RÔLE : bouton ✕ standardisé via ui-core.js -->
     </div>
     <pre style="font-size:var(--fs-sm);line-height:1.8;white-space:pre-wrap;color:var(--text2);margin:0 0 10px;max-height:60vh;overflow-y:auto">${contenu}</pre>
     <button onclick="clModal()" class="btn btn-s" style="width:100%;font-size:var(--fs-sm)">Fermer</button>

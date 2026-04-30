@@ -619,7 +619,7 @@ window._soutienHistory = [];
   document.getElementById('mbox').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <h3 style="font-size:13px;color:var(--lilac);">💜 Besoin de soutien</h3>
-<button onclick="modalLocked=false;clModal()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2)">✕</button>
+      ${window._modalCloseBtn('modalLocked=false;clModal()')} <!-- RÔLE : bouton ✕ standardisé — déverrouille modalLocked avant de fermer -->
     </div>
     <div class="soutien-chat" id="soutien-chat">
       <div class="soutien-chat" id="soutien-chat"></div>

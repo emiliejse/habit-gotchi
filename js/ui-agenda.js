@@ -66,7 +66,7 @@ function ouvrirAgenda(dateStr) {
 mbox.innerHTML = `
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
     <h2 style="color:var(--text)">🗓️ Mon Agenda</h2>
-      <button onclick="fermerAgenda()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0">✕</button>
+    ${window._modalCloseBtn('fermerAgenda()')} <!-- RÔLE : bouton ✕ standardisé — appelle fermerAgenda() au lieu de clModal() -->
   </div>
   <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
     <button onclick="switchAgenda('jour')" id="atab-jour"

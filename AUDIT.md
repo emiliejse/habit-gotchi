@@ -4,6 +4,8 @@
 >
 > **Session refactoring 2026-04-30** : `ui.js` (5192 l) découpé en 8 modules — voir section "Historique des sessions" en fin de fichier. `sw.js` mis à jour (ajout `render-sprites.js` + 8 modules ui, retrait `ui.js`). `index.html` mis à jour (ordre de chargement). `getWeekId` doublon confirmé absent (déjà supprimé). `escapeHtml` unifié sur `escape` dans `ui-core.js`.
 >
+> **Session quick wins 2026-04-30** : 3 quick wins résolus — `getStageBaseY()` dans `render.js` (déduplication ternaire `by`), `clearInterval` + handles module-level dans `app.js` (intervals nettoyés), `window._modalCloseBtn(onclick)` exposé depuis `ui-core.js` et appliqué dans 5 modales (`ui-shop.js` ×4, `ui-agenda.js` ×1, `ui-ai.js` ×1).
+>
 > **Vérification version** : `window.APP_VERSION = 'v4.5'` ([app.js L54](js/app.js#L54)) — ⚠️ la consigne mentionnait `'hg-v4.5'` mais le code stocke uniquement `'v4.5'`. Le `CACHE_VERSION` de `sw.js` ([L7](sw.js#L7)) est aligné `'v4.5'`. Cohérence OK entre les deux fichiers, mais préfixe `hg-` non utilisé.
 
 ---
@@ -40,20 +42,17 @@
 
 ### Top 3 quick wins
 
-1. 🟡 **Dédupliquer le calcul `by` (Y du sprite par stade)**
-   - Fichier : `js/render.js` [L522, L1031-L1034, L1092-L1095]
-   - Description : Le ternaire `g.stage==='egg'?115 : 'baby'?108 : 'teen'?98 : 85` est répété **3 fois** (draw, touchStarted, touchMoved).
-   - Suggestion : Extraire en `function getStageBaseY(stage)` au top du fichier.
+1. ✅ **Dédupliquer le calcul `by` (Y du sprite par stade)** — RÉSOLU (2026-04-30)
+   - Fichier : `js/render.js`
+   - Solution : Fonction `getStageBaseY(stage)` ajoutée (~L102, juste avant `getGotchiC()`). Les 3 occurrences du ternaire inline (draw, touchStarted, touchMoved) remplacées par un appel à cette fonction.
 
-2. 🟡 **Éviter `setInterval` non nettoyés**
-   - Fichier : `js/app.js` [L1207-L1208]
-   - Description : `setInterval(fetchMeteo, 1800000)` et `setInterval(maybeSpawnPoop, POOP_CHECK_INTERVAL_MS)` sont créés à chaque appel de `bootstrap()`. Or `bootstrap()` peut être appelée plusieurs fois (filet `pageshow`/`visibilitychange`). Le flag `_appInitialized` early-return AVANT mais après `await loadUserConfig()` — donc en cas de retour foreground rapide, on ne ré-empile pas les intervals (OK), mais le code n'est pas verrouillé explicitement.
-   - Suggestion : Stocker les handles dans des variables module-level et `clearInterval` avant recréation, ou les déplacer hors de `bootstrap()`.
+2. ✅ **Éviter `setInterval` non nettoyés** — RÉSOLU (2026-04-30)
+   - Fichier : `js/app.js`
+   - Solution : Variables module-level `_meteoIntervalId` et `_poopIntervalId` ajoutées (~L57). Dans `bootstrap()`, `clearInterval()` appelé sur chaque handle avant recréation — sans effet si `null`, sûr dans tous les cas.
 
-3. 🟡 **Centraliser le bouton ✕ des modales agenda/boutique**
-   - Fichier : `js/ui.js` [L1113, L1369, L4001]
-   - Description : Le bouton `<button onclick="...">✕</button>` est dupliqué inline dans au moins 3 modales (boutique, IA bulle/cadeau, agenda) avec exactement les mêmes styles (`background:none;border:none;font-size:20px;...`). `_modalCloseBtn()` existe ([L343]) mais n'est utilisé que par `openModal()`.
-   - Suggestion : Faire passer ces 3 modales par `openModal()` ou utiliser `_modalCloseBtn()` directement.
+3. ✅ **Centraliser le bouton ✕ des modales agenda/boutique** — RÉSOLU (2026-04-30)
+   - Fichiers : `js/ui-core.js`, `js/ui-shop.js`, `js/ui-agenda.js`, `js/ui-ai.js`
+   - Solution : `_modalCloseBtn(onclick)` rendu paramétrable + exposé sur `window._modalCloseBtn`. Les 5 boutons ✕ inline remplacés par `${window._modalCloseBtn()}` (ou avec onclick personnalisé pour agenda : `fermerAgenda()`, et soutien IA : `modalLocked=false;clModal()`).
 
 ---
 

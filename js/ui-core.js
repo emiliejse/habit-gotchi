@@ -244,10 +244,14 @@ function _setInert(active) {
  * RÔLE : Génère le bouton ✕ de fermeture persistant pour toutes les modales
  * POURQUOI : Sans bouton explicite, l'utilisatrice doit deviner qu'il faut taper à côté
  *            pour fermer — source de frustration sur mobile, surtout avec TDAH
+ * @param {string} [onclick] - Action JS à exécuter (défaut : "clModal()")
  */
-function _modalCloseBtn() {
-  return `<button class="modal-close" onclick="clModal()" aria-label="Fermer">✕</button>`;
+function _modalCloseBtn(onclick = 'clModal()') {
+  return `<button class="modal-close" onclick="${onclick}" aria-label="Fermer">✕</button>`;
 }
+// RÔLE : Exposé sur window pour permettre aux modules ui-*.js d'utiliser le bouton ✕ standardisé.
+// POURQUOI : La fonction est définie dans ui-core.js mais les autres modules n'y ont pas accès direct.
+window._modalCloseBtn = _modalCloseBtn;
 
 function clModal(e) {
   if (modalLocked) return;

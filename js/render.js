@@ -99,6 +99,18 @@ window.triggerExpr = function(mood, duration = 60) {
   window._expr.moodTimer = duration;
 };
 
+/**
+ * RÔLE : Retourne la position Y de base du Gotchi en fonction de son stade de développement.
+ * POURQUOI : Ce ternaire était copié-collé 3 fois (draw, touchStarted, touchMoved) —
+ *            une seule fonction évite les désynchronisations si les valeurs changent.
+ */
+function getStageBaseY(stage) {
+  if (stage === 'egg')  return 115;
+  if (stage === 'baby') return 108;
+  if (stage === 'teen') return 98;
+  return 85; // adult (valeur par défaut)
+}
+
 function getGotchiC() {
   const id = window.D.g.gotchiColor || 'vert';
   const gc = window.HG_CONFIG.GOTCHI_COLORS.find(x => x.id === id) || window.HG_CONFIG.GOTCHI_COLORS[0];
@@ -519,7 +531,7 @@ if (!sleeping) {
 window._gotchiX = walkX; // ← exposition de la position réelle
 
 const cx = walkX;
-const by = g.stage==='egg'?115 : g.stage==='baby'?108 : g.stage==='teen'?98 : 85;
+const by = getStageBaseY(g.stage); // RÔLE : Y de base du Gotchi selon son stade — centralisé dans getStageBaseY()
 window._gotchiY = by + (bobY || 0);
 const tilt = (!sleeping && en < EN_TILT) ? Math.sin(p.frameCount * 0.05) * 2 : 0; // balancement si en < 2
 
@@ -1028,11 +1040,8 @@ if (!window._gotchiActif) return true;
     // Position du Gotchi à l'écran = by + bobY (le bobY contient déjà GOTCHI_OFFSET_Y)
     // On recalcule donc by seul, SANS ajouter OFFSET_Y (il est déjà dans bobY côté rendu).
     // Puis on centre la hitbox sur le CORPS entier du Gotchi, pas juste la tête.
-    const by = window.D.g.stage === 'egg'  ? 115
-             : window.D.g.stage === 'baby' ? 108
-             : window.D.g.stage === 'teen' ? 98
-             :                               85;
-    
+    const by = getStageBaseY(window.D.g.stage); // RÔLE : Y de base du Gotchi — centralisé dans getStageBaseY()
+
     // Centre du corps = by + OFFSET_Y (pour compenser le bobY) + ~30px (milieu du corps)
     // Hitbox : ±26 en X (largeur corps) et ±35 en Y (tête + corps, PAS au-dessus)
     const gotchiCenterY = by + GOTCHI_OFFSET_Y + 30;
@@ -1089,10 +1098,7 @@ if (!window._gotchiActif) return true;
     const my = p.touches[0]?.y ?? p.mouseY;
 
     // Recalcule la hitbox Gotchi (même logique que touchStarted)
-    const by = window.D.g.stage === 'egg'  ? 115
-             : window.D.g.stage === 'baby' ? 108
-             : window.D.g.stage === 'teen' ? 98
-             :                               85;
+    const by = getStageBaseY(window.D.g.stage); // RÔLE : Y de base du Gotchi — centralisé dans getStageBaseY()
     const gotchiCenterY = by + GOTCHI_OFFSET_Y + 30;
     const hit = Math.abs(mx - walkX) < 26 && Math.abs(my - gotchiCenterY) < 35;
 

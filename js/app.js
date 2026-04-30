@@ -50,6 +50,12 @@ window.meteoData  = null;
 window._gotchiActif = true;
 
 
+// RÔLE : Handles des setInterval récurrents — stockés pour pouvoir les annuler avant recréation.
+// POURQUOI : bootstrap() peut être appelée plusieurs fois (pageshow/visibilitychange).
+//            Sans clearInterval préalable, chaque appel empilerait un nouvel interval en doublon.
+let _meteoIntervalId = null;
+let _poopIntervalId  = null;
+
 // VERSION À CHANGER
 window.APP_VERSION = 'v4.55'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
@@ -1203,8 +1209,13 @@ async function bootstrap() {
 
   fetchMeteo();
   fetchSolarPhases();
-  setInterval(fetchMeteo, 1800000);
-  setInterval(maybeSpawnPoop, POOP_CHECK_INTERVAL_MS);
+
+  // RÔLE : Lance les intervals récurrents en s'assurant de ne pas en empiler plusieurs.
+  // POURQUOI : clearInterval sur null est sans effet — pas besoin de guard if().
+  clearInterval(_meteoIntervalId);
+  clearInterval(_poopIntervalId);
+  _meteoIntervalId = setInterval(fetchMeteo, 1800000);           // météo toutes les 30 min
+  _poopIntervalId  = setInterval(maybeSpawnPoop, POOP_CHECK_INTERVAL_MS); // check crottes
 }
 
 /* ---------- Déclencheurs ---------- */

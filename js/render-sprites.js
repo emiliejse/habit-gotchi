@@ -79,11 +79,25 @@ function renderSprite(p, layers, cx, cy, params, palette) {
 
   p.noStroke();
 
+  // RÔLE : Lire les overrides d'animation calculés ce frame par animator.resolve().
+  // POURQUOI : window._animOverrides est recalculé une seule fois par frame dans p.draw()
+  //            (après animator.tick()) et exposé ici en lecture seule.
+  //            On utilise un objet vide par défaut pour que renderSprite() reste
+  //            utilisable même si animator n'a pas encore tourné (ex. premier frame).
+  const aov = window._animOverrides || { hidden: new Set(), visible: new Set(), dx: 0, dy: 0 };
+
   for (const layer of layers) {
     // RÔLE : Évaluer la condition du calque avant de dessiner.
     // POURQUOI : `when` est une fonction pure (params) => bool.
     //            Si absent, le calque est toujours affiché.
-    if (layer.when && !layer.when(params)) continue;
+    //
+    // Priorité des overrides d'animation :
+    //   1. aov.hidden  → forcer le calque à ne PAS être dessiné (ignore `when`)
+    //   2. aov.visible → forcer le calque à être dessiné (ignore `when`)
+    //   3. Comportement normal via `when`
+    if (layer.id && aov.hidden.has(layer.id)) continue;          // animation masque ce calque
+    const forceVisible = layer.id && aov.visible.has(layer.id);  // animation force ce calque
+    if (!forceVisible && layer.when && !layer.when(params)) continue;
 
     // RÔLE : Appliquer l'opacité globale du calque si définie.
     // POURQUOI : Certains calques (joues débordantes joie) ont une transparence partielle.
@@ -108,10 +122,11 @@ function renderSprite(p, layers, cx, cy, params, palette) {
     //            rawW/rawH permettent des dimensions non-multiples de PX (ex. reflets 2×2 px).
     //            yFn est une fonction (params) => number pour les positions Y dynamiques
     //            (ex. mouthY qui descend avec la respiration).
+    //            aov.dx / aov.dy : offsets d'animation, déjà snappés à PX dans animator.resolve().
     for (const r of layer.rects) {
-      const rx = cx + r.x * PX + (r.rawDx || 0) + (r.rawDxFn ? r.rawDxFn(params) : 0);
+      const rx = cx + r.x * PX + (r.rawDx || 0) + (r.rawDxFn ? r.rawDxFn(params) : 0) + aov.dx;
       const baseY = r.yFn ? r.yFn(params) : cy + r.y * PX;
-      const ry = baseY + (r.rawDy || 0) + (r.rawDyFn ? r.rawDyFn(params) : 0);
+      const ry = baseY + (r.rawDy || 0) + (r.rawDyFn ? r.rawDyFn(params) : 0) + aov.dy;
       const rw = r.rawW !== undefined ? r.rawW : r.w * PX;
       const rh = r.rawH !== undefined ? r.rawH : r.h * PX;
       px(p, rx, ry, rw, rh);

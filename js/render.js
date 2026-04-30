@@ -112,6 +112,112 @@ window.triggerExpr = function(mood, duration = 60) {
   window._expr.moodTimer = duration;
 };
 
+/* ─── SYSTÈME D'ANIMATION DÉCLARATIF ────────────────────────────────── */
+// RÔLE : Catalogue des animations déclenchables — format déclaratif, extensible vers JSON.
+// POURQUOI : Remplace les variables ad hoc (_jumpTimer, shakeTimer, _adultPose…) par un
+//            langage commun. Chaque entrée décrit UNE animation, ses effets visuels (poses
+//            de calques, offset dx/dy) et ses conditions de déclenchement.
+//            Le catalogue reste en JS pour l'instant ; à terme il pourra être chargé depuis
+//            data/anims.json sans changer le moteur.
+//
+// Structure d'une définition :
+//   stages   : ['baby','teen','adult'] | ['*']  — stades concernés ('*' = tous)
+//   duration : number                           — durée en frames
+//   poses    : { [layerId]: { hidden?: bool, visible?: bool } }  — overrides de calques DSL
+//   bodyOffset : {
+//     yFn?: (elapsed) => number,   — décalage Y en pixels canvas (snappé à PX dans resolve)
+//     xFn?: (elapsed) => number    — décalage X en pixels canvas (snappé à PX dans resolve)
+//   }
+//
+// Note : les layerIds dans `poses` doivent correspondre exactement aux `id` définis
+//        dans les tableaux LAYERS_* de render-sprites.js.
+const ANIM_DEFS = {
+  // Exemple de jump de joie (déclenché par toggleHab, XP gain…).
+  // Remplacera window._jumpTimer à l'étape Temps 2.
+  // saut_joie: {
+  //   stages: ['*'],
+  //   duration: 20,
+  //   bodyOffset: {
+  //     yFn: (elapsed) => -Math.floor(Math.sin(elapsed / 20 * Math.PI) * 22 / PX) * PX
+  //   }
+  // },
+};
+
+// RÔLE : Moteur léger qui gère la pile des animations actives.
+// POURQUOI : Séparer la logique d'animation (trigger / tick / resolve) du rendu (p.draw)
+//            permet de déclencher des animations depuis n'importe quel module (app.js,
+//            ui-habs.js…) sans toucher à render.js.
+const animator = {
+  // Pile des animations en cours : [{ id, t, def }, …]
+  // t = frames restantes ; décrémenté à chaque tick().
+  active: [],
+
+  // RÔLE : Déclencher une animation par son id (clé dans ANIM_DEFS).
+  // POURQUOI : Cherche d'abord dans ANIM_DEFS, accepte aussi une def inline
+  //            pour les cas one-shot non catalogués (test, debug).
+  trigger(id, defOverride) {
+    const def = defOverride || ANIM_DEFS[id];
+    if (!def) return; // id inconnu → silencieux
+    this.active.push({ id, t: def.duration, def });
+  },
+
+  // RÔLE : Décrémenter tous les timers et retirer les animations terminées.
+  // POURQUOI : Appelé une fois par frame dans p.draw(), avant resolve().
+  tick() {
+    this.active = this.active.filter(a => --a.t > 0);
+  },
+
+  // RÔLE : Calculer le diff visuel à appliquer ce frame, pour un stade donné.
+  // POURQUOI : Retourne un objet plat { hidden, visible, dx, dy } que renderSprite()
+  //            peut lire sans connaître le système d'animation.
+  //            Toutes les animations actives sont cumulées : un saut + une pose idle
+  //            peuvent coexister.
+  // @param {string} stage - 'egg' | 'baby' | 'teen' | 'adult'
+  // @returns {{ hidden: Set<string>, visible: Set<string>, dx: number, dy: number }}
+  resolve(stage) {
+    const out = { hidden: new Set(), visible: new Set(), dx: 0, dy: 0 };
+
+    for (const a of this.active) {
+      const { stages, duration, poses, bodyOffset } = a.def;
+
+      // RÔLE : Filtrer les animations non applicables au stade courant.
+      // POURQUOI : stages: ['*'] = wildcard tous stades ; sinon on vérifie l'inclusion.
+      if (stages !== '*' && !stages.includes(stage)) continue;
+
+      // RÔLE : Calculer le nombre de frames écoulées depuis le début de l'animation.
+      // POURQUOI : elapsed va de 0 (début) à duration-1 (fin) — utilisé par yFn/xFn
+      //            pour les courbes (sin, lerp…).
+      const elapsed = duration - a.t;
+
+      // RÔLE : Appliquer les overrides de calques (visibilité).
+      if (poses) {
+        for (const [layerId, ov] of Object.entries(poses)) {
+          if (ov.hidden)  out.hidden.add(layerId);
+          if (ov.visible) out.visible.add(layerId);
+        }
+      }
+
+      // RÔLE : Cumuler les offsets de position, snappés à la grille PX.
+      // POURQUOI : Le snap (Math.floor / PX * PX) est obligatoire pour le pixel art —
+      //            un offset flottant produit des positions sub-pixel qui floutent le sprite.
+      if (bodyOffset?.yFn) out.dy += Math.floor(bodyOffset.yFn(elapsed) / PX) * PX;
+      if (bodyOffset?.xFn) out.dx += Math.floor(bodyOffset.xFn(elapsed) / PX) * PX;
+    }
+
+    return out;
+  }
+};
+
+// RÔLE : Exposer animator sur window pour que app.js et les modules ui-* puissent
+//        déclencher des animations sans importer render.js.
+// POURQUOI : Convention du projet — toute globale partagée passe par window.*.
+window.animator = animator;
+
+// RÔLE : Initialiser _animOverrides à vide au démarrage.
+// POURQUOI : renderSprite() y accède dès le premier frame — on garantit que l'objet
+//            existe même avant le premier tick().
+window._animOverrides = { hidden: new Set(), visible: new Set(), dx: 0, dy: 0 };
+
 /**
  * RÔLE : Retourne la position Y de base du Gotchi en fonction de son stade de développement.
  * POURQUOI : Ce ternaire était copié-collé 3 fois (draw, touchStarted, touchMoved) —
@@ -857,6 +963,14 @@ const tilt = (!sleeping && en < EN_TILT) ? Math.sin(p.frameCount * 0.05) * 2 : 0
 
 if (window.shakeTimer > 0) window.shakeTimer--;
 
+// RÔLE : Faire avancer le moteur d'animation d'un tick, puis calculer le diff visuel
+//        pour ce frame et l'exposer sur window._animOverrides.
+// POURQUOI : tick() décrémente les timers et purge les animations terminées.
+//            resolve() produit un objet plat { hidden, visible, dx, dy } que renderSprite()
+//            consommera en lecture seule — une seule évaluation par frame, partagée par
+//            tous les appels renderSprite() du frame (drawAdult, drawTeen…).
+animator.tick();
+window._animOverrides = animator.resolve(g.stage);
 
 // 7. Dessin du Gotchi
     let gotchiInfo;

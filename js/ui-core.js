@@ -315,17 +315,18 @@ function openModalRaw(html) {
 function lockScroll() {
   document.body.style.overflow = 'hidden';
   // RÔLE : bloque le scroll propre de #dynamic-zone (overflow-y:auto indépendant du body)
-  // POURQUOI : body.overflow:hidden ne suffit pas — #dynamic-zone scrolle de façon autonome,
-  //            donc quand la boutique est ouverte on peut encore scroller le contenu derrière.
+  // POURQUOI : body.overflow:hidden ne suffit pas — #dynamic-zone a son propre scroll.
+  //            overflow-y:hidden seul peut être contourné par le momentum natif iOS/Safari,
+  //            donc on ajoute touch-action:none pour bloquer aussi l'interprétation tactile.
   const dz = document.getElementById('dynamic-zone');
-  if (dz) dz.style.overflowY = 'hidden';
+  if (dz) { dz.style.overflowY = 'hidden'; dz.style.touchAction = 'none'; }
   _setInert(true);
 }
 function unlockScroll() {
   document.body.style.overflow = '';
-  // RÔLE : restitue le scroll interne de #dynamic-zone
+  // RÔLE : restitue le scroll et les gestes tactiles de #dynamic-zone
   const dz = document.getElementById('dynamic-zone');
-  if (dz) dz.style.overflowY = '';
+  if (dz) { dz.style.overflowY = ''; dz.style.touchAction = ''; }
   _setInert(false);
 }
 

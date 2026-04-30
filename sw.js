@@ -4,7 +4,7 @@
    pour forcer le rechargement chez tous les utilisateurs.
    ============================================================ */
 
-const CACHE_VERSION = 'v4.7';  // ⚠️ SYNC → app.js ligne 1 : window.APP_VERSION
+const CACHE_VERSION = 'v4.71';  // ⚠️ SYNC → app.js ligne 1 : window.APP_VERSION
 
 const ASSETS = [
   './',
@@ -59,6 +59,17 @@ self.addEventListener('activate', e => {
       )
     ).then(() => self.clients.claim())  // prend le contrôle de tous les onglets ouverts
   );
+});
+
+// ── Message : activation immédiate sur demande de l'UI ──
+// RÔLE : Écoute le message SKIP_WAITING envoyé par le bandeau de mise à jour.
+// POURQUOI : Permet à l'UI de déclencher l'activation du nouveau SW sans attendre
+//            la fermeture de tous les onglets. Sans ce listener, le SW en état
+//            "waiting" ne s'active que quand toutes les pages sont fermées.
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // ── Fetch : cache d'abord, réseau en fallback ──

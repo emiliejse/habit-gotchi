@@ -122,11 +122,13 @@ function renderSprite(p, layers, cx, cy, params, palette) {
     //            rawW/rawH permettent des dimensions non-multiples de PX (ex. reflets 2×2 px).
     //            yFn est une fonction (params) => number pour les positions Y dynamiques
     //            (ex. mouthY qui descend avec la respiration).
-    //            aov.dx / aov.dy : offsets d'animation, déjà snappés à PX dans animator.resolve().
+    //            aov.dx : offset horizontal d'animation, snappé à PX dans animator.resolve().
+    //            aov.dy : NON appliqué ici — absorbé sur drawY dans p.draw() pour décaler
+    //                     le Gotchi entier (corps + accessoires + dithering + reflets).
     for (const r of layer.rects) {
       const rx = cx + r.x * PX + (r.rawDx || 0) + (r.rawDxFn ? r.rawDxFn(params) : 0) + aov.dx;
       const baseY = r.yFn ? r.yFn(params) : cy + r.y * PX;
-      const ry = baseY + (r.rawDy || 0) + (r.rawDyFn ? r.rawDyFn(params) : 0) + aov.dy;
+      const ry = baseY + (r.rawDy || 0) + (r.rawDyFn ? r.rawDyFn(params) : 0);
       const rw = r.rawW !== undefined ? r.rawW : r.w * PX;
       const rh = r.rawH !== undefined ? r.rawH : r.h * PX;
       px(p, rx, ry, rw, rh);
@@ -1425,7 +1427,11 @@ function drawAdult(p, cx, cy, sl, en, ha) {
   //            n'est qu'un itérateur passif. On calcule pose.current ici, puis on
   //            le passe dans params — les calques bras lisent pm.pose.
   const pose = window._adultPose;
-  const canVary = !sl && !window._jumpTimer;
+  // RÔLE : Bloquer les poses idle pendant un saut de joie.
+  // POURQUOI : Avant, on lisait window._jumpTimer > 0. Désormais le saut est géré
+  //            par animator — on vérifie si 'saut_joie' est dans la pile active.
+  const isJumping = window.animator?.active.some(a => a.id === 'saut_joie') ?? false;
+  const canVary = !sl && !isJumping;
 
   if (en >= EN_WARN && ha <= HA_ARMS_UP) {
     // RÔLE : Faire évoluer la pose uniquement quand les bras sont en mode idle.

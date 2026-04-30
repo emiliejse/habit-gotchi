@@ -60,7 +60,14 @@ let walkDir = 1;
 //   walkStep était incrémenté dans la boucle de marche mais jamais lu nulle part.
 let walkTarget = 100;   // destination en X
 let walkPause  = 0;     // frames d'attente avant le prochain déplacement  
-window.triggerGotchiBounce = function() { window._jumpTimer = 20; };
+// RÔLE : Déclencher le saut de joie du Gotchi depuis n'importe quel module.
+// POURQUOI : Remplace l'ancienne approche window._jumpTimer = 20 (Temps 2).
+//            L'interface publique (triggerGotchiBounce) est inchangée — app.js,
+//            ui-shop.js et ui.js n'ont pas besoin d'être modifiés.
+window.triggerGotchiBounce = function() { animator.trigger('saut_joie'); };
+// Note : window._jumpTimer conservé à 0 pour éviter toute erreur si du code
+//        externe lirait encore cette variable (rétrocompatibilité défensive).
+window._jumpTimer = 0;
 window.triggerGotchiShake  = function() { window.shakeTimer = 12; }; 
 window.spawnP = spawnP;
 window._nextBlinkAt = 60;
@@ -132,15 +139,19 @@ window.triggerExpr = function(mood, duration = 60) {
 // Note : les layerIds dans `poses` doivent correspondre exactement aux `id` définis
 //        dans les tableaux LAYERS_* de render-sprites.js.
 const ANIM_DEFS = {
-  // Exemple de jump de joie (déclenché par toggleHab, XP gain…).
-  // Remplacera window._jumpTimer à l'étape Temps 2.
-  // saut_joie: {
-  //   stages: ['*'],
-  //   duration: 20,
-  //   bodyOffset: {
-  //     yFn: (elapsed) => -Math.floor(Math.sin(elapsed / 20 * Math.PI) * 22 / PX) * PX
-  //   }
-  // },
+  // Saut de joie — déclenché par toggleHab, allHabsDone, achat boutique.
+  // Remplace window._jumpTimer (Temps 2).
+  // POURQUOI yFn : sin(0→π) produit une cloche 0→1→0 sur la durée.
+  //   × 22 = amplitude max en px canvas, identique à l'ancienne valeur _jumpTimer.
+  //   Le résultat est négatif (montée = Y décroissant sur canvas).
+  //   Pas de snap ici : bobY est déjà en px canvas, le snap est dans resolve().
+  saut_joie: {
+    stages: ['*'],
+    duration: 20,
+    bodyOffset: {
+      yFn: (elapsed) => -(Math.sin(elapsed / 20 * Math.PI) * 22)
+    }
+  },
 };
 
 // RÔLE : Moteur léger qui gère la pile des animations actives.
@@ -898,12 +909,9 @@ if (window.eatAnim?.active) {
   }
 }
 
-// Saut déclenché depuis app.js (habitudes, réactions)
-if (window._jumpTimer > 0) {
-  const t = window._jumpTimer / 20;
-  bobY -= Math.sin(t * Math.PI) * 22;
-  window._jumpTimer--;
-}
+// Note : le saut de joie était géré ici via window._jumpTimer (supprimé Temps 2).
+//        Il est maintenant géré par animator ('saut_joie') → _animOverrides.dy,
+//        appliqué sur drawY après resolve() ci-dessous.
 
 let amplitude = 15, vitesse = 0.02;
 if (!sleeping && ha >= HA_HIGH && en >= HA_HIGH) {  // très heureux + plein d'énergie (≥ 4)
@@ -979,8 +987,13 @@ window._animOverrides = animator.resolve(g.stage);
     
     const shakeOffsetX = (window.shakeTimer > 0) ? Math.sin(p.frameCount * 3) * 5 : 0;
     const shakeOffsetY = (window.shakeTimer > 0) ? Math.sin(p.frameCount * 2) * 3 : 0;
+    // RÔLE : Appliquer l'offset vertical de l'animator (saut, futur : bond, etc.) sur drawY.
+    // POURQUOI : drawY est le cy transmis à drawAdult/drawBaby/drawTeen — c'est le bon niveau
+    //            pour décaler le Gotchi entier (corps + accessoires + dithering + reflets yeux).
+    //            Appliquer dy ici plutôt que dans renderSprite() évite de doubler l'offset.
+    const animDy = window._animOverrides?.dy || 0;
     const drawX = cx + shakeOffsetX;
-    const drawY = by + bobY + shakeOffsetY;
+    const drawY = by + bobY + shakeOffsetY + animDy;
 
     if (window._evoAnim && window._evoAnim.active) {
   const t = window._evoAnim.timer;

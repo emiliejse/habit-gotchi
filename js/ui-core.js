@@ -303,31 +303,62 @@ function openModalRaw(html) {
    SCROLL LOCK
    ============================================================ */
 // RÔLE : Bloque le scroll du fond ET les interactions derrière, pour toute modale ou overlay.
-// POURQUOI : On centralise ici plutôt que dans chaque fonction d'ouverture,
-//            parce que toutes les ouvertures qui bypassent openModal() appellent quand même
-//            lockScroll() (boutique, agenda, tablet, etats-overlay...).
-//            Deux mécanismes combinés :
-//            1. body.overflow = 'hidden' → bloque le scroll global
-//            2. #dynamic-zone overflow-y = 'hidden' → bloque son scroll interne propre
-//               (nécessaire car #dynamic-zone a overflow-y:auto indépendant du body)
-//            3. inert sur #console-top et #dynamic-zone → désactive pointer-events + focus
-//               sur les éléments HTML derrière (protection complémentaire)
+// POURQUOI : Sur iOS/Safari, overflow:hidden et touch-action:none sont ignorés par le moteur
+//            de scroll natif (rubber-band/momentum). La seule solution fiable est d'intercepter
+//            touchmove sur le document avec preventDefault() — ce qui empêche le navigateur
+//            de propager le geste au scroll sous-jacent.
+//            ATTENTION : le listener doit être { passive: false } pour que preventDefault() soit
+//            autorisé (les listeners passifs ignorent preventDefault depuis Chrome 56 / iOS 13).
+//            On garde quand même overflow:hidden + inert pour les navigateurs desktop et pour
+//            bloquer le focus clavier.
+
+// Référence au listener touchmove actif — nécessaire pour le retirer proprement dans unlockScroll
+let _touchmoveBlocker = null;
+
 function lockScroll() {
   document.body.style.overflow = 'hidden';
-  // RÔLE : bloque le scroll propre de #dynamic-zone (overflow-y:auto indépendant du body)
-  // POURQUOI : body.overflow:hidden ne suffit pas — #dynamic-zone a son propre scroll.
-  //            overflow-y:hidden seul peut être contourné par le momentum natif iOS/Safari,
-  //            donc on ajoute touch-action:none pour bloquer aussi l'interprétation tactile.
   const dz = document.getElementById('dynamic-zone');
   if (dz) { dz.style.overflowY = 'hidden'; dz.style.touchAction = 'none'; }
   _setInert(true);
+
+  // RÔLE : Bloque le scroll natif iOS en interceptant touchmove sur le document entier.
+  // POURQUOI : Sur iPhone/iPad, même avec overflow:hidden, le moteur WebKit continue de
+  //            propager les gestes de scroll aux éléments scrollables en dessous d'une modale.
+  //            preventDefault() sur touchmove est le seul moyen de l'en empêcher.
+  // POURQUOI on ne bloque pas sur .modal-box et .mbox : ces éléments ont leur propre scroll
+  //            interne (max-height:85dvh; overflow-y:auto) — on doit laisser passer les touchmove
+  //            qui les ciblent, et bloquer uniquement ceux qui ciblent le fond.
+  if (!_touchmoveBlocker) {
+    _touchmoveBlocker = function(e) {
+      // Laisse passer les touchmove qui viennent de l'intérieur d'un élément scrollable de la modale
+      // (modal-box, boutique-contenu, soutien-chat, tablet-screen, etats-sheet...)
+      // POURQUOI : si on bloque TOUS les touchmove, le scroll interne de la modale est aussi cassé.
+      let el = e.target;
+      while (el && el !== document.body) {
+        const style = getComputedStyle(el);
+        const overflowY = style.overflowY;
+        const canScroll = (overflowY === 'auto' || overflowY === 'scroll') && el.scrollHeight > el.clientHeight;
+        if (canScroll) return; // cet élément peut scroller → on laisse passer
+        el = el.parentElement;
+      }
+      // Aucun ancêtre scrollable trouvé → on est sur le fond → on bloque
+      e.preventDefault();
+    };
+    document.addEventListener('touchmove', _touchmoveBlocker, { passive: false });
+  }
 }
+
 function unlockScroll() {
   document.body.style.overflow = '';
-  // RÔLE : restitue le scroll et les gestes tactiles de #dynamic-zone
   const dz = document.getElementById('dynamic-zone');
   if (dz) { dz.style.overflowY = ''; dz.style.touchAction = ''; }
   _setInert(false);
+
+  // RÔLE : Retire le listener touchmove pour ne pas bloquer le scroll normal de l'app
+  if (_touchmoveBlocker) {
+    document.removeEventListener('touchmove', _touchmoveBlocker, { passive: false });
+    _touchmoveBlocker = null;
+  }
 }
 
 /* ============================================================

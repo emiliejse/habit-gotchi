@@ -528,37 +528,58 @@ const LAYERS_BABY = [
   },
 
   // ── Yeux fermés (sommeil ou clignotement) ──────────────────────
+  // RÔLE : Barres fermées alignées avec les yeux ouverts (x:-2,w:2 et x:1,w:2).
   {
     id: 'yeux-fermes',
     fill: 'C.eye',
     when: (pm) => pm.sl || pm.blink,
     rects: [
-      { x: -2, y: 2, w: 2, h: 1 },   // œil gauche fermé (barre)
-      { x:  0, y: 2, w: 2, h: 1 },   // œil droit fermé (barre)
+      { x: -2, y: 2, w: 2, h: 1 },   // œil gauche fermé (barre, aligné avec œil ouvert)
+      { x:  1, y: 2, w: 2, h: 1 },   // œil droit fermé  (barre, aligné avec œil ouvert)
     ]
   },
 
   // ── Yeux ouverts (éveillé, sans clignotement) ──────────────────
+  // RÔLE : Œil 2×1 PX (large) pour un look mignon, cohérent avec la bouche à y:3.
+  // POURQUOI : Un œil 1×1 PX (5×5px) laissait trop peu de place pour un reflet vivant.
+  //            Un œil 2×1 PX (10×5px) donne plus d'espace horizontal pour que le reflet
+  //            se balade de gauche à droite — sans empiéter sur la bouche (y:3) ni les joues.
+  //            Symétrique : gauche de x=-2 à x=0, droit de x=1 à x=3.
+  //            Corps : x=-3 à x+3 — les joues à x=-3 et x=2 ne sont pas touchées
+  //            car l'œil droit s'arrête à x=3 (hors corps, case des joues = x=2 est libre).
   {
     id: 'yeux-ouverts',
     fill: 'C.eye',
     when: (pm) => !pm.sl && !pm.blink,
     rects: [
-      { x: -2, y: 2, w: 1, h: 1 },   // pupille gauche
-      { x:  1, y: 2, w: 1, h: 1 },   // pupille droite
+      { x: -2, y: 2, w: 2, h: 1 },   // œil gauche (2×1 PX — plus large, même hauteur)
+      { x:  1, y: 2, w: 2, h: 1 },   // œil droit  (2×1 PX)
     ]
   },
 
-  // ── Reflets blancs dans les yeux ouverts (2×2 px sub-PX) ───────
-  // POURQUOI : p.rect(x+PX, y+PX*2, 2, 2) dans l'original — 2px, pas un multiple de PX.
-  //            rawW/rawH portent les dimensions brutes pour rester fidèle au pixel art.
+  // ── Reflets blancs mobiles dans les yeux ouverts ───────────────
+  // RÔLE : Petit point blanc 2×2 px qui se déplace doucement dans l'œil.
+  // POURQUOI : Un reflet fixe au coin supérieur-gauche donnait un regard "mort".
+  //            rawDxFn fait osciller le reflet horizontalement dans l'œil (0 → PX-2 = 3px).
+  //            Les deux yeux bougent ensemble — le gotchi semble regarder d'un côté à l'autre.
+  //            rawDyFn est nul (œil sur 1 PX de hauteur = 5px, reflet 2px, juste 3px de jeu
+  //            vertical — on laisse centré verticalement pour éviter la pixellation).
   {
     id: 'reflets-yeux',
     fill: '#fff',
     when: (pm) => !pm.sl && !pm.blink,
     rects: [
-      { x: -2, y: 2, w: 0, h: 0, rawW: 2, rawH: 2 },   // reflet œil gauche
-      { x:  1, y: 2, w: 0, h: 0, rawW: 2, rawH: 2 },   // reflet œil droit
+      {
+        x: -2, y: 2, w: 0, h: 0, rawDy: 1, rawW: 2, rawH: 2,
+        // RÔLE : Déplacement horizontal du reflet dans l'œil gauche (0 → PX-2 = 3px).
+        // L'œil fait 2×PX = 10px de large, le reflet 2px — peut se déplacer sur 8px.
+        rawDxFn: () => Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 2)),
+      },
+      {
+        x:  1, y: 2, w: 0, h: 0, rawDy: 1, rawW: 2, rawH: 2,
+        // RÔLE : Même déplacement pour l'œil droit — synchronisé.
+        rawDxFn: () => Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 2)),
+      },
     ]
   },
 
@@ -776,17 +797,28 @@ const LAYERS_TEEN = [
     ]
   },
 
-  // ── Reflets yeux ouverts (4×4 px sub-PX, décalés +1) ───────────
-  // POURQUOI : 4×4 px reproduit fidèlement l'original v4.5 (p.rect(x+PX+1, y+PX*2+1, 4, 4)).
-  //            La rangée basse de l'œil amande fait 1×PX (5px) — le reflet de 4px tient
-  //            dans la rangée haute (2×PX = 10px) avec offset +1, sans déborder visuellement.
+  // ── Reflets yeux ouverts mobiles (4×4 px sub-PX) ───────────────
+  // RÔLE : Reflet blanc 4×4 px qui se promène doucement dans la rangée haute de l'œil.
+  // POURQUOI : Remplacement du reflet statique (rawDx:1, rawDy:1 fixes) par un reflet
+  //            animé — même logique que le baby mais dans un œil amande plus grand.
+  //            L'œil haut fait 2×PX = 10px. Le reflet de 4px peut se déplacer de 0 à 5px
+  //            horizontalement sans sortir de l'œil. L'oscillation est lente (0.0008 rad/ms)
+  //            pour rester subtile — effet "regard vivant" sans être distrayant.
   {
     id: 'reflets-yeux-ouverts',
     fill: '#fff',
     when: (pm) => !pm.sl && !pm.blink && !isMood('surprise'),
     rects: [
-      { x: -3, y: 2, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
-      { x:  1, y: 2, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
+      {
+        x: -3, y: 2, w: 0, h: 0, rawDy: 1, rawW: 4, rawH: 4,
+        // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 5px = largeur 2PX - 4px reflet - 1 marge).
+        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * 5),
+      },
+      {
+        x:  1, y: 2, w: 0, h: 0, rawDy: 1, rawW: 4, rawH: 4,
+        // RÔLE : Même déplacement pour l'œil droit — synchronisé avec le gauche.
+        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * 5),
+      },
     ]
   },
 
@@ -974,12 +1006,14 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     drawDither(p, cxB, cy + PX * 4, PX * 8, PX * 5, C.bodyDk);
   }
 
-  // RÔLE : Passer cx brut (centre de marche) à drawAccessoires.
-  // POURQUOI : drawAccessoires centre l'accessoire sur le cx reçu via accX = cx - largeur/2.
-  //            cx est le centre de marche du gotchi (walkX + shakeOffset) — c'est la référence
-  //            stable et correcte. breathX (±1px) ne crée pas de décalage visible en pratique
-  //            et était absent de l'ancienne version qui fonctionnait bien.
-  drawAccessoires(p, cx, { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 5 }, 'teen', sl);
+  // RÔLE : Passer cxB (centre visuel du sprite teen) à drawAccessoires.
+  // POURQUOI : Le sprite teen est centré sur cxB = cx - PX*4 - breathX.
+  //            drawAccessoires calcule accX = cx - largeur/2, donc le "cx" qu'il reçoit
+  //            doit être le centre visuel du sprite, pas le centre de marche (cx).
+  //            En passant cx (ancien code), l'accessoire était décalé de ~4*PX = 20px
+  //            vers la droite du gotchi — c'est le bug "accessoires dans le vide à droite".
+  //            cxB est le bon centre : le corps de LAYERS_TEEN est centré sur cxB.
+  drawAccessoires(p, cxB, { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 5 }, 'teen', sl);
   drawSaleteDither(p, 'teen', cx, cy, window.D?.g?.salete || 0, sl);
 
   return { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 5 };
@@ -1096,16 +1130,26 @@ const LAYERS_ADULT = [
     ]
   },
 
-  // ── Reflets yeux ouverts (4×4 px, décalés +1) ──────────────────
-  // POURQUOI : 4×4 px reproduit fidèlement l'original v4.5 (p.rect(x+PX*2+1, y+PX*3+1, 4, 4)).
-  //            La rangée haute de l'œil adulte fait 3×PX (15px) — largement assez pour 4px.
+  // ── Reflets yeux ouverts mobiles (4×4 px sub-PX) ───────────────
+  // RÔLE : Reflet blanc 4×4 px animé dans la rangée haute de l'œil adulte (3×PX = 15px).
+  // POURQUOI : L'œil adulte est plus grand (3 PX de large en haut), ce qui donne plus
+  //            d'espace pour le voyage du reflet (0 → 10px). Oscillation lente synchronisée
+  //            avec teen pour cohérence entre les stades.
   {
     id: 'reflets-yeux-ouverts',
     fill: '#fff',
     when: (pm) => !pm.sl && !pm.blink && !isMood('surprise'),
     rects: [
-      { x: -3, y: 3, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
-      { x:  1, y: 3, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
+      {
+        x: -3, y: 3, w: 0, h: 0, rawDy: 1, rawW: 4, rawH: 4,
+        // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 10px = 3PX - 4px reflet - 1 marge).
+        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * 10),
+      },
+      {
+        x:  1, y: 3, w: 0, h: 0, rawDy: 1, rawW: 4, rawH: 4,
+        // RÔLE : Même déplacement pour l'œil droit.
+        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * 10),
+      },
     ]
   },
 
@@ -1409,11 +1453,12 @@ function drawAdult(p, cx, cy, sl, en, ha) {
     drawDither(p, cxB + PX, cy + PX * 5, PX * 8, PX * 5, C.bodyDk);
   }
 
-  // RÔLE : Passer cx brut (centre de marche) à drawAccessoires.
-  // POURQUOI : Même logique que drawTeen — cx est la référence stable (walkX + shakeOffset).
-  //            breathX (±1px) ne crée pas de décalage visible et était absent de l'ancienne
-  //            version qui fonctionnait bien (v4.5 et antérieur).
-  drawAccessoires(p, cx, { topY: cy, eyeY: cy + PX * 3, neckY: cy + PX * 6 }, 'adult', sl);
+  // RÔLE : Passer cxB (centre visuel du sprite adulte) à drawAccessoires.
+  // POURQUOI : Le sprite adulte est centré sur cxB = cx - PX*5 - breathX.
+  //            Passer cx (ancien code) créait un décalage de ~5*PX = 25px vers la droite
+  //            — c'est le bug "accessoires dans le vide à droite du gotchi".
+  //            cxB est le vrai centre : le corps de LAYERS_ADULT (x: -5 → +5) est centré sur cxB.
+  drawAccessoires(p, cxB, { topY: cy, eyeY: cy + PX * 3, neckY: cy + PX * 6 }, 'adult', sl);
   drawSaleteDither(p, 'adult', cx, cy, window.D?.g?.salete || 0, sl);
 
   return { topY: cy, eyeY: cy + PX * 3, neckY: cy + PX * 6 };

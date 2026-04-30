@@ -275,6 +275,20 @@
 #### ✅ RÉSOLU — Indentation alternée 2/4 espaces (2026-04-30)
 - Résolu par réécriture des blocs `drawTeen`/`drawAdult` dans le DSL.
 
+#### ✅ RÉSOLU — Reflets yeux baby/teen/adult fixes au coin supérieur-gauche (2026-04-30)
+- Problème : `rawDx:0, rawDy:0` → reflet statique au coin, regard "mort".
+- Solution : `rawDxFn` avec `Math.sin(Date.now() * 0.0008)` → reflet mobile dans l'œil.
+  - Baby : œil élargi à 2×1 PX + reflet 2×2 px qui balaye 8px horizontalement.
+  - Teen : œil amande 2×2 PX (inchangé) + reflet 4×4 px qui balaye 5px horizontalement.
+  - Adult : œil amande 3×2 PX (inchangé) + reflet 4×4 px qui balaye 10px horizontalement.
+
+#### ✅ RÉSOLU — Accessoires teen/adult dans le vide à droite du gotchi (2026-04-30)
+- Problème : `drawAccessoires(p, cx, ...)` passait le centre de marche brut `cx`.
+  Mais le sprite teen est centré sur `cxB = cx - PX*4 - breathX` et le sprite adult
+  sur `cxB = cx - PX*5 - breathX` — décalage de 4 ou 5 PX (20–25px) vers la droite.
+- Solution : passer `cxB` à `drawAccessoires` pour teen et adult.
+  Baby inchangé (sprite centré directement sur `cx`, pas de `cxB`).
+
 ### 4.4 Code mort / redondances
 - Aucune fonction morte détectée.
 

@@ -169,6 +169,21 @@ function spawnP(x, y, c) {
 
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME & TOPOGRAPHIE ──────────────────────── */
 
+// RÔLE : Coordonnées [x, y] des étoiles fixes du ciel (en pixels canvas).
+// POURQUOI : Extraites ici plutôt qu'en tableau littéral dans drawSky()
+//            pour faciliter les ajustements visuels sans chercher dans la boucle.
+//            Zone haute (y 5–40) : étoiles d'origine.
+//            Zone médiane (y 45–80) + basse (y 82–115) : ajoutées pour couvrir
+//            la fenêtre de la chambre visible dans le biome intérieur.
+const STARS = [
+  // Zone haute (y 5–40)
+  [20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35],
+  // Zone médiane (y 45–80)
+  [15,50],[75,55],[100,48],[145,62],[175,58],[35,72],[160,75],
+  // Zone basse (y 82–115)
+  [50,85],[90,92],[135,88],[170,98],[25,105],[120,112],[80,100],
+];
+
 /**
  * Dessine le ciel avec un gradient dynamique et des éléments célestes.
  */
@@ -223,19 +238,11 @@ function drawSky(p, h, ha) {
       : skyPhase === 'aube'                      ? (1 - skyT / 0.25) * 255
       : ((skyT - 0.75) / 0.25) * 255;
     // RÔLE : Dessine les étoiles réparties sur toute la hauteur du ciel (0–115px).
-    // POURQUOI : Avant, les 7 étoiles étaient toutes dans les 40px du haut.
-    // On en ajoute pour couvrir la zone basse du ciel, visible notamment
-    // à travers la fenêtre de la chambre.
+    // POURQUOI : Coordonnées centralisées dans const STARS (haut du fichier) —
+    //            plus besoin de chercher dans la boucle pour ajuster une étoile.
     // Chaque étoile : [x, y] — scintillement décalé via (frameCount + x) % cycle
     p.fill(p.color(255, 255, 200, Math.round(starAlpha)));
-    [
-      // Zone haute (y 5–40) — étoiles d'origine
-      [20,10],[60,25],[110,8],[155,22],[185,12],[40,40],[130,35],
-      // Zone médiane (y 45–80) — nouvelles
-      [15,50],[75,55],[100,48],[145,62],[175,58],[35,72],[160,75],
-      // Zone basse (y 82–115) — visibles par la fenêtre de la chambre
-      [50,85],[90,92],[135,88],[170,98],[25,105],[120,112],[80,100],
-    ].forEach(s => {
+    STARS.forEach(s => {
       if ((p.frameCount + s[0]) % 35 < 25) px(p, s[0], s[1], PX, PX);
     });
 
@@ -937,7 +944,9 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
       bounceT = Math.PI * 1.5;
     }
 
-    // Surcouche nuit — couvre env, props, Gotchi ; épargne le HUD
+    // Surcouche nuit — couvre env, props, Gotchi.
+    // POURQUOI : Dessinée AVANT le HUD → le HUD est rendu par-dessus et reste lumineux.
+    //            (L'overlay ne "cache" pas le HUD : il est simplement dessiné après lui.)
     if (darkAlpha > 0) {
       p.noStroke();
       p.fill(0, 0, 0, darkAlpha);
@@ -1011,9 +1020,13 @@ if (
 // 🔒 GARDE 4 : hors onglet Gotchi → géré par pointerdown sur .tama-screen (ui.js)
 if (!window._gotchiActif) return true;
 
+    // RÔLE : Anti-rebond tactile — ignore les taps répétés trop rapprochés (< 200ms)
+    // POURQUOI : Encapsulé dans _tapState pour éviter une variable globale nue
+    //            qui pouvait être écrasée accidentellement depuis un autre module.
+    if (!window._tapState) window._tapState = { lastTime: 0 };
     const now = Date.now();
-    if (now - (window._lastTapTime || 0) < 200) return false;
-    window._lastTapTime = now;
+    if (now - window._tapState.lastTime < 200) return false;
+    window._tapState.lastTime = now;
 
     const mx = p.touches[0]?.x ?? p.mouseX;
     const my = p.touches[0]?.y ?? p.mouseY;

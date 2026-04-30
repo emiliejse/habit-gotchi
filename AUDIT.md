@@ -8,6 +8,8 @@
 >
 > **Session refactoring render.js + fix slider 2026-04-30** : `p.draw()` (~570 l) découpé en 4 sous-fonctions locales (`drawPropsLayer`, `drawHUD`, `drawBadges`, `drawEnvSelector`) — orchestrateur réduit à ~310 l. Fix bug `lockScroll` : `_touchmoveBlocker` dans `ui-core.js` bloquait les `touchmove` sur `input[type=range]` (pas d'ancêtre scrollable → `preventDefault()` annulait le drag du thumb sur iOS/WebKit). Correction : garde `if (e.target.type === 'range') return` ajoutée en tête du blocker.
 >
+> **Session bugs mineurs render.js 2026-04-30** : 3 bugs mineurs résolus dans `render.js` — `_lastTapTime` encapsulé dans `window._tapState { lastTime }`, tableau étoiles extrait en `const STARS` (~L178), commentaire `darkAlpha` reformulé (overlay dessiné AVANT le HUD, pas le contraire).
+>
 > **Vérification version** : `window.APP_VERSION = 'v4.5'` ([app.js L54](js/app.js#L54)) — ⚠️ la consigne mentionnait `'hg-v4.5'` mais le code stocke uniquement `'v4.5'`. Le `CACHE_VERSION` de `sw.js` ([L7](sw.js#L7)) est aligné `'v4.5'`. Cohérence OK entre les deux fichiers, mais préfixe `hg-` non utilisé.
 
 ---
@@ -190,19 +192,17 @@
 - `render-sprites.js` [L595] mis à jour : `typeof walkPause !== 'undefined' && walkPause === 0` → `window._walk ? window._walk.pause === 0 : false`. Dépendance documentée en en-tête du fichier.
 - Risque résiduel : `window._walk` est mis à jour une fois par frame dans `draw()` — cohérence garantie si `drawGotchi()` est appelé dans la même frame.
 
-#### 🟡 MINEUR — `_lastTapTime` global non protégé
-- Lignes : [L949-L950]
-- Suggestion : Encapsuler dans un objet `_tapState`.
+#### ✅ RÉSOLU — `_lastTapTime` global non protégé (2026-04-30)
+- Lignes d'origine : [L949-L950]
+- Solution : Variable remplacée par `window._tapState = { lastTime: 0 }`. Initialisée au premier appel (lazy init). Accès via `window._tapState.lastTime`. Plus de risque d'écrasement accidentel depuis un autre module.
 
-#### 🟡 MINEUR — Étoiles hardcodées en tableau littéral énorme
-- Lignes : [L219-L228]
-- Description : 21 coordonnées `[x, y]` en dur. Difficile à modifier visuellement.
-- Suggestion : Extraire en `const STARS = [...]` au top du fichier.
+#### ✅ RÉSOLU — Étoiles hardcodées en tableau littéral énorme (2026-04-30)
+- Lignes d'origine : [L219-L228]
+- Solution : Tableau extrait en `const STARS = [...]` juste avant `drawSky()` (~L178). Les 21 coordonnées `[x, y]` sont désormais regroupées avec des commentaires de zone (haute/médiane/basse). `drawSky()` utilise simplement `STARS.forEach(s => ...)`. Modification visuelle possible sans chercher dans la boucle.
 
-#### 🟡 MINEUR — `darkAlpha` calculé mais utilisé seulement après le HUD
-- Lignes : [L362-L365, L660-L664]
-- Description : Calcul correct mais l'overlay nuit recouvre déjà les badges canvas (badges dessinés ensuite via `if (!isCompact)`). Le commentaire ([L659]) dit "épargne le HUD" mais en réalité le HUD est dessiné APRÈS l'overlay → le HUD n'est pas assombri (correct), mais c'est l'inverse de ce que dit le commentaire.
-- Suggestion : Reformuler le commentaire — l'overlay nuit est dessiné AVANT le HUD donc le HUD reste lumineux.
+#### ✅ RÉSOLU — Commentaire `darkAlpha` trompeur (2026-04-30)
+- Lignes d'origine : [L362-L365, L660-L664]
+- Solution : Commentaire reformulé. Le texte "épargne le HUD" (qui laissait entendre que l'overlay évitait le HUD) est remplacé par une explication claire : l'overlay est dessiné AVANT le HUD, donc le HUD est rendu par-dessus et reste lumineux. Aucune modification de logique — comportement inchangé.
 
 #### 🟡 MINEUR — `_envSelectorHits` reconstruit chaque frame
 - Lignes : [L843, L860, L885]

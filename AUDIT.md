@@ -538,9 +538,10 @@
 - Listener `controllerchange` ajouté dans le bloc d'enregistrement SW (`index.html`) : `banner.style.display = 'block'` déclenché quand le nouveau SW prend le contrôle.
 - Commentaires RÔLE/POURQUOI ajoutés sur les deux blocs.
 
-#### 🟡 MINEUR — `manifest.json` a 502 octets non audité
+#### ✅ RÉSOLU — `manifest.json` JSON invalide
+- Résolu le 2026-04-30.
+- Virgule manquante après `start_url` [L5] ajoutée — JSON valide.
 - `theme_color: "#ddd6e8"` déjà aligné sur `index.html` [L21] — aucune correction nécessaire.
-- Note : `manifest.json` contient un JSON invalide (virgule manquante après `start_url` [L5]) — à corriger dans une prochaine session.
 
 #### ✅ RÉSOLU — Pas de logging des erreurs cache.put
 - Résolu le 2026-04-30.

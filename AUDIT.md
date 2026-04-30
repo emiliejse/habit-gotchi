@@ -12,6 +12,8 @@
 >
 > **Session nettoyage render.js 2026-04-30** : 5 corrections dans `render.js` — (1) `_envSelectorHits` mis en cache : tableau reconstruit uniquement quand `activeEnv` ou `_envSelectorOpen` change (`window._envSelectorCache` ajouté) ; (2) magic numbers hitbox remplacés par `const GOTCHI_HITBOX = { rX:26, rY:35, centerOffsetY:30 }` ; (3) commentaires RÔLE/POURQUOI ajoutés pour justifier ternaire vs if/else dans le bloc marche ; (4) code mort supprimé : `window._bounceT` (jamais lu, remplacé par commentaire explicatif), `walkStep` (incrémenté mais jamais lu — variable + `window._walk.step` supprimés), `window._lastPetTime` (écrit mais jamais relu — ligne supprimée, commentaire en place).
 >
+> **Session bugs mineurs render-sprites.js 2026-04-30** : 2 bugs mineurs résolus dans `render-sprites.js` — (1) `dejaDessines` : `new Set()` par frame remplacé par `_dejaDessinesObj = {}` module-level, réinitialisé manuellement à chaque appel (`for...in delete`) — plus d'allocation Set × 12 fps ; (2) `isMood(name)` : helper ajouté en §4b, centralise le test `moodTimer > 0 && lastMood === name` — les ~8 occurrences dupliquées dans `drawTeen` et `drawAdult` remplacées par des appels `isMood('joie')`, `isMood('faim')`, `isMood('surprise')`.
+>
 > **Vérification version** : `window.APP_VERSION = 'v4.5'` ([app.js L54](js/app.js#L54)) — ⚠️ la consigne mentionnait `'hg-v4.5'` mais le code stocke uniquement `'v4.5'`. Le `CACHE_VERSION` de `sw.js` ([L7](sw.js#L7)) est aligné `'v4.5'`. Cohérence OK entre les deux fichiers, mais préfixe `hg-` non utilisé.
 
 ---
@@ -260,14 +262,13 @@
 - Solution : Option (b) implémentée — masque alpha généré off-screen via `p.createGraphics()`. Deux nouvelles fonctions privées ajoutées : `_drawSilhouetteOffscreen(g, stage, breathX)` dessine la silhouette du stade sur un canvas off-screen ; `_getSaleteMask(p, stage, breathX)` lit les pixels non-vides et retourne le tableau `[{rx, ry}]`, mis en cache par clé `stage_breathX`. `drawSaleteDither` itère ce masque et applique le damier. Le cache est invalide si breathX change (au plus 3 entrées par stade). `g.remove()` libère la mémoire GPU après lecture.
 - Bénéfice : Si un sprite est modifié, mettre à jour `_drawSilhouetteOffscreen` suffit — la boue suit automatiquement. Plus de risque de désynchronisation silencieuse.
 
-#### 🟡 MINEUR — `dejaDessines` Set créé à chaque frame dans `drawAccessoires`
-- Lignes : [L155]
-- Description : Allocation Set par frame × 12 fps = 720 allocs/min. Faible impact mais évitable.
-- Suggestion : Utiliser un objet réutilisable ou un tableau small.
+#### ✅ RÉSOLU — `dejaDessines` Set créé à chaque frame dans `drawAccessoires` (2026-04-30)
+- Lignes d'origine : [L265]
+- Solution : `const _dejaDessinesObj = {}` déclaré une seule fois au niveau module (§2, avant `drawAccessoires`). En début de chaque appel, les clés existantes sont supprimées via `for (const k in _dejaDessinesObj) delete _dejaDessinesObj[k]` — coût O(nb ancrages actifs, ≤ 3). Les `.has()` / `.add()` remplacés par `_dejaDessinesObj[ancrage]` / `_dejaDessinesObj[ancrage] = true`. Plus d'allocation Set par frame.
 
-#### 🟡 MINEUR — `expr.moodTimer > 0 && expr.lastMood === 'X'` répété ~7 fois
-- Lignes : [L309, L348, L361, L366, L372, L491, L504, L509, L515]
-- Suggestion : Helper `function isMood(name) { return _expr.moodTimer > 0 && _expr.lastMood === name; }`.
+#### ✅ RÉSOLU — `expr.moodTimer > 0 && expr.lastMood === 'X'` répété ~7 fois (2026-04-30)
+- Lignes d'origine : [L440, L479, L492, L497, L503, L583, L622, L635, L640, L646]
+- Solution : Helper `function isMood(name)` ajouté en §4b (avant `drawTeen`). Lit `window._expr` directement. Toutes les occurrences dans `drawTeen` et `drawAdult` remplacées par `isMood('joie')`, `isMood('faim')`, `isMood('surprise')`. Les deux variables locales `isSurprise` conservées (lisibilité des blocs `if/else if` yeux) mais construites via le helper. Modification centralisée : si la logique de `moodTimer` change, une seule ligne à toucher.
 
 #### ✅ RÉSOLU — `walkPause` lu par référence implicite (2026-04-30)
 - Lignes d'origine : [L595]

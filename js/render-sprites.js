@@ -240,6 +240,13 @@ function drawSaleteDither(p, stage, cx, cy, salete, sl) {
 
 /* ─── §2 ACCESSOIRES ─────────────────────────────────────────────── */
 
+// RÔLE : Objet de déduplication réutilisable entre les appels à drawAccessoires.
+// POURQUOI : Évite d'allouer un new Set() à chaque frame (12 fps = 720 allocs/min).
+//            On utilise un objet plat (clé = ancrage, valeur = true) — réinitialisé
+//            manuellement en début de fonction via une boucle de nettoyage O(n ancrages).
+//            Les ancrages possibles sont 3 au maximum (tete, yeux, cou) — coût négligeable.
+const _dejaDessinesObj = {};
+
 /**
  * Dessine les accessoires équipés DIRECTEMENT sur le sprite du Gotchi.
  * À appeler depuis drawBaby/drawTeen/drawAdult, avec les coordonnées internes du sprite.
@@ -259,10 +266,11 @@ function drawAccessoires(p, cx, anchors, stage, sl) {
   //            Rétrocompat : si prop.env non défini (ancienne sauvegarde), on affiche quand même.
   const envActif = window.D.g.activeEnv || 'parc';
 
-  // RÔLE : Déduplication par ancrage — un seul accessoire dessiné par slot (tete, yeux, cou).
-  // POURQUOI : Guard défensif au cas où la sauvegarde contiendrait deux accessoires actifs
-  //            sur le même ancrage dans le même env (ne devrait pas arriver, mais on se protège).
-  const dejaDessines = new Set(); // mémorise les ancrages déjà rendus cette frame
+  // RÔLE : Réinitialiser l'objet de déduplication avant chaque appel.
+  // POURQUOI : On réutilise _dejaDessinesObj (déclaré une seule fois au niveau module)
+  //            pour éviter d'allouer un new Set() à chaque frame.
+  //            On efface uniquement les clés présentes — pas de recréation d'objet.
+  for (const k in _dejaDessinesObj) delete _dejaDessinesObj[k];
 
   window.D.g.props
     .filter(pr => pr.actif && pr.type === 'accessoire' && (pr.env === envActif || !pr.env))
@@ -274,8 +282,8 @@ function drawAccessoires(p, cx, anchors, stage, sl) {
 
       // RÔLE : Si un accessoire sur ce slot a déjà été dessiné, on ignore celui-ci.
       // POURQUOI : Évite la superposition visuelle si deux props actifs partagent le même ancrage.
-      if (dejaDessines.has(ancrage)) return;
-      dejaDessines.add(ancrage);
+      if (_dejaDessinesObj[ancrage]) return;
+      _dejaDessinesObj[ancrage] = true;
 
       const ps = def.pxSize || PX;
 
@@ -376,6 +384,19 @@ function drawBaby(p, cx, cy, sl, en, ha) {
     return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
 }
 
+/* ─── §4b HELPER EXPRESSION ──────────────────────────────────────── */
+
+// RÔLE : Vérifier si une humeur nommée est active sur le Gotchi.
+// POURQUOI : La condition `expr.moodTimer > 0 && expr.lastMood === 'X'` était répétée
+//            ~7 fois dans drawTeen et drawAdult — source d'erreur si la logique change.
+//            Ce helper centralise le test : modifier ici suffit pour tous les sprites.
+// @param {string} name - Nom de la humeur : 'joie' | 'faim' | 'surprise' | etc.
+// @returns {boolean}
+function isMood(name) {
+  const expr = window._expr;
+  return expr && expr.moodTimer > 0 && expr.lastMood === name;
+}
+
 /* ─── §5 STADE ADO ──────────────────────────────────────────────── */
 
 function drawTeen(p, cx, cy, sl, en, ha) {
@@ -416,7 +437,7 @@ px(p, x+PX*5+2, y-PX,   PX, PX);
 
     /* ─── YEUX (grands, amande) ─── */
     const expr = window._expr;
-    const isSurprise = expr.moodTimer > 0 && expr.lastMood === 'surprise';
+    const isSurprise = isMood('surprise'); // helper centralisé §4b
 
     if (sl || blink) {
       p.fill(C.eye);
@@ -455,7 +476,7 @@ px(p, x+PX*5+2, y-PX,   PX, PX);
     px(p, x+PX*6, y+PX*4, PX, PX);
 
     // Joues débordantes si joie active
-    if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
+    if (isMood('joie')) {
       p.drawingContext.globalAlpha = 0.7;
       px(p, x,      y+PX*4, PX, PX);
       px(p, x+PX*7, y+PX*4, PX, PX);
@@ -468,18 +489,18 @@ px(p, x+PX*5+2, y-PX,   PX, PX);
       // Respiration bouche : descend de 0-2 px sur le cycle
       const mouthY = y + PX*5 + Math.round(breath * 2);
 
-      if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
+      if (isMood('joie')) {
         // Grand sourire : barre principale en bas, coins relevés
         px(p, x+PX*2, mouthY+PX, PX*4, PX);   // ligne principale
         px(p, x+PX,   mouthY,    PX,   PX);   // coin gauche relevé
         px(p, x+PX*6, mouthY,    PX,   PX);   // coin droit relevé
-      } else if (expr.moodTimer > 0 && expr.lastMood === 'faim') {
+      } else if (isMood('faim')) {
         // Bouche baveuse (ouverte + goutte bleue)
         px(p, x+PX*3, mouthY, PX*2, PX*2);
         p.fill('#88c0e0');
         px(p, x+PX*3, mouthY+PX*2, PX, PX);
         p.fill(C.mouth);
-      } else if (expr.moodTimer > 0 && expr.lastMood === 'surprise') {
+      } else if (isMood('surprise')) {
         // Petit "o" de surprise
         px(p, x+PX*3, mouthY, PX*2, PX*2);
       } else {
@@ -559,7 +580,7 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
 
     /* ─── YEUX (grands, amande) ─── */
     const expr = window._expr;
-    const isSurprise = expr.moodTimer > 0 && expr.lastMood === 'surprise';
+    const isSurprise = isMood('surprise'); // helper centralisé §4b
 
     if (sl || blink) {
       p.fill(C.eye);
@@ -598,7 +619,7 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
     px(p, x+PX*7, y+PX*6, PX, PX);
 
     // Joues débordantes si joie active
-    if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
+    if (isMood('joie')) {
       p.drawingContext.globalAlpha = 0.7;
       px(p, x+PX,   y+PX*6, PX, PX);
       px(p, x+PX*8, y+PX*6, PX, PX);
@@ -611,18 +632,18 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
       // Respiration bouche : descend de 0-2 px sur le cycle
       const mouthY = y + PX*6 + Math.round(breath * 2);
 
-      if (expr.moodTimer > 0 && expr.lastMood === 'joie') {
+      if (isMood('joie')) {
         // Grand sourire : barre principale en bas, coins relevés
         px(p, x+PX*3, mouthY+PX, PX*4, PX);   // ligne principale
         px(p, x+PX*2, mouthY,    PX,   PX);   // coin gauche relevé
         px(p, x+PX*7, mouthY,    PX,   PX);   // coin droit relevé
-      } else if (expr.moodTimer > 0 && expr.lastMood === 'faim') {
+      } else if (isMood('faim')) {
         // Bouche baveuse (ouverte + goutte bleue)
         px(p, x+PX*4, mouthY, PX*2, PX*2);
         p.fill('#88c0e0');
         px(p, x+PX*4, mouthY+PX*2, PX, PX);
         p.fill(C.mouth);
-      } else if (expr.moodTimer > 0 && expr.lastMood === 'surprise') {
+      } else if (isMood('surprise')) {
         // Petit "o" de surprise
         px(p, x+PX*4, mouthY, PX*2, PX*2);
       } else {

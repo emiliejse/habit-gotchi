@@ -71,6 +71,35 @@ function syncDuringTransition(shell) {
 /* ─── ROUTEUR SPA ─────────────────────────────────────────── */
 
 /**
+ * RÔLE : Source de vérité unique pour le calcul de l'env actif selon l'onglet et l'heure.
+ * POURQUOI : Remplace les 3 sources de vérité dispersées dans go() (logique heure,
+ *            forçage par onglet, flag _invEnvForced). Tout futur onglet doit être
+ *            ajouté ICI — go() n'a plus à connaître la logique d'env.
+ *
+ * @param {string} tab  — identifiant de l'onglet cible (ex. 'gotchi', 'journal'…)
+ * @param {number} h    — heure courante 0-23 (passée en paramètre pour rester testable)
+ * @returns {string|null} — nom de l'env à appliquer, ou null si l'env doit rester inchangé
+ *
+ * Règle null : tab 'props' conserve l'env courant (le switcher inventaire gère lui-même).
+ */
+function _getEffectiveEnv(tab, h) {
+  // RÔLE : Onglet gotchi — env selon l'heure (nuit = chambre, jour = parc)
+  if (tab === 'gotchi')   return (h >= 21 || h < 6) ? 'chambre' : 'parc';
+
+  // RÔLE : Onglet inventaire — on ne touche pas à l'env pour que le switcher reste cohérent
+  if (tab === 'props')    return null;
+
+  // RÔLE : Onglets avec env fixe — chaque onglet impose son ambiance narrative
+  if (tab === 'journal')  return 'chambre';   // introspection → espace intime
+  if (tab === 'perso')    return 'parc';      // profil → extérieur apaisé
+  if (tab === 'progress') return 'montagne';  // progression → vue en hauteur
+  if (tab === 'settings') return 'chambre';   // réglages → espace intime
+
+  // RÔLE : Onglet inconnu — on ne touche pas à l'env (sécurité si nouvel onglet ajouté sans mise à jour)
+  return null;
+}
+
+/**
  * RÔLE : Moteur de routage interne — affiche l'onglet ciblé et adapte l'environnement.
  * POURQUOI : HabitGotchi est une SPA sans URL — go('journal') remplace
  *            window.location par une manipulation de classes CSS.
@@ -94,32 +123,20 @@ function go(t) {
   // donnent l'effet de glissement/rétrécissement. syncConsoleHeight recalcule après.
   if (t === 'gotchi') {
     consoleTop.classList.remove('compact');
-    // RÔLE : En quittant l'onglet gotchi, on remet l'env selon l'heure.
-    // POURQUOI : le flag _invEnvForced est remis à false quelle que soit son état —
-    //            on sort de la preview inventaire, la logique heure reprend.
-    window._invEnvForced = false;
-    const h = hr();
-    window.D.g.activeEnv = (h >= 21 || h < 6) ? 'chambre' : 'parc';
   } else {
     consoleTop.classList.add('compact');
-    if (t === 'props') {
-      // RÔLE : En arrivant dans l'inventaire, on ne force PAS d'env —
-      //        on garde l'env actuel pour que le switcher soit cohérent avec ce qu'on voit.
-      // POURQUOI : L'utilisatrice peut arriver depuis n'importe quel état. Le switcher
-      //            se synchronise sur l'env en cours et elle peut ensuite changer.
-      window._invEnvForced = false; // reset au cas où on revient dans l'onglet
-      // l'env reste tel quel — le switcher affichera l'env actuel
-    } else {
-      // En quittant props vers un autre onglet, nettoyer le flag et reprendre la logique normale
-      if (window._invEnvForced) {
-        window._invEnvForced = false;
-      }
-      if      (t === 'journal')  window.D.g.activeEnv = 'chambre';
-      else if (t === 'perso')    window.D.g.activeEnv = 'parc';
-      else if (t === 'progress') window.D.g.activeEnv = 'montagne';
-      else if (t === 'settings') window.D.g.activeEnv = 'chambre';
-    }
   }
+
+  // RÔLE : Reset du flag preview inventaire — toujours remis à false en changeant d'onglet.
+  // POURQUOI : _invEnvForced n'est actif que pendant la navigation dans l'inventaire.
+  //            Dès qu'on quitte props (ou qu'on y revient en navigation normale), on repart
+  //            de l'env standard — le switcher se synchronise sur l'env réel.
+  window._invEnvForced = false;
+
+  // RÔLE : Applique l'env calculé par _getEffectiveEnv() — source de vérité unique.
+  // POURQUOI : null signifie "env inchangé" (cas props) — on n'écrase pas l'env courant.
+  const envCible = _getEffectiveEnv(t, hr());
+  if (envCible !== null) window.D.g.activeEnv = envCible;
   save();
 
   if (t === 'gotchi' || t === 'settings') renderHabs();

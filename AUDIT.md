@@ -33,7 +33,7 @@
 | `js/render.js` | **B** | `p.draw()` découpé en 4 sous-fonctions extraites (2026-04-30) — orchestrateur ~85 lignes. Reste : helpers de hitbox dupliqués entre `touchStarted` et `touchMoved`, `walkX`/`walkPause` implicitement partagés avec `render-sprites.js`. |
 | `js/render-sprites.js` | **A** | Sprites bien isolés, `drawSaleteDither` utilise désormais un masque off-screen (auto-synchronisé avec les sprites), code lisible et autonome. |
 | `js/envs.js` | **A** | `drawActiveEnv` découpé en 3 fonctions + dispatcher (2026-04-30). `tc()` robuste, magic numbers nommés, couleur nuit unifiée via `shadeN`. |
-| `js/ui-*.js` (8 modules) | **B** | `ui.js` splitté en 8 modules (2026-04-30). `ouvrirSnack()` et `ouvrirAgenda()` migrés vers `openModal()`/`openModalRaw()` — lockScroll unifié. Reste : overlays séparés intentionnels documentés, `go()` trois sources de vérité (Phase 2). `modalLocked` : guard bootstrap ajouté (2026-04-30). |
+| `js/ui-*.js` (8 modules) | **B+** | `ui.js` splitté en 8 modules (2026-04-30). `ouvrirSnack()` et `ouvrirAgenda()` migrés vers `openModal()`/`openModalRaw()` — lockScroll unifié. `_getEffectiveEnv()` extrait dans `ui-nav.js` — source de vérité unique pour `activeEnv` (2026-04-30). `modalLocked` : guard bootstrap ajouté (2026-04-30). Reste : overlays séparés intentionnels documentés. |
 | `index.html` | **B** | Ordre des scripts correct, debug-panel inline volumineux (~85 l), p5.js CDN sans `integrity`, masquage features RDV/Cycle dans script séparé en bas. |
 | `sw.js` | **C+** | ✅ `render-sprites.js` ajouté dans `ASSETS` (fix session 2026-04-30). Reste : stratégie cache-first sans `response.ok` (cache des 404), pas de gestion des updates côté client. |
 
@@ -415,11 +415,10 @@
 - `USER_CONFIG` (`data/user_config.json`) est trusted — pas d'escape systématique sur ses valeurs. Documenté dans le skill `habitgotchi-dev`.
 - `snackButtons` dans `ouvrirSnack()` : emojis internes issus de `config.js` (pool SNACK_POOL) — trusted, commentaire ajouté en code.
 
-#### 🟠 IMPORTANT — `go()` : trois sources de vérité pour `activeEnv`
-- Fichier : `ui-nav.js` [L95-L122]
-- Description : La logique est documentée et commentée (RÔLE/POURQUOI sur chaque branche), mais les trois sources coexistent : `hr()` (retour onglet Gotchi), forçage par onglet (`journal` → chambre, etc.), `_invEnvForced` (preview inventaire). `getEffectiveEnv()` n'existe pas encore.
-- Risque résiduel : Incohérence possible si un nouvel onglet est ajouté sans mettre à jour `go()`. Le bug "21h montagne → chambre" n'a pas été reproduit depuis la session de commentaires.
-- Suggestion (Phase 2) : Extraire `getEffectiveEnv(tab, hr, invForced)` → source de vérité unique consultée par `go()` et tout futur appelant.
+#### ✅ RÉSOLU — `go()` : source de vérité unique `_getEffectiveEnv()` (2026-04-30)
+- Fichier : `ui-nav.js` [L85-L139]
+- Fix appliqué : Extraction de `_getEffectiveEnv(tab, h)` — fonction pure, interne à `ui-nav.js`. Retourne l'env cible selon l'onglet et l'heure, ou `null` si l'env doit rester inchangé (cas `props`). `go()` appelle `_getEffectiveEnv()` et n'applique que si résultat non-null. Reset de `_invEnvForced` séparé du calcul d'env — géré explicitement dans `go()` avant l'appel.
+- Pour ajouter un onglet : mettre à jour uniquement `_getEffectiveEnv()`, pas `go()`.
 
 #### 🟡 MINEUR — `tabletLastSeenDate` non préfixé `window.` (déjà identifié en v3.02, **non résolu**)
 - Lignes : [L3432]
@@ -623,7 +622,7 @@ Trois facteurs cumulés causaient le bug :
 |---|---|---|---|---|
 | 6 | Centraliser les 14+ ouvertures directes sous `openModal()`/`openModalRaw()` | modules `ui-*.js` | M | Cohérence UX — scroll iOS déjà bloqué via lockScroll(), reste à unifier l'animation et le ✕ |
 | 7 | Extraire `getStageBaseY()` (déduplication 3×) | `js/render.js` | S | Lisibilité |
-| 8 | Extraire `getEffectiveEnv()` | `js/ui.js` go() + `js/app.js` | M | Source de vérité unique |
+| 8 | ~~Extraire `getEffectiveEnv()`~~ ✅ résolu 2026-04-30 | `js/ui-nav.js` | M | Source de vérité unique |
 | 9 | ~~Étendre `HG_CONFIG` aux constantes XP/EN/HA/POOP~~ ✅ résolu 2026-04-30 | `data/config.js` | S | Hygiène globale |
 | 10 | Persister `tabletLastSeenDate` et `journalLocked` dans D | `js/ui.js` | S | Robustesse PWA |
 | 11 | Supprimer code mort `_bounceT`, `_lastPetTime`, `walkStep` | `js/render.js` | S | Lisibilité |

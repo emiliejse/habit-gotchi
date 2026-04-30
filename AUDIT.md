@@ -107,11 +107,9 @@
 
 ### 2.3 Problèmes
 
-#### 🔴 CRITIQUE — `addEvent` double signature (déjà identifié en v3.02, non résolu)
-- Lignes : [L648-L660]
-- Description : Le fichier expose une fonction qui accepte soit un objet (`addEvent({type, ...})`), soit l'API legacy (`addEvent(type, valeur, label)`). Aucun appel legacy détecté dans `app.js` ni `ui.js`, mais la branche reste branchée. Cf. quick win #3 ci-dessus.
-- Risque : Maintenance, ambiguïté.
-- Suggestion : Supprimer la branche `else`.
+#### ✅ RÉSOLU — `addEvent` double signature (2026-04-30)
+- Lignes : [L648-L659]
+- Description : Branche legacy supprimée. Signature unique : `function addEvent(ev)` — ev est toujours un objet `{ type, subtype, valeur, label }`. Horodatage et spread automatiques. Zéro appel legacy confirmé dans l'ensemble du codebase.
 
 #### 🟠 IMPORTANT — `bootstrap()` non idempotent face aux `setInterval`
 - Lignes : [L1175-L1209]
@@ -460,10 +458,9 @@
 
 ### 8.3 Problèmes
 
-#### 🔴 CRITIQUE — `render-sprites.js` absent de `ASSETS`
-- Lignes : [L9-L31]
-- Description : Cf. Top 3 problèmes critiques (#1).
-- Suggestion : Ajouter la ligne.
+#### ✅ RÉSOLU — `render-sprites.js` absent de `ASSETS`
+- Lignes : [L25]
+- Description : Ajouté lors du split ui.js (session 2026-04-30). Présent dans `ASSETS`.
 
 #### 🟠 IMPORTANT — Cache-first sans vérifier `response.ok`
 - Lignes : [L62-L66]
@@ -556,11 +553,11 @@ Trois facteurs cumulés causaient le bug :
 
 | N° | Titre | Fichiers | Effort | Bénéfice |
 |---|---|---|---|---|
-| 1 | ✅ Ajouter `render-sprites.js` à `ASSETS` du SW | `sw.js` [L9-L31] | S | Fix critique offline |
+| 1 | ✅ Ajouter `render-sprites.js` à `ASSETS` du SW | `sw.js` [L25] | S | Fix critique offline |
 | 2 | Vérifier `response.ok` avant `cache.put` | `sw.js` [L62-L66] | S | Évite les 404 cachés |
 | 3 | ✅ Fix modale non-bloquante — scroll iOS bloqué | `css/style.css`, `index.html`, `js/ui-core.js`, `js/ui-settings.js` | M | Fix bug critique UX |
 | 4 | Bumper sync `APP_VERSION` à `'hg-v4.5'` si convention | `js/app.js` [L54] + `sw.js` [L7] | S | Cohérence |
-| 5 | Supprimer signature legacy de `addEvent` | `js/app.js` [L648-L660] | S | Sécurité API |
+| 5 | ✅ Supprimer signature legacy de `addEvent` | `js/app.js` [L648-L659] | S | API unifiée — FAIT 2026-04-30 |
 
 ### Phase 2 — Stabilisation (dette technique, doublons)
 
@@ -732,6 +729,33 @@ Trois facteurs cumulés causaient le bug :
 - `ouvrirSnack()` (4 cas) n'appelle pas `lockScroll()` → scroll encore possible pendant le snack → item #6 Phase 2.
 - Centralisation complète des 14+ ouvertures directes vers `openModal()`/`openModalRaw()` → item #6 Phase 2.
 - Focus trap et `aria-hidden` → item #21 Phase 3.
+
+---
+
+### Session — 2026-04-30 : Résolution des 3 problèmes critiques restants
+
+**Objectif** : Clore les 3 🔴 du Top 3 issues (bugs 1, 2, 3).
+
+**État constaté à l'entrée de session** :
+- Bug 1 (`render-sprites.js` absent SW) : **déjà corrigé** lors du split ui.js — présent à `sw.js` [L25].
+- Bug 2 (modale non-bloquante) : **déjà corrigé** lors de la session précédente — section spéciale présente et complète.
+- Bug 3 (`addEvent` double signature) : **en attente** — branche legacy toujours présente.
+
+**Correction appliquée** :
+
+**`js/app.js` [L648-L659]** — `addEvent` :
+- Signature `function addEvent(type, valeur, label)` remplacée par `function addEvent(ev)`.
+- La branche ternaire `(typeof type === 'object') ? ... : ...` supprimée.
+- La fonction n'accepte désormais qu'un objet `{ type, subtype, valeur, label }`.
+- Horodatage et spread dans `entry` conservés, logique simplifiée.
+- Vérification préalable : 0 appel legacy détecté dans l'ensemble du codebase (app.js, ui-ai.js, ui-journal.js, ui-settings.js, render.js, ui-shop.js).
+
+**Mise à jour AUDIT.md** :
+- Top 3 : tous marqués ✅.
+- Tableau santé `sw.js` : C → C+ (render-sprites.js confirmé présent).
+- Section 2.3 `app.js` : bug addEvent marqué résolu.
+- Section 8.3 `sw.js` : bug render-sprites.js marqué résolu.
+- Plan Phase 1 item 5 : marqué ✅.
 
 ---
 

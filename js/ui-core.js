@@ -303,20 +303,30 @@ function openModalRaw(html) {
    SCROLL LOCK
    ============================================================ */
 // RÔLE : Bloque le scroll du fond ET les interactions derrière, pour toute modale ou overlay.
-// POURQUOI : On centralise _setInert() ici plutôt que dans chaque fonction d'ouverture,
+// POURQUOI : On centralise ici plutôt que dans chaque fonction d'ouverture,
 //            parce que toutes les ouvertures qui bypassent openModal() appellent quand même
-//            lockScroll() (boutique, agenda, tablet, etats-overlay...). En couplant inert
-//            à lockScroll, on couvre tous les cas en un seul endroit sans modifier
-//            les 14+ fonctions d'ouverture individuellement.
-//            unlockScroll() retire systématiquement inert — safe car _fermerMenuSiOuvert()
-//            garantit qu'on ne superpose jamais menu + modale.
+//            lockScroll() (boutique, agenda, tablet, etats-overlay...).
+//            Deux mécanismes combinés :
+//            1. body.overflow = 'hidden' → bloque le scroll global
+//            2. #dynamic-zone overflow-y = 'hidden' → bloque son scroll interne propre
+//               (nécessaire car #dynamic-zone a overflow-y:auto indépendant du body)
+//            3. inert sur #console-top et #dynamic-zone → désactive pointer-events + focus
+//               sur les éléments HTML derrière (protection complémentaire)
 function lockScroll() {
   document.body.style.overflow = 'hidden';
-  _setInert(true); // RÔLE : rend #console-top et #dynamic-zone inertes (plus de scroll ni de tap derrière)
+  // RÔLE : bloque le scroll propre de #dynamic-zone (overflow-y:auto indépendant du body)
+  // POURQUOI : body.overflow:hidden ne suffit pas — #dynamic-zone scrolle de façon autonome,
+  //            donc quand la boutique est ouverte on peut encore scroller le contenu derrière.
+  const dz = document.getElementById('dynamic-zone');
+  if (dz) dz.style.overflowY = 'hidden';
+  _setInert(true);
 }
 function unlockScroll() {
   document.body.style.overflow = '';
-  _setInert(false); // RÔLE : restitue l'interactivité des zones derrière
+  // RÔLE : restitue le scroll interne de #dynamic-zone
+  const dz = document.getElementById('dynamic-zone');
+  if (dz) dz.style.overflowY = '';
+  _setInert(false);
 }
 
 /* ============================================================

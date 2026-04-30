@@ -366,6 +366,25 @@ const _dejaDessinesObj = {};
 function drawAccessoires(p, cx, anchors, stage, sl) {
   if (!window.D?.g?.props) return;
 
+  // RÔLE : Snapper cx sur la grille PX dès l'entrée dans drawAccessoires.
+  // POURQUOI : cx (= cxB pour teen/adult) est flottant car walkX accumule des vitesses
+  //            non-entières (1.4, 0.7, 0.35…). Dans renderSprite, chaque rect du corps
+  //            est snappé par px() depuis ce même cx flottant — résultat : le premier
+  //            pixel du corps tombe sur Math.floor(cx + r.x*PX / PX)*PX.
+  //            Pour que l'accessoire soit synchronisé, il faut qu'il parte du même cx
+  //            snappé que le corps. On snappe une seule fois ici → tous les calculs
+  //            accX/accY qui suivent héritent automatiquement de ce snap.
+  cx = Math.floor(cx / PX) * PX;
+
+  // RÔLE : Snapper également les ancres Y sur la grille PX.
+  // POURQUOI : anchors.eyeY, neckY, topY proviennent de cy + n*PX — cy est transmis
+  //            depuis render.js via bobY (flottant). Même problème qu'en X.
+  anchors = {
+    topY:  Math.floor(anchors.topY  / PX) * PX,
+    eyeY:  Math.floor(anchors.eyeY  / PX) * PX,
+    neckY: Math.floor(anchors.neckY / PX) * PX,
+  };
+
   // RÔLE : Filtrer les accessoires par environnement actif.
   // POURQUOI : Feature multi-env v3.49 — chaque env peut avoir ses propres accessoires.
   //            Rétrocompat : si prop.env non défini (ancienne sauvegarde), on affiche quand même.
@@ -392,21 +411,31 @@ function drawAccessoires(p, cx, anchors, stage, sl) {
 
       const ps = def.pxSize || PX;
 
-      // RÔLE : Centrer l'accessoire sur cx puis snapper sur grille PX.
-      // POURQUOI : Le corps passe par px() qui floore sur la grille PX (paliers de 5px).
-      //            Sans ce snap, l'accessoire "rampait" pixel par pixel pendant que le corps
-      //            "sautait" de palier en palier → désynchronisation visible à la marche et au bob.
-      //            On snap accX sur la même grille pour qu'ils bougent au même rythme.
-      const accXraw = cx - (def.pixels[0].length * ps) / 2;
-      const accX    = Math.floor(accXraw / PX) * PX;
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // 🎯 POSITION HORIZONTALE (gauche ↔ droite)
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // accX = coin gauche de l'accessoire, calculé pour le centrer sur le Gotchi.
+      //
+      // Pour décaler l'accessoire à DROITE  → ajouter  + PX  (ou + PX*2 pour plus)
+      // Pour décaler l'accessoire à GAUCHE  → ajouter  - PX
+      //
+      // Exemple : const accX = cx - (def.pixels[0].length * ps) / 2 + PX;
+      //                                                              ^^^
+      //                                              ← modifier ici
+      const accX = cx - (def.pixels[0].length * ps) / 2;
 
-      // RÔLE : Choisir l'ancrage Y selon le slot, en tenant compte des yeux fermés (sl).
-      // POURQUOI : La nuit, les yeux fermés sont dessinés 1 rangée plus bas que les yeux ouverts
-      //            sur teen et adult. Sans cette correction, les lunettes/accessoires yeux
-      //            apparaissaient 1px trop haut.
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // 🎯 POINT D'ANCRAGE VERTICAL (quel repère Y on utilise)
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // Selon def.ancrage dans props.json, on part d'un repère différent :
+      //   'yeux' → hauteur des yeux du Gotchi  (lunettes, masques…)
+      //   'cou'  → hauteur du cou              (colliers, écharpes…)
+      //   autre  → sommet de la tête           (chapeaux, antennes…)
+      //
+      // Tu peux modifier la valeur de baseYraw ici pour décaler le point
+      // de départ vertical d'un accessoire, mais c'est rare — préfère offsetY ci-dessous.
       let baseYraw;
       if (def.ancrage === 'yeux') {
-        // Décalage +PX si sleeping sur teen et adult (yeux fermés = une rangée plus bas)
         const sleepShift = sl && (stage === 'teen' || stage === 'adult') ? PX : 0;
         baseYraw = anchors.eyeY + sleepShift;
       } else if (def.ancrage === 'cou') {
@@ -415,20 +444,33 @@ function drawAccessoires(p, cx, anchors, stage, sl) {
         baseYraw = anchors.topY;
       }
 
-      // RÔLE : Calculer l'offset Y selon le slot puis snapper accY sur grille PX.
-      // POURQUOI : Même logique que accX — baseYraw est flottant (bobY, breathX etc.).
-      //            Le snap sur grille PX assure que l'accessoire suit exactement les mêmes
-      //            paliers que le corps, éliminant le glissement vertical à la marche/respiration.
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // 🎯 DÉCALAGE VERTICAL FIN (haut ↕ bas) — C'EST ICI QU'ON AJUSTE
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // offsetY = combien de px on remonte l'accessoire depuis le repère de base.
+      // La valeur est en multiples de ps (= taille d'un pixel art, généralement 5px).
+      //
+      // Pour monter l'accessoire  → augmenter la valeur  (ex: ps*4 au lieu de ps*3)
+      // Pour descendre            → diminuer la valeur   (ex: ps*2 au lieu de ps*3)
+      //
+      // Valeurs actuelles par ancrage × stade :
+      //   'yeux'  → teen : ps*3 │ adult : ps*3 │ baby : ps*2
+      //   'cou'   → baby : ps*3 │ teen/adult : ps*5
+      //   'tete'  → tous stades : ps*1
+      //                                          ↓ modifier ici
       const offsetY = def.ancrage === 'yeux'
-                    ? (stage === 'teen' ? ps * 3
-                     : stage === 'adult' ? ps * 3
-                     : ps * 2)
+                    ? (stage === 'teen'  ? ps * 3   // ← lunettes teen  : monter = +1, descendre = -1
+                     : stage === 'adult' ? ps * 3   // ← lunettes adult
+                     :                    ps * 2)   // ← lunettes baby
                     : def.ancrage === 'cou'
-                    ? (stage === 'baby' ? ps * 3 : ps * 5)
-                    : ps;
+                    ? (stage === 'baby'  ? ps * 3   // ← collier baby
+                     :                    ps * 5)   // ← collier teen/adult
+                    :                    ps * 1;    // ← chapeau (tous stades)
 
-      const accYraw = baseYraw - def.pixels.length * ps + offsetY;
-      const accY    = Math.floor(accYraw / PX) * PX;
+      // accY = position Y finale du coin haut-gauche de l'accessoire.
+      // (baseYraw - hauteur de l'accessoire + offsetY)
+      // → Tu n'as normalement pas besoin de toucher cette ligne.
+      const accY = baseYraw - def.pixels.length * ps + offsetY;
       drawProp(p, def, accX, accY);
     });
 }

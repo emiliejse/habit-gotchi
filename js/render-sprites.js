@@ -643,9 +643,12 @@ function drawBaby(p, cx, cy, sl, en, ha) {
   if (!params.sl && !params.blink) {
     p.fill('#fff');
     p.noStroke();
-    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX - 2);
-    p.rect(cx - PX * 2 + 1 + rx, cy + PX * 2 + 1, 2, 2); // œil gauche
-    p.rect(cx + PX * 1 + 1 + rx, cy + PX * 2 + 1, 2, 2); // œil droit
+    // Iris baby : 2×PX = 10px large, 1×PX = 5px haut. Reflet 3×3px.
+    // Amplitude : 10px - 3px reflet - 1px marge gauche - 1px marge droite = 5px max.
+    // Y : calé au bord haut de l'iris (cy + PX*2), sans décalage, reflet fait 3px → reste dans les 5px.
+    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 3 - 2);
+    p.rect(cx - PX * 2 + 1 + rx, cy + PX * 2, 3, 3); // œil gauche
+    p.rect(cx + PX * 1 + 1 + rx, cy + PX * 2, 3, 3); // œil droit
   }
 
   // Épuisement (dither) — géré en dehors du DSL car drawDither() a sa propre logique
@@ -973,7 +976,10 @@ function drawTeen(p, cx, cy, sl, en, ha) {
   if (!params.sl && !params.blink && !isMood('surprise')) {
     p.fill('#fff');
     p.noStroke();
-    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 4 - 2);
+    // Iris teen : rangée haute 2×PX = 10px large, 1×PX = 5px haut. Reflet 4×4px.
+    // Amplitude : 10px - 4px reflet - 1px marge gauche - 2px marge droite = 3px max (serré côté droit).
+    // Y : +1px sous le bord haut de l'iris, reflet 4px → bord bas à +5px = limite exacte de l'iris.
+    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 4 - 3);
     p.rect(cxB - PX * 3 + 1 + rx, cy + PX * 2 + 1, 4, 4); // œil gauche
     p.rect(cxB + PX * 1 + 1 + rx, cy + PX * 2 + 1, 4, 4); // œil droit
   }
@@ -1411,7 +1417,10 @@ function drawAdult(p, cx, cy, sl, en, ha) {
   if (!params.sl && !params.blink && !isMood('surprise')) {
     p.fill('#fff');
     p.noStroke();
-    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 4 - 2);
+    // Iris adult : rangée haute 3×PX = 15px large, 1×PX = 5px haut. Reflet 4×4px.
+    // Amplitude : 15px - 4px reflet - 1px marge gauche - 3px marge droite = 7px max.
+    // Y : +1px sous le bord haut, reflet 4px → reste dans les 5px de la rangée haute.
+    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 4 - 4);
     p.rect(cxB - PX * 3 + 1 + rx, cy + PX * 3 + 1, 4, 4); // œil gauche
     p.rect(cxB + PX * 1 + 1 + rx, cy + PX * 3 + 1, 4, 4); // œil droit
   }

@@ -136,24 +136,22 @@
 - Lignes : [L711]
 - Description : `font-size:11px` remplacé par `font-size:var(--fs-xs)` dans le `cssText`. `font-weight:bold` conservé tel quel — c'est la convention dans tout le codebase (pas de variable `--fw-*` définie). `var(--lilac)` était déjà en place.
 
-#### 🔵 STYLE — Indentation incohérente dans `defs()`
-- Lignes : [L165-L196]
-- Description : Mélange de 2 espaces et de tabs, alignement aléatoire des virgules.
-- Suggestion : Passage à Prettier.
+#### ✅ RÉSOLU — Indentation incohérente dans `defs()` (2026-04-30)
+- Lignes : [L175-L222]
+- Description : Reformatage complet de `defs()`. Chaque champ est désormais sur sa propre ligne, indenté à 6 espaces pour `g:{}` et 4 espaces pour la racine. Alignement des valeurs sur une colonne commune (style "colonnes") pour faciliter la lecture. Commentaires inline conservés.
 
-#### 🔵 STYLE — Numérotation `§` du header ne correspond plus aux lignes
+#### ✅ RÉSOLU — Numérotation `§` du header désynchronisée (2026-04-30)
 - Lignes : [L6-L24]
-- Description : Le header annonce `§16 ~973 INIT QUOTIDIENNE` mais `handleDailyReset()` est en réalité [L1095].
-- Suggestion : Recalculer les ancres ou utiliser des `// §16` inline.
+- Description : Toutes les ancres `§1`–`§17` recalculées sur les vraies lignes actuelles du fichier. Correction notable : `§16 INIT QUOTIDIENNE` était annoncé `~973` — réel : `~1134`. `§17 CONFIG UTILISATEUR` était `~1045` — réel : `~1204`. `haptic()` retiré du §1 (fonction inexistante dans ce fichier), remplacé par `clamp()`.
 
 ### 2.4 Code mort / redondances
-- `MSG` ([L150-L157]) en pratique jamais lu (cf. ci-dessus).
-- `forceUpdate()` toast() suppose `toast` existe — protection `typeof` manquante (mais `ui.js` est chargé après).
-- `_lat`/`_lng` sur `D` : nettoyés via migration `m1` ([L242-L255]) — OK.
+- ✅ `MSG` ([L160-L167]) : documenté comme fallback défensif intentionnel (session 2026-04-30) — conservé.
+- `forceUpdate()` `toast()` sans guard `typeof` ([L402]) : `toast()` est défini dans `ui-core.js`, chargé après `app.js` — pas de risque en prod. En dev isolé (app.js seul), `toast` serait undefined. Risque négligeable, guard non ajouté pour ne pas surcharger une fonction déjà courte.
+- `_lat`/`_lng` sur `D` : nettoyés via migration `m1` ([L337-L350]) — OK.
 
 ### 2.5 Dette technique
-- `bootstrap` mélange chargement + initialisation + démarrage timers.
-- Pas de couche "service" entre data et UI : `app.js` appelle directement `updUI`, `renderProps`, `updBadgeBoutique` (couplage fort avec `ui.js`).
+- ✅ `bootstrap()` : chargement + initialisation + timers désormais mieux séparés (session 2026-04-30 — `setInterval` déplacés derrière la promesse `loadDataFiles().then()`). La séparation complète en couches resterait un chantier Phase 3.
+- Pas de couche "service" entre data et UI : `app.js` appelle directement `updUI`, `renderProps`, `updBadgeBoutique` (couplage fort avec les modules `ui-*.js`). Documenté — non traité, refactoring Phase 3.
 
 ---
 
@@ -787,6 +785,32 @@ Trois facteurs cumulés causaient le bug :
 **3. `floatXP` — `font-size` tokenisé (🟡 → ✅)**
 - `font-size:11px` → `font-size:var(--fs-xs)` dans le `cssText` de `floatXP()`. Valeur identique (11px = `--fs-xs`), mais désormais liée au système de design.
 - `font-weight:bold` conservé — pas de variable `--fw-*` dans le projet, `bold` hardcodé est la convention partout.
+
+---
+
+### Session — 2026-04-30 : Fix 2 items 🔵 STYLE + mise à jour 2.4/2.5 app.js
+
+**Objectif** : Clore les deux items de style restants sur `app.js` et mettre à jour les sections code mort / dette technique.
+
+**Fichiers modifiés** : `js/app.js`, `AUDIT.md`
+
+**Corrections appliquées** :
+
+**1. `defs()` — reformatage indentation (🔵 → ✅)**
+- Chaque champ de `g:{}` et de la racine de l'objet retourné est désormais sur sa propre ligne.
+- Indentation uniforme : 6 espaces pour les champs de `g`, 4 espaces pour la racine.
+- Valeurs alignées en colonne pour la lisibilité.
+- Aucun changement de valeur ou de logique — reformatage pur.
+
+**2. Header `§` — resynchronisation (🔵 → ✅)**
+- Toutes les ancres §1–§17 recalculées sur les vraies lignes du fichier post-refactoring.
+- Écarts corrigés : §16 (était ~973, réel ~1134), §17 (était ~1045, réel ~1204), et plusieurs autres.
+- `haptic()` retiré du §1 (n'existe pas dans `app.js`), remplacé par `clamp()`.
+
+**3. Sections 2.4 / 2.5 — mise à jour documentaire**
+- `MSG` marqué résolu (fallback défensif documenté).
+- `bootstrap()` dette technique partiellement résorbée (timers déplacés) — reste un chantier Phase 3.
+- Couplage `app.js` ↔ `ui-*.js` documenté comme dette Phase 3 connue.
 
 ---
 

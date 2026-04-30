@@ -4,23 +4,23 @@
    les mathématiques (XP, pétales), le temps, et l'humeur.
 
    NAVIGATION RAPIDE (Ctrl+G dans VS Code → numéro de ligne) :
-   §1  ~10    UTILITAIRES GLOBAUX  today(), hr(), haptic()
-   §2  ~17    VARIABLES GLOBALES   window.D, window.PROPS_LIB, etc.
-   §3  ~41    CHARGEMENT JSON      loadDataFiles()
-   §4  ~102   CONSTANTES MÉTIER    SK, STG, CATS
-   §5  ~142   STRUCTURE D          defs(), getCyclePhase()
-   §6  ~208   SAVE / LOAD          migrate(), load(), save(), saveDebounced()
-   §7  ~288   UTILITAIRES          forceUpdate(), computeNickname()
-   §8  ~309   XP & STADES          getSt(), nxtTh(), addXp()
-   §9  ~343   CROTTES              spawnPoop(), maybeSpawnPoop(), cleanPoops()
-   §10 ~390   SEMAINE & REPAS      getWeekId(), getCurrentMealWindow(), giveSnack()
-   §11 ~560   HABITUDES            calcStr(), toggleHab(), editH()
-   §12 ~715   SAVE DEBOUNCED       saveDebounced(), setEnergy(), setHappy()
-   §13 ~738   INIT PROPS           initBaseProps() 
-   §14 ~768   MÉTÉO                fetchMeteo(), fetchSolarPhases(), getSolarPhase()
-   §15 ~867   BULLE DE DIALOGUE    flashBubble(), updBubbleNow()
-   §16 ~973   INIT QUOTIDIENNE     handleDailyReset(), catchUpPoops()
-   §17 ~1045  CONFIG UTILISATEUR   loadUserConfig(), bootstrap()
+   §1  ~29    UTILITAIRES GLOBAUX  today(), hr(), clamp()
+   §2  ~36    VARIABLES GLOBALES   window.D, window.PROPS_LIB, etc.
+   §3  ~70    CHARGEMENT JSON      loadDataFiles()
+   §4  ~130   CONSTANTES MÉTIER    SK, STG, CATS
+   §5  ~175   STRUCTURE D          defs(), getCyclePhase()
+   §6  ~337   SAVE / LOAD          migrate(), load(), save(), computeNickname()
+   §7  ~402   UTILITAIRES          forceUpdate()
+   §8  ~433   XP & STADES          getSt(), nxtTh(), addXp()
+   §9  ~464   CROTTES              spawnPoop(), maybeSpawnPoop(), cleanPoops()
+   §10 ~533   SEMAINE & REPAS      getWeekId(), getCurrentMealWindow(), giveSnack()
+   §11 ~702   HABITUDES            calcStr(), toggleHab(), editH()
+   §12 ~857   SAVE DEBOUNCED       saveDebounced(), setEnergy(), setHappy()
+   §13 ~891   INIT PROPS           initBaseProps()
+   §14 ~918   MÉTÉO                fetchMeteo(), fetchSolarPhases(), getSolarPhase()
+   §15 ~1017  BULLE DE DIALOGUE    flashBubble(), updBubbleNow()
+   §16 ~1134  INIT QUOTIDIENNE     handleDailyReset(), catchUpPoops()
+   §17 ~1204  CONFIG UTILISATEUR   loadUserConfig(), bootstrap()
    ============================================================ */
 
    /* ============================================================
@@ -175,34 +175,49 @@ const MSG = {
 function defs() {
   return {
     g: {
-      name:'Petit·e Gotchi', userName: 'Émilie', userNickname: window.USER_CONFIG?.identity?.userNickname ?? '', totalXp:0, stage:'egg', energy:3, happiness:3,
-envLv:0, activeEnv:'parc', petales:0,poops: [], poopDay: '',    // date du dernier comptage
-poopCount: 0,  // nb de cacas spawné aujourd'hui
-snackDone: '', snackEmoji: '',
-salete: 0,       // niveau de saleté du Gotchi — 0 (propre) à 10 (très sale)
-      props:[], customBubbles:[],
-      bilanCount: 0,
-      bilanWeek: '',
-      bilanText: '',
-      lastTick: Date.now(),
-      solarPhases: null,
-      cycleDuree: CYCLE_DEFAULT_DURATION, // durée du cycle en jours (défaut = 28)
-      birthdayShown: false,    // true une fois la modale anniversaire affichée ce jour-là
+      name:            'Petit·e Gotchi',
+      userName:        'Émilie',
+      userNickname:    window.USER_CONFIG?.identity?.userNickname ?? '',
+      totalXp:         0,
+      stage:           'egg',
+      energy:          3,
+      happiness:       3,
+      envLv:           0,
+      activeEnv:       'parc',
+      petales:         0,
+      poops:           [],
+      poopDay:         '',    // date du dernier comptage
+      poopCount:       0,     // nb de cacas spawné aujourd'hui
+      snackDone:       '',
+      snackEmoji:      '',
+      salete:          0,     // niveau de saleté du Gotchi — 0 (propre) à 10 (très sale)
+      props:           [],
+      customBubbles:   [],
+      bilanCount:      0,
+      bilanWeek:       '',
+      bilanText:       '',
+      lastTick:        Date.now(),
+      solarPhases:     null,
+      cycleDuree:      CYCLE_DEFAULT_DURATION, // durée du cycle en jours (défaut = 28)
+      birthdayShown:   false, // true une fois la modale anniversaire affichée ce jour-là
       birthdayCodeUsed: false, // true une fois le code cheat anniversaire utilisé
     },
-    habits: CATS.map(c => ({catId:c.id, label:c.label})),
-    log:{}, journal:[], pin:null, apiKey:null,
-    propsPixels: {},  // objets achetés en boutique IA (clé = id prop)
-    lastThoughtDate: null,
-thoughtCount: 0,
-lastSoutienDate: null,
-lastJournalExport: null,
-soutienCount: 0,
-eventLog: [],        // historique (max 50)
-firstLaunch: null,   // sera rempli au 1er lancement
-lastActive: null,    // mis à jour à chaque ouverture
-cycle: [], // { date: "2025-04-10", type: "regles" }
-rdv:   [] // { id, date, label, heure? }
+    habits:           CATS.map(c => ({catId:c.id, label:c.label})),
+    log:              {},
+    journal:          [],
+    pin:              null,
+    apiKey:           null,
+    propsPixels:      {},     // objets achetés en boutique IA (clé = id prop)
+    lastThoughtDate:  null,
+    thoughtCount:     0,
+    lastSoutienDate:  null,
+    lastJournalExport: null,
+    soutienCount:     0,
+    eventLog:         [],     // historique (max 50)
+    firstLaunch:      null,   // sera rempli au 1er lancement
+    lastActive:       null,   // mis à jour à chaque ouverture
+    cycle:            [],     // { date: "2025-04-10", type: "regles" }
+    rdv:              [],     // { id, date, label, heure? }
   };
 }
 

@@ -92,7 +92,13 @@ function renderSprite(p, layers, cx, cy, params, palette) {
     if (hasAlpha) p.drawingContext.globalAlpha = layer.alpha;
 
     // RÔLE : Résoudre la couleur et l'appliquer.
-    p.fill(_resolveFill(p, layer.fill, pal));
+    // POURQUOI : fillFn est une fonction (params, p) => p5.Color pour les couleurs dynamiques
+    //            (ex. joues pulsantes via lerpColor). Prioritaire sur fill si définie.
+    if (layer.fillFn) {
+      p.fill(layer.fillFn(params, p));
+    } else {
+      p.fill(_resolveFill(p, layer.fill, pal));
+    }
 
     // RÔLE : Dessiner chaque rectangle du calque.
     // POURQUOI : x/y sont en multiples de PX, relatifs à cx/cy.
@@ -100,9 +106,12 @@ function renderSprite(p, layers, cx, cy, params, palette) {
     //            rawDxFn/rawDyFn sont des fonctions (params) => number pour les offsets dynamiques
     //            (ex. wobble temporel des craquelures de l'œuf via Math.sin(Date.now()...)).
     //            rawW/rawH permettent des dimensions non-multiples de PX (ex. reflets 2×2 px).
+    //            yFn est une fonction (params) => number pour les positions Y dynamiques
+    //            (ex. mouthY qui descend avec la respiration).
     for (const r of layer.rects) {
       const rx = cx + r.x * PX + (r.rawDx || 0) + (r.rawDxFn ? r.rawDxFn(params) : 0);
-      const ry = cy + r.y * PX + (r.rawDy || 0) + (r.rawDyFn ? r.rawDyFn(params) : 0);
+      const baseY = r.yFn ? r.yFn(params) : cy + r.y * PX;
+      const ry = baseY + (r.rawDy || 0) + (r.rawDyFn ? r.rawDyFn(params) : 0);
       const rw = r.rawW !== undefined ? r.rawW : r.w * PX;
       const rh = r.rawH !== undefined ? r.rawH : r.h * PX;
       px(p, rx, ry, rw, rh);
@@ -659,142 +668,314 @@ function isMood(name) {
 
 /* ─── §5 STADE ADO ──────────────────────────────────────────────── */
 
+// RÔLE : Définition DSL du sprite Ado — tableau de calques pour renderSprite().
+// POURQUOI : Remplace les px() manuels de l'ancienne drawTeen().
+//            Coordonnées en multiples de PX, relatives au cx effectif (après breathX).
+//            drawTeen() calcule cxB = cx - PX*4 - breathX et passe cxB au moteur,
+//            donc tous les x DSL sont relatifs à cxB : x_dsl = offset_original + (-4).
+//
+// Repère : x_dsl = offset_depuis_x_original + (-4)
+//          ex. x+PX*2 → 2 + (-4) = -2  |  x+PX*5 → 5 + (-4) = 1  |  x-PX → -1 + (-4) = -5
+//
+// Abréviations params : pm.sl=sommeil, pm.en=énergie, pm.ha=bonheur,
+//   pm.blink=clignotement, pm.breath=valeur 0→1, pm.mouthBaseY=y+PX*5 (calculé avant appel)
+const LAYERS_TEEN = [
+
+  // ── Corps rond fusionné (8×8 PX) ───────────────────────────────
+  {
+    id: 'corps',
+    fill: 'C.body',
+    rects: [
+      { x: -2, y:  0, w: 4, h: 1 },   // arrondi haut
+      { x: -3, y:  1, w: 6, h: 1 },
+      { x: -4, y:  2, w: 8, h: 4 },   // milieu large (visage + corps)
+      { x: -3, y:  6, w: 6, h: 1 },
+      { x: -2, y:  7, w: 4, h: 1 },   // arrondi bas
+    ]
+  },
+
+  // ── Highlights ──────────────────────────────────────────────────
+  {
+    id: 'highlights',
+    fill: 'C.bodyLt',
+    rects: [
+      { x: -2, y: 1, w: 2, h: 1 },
+      { x: -3, y: 2, w: 2, h: 1 },
+    ]
+  },
+
+  // ── Oreilles d'ourson — corps (demi-cercles, couleur body) ─────
+  // POURQUOI : Dessinées AVANT les yeux dans l'original — même ordre ici.
+  //            rawDx:2 sur les sommets = sub-pixel +2px (arrondi pixel art).
+  {
+    id: 'oreilles-corps',
+    fill: 'C.body',
+    rects: [
+      { x: -3, y: -1, w: 2, h: 1 },           // oreille gauche base
+      { x: -3, y: -2, w: 2, h: 1 },           // oreille gauche milieu
+      { x: -3, y: -3, w: 1, h: 1, rawDx: 2 }, // oreille gauche sommet arrondi
+      { x:  1, y: -1, w: 2, h: 1 },           // oreille droite base
+      { x:  1, y: -2, w: 2, h: 1 },           // oreille droite milieu
+      { x:  1, y: -3, w: 1, h: 1, rawDx: 2 }, // oreille droite sommet arrondi
+    ]
+  },
+
+  // ── Oreilles — intérieur rose (creux) ──────────────────────────
+  {
+    id: 'oreilles-interieur',
+    fill: 'C.cheek',
+    rects: [
+      { x: -3, y: -1, w: 1, h: 1, rawDx: 2 }, // creux gauche
+      { x:  1, y: -1, w: 1, h: 1, rawDx: 2 }, // creux droit
+    ]
+  },
+
+  // ── Yeux fermés — sommeil ou clignotement ──────────────────────
+  {
+    id: 'yeux-fermes',
+    fill: 'C.eye',
+    when: (pm) => pm.sl || pm.blink,
+    rects: [
+      { x: -3, y: 3, w: 2, h: 1 },   // œil gauche fermé
+      { x:  1, y: 3, w: 2, h: 1 },   // œil droit fermé
+    ]
+  },
+
+  // ── Yeux surprise (carrés pleins 2×2 PX) ───────────────────────
+  {
+    id: 'yeux-surprise',
+    fill: 'C.eye',
+    when: (pm) => !pm.sl && !pm.blink && isMood('surprise'),
+    rects: [
+      { x: -3, y: 2, w: 2, h: 2 },   // œil gauche carré
+      { x:  1, y: 2, w: 2, h: 2 },   // œil droit carré
+    ]
+  },
+
+  // ── Reflets yeux surprise (4×4 px sub-PX, décalés +1) ──────────
+  {
+    id: 'reflets-yeux-surprise',
+    fill: '#fff',
+    when: (pm) => !pm.sl && !pm.blink && isMood('surprise'),
+    rects: [
+      { x: -3, y: 2, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
+      { x:  1, y: 2, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
+    ]
+  },
+
+  // ── Yeux ouverts normaux (amande 2 rangées) ─────────────────────
+  {
+    id: 'yeux-ouverts',
+    fill: 'C.eye',
+    when: (pm) => !pm.sl && !pm.blink && !isMood('surprise'),
+    rects: [
+      { x: -3, y: 2, w: 2, h: 1 },   // œil gauche haut large
+      { x: -2, y: 3, w: 1, h: 1 },   // œil gauche bas étroit
+      { x:  1, y: 2, w: 2, h: 1 },   // œil droit haut large
+      { x:  1, y: 3, w: 1, h: 1 },   // œil droit bas étroit
+    ]
+  },
+
+  // ── Reflets yeux ouverts (4×4 px sub-PX, décalés +1) ───────────
+  {
+    id: 'reflets-yeux-ouverts',
+    fill: '#fff',
+    when: (pm) => !pm.sl && !pm.blink && !isMood('surprise'),
+    rects: [
+      { x: -3, y: 2, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
+      { x:  1, y: 2, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
+    ]
+  },
+
+  // ── Dégoût poop (par-dessus les yeux normaux) ───────────────────
+  {
+    id: 'yeux-poop',
+    fill: 'C.eye',
+    when: (pm) => !!window._gotchiNearPoop && !pm.sl,
+    rects: [
+      { x: -3, y: 2, w: 2, h: 1 },
+      { x:  1, y: 2, w: 2, h: 1 },
+    ]
+  },
+
+  // ── Joues pulsantes (couleur interpolée dynamiquement) ──────────
+  // POURQUOI : p.lerpColor ne peut pas être une clé statique — fillFn calcule
+  //            la couleur à chaque frame à partir de getCheekPulse().
+  {
+    id: 'joues',
+    fillFn: (pm, p) => p.lerpColor(p.color(C.cheek), p.color('#e88098'), pm.pulse),
+    rects: [
+      { x: -3, y: 4, w: 1, h: 1 },   // joue gauche
+      { x:  2, y: 4, w: 1, h: 1 },   // joue droite
+    ]
+  },
+
+  // ── Joues débordantes si joie (semi-transparentes) ──────────────
+  {
+    id: 'joues-joie',
+    fillFn: (pm, p) => p.lerpColor(p.color(C.cheek), p.color('#e88098'), pm.pulse),
+    alpha: 0.7,
+    when: (pm) => isMood('joie'),
+    rects: [
+      { x: -4, y: 4, w: 1, h: 1 },   // débordement gauche
+      { x:  3, y: 4, w: 1, h: 1 },   // débordement droit
+    ]
+  },
+
+  // ── Bouche joie (grand sourire avec coins relevés) ───────────────
+  // POURQUOI : mouthBaseY = cy + PX*5 + Math.round(breath*2) — position Y dynamique.
+  //            yFn calcule la position absolue du rect à chaque frame.
+  {
+    id: 'bouche-joie',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && isMood('joie'),
+    rects: [
+      { x: -2, y: 0, w: 4, h: 1, yFn: (pm) => pm.mouthBaseY + PX },   // ligne principale
+      { x: -3, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY      },   // coin gauche relevé
+      { x:  2, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY      },   // coin droit relevé
+    ]
+  },
+
+  // ── Bouche faim (ouverte, baveuse) ──────────────────────────────
+  {
+    id: 'bouche-faim',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && isMood('faim'),
+    rects: [
+      { x: -1, y: 0, w: 2, h: 2, yFn: (pm) => pm.mouthBaseY },   // bouche ouverte
+    ]
+  },
+
+  // ── Goutte de bave (faim) — hex littérale, calque séparé ────────
+  {
+    id: 'bouche-faim-bave',
+    fill: '#88c0e0',
+    when: (pm) => !pm.sl && isMood('faim'),
+    rects: [
+      { x: -1, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY + PX * 2 },
+    ]
+  },
+
+  // ── Bouche surprise (petit "o") ──────────────────────────────────
+  {
+    id: 'bouche-surprise',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && isMood('surprise'),
+    rects: [
+      { x: -1, y: 0, w: 2, h: 2, yFn: (pm) => pm.mouthBaseY },
+    ]
+  },
+
+  // ── Bouche sourire ha élevé ──────────────────────────────────────
+  {
+    id: 'bouche-sourire-ha',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha > HA_HAPPY_TEEN,
+    rects: [
+      { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY },   // centre
+      { x: -2, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY },   // coin gauche
+      { x:  1, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY },   // coin droit
+    ]
+  },
+
+  // ── Bouche sourire neutre ────────────────────────────────────────
+  {
+    id: 'bouche-neutre',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha <= HA_HAPPY_TEEN && pm.ha > HA_MED,
+    rects: [
+      { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY },
+    ]
+  },
+
+  // ── Bouche triste ────────────────────────────────────────────────
+  {
+    id: 'bouche-triste',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha < HA_SAD,
+    rects: [
+      { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY, rawDy: 2 },
+    ]
+  },
+
+  // ── Bouche par défaut (point) ────────────────────────────────────
+  {
+    id: 'bouche-defaut',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha >= HA_SAD && pm.ha <= HA_MED,
+    rects: [
+      { x: -1, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY },
+    ]
+  },
+
+  // ── Bras normaux (énergie correcte) ────────────────────────────
+  {
+    id: 'bras-normaux',
+    fill: 'C.bodyDk',
+    when: (pm) => !pm.sl && pm.en >= EN_WARN,
+    rects: [
+      { x: -5, y: 4, w: 1, h: 2 },   // bras gauche
+      { x:  4, y: 4, w: 1, h: 2 },   // bras droit
+    ]
+  },
+
+  // ── Bras tombés (énergie faible) ────────────────────────────────
+  {
+    id: 'bras-tombes',
+    fill: 'C.bodyDk',
+    when: (pm) => !pm.sl && pm.en < EN_WARN,
+    rects: [
+      { x: -5, y: 5, w: 1, h: 1 },   // bras gauche tombé
+      { x:  4, y: 5, w: 1, h: 1 },   // bras droit tombé
+    ]
+  },
+
+  // ── Pieds ────────────────────────────────────────────────────────
+  {
+    id: 'pieds',
+    fill: 'C.bodyDk',
+    rects: [
+      { x: -2, y: 8, w: 1, h: 1 },   // pied gauche
+      { x:  1, y: 8, w: 1, h: 1 },   // pied droit
+    ]
+  },
+];
+
 function drawTeen(p, cx, cy, sl, en, ha) {
-    // ─── Respiration : étire légèrement la largeur (±1 pixel) ───
-    const breath = getBreath(p);
-    const breathX = sl ? 0 : Math.round(breath * 2 - 1);
-    const x = cx - PX * 4 - breathX, y = cy;
-    p.noStroke();
+  // RÔLE : Calculer la respiration et décaler cx pour que le sprite respire.
+  // POURQUOI : breathX décale toute la géométrie du sprite d'±1px — on l'applique
+  //            au cx transmis au moteur (cxB), pas dans chaque rect individuellement.
+  //            Ainsi, tous les calques de LAYERS_TEEN respirent automatiquement.
+  const breath  = getBreath(p);
+  const breathX = sl ? 0 : Math.round(breath * 2 - 1);
+  const cxB     = cx - PX * 4 - breathX; // cx effectif : décalage base + respiration
 
-    /* ─── CORPS ROND FUSIONNÉ (8×8 PX) ─── */
-    p.fill(C.body);
-    px(p, x+PX*2, y,        PX*4, PX);      // arrondi haut
-    px(p, x+PX,   y+PX,     PX*6, PX);
-    px(p, x,      y+PX*2,   PX*8, PX*4);    // milieu large (visage+corps)
-    px(p, x+PX,   y+PX*6,   PX*6, PX);
-    px(p, x+PX*2, y+PX*7,   PX*4, PX);      // arrondi bas
+  // RÔLE : mouthBaseY est la position Y de base de la bouche, animée par la respiration.
+  // POURQUOI : Les calques bouche utilisent yFn qui lit pm.mouthBaseY — calculé une seule
+  //            fois ici, pas à chaque rect pour éviter les divergences.
+  const mouthBaseY = cy + PX * 5 + Math.round(breath * 2);
 
-    /* ─── HIGHLIGHTS ─── */
-    p.fill(C.bodyLt);
-    px(p, x+PX*2, y+PX,   PX*2, PX);
-    px(p, x+PX,   y+PX*2, PX*2, PX);
+  const params = {
+    sl, en, ha,
+    blink,
+    breath,
+    pulse: getCheekPulse(p),
+    mouthBaseY,
+  };
 
-    /* ─── OREILLES D'OURSON (demi-cercles) ─── */
-p.fill(C.body);
-// oreille gauche
-px(p, x+PX,   y-PX,   PX*2, PX);   // base large
-px(p, x+PX,   y-PX*2, PX*2, PX);   // milieu
-px(p, x+PX*1+2, y-PX*3, PX, PX);   // sommet arrondi
-// oreille droite (miroir)
-px(p, x+PX*5, y-PX,   PX*2, PX);
-px(p, x+PX*5, y-PX*2, PX*2, PX);
-px(p, x+PX*5+2, y-PX*3, PX, PX);
+  renderSprite(p, LAYERS_TEEN, cxB, cy, params);
 
-// Intérieur d'oreille rose (creux)
-p.fill(C.cheek);
-px(p, x+PX+2,   y-PX,   PX, PX);
-px(p, x+PX*5+2, y-PX,   PX, PX);
+  // Épuisement dither — hors DSL (drawDither a sa propre logique de damier).
+  // POURQUOI : x original = cxB (déjà décalé), y = cy + PX*4, w = 8*PX, h = 5*PX.
+  if (en < EN_CRIT && !sl) {
+    drawDither(p, cxB, cy + PX * 4, PX * 8, PX * 5, C.bodyDk);
+  }
 
-    /* ─── YEUX (grands, amande) ─── */
-    const expr = window._expr;
-    const isSurprise = isMood('surprise'); // helper centralisé §4b
+  // Accessoires et saleté — interfaces inchangées, coordonnées originales cx/cy.
+  drawAccessoires(p, cx, { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 5 }, 'teen', sl);
+  drawSaleteDither(p, 'teen', cx, cy, window.D?.g?.salete || 0, sl);
 
-    if (sl || blink) {
-      p.fill(C.eye);
-      px(p, x+PX,   y+PX*3, PX*2, PX);
-      px(p, x+PX*5, y+PX*3, PX*2, PX);
-    } else if (isSurprise) {
-      // Yeux grands ouverts : carrés pleins
-      p.fill(C.eye);
-      px(p, x+PX,   y+PX*2, PX*2, PX*2);
-      px(p, x+PX*5, y+PX*2, PX*2, PX*2);
-      p.fill('#fff');
-      p.rect(x+PX+1,   y+PX*2+1, 4, 4);
-      p.rect(x+PX*5+1, y+PX*2+1, 4, 4);
-    } else {
-      p.fill(C.eye);
-      px(p, x+PX,   y+PX*2, PX*2, PX);      // œil gauche haut large
-      px(p, x+PX*2, y+PX*3, PX,   PX);      // œil gauche bas étroit
-      px(p, x+PX*5, y+PX*2, PX*2, PX);      // œil droit miroir
-      px(p, x+PX*5, y+PX*3, PX,   PX);
-      p.fill('#fff');
-      p.rect(x+PX+1,   y+PX*2+1, 4, 4);
-      p.rect(x+PX*5+1, y+PX*2+1, 4, 4);
-    }
-
-    /* ─── POOP DISGUST ─── */
-    if (window._gotchiNearPoop && !sl) {
-      p.fill(C.eye);
-      px(p, x+PX,   y+PX*2, PX*2, PX);
-      px(p, x+PX*5, y+PX*2, PX*2, PX);
-    }
-
-    /* ─── JOUES ROSES (pulsantes, centrées) ─── */
-    const pulse = getCheekPulse(p);
-    p.fill(p.lerpColor(p.color(C.cheek), p.color('#e88098'), pulse));
-    px(p, x+PX,   y+PX*4, PX, PX);
-    px(p, x+PX*6, y+PX*4, PX, PX);
-
-    // Joues débordantes si joie active
-    if (isMood('joie')) {
-      p.drawingContext.globalAlpha = 0.7;
-      px(p, x,      y+PX*4, PX, PX);
-      px(p, x+PX*7, y+PX*4, PX, PX);
-      p.drawingContext.globalAlpha = 1.0;
-    }
-
-    /* ─── BOUCHE ─── */
-    p.fill(C.mouth);
-    if (!sl) {
-      // Respiration bouche : descend de 0-2 px sur le cycle
-      const mouthY = y + PX*5 + Math.round(breath * 2);
-
-      if (isMood('joie')) {
-        // Grand sourire : barre principale en bas, coins relevés
-        px(p, x+PX*2, mouthY+PX, PX*4, PX);   // ligne principale
-        px(p, x+PX,   mouthY,    PX,   PX);   // coin gauche relevé
-        px(p, x+PX*6, mouthY,    PX,   PX);   // coin droit relevé
-      } else if (isMood('faim')) {
-        // Bouche baveuse (ouverte + goutte bleue)
-        px(p, x+PX*3, mouthY, PX*2, PX*2);
-        p.fill('#88c0e0');
-        px(p, x+PX*3, mouthY+PX*2, PX, PX);
-        p.fill(C.mouth);
-      } else if (isMood('surprise')) {
-        // Petit "o" de surprise
-        px(p, x+PX*3, mouthY, PX*2, PX*2);
-      } else {
-        // Humeurs normales
-        if      (ha > HA_HAPPY_TEEN) { px(p,x+PX*3,mouthY,PX*2,PX); px(p,x+PX*2,mouthY,PX,PX); px(p,x+PX*5,mouthY,PX,PX); } // grand sourire (ha > 4)
-        else if (ha > HA_MED)         px(p,x+PX*3,mouthY,PX*2,PX);   // sourire neutre (ha > 2)
-        else if (ha < HA_SAD)         px(p,x+PX*3,mouthY+2,PX*2,PX); // bouche triste (ha < 1)
-        else                px(p,x+PX*3,mouthY,PX,PX);
-      }
-    }
-
-    /* ─── PETITS BRAS SUR LES CÔTÉS ─── */
-    p.fill(C.bodyDk);
-    if (en < EN_WARN && !sl) {
-      px(p, x-PX,   y+PX*5, PX, PX);        // bras tombés (en < 2)
-      px(p, x+PX*8, y+PX*5, PX, PX);
-    } else {
-      px(p, x-PX,   y+PX*4, PX, PX*2);      // bras normaux
-      px(p, x+PX*8, y+PX*4, PX, PX*2);
-    }
-
-    /* ─── PETITS PIEDS ─── */
-    px(p, x+PX*2, y+PX*8, PX, PX);
-    px(p, x+PX*5, y+PX*8, PX, PX);
-
-    if (en < EN_CRIT && !sl) drawDither(p, x, y + PX * 4, PX * 8, PX * 5, C.bodyDk); // épuisement (en < 1)
-
-    // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
-    drawAccessoires(p, cx, { topY: y, eyeY: y + PX*2, neckY: y + PX*5 }, 'teen', sl);
-
-    // Couche de saleté par-dessus le sprite (si salete >= 5)
-    drawSaleteDither(p, 'teen', cx, cy, window.D?.g?.salete || 0, sl);
-
-    return { topY: y, eyeY: y+PX*2, neckY: y+PX*5 };
+  return { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 5 };
 }
 
 /* ─── §6 STADE ADULTE ───────────────────────────────────────────── */

@@ -377,14 +377,16 @@
 
 ---
 
-## 6. `js/ui.js`
+## 6. `js/ui-*.js` (8 modules — ex-`ui.js`)
+
+> ⚠️ `ui.js` (5192 l) a été découpé en 8 modules lors de la session 2026-04-30. Cette section documente l'état post-split. `ui.js` est conservé dans le repo pour compatibilité mais n'est plus chargé par `index.html`.
 
 ### 6.1 Vue d'ensemble
-5192 lignes. Le poids lourd : helpers IA, navigation onglets, modales, repas, habitudes, boutique, IA bulle/cadeau, IA soutien, IA bilan, perso, journal, progression, réglages, tablette rétro, bienvenue, agenda (jour/mois/cycle), init UI. Mélange massif de génération de HTML par templates string et de logique métier.
+8 modules : `ui-core.js` (helpers, modales, scroll, callClaude), `ui-habs.js` (habitudes), `ui-shop.js` (boutique, inventaire, env switcher), `ui-ai.js` (soutien IA, bilan, cadeau), `ui-journal.js` (journal, PIN, mood, export), `ui-agenda.js` (agenda jour/mois/cycle), `ui-settings.js` (réglages, perso, progression, tablette, snack, initUI), `ui-nav.js` (go(), syncConsoleHeight, updDate — chargé en dernier).
 
 ### 6.2 Points forts
-- Header de navigation ([L9-L28]) maintenu.
-- `callClaude()` ([L37-L63]) centralise les headers/URL — bonne pratique.
+- Header de navigation maintenu dans chaque module (`§` numérotés).
+- `callClaude()` (`ui-core.js` [L37-L63]) centralise les headers/URL — bonne pratique.
 - `escape()` ([L89-L97]) protège contre XSS — appliqué sur la plupart des strings utilisateur.
 - `lockScroll()` / `unlockScroll()` ([L274-L279]) — minimaliste et propre.
 - `openModal()` ([L395-L409]) : pattern centralisé propre, force reflow pour rejouer l'animation.
@@ -446,14 +448,14 @@
 - Suggestion : Migrer progressivement vers des classes CSS (`.btn-snack`, `.modal-header`, etc).
 
 ### 6.4 Code mort / redondances
-- `toggleSliders()` ([L305]) : "supprimée — conservée vide" — code mort assumé.
-- `floatXP` ([app.js L678]) défini mais utilisé une fois ([L724]).
-- Plusieurs handlers `onclick="event.stopPropagation()"` sans documentation.
+- `toggleSliders()` : présente dans `ui-core.js` [L403] — conservée vide intentionnellement pour ne pas casser d'éventuels appels résiduels. Code mort assumé, documenté en §9 du header de `ui-core.js`.
+- `floatXP` ([app.js L717]) : définie et utilisée une seule fois ([L763]). Usage unique intentionnel — animation flottante +XP sur la carte habitude cochée. Pas du code mort, mais extraction inutile pour une seule occurrence.
+- `onclick="event.stopPropagation()"` : **une seule occurrence** dans `ui-shop.js` [L81] — croix rouge overlay "mode suppression objet IA" sur les cartes inventaire. Comportement intentionnel (empêche la propagation au parent qui activerait l'objet). Déjà documenté dans 6.3.
 
 ### 6.5 Dette technique
-- 5192 lignes monolithiques. Aucune extraction par feature.
-- Templates string de 80+ lignes injectés en innerHTML — illisibles, non testables.
-- Le fichier exporte ~70 fonctions globales (`function X() { ... }`) sans aucun namespace UI.
+- ✅ RÉSOLU (2026-04-30) — `ui.js` 5192 lignes découpé en 8 modules `ui-*.js`. Chaque module est autonome par feature. Voir section "Historique des sessions" pour le détail du split.
+- Templates string de 80+ lignes injectés en innerHTML : dette connue, documentée. Migration progressive vers classes CSS (`.btn-snack`, `.modal-header`, etc.) à prévoir en Phase 3 — voir item STYLE section 6.3.
+- Fonctions globales `window.*` : convention maintenue. ~70 fonctions exposées — aucun namespace UI ajouté volontairement (overhead inutile pour une SPA de cette taille). Documenté comme acceptable.
 
 ---
 
@@ -634,7 +636,7 @@ Trois facteurs cumulés causaient le bug :
 |---|---|---|---|---|
 | 15 | ✅ Découper `p.draw()` en sous-fonctions thématiques | `js/render.js` — `drawPropsLayer`, `drawHUD`, `drawBadges`, `drawEnvSelector` extraits (2026-04-30) | L | Maintenabilité |
 | 16 | ✅ Découper `ui.js` (5192 l) en modules par feature | `js/ui-core.js` (300 l), `js/ui-nav.js` (155 l), `js/ui-habs.js` (179 l), `js/ui-shop.js` (1047 l), `js/ui-ai.js` (918 l), `js/ui-journal.js` (342 l), `js/ui-agenda.js` (1204 l), `js/ui-settings.js` (1307 l) | L | Maintenabilité |
-| 17 | Migrer les inline-styles vers classes CSS | `js/ui.js` + `css/style.css` | L | Thématisation |
+| 17 | Migrer les inline-styles vers classes CSS | `js/ui-*.js` + `css/style.css` | L | Thématisation |
 | 18 | ✅ Extraire `drawParc/Chambre/Montagne` de `drawActiveEnv` | `js/envs.js` — `drawParc`, `drawChambre`, `drawMontagne` + dispatcher `switch` (2026-04-30) | M | Lisibilité |
 | 19 | Découpler `render-sprites.js` de `render.js` (variables module) | les deux | M | Modularité |
 | 20 | Ajouter une suite de tests automatisés (Jest/Vitest) | nouveau `tests/` | L | Régressions |
@@ -756,15 +758,15 @@ Trois facteurs cumulés causaient le bug :
 | `drawActiveEnv(p,env,n,h)` | dispatcher biomes | `p.draw` | `tc`, `drawTreeTheme`, `drawCactus`, `drawFrameMotif`, `drawThemeAccents` |
 | `drawTreeTheme/Cactus/Fl` | helpers décor | drawActiveEnv | `px` |
 
-### `js/ui.js`
-| Fonction | Rôle | Appelée par | Appelle |
-|---|---|---|---|
-| `callClaude({...})` | wrapper API Anthropic | askClaude, soutien, bilan, cadeau | `fetch` |
-| `escape(s)` | XSS-sanitize | partout | — |
-| `lockScroll`/`unlockScroll` | scroll body | openModal, toggleMenu | — |
-| `openModal(html)` / `clModal(e)` / `toastModal(m)` | modales | UI | `_modalCloseBtn`, `_fermerMenuSiOuvert`, `unlockScroll` |
-| `go(t)` / `goMenu(t)` / `toggleMenu` | navigation | UI | `renderHabs`, `renderProg`, `renderProps`, `renderPerso`, `renderJ`, `syncDuringTransition` |
-| `updUI()` | refresh HUD | métier | `getSt`, `nxtTh`, `calcStr`, `updThoughtFlowers`, `updJournalFlowers`, `updBadgeBoutique` |
+### `js/ui-*.js` (8 modules — ex-`ui.js`)
+| Fonction | Rôle | Module | Appelée par | Appelle |
+|---|---|---|---|---|
+| `callClaude({...})` | wrapper API Anthropic | `ui-core.js` | askClaude, soutien, bilan, cadeau | `fetch` |
+| `escape(s)` | XSS-sanitize | `ui-core.js` | partout | — |
+| `lockScroll`/`unlockScroll` | scroll body | `ui-core.js` | openModal, toggleMenu | — |
+| `openModal(html)` / `clModal(e)` / `toastModal(m)` | modales | `ui-core.js` | UI | `_modalCloseBtn`, `_fermerMenuSiOuvert`, `unlockScroll` |
+| `go(t)` / `goMenu(t)` / `toggleMenu` | navigation | `ui-nav.js` | UI | `renderHabs`, `renderProg`, `renderProps`, `renderPerso`, `renderJ`, `syncDuringTransition` |
+| `updUI()` | refresh HUD | `ui-settings.js` | métier | `getSt`, `nxtTh`, `calcStr`, `updThoughtFlowers`, `updJournalFlowers`, `updBadgeBoutique` |
 | `ouvrirSnack` | popup snack | render touch, HUD | `getCurrentMealWindow`, `ensureMealsToday`, `pickThreeSnacks`, `giveSnack` |
 | `ouvrirEditionHabitudes` / `sauvegarderToutesHabitudes` | renommer/réordonner | UI | `openModal`, `save`, `renderHabs` |
 | `ouvrirBoutique` / `acheterProp` / `toggleProp` / `openSlotPicker*` | boutique | UI | `addEvent`, `save`, `renderProps`, `updBadgeBoutique` |

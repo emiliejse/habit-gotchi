@@ -909,9 +909,10 @@ function drawEnvSelector(p, g, nightRatio) {
   // RÔLE : On n'appelle .push() que lors d'un vrai changement d'état.
   //        Entre deux frames identiques, _envSelectorHits est réutilisé tel quel.
   if (!cacheHit) {
-    if (!envLocked) {
-      window._envSelectorHits.push({ env: '__main__', cx: envCX, cy: envCY, r: envR });
-    }
+    // RÔLE : On enregistre toujours la zone du cercle principal, verrouillé ou non.
+    // POURQUOI : Quand l'env est verrouillé (nuit), le tap doit afficher une bulle
+    //            plutôt que de ne rien faire — le flag `locked` permet de distinguer les deux cas.
+    window._envSelectorHits.push({ env: '__main__', cx: envCX, cy: envCY, r: envR, locked: envLocked });
   }
 
   // ── Cercles flottants (seulement si ouvert et env non verrouillé) ──
@@ -1511,13 +1512,23 @@ if (!window._gotchiActif) return true;
           tappedEnvSelector = true;
 
           if (zone.env === '__main__') {
-            // RÔLE : Tap sur le cercle principal → ouvre si env disponible, inerte si verrouillé.
+            // RÔLE : Tap sur le cercle principal → ouvre si env disponible, bulle si verrouillé.
             // POURQUOI : On utilise window._envLocked (calculé dans draw() via nightRatio)
             //            plutôt que h >= 22, pour être cohérent avec le vrai seuil de verrouillage (21h).
             if (!window._envLocked) {
               window._envSelectorOpen = !window._envSelectorOpen; // toggle ouvert/fermé
+            } else {
+              // RÔLE : Bulle contextuelle quand le sélecteur est verrouillé (nuit, dès 21h).
+              // POURQUOI : Sans message, le 💤 semble figé ou bugué. La bulle explique pourquoi
+              //            l'env ne peut pas changer et donne vie au Gotchi même la nuit.
+              const msgsNuit = [
+                'Je suis dans ma chambre pour la nuit… 💤',
+                'Chut ! Je dors bientôt… 🌙',
+                'On changera d\'endroit demain matin ! 😴',
+                'C\'est l\'heure du dodo, on reste ici 🛏️',
+              ];
+              flashBubble(msgsNuit[Math.floor(Math.random() * msgsNuit.length)], 2500);
             }
-            // Verrouillé (nuit dès 21h) : on ne fait rien
 
           } else {
             // RÔLE : Tap sur un cercle flottant → change d'env, referme le sélecteur, déclenche le fondu.

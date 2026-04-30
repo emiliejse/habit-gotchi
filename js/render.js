@@ -152,6 +152,43 @@ const ANIM_DEFS = {
       yFn: (elapsed) => -(Math.sin(elapsed / 20 * Math.PI) * 22)
     }
   },
+
+  // ── Poses idle adulte — déclenchées par le scheduler _adultPose ──
+  // POURQUOI : Chaque pose masque 'bras-normal' (calque par défaut)
+  //            et rend visible son propre calque. Les durées sont
+  //            passées en override depuis le scheduler qui tire au sort.
+  pose_hanche_g: {
+    stages: ['adult'],
+    duration: 60, // valeur par défaut — le scheduler passe la vraie durée en override
+    poses: {
+      'bras-normal':   { hidden: true },
+      'bras-hanche-g': { visible: true }
+    }
+  },
+  pose_hanche_d: {
+    stages: ['adult'],
+    duration: 60,
+    poses: {
+      'bras-normal':   { hidden: true },
+      'bras-hanche-d': { visible: true }
+    }
+  },
+  pose_croises: {
+    stages: ['adult'],
+    duration: 72,
+    poses: {
+      'bras-normal':  { hidden: true },
+      'bras-croises': { visible: true }
+    }
+  },
+  pose_salut: {
+    stages: ['adult'],
+    duration: 12,
+    poses: {
+      'bras-normal': { hidden: true },
+      'bras-salut':  { visible: true }
+    }
+  },
 };
 
 // RÔLE : Moteur léger qui gère la pile des animations actives.
@@ -164,11 +201,18 @@ const animator = {
   active: [],
 
   // RÔLE : Déclencher une animation par son id (clé dans ANIM_DEFS).
-  // POURQUOI : Cherche d'abord dans ANIM_DEFS, accepte aussi une def inline
-  //            pour les cas one-shot non catalogués (test, debug).
-  trigger(id, defOverride) {
-    const def = defOverride || ANIM_DEFS[id];
-    if (!def) return; // id inconnu → silencieux
+  // POURQUOI : Cherche d'abord dans ANIM_DEFS, puis merge les options optionnelles.
+  //            options peut contenir { duration } pour surcharger la durée catalogue —
+  //            utile quand le scheduler tire une durée aléatoire (ex. poses idle adulte).
+  //            options peut aussi être une def complète pour les cas one-shot non catalogués.
+  trigger(id, options) {
+    const base = ANIM_DEFS[id];
+    if (!base && !options) return; // id inconnu sans fallback → silencieux
+    // RÔLE : Merger la def catalogue avec les options passées.
+    // POURQUOI : Object.assign crée une copie — on ne mute pas la def catalogue,
+    //            ce qui permet de déclencher la même animation plusieurs fois avec
+    //            des durées différentes sans effet de bord.
+    const def = options ? Object.assign({}, base || options, options) : base;
     this.active.push({ id, t: def.duration, def });
   },
 

@@ -1082,8 +1082,9 @@ function drawTeen(p, cx, cy, sl, en, ha) {
 // Repère : x_dsl = offset_depuis_x_original + (-5)
 //          ex. x+PX*3 → -2  |  x+PX*6 → 1  |  x-PX → -6  |  x+PX*10 → 5  |  x+PX*11 → 6
 //
-// params spécifiques adult : pm.pose (string pose idle courante), pm.stepPhase (0|1|-1),
-//   pm.pulse, pm.mouthBaseY, pm.sl, pm.en, pm.ha, pm.blink
+// params spécifiques adult : pm.stepPhase (0|1|-1), pm.pulse, pm.mouthBaseY,
+//   pm.sl, pm.en, pm.ha, pm.blink
+// Note : pm.pose supprimé (Temps 3) — les poses idle sont pilotées par aov.hidden/visible.
 const LAYERS_ADULT = [
 
   // ── Corps rond fusionné (10×10 PX) ─────────────────────────────
@@ -1328,10 +1329,12 @@ const LAYERS_ADULT = [
   },
 
   // ── Pose hanche gauche ───────────────────────────────────────────
+  // POURQUOI : Plus de `when` — ce calque est affiché uniquement via aov.visible
+  //            (déclenché par animator 'pose_hanche_g'). Sans aov.visible, il reste caché.
   {
     id: 'bras-hanche-g',
     fill: 'C.bodyDk',
-    when: (pm) => !pm.sl && pm.en >= EN_WARN && pm.ha <= HA_ARMS_UP && pm.pose === 'hanche_g',
+    when: () => false, // caché par défaut — rendu uniquement via aov.visible
     rects: [
       { x: -4, y: 5, w: 2, h: 1 },   // avant-bras horizontal gauche
       { x: -5, y: 4, w: 1, h: 2 },   // coude gauche
@@ -1343,7 +1346,7 @@ const LAYERS_ADULT = [
   {
     id: 'bras-hanche-d',
     fill: 'C.bodyDk',
-    when: (pm) => !pm.sl && pm.en >= EN_WARN && pm.ha <= HA_ARMS_UP && pm.pose === 'hanche_d',
+    when: () => false, // caché par défaut — rendu uniquement via aov.visible
     rects: [
       { x: -6, y: 5, w: 1, h: 2 },   // bras gauche normal
       { x:  2, y: 7, w: 2, h: 1 },   // avant-bras horizontal droit
@@ -1355,7 +1358,7 @@ const LAYERS_ADULT = [
   {
     id: 'bras-croises',
     fill: 'C.bodyDk',
-    when: (pm) => !pm.sl && pm.en >= EN_WARN && pm.ha <= HA_ARMS_UP && pm.pose === 'croises',
+    when: () => false, // caché par défaut — rendu uniquement via aov.visible
     rects: [
       { x: -6, y: 4, w: 1, h: 1 },   // coude gauche
       { x: -5, y: 5, w: 4, h: 1 },   // avant-bras gauche
@@ -1368,7 +1371,7 @@ const LAYERS_ADULT = [
   {
     id: 'bras-salut',
     fill: 'C.bodyDk',
-    when: (pm) => !pm.sl && pm.en >= EN_WARN && pm.ha <= HA_ARMS_UP && pm.pose === 'salut',
+    when: () => false, // caché par défaut — rendu uniquement via aov.visible
     rects: [
       { x: -6, y: 2, w: 1, h: 3 },   // bras gauche levé vertical
       { x: -6, y: 1, w: 1, h: 1 },   // main gauche au sommet
@@ -1377,10 +1380,12 @@ const LAYERS_ADULT = [
   },
 
   // ── Pose normale ─────────────────────────────────────────────────
+  // POURQUOI : Affiché par défaut quand les bras sont en mode idle (éveillé, énergie ok,
+  //            bonheur pas max). Masqué via aov.hidden quand une pose variante est active.
   {
     id: 'bras-normal',
     fill: 'C.bodyDk',
-    when: (pm) => !pm.sl && pm.en >= EN_WARN && pm.ha <= HA_ARMS_UP && pm.pose === 'normal',
+    when: (pm) => !pm.sl && pm.en >= EN_WARN && pm.ha <= HA_ARMS_UP,
     rects: [
       { x: -6, y: 5, w: 1, h: 2 },
       { x:  5, y: 5, w: 1, h: 2 },
@@ -1423,39 +1428,42 @@ const LAYERS_ADULT = [
 ];
 
 function drawAdult(p, cx, cy, sl, en, ha) {
-  // RÔLE : Faire tourner la machine d'état des poses idle AVANT le rendu DSL.
-  // POURQUOI : Le timer/cooldown doit s'exécuter à chaque frame même si le moteur
-  //            n'est qu'un itérateur passif. On calcule pose.current ici, puis on
-  //            le passe dans params — les calques bras lisent pm.pose.
+  // RÔLE : Scheduler des poses idle — décide QUAND et LAQUELLE déclencher.
+  // POURQUOI : _adultPose ne stocke plus que le cooldown entre deux poses.
+  //            La pose active est portée par animator (pile active) — c'est
+  //            aov.hidden / aov.visible dans renderSprite() qui pilote les calques.
   const pose = window._adultPose;
-  // RÔLE : Bloquer les poses idle pendant un saut de joie.
-  // POURQUOI : Avant, on lisait window._jumpTimer > 0. Désormais le saut est géré
-  //            par animator — on vérifie si 'saut_joie' est dans la pile active.
+
+  // RÔLE : Bloquer les poses idle pendant un saut ou pendant le sommeil.
+  // POURQUOI : Pendant un saut, déclencher une pose changerait les bras au milieu
+  //            de l'animation — visuellement incohérent.
   const isJumping = window.animator?.active.some(a => a.id === 'saut_joie') ?? false;
-  const canVary = !sl && !isJumping;
+  // RÔLE : Vérifier si une pose idle est déjà en cours dans l'animator.
+  // POURQUOI : Évite de déclencher une nouvelle pose avant que la précédente soit terminée.
+  const poseIds = ['pose_hanche_g', 'pose_hanche_d', 'pose_croises', 'pose_salut'];
+  const isPosing = window.animator?.active.some(a => poseIds.includes(a.id)) ?? false;
+  const canVary = !sl && !isJumping && !isPosing;
 
   if (en >= EN_WARN && ha <= HA_ARMS_UP) {
-    // RÔLE : Faire évoluer la pose uniquement quand les bras sont en mode idle.
-    // POURQUOI : Si en < EN_WARN (bras tombés) ou ha > HA_ARMS_UP (bras levés joie),
-    //            les calques bras-idle ne sont pas affichés — inutile de faire tourner le timer.
+    // RÔLE : Faire tourner le cooldown entre deux poses, puis tirer au sort.
+    // POURQUOI : isPosing remplace l'ancien pose.timer — tant qu'une animation de pose
+    //            est active dans l'animator, on ne tire pas de nouvelle pose.
+    //            Quand elle se termine (tick() la retire), isPosing repasse à false,
+    //            et on commence le cooldown avant la prochaine.
     if (canVary) {
-      if (pose.timer > 0) {
-        pose.timer--;
-        if (pose.timer === 0) {
-          pose.current = 'normal';
-          pose.cooldown = 60 + Math.floor(Math.random() * 60); // 5-10 sec
-        }
-      } else if (pose.cooldown > 0) {
+      if (pose.cooldown > 0) {
         pose.cooldown--;
       } else {
+        // RÔLE : Tirer une pose au sort et la déclencher via animator.
+        // POURQUOI : On passe { duration } en override pour garder la durée aléatoire
+        //            du scheduler — la def catalogue contient juste une valeur par défaut.
         const r = Math.random();
-        if      (r < 0.35) { pose.current = 'hanche_g'; pose.timer = 60 + Math.floor(Math.random() * 24); }
-        else if (r < 0.70) { pose.current = 'hanche_d'; pose.timer = 60 + Math.floor(Math.random() * 24); }
-        else if (r < 0.90) { pose.current = 'croises';  pose.timer = 72 + Math.floor(Math.random() * 24); }
-        else               { pose.current = 'salut';    pose.timer = 12 + Math.floor(Math.random() * 6);  }
+        if      (r < 0.35) { window.animator.trigger('pose_hanche_g', { duration: 60 + Math.floor(Math.random() * 24) }); }
+        else if (r < 0.70) { window.animator.trigger('pose_hanche_d', { duration: 60 + Math.floor(Math.random() * 24) }); }
+        else if (r < 0.90) { window.animator.trigger('pose_croises',  { duration: 72 + Math.floor(Math.random() * 24) }); }
+        else               { window.animator.trigger('pose_salut',    { duration: 12 + Math.floor(Math.random() * 6)  }); }
+        pose.cooldown = 60 + Math.floor(Math.random() * 60); // 5-10 sec avant la prochaine
       }
-    } else {
-      pose.current = 'normal';
     }
   }
 
@@ -1471,13 +1479,15 @@ function drawAdult(p, cx, cy, sl, en, ha) {
 
   const mouthBaseY = cy + PX * 6 + Math.round(breath * 2);
 
+  // RÔLE : Paramètres transmis aux fonctions `when` des calques DSL.
+  // POURQUOI : `pose` a été retiré — les poses idle sont maintenant pilotées par
+  //            aov.hidden / aov.visible (animator) et non plus par pm.pose.
   const params = {
     sl, en, ha,
     blink,
     breath,
     pulse: getCheekPulse(p),
     mouthBaseY,
-    pose:      pose.current,
     stepPhase,
   };
 

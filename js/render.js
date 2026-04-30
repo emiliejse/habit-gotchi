@@ -1435,6 +1435,60 @@ if (!window._gotchiActif) return true;
     const mx = p.touches[0]?.x ?? p.mouseX;
     const my = p.touches[0]?.y ?? p.mouseY;
 
+    // 🌸 Pétales (zone gauche du HUD, x < 50) — bulle contextuelle selon le solde
+    if (mx < 50 && my < 26) {
+      const petales = window.D?.g?.petales || 0;
+      if (petales === 0) {
+        const msgsZero = [
+          'Pas encore de pétales… on y travaille ! 🌱',
+          'Aucun pétale pour l\'instant — prends soin de moi ! 🌸',
+          'Zéro pétale… mais ça peut changer ! 💪',
+        ];
+        flashBubble(msgsZero[Math.floor(Math.random() * msgsZero.length)], 2500);
+      } else if (petales < 10) {
+        const msgsFew = [
+          `${petales} pétale${petales > 1 ? 's' : ''}… tu prends soin de moi 🌸`,
+          `J'ai ${petales} pétale${petales > 1 ? 's' : ''} ! Continuons comme ça ✨`,
+          `${petales} pétale${petales > 1 ? 's' : ''}, c'est un début ! 🌷`,
+        ];
+        flashBubble(msgsFew[Math.floor(Math.random() * msgsFew.length)], 2500);
+      } else {
+        const msgsRich = [
+          `${petales} pétales ! Je me sens tellement choyé·e 🌸✨`,
+          `Woah, ${petales} pétales ! Tu es formidable 💜`,
+          `${petales} pétales… je rayonne ! 🌸🌸`,
+        ];
+        flashBubble(msgsRich[Math.floor(Math.random() * msgsRich.length)], 2500);
+      }
+      return false;
+    }
+
+    // 🌡️ Météo (zone droite du HUD, x > CS - 55) — bulle contextuelle selon la météo
+    if (mx > CS - 55 && my < 26 && window.meteoData?.temperature !== undefined) {
+      const temp  = Math.round(window.meteoData.temperature);
+      const wind  = window.meteoData.windspeed || 0;
+      const wcode = window.meteoData.weathercode;
+      let msgMeteo;
+      if (wcode === 45 || wcode === 48) {
+        msgMeteo = 'Il y a du brouillard dehors… je reste au chaud 😶‍🌫️';
+      } else if (temp <= 0) {
+        msgMeteo = `${temp}°C ! Il gèle dehors, je suis bien ici 🥶`;
+      } else if (temp < 10) {
+        msgMeteo = `Seulement ${temp}°C… couvre-toi bien ! 🧥`;
+      } else if (temp < 18) {
+        msgMeteo = `${temp}°C, une belle journée fraîche ✨`;
+      } else if (temp < 26) {
+        msgMeteo = `${temp}°C, c'est agréable dehors ! ☀️`;
+      } else if (temp < 33) {
+        msgMeteo = `${temp}°C… il fait chaud ! Pense à t'hydrater 💧`;
+      } else {
+        msgMeteo = `${temp}°C ! Canicule… reste à l'ombre 🥵`;
+      }
+      if (wind > 20) msgMeteo += ` Et il y a du vent (${Math.round(wind)} km/h) 🌬️`;
+      flashBubble(msgMeteo, 3000);
+      return false;
+    }
+
     // 🧹 Balai (x=70) — nettoyer les crottes, ou bulle si déjà propre
     if (Math.abs(mx - 70) < 14 && my < 26) {
       const poops = window.D?.g?.poops || [];

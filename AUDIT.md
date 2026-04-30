@@ -6,6 +6,8 @@
 >
 > **Session quick wins 2026-04-30** : 3 quick wins résolus — `getStageBaseY()` dans `render.js` (déduplication ternaire `by`), `clearInterval` + handles module-level dans `app.js` (intervals nettoyés), `window._modalCloseBtn(onclick)` exposé depuis `ui-core.js` et appliqué dans 5 modales (`ui-shop.js` ×4, `ui-agenda.js` ×1, `ui-ai.js` ×1).
 >
+> **Session refactoring render.js + fix slider 2026-04-30** : `p.draw()` (~570 l) découpé en 4 sous-fonctions locales (`drawPropsLayer`, `drawHUD`, `drawBadges`, `drawEnvSelector`) — orchestrateur réduit à ~310 l. Fix bug `lockScroll` : `_touchmoveBlocker` dans `ui-core.js` bloquait les `touchmove` sur `input[type=range]` (pas d'ancêtre scrollable → `preventDefault()` annulait le drag du thumb sur iOS/WebKit). Correction : garde `if (e.target.type === 'range') return` ajoutée en tête du blocker.
+>
 > **Vérification version** : `window.APP_VERSION = 'v4.5'` ([app.js L54](js/app.js#L54)) — ⚠️ la consigne mentionnait `'hg-v4.5'` mais le code stocke uniquement `'v4.5'`. Le `CACHE_VERSION` de `sw.js` ([L7](sw.js#L7)) est aligné `'v4.5'`. Cohérence OK entre les deux fichiers, mais préfixe `hg-` non utilisé.
 
 ---
@@ -705,7 +707,7 @@ Trois facteurs cumulés causaient le bug :
   - `openModal()` et `clModal()` : appellent `lockScroll()`/`unlockScroll()` (qui gèrent inert).
   - `openModalRaw(html)` ajoutée — variante sans ✕ auto pour boutique/agenda/soutien.
   - `toastModal()` : passe désormais par `openModal()`.
-  - `lockScroll()` renforcé : `body.overflow:hidden` + `#dynamic-zone overflowY:hidden + touchAction:none` + `_setInert(true)` + **listener `touchmove` avec `preventDefault()` sur `document`** (passive:false) — seul mécanisme efficace contre le rubber-band iOS/Safari. Le listener inspecte la chaîne de parents pour laisser passer les `touchmove` ciblant un élément scrollable de la modale.
+  - `lockScroll()` renforcé : `body.overflow:hidden` + `#dynamic-zone overflowY:hidden + touchAction:none` + `_setInert(true)` + **listener `touchmove` avec `preventDefault()` sur `document`** (passive:false) — seul mécanisme efficace contre le rubber-band iOS/Safari. Le listener inspecte la chaîne de parents pour laisser passer les `touchmove` ciblant un élément scrollable de la modale. **Exception ajoutée (2026-04-30)** : `if (e.target.type === 'range') return` — les `input[type=range]` ne sont pas des éléments scrollables, sans cette garde le drag du thumb était annulé par `preventDefault()` sur iOS/WebKit (bug confirmé sur la modale `ouvrirModalEtats`).
   - `unlockScroll()` : retire tous les mécanismes + `removeEventListener` du `touchmoveBlocker`.
 - `js/ui-settings.js` :
   - `openTablet()` : `lockScroll()` + listener `Escape` ajoutés.

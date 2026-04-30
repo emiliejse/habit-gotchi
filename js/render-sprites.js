@@ -976,12 +976,14 @@ function drawTeen(p, cx, cy, sl, en, ha) {
   if (!params.sl && !params.blink && !isMood('surprise')) {
     p.fill('#fff');
     p.noStroke();
-    // Iris teen : rangée haute 2×PX = 10px large, 1×PX = 5px haut. Reflet 4×4px.
-    // Amplitude : 10px - 4px reflet - 1px marge gauche - 2px marge droite = 3px max (serré côté droit).
-    // Y : +1px sous le bord haut de l'iris, reflet 4px → bord bas à +5px = limite exacte de l'iris.
-    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 4 - 3);
-    p.rect(cxB - PX * 3 + 1 + rx, cy + PX * 2 + 1, 4, 4); // œil gauche
-    p.rect(cxB + PX * 1 + 1 + rx, cy + PX * 2 + 1, 4, 4); // œil droit
+    // Iris teen : rangée haute 2×PX = 10px large, 1×PX = 5px haut. Reflet 3×3px.
+    // POURQUOI hauteur 3 au lieu de 4 : le reflet à 4px descendait dans la rangée basse
+    // de l'iris (1×PX wide = 5px), où il débordait visuellement hors du noir → pupille
+    // qui "sort" de l'œil. À 3px de haut, le reflet reste confiné dans la rangée haute.
+    // Amplitude : 10px - 3px reflet - 1px marge gauche - 1px marge droite = 5px max.
+    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 3 - 2);
+    p.rect(cxB - PX * 3 + 1 + rx, cy + PX * 2 + 1, 3, 3); // œil gauche
+    p.rect(cxB + PX * 1 + 1 + rx, cy + PX * 2 + 1, 3, 3); // œil droit
   }
 
   // Épuisement dither — hors DSL (drawDither a sa propre logique de damier).
@@ -1417,12 +1419,15 @@ function drawAdult(p, cx, cy, sl, en, ha) {
   if (!params.sl && !params.blink && !isMood('surprise')) {
     p.fill('#fff');
     p.noStroke();
-    // Iris adult : rangée haute 3×PX = 15px large, 1×PX = 5px haut. Reflet 4×4px.
-    // Amplitude : 15px - 4px reflet - 1px marge gauche - 3px marge droite = 7px max.
-    // Y : +1px sous le bord haut, reflet 4px → reste dans les 5px de la rangée haute.
-    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 4 - 4);
-    p.rect(cxB - PX * 3 + 1 + rx, cy + PX * 3 + 1, 4, 4); // œil gauche
-    p.rect(cxB + PX * 1 + 1 + rx, cy + PX * 3 + 1, 4, 4); // œil droit
+    // Iris adult : rangée haute 3×PX = 15px large, 1×PX = 5px haut. Reflet 3×3px.
+    // POURQUOI hauteur 3 au lieu de 4 : le reflet à 4px descendait dans la rangée basse
+    // de l'iris adult (x:-2, w:2 = 10px, plus étroite que la rangée haute = 15px),
+    // créant un débordement visible sur le côté gauche → même bug pupille que chez teen.
+    // À 3px de haut, le reflet reste dans la rangée haute (5px d'espace vertical suffit).
+    // Amplitude : 15px - 3px reflet - 1px marge gauche - 1px marge droite = 10px max.
+    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 3 - 2);
+    p.rect(cxB - PX * 3 + 1 + rx, cy + PX * 3 + 1, 3, 3); // œil gauche
+    p.rect(cxB + PX * 1 + 1 + rx, cy + PX * 3 + 1, 3, 3); // œil droit
   }
 
   // Épuisement dither — hors DSL.

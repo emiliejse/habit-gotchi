@@ -53,17 +53,21 @@
 window._agendaJour = null;
 
 function ouvrirAgenda(dateStr) {
+  // RÔLE : Ouvre l'agenda dans la modale centrale
+  // POURQUOI : openModalRaw() garantit lockScroll() + modal.style.display + _fermerMenuSiOuvert()
+  //            sans imposer le ✕ standard (l'agenda a son propre bouton fermerAgenda()).
+  //            Les classes shop-open / agenda-open sont appliquées APRÈS openModalRaw() car
+  //            elles pilotent le scroll interne du mbox — elles doivent être posées après
+  //            le reflow déclenché par openModalRaw() (void mbox.offsetWidth interne).
   window._agendaJour = dateStr || today();
-  _fermerMenuSiOuvert(); // ferme le menu-overlay s'il était ouvert
 
   const mbox = document.getElementById('mbox');
-  const modal = document.getElementById('modal');
 
-  // 1. Nettoie les classes d'un éventuel précédent affichage
+  // 1. Nettoie les classes d'un éventuel précédent affichage avant l'injection
   mbox.classList.remove('shop-open', 'shop-catalogue', 'agenda-open');
 
-  // 2. Prépare le contenu
-mbox.innerHTML = `
+  // 2. Ouvre via la voie centralisée (lockScroll + display:flex + _fermerMenuSiOuvert)
+  openModalRaw(`
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
     <h2 style="color:var(--text)">🗓️ Mon Agenda</h2>
     ${window._modalCloseBtn('fermerAgenda()')} <!-- RÔLE : bouton ✕ standardisé — appelle fermerAgenda() au lieu de clModal() -->
@@ -87,16 +91,14 @@ mbox.innerHTML = `
     </button>` : ''}
   </div>
   <div id="agenda-contenu"></div>
-`;
-// 3. Force un reflow pour redéclencher l'animation shopOpen
-void mbox.offsetWidth;
-// 4. Applique les classes (anime + scroll interne)
-mbox.classList.add('shop-open', 'agenda-open');
-// 5. Affiche la modale
-lockScroll();
-modal.style.display = 'flex';
-animEl(mbox, 'bounceIn');
-switchAgenda('jour');
+  `);
+
+  // 3. Applique les classes de scroll interne APRÈS openModalRaw()
+  // POURQUOI : openModalRaw() fait un void offsetWidth interne — ce reflow suffit.
+  //            On ajoute les classes juste après pour que le CSS de scroll agenda s'active.
+  mbox.classList.add('shop-open', 'agenda-open');
+  animEl(mbox, 'bounceIn');
+  switchAgenda('jour');
 }
 
 function fermerAgenda() {

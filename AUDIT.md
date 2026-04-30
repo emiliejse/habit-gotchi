@@ -17,6 +17,8 @@
 > **Vérification version** : `window.APP_VERSION = 'v4.5'` ([app.js L54](js/app.js#L54)) — ⚠️ la consigne mentionnait `'hg-v4.5'` mais le code stocke uniquement `'v4.5'`. Le `CACHE_VERSION` de `sw.js` ([L7](sw.js#L7)) est aligné `'v4.5'`. Cohérence OK entre les deux fichiers, mais préfixe `hg-` non utilisé.
 >
 > **Session bugs mineurs envs.js 2026-04-30** : 5 corrections dans `envs.js` — (1) `drawActiveEnv` découpé en `drawParc`, `drawChambre`, `drawMontagne` + dispatcher `switch` (130 lignes → orchestrateur ~8 lignes + 3 fonctions lisibles) ; (2) magic numbers `drawFog` remplacés par `FOG_LAYERS_GROUND = 5` et `FOG_LAYERS_HIGH = 4` ; (3) `tc()` : fallback `Number(n)` ajouté + valeur par défaut `n=0` pour rétrocompat booléen ; (4) couleur hardcodée `'#304028'` dans `drawTreeTheme` remplacée par `tc(n, colLeaf)` / `tc(n, colLeaf2)` — cohérent avec le reste du système nuit ; (5) convention `p.rect` vs `px()` documentée dans un bloc commentaire au-dessus du dispatcher.
+>
+> **Session bugs modales 2026-04-30** : vérification des 5 bugs signalés — état réel constaté et traité. (1) `ouvrirSnack()` dans `ui-settings.js` : 4 ouvertures directes `modal.style.display + mbox.innerHTML` migrées vers `openModal()`. (2) `ouvrirAgenda()` dans `ui-agenda.js` : migré vers `openModalRaw()`, classes CSS `shop-open`/`agenda-open` conservées et appliquées après. (3) `modalLocked` documenté comme partiellement résolu (reset uniquement via ✕ soutien — risque résiduel crash documenté). (4) Escape sur `USER_CONFIG` documenté comme trusted. (5) `go()` : logique commentée, `getEffectiveEnv()` reporté Phase 2.
 
 ---
 
@@ -31,7 +33,7 @@
 | `js/render.js` | **B** | `p.draw()` découpé en 4 sous-fonctions extraites (2026-04-30) — orchestrateur ~85 lignes. Reste : helpers de hitbox dupliqués entre `touchStarted` et `touchMoved`, `walkX`/`walkPause` implicitement partagés avec `render-sprites.js`. |
 | `js/render-sprites.js` | **A** | Sprites bien isolés, `drawSaleteDither` utilise désormais un masque off-screen (auto-synchronisé avec les sprites), code lisible et autonome. |
 | `js/envs.js` | **A** | `drawActiveEnv` découpé en 3 fonctions + dispatcher (2026-04-30). `tc()` robuste, magic numbers nommés, couleur nuit unifiée via `shadeN`. |
-| `js/ui.js` | **C+** | 5192 lignes, 5 manières différentes d'ouvrir une modale (`openModal`, accès direct `mbox.innerHTML`, `etats-overlay` créé en JS, `tablet-overlay` HTML, agenda `shop-open`), code dupliqué massif sur les en-têtes de modales, gestion scroll-lock incohérente. |
+| `js/ui-*.js` (8 modules) | **B** | `ui.js` splitté en 8 modules (2026-04-30). `ouvrirSnack()` et `ouvrirAgenda()` migrés vers `openModal()`/`openModalRaw()` — lockScroll unifié. Reste : overlays séparés intentionnels documentés, `modalLocked` reset partiel, `go()` trois sources de vérité (Phase 2). |
 | `index.html` | **B** | Ordre des scripts correct, debug-panel inline volumineux (~85 l), p5.js CDN sans `integrity`, masquage features RDV/Cycle dans script séparé en bas. |
 | `sw.js` | **C+** | ✅ `render-sprites.js` ajouté dans `ASSETS` (fix session 2026-04-30). Reste : stratégie cache-first sans `response.ok` (cache des 404), pas de gestion des updates côté client. |
 
@@ -389,37 +391,36 @@
 
 ### 6.3 Problèmes
 
-#### 🔴 CRITIQUE — Cinq mécanismes différents pour ouvrir une "modale"
-- Lignes : 
-  1. `openModal()` ([L395]) — la voie centralisée.
-  2. Manipulation directe `modal.style.display = 'flex'` + `mbox.innerHTML = ...` ([L351, L425, L488, L625, L1108, L1311, L1364, L1502, L1754, L1792, L1816, L2211, L3527, L4029] — au moins 14 occurrences).
-  3. `etats-overlay` créé en JS ([L3893-L3967]) avec son propre z-index 1000 et son propre handler de fermeture.
-  4. `tablet-overlay` HTML statique avec `.open` class ([L3434-L3482]).
-  5. `menu-overlay` HTML statique avec `.open` class ([L281-L298]).
-- Risque : Le scroll-lock, le focus management, la fermeture par Escape, la gestion des modales empilées sont tous incohérents. Le bug "modale non-bloquante" vient en partie de cette fragmentation. Cf. section spéciale plus bas.
-- Suggestion : Unifier sous `openModal()` (cas 1 et 2). Pour `etats-overlay`, soit l'aligner sur `.modal` (z-index 300, mêmes classes), soit documenter qu'il vit volontairement à part. Idem pour `tablet-overlay` et `menu-overlay`.
+#### ✅ RÉSOLU — Cinq mécanismes différents pour ouvrir une "modale" (2026-04-30)
+- Architecture : `openModal()` / `openModalRaw()` dans `ui-core.js` = voie centralisée (lockScroll + ✕ auto + inert).
+- `ouvrirSnack()` (`ui-settings.js`) : 4 ouvertures directes migrées vers `openModal()`. Variables locales `modal` / `mbox` supprimées de la fonction.
+- `ouvrirAgenda()` (`ui-agenda.js`) : migré vers `openModalRaw()` (son propre ✕ via `fermerAgenda()`). Les classes CSS `shop-open` / `agenda-open` appliquées juste après, ce qui est correct (openModalRaw fait son reflow interne avant).
+- Overlays séparés intentionnels et documentés :
+  - `#etats-overlay` (z-index 1000) — overlay états Gotchi, géré via `openEtatsOverlay()` dans `ui-settings.js`.
+  - `#tablet-overlay` (z-index 400) — tablette rétro, gérée via `openTablet()`.
+  - `#menu-overlay` (z-index 200) — navigation latérale, gérée via `.open` class.
+  - Ces trois overlays vivent volontairement hors du système modal (z-index distincts, comportements propres).
 
-#### 🟠 IMPORTANT — `modalLocked` global jamais documenté
-- Lignes : [L378, L381]
-- Description : Un boolean global qui empêche `clModal()` de fermer. Mis à `true` "pendant le soutien" d'après le commentaire mais aucune trace claire de son set/reset dans le fichier (à vérifier au-delà de mes lectures partielles).
-- Risque : Si un crash empêche le reset, la modale reste bloquée définitivement.
-- Suggestion : Préférer un attribut `data-locked` sur la modale ou un flag local au flow soutien.
+#### 🟠 IMPORTANT — `modalLocked` : reset uniquement via bouton ✕ du soutien
+- Fichiers : `ui-core.js` [L225], `ui-ai.js` [L617, L622]
+- Description : `modalLocked = false` défini dans `ui-core.js`. Set à `true` dans `_genSoutienCore()`. Reset uniquement via le bouton ✕ standardisé (`modalLocked=false;clModal()`). Il existe aussi un patch temporaire sur `window.clModal` dans `_showSoutienConfirm()` qui restaure la fonction originale après confirmation — logique correcte mais fragile.
+- Risque résiduel : Si la session soutien crashe avant que l'utilisatrice ferme la modale, `modalLocked` reste `true` jusqu'au rechargement. Pas de reset automatique côté `bootstrap()`.
+- Suggestion (Phase 2) : Ajouter `modalLocked = false` dans `bootstrap()` ou `clModal()` en guard de dernier recours.
 
-#### 🟠 IMPORTANT — Boutons `✕` répliqués inline
-- Lignes : [L1113, L1369, L4001]
-- Description : Cf. quick win #3.
-- Risque : Style divergent au fil du temps.
+#### ✅ RÉSOLU — Boutons `✕` répliqués inline (2026-04-30)
+- `window._modalCloseBtn()` exposé dans `ui-core.js` et utilisé dans `ui-shop.js`, `ui-agenda.js`, `ui-ai.js`.
+- Cas résiduel documenté : `ui-shop.js` [L84] — croix rouge overlay "mode suppression objet IA" sur les cartes inventaire. Ce n'est pas un bouton de fermeture de modale — comportement distinct (`supprimerObjetIA()`), style intentionnellement différent (rouge, 28px, pleine carte). Conservé tel quel.
 
-#### 🟠 IMPORTANT — `mbox.innerHTML = ...` injecte sans toujours passer par `escape()`
-- Lignes : passim — par exemple [L466] utilise `escape(D.g.name)` ✅, mais [L630] interpole `${bday.message || ...}` sans escape (mais issue de USER_CONFIG → assumé safe).
-- Risque : Si `USER_CONFIG` est manipulable (importé via `data/user_config.json`), un message contenant `<script>` pourrait s'exécuter.
-- Suggestion : Soit escape systématique, soit documenter que `USER_CONFIG` est trusted.
+#### ✅ RÉSOLU — `mbox.innerHTML` et escape (2026-04-30)
+- Règle documentée : `escape()` (de `ui-core.js`) appliqué sur toutes les strings issues de `D.g` (nom du Gotchi, etc.).
+- `USER_CONFIG` (`data/user_config.json`) est trusted — pas d'escape systématique sur ses valeurs. Documenté dans le skill `habitgotchi-dev`.
+- `snackButtons` dans `ouvrirSnack()` : emojis internes issus de `config.js` (pool SNACK_POOL) — trusted, commentaire ajouté en code.
 
-#### 🟠 IMPORTANT — `go()` change `D.g.activeEnv` mais garde un environnement logique distinct
-- Lignes : [L218-L246]
-- Description : Quand on quitte l'onglet Gotchi pour Journal, le code force `chambre`. Quand on revient, il calcule selon `hr()`. Mais `_invEnvForced` est un flag séparé pour la preview inventaire. Trois sources de vérité (heure, onglet, preview).
-- Risque : Bugs de cohérence (déjà arrivé : "à 21h sur l'inventaire montagne, ça repassait chambre").
-- Suggestion : Centraliser dans `getEffectiveEnv(state)`.
+#### 🟠 IMPORTANT — `go()` : trois sources de vérité pour `activeEnv`
+- Fichier : `ui-nav.js` [L95-L122]
+- Description : La logique est documentée et commentée (RÔLE/POURQUOI sur chaque branche), mais les trois sources coexistent : `hr()` (retour onglet Gotchi), forçage par onglet (`journal` → chambre, etc.), `_invEnvForced` (preview inventaire). `getEffectiveEnv()` n'existe pas encore.
+- Risque résiduel : Incohérence possible si un nouvel onglet est ajouté sans mettre à jour `go()`. Le bug "21h montagne → chambre" n'a pas été reproduit depuis la session de commentaires.
+- Suggestion (Phase 2) : Extraire `getEffectiveEnv(tab, hr, invForced)` → source de vérité unique consultée par `go()` et tout futur appelant.
 
 #### 🟡 MINEUR — `tabletLastSeenDate` non préfixé `window.` (déjà identifié en v3.02, **non résolu**)
 - Lignes : [L3432]

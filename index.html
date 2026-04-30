@@ -504,6 +504,15 @@ Ton bilan de la semaine apparaîtra ici...
 <!-- Toast non-bloquant (SYSTEM 5: UI/Design) -->
 <div id="toast"></div>
 
+<!-- Bandeau mise à jour PWA (SYSTEM 7: Ingénierie) -->
+<!-- RÔLE : Informe l'utilisatrice qu'une nouvelle version est disponible -->
+<!-- POURQUOI : skipWaiting active le nouveau SW, mais les onglets déjà ouverts
+               continuent de tourner avec l'ancienne version — sans ce bandeau,
+               rien ne l'indique. Un clic recharge la page pour appliquer la MAJ. -->
+<div id="update-banner" onclick="location.reload()">
+  ✦ Nouvelle version disponible — Appuie pour mettre à jour
+</div>
+
 <!-- Tablette rétro (SYSTEM 3: IA & Cognition) -->
 <!-- POURQUOI .app-overlay : garantit position:fixed;inset:0;pointer-events:auto sur cet overlay -->
 <div id="tablet-overlay" class="app-overlay" onclick="closeTablet(event)">
@@ -560,6 +569,16 @@ Ton bilan de la semaine apparaîtra ici...
     navigator.serviceWorker.register('./sw.js')
       .then(() => console.log('✿ SW enregistré'))
       .catch(e => console.log('SW erreur:', e));
+
+    // RÔLE : Affiche le bandeau de mise à jour quand un nouveau SW prend le contrôle
+    // POURQUOI : skipWaiting() dans sw.js active le nouveau worker immédiatement,
+    //            mais les onglets déjà ouverts ne rechargent pas automatiquement.
+    //            controllerchange se déclenche précisément quand le nouveau SW
+    //            devient actif — c'est le bon moment pour alerter l'utilisatrice.
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      const banner = document.getElementById('update-banner');
+      if (banner) banner.style.display = 'block';
+    });
   }
 </script>
 

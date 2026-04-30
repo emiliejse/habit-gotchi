@@ -21,6 +21,8 @@
 > **Session bugs modales 2026-04-30** : vérification des 5 bugs signalés — état réel constaté et traité. (1) `ouvrirSnack()` dans `ui-settings.js` : 4 ouvertures directes `modal.style.display + mbox.innerHTML` migrées vers `openModal()`. (2) `ouvrirAgenda()` dans `ui-agenda.js` : migré vers `openModalRaw()`, classes CSS `shop-open`/`agenda-open` conservées et appliquées après. (3) `modalLocked` documenté comme partiellement résolu (reset uniquement via ✕ soutien — risque résiduel crash documenté). (4) Escape sur `USER_CONFIG` documenté comme trusted. (5) `go()` : logique commentée, `getEffectiveEnv()` reporté Phase 2.
 >
 > **Session bugs index.html 2026-04-30** : 4 corrections dans `index.html` et fichiers associés — (1) Debug panel inline (~85 l) extrait dans `js/debug.js`, remplacé par `<script src="js/debug.js">` dans `<head>`, ajouté dans `ASSETS` de `sw.js` ; (2) SRI hash sha384 ajouté sur p5.js CDN + `crossorigin="anonymous"` (hash vérifié par curl/openssl) ; (3) masquage `#btn-menu-agenda` déplacé de `DOMContentLoaded` inline vers `initUI()` dans `ui-settings.js` — guard `typeof` ajouté ; (4) `class="modal"` retiré de `#modal` dans `index.html`, sélecteur `.modal` → `#modal` dans `style.css`.
+>
+> **Session bugs sw.js 2026-04-30** : 3 corrections dans `sw.js` et `index.html` — (1) Guard `response.ok` ajouté avant `cache.put()` dans le handler `fetch` ([L77]) : les réponses 404/500/redirections ne sont plus mises en cache ; (2) Bandeau `#update-banner` ajouté dans `index.html` (élément DOM + CSS déjà en place, z-index 999) + listener `controllerchange` ajouté dans le bloc d'enregistrement SW ([index.html L558-L574]) — l'utilisatrice voit un bandeau cliquable dès qu'un nouveau SW prend le contrôle ; (3) `.catch(err => console.warn('SW cache error', err))` ajouté sur `cache.put()` — erreurs d'écriture cache désormais visibles dans la console. Note : `theme_color` dans `manifest.json` déjà aligné sur `index.html` L21 (`#ddd6e8`) — aucune correction nécessaire. Note : `manifest.json` contient un JSON invalide (virgule manquante après `start_url`) — signalé, hors scope de cette session.
 
 ---
 
@@ -37,7 +39,7 @@
 | `js/envs.js` | **A** | `drawActiveEnv` découpé en 3 fonctions + dispatcher (2026-04-30). `tc()` robuste, magic numbers nommés, couleur nuit unifiée via `shadeN`. |
 | `js/ui-*.js` (8 modules) | **B+** | `ui.js` splitté en 8 modules (2026-04-30). `ouvrirSnack()` et `ouvrirAgenda()` migrés vers `openModal()`/`openModalRaw()` — lockScroll unifié. `_getEffectiveEnv()` extrait dans `ui-nav.js` — source de vérité unique pour `activeEnv` (2026-04-30). `modalLocked` : guard bootstrap ajouté (2026-04-30). Reste : overlays séparés intentionnels documentés. |
 | `index.html` | **A-** | Debug panel extrait dans `js/debug.js` (2026-04-30). SRI sha384 ajouté sur p5.js CDN (2026-04-30). Masquage agenda déplacé dans `initUI()` (2026-04-30). `class="modal"` retiré — `#modal` CSS unifié. Reste : pas de CSP (Phase 3). |
-| `sw.js` | **C+** | ✅ `render-sprites.js` ajouté dans `ASSETS` (fix session 2026-04-30). Reste : stratégie cache-first sans `response.ok` (cache des 404), pas de gestion des updates côté client. |
+| `sw.js` | **B** | ✅ `render-sprites.js` ajouté dans `ASSETS` (2026-04-30). ✅ Guard `response.ok` ajouté (2026-04-30). ✅ Bandeau mise à jour + `controllerchange` côté client (2026-04-30). ✅ Logging erreurs `cache.put` (2026-04-30). Reste : pas de stratégie network-first pour les JSON dynamiques. |
 
 ### Top 3 problèmes critiques
 
@@ -525,22 +527,24 @@
 - Lignes : [L25]
 - Description : Ajouté lors du split ui.js (session 2026-04-30). Présent dans `ASSETS`.
 
-#### 🟠 IMPORTANT — Cache-first sans vérifier `response.ok`
-- Lignes : [L62-L66]
-- Description : `fetch(e.request).then(response => { ...cache.put(e.request, clone)... })` met en cache même les 404, 500, redirections. Si un asset échoue la première fois, l'erreur reste en cache jusqu'au prochain `CACHE_VERSION` bump.
-- Risque : PWA qui sert un HTML 404 indéfiniment.
-- Suggestion : `if (response.ok) cache.put(...)`.
+#### ✅ RÉSOLU — Cache-first sans vérifier `response.ok`
+- Résolu le 2026-04-30.
+- Guard `if (!response.ok) return response;` ajouté avant `cache.put()` dans le handler `fetch` ([sw.js L77]).
+- Les réponses 404, 500 et redirections ne sont plus jamais mises en cache.
 
-#### 🟠 IMPORTANT — Pas de message de mise à jour côté client
-- Lignes : tout le fichier
-- Description : Quand un nouveau SW est installé, l'utilisatrice ne sait pas qu'elle doit recharger. `skipWaiting` force l'activation mais les clients déjà ouverts ne sont pas notifiés.
-- Suggestion : Écouter `navigator.serviceWorker.controllerchange` côté client + afficher un toast "Nouvelle version disponible".
+#### ✅ RÉSOLU — Pas de message de mise à jour côté client
+- Résolu le 2026-04-30.
+- `#update-banner` ajouté dans `index.html` (après `#toast`) — élément cliquable (`onclick="location.reload()"`), masqué par défaut via CSS déjà en place.
+- Listener `controllerchange` ajouté dans le bloc d'enregistrement SW (`index.html`) : `banner.style.display = 'block'` déclenché quand le nouveau SW prend le contrôle.
+- Commentaires RÔLE/POURQUOI ajoutés sur les deux blocs.
 
 #### 🟡 MINEUR — `manifest.json` a 502 octets non audité
-- Description : Pas dans le scope, mais `theme_color` doit s'aligner sur `index.html` [L103].
+- `theme_color: "#ddd6e8"` déjà aligné sur `index.html` [L21] — aucune correction nécessaire.
+- Note : `manifest.json` contient un JSON invalide (virgule manquante après `start_url` [L5]) — à corriger dans une prochaine session.
 
-#### 🔵 STYLE — Pas de logging des erreurs cache.put
-- Suggestion : `.catch(e => console.warn('SW cache error', e))`.
+#### ✅ RÉSOLU — Pas de logging des erreurs cache.put
+- Résolu le 2026-04-30.
+- `.catch(err => console.warn('SW cache error', err))` ajouté sur la chaîne `cache.put()` ([sw.js L80]).
 
 ### 8.4 Code mort / redondances
 - Aucun.
@@ -617,7 +621,7 @@ Trois facteurs cumulés causaient le bug :
 | N° | Titre | Fichiers | Effort | Bénéfice |
 |---|---|---|---|---|
 | 1 | ✅ Ajouter `render-sprites.js` à `ASSETS` du SW | `sw.js` [L25] | S | Fix critique offline |
-| 2 | Vérifier `response.ok` avant `cache.put` | `sw.js` [L62-L66] | S | Évite les 404 cachés |
+| 2 | ✅ Vérifier `response.ok` avant `cache.put` | `sw.js` [L77] — FAIT 2026-04-30 | S | Évite les 404 cachés |
 | 3 | ✅ Fix modale non-bloquante — scroll iOS bloqué | `css/style.css`, `index.html`, `js/ui-core.js`, `js/ui-settings.js` | M | Fix bug critique UX |
 | 4 | Bumper sync `APP_VERSION` à `'hg-v4.5'` si convention | `js/app.js` [L54] + `sw.js` [L7] | S | Cohérence |
 | 5 | ✅ Supprimer signature legacy de `addEvent` | `js/app.js` [L648-L659] | S | API unifiée — FAIT 2026-04-30 |
@@ -634,7 +638,7 @@ Trois facteurs cumulés causaient le bug :
 | 11 | Supprimer code mort `_bounceT`, `_lastPetTime`, `walkStep` | `js/render.js` | S | Lisibilité |
 | 12 | ✅ Extraire le debug-panel inline dans `js/debug.js` | `index.html` — FAIT 2026-04-30 | S | Allègement HTML — ajouté au cache SW |
 | 13 | ✅ Ajouter SRI sur p5.js CDN | `index.html` — FAIT 2026-04-30 | S | Sécurité supply chain — hash sha384 vérifié |
-| 14 | Notifier l'utilisatrice quand un nouveau SW est dispo | `sw.js` + `index.html` | M | UX update |
+| 14 | ✅ Notifier l'utilisatrice quand un nouveau SW est dispo | `sw.js` + `index.html` — FAIT 2026-04-30 | M | UX update |
 
 ### Phase 3 — Amélioration structurelle (découpage, centralisation, tests)
 

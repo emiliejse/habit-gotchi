@@ -69,9 +69,16 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     caches.match(e.request).then(cached => {
       return cached || fetch(e.request).then(response => {
+        // RÔLE : Ne mettre en cache que les réponses valides (200 OK)
+        // POURQUOI : Sans ce guard, une erreur 404/500 serait mise en cache
+        //            et servirait indéfiniment jusqu'au prochain CACHE_VERSION bump.
+        if (!response.ok) return response;
+
         // Met en cache les nouvelles ressources rencontrées
         const clone = response.clone();
-        caches.open(CACHE_VERSION).then(cache => cache.put(e.request, clone));
+        caches.open(CACHE_VERSION)
+          .then(cache => cache.put(e.request, clone))
+          .catch(err => console.warn('SW cache error', err)); // STYLE : log si écriture cache échoue
         return response;
       });
     })

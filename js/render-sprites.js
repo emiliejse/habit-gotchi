@@ -1059,8 +1059,9 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     // → on clamp dur pour garantir que le bord droit du reflet ne sort jamais de l'iris.
     const rxMax = PX * 2 - 3 - 3; // 10 - 3 - 3 = 4px (marge droite portée à 3px)
     const rx = Math.min((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * rxMax, rxMax);
-    p.rect(cxB - PX * 3 + 1 + rx, cy + PX * 2 + 1, 3, 3); // œil gauche
-    p.rect(cxB + PX * 1 + 1 + rx, cy + PX * 2 + 1, 3, 3); // œil droit
+    // Iris teen DSL : œil gauche à x:-3 (cx - 3*PX), œil droit à x:1 (cx + 1*PX)
+    p.rect(cx - PX * 3 + 1 + rx, cy + PX * 2 + 1, 3, 3); // œil gauche
+    p.rect(cx + PX * 1 + 1 + rx, cy + PX * 2 + 1, 3, 3); // œil droit
   }
 
   // Épuisement dither — hors DSL (drawDither a sa propre logique de damier).
@@ -1525,8 +1526,9 @@ function drawAdult(p, cx, cy, sl, en, ha) {
     // droit quelle que soit la valeur flottante du sinus.
     const rxMax = PX * 3 - 3 - 4; // 15 - 3 - 4 = 8px (marge droite portée à 4px)
     const rx = Math.min((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * rxMax, rxMax);
-    p.rect(cxB - PX * 3 + 1 + rx, cy + PX * 3 + 1, 3, 3); // œil gauche
-    p.rect(cxB + PX * 1 + 1 + rx, cy + PX * 3 + 1, 3, 3); // œil droit
+    // Iris adult DSL : œil gauche à x:-3 (cx - 3*PX), œil droit à x:1 (cx + 1*PX)
+    p.rect(cx - PX * 3 + 1 + rx, cy + PX * 3 + 1, 3, 3); // œil gauche
+    p.rect(cx + PX * 1 + 1 + rx, cy + PX * 3 + 1, 3, 3); // œil droit
   }
 
   // Épuisement dither — hors DSL.

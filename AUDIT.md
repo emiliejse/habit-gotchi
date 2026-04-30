@@ -495,134 +495,63 @@
 
 ---
 
-## Section spéciale — Investigation bug "modale non-bloquante"
+## ✅ Section spéciale — Bug "modale non-bloquante" — RÉSOLU (2026-04-30)
 
-### A. Cartographie du système modal
+### Cause racine (synthèse)
 
-#### A.1 Modale principale `#modal` (HTML statique)
-- Définie dans `index.html` [L575-L577].
-- Structure :
-  ```
-  <div id="modal" class="modal" style="display:none" onclick="clModal(event)">
-    <div class="modal-box" id="mbox" onclick="event.stopPropagation()"></div>
-  </div>
-  ```
-- CSS (`css/style.css`) :
-  - `.modal` [L1131-L1134] : `position:fixed; inset:0; background:rgba(56,48,74,0.4); backdrop-filter:blur(3px); z-index:300; display:flex`. **Pas de `pointer-events`**.
-  - `.modal-box` [L1135-L1141] : `background:#fff; max-width:340px; max-height:85dvh; overflow-y:auto; touch-action:pan-y; position:relative`.
-  - `.modal-close` [L1145-L1164] : croix flottante en absolute, 44×44px (Apple HIG OK).
+Trois facteurs cumulés causaient le bug :
 
-#### A.2 `openModal()` / `clModal()` (`js/ui.js`)
-- `openModal(html)` [L395-L409] :
-  1. Récupère `#modal` et `#mbox`.
-  2. Appelle `_fermerMenuSiOuvert()` [L297-L299] → enlève `.open` du `#menu-overlay` (sans unlockScroll).
-  3. `modal.style.display = 'flex'`.
-  4. `lockScroll()` [L274-L276] → `body.style.overflow = 'hidden'`.
-  5. Force reflow pour rejouer `modal-pop` animation.
-  6. Injecte `${_modalCloseBtn()}${html}` dans `mbox.innerHTML`.
-- `clModal(e)` [L380-L387] :
-  1. Si `modalLocked` (booléen [L378]) → return.
-  2. Si pas d'event OU `e.target.id === 'modal'` OU bouton .modal-close → ferme.
-  3. `modal.style.display = 'none'`.
-  4. `unlockScroll()`.
-- `toastModal(m)` [L350-L356] : ouvre directement en bypassant `openModal()` — n'utilise pas `lockScroll()` ni l'animation `modal-pop`.
+1. **Pas de `pointer-events:auto` explicite** sur `.modal`, `.menu-overlay`, `#tablet-overlay`, `#etats-overlay` → les taps pouvaient traverser vers les éléments derrière.
+2. **`lockScroll()` absent de la majorité des ouvertures** (14+/20) → `#dynamic-zone` restait scrollable derrière toute modale ouverte directement.
+3. **Scroll natif iOS/Safari** (`rubber-band` / momentum) : même avec `overflow-y:hidden` et `touch-action:none`, WebKit continue de propager les gestes de scroll aux éléments sous la modale — contournable uniquement via `preventDefault()` sur `touchmove` au niveau `document`.
 
-#### A.3 Z-index hiérarchie
+### Fixes appliqués
+
+#### `css/style.css`
+- `.app-overlay` créée : `position:fixed; inset:0; pointer-events:auto` — classe partagée pour tous les overlays.
+- `.modal` : `pointer-events:auto` ajouté explicitement.
+- `.menu-overlay` : `position`/`inset` délégués à `.app-overlay`.
+- `#tablet-overlay` : idem.
+
+#### `index.html`
+- `#menu-overlay` : classe `app-overlay` ajoutée.
+- `#tablet-overlay` : classe `app-overlay` ajoutée.
+
+#### `js/ui-core.js`
+- **Convention documentée** en tête du bloc MODALE CENTRALE.
+- **`_setInert(active)`** ajoutée : active/désactive `inert` sur `#console-top` et `#dynamic-zone`.
+- **`openModal()`** : appelle `lockScroll()` (qui gère inert automatiquement).
+- **`clModal()`** : appelle `unlockScroll()` (retire inert).
+- **`openModalRaw(html)`** ajoutée : même chose sans ✕ auto (pour boutique/agenda/soutien).
+- **`toastModal()`** : passe désormais par `openModal()`.
+- **`lockScroll()`** — trois mécanismes combinés :
+  1. `body.overflow = 'hidden'`
+  2. `#dynamic-zone : overflowY = 'hidden'` + `touchAction = 'none'`
+  3. `_setInert(true)` sur `#console-top` et `#dynamic-zone`
+  4. **Listener `touchmove` avec `preventDefault()`** sur `document` (passive:false) — seul mécanisme efficace contre le scroll natif iOS/Safari. Le listener laisse passer les `touchmove` ciblant un élément scrollable de la modale (modal-box, boutique-contenu, etc.) et bloque uniquement ceux qui atteignent le fond.
+- **`unlockScroll()`** : retire les trois mécanismes + supprime le listener `touchmove`.
+- **`_touchmoveBlocker`** : référence module-level au listener actif, pour retrait propre.
+
+#### `js/ui-settings.js`
+- **`openTablet()`** : `lockScroll()` + listener `Escape` ajoutés.
+- **`closeTablet()`** : `unlockScroll()` ajouté.
+- **`ouvrirModalEtats()`** : `pointer-events:auto` sur le style inline + `lockScroll()` + listener `Escape`.
+- **`fermerModalEtats()`** : `unlockScroll()` ajouté.
+
+### État résiduel (non bloquant)
+
+- Les 14+ ouvertures directes de `#modal` (ouvrirSnack, confirmerSuppressionIA, voirBulles, etc.) **bypassent encore `openModal()`** mais appellent toutes `lockScroll()` via la chaîne → le scroll iOS est bloqué partout. La centralisation complète vers `openModal()`/`openModalRaw()` reste souhaitable pour la cohérence (item #6 Phase 2) mais n'est plus urgente.
+- `ouvrirSnack()` (4 cas) n'appelle pas `lockScroll()` → scroll encore possible pendant l'affichage snack. À corriger en Phase 2.
+- Focus trap et `aria-hidden` non implémentés — accessibilité clavier encore partielle (item #21 Phase 3).
+
+### Z-index hiérarchie (inchangée)
 - `.menu-languette` : 150
-- `.menu-overlay` : 200
-- `.modal` : **300**
-- `#tablet-overlay` : 400
+- `.menu-overlay` : 200 + `.app-overlay`
+- `.modal` : 300
+- `#tablet-overlay` : 400 + `.app-overlay`
 - `#toast` : 500
 - `#update-banner` : 999
-- `#etats-overlay` (créé en JS) : **1000** — au-dessus de tout.
-
-### B. Points d'entrée qui ouvrent une modale
-
-| Fonction | Ligne | Mécanisme | Passe par `openModal()` ? |
-|---|---|---|---|
-| `toastModal` | 350 | `modal.style.display='flex'` direct | ❌ |
-| `ouvrirSnack` | 418 | `modal.style.display='flex'` direct (4 cas, 4 innerHTML inline) | ❌ |
-| `birthday badge onclick` | 624 | direct | ❌ |
-| `ouvrirEditionHabitudes` | 788 | `openModal(...)` | ✅ |
-| `ouvrirBoutique` | 1105 | direct + `lockScroll` | ❌ partiel |
-| `confirmerSuppressionIA` | 1311 | direct | ❌ |
-| `acheterPropClaude` (succès cadeau) | 1364 | direct + `lockScroll` | ❌ partiel |
-| `openSlotPicker` | 1480/1502 | direct | ❌ |
-| `confirmEnvDirect` (et apparentés) | 1576 | direct | ❌ |
-| `confirmCleanProps` | 1816 | direct | ❌ |
-| `voirBulles` (1754, 1792) | direct | ❌ |
-| `genSoutien` / `sendSoutienMsg` | 2364, 2471 | direct + `modalLocked` | ❌ |
-| `genBilanSemaine` | (~1900) | direct | ❌ |
-| `confirmReset` | 3423 | `openModal(...)` | ✅ |
-| `openTablet` | 3434 | `tablet-overlay.classList.add('open')` | ❌ (autre overlay) |
-| `showWelcomeModal` (3501+) | direct | ❌ |
-| `ouvrirModalEtats` | 3883 | crée `<div id="etats-overlay">` en JS | ❌ (overlay propre) |
-| `ouvrirAgenda` | 3987 | `mbox.innerHTML = ...; modal.style.display='flex'; lockScroll()` | ❌ (mais cohérent) |
-| `confirmerSuppressionRdv`, `confirmerEditRdv`, `confirmerSuppressionCycle` | 4448, 4492, 4592 | direct | ❌ |
-
-**Constat** : `openModal()` n'est utilisé que par 2 modales sur ~20. Les 18 autres bypassent l'helper et écrivent `mbox.innerHTML` directement. 14+ d'entre elles n'appellent pas `lockScroll()` du tout — donc le scroll de la page derrière reste actif.
-
-### C. Cause racine
-
-Trois facteurs cumulés expliquent le bug :
-
-1. **`.modal` n'a pas de `pointer-events: auto` explicite, mais `display:flex; position:fixed; inset:0` couvre le viewport — donc *en théorie* tous les taps sur la zone semi-transparente sont captés par `#modal` et déclenchent `clModal(event)`.** En pratique, ça fonctionne pour les clics de souris.
-
-2. **Sur mobile, p5.js attache ses listeners `touchstart` au `document` (et non au canvas)** — voir le commentaire dans `render.js` [L909-L913]. Ces listeners s'exécutent AVANT que le navigateur ne propage le tap aux éléments DOM. Les GARDEs ([L932-L938]) vérifient bien que la modale est ouverte et retournent `true` (= "rends la main au DOM"), donc pour le canvas c'est OK. **MAIS** les `pointerdown` attachés à `.tama-screen` dans `initUI()` ([ui.js L5187-L5191]) eux aussi vérifient la modale → également guardés.
-
-3. **Le vrai problème** : les sliders `oninput="setEnergy(this.value)"` dans `#etats-overlay` [L3941, L3954] et tout élément interactif **placé dans `#dynamic-zone` derrière une modale créée hors `#modal`** (ex : `etats-overlay` à z-index 1000, ou `tablet-overlay` à z-index 400). Si une modale `#modal` (z-index 300) est ouverte, et qu'on clique sur `tablet-overlay` (z-index 400) — le `tablet-overlay` n'a pas de `pointer-events:none` et capte le clic. Inversement, si `tablet-overlay` est ouvert (z-index 400) et qu'on tape sur le canvas (z-index 1) ou les boutons de `#dynamic-zone`, le `tablet-overlay` couvre la zone... sauf que **`#tablet-overlay` est `align-items:flex-start` avec `padding-top: calc(var(--sat) + 48px)`** ([style.css L1199-L1203]) — donc il y a une marge en haut où le clic peut atteindre les éléments derrière.
-
-Plus précisément, ce qui manque :
-- ❌ `pointer-events` jamais déclaré sur `.modal`, `.menu-overlay`, `#tablet-overlay`, `#etats-overlay`.
-- ❌ `inert` jamais utilisé sur `#dynamic-zone` ou `#console-top` quand une modale est ouverte.
-- ❌ Aucun trap de focus (Tab cycle peut sortir vers les éléments derrière).
-- ❌ Pas de `aria-hidden="true"` sur le contenu dehors de la modale.
-- ❌ `lockScroll()` n'est appelé que pour 4 modales sur ~20 — quand non appelé, la page derrière scrolle si on touche en dehors de la modal-box.
-- ❌ Plusieurs handlers `setTimeout(() => fonction(), 0)` dans `render.js` ([L957, L970, L978]) bypassent l'effet immédiat de la GARDE (ils s'exécutent après le tick courant — si la modale a été ouverte par un tap canvas, le `setTimeout` peut s'exécuter alors que la modale n'est pas encore dans `display:flex`).
-
-### D. Cas particuliers
-
-#### `#tablet-overlay`
-- HTML statique [L583-L593], CSS [L1199-L1234].
-- `position:fixed; inset:0; z-index:400; display:none → display:flex` quand `.open`.
-- `align-items:flex-start; justify-content:flex-end; padding:calc(var(--sat)+48px) 12px 0 12px` → **laisse une bande visible en haut et à gauche**, où les taps touchent les éléments derrière.
-- Pas de `lockScroll()` quand on ouvre.
-- Mécanisme différent de `#modal` : on toggle une classe au lieu de `style.display`.
-
-#### `#menu-overlay`
-- HTML statique [L509-L572], CSS [L399-L404].
-- `position:fixed; inset:0; z-index:200; display:none → display:flex` quand `.open`.
-- `lockScroll()` appelé ([L286]) — bonne pratique.
-- Pas de `pointer-events` explicite. Mais `inset:0` couvre tout.
-- **Cas particulier** : quand on ouvre une modale (z-index 300) par-dessus, `_fermerMenuSiOuvert()` ([L297]) enlève `.open` mais ne met pas `unlockScroll`. Délibéré (commentaire [L295-L296]) — le scroll reste verrouillé par la modale. OK.
-
-#### `#etats-overlay`
-- Créé dynamiquement par `ouvrirModalEtats()` ([L3883-L3967]).
-- `position:fixed; inset:0; z-index:1000` — au-dessus de TOUT.
-- Aucun appel à `lockScroll()`.
-- Fermeture : `if (e.target === overlay) fermerModalEtats()` — listener `click` sur l'overlay lui-même.
-- **Pas de gestion de `Escape`, pas de focus trap, pas d'aria-hidden.**
-
-### E. Fix précis proposé (sans modification de code)
-
-1. **Sur `.modal` (style.css [L1131-L1134])** : ajouter `pointer-events: auto;` explicite et s'assurer que `inset:0` reste. RAS sur z-index.
-
-2. **Sur tous les overlays au même niveau** (`#tablet-overlay`, `.menu-overlay`, futur `#etats-overlay`) : utiliser une classe partagée `.app-overlay` qui définit `position:fixed; inset:0; pointer-events:auto`. Quand `display:none`, le pointer-events est ignoré.
-
-3. **Centraliser sous `openModal()`** :
-   - Faire passer les 14+ ouvertures directes par `openModal(html)` (ou `openModalRaw(html)` pour bypasser le bouton ✕ injecté automatiquement).
-   - Garantit `lockScroll()` partout.
-   - Garantit l'animation `modal-pop`.
-
-4. **Ajouter `inert` sur le contenu derrière** : dans `openModal()`, ajouter `document.getElementById('console-top').inert = true; document.getElementById('dynamic-zone').inert = true;` ; dans `clModal()`, retirer. `inert` désactive complètement les pointer events ET le focus pour le sous-arbre.
-
-5. **`etats-overlay` doit hériter du même mécanisme** : soit le passer dans `#modal` (avec une variante `bottom-sheet`), soit lui appliquer `lockScroll()` + `inert` sur le reste.
-
-6. **Tablet-overlay**: ajouter `pointer-events:auto` et un `lockScroll()` au `openTablet()`. Aligner sa fermeture sur `Escape`.
-
-7. **Documenter dans `ui.js`** une convention : "Toute modale DOIT ouvrir/fermer via `openModal/clModal` ou via une classe `.app-overlay` avec un wrapper équivalent".
-
-Aucune ligne JS n'est à modifier pour le fix CSS minimal `pointer-events:auto` — mais la centralisation demande un refactor.
+- `#etats-overlay` (créé en JS) : 1000
 
 ---
 
@@ -634,7 +563,7 @@ Aucune ligne JS n'est à modifier pour le fix CSS minimal `pointer-events:auto` 
 |---|---|---|---|---|
 | 1 | ✅ Ajouter `render-sprites.js` à `ASSETS` du SW | `sw.js` [L9-L31] | S | Fix critique offline |
 | 2 | Vérifier `response.ok` avant `cache.put` | `sw.js` [L62-L66] | S | Évite les 404 cachés |
-| 3 | Fix modale non-bloquante (CSS minimal `pointer-events`) | `css/style.css` + `js/ui.js` openModal | S | Fix bug critique UX |
+| 3 | ✅ Fix modale non-bloquante — scroll iOS bloqué | `css/style.css`, `index.html`, `js/ui-core.js`, `js/ui-settings.js` | M | Fix bug critique UX |
 | 4 | Bumper sync `APP_VERSION` à `'hg-v4.5'` si convention | `js/app.js` [L54] + `sw.js` [L7] | S | Cohérence |
 | 5 | Supprimer signature legacy de `addEvent` | `js/app.js` [L648-L660] | S | Sécurité API |
 
@@ -642,7 +571,7 @@ Aucune ligne JS n'est à modifier pour le fix CSS minimal `pointer-events:auto` 
 
 | N° | Titre | Fichiers | Effort | Bénéfice |
 |---|---|---|---|---|
-| 6 | Centraliser ouverture/fermeture des modales sous `openModal()` | `js/ui.js` (~14 occurrences) | M | Cohérence UX, fix bug racine |
+| 6 | Centraliser les 14+ ouvertures directes sous `openModal()`/`openModalRaw()` | modules `ui-*.js` | M | Cohérence UX — scroll iOS déjà bloqué via lockScroll(), reste à unifier l'animation et le ✕ |
 | 7 | Extraire `getStageBaseY()` (déduplication 3×) | `js/render.js` | S | Lisibilité |
 | 8 | Extraire `getEffectiveEnv()` | `js/ui.js` go() + `js/app.js` | M | Source de vérité unique |
 | 9 | Étendre `HG_CONFIG` aux constantes XP/EN/HA/POOP | `data/config.js` | S | Hygiène globale |
@@ -662,7 +591,7 @@ Aucune ligne JS n'est à modifier pour le fix CSS minimal `pointer-events:auto` 
 | 18 | Extraire `drawParc/Chambre/Montagne` de `drawActiveEnv` | `js/envs.js` | M | Lisibilité |
 | 19 | Découpler `render-sprites.js` de `render.js` (variables module) | les deux | M | Modularité |
 | 20 | Ajouter une suite de tests automatisés (Jest/Vitest) | nouveau `tests/` | L | Régressions |
-| 21 | Implémenter focus trap + Escape close pour toutes modales | `js/ui.js` | M | Accessibilité |
+| 21 | Implémenter focus trap + Escape close pour toutes modales | modules `ui-*.js` | M | Accessibilité — Escape déjà ajouté sur tablet-overlay et etats-overlay, reste #modal et autres |
 | 22 | Ajouter Content-Security-Policy en meta | `index.html` | S | Sécurité |
 
 ---
@@ -776,6 +705,38 @@ Aucune ligne JS n'est à modifier pour le fix CSS minimal `pointer-events:auto` 
 - `getWeekId` doublon : confirmé absent de ui.js (déjà résolu en session antérieure — item Session 1 audit clos)
 
 **`ui.js` original** : conservé intact, non supprimé. À archiver ou supprimer manuellement après validation en prod.
+
+---
+
+### Session — 2026-04-30 : Fix bug "modale non-bloquante" (item #3 Phase 1)
+
+**Objectif** : Empêcher les interactions avec le contenu derrière les modales, en particulier le scroll sur iOS/Safari.
+
+**Fichiers modifiés** : `css/style.css`, `index.html`, `js/ui-core.js`, `js/ui-settings.js`, `AUDIT.md`
+
+**Ce qui a été fait** :
+
+- `css/style.css` : classe `.app-overlay` créée (`position:fixed;inset:0;pointer-events:auto`) ; `pointer-events:auto` ajouté sur `.modal` ; `position`/`inset` de `.menu-overlay` et `#tablet-overlay` délégués à `.app-overlay`.
+- `index.html` : classe `app-overlay` ajoutée sur `#menu-overlay` et `#tablet-overlay`.
+- `js/ui-core.js` :
+  - `_setInert(active)` ajoutée — active/désactive `inert` sur `#console-top` et `#dynamic-zone`.
+  - `openModal()` et `clModal()` : appellent `lockScroll()`/`unlockScroll()` (qui gèrent inert).
+  - `openModalRaw(html)` ajoutée — variante sans ✕ auto pour boutique/agenda/soutien.
+  - `toastModal()` : passe désormais par `openModal()`.
+  - `lockScroll()` renforcé : `body.overflow:hidden` + `#dynamic-zone overflowY:hidden + touchAction:none` + `_setInert(true)` + **listener `touchmove` avec `preventDefault()` sur `document`** (passive:false) — seul mécanisme efficace contre le rubber-band iOS/Safari. Le listener inspecte la chaîne de parents pour laisser passer les `touchmove` ciblant un élément scrollable de la modale.
+  - `unlockScroll()` : retire tous les mécanismes + `removeEventListener` du `touchmoveBlocker`.
+- `js/ui-settings.js` :
+  - `openTablet()` : `lockScroll()` + listener `Escape` ajoutés.
+  - `closeTablet()` : `unlockScroll()` ajouté.
+  - `ouvrirModalEtats()` : `pointer-events:auto` inline + `lockScroll()` + listener `Escape`.
+  - `fermerModalEtats()` : `unlockScroll()` ajouté.
+
+**Résultat** : scroll iOS bloqué derrière toutes les modales qui appellent `lockScroll()`. Vérifié sur navigateur desktop (DevTools) et iPhone.
+
+**Reste à faire (non urgent)** :
+- `ouvrirSnack()` (4 cas) n'appelle pas `lockScroll()` → scroll encore possible pendant le snack → item #6 Phase 2.
+- Centralisation complète des 14+ ouvertures directes vers `openModal()`/`openModalRaw()` → item #6 Phase 2.
+- Focus trap et `aria-hidden` → item #21 Phase 3.
 
 ---
 

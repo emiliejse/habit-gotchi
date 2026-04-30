@@ -338,8 +338,11 @@ function drawSaleteDither(p, stage, cx, cy, salete, sl) {
   // RÔLE : breathX doit correspondre exactement à celui utilisé dans le sprite.
   // POURQUOI : Le masque est mis en cache par breathX — s'il diverge,
   //            la boue sera décalée d'un pixel par rapport au corps.
+  // RÔLE : Calculer breathX avec floor pour une distribution équitable des positions.
+  // POURQUOI : Math.round(x*2-1) biaisait vers 0 — Math.floor(x*3)-1 donne {-1,0,1} équitable.
+  //            Doit correspondre exactement au breathX utilisé dans drawTeen/drawAdult.
   const breathX = (stage === 'teen' || stage === 'adult')
-    ? (sl ? 0 : Math.round(getBreath(p) * 2 - 1))
+    ? (sl ? 0 : Math.floor(getBreath(p) * 3) - 1) // ∈ {-1, 0, 1} — distribution équitable
     : 0;
 
   // Récupérer (ou construire) le masque de silhouette
@@ -893,7 +896,7 @@ const LAYERS_TEEN = [
   },
 
   // ── Bouche joie (grand sourire avec coins relevés) ───────────────
-  // POURQUOI : mouthBaseY = cy + PX*5 + Math.round(breath*2) — position Y dynamique.
+  // POURQUOI : mouthBaseY = cy + PX*5 + Math.floor(breath*3) — position Y dynamique ∈ {0,1,2}.
   //            yFn calcule la position absolue du rect à chaque frame.
   {
     id: 'bouche-joie',
@@ -1017,13 +1020,16 @@ function drawTeen(p, cx, cy, sl, en, ha) {
   //            déjà le décalage de base (-4). breathX est conservé séparément pour les
   //            reflets (p.rect) et le dither qui utilisent cxB comme référence absolue.
   const breath  = getBreath(p);
-  const breathX = sl ? 0 : Math.round(breath * 2 - 1);
+  // RÔLE : breathX — décalage horizontal du corps selon la phase de respiration.
+  // POURQUOI : Math.floor(x*3)-1 donne {-1,0,1} de façon équitable (Math.round biaisait vers 0).
+  const breathX = sl ? 0 : Math.floor(breath * 3) - 1; // ∈ {-1, 0, 1} — distribution équitable
   const cxB     = cx - PX * 4 - breathX; // référence absolue pour reflets + dither uniquement
 
   // RÔLE : mouthBaseY est la position Y de base de la bouche, animée par la respiration.
   // POURQUOI : Les calques bouche utilisent yFn qui lit pm.mouthBaseY — calculé une seule
   //            fois ici, pas à chaque rect pour éviter les divergences.
-  const mouthBaseY = cy + PX * 5 + Math.round(breath * 2);
+  //            Math.floor(x*3) donne {0,1,2} équitable au lieu du {0,1,2} biaisé de Math.round.
+  const mouthBaseY = cy + PX * 5 + Math.floor(breath * 3); // ∈ {0, 1, 2} — distribution équitable
 
   const params = {
     sl, en, ha,
@@ -1474,7 +1480,9 @@ function drawAdult(p, cx, cy, sl, en, ha) {
   // POURQUOI : Même logique que drawTeen — cxB sert uniquement aux p.rect() de reflets
   //            et à drawDither(), pas à renderSprite() qui reçoit cx directement.
   const breath  = getBreath(p);
-  const breathX = sl ? 0 : Math.round(breath * 2 - 1);
+  // RÔLE : breathX — décalage horizontal du corps selon la phase de respiration.
+  // POURQUOI : Math.floor(x*3)-1 donne {-1,0,1} de façon équitable (Math.round biaisait vers 0).
+  const breathX = sl ? 0 : Math.floor(breath * 3) - 1; // ∈ {-1, 0, 1} — distribution équitable
   const cxB     = cx - PX * 5 - breathX; // référence absolue pour reflets + dither uniquement
 
   // RÔLE : stepPhase pour l'animation de marche des pieds.
@@ -1482,7 +1490,9 @@ function drawAdult(p, cx, cy, sl, en, ha) {
   const isMoving  = !sl && (window._walk ? window._walk.pause === 0 : false);
   const stepPhase = isMoving ? Math.floor(walkX / PX) % 2 : -1;
 
-  const mouthBaseY = cy + PX * 6 + Math.round(breath * 2);
+  // RÔLE : mouthBaseY — position Y de base de la bouche, animée par la respiration.
+  // POURQUOI : Math.floor(x*3) donne {0,1,2} équitable au lieu du {0,1,2} biaisé de Math.round.
+  const mouthBaseY = cy + PX * 6 + Math.floor(breath * 3); // ∈ {0, 1, 2} — distribution équitable
 
   // RÔLE : Paramètres transmis aux fonctions `when` des calques DSL.
   // POURQUOI : `pose` a été retiré — les poses idle sont maintenant pilotées par

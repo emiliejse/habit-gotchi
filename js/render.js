@@ -842,6 +842,11 @@ function drawEnvSelector(p, g, nightRatio) {
 const p5s = (p) => {
   p.setup = function() {
     p.createCanvas(CS, CS).parent('cbox');
+    // RÔLE : Forcer la densité de pixel à 1 pour éviter le flou sur les écrans Retina.
+    // POURQUOI : Sans pixelDensity(1), p5 multiplie la résolution interne par le devicePixelRatio
+    //            (2x sur iPhone/Mac Retina) — les pixels du Gotchi sont alors interpolés → flou.
+    //            Combiné à noSmooth() et image-rendering:pixelated (CSS), garantit un rendu net.
+    p.pixelDensity(1);
     p.noSmooth();
     p.frameRate(12);
   };

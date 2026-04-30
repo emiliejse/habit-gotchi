@@ -245,7 +245,7 @@
 
 #### 💡 FEATURE — Exagérer l'effet de respiration pour rendre le Gotchi plus vivant
 - Fichiers : `render.js` (~L100), `render-sprites.js` (~L99, L116, L274, L414)
-- Contexte : `getBreath(p, speed = 0.025)` produit une oscillation 0→1 via `Math.sin(frameCount * speed)`. Dans les sprites, cette valeur est réduite à `breathX = Math.round(breath * 2 - 1)` soit ±1 pixel uniquement — effet très subtil.
+- Contexte : `getBreath(p, speed = 0.025)` produit une oscillation 0→1 via `Math.sin(frameCount * speed)`. Dans les sprites, cette valeur est réduite à `breathX = Math.floor(breath * 3) - 1` soit ±1 pixel uniquement — effet très subtil. (formule corrigée 2026-04-30 : `Math.round` biaisé → `Math.floor` équitable)
 - `_expr.breathPhase` est déclaré dans `window._expr` mais jamais utilisé — champ prévu initialement pour moduler la vitesse selon l'état émotionnel, non implémenté (dette résiduelle).
 - Pistes d'implémentation :
   - Augmenter l'amplitude : `breath * 4 - 2` → ±2px au lieu de ±1px (changement minimal, effet immédiat)
@@ -954,6 +954,49 @@ Trois facteurs cumulés causaient le bug :
 - `MSG` marqué résolu (fallback défensif documenté).
 - `bootstrap()` dette technique partiellement résorbée (timers déplacés) — reste un chantier Phase 3.
 - Couplage `app.js` ↔ `ui-*.js` documenté comme dette Phase 3 connue.
+
+---
+
+### Session — 2026-04-30 : Qualité code pixel art (dette technique #3 et #4)
+
+**Objectif** : Corriger les Math.round biaisés sur la géométrie des sprites et ajouter pixelDensity(1) pour les écrans Retina.
+
+**Fichiers modifiés** : `js/render-sprites.js`, `js/render.js`, `AUDIT.md`
+
+**Corrections appliquées** :
+
+**Fix #3 — Math.round → Math.floor sur la géométrie des sprites (✅)**
+
+5 occurrences remplacées dans `render-sprites.js` :
+
+| Ligne (avant) | Localisation | Changement |
+|---|---|---|
+| ~342 | `drawSaleteDither` — breathX boue | `Math.round(getBreath(p)*2-1)` → `Math.floor(getBreath(p)*3)-1` |
+| ~1020 | `drawTeen` — breathX | `Math.round(breath*2-1)` → `Math.floor(breath*3)-1` |
+| ~1026 | `drawTeen` — mouthBaseY | `Math.round(breath*2)` → `Math.floor(breath*3)` |
+| ~1483 | `drawAdult` — breathX | `Math.round(breath*2-1)` → `Math.floor(breath*3)-1` |
+| ~1491 | `drawAdult` — mouthBaseY | `Math.round(breath*2)` → `Math.floor(breath*3)` |
+
+Raison : `Math.round(x*2-1)` sur x∈[0,1] produit {-1,0,1} mais 0 est 2× plus probable que ±1 (biais central). `Math.floor(x*3)-1` donne une distribution réellement équitable.
+
+Cohérence garantie : `drawSaleteDither` utilise désormais exactement la même formule que `drawTeen`/`drawAdult` — le masque de boue reste aligné sur la silhouette.
+
+**Fix #4 — pixelDensity(1) sur le canvas principal (✅)**
+
+- `render.js` ~L844 : `p.pixelDensity(1)` ajouté avant `p.noSmooth()`
+- Corrige le flou retina potentiel sur iPhone et Mac avec écran HiDPI
+- Complète la chaîne de rendu pixel art : `pixelDensity(1)` + `noSmooth()` + `image-rendering:pixelated` (CSS)
+- `pixelDensity(1)` était déjà présent sur les canvas off-screen dans `render-sprites.js:285` — désormais cohérent sur l'ensemble du pipeline
+
+**État du récapitulatif fixes prioritaires (audit_pixel_art) :**
+
+| # | Fix | État |
+|---|---|---|
+| 1 | Snap PX reflets pupille | ⏳ Reste à faire |
+| 2 | Snap PX accessoires | ⏳ Reste à faire |
+| 3 | Math.round → Math.floor géométrie | ✅ FAIT 2026-04-30 |
+| 4 | pixelDensity(1) retina | ✅ FAIT 2026-04-30 |
+| 5 | Architecture animator | ✅ FAIT 2026-04-30 (session précédente) |
 
 ---
 

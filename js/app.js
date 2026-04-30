@@ -57,7 +57,7 @@ let _meteoIntervalId = null;
 let _poopIntervalId  = null;
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v4.8'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v4.81'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -1298,6 +1298,26 @@ async function bootstrap() {
     clearInterval(_poopIntervalId);
     _meteoIntervalId = setInterval(fetchMeteo, 1800000);            // météo toutes les 30 min
     _poopIntervalId  = setInterval(maybeSpawnPoop, POOP_CHECK_INTERVAL_MS); // check crottes
+
+    // RÔLE : Supprime la barre de navigation clavier iOS (chevrons ‹ › + coche) sur iPhone.
+    // POURQUOI : iOS affiche cette barre dès qu'il détecte plusieurs champs de formulaire
+    //            dans le DOM. tabindex="-1" retire les champs de la séquence de focus iOS
+    //            → la barre disparaît, sans empêcher le tap/focus normal sur le champ.
+    //            Un MutationObserver est nécessaire car beaucoup d'inputs sont injectés
+    //            dynamiquement (modales, soutien, journal…) après le chargement initial.
+    //            Les input[type=range] et input[type=file] sont exclus (pas de clavier).
+    function patchTabIndex(root) {
+      root.querySelectorAll('input:not([type=range]):not([type=file]):not([type=checkbox]):not([type=radio]), textarea')
+        .forEach(el => { if (el.tabIndex !== -1) el.tabIndex = -1; });
+    }
+    patchTabIndex(document.body); // champs déjà présents dans le DOM statique
+    new MutationObserver(mutations => {
+      for (const m of mutations) {
+        for (const node of m.addedNodes) {
+          if (node.nodeType === 1) patchTabIndex(node); // éléments ajoutés dynamiquement
+        }
+      }
+    }).observe(document.body, { childList: true, subtree: true });
 
     _appInitialized = true;
   });

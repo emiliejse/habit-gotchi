@@ -99,10 +99,13 @@ function renderSprite(p, layers, cx, cy, params, palette) {
     //            rawDx/rawDy portent les décalages sub-pixel statiques (ex. +2 dans les oreilles).
     //            rawDxFn/rawDyFn sont des fonctions (params) => number pour les offsets dynamiques
     //            (ex. wobble temporel des craquelures de l'œuf via Math.sin(Date.now()...)).
+    //            rawW/rawH permettent des dimensions non-multiples de PX (ex. reflets 2×2 px).
     for (const r of layer.rects) {
       const rx = cx + r.x * PX + (r.rawDx || 0) + (r.rawDxFn ? r.rawDxFn(params) : 0);
       const ry = cy + r.y * PX + (r.rawDy || 0) + (r.rawDyFn ? r.rawDyFn(params) : 0);
-      px(p, rx, ry, r.w * PX, r.h * PX);
+      const rw = r.rawW !== undefined ? r.rawW : r.w * PX;
+      const rh = r.rawH !== undefined ? r.rawH : r.h * PX;
+      px(p, rx, ry, rw, rh);
     }
 
     // RÔLE : Restaurer l'opacité normale après un calque semi-transparent.
@@ -486,41 +489,159 @@ function drawEgg(p, cx, cy) {
 
 /* ─── §4 STADE BÉBÉ ─────────────────────────────────────────────── */
 
+// RÔLE : Définition DSL du sprite Bébé — tableau de calques pour renderSprite().
+// POURQUOI : Remplace les px() manuels de l'ancienne drawBaby().
+//            Coordonnées en multiples de PX, relatives à cx/cy (origin = cx - 3*PX).
+//
+// Repère : x DSL = offset_depuis_x_original + (-3)
+//          ex. x+PX dans l'ancien code → x_dsl = 1 + (-3) = -2
+const LAYERS_BABY = [
+
+  // ── Corps (6×5 PX arrondi) ─────────────────────────────────────
+  {
+    id: 'corps',
+    fill: 'C.body',
+    rects: [
+      { x: -2, y: 0, w: 4, h: 1 },   // arrondi haut
+      { x: -3, y: 1, w: 6, h: 3 },   // ventre large
+      { x: -2, y: 4, w: 4, h: 1 },   // arrondi bas
+    ]
+  },
+
+  // ── Highlights (reflets clairs coin haut-gauche) ────────────────
+  {
+    id: 'highlights',
+    fill: 'C.bodyLt',
+    rects: [
+      { x: -2, y: 1, w: 1, h: 1 },
+      { x: -1, y: 0, w: 1, h: 1 },
+    ]
+  },
+
+  // ── Yeux fermés (sommeil ou clignotement) ──────────────────────
+  {
+    id: 'yeux-fermes',
+    fill: 'C.eye',
+    when: (pm) => pm.sl || pm.blink,
+    rects: [
+      { x: -2, y: 2, w: 2, h: 1 },   // œil gauche fermé (barre)
+      { x:  0, y: 2, w: 2, h: 1 },   // œil droit fermé (barre)
+    ]
+  },
+
+  // ── Yeux ouverts (éveillé, sans clignotement) ──────────────────
+  {
+    id: 'yeux-ouverts',
+    fill: 'C.eye',
+    when: (pm) => !pm.sl && !pm.blink,
+    rects: [
+      { x: -2, y: 2, w: 1, h: 1 },   // pupille gauche
+      { x:  1, y: 2, w: 1, h: 1 },   // pupille droite
+    ]
+  },
+
+  // ── Reflets blancs dans les yeux ouverts (2×2 px sub-PX) ───────
+  // POURQUOI : p.rect(x+PX, y+PX*2, 2, 2) dans l'original — 2px, pas un multiple de PX.
+  //            rawW/rawH portent les dimensions brutes pour rester fidèle au pixel art.
+  {
+    id: 'reflets-yeux',
+    fill: '#fff',
+    when: (pm) => !pm.sl && !pm.blink,
+    rects: [
+      { x: -2, y: 2, w: 0, h: 0, rawW: 2, rawH: 2 },   // reflet œil gauche
+      { x:  1, y: 2, w: 0, h: 0, rawW: 2, rawH: 2 },   // reflet œil droit
+    ]
+  },
+
+  // ── Joues roses ────────────────────────────────────────────────
+  {
+    id: 'joues',
+    fill: 'C.cheek',
+    rects: [
+      { x: -3, y: 3, w: 1, h: 1 },   // joue gauche
+      { x:  2, y: 3, w: 1, h: 1 },   // joue droite
+    ]
+  },
+
+  // ── Dégoût poop (yeux en croix, par-dessus les yeux normaux) ───
+  // POURQUOI : Affiché uniquement si le Gotchi est proche d'un poop et éveillé.
+  //            Ces rects écrasent visuellement les yeux normaux (même position, plus large).
+  {
+    id: 'yeux-poop',
+    fill: 'C.eye',
+    when: (pm) => !!window._gotchiNearPoop && !pm.sl,
+    rects: [
+      { x: -1, y: 2, w: 2, h: 1 },   // œil gauche écarquillé
+      { x:  2, y: 2, w: 2, h: 1 },   // œil droit écarquillé
+    ]
+  },
+
+  // ── Bouche sourire (ha élevé) ───────────────────────────────────
+  {
+    id: 'bouche-sourire',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && pm.ha > HA_HIGH,
+    rects: [{ x: -1, y: 3, w: 2, h: 1 }]
+  },
+
+  // ── Bouche triste (ha bas) — rawDy:2 pour l'offset sub-pixel ───
+  {
+    id: 'bouche-triste',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && pm.ha < HA_SAD,
+    rects: [{ x: -1, y: 3, w: 2, h: 1, rawDy: 2 }]
+  },
+
+  // ── Bouche neutre (état par défaut) ────────────────────────────
+  {
+    id: 'bouche-neutre',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && pm.ha >= HA_SAD && pm.ha <= HA_HIGH,
+    rects: [{ x: -1, y: 3, w: 1, h: 1 }]
+  },
+
+  // ── Pieds / membres inférieurs (toujours visibles) ─────────────
+  {
+    id: 'pieds',
+    fill: 'C.bodyDk',
+    rects: [
+      { x: -2, y: 5, w: 1, h: 1 },   // pied gauche
+      { x:  1, y: 5, w: 1, h: 1 },   // pied droit
+    ]
+  },
+
+  // ── Bras tombés (énergie faible, éveillé) ──────────────────────
+  // POURQUOI : Quand en < EN_WARN, les bras s'élargissent vers le bas plutôt que
+  //            les côtés — même couleur que les pieds (bodyDk), calque séparé.
+  {
+    id: 'bras-tombes',
+    fill: 'C.bodyDk',
+    when: (pm) => pm.en < EN_WARN && !pm.sl,
+    rects: [{ x: -1, y: 5, w: 2, h: 1 }]
+  },
+];
+
 function drawBaby(p, cx, cy, sl, en, ha) {
-    const x = cx - PX * 3, y = cy; p.noStroke();
-    p.fill(C.body); px(p,x+PX,y,PX*4,PX); px(p,x,y+PX,PX*6,PX*3); px(p,x+PX,y+PX*4,PX*4,PX);
-    p.fill(C.bodyLt); px(p,x+PX,y+PX,PX,PX); px(p,x+PX*2,y,PX,PX);
+  // RÔLE : Construire les params DSL et déléguer le rendu à renderSprite().
+  // POURQUOI : drawBaby() reste le point d'entrée appelé par render.js — son interface
+  //            (p, cx, cy, sl, en, ha) est inchangée. Le DSL est interne à ce fichier.
+  const params = { sl, en, ha, blink };
 
-    if(sl || blink) {
-      p.fill(C.eye); px(p,x+PX,y+PX*2,PX*2,PX); px(p,x+PX*3,y+PX*2,PX*2,PX);
-    } else {
-      p.fill(C.eye); px(p,x+PX,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*2,PX,PX);
-      p.fill('#fff'); p.rect(x+PX,y+PX*2,2,2); p.rect(x+PX*4,y+PX*2,2,2);
-    }
+  renderSprite(p, LAYERS_BABY, cx, cy, params);
 
-    p.fill(C.cheek); px(p,x,y+PX*3,PX,PX); px(p,x+PX*5,y+PX*3,PX,PX);
-    if (window._gotchiNearPoop && !sl) {
-      p.fill(C.eye); px(p, x+PX*2, y+PX*2, PX*2, PX); px(p, x+PX*5, y+PX*2, PX*2, PX);
-    }
+  // Épuisement (dither) — géré en dehors du DSL car drawDither() a sa propre logique
+  // de damier qui ne passe pas par px() standard.
+  if (en < EN_CRIT && !sl) {
+    drawDither(p, cx - PX * 2, cy + PX * 3, PX * 4, PX * 3, C.bodyDk);
+  }
 
-    p.fill(C.mouth);
-    if(!sl) {
-      if(ha > HA_HIGH) px(p,x+PX*2,y+PX*3,PX*2,PX);       // sourire bébé (ha > 4)
-      else if(ha < HA_SAD) px(p,x+PX*2,y+PX*3+2,PX*2,PX); // bouche triste (ha < 1)
-      else px(p,x+PX*2,y+PX*3,PX,PX);
-    }
+  // Accessoires pixel-perfect — interface inchangée
+  drawAccessoires(p, cx, { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 4 }, 'baby', sl);
 
-    p.fill(C.bodyDk); px(p,x+PX,y+PX*5,PX,PX); px(p,x+PX*4,y+PX*5,PX,PX);
-    if(en < EN_WARN && !sl) { px(p,x+PX*2,y+PX*5,PX*2,PX); }       // bras tombés (en < 2)
-    if (en < EN_CRIT && !sl) drawDither(p, x + PX, y + PX * 3, PX * 4, PX * 3, C.bodyDk); // épuisement (en < 1)
+  // Couche de saleté — interface inchangée
+  drawSaleteDither(p, 'baby', cx, cy, window.D?.g?.salete || 0, sl);
 
-    // ✨ Accessoires dessinés en interne (pixel-perfect avec le corps)
-    drawAccessoires(p, cx, { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 }, 'baby', sl);
-
-    // Couche de saleté par-dessus le sprite (si salete >= 5)
-    drawSaleteDither(p, 'baby', cx, cy, window.D?.g?.salete || 0, sl);
-
-    return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
+  return { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 4 };
 }
 
 /* ─── §4b HELPER EXPRESSION ──────────────────────────────────────── */

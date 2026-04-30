@@ -392,10 +392,13 @@ function drawAccessoires(p, cx, anchors, stage, sl) {
 
       const ps = def.pxSize || PX;
 
-      // RÔLE : Centrer l'accessoire sur cx sans snap grille — drawProp gère le rendu pixel.
-      // POURQUOI : Le snap Math.floor(cx/PX)*PX désynchronisait l'accessoire du corps quand
-      //            le Gotchi respirait (breathX) ou rebondissait (bobY flottant) → glissement visible.
-      const accX = cx - (def.pixels[0].length * ps) / 2;
+      // RÔLE : Centrer l'accessoire sur cx puis snapper sur grille PX.
+      // POURQUOI : Le corps passe par px() qui floore sur la grille PX (paliers de 5px).
+      //            Sans ce snap, l'accessoire "rampait" pixel par pixel pendant que le corps
+      //            "sautait" de palier en palier → désynchronisation visible à la marche et au bob.
+      //            On snap accX sur la même grille pour qu'ils bougent au même rythme.
+      const accXraw = cx - (def.pixels[0].length * ps) / 2;
+      const accX    = Math.floor(accXraw / PX) * PX;
 
       // RÔLE : Choisir l'ancrage Y selon le slot, en tenant compte des yeux fermés (sl).
       // POURQUOI : La nuit, les yeux fermés sont dessinés 1 rangée plus bas que les yeux ouverts
@@ -412,9 +415,10 @@ function drawAccessoires(p, cx, anchors, stage, sl) {
         baseYraw = anchors.topY;
       }
 
-      // RÔLE : Pas de snap grille sur Y non plus — on utilise la valeur flottante directement.
-      // POURQUOI : Math.floor(baseYraw/PX)*PX faisait "sauter" l'accessoire d'une case entière
-      //            quand bobY franchissait un palier de 5px → glissement vertical le jour.
+      // RÔLE : Calculer l'offset Y selon le slot puis snapper accY sur grille PX.
+      // POURQUOI : Même logique que accX — baseYraw est flottant (bobY, breathX etc.).
+      //            Le snap sur grille PX assure que l'accessoire suit exactement les mêmes
+      //            paliers que le corps, éliminant le glissement vertical à la marche/respiration.
       const offsetY = def.ancrage === 'yeux'
                     ? (stage === 'teen' ? ps * 3
                      : stage === 'adult' ? ps * 3
@@ -423,7 +427,8 @@ function drawAccessoires(p, cx, anchors, stage, sl) {
                     ? (stage === 'baby' ? ps * 3 : ps * 5)
                     : ps;
 
-      const accY = baseYraw - def.pixels.length * ps + offsetY;
+      const accYraw = baseYraw - def.pixels.length * ps + offsetY;
+      const accY    = Math.floor(accYraw / PX) * PX;
       drawProp(p, def, accX, accY);
     });
 }

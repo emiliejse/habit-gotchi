@@ -796,7 +796,13 @@ if (!sleeping) {
   walkX += walkDir * 0.04;
   if (walkX > XMAX || walkX < XMIN) walkDir *= -1;
 }
-window._gotchiX = walkX; // ← exposition de la position réelle
+// RÔLE : Exposer toutes les variables de marche dans un objet partagé.
+// POURQUOI : render-sprites.js avait besoin de walkPause pour savoir si le Gotchi
+//            est en mouvement. Avant, il accédait à walkPause directement via la scope
+//            globale — couplage implicite qui casserait si on passe en modules ES.
+//            Avec window._walk, la dépendance est explicite et documentée.
+window._walk = { x: walkX, dir: walkDir, pause: walkPause, step: walkStep, target: walkTarget };
+window._gotchiX = walkX; // ← gardé pour la rétrocompatibilité (hitbox touch, etc.)
 
 const cx = walkX;
 const by = getStageBaseY(g.stage); // RÔLE : Y de base du Gotchi selon son stade — centralisé dans getStageBaseY()

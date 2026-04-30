@@ -179,16 +179,16 @@
   - `drawEnvSelector(p, g, nightRatio)` — cercle env actif + cercles flottants + `window._envLocked` / `window._envSelectorHits`
 - `p.draw()` réduit à un orchestrateur ~85 lignes. Les sous-fonctions sont insérées juste avant `p5s()`, commentaires RÔLE/POURQUOI/JSDoc présents sur chacune.
 
-#### 🟠 IMPORTANT — `getBaseY(stage)` dupliqué 3 fois
-- Lignes : [L522, L1031-L1034, L1092-L1095]
-- Description : Le mapping stage→baseY est répété (cf. quick win #1).
-- Risque : Désync si un seul des 3 endroits est modifié → hitbox décalée.
+#### ✅ RÉSOLU — `getBaseY(stage)` dupliqué 3 fois (2026-04-30)
+- Lignes d'origine : [L522, L1031-L1034, L1092-L1095]
+- Solution : Fonction `getStageBaseY(stage)` créée (~L107). Les 3 occurrences inline remplacées par un appel centralisé. Aucune désync possible : une seule source de vérité.
+- État actuel : 3 appels à `getStageBaseY()` (draw L802, touchStarted L1091, touchMoved L1149). Mapping dans la fonction unique.
 
-#### 🟠 IMPORTANT — `walkX`/`walkDir`/`walkStep` en variables module non exposées
-- Lignes : [L49-L53]
-- Description : `walkX` est exposé via `window._gotchiX = walkX` ([L519]) mais `walkPause`, `walkTarget` restent privés. `render-sprites.js` ([L595]) référence `walkPause` directement → ce n'est possible que parce que le `let` est hissé dans la même scope script (les deux fichiers partagent le contexte global).
-- Risque : Couplage implicite entre `render.js` et `render-sprites.js` ; tout passage en module ES casserait le code.
-- Suggestion : Exposer explicitement `window._walk = { x, dir, pause, ... }` ou exporter via un objet partagé.
+#### ✅ RÉSOLU — `walkX`/`walkDir`/`walkStep` en variables module non exposées (2026-04-30)
+- Lignes d'origine : [L49-L53]
+- Solution : `window._walk = { x: walkX, dir: walkDir, pause: walkPause, step: walkStep, target: walkTarget }` ajouté juste après la boucle de marche (~L799), avant `window._gotchiX`. `window._gotchiX` conservé pour rétrocompatibilité (hitbox touch).
+- `render-sprites.js` [L595] mis à jour : `typeof walkPause !== 'undefined' && walkPause === 0` → `window._walk ? window._walk.pause === 0 : false`. Dépendance documentée en en-tête du fichier.
+- Risque résiduel : `window._walk` est mis à jour une fois par frame dans `draw()` — cohérence garantie si `drawGotchi()` est appelé dans la même frame.
 
 #### 🟡 MINEUR — `_lastTapTime` global non protégé
 - Lignes : [L949-L950]
@@ -223,8 +223,8 @@
 - `walkStep` ([L51, L493]) : incrémenté mais jamais lu — code mort.
 
 ### 3.5 Dette technique
-- `p.draw` à découper.
-- Couplage implicite avec `render-sprites.js` via variables module.
+- `p.draw` à découper. ✅ Partiellement résolu (2026-04-30) : découpé en 4 sous-fonctions (`drawPropsLayer`, `drawHUD`, `drawBadges`, `drawEnvSelector`).
+- ✅ Couplage implicite avec `render-sprites.js` via variables module — RÉSOLU (2026-04-30) : `window._walk` exposé explicitement.
 
 ---
 
@@ -256,9 +256,9 @@
 - Lignes : [L309, L348, L361, L366, L372, L491, L504, L509, L515]
 - Suggestion : Helper `function isMood(name) { return _expr.moodTimer > 0 && _expr.lastMood === name; }`.
 
-#### 🟡 MINEUR — `walkPause` lu par référence implicite
-- Lignes : [L595]
-- Description : Cf. render.js — couplage cross-fichier.
+#### ✅ RÉSOLU — `walkPause` lu par référence implicite (2026-04-30)
+- Lignes d'origine : [L595]
+- Solution : Cf. render.js — `window._walk.pause` utilisé à la place. Couplage implicite supprimé.
 
 #### 🔵 STYLE — Indentation alternée 2/4 espaces
 - Lignes : passim — `drawTeen`/`drawAdult` mélangent les deux.

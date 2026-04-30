@@ -9,7 +9,8 @@
                         HA_HAPPY_TEEN, HA_MED_ADULT, HA_ARMS_UP
      - render.js     → px(), C, PX, blink, getBreath(), getCheekPulse(),
                         getPropDef(), drawProp(), walkX, window._expr,
-                        window._adultPose, window._gotchiNearPoop
+                        window._adultPose, window._gotchiNearPoop,
+                        window._walk  (objet { x, dir, pause, step, target })
 
    NAVIGATION RAPIDE :
    §1  drawDither()       — effet épuisement style Gameboy
@@ -592,7 +593,12 @@ px(p, x+PX*6+2, y-PX,   PX, PX);
 
 /* ─── PETITS PIEDS — légère levée alternée pendant la marche ─── */
     // Compteur de pas basé sur la distance parcourue : 1 alternance tous les PX pixels
-    const isMoving = !sl && (typeof walkPause !== 'undefined' && walkPause === 0);
+    // RÔLE : Détecter si le Gotchi est en mouvement pour alterner les pieds.
+    // POURQUOI : On lit window._walk.pause au lieu de walkPause directement.
+    //            L'accès direct à walkPause fonctionnait uniquement grâce à la scope globale
+    //            partagée entre render.js et render-sprites.js — couplage implicite fragile.
+    //            window._walk est mis à jour dans render.js juste avant l'appel au sprite.
+    const isMoving = !sl && (window._walk ? window._walk.pause === 0 : false);
     const stepPhase = isMoving ? Math.floor(walkX / PX) % 2 : -1;
 
     if (stepPhase === 0) {

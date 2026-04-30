@@ -96,10 +96,12 @@ function renderSprite(p, layers, cx, cy, params, palette) {
 
     // RÔLE : Dessiner chaque rectangle du calque.
     // POURQUOI : x/y sont en multiples de PX, relatifs à cx/cy.
-    //            rawDx/rawDy portent les décalages sub-pixel (ex. +2 dans les oreilles).
+    //            rawDx/rawDy portent les décalages sub-pixel statiques (ex. +2 dans les oreilles).
+    //            rawDxFn/rawDyFn sont des fonctions (params) => number pour les offsets dynamiques
+    //            (ex. wobble temporel des craquelures de l'œuf via Math.sin(Date.now()...)).
     for (const r of layer.rects) {
-      const rx = cx + r.x * PX + (r.rawDx || 0);
-      const ry = cy + r.y * PX + (r.rawDy || 0);
+      const rx = cx + r.x * PX + (r.rawDx || 0) + (r.rawDxFn ? r.rawDxFn(params) : 0);
+      const ry = cy + r.y * PX + (r.rawDy || 0) + (r.rawDyFn ? r.rawDyFn(params) : 0);
       px(p, rx, ry, r.w * PX, r.h * PX);
     }
 
@@ -416,24 +418,70 @@ function drawAccessoires(p, cx, anchors, stage, sl) {
 
 /* ─── §3 STADE ŒUF ──────────────────────────────────────────────── */
 
+// RÔLE : Définition DSL du sprite Œuf — tableau de calques pour renderSprite().
+// POURQUOI : Remplace les px() manuels de l'ancienne drawEgg().
+//            Coordonnées en multiples de PX, relatives à cx/cy (origin = cx - 3*PX).
+//            Ajouter un nouveau détail visuel = ajouter un calque ici, sans toucher au moteur.
+//
+// Repère : x DSL = (offset_canvas - cx) / PX = offset_depuis_x_original + (-3)
+//          ex. x+PX*2 dans l'ancien code → x_dsl = 2 + (-3) = -1
+const LAYERS_EGG = [
+
+  // ── Corps principal (forme ovoïde 7×7 PX) ──────────────────────
+  {
+    id: 'corps',
+    fill: 'C.egg',
+    rects: [
+      { x: -1, y: 0, w: 3, h: 1 },   // arrondi haut
+      { x: -2, y: 1, w: 5, h: 1 },
+      { x: -3, y: 2, w: 7, h: 3 },   // ventre large
+      { x: -2, y: 5, w: 5, h: 1 },
+      { x: -1, y: 6, w: 3, h: 1 },   // arrondi bas
+    ]
+  },
+
+  // ── Reflets brillants (taches claires) ─────────────────────────
+  {
+    id: 'reflets',
+    fill: 'C.eggSp',
+    rects: [
+      { x: -1, y: 2, w: 1, h: 1 },   // reflet haut-gauche
+      { x:  1, y: 3, w: 2, h: 1 },   // reflet milieu-droit
+      { x:  0, y: 5, w: 1, h: 1 },   // reflet bas
+    ]
+  },
+
+  // ── Craquelures (apparaissent si totalXp > 45, s'intensifient ≥ 75) ──
+  // POURQUOI : Le wobble est temporel (Math.sin(Date.now())) — il ne peut pas être
+  //            une constante statique. rawDxFn est une fonction (params) => number
+  //            évaluée à chaque frame par renderSprite().
+  {
+    id: 'craquelures',
+    fill: 'C.eggCr',
+    when: (pm) => pm.totalXp > 45,
+    rects: [
+      { x: 0, y: 1, w: 1, h: 1, rawDxFn: (pm) => Math.sin(Date.now() * 0.015) * (pm.totalXp >= 75 ? 2 : 1) },
+      { x: 1, y: 2, w: 1, h: 1, rawDxFn: (pm) => Math.sin(Date.now() * 0.015) * (pm.totalXp >= 75 ? 2 : 1) },
+      { x: 0, y: 3, w: 1, h: 1, rawDxFn: (pm) => Math.sin(Date.now() * 0.015) * (pm.totalXp >= 75 ? 2 : 1) },
+    ]
+  },
+];
+
 function drawEgg(p, cx, cy) {
-  const x = cx - PX * 3, y = cy;
-  p.noStroke();
-  p.fill(C.egg);
-  px(p,x+PX*2,y,PX*3,PX); px(p,x+PX,y+PX,PX*5,PX); px(p,x,y+PX*2,PX*7,PX*3); px(p,x+PX,y+PX*5,PX*5,PX); px(p,x+PX*2,y+PX*6,PX*3,PX);
-  p.fill(C.eggSp); px(p,x+PX*2,y+PX*2,PX,PX); px(p,x+PX*4,y+PX*3,PX*2,PX); px(p,x+PX*3,y+PX*5,PX,PX);
-  const totalXp = window.D.g.totalXp;
-if (totalXp > 45) {
-  const intensity = totalXp >= 75 ? 2 : 1;
-  const wobble = Math.sin(Date.now() * 0.015) * intensity;
-  p.fill(C.eggCr);
-  px(p, x + PX*3 + wobble, y + PX,   PX, PX);
-  px(p, x + PX*4 + wobble, y + PX*2, PX, PX);
-  px(p, x + PX*3 + wobble, y + PX*3, PX, PX);
-}
-  // Couche de saleté par-dessus le sprite (si salete >= 5)
+  // RÔLE : Construire les params DSL et déléguer le rendu à renderSprite().
+  // POURQUOI : drawEgg() reste le point d'entrée appelé par render.js — son interface
+  //            (p, cx, cy) est inchangée. Le DSL est interne à ce fichier.
+  const params = {
+    totalXp: window.D?.g?.totalXp || 0,
+  };
+
+  renderSprite(p, LAYERS_EGG, cx, cy, params);
+
+  // Couche de saleté par-dessus le sprite (si salete >= 5) — interface inchangée
   drawSaleteDither(p, 'egg', cx, cy, window.D?.g?.salete || 0, false);
-  return { topY: y, eyeY: y + PX * 2, neckY: y + PX * 4 };
+
+  // Retourner les anchors pour drawAccessoires — valeurs identiques à l'ancienne version
+  return { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 4 };
 }
 
 /* ─── §4 STADE BÉBÉ ─────────────────────────────────────────────── */

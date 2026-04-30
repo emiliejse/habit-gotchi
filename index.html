@@ -506,7 +506,8 @@ Ton bilan de la semaine apparaîtra ici...
 <button class="menu-languette" onclick="toggleMenu()" aria-label="Ouvrir le menu">☰</button>
 
 <!-- Menu overlay (SYSTEM 5: UI/Design) -->
-<div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()">
+<!-- POURQUOI .app-overlay : garantit position:fixed;inset:0;pointer-events:auto sur cet overlay -->
+<div class="menu-overlay app-overlay" id="menu-overlay" onclick="toggleMenu()">
   <div class="menu-book" onclick="event.stopPropagation()">
 
   <!-- Doodle pixel art coin supérieur droit -->
@@ -580,7 +581,8 @@ Ton bilan de la semaine apparaîtra ici...
 <div id="toast"></div>
 
 <!-- Tablette rétro (SYSTEM 3: IA & Cognition) -->
-<div id="tablet-overlay" onclick="closeTablet(event)">
+<!-- POURQUOI .app-overlay : garantit position:fixed;inset:0;pointer-events:auto sur cet overlay -->
+<div id="tablet-overlay" class="app-overlay" onclick="closeTablet(event)">
   <div id="tablet-box">
     <div id="tablet-header">
       <span>📟 TERMINAL</span>

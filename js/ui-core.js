@@ -182,12 +182,15 @@ function toast(m) {
 
 /**
  * Modale standard avec bouton OK (bloquante)
+ * RÔLE : Affiche un message court avec un bouton OK — passe désormais par openModal()
+ * POURQUOI : Avant, toastModal() manipulait mbox.innerHTML directement sans lockScroll()
+ *            ni _setInert() → le fond restait interactif pendant l'affichage du message.
+ *            openModal() garantit les deux.
  */
 function toastModal(m) {
-  document.getElementById('modal').style.display = 'flex';
   // POURQUOI padding-top:36px sur le <p> : le bouton .modal-close est positionné à top:10px avec ~24px de hauteur
   // Sans ce padding, le texte commence sous la croix et se superpose visuellement
-  document.getElementById('mbox').innerHTML = `${_modalCloseBtn()}<p style="text-align:center;font-size:var(--fs-sm);padding-top:36px;line-height:1.5">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`;
+  openModal(`<p style="text-align:center;font-size:var(--fs-sm);padding-top:36px;line-height:1.5">${m}</p><button class="btn btn-p" onclick="clModal()" style="width:100%;margin-top:8px">OK</button>`);
   animEl(document.getElementById('mbox'), 'bounceIn');
 }
 
@@ -212,8 +215,31 @@ function toastSnack(msg) {
 
 /* ============================================================
    MODALE CENTRALE
+   CONVENTION : Toute modale DOIT passer par openModal() ou openModalRaw().
+   - openModal(html)    → injecte automatiquement le bouton ✕, lockScroll, inert
+   - openModalRaw(html) → sans ✕ auto (boutique/agenda qui gèrent leur propre bouton)
+   - clModal(e)         → ferme, unlockScroll, retire inert
+   Les overlays séparés (tablet-overlay, etats-overlay) doivent appeler
+   lockScroll() + _setInert(true) à l'ouverture, et unlockScroll() + _setInert(false)
+   à la fermeture.
    ============================================================ */
 let modalLocked = false; // ← true pendant le soutien IA (empêche la fermeture accidentelle)
+
+/**
+ * RÔLE : Active ou désactive l'attribut `inert` sur les zones de contenu derrière les modales.
+ * POURQUOI : `inert` désactive complètement les pointer-events ET le focus sur tout le sous-arbre
+ *            — y compris les listeners p5.js attachés au document. C'est la protection la plus
+ *            robuste contre les "clics qui passent à travers" une modale.
+ *            Quand inert=true : #console-top et #dynamic-zone deviennent inertes.
+ *            Quand inert=false : ils redeviennent interactifs.
+ */
+function _setInert(active) {
+  const zones = ['console-top', 'dynamic-zone'];
+  zones.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.inert = active;
+  });
+}
 
 /**
  * RÔLE : Génère le bouton ✕ de fermeture persistant pour toutes les modales
@@ -230,6 +256,7 @@ function clModal(e) {
   if (!e || e.target.id === 'modal' || e.currentTarget?.classList?.contains('modal-close')) {
     document.getElementById('modal').style.display = 'none';
     unlockScroll();
+    _setInert(false); // RÔLE : remet #console-top et #dynamic-zone interactifs après fermeture
   }
 }
 
@@ -245,6 +272,7 @@ function openModal(html) {
   _fermerMenuSiOuvert(); // ferme le menu-overlay s'il était ouvert (évite qu'il capte les clics sous la modale)
   modal.style.display = 'flex';
   lockScroll();
+  _setInert(true); // RÔLE : bloque toute interaction derrière la modale (#console-top, #dynamic-zone)
   // RÔLE : Retire la classe avant d'injecter le contenu, force le reflow, puis remet la classe
   // POURQUOI : L'ordre est critique — si on injecte le HTML après le remove/add, le navigateur
   //            batchera les mutations DOM et ignorera le reflow entre les deux, cassant l'animation
@@ -252,6 +280,26 @@ function openModal(html) {
   mbox.classList.remove('modal-pop');
   void mbox.offsetWidth; // force reflow — le navigateur recalcule avant d'appliquer la classe
   mbox.innerHTML = `${_modalCloseBtn()}${html}`;
+  mbox.classList.add('modal-pop');
+}
+
+/**
+ * RÔLE : Variante de openModal() sans injection automatique du bouton ✕
+ * POURQUOI : Boutique, agenda et soutien gèrent leur propre bouton de fermeture
+ *            (avec des styles ou des comportements spécifiques). openModalRaw() leur
+ *            garantit quand même lockScroll() et inert sans imposer le ✕ standard.
+ * USAGE : openModalRaw(`<button onclick="clModal()">✕</button><div>contenu...</div>`)
+ */
+function openModalRaw(html) {
+  const modal = document.getElementById('modal');
+  const mbox  = document.getElementById('mbox');
+  _fermerMenuSiOuvert();
+  modal.style.display = 'flex';
+  lockScroll();
+  _setInert(true); // même protection que openModal()
+  mbox.classList.remove('modal-pop');
+  void mbox.offsetWidth;
+  mbox.innerHTML = html; // pas de ✕ injecté automatiquement
   mbox.classList.add('modal-pop');
 }
 

@@ -703,7 +703,7 @@ let tabletLastSeenDate = null; // ISO date du dernier événement vu à la derni
 function openTablet() {
   const D = window.D;
   const log = D.eventLog || [];
-  
+
   // Icône choisie selon le type + signe de la valeur (gain/perte XP)
   const getIcon = (ev) => {
   // Le subtype prime sur le type s'il existe
@@ -711,7 +711,7 @@ function openTablet() {
   if (ev.subtype === 'poop')  return '💩';
   if (ev.subtype === 'stade') return '🌱';
   if (ev.subtype === 'bain')  return '🛁';
-  
+
   // Sinon, fallback sur le type
   if (ev.type === 'xp')       return (ev.valeur < 0) ? '💤' : '⭐';
   if (ev.type === 'cadeau') return ev.emoji || '🎁';
@@ -719,7 +719,7 @@ function openTablet() {
   if (ev.type === 'note')     return '📓';
   return '•';
 };
-  
+
   const lines = document.getElementById('tablet-lines');
 
   if (!log.length) {
@@ -741,12 +741,30 @@ function openTablet() {
   document.getElementById('tablet-badge').style.display = 'none';
 
   document.getElementById('tablet-overlay').classList.add('open');
+
+  // RÔLE : Bloque les interactions derrière la tablette (même logique que openModal)
+  // POURQUOI : #tablet-overlay est à z-index:400 — au-dessus de .modal (300).
+  //            Sans lockScroll + inert, le fond reste scrollable et les éléments
+  //            de #console-top restent cliquables sous la zone de padding.
+  lockScroll();
+  _setInert(true);
+
+  // RÔLE : Fermeture par la touche Escape (accessibilité clavier + cohérence avec les modales)
+  // POURQUOI : Les modales standards se ferment sur Escape via le navigateur — la tablette doit
+  //            se comporter de la même façon. Le listener se retire lui-même après usage.
+  function _onEscTablet(ev) {
+    if (ev.key === 'Escape') { closeTablet({ target: document.getElementById('tablet-overlay') }); document.removeEventListener('keydown', _onEscTablet); }
+  }
+  document.addEventListener('keydown', _onEscTablet);
 }
 
 function closeTablet(e) {
   // Ferme seulement si on clique sur le fond, pas sur la tablette
   if (e.target === document.getElementById('tablet-overlay')) {
     document.getElementById('tablet-overlay').classList.remove('open');
+    // RÔLE : Restitue le scroll et l'interactivité des zones derrière
+    unlockScroll();
+    _setInert(false);
   }
 }
 
@@ -1163,16 +1181,25 @@ function ouvrirModalEtats() {
   // RÔLE : Crée l'overlay semi-transparent qui capture les taps extérieurs pour fermer
   const overlay = document.createElement('div');
   overlay.id = 'etats-overlay';
+  // POURQUOI pointer-events:auto : même logique que .app-overlay — garantit que l'overlay
+  // créé dynamiquement capte bien les taps sur sa zone semi-transparente.
   overlay.style.cssText = `
     position:fixed;inset:0;z-index:1000;
     background:rgba(0,0,0,0.35);
     display:flex;align-items:flex-end;justify-content:center;
+    pointer-events:auto;
   `;
 
   // RÔLE : Ferme la sheet si on tape sur l'overlay (hors de la sheet)
   overlay.addEventListener('click', function(e) {
     if (e.target === overlay) fermerModalEtats();
   });
+
+  // RÔLE : Fermeture par Escape — cohérence avec openTablet() et les modales standards
+  function _onEscEtats(ev) {
+    if (ev.key === 'Escape') { fermerModalEtats(); document.removeEventListener('keydown', _onEscEtats); }
+  }
+  document.addEventListener('keydown', _onEscEtats);
 
   // RÔLE : Contenu de la bottom sheet
   // POURQUOI : Les inputs n'ont pas de style inline — tout le rendu du slider est géré par
@@ -1236,12 +1263,21 @@ function ouvrirModalEtats() {
   `;
 
   document.body.appendChild(overlay);
+
+  // RÔLE : Bloque le scroll du fond et les interactions derrière la bottom sheet
+  // POURQUOI : Même logique que openModal() — sans ça, le fond reste scrollable
+  //            et les éléments de #console-top restent cliquables sous la sheet.
+  lockScroll();
+  _setInert(true);
 }
 
 // RÔLE : Ferme et supprime la bottom sheet des états
 function fermerModalEtats() {
   const overlay = document.getElementById('etats-overlay');
   if (overlay) overlay.remove();
+  // RÔLE : Restitue le scroll et l'interactivité des zones derrière
+  unlockScroll();
+  _setInert(false);
 }
 
 // RÔLE : Expose les fonctions pour y accéder depuis render.js (tap canvas)

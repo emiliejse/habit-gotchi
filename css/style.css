@@ -395,9 +395,19 @@ body {
   transform: translateX(-50%) translateY(10px);
 }
 
+/* ─── CLASSE PARTAGÉE POUR TOUS LES OVERLAYS ────────────────────── */
+/* RÔLE : Garantit que chaque overlay couvre bien tout le viewport ET capte les taps.
+   POURQUOI : Sans pointer-events:auto explicite, certains navigateurs mobiles laissent
+              les événements touch "passer à travers" l'overlay vers les éléments derrière.
+              Quand display:none, pointer-events est automatiquement ignoré — pas de conflit.
+   CONVENTION : Toute modale/overlay DOIT avoir cette classe OU utiliser openModal()/clModal(). */
+.app-overlay {
+  position: fixed; inset: 0; pointer-events: auto;
+}
+
 /* Modale du Menu Principal */
 .menu-overlay {
-  position: fixed; inset: 0; z-index: 200; display: none;
+  z-index: 200; display: none;
   align-items: center; justify-content: center;
   background: rgba(56, 48, 74, 0.45); backdrop-filter: blur(3px);
 }
@@ -1128,9 +1138,14 @@ details.settings-section.danger > summary { color: var(--danger); }
 }
 
 /* Modale Principale (Alertes, Boutique) */
+/* RÔLE : pointer-events:auto explicite — garantit que la zone semi-transparente capte
+   les taps même sur mobile (p5.js attachant ses listeners au document, pas au canvas).
+   POURQUOI : Sans cet attribut, un tap sur le fond semi-transparent pouvait traverser
+              jusqu'aux éléments HTML de #dynamic-zone derrière la modale. */
 .modal {
   position: fixed; inset: 0; background: rgba(56, 48, 74, 0.4); backdrop-filter: blur(3px);
   z-index: 300; display: flex; align-items: center; justify-content: center; padding: 16px;
+  pointer-events: auto;
 }
 .modal-box {
   background: #fff; border-radius: var(--r-lg); padding: var(--sp-lg); max-width: 340px; width: 100%;
@@ -1197,7 +1212,11 @@ details.settings-section.danger > summary { color: var(--danger); }
 /* ─── SYSTÈME 6 : LE TERMINAL (Événements Cachés) ────────────────── */
 
 #tablet-overlay {
-  display: none; position: fixed; inset: 0; z-index: 400;
+  /* RÔLE : position/inset/pointer-events hérités de .app-overlay (ajouté dans index.html).
+     POURQUOI : #tablet-overlay est à z-index:400 — au-dessus de .modal (300).
+                Sans pointer-events:auto, une bande en haut de l'écran (padding-top)
+                laissait les taps atteindre les boutons de #console-top derrière. */
+  display: none; z-index: 400;
   background: rgba(0,0,0,.5); align-items: flex-start; justify-content: flex-end;
   padding: calc(var(--sat) + 48px) 12px 0 12px;
 }

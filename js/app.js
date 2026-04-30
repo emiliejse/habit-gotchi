@@ -182,7 +182,7 @@ salete: 0,       // niveau de saleté du Gotchi — 0 (propre) à 10 (très sale
       bilanText: '',
       lastTick: Date.now(),
       solarPhases: null,
-      cycleDuree: 28,// durée du cycle en jours
+      cycleDuree: CYCLE_DEFAULT_DURATION, // durée du cycle en jours (défaut = 28)
       birthdayShown: false,    // true une fois la modale anniversaire affichée ce jour-là
       birthdayCodeUsed: false, // true une fois le code cheat anniversaire utilisé
     },
@@ -215,7 +215,7 @@ function getCyclePhase(dateStr) {
   const j1    = new Date(cycles[0] + 'T12:00');
   const cible = new Date((dateStr || today()) + 'T12:00');
   const diff  = Math.floor((cible - j1) / 86400000);
-  let duree = window.D.g.cycleDuree || 28;
+  let duree = window.D.g.cycleDuree || CYCLE_DEFAULT_DURATION;
 if (cycles.length >= 2) {
   let total = 0;
   for (let i = 0; i < cycles.length - 1; i++)
@@ -252,7 +252,7 @@ const MIGRATIONS = [
     d.g.bilanCount     = d.g.bilanCount     ?? 0;
     d.g.bilanWeek      = d.g.bilanWeek      ?? '';
     d.g.bilanText      = d.g.bilanText      ?? '';
-    d.g.cycleDuree     = d.g.cycleDuree     ?? 28;
+    d.g.cycleDuree     = d.g.cycleDuree     ?? CYCLE_DEFAULT_DURATION;
     d.g.birthdayShown  = d.g.birthdayShown  ?? false;
     d.g.birthdayCodeUsed = d.g.birthdayCodeUsed ?? false;
     d.g.poopDay        = d.g.poopDay        ?? '';

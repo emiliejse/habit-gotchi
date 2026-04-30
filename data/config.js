@@ -232,13 +232,56 @@ const HA_HIGH       = 4; // grand sourire bébé + animation vive + soleil
 const HA_HAPPY_TEEN = 4; // grand sourire ado
 const HA_ARMS_UP    = 4; // bras levés adulte (joie intense)
 
+// Durée par défaut d'un cycle menstruel en jours — utilisée si aucun historique de règles
+// ne permet de calculer une durée personnalisée.
+const CYCLE_DEFAULT_DURATION = 28;
+
 // RÔLE : Expose toutes les constantes sous un namespace global unique.
 // POURQUOI : Évite la pollution de window et les collisions de noms
 //            si un autre script déclare les mêmes identifiants.
+//            Les constantes gameplay (XP, EN, HA, POOP…) sont regroupées
+//            dans le sous-objet HG_CONFIG.GAMEPLAY pour les distinguer
+//            des constantes visuelles/UI sans créer un second namespace.
 window.HG_CONFIG = {
+  // ── UI & thèmes ────────────────────────────────────────────────
   UI_PALETTES,
   GOTCHI_COLORS,
   ENV_THEMES,
   MEAL_WINDOWS,
   SNACKS_POOL,
+
+  // ── Gameplay : toutes les valeurs numériques métier ────────────
+  GAMEPLAY: {
+    // Modèle IA
+    AI_MODEL,
+
+    // XP
+    XP_HABITUDE,
+    XP_NOTE,
+    XP_MAX,
+    PETALES_SNACK,
+
+    // Cycle menstruel
+    CYCLE_DEFAULT_DURATION,
+
+    // Crottes
+    POOP_MIN_DELAY_MS,
+    POOP_SPAWN_DELAY_MS,
+    POOP_CHECK_INTERVAL_MS,
+
+    // Seuils énergie
+    EN_CRIT,
+    EN_WARN,
+    EN_TILT,
+
+    // Seuils bonheur
+    HA_SAD,
+    HA_MED,
+    HA_MED_ADULT,
+    HA_SLOW,
+    HA_WALK,
+    HA_HIGH,
+    HA_HAPPY_TEEN,
+    HA_ARMS_UP,
+  },
 };

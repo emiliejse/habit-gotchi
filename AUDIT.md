@@ -16,7 +16,7 @@
 
 | Fichier | Score | Justification (1 phrase) |
 |---|---|---|
-| `data/config.js` | **A** | Constantes pures, namespace `window.HG_CONFIG` propre, palettes documentées, mais `window.HG_CONFIG` n'expose que 5 constantes sur ~20 (les `XP_*`, `EN_*`, `HA_*`, `POOP_*` restent en globales nues). |
+| `data/config.js` | **A** | Constantes pures, namespace `window.HG_CONFIG` propre, palettes documentées. `HG_CONFIG.GAMEPLAY` expose désormais toutes les constantes gameplay (XP, EN, HA, POOP, cycle). |
 | `js/app.js` | **B+** | Bien commenté, migrations versionnées, mais bootstrap éparpillé, `addEvent` mixe deux signatures, et plusieurs `setInterval` non clearables. |
 | `js/render.js` | **B-** | `p.draw()` monolithique de ~570 lignes, mélange logique métier (locomotion, badges, env selector) et rendu, helpers de hitbox dupliqués entre `touchStarted` et `touchMoved`. |
 | `js/render-sprites.js` | **A-** | Sprites bien isolés, `drawSaleteDither` reproduit manuellement les silhouettes (dette fragile mais documentée), code lisible et autonome. |
@@ -65,30 +65,28 @@
 - Commentaires "RÔLE" / "POURQUOI" très bien tenus ([L19], [L34], [L60]).
 - `CARD_BG` factorisé ([L10]) → un seul point de modification pour le fond des cartes.
 - Justifications WCAG documentées sur `text2` ([L20-L28]).
-- Namespace `window.HG_CONFIG` ([L238-L243]) — bonne pratique conservée depuis la v3.02.
+- Namespace `window.HG_CONFIG` ([L238+]) — bonne pratique conservée depuis la v3.02. Les constantes gameplay sont désormais regroupées dans `HG_CONFIG.GAMEPLAY`.
 
 ### 1.3 Problèmes
 
-#### 🟡 MINEUR — Constantes XP/EN/HA non exposées dans `HG_CONFIG`
-- Lignes : [L196-L233], [L238-L243]
-- Description : `AI_MODEL`, `XP_HABITUDE`, `XP_NOTE`, `XP_MAX`, `PETALES_SNACK`, `POOP_*_MS`, `EN_*`, `HA_*` sont des `const` globales nues. Le namespace `HG_CONFIG` ([L238]) n'expose que `UI_PALETTES`, `GOTCHI_COLORS`, `ENV_THEMES`, `MEAL_WINDOWS`, `SNACKS_POOL`.
-- Risque : Pollution du `window`, collisions potentielles avec d'autres scripts ou extensions.
-- Suggestion : Étendre `HG_CONFIG` aux constantes gameplay, ou créer un second namespace `HG_GAMEPLAY`.
+#### ✅ RÉSOLU — Constantes XP/EN/HA non exposées dans `HG_CONFIG`
+- Résolu le 2026-04-30.
+- `AI_MODEL`, `XP_*`, `PETALES_SNACK`, `POOP_*`, `EN_*`, `HA_*`, `CYCLE_DEFAULT_DURATION` sont maintenant exposées dans `window.HG_CONFIG.GAMEPLAY` (sous-objet dédié). Les constantes UI restent à la racine de `HG_CONFIG`.
 
 #### 🟡 MINEUR — Quatre thèmes seulement (`pastel`, `automne`, `hiver`, `desert`)
 - Lignes : [L84-L155]
 - Description : Le code cible un sélecteur visible dans `index.html` ("Ambiance des univers") qui implique potentiellement plus d'options. Pas un bug — juste à noter.
 - Suggestion : RAS, simple constat documentaire.
 
-#### 🔵 STYLE — Magic number `28` pour cycle par défaut éparpillé
-- Lignes : `app.js` [L179, L212, L249] référencent `cycleDuree:28`, mais aucune constante `CYCLE_DEFAULT_DURATION` dans `config.js`.
-- Suggestion : Ajouter `const CYCLE_DEFAULT_DURATION = 28;`.
+#### ✅ RÉSOLU — Magic number `28` pour cycle par défaut éparpillé
+- Résolu le 2026-04-30.
+- Constante `CYCLE_DEFAULT_DURATION = 28` ajoutée dans `config.js` et exposée dans `HG_CONFIG.GAMEPLAY`. Les trois occurrences dans `app.js` (defs, getCyclePhase, migration m1) ont été remplacées.
 
 ### 1.4 Code mort / redondances
 - Aucune fonction. Le `card` répété 6× dans `UI_PALETTES` est déjà factorisé via `CARD_BG`.
 
 ### 1.5 Dette technique
-- Très faible. Le seul reproche structurel est l'incomplétude du namespace.
+- Très faible. Le namespace `HG_CONFIG.GAMEPLAY` est désormais complet. Seul point d'attention résiduel : `config.js` fait 286 lignes — en cas d'ajout futur de constantes, envisager de séparer les constantes visuelles (`UI_PALETTES`, `GOTCHI_COLORS`, `ENV_THEMES`) des constantes gameplay dans deux fichiers distincts.
 
 ---
 
@@ -565,7 +563,7 @@ Trois facteurs cumulés causaient le bug :
 | 6 | Centraliser les 14+ ouvertures directes sous `openModal()`/`openModalRaw()` | modules `ui-*.js` | M | Cohérence UX — scroll iOS déjà bloqué via lockScroll(), reste à unifier l'animation et le ✕ |
 | 7 | Extraire `getStageBaseY()` (déduplication 3×) | `js/render.js` | S | Lisibilité |
 | 8 | Extraire `getEffectiveEnv()` | `js/ui.js` go() + `js/app.js` | M | Source de vérité unique |
-| 9 | Étendre `HG_CONFIG` aux constantes XP/EN/HA/POOP | `data/config.js` | S | Hygiène globale |
+| 9 | ~~Étendre `HG_CONFIG` aux constantes XP/EN/HA/POOP~~ ✅ résolu 2026-04-30 | `data/config.js` | S | Hygiène globale |
 | 10 | Persister `tabletLastSeenDate` et `journalLocked` dans D | `js/ui.js` | S | Robustesse PWA |
 | 11 | Supprimer code mort `_bounceT`, `_lastPetTime`, `walkStep` | `js/render.js` | S | Lisibilité |
 | 12 | Extraire le debug-panel inline dans `js/debug.js` | `index.html` [L13-L98] | S | Allègement HTML |

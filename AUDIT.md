@@ -18,7 +18,7 @@
 |---|---|---|
 | `data/config.js` | **A** | Constantes pures, namespace `window.HG_CONFIG` propre, palettes documentées. `HG_CONFIG.GAMEPLAY` expose désormais toutes les constantes gameplay (XP, EN, HA, POOP, cycle). |
 | `js/app.js` | **B+** | Bien commenté, migrations versionnées, mais bootstrap éparpillé, `addEvent` mixe deux signatures, et plusieurs `setInterval` non clearables. |
-| `js/render.js` | **B-** | `p.draw()` monolithique de ~570 lignes, mélange logique métier (locomotion, badges, env selector) et rendu, helpers de hitbox dupliqués entre `touchStarted` et `touchMoved`. |
+| `js/render.js` | **B** | `p.draw()` découpé en 4 sous-fonctions extraites (2026-04-30) — orchestrateur ~85 lignes. Reste : helpers de hitbox dupliqués entre `touchStarted` et `touchMoved`, `walkX`/`walkPause` implicitement partagés avec `render-sprites.js`. |
 | `js/render-sprites.js` | **A-** | Sprites bien isolés, `drawSaleteDither` reproduit manuellement les silhouettes (dette fragile mais documentée), code lisible et autonome. |
 | `js/envs.js` | **B+** | Cohérent et factorisé (`tc`, `shadeN`), seul reproche : `drawActiveEnv` mélange parc/chambre/montagne dans une seule fonction de 130 lignes. |
 | `js/ui.js` | **C+** | 5192 lignes, 5 manières différentes d'ouvrir une modale (`openModal`, accès direct `mbox.innerHTML`, `etats-overlay` créé en JS, `tablet-overlay` HTML, agenda `shop-open`), code dupliqué massif sur les en-têtes de modales, gestion scroll-lock incohérente. |
@@ -168,11 +168,14 @@
 
 ### 3.3 Problèmes
 
-#### 🟠 IMPORTANT — `p.draw()` monolithique (~570 lignes)
-- Lignes : [L330-L896]
-- Description : Une seule fonction qui : initialise les couleurs, calcule la nuit, dessine ciel/env/props/poops/gotchi/HUD/badges/env-selector. Les sections sont commentées (`// 1.`, `// 2.`...) mais aucune extraction.
-- Risque : Modifier une zone (ex: HUD) impose de relire 500 lignes. Rendu forcément couplé à la frame courante (pas de cache).
-- Suggestion : Extraire `drawHUD(p)`, `drawBadges(p)`, `drawEnvSelector(p)`, `drawPropsLayer(p, slotFilter)` — réduire `p.draw` à un orchestrateur ~80 lignes.
+#### ✅ RÉSOLU — `p.draw()` monolithique (~570 lignes)
+- Résolu le 2026-04-30.
+- 4 sous-fonctions extraites, locales au module (pas d'exposition `window.*`) :
+  - `drawPropsLayer(p, g, envActif, mode)` — mode ∈ `'ambiance'|'fond'|'sol'|'fg'` — remplace 4 blocs `.filter().forEach()` quasi-identiques
+  - `drawHUD(p, g, h)` — bandeau translucide : pétales / icônes d'action / météo
+  - `drawBadges(p, g)` — capsules ⚡/✿ + triangle ▲ + exposition `window._badgeHitZone`
+  - `drawEnvSelector(p, g, nightRatio)` — cercle env actif + cercles flottants + `window._envLocked` / `window._envSelectorHits`
+- `p.draw()` réduit à un orchestrateur ~85 lignes. Les sous-fonctions sont insérées juste avant `p5s()`, commentaires RÔLE/POURQUOI/JSDoc présents sur chacune.
 
 #### 🟠 IMPORTANT — `getBaseY(stage)` dupliqué 3 fois
 - Lignes : [L522, L1031-L1034, L1092-L1095]
@@ -564,7 +567,7 @@ Trois facteurs cumulés causaient le bug :
 
 | N° | Titre | Fichiers | Effort | Bénéfice |
 |---|---|---|---|---|
-| 15 | Découper `p.draw()` en sous-fonctions thématiques | `js/render.js` [L330-L896] | L | Maintenabilité |
+| 15 | ✅ Découper `p.draw()` en sous-fonctions thématiques | `js/render.js` — `drawPropsLayer`, `drawHUD`, `drawBadges`, `drawEnvSelector` extraits (2026-04-30) | L | Maintenabilité |
 | 16 | ✅ Découper `ui.js` (5192 l) en modules par feature | `js/ui-core.js` (300 l), `js/ui-nav.js` (155 l), `js/ui-habs.js` (179 l), `js/ui-shop.js` (1047 l), `js/ui-ai.js` (918 l), `js/ui-journal.js` (342 l), `js/ui-agenda.js` (1204 l), `js/ui-settings.js` (1307 l) | L | Maintenabilité |
 | 17 | Migrer les inline-styles vers classes CSS | `js/ui.js` + `css/style.css` | L | Thématisation |
 | 18 | Extraire `drawParc/Chambre/Montagne` de `drawActiveEnv` | `js/envs.js` | M | Lisibilité |

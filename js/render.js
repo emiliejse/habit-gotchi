@@ -332,6 +332,309 @@ function triggerTouchReaction(sleeping) {
 
 /* ─── SYSTÈME 7 : L'INGÉNIERIE & LA BOUCLE PRINCIPALE p5.js ─────── */
 
+/* ──────────────────────────────────────────────────────────────────
+   SOUS-FONCTIONS DE RENDU — extraites de p.draw() pour lisibilité
+   Toutes locales au module : aucune exposition window.* nécessaire
+   car elles ne sont appelées que depuis p.draw().
+   ────────────────────────────────────────────────────────────────── */
+
+/**
+ * RÔLE : Dessine les props filtrées par type de slot.
+ * POURQUOI : Remplace 4 blocs .filter().forEach() quasi-identiques dans p.draw().
+ *            Un seul endroit à lire/modifier si la logique de filtrage évolue.
+ *
+ * @param {object} p         - instance p5.js
+ * @param {object} g         - window.D.g (état du gotchi)
+ * @param {string} envActif  - identifiant de l'env courant ('parc', 'chambre', 'montagne')
+ * @param {string} mode      - 'ambiance' | 'fond' | 'sol' | 'fg'
+ *   • 'ambiance' → type=ambiance, tous slots, animation drift/fall/float/sparkle
+ *   • 'fond'     → type=decor, slots A et B
+ *   • 'sol'      → type=decor, slot SOL
+ *   • 'fg'       → type=decor, slots C et D (premier plan, devant le Gotchi)
+ */
+function drawPropsLayer(p, g, envActif, mode) {
+  if (!g.props) return; // aucune prop à dessiner — sortie rapide
+
+  if (mode === 'ambiance') {
+    // RÔLE : Props flottantes (nuages, bulles, feuilles…) — animées et répétées 3×
+    g.props
+      .filter(pr => pr.actif && pr.type === 'ambiance' && (pr.env === envActif || !pr.env))
+      .forEach(prop => {
+        const def = getPropDef(prop.id);
+        if (!def?.pixels) return;
+        const motion = def.motion || 'drift';
+        for (let i = 0; i < 3; i++) {
+          let ax, ay;
+          if (motion === 'drift') {
+            ax = CS - ((p.frameCount * 2 + i * 70) % (CS + 20));
+            ay = 20 + i * 35 + Math.sin(p.frameCount * .05 + i) * 8;
+          } else if (motion === 'fall') {
+            ax = 20 + i * 70 + Math.sin(p.frameCount * .04 + i) * 5;
+            ay = (p.frameCount * 2 + i * 40) % 130;
+          } else if (motion === 'float') {
+            ax = 30 + i * 65 + Math.sin(p.frameCount * .06 + i) * 6;
+            ay = 110 - ((p.frameCount + i * 45) % 120);
+          } else if (motion === 'sparkle') {
+            if ((p.frameCount + i * 13) % 20 < 10) continue;
+            ax = 15 + i * 75 + Math.sin(p.frameCount * .1 + i) * 10;
+            ay = 15 + i * 35 + Math.cos(p.frameCount * .08 + i) * 8;
+          }
+          drawProp(p, def, ax, ay);
+        }
+      });
+
+  } else {
+    // RÔLE : Props de décor fixes — positionnées sur un slot PROP_SLOTS défini
+    // POURQUOI : 'fond' (A,B), 'sol' (SOL), 'fg' (C,D) partagent exactement la même
+    //            logique de dessin — seul le filtre sur pr.slot change.
+    const slotWhitelist = mode === 'fond' ? ['A', 'B']
+                        : mode === 'sol'  ? ['SOL']
+                        :                  ['C', 'D']; // fg
+
+    g.props
+      .filter(pr =>
+        pr.actif &&
+        pr.type === 'decor' &&
+        slotWhitelist.includes(pr.slot) &&
+        (pr.env === envActif || !pr.env)
+      )
+      .forEach(prop => {
+        const def = getPropDef(prop.id);
+        if (!def?.pixels) return;
+        const slot = PROP_SLOTS[prop.slot];
+        if (slot) drawProp(p, def, slot.x, slot.y);
+      });
+  }
+}
+
+/**
+ * RÔLE : Dessine le bandeau HUD en haut du canvas.
+ * POURQUOI : Isoler cette zone (~65 lignes) permet de modifier l'affichage
+ *            des pétales, météo ou icônes d'action sans parcourir tout p.draw().
+ *
+ * @param {object} p - instance p5.js
+ * @param {object} g - window.D.g
+ * @param {number} h - heure courante (0–23)
+ */
+function drawHUD(p, g, h) {
+  // ── Bandeau de fond semi-transparent ──
+  p.noStroke();
+  p.textStyle(p.NORMAL);
+  p.fill(0, 0, 0, 50);
+  p.rect(0, 0, CS, 26);
+
+  // ── ZONE GAUCHE : pétales ──────────────────────────────────────
+  p.fill(255);
+  p.textSize(11);
+  p.textAlign(p.LEFT, p.TOP);
+  p.drawingContext.globalAlpha = 1.0;
+  p.text('🌸 ' + (g.petales || 0), 5, 6);
+
+  // ── ZONE DROITE : météo ────────────────────────────────────────
+  if (window.meteoData?.temperature) {
+    const wcMeteo = window.meteoData?.weathercode;
+    const wind    = window.meteoData?.windspeed || 0;
+    let hudMeteo  = Math.round(window.meteoData.temperature) + '°C';
+    if (wcMeteo === 45 || wcMeteo === 48) hudMeteo += ' 😶‍🌫️';
+    if (wind > 20) hudMeteo += ' 🌬️';
+    p.textSize(hudMeteo.length > 9 ? 9 : 11);
+    p.textAlign(p.RIGHT, p.TOP);
+    p.drawingContext.globalAlpha = 1.0;
+    p.text(hudMeteo, CS - 5, 6);
+    p.textSize(11);
+  }
+
+  // ── ZONE CENTRE : 3 icônes d'action ───────────────────────────
+  // Disposition : 🛁 (gauche) — 🧹 (centre exact) — 🍽️ (droite)
+  // POURQUOI : Le balai (action la plus fréquente) est au centre exact du canvas.
+  //            🛁 et 🍽️ sont symétriques à ±28px de ce centre.
+  //            Opacité : 1.0 = action dispo, 0.25 = rien à faire (icône toujours visible).
+  p.textSize(20);
+  p.textAlign(p.CENTER, p.CENTER);
+
+  // 🧹 Balai (centre exact, x=70) : opaque si des crottes sont présentes
+  const hasPoops = (window.D.g.poops || []).length > 0;
+  p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.25;
+  p.text('🧹', 70, 14);
+
+  // 🛁 Bain (gauche du centre, x=100) : opaque si salete >= 5, estompé si propre
+  const salete = window.D?.g?.salete || 0;
+  p.drawingContext.globalAlpha = salete >= 5 ? 1.0 : 0.25;
+  p.text('🛁', 100, 14);
+
+  // 🍽️ Assiette (droite du centre, x=130) : opaque si repas disponible
+  const mealWin = (typeof getCurrentMealWindow === 'function') ? getCurrentMealWindow() : null;
+  const meals   = (typeof ensureMealsToday === 'function') ? ensureMealsToday() : null;
+  const mealAvailable = mealWin && meals && !meals[mealWin];
+  p.drawingContext.globalAlpha = mealAvailable ? 1.0 : 0.25;
+  p.text('🍽️', 130, 14);
+
+  p.drawingContext.globalAlpha = 1.0;
+
+  // RÔLE : Déclenche les particules de propreté si une crotte vient d'être nettoyée
+  // POURQUOI : window._cleanPositions est posé par app.js juste après le nettoyage —
+  //            on le lit ici (dans le draw) pour les faire apparaître au bon endroit.
+  if (window._cleanPositions?.length) {
+    window._cleanPositions.forEach(pos => {
+      for (let i = 0; i < 6; i++) {
+        spawnP(pos.x + (Math.random() - 0.5) * 20, pos.y + (Math.random() - 0.5) * 10, C.star);
+      }
+    });
+    window._cleanPositions = null;
+  }
+}
+
+/**
+ * RÔLE : Dessine les deux badges ⚡/✿ en bas-gauche + le triangle d'interactivité.
+ * POURQUOI : Les badges exposent window._badgeHitZone pour touchStarted — les isoler
+ *            ici permet de changer leur taille/position sans toucher à p.draw().
+ *
+ * @param {object} p - instance p5.js
+ * @param {object} g - window.D.g
+ */
+function drawBadges(p, g) {
+  const en = g.energy;
+  const ha = g.happiness;
+  const badgeY  = CS - 18; // position verticale : 18px du bas
+  const badgeH  = 13;      // hauteur de la capsule
+  const badgeR  = 3;       // rayon des coins arrondis
+  const badgePadX = 4;     // padding interne horizontal
+  const badgeW  = 30;      // largeur fixe identique pour les deux badges
+  const iconW   = 10;      // zone réservée à l'icône
+  const gap     = 3;       // espace fixe entre icône et chiffre
+  const gap2    = 3;       // espace entre les deux badges
+  // POURQUOI : p.CENTER sur Y + midY évite le décalage manuel qui variait selon textSize
+  const midY    = badgeY - 1 + badgeH / 2;
+
+  p.noStroke();
+  p.textStyle(p.NORMAL);
+  p.textSize(9);
+
+  // ── Badge ⚡ (énergie) ──
+  const enX = 4;
+  p.fill(0, 0, 0, 50);           // même alpha que le bandeau HUD supérieur
+  p.rect(enX, badgeY - 1, badgeW, badgeH, badgeR);
+  p.fill(255);
+  p.textAlign(p.LEFT, p.CENTER); // CENTER sur Y = centrage vertical automatique
+  p.text('⚡', enX + badgePadX, midY);
+  p.text(String(en), enX + badgePadX + iconW + gap, midY);
+
+  // ── Badge ✿ (bonheur) ──
+  const haX = enX + badgeW + gap2;
+  p.fill(0, 0, 0, 50);
+  p.rect(haX, badgeY - 1, badgeW, badgeH, badgeR);
+  p.fill(255);
+  p.textAlign(p.LEFT, p.CENTER);
+  p.text('✿', haX + badgePadX, midY);
+  p.text(String(ha), haX + badgePadX + iconW + gap, midY);
+
+  // ── Triangle ▲ interactivité ──
+  const triX = haX + badgeW + 4;
+  p.textSize(8);
+  p.fill(255, 255, 255, 160);
+  p.textAlign(p.LEFT, p.CENTER);
+  p.text('▲', triX, midY);
+
+  // Exposer la zone de hit pour touchStarted (en px canvas)
+  // POURQUOI : calculé ici pour rester synchronisé si les badges changent de taille
+  window._badgeHitZone = {
+    x1: 4,
+    x2: triX + 10,
+    y1: badgeY - 2,
+    y2: badgeY + badgeH + 2
+  };
+
+  p.textSize(11); // ← remet la taille par défaut après les badges
+}
+
+/**
+ * RÔLE : Dessine le sélecteur d'environnement en bas-droite du canvas.
+ * POURQUOI : Isoler ce composant (~85 lignes) permet de modifier son comportement
+ *            (nouveaux envs, animation de fondu) sans parcourir tout p.draw().
+ *
+ * @param {object} p          - instance p5.js
+ * @param {object} g          - window.D.g
+ * @param {number} nightRatio - ratio nuit 0→1 (calculé dans p.draw)
+ */
+function drawEnvSelector(p, g, nightRatio) {
+  // ── Géométrie (aligné sur le bas des badges) ──
+  // POURQUOI : badgeY = CS-18, bas des badges = badgeY - 1 + badgeH = CS - 6.
+  //            On aligne le bas du cercle sur ce même bas → centre = CS - 6 - envR.
+  const envR  = 13;                 // rayon = badgeH (13) → diamètre 26px = 2× hauteur badge
+  const envCX = CS - 4 - envR;     // centre X : margin droit 4px + rayon
+  const envCY = CS - 6 - envR;     // centre Y : bas aligné sur le bas des badges (CS - 6)
+  const envGap = envR * 2 + 5;     // espacement entre cercles empilés (diamètre + 5px)
+
+  // ── Mapping emoji par env ──
+  const ENV_EMOJI = { parc: '🌳', chambre: '🛏️', montagne: '⛰️' };
+  const activeEnv = g.activeEnv || 'parc';
+
+  // ── Détermination du mode nuit pour le sélecteur ──
+  // RÔLE : On bloque le sélecteur dès que nightRatio === 1 (à partir de 21h),
+  //        car l'env est forcé chambre et l'utilisatrice ne peut pas changer d'env.
+  // POURQUOI : sleeping (>= 22h) est trop tardif — à 21h l'env est déjà verrouillé.
+  const envLocked = nightRatio === 1;
+  window._envLocked = envLocked; // exposé pour touchStarted (pas accès à nightRatio là-bas)
+
+  // ── Gestion du fondu d'environnement (crossfade ~18 frames ≈ 0,3s) ──
+  // RÔLE : Incrémente le compteur de fondu à chaque frame si un changement d'env est en cours.
+  // POURQUOI : Transition douce — évite le saut brutal de décor.
+  const FADE_FRAMES = 18;
+  if (window._envFadeState) {
+    window._envFadeState.frames++;
+    if (window._envFadeState.frames >= FADE_FRAMES) {
+      window._envFadeState = null; // fondu terminé, on nettoie
+    }
+  }
+
+  // ── Réinitialise les zones de tap à chaque frame ──
+  window._envSelectorHits = [];
+
+  // ── Cercle principal (env actif, ou 💤 la nuit) ──
+  p.noStroke();
+  p.fill(0, 0, 0, 50);           // même fond semi-transparent que les badges
+  p.circle(envCX, envCY, envR * 2);
+  p.textAlign(p.CENTER, p.CENTER);
+  p.textSize(14);
+  p.fill(255);
+  // RÔLE : Affiche 💤 dès que l'env est verrouillé (nightRatio === 1, soit dès 21h).
+  const mainEmoji = envLocked ? '💤' : ENV_EMOJI[activeEnv] || '🌳';
+  p.text(mainEmoji, envCX, envCY);
+  p.textSize(11); // ← reset taille texte
+
+  // ── Zone de tap : n'exposer que si pas verrouillé ──
+  if (!envLocked) {
+    window._envSelectorHits.push({ env: '__main__', cx: envCX, cy: envCY, r: envR });
+  }
+
+  // ── Cercles flottants (seulement si ouvert et env non verrouillé) ──
+  if (window._envSelectorOpen && !envLocked) {
+    // RÔLE : Affiche les 2 environnements alternatifs au-dessus du cercle principal.
+    // POURQUOI : Empilés verticalement, même style, tap = changement d'env + fermeture.
+    const otherEnvs = ['parc', 'chambre', 'montagne'].filter(e => e !== activeEnv);
+
+    otherEnvs.forEach((env, i) => {
+      // i=0 → juste au-dessus du principal | i=1 → encore plus haut
+      const floatCY = envCY - envGap * (i + 1);
+
+      p.fill(0, 0, 0, 65);       // légèrement plus opaque pour se distinguer
+      p.circle(envCX, floatCY, envR * 2);
+
+      p.fill(255);
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(14);
+      p.text(ENV_EMOJI[env] || '?', envCX, floatCY);
+      p.textSize(11); // ← reset
+
+      window._envSelectorHits.push({ env, cx: envCX, cy: floatCY, r: envR });
+    });
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   FIN DES SOUS-FONCTIONS — p5s() commence ci-dessous
+   ────────────────────────────────────────────────────────────────── */
+
 const p5s = (p) => {
   p.setup = function() {
     p.createCanvas(CS, CS).parent('cbox');
@@ -398,32 +701,7 @@ const p5s = (p) => {
     // RÔLE : N'afficher que les ambiances assignées à l'env en cours.
     // POURQUOI : Chaque univers peut avoir ses propres ambiances depuis la v3.49.
     //            Rétrocompat : si env non défini (ancienne sauvegarde), on affiche quand même.
-    if (g.props) {
-      g.props.filter(pr => pr.actif && pr.type === 'ambiance' && (pr.env === envActif || !pr.env)).forEach(prop => {
-        const def = getPropDef(prop.id);
-        if (def && def.pixels) {
-          const motion = def.motion || 'drift';
-          for (let i = 0; i < 3; i++) {
-            let ax, ay;
-            if (motion === 'drift') {
-              ax = CS - ((p.frameCount * 2 + i * 70) % (CS + 20));
-              ay = 20 + i * 35 + Math.sin(p.frameCount * .05 + i) * 8;
-            } else if (motion === 'fall') {
-              ax = 20 + i * 70 + Math.sin(p.frameCount * .04 + i) * 5;
-              ay = (p.frameCount * 2 + i * 40) % 130;
-            } else if (motion === 'float') {
-              ax = 30 + i * 65 + Math.sin(p.frameCount * .06 + i) * 6;
-              ay = 110 - ((p.frameCount + i * 45) % 120);
-            } else if (motion === 'sparkle') {
-              if ((p.frameCount + i * 13) % 20 < 10) continue;
-              ax = 15 + i * 75 + Math.sin(p.frameCount * .1 + i) * 10;
-              ay = 15 + i * 35 + Math.cos(p.frameCount * .08 + i) * 8;
-            }
-            drawProp(p, def, ax, ay);
-          }
-        }
-      });
-    }
+    drawPropsLayer(p, g, envActif, 'ambiance');
 
     // 3. Détection proximité Gotchi/Crotte (calcul anticipé, dessin reporté après SOL)
     // RÔLE : On calcule ici si le gotchi est près d'une crotte, mais on ne dessine PAS encore.
@@ -439,20 +717,10 @@ const p5s = (p) => {
     // 4. Props Décor — Fond (A, B) — filtrées par environnement actif
     // RÔLE : N'afficher que les décors de fond assignés à l'env en cours.
     // POURQUOI : Feature multi-env v3.49. Rétrocompat : env absent → toujours visible.
-if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'A' || pr.slot === 'B') && (pr.env === envActif || !pr.env)).forEach(prop => {
-    const def = getPropDef(prop.id);
-    if (def?.pixels) { const slot = PROP_SLOTS[prop.slot]; if (slot) drawProp(p, def, slot.x, slot.y); }
-  });
-}
+    drawPropsLayer(p, g, envActif, 'fond');
 
 // 5. Props Décor — SOL (devant le décor, DERRIÈRE le Gotchi) — filtrées par env
-if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && pr.slot === 'SOL' && (pr.env === envActif || !pr.env)).forEach(prop => {
-    const def = getPropDef(prop.id);
-    if (def?.pixels) { const slot = PROP_SLOTS['SOL']; if (slot) drawProp(p, def, slot.x, slot.y); }
-  });
-}
+    drawPropsLayer(p, g, envActif, 'sol');
 
 // 5b. Dessin des Cacas — APRÈS le sol, AVANT le Gotchi
 // RÔLE : Les crottes sont dessinées ici pour qu'elles apparaissent devant les objets du fond
@@ -583,12 +851,7 @@ if (window.shakeTimer > 0) window.shakeTimer--;
     if (wc === 45 || wc === 48) drawFog(p);
 
     // 9. Props Décor — Premier plan (C, D) — DEVANT le Gotchi — filtrées par env
-if (D.g.props) {
-  D.g.props.filter(pr => pr.actif && pr.type === 'decor' && (pr.slot === 'C' || pr.slot === 'D') && (pr.env === envActif || !pr.env)).forEach(prop => {
-    const def = getPropDef(prop.id);
-    if (def?.pixels) { const slot = PROP_SLOTS[prop.slot]; if (slot) drawProp(p, def, slot.x, slot.y); }
-  });
-}
+    drawPropsLayer(p, g, envActif, 'fg');
 
     // 10. Réactions et Particules
     p.drawingContext.globalAlpha = 1.0; 
@@ -675,231 +938,16 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
       p.rect(0, 0, p.width, p.height);
     }
 
-    // 12. HUD (Bandeau supérieur) + 13. Badges énergie/bonheur
+    // 12–14. HUD, Badges, Sélecteur d'environnement
     // RÔLE : Masqués en mode compact (tama réduit sur les onglets secondaires).
     // POURQUOI : En mode compact, le canvas est réduit à ~110px de large — le HUD et les
     //            badges n'ont plus assez de place et visuellement ils ne servent à rien
     //            puisque l'utilisatrice n'est pas sur l'onglet Gotchi.
     const isCompact = document.getElementById('console-top')?.classList.contains('compact');
     if (!isCompact) {
-
-    // 12. HUD (Bandeau supérieur)
-    // RÔLE : Bandeau translucide en haut du canvas avec 3 zones : pétales | actions | météo
-    // POURQUOI : Répartition symétrique sur 200px — chaque zone a son espace dédié.
-    p.noStroke();
-    p.textStyle(p.NORMAL);
-    p.fill(0, 0, 0, 50);
-    p.rect(0, 0, CS, 26);
-
-    // ── ZONE GAUCHE : pétales ──────────────────────────────────────
-    p.fill(255);
-    p.textSize(11);
-    p.textAlign(p.LEFT, p.TOP);
-    p.drawingContext.globalAlpha = 1.0;
-    p.text('🌸 ' + (g.petales || 0), 5, 6);
-
-    // ── ZONE DROITE : météo ────────────────────────────────────────
-    if (window.meteoData?.temperature) {
-      const wcMeteo = window.meteoData?.weathercode;
-      const wind    = window.meteoData?.windspeed || 0;
-      let hudMeteo  = Math.round(window.meteoData.temperature) + '°C';
-      if (wcMeteo === 45 || wcMeteo === 48) hudMeteo += ' 😶‍🌫️';
-      if (wind > 20) hudMeteo += ' 🌬️';
-      p.textSize(hudMeteo.length > 9 ? 9 : 11);
-      p.textAlign(p.RIGHT, p.TOP);
-      p.drawingContext.globalAlpha = 1.0;
-      p.text(hudMeteo, CS - 5, 6);
-      p.textSize(11);
-    }
-
-    // ── ZONE CENTRE : 3 icônes d'action ───────────────────────────
-    // Disposition : 🛁 (gauche) — 🧹 (centre exact) — 🍽️ (droite)
-    // POURQUOI : Le balai (action la plus fréquente) est au centre exact du canvas.
-    //            🛁 et 🍽️ sont symétriques à ±28px de ce centre.
-    //            Taille 16 identique à l'ancien HUD.
-    //            Opacité : 1.0 = action dispo, 0.25 = rien à faire (icône toujours visible).
-    p.textSize(20);
-    p.textAlign(p.CENTER, p.CENTER);
-
-    // 🧹 Balai (centre exact, x=70) : opaque si des crottes sont présentes
-    const hasPoops = (window.D.g.poops || []).length > 0;
-    p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.25;
-    p.text('🧹', 70, 14);
-
-        // 🛁 Bain (gauche du centre, x=100) : opaque si salete >= 5, estompé si propre
-    const salete = window.D?.g?.salete || 0;
-    p.drawingContext.globalAlpha = salete >= 5 ? 1.0 : 0.25;
-    p.text('🛁', 100, 14);
-
-    // 🍽️ Assiette (droite du centre, x=130) : opaque si repas disponible
-    const mealWin = (typeof getCurrentMealWindow === 'function') ? getCurrentMealWindow() : null;
-    const meals   = (typeof ensureMealsToday === 'function') ? ensureMealsToday() : null;
-    const mealAvailable = mealWin && meals && !meals[mealWin];
-    p.drawingContext.globalAlpha = mealAvailable ? 1.0 : 0.25;
-    p.text('🍽️', 130, 14);
-
-    p.drawingContext.globalAlpha = 1.0;
-
-    if (window._cleanPositions && window._cleanPositions.length) {
-      window._cleanPositions.forEach(pos => {
-        for (let i = 0; i < 6; i++) {
-          spawnP(pos.x + (Math.random() - 0.5) * 20, pos.y + (Math.random() - 0.5) * 10, C.star);
-        }
-      });
-      window._cleanPositions = null;
-    }
-
-    // 13. BADGES ÉNERGIE + BONHEUR (bas-gauche du canvas)
-    // RÔLE : Affiche deux capsules compactes ⚡N et ✿N en bas à gauche,
-    //        toujours visibles, cliquables pour ouvrir la modale d'état.
-    // POURQUOI : Dessinés dans le canvas pour suivre le rétrécissement/agitation du tama.
-    {
-      const en = g.energy;
-      const ha = g.happiness;
-      const badgeY = CS - 18;       // position verticale : 18px du bas
-      const badgeH = 13;            // hauteur de la capsule
-      const badgeR = 3;             // rayon des coins arrondis
-      const badgePadX = 4;          // padding interne horizontal
-
-      p.noStroke();
-      p.textStyle(p.NORMAL);
-      p.textSize(9);
-
-      // POURQUOI : largeur fixe identique pour les deux badges + icône/chiffre positionnés
-      //            séparément avec gap fixe, pour que ⚡ et ✿ n'affectent pas l'alignement.
-      const badgeW   = 30;           // largeur fixe identique pour les deux badges
-      const iconW    = 10;           // zone réservée à l'icône
-      const gap      = 3;            // espace fixe entre icône et chiffre
-      const gap2     = 3;            // espace entre les deux badges
-      // Centre vertical du badge — textAlign CENTER sur Y centre le texte dans la capsule
-      // POURQUOI : p.CENTER sur Y + midY évite le décalage manuel qui variait selon textSize
-      const midY     = badgeY - 1 + badgeH / 2;
-
-      // ── Badge ⚡ (énergie) ──
-      const enX = 4;
-      p.fill(0, 0, 0, 50);          // même alpha que le bandeau HUD supérieur
-      p.rect(enX, badgeY - 1, badgeW, badgeH, badgeR);
-      p.fill(255);
-      p.textAlign(p.LEFT, p.CENTER); // CENTER sur Y = centrage vertical automatique
-      p.text('⚡', enX + badgePadX, midY);
-      p.text(String(en), enX + badgePadX + iconW + gap, midY);
-
-      // ── Badge ✿ (bonheur) ──
-      const haX = enX + badgeW + gap2;
-      p.fill(0, 0, 0, 50);
-      p.rect(haX, badgeY - 1, badgeW, badgeH, badgeR);
-      p.fill(255);
-      p.textAlign(p.LEFT, p.CENTER);
-      p.text('✿', haX + badgePadX, midY);
-      p.text(String(ha), haX + badgePadX + iconW + gap, midY);
-
-      // ── Triangle ▲ interactivité ──
-      const triX = haX + badgeW + 4;
-      p.textSize(8);
-      p.fill(255, 255, 255, 160);
-      p.textAlign(p.LEFT, p.CENTER);
-      p.text('▲', triX, midY);
-
-      // Exposer la zone de hit pour touchStarted (en px canvas)
-      // POURQUOI : calculé ici pour rester synchronisé si les badges changent de taille
-      window._badgeHitZone = {
-        x1: 4,
-        x2: triX + 10,
-        y1: badgeY - 2,
-        y2: badgeY + badgeH + 2
-      };
-
-      p.textSize(11); // ← remet la taille par défaut après les badges
-    }
-
-    // ── 14. Sélecteur d'environnement canvas ──────────────────────────
-    // RÔLE : Dessine un petit cercle emoji en bas à droite représentant l'env actif.
-    //        Au tap, 2 cercles supplémentaires apparaissent pour choisir un autre env.
-    //        La nuit (sleeping), affiche 💤 et désactive toute interaction.
-    // POURQUOI : Accès rapide à l'env sans passer par l'inventaire.
-    //            Même margin (4px) et hauteur double des badges pour rester discret.
-    {
-      // ── Géométrie (aligné sur le bas des badges) ──
-      // POURQUOI : badgeY = CS-18, bas des badges = badgeY - 1 + badgeH = CS - 6.
-      //            On aligne le bas du cercle sur ce même bas → centre = CS - 6 - envR.
-      const envR   = 13;                   // rayon = badgeH (13) → diamètre 26px = 2× hauteur badge
-      const envCX  = CS - 4 - envR;        // centre X : margin droit 4px + rayon
-      const envCY  = CS - 6 - envR;        // centre Y : bas aligné sur le bas des badges (CS - 6)
-      const envGap = envR * 2 + 5;         // espacement entre cercles empilés (diamètre + 5px)
-
-      // ── Mapping emoji par env ──
-      const ENV_EMOJI = { parc: '🌳', chambre: '🛏️', montagne: '⛰️' };
-      const activeEnv = window.D.g.activeEnv || 'parc';
-
-      // ── Détermination du mode nuit pour le sélecteur ──
-      // RÔLE : On bloque le sélecteur dès que nightRatio === 1 (à partir de 21h),
-      //        car l'env est forcé chambre et l'utilisatrice ne peut pas changer d'env.
-      // POURQUOI : sleeping (>= 22h) est trop tardif — à 21h l'env est déjà verrouillé.
-      const envLocked = nightRatio === 1;
-      window._envLocked = envLocked; // exposé pour touchStarted (pas accès à nightRatio là-bas)
-
-      // ── Gestion du fondu d'environnement (crossfade ~18 frames ≈ 0,3s) ──
-      // RÔLE : Interpole progressivement entre l'ancien et le nouvel env pendant le changement.
-      // POURQUOI : Transition douce — évite le saut brutal de décor.
-      const FADE_FRAMES = 18;
-      if (window._envFadeState) {
-        window._envFadeState.frames++;
-        if (window._envFadeState.frames >= FADE_FRAMES) {
-          window._envFadeState = null; // fondu terminé, on nettoie
-        }
-        // NB : l'interpolation visuelle du fond est gérée par drawActiveEnv via envActif
-        // Ici on laisse le changement immédiat de D.g.activeEnv faire son effet dans le draw suivant.
-      }
-
-      // ── Réinitialise les zones de tap à chaque frame ──
-      window._envSelectorHits = [];
-
-      // ── Cercle principal (env actif, ou 💤 la nuit) ──
-      p.noStroke();
-      p.fill(0, 0, 0, 50);           // même fond semi-transparent que les badges
-      p.circle(envCX, envCY, envR * 2);
-      p.textAlign(p.CENTER, p.CENTER);
-      p.textSize(14);
-      p.fill(255);
-      // RÔLE : Affiche 💤 dès que l'env est verrouillé (nightRatio === 1, soit dès 21h).
-      // POURQUOI : Cohérent avec la logique qui force la chambre — pas la peine d'attendre 22h.
-      const mainEmoji = envLocked ? '💤' : ENV_EMOJI[activeEnv] || '🌳';
-      p.text(mainEmoji, envCX, envCY);
-      p.textSize(11); // ← reset taille texte
-
-      // ── Zone de tap : n'exposer que si pas verrouillé (nuit = inerte) ──
-      if (!envLocked) {
-        window._envSelectorHits.push({ env: '__main__', cx: envCX, cy: envCY, r: envR });
-      }
-
-      // ── Cercles flottants (seulement si ouvert et env non verrouillé) ──
-      if (window._envSelectorOpen && !envLocked) {
-        // RÔLE : Affiche les 2 environnements alternatifs au-dessus du cercle principal.
-        // POURQUOI : Empilés verticalement, même style, tap = changement d'env + fermeture.
-        const otherEnvs = ['parc', 'chambre', 'montagne'].filter(e => e !== activeEnv);
-
-        otherEnvs.forEach((env, i) => {
-          // i=0 → juste au-dessus du principal | i=1 → encore plus haut
-          const floatCY = envCY - envGap * (i + 1);
-
-          // Fond du cercle flottant
-          p.fill(0, 0, 0, 65);       // légèrement plus opaque pour se distinguer
-          p.circle(envCX, floatCY, envR * 2);
-
-          // Emoji de l'env alternatif
-          p.fill(255);
-          p.textAlign(p.CENTER, p.CENTER);
-          p.textSize(14);
-          p.text(ENV_EMOJI[env] || '?', envCX, floatCY);
-          p.textSize(11); // ← reset
-
-          // Exposer la zone de tap
-          window._envSelectorHits.push({ env, cx: envCX, cy: floatCY, r: envR });
-        });
-      }
-    }
-    // ── Fin sélecteur d'environnement ─────────────────────────────────
-
+      drawHUD(p, g, h);              // 12. Bandeau pétales / actions / météo
+      drawBadges(p, g);              // 13. Capsules ⚡/✿ + zone de hit badges
+      drawEnvSelector(p, g, n);     // 14. Cercle env actif + cercles flottants
     } else {
       // Mode compact : désactiver la zone de tap des badges
       window._badgeHitZone = null;

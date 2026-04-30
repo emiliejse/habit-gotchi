@@ -32,26 +32,63 @@
    §16 copyBilanSemaine()     — copie le bilan dans le presse-papier
    ============================================================ */
 
-function startThinkingAnim(elementId, nomGotchi) {
+// RÔLE : Animation "en train de penser" pendant un appel IA.
+// POURQUOI : Donne vie au Gotchi pendant l'attente — les phrases varient selon le contexte
+//            (thought, soutien, bilan, prop) pour rester cohérentes avec la situation.
+//            Le paramètre `context` est optionnel — fallback sur des phrases génériques.
+function startThinkingAnim(elementId, nomGotchi, context) {
   const el = document.getElementById(elementId);
   if (!el) return null;
 
-  const phrases = [
+  // RÔLE : Centrage systématique pendant l'animation.
+  el.style.textAlign = 'center';
+
+  const phrasesByContext = {
+    thought: [
+      `💭 ${nomGotchi} cherche ses mots`,
+      `une idée germe`,
+      `quelque chose me traverse`,
+      `je t'observe depuis ce matin`,
+    ],
+    soutien: [
+      `💭 ${nomGotchi} écoute`,
+      `je suis là`,
+      `je lis ce que tu m'as dit`,
+      `je prends le temps d'y répondre`,
+    ],
+    bilan: [
+      `💭 ${nomGotchi} repasse la semaine`,
+      `je rassemble tout ça`,
+      `je regarde ce qu'on a vécu`,
+      `je cherche les bons mots`,
+    ],
+    prop: [
+      `💭 ${nomGotchi} imagine quelque chose`,
+      `une idée prend forme`,
+      `je crée`,
+      `presque prêt·e`,
+    ],
+  };
+
+  const phrases = phrasesByContext[context] || [
     `💭 ${nomGotchi} réfléchit`,
-    `✨ ${nomGotchi} cherche les mots`,
-    `🌱 ${nomGotchi} prépare quelque chose`,
-    `💜 ${nomGotchi} est là`,
+    `je cherche les mots`,
+    `je prépare quelque chose`,
+    `je suis là`,
   ];
-  let frame = 0, dots = 0;
-  el.textContent = phrases[0] + '...';
+
+  // Ellipses animées en 3 temps — plus élégant que les points répétés
+  const ellipses = [' ·', ' ··', ' ···'];
+  let frame = 0, dot = 0;
+  el.textContent = phrases[0] + ellipses[0];
 
   const interval = setInterval(() => {
-    dots = (dots + 1) % 4;
-    if (dots === 0) frame = (frame + 1) % phrases.length;
-    el.textContent = phrases[frame] + '.'.repeat(dots || 3);
-  }, 400);
+    dot = (dot + 1) % 3;
+    if (dot === 0) frame = (frame + 1) % phrases.length;
+    el.textContent = phrases[frame] + ellipses[dot];
+  }, 500);
 
-  return interval; // stocker pour pouvoir l'arrêter
+  return interval;
 }
 
 function stopThinkingAnim(interval) {
@@ -155,7 +192,7 @@ async function askClaude() {
   }
 
   /* ── Animation de chargement ── */
-  const animThought = startThinkingAnim('claude-msg', g.name);
+  const animThought = startThinkingAnim('claude-msg', g.name, 'thought');
 
   /* ── Construction du prompt ── */
   const P   = window.PERSONALITY;
@@ -270,7 +307,7 @@ async function acheterPropClaude() {
   /* ── Animation de chargement ── */
   const el = document.getElementById('boutique-contenu');
   if (el) el.innerHTML = `<p style="text-align:center;font-size:var(--fs-sm);padding:20px" id="prop-loading">💭</p>`;
-  const animProp = startThinkingAnim('prop-loading', window.D.g.name);
+  const animProp = startThinkingAnim('prop-loading', window.D.g.name, 'prop');
 
   /* ── Construction du prompt ── */
   const nomsInventaire = (D.g.props || []).map(p => `${p.nom} (${p.type})`);
@@ -683,7 +720,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   /* ── Animation de chargement ── */
   const bubbleId   = 'typing-' + Date.now();
   chat.innerHTML  += `<div class="chat-bubble-system" id="${bubbleId}">💭</div>`;
-  const animSoutien = startThinkingAnim(bubbleId, window.D.g.name);
+  const animSoutien = startThinkingAnim(bubbleId, window.D.g.name, 'soutien');
   chat.scrollTop   = chat.scrollHeight;
 
   /* ── Construction du contexte ── */
@@ -862,7 +899,7 @@ if (semaineEnCours) {
     return;
   }
 
-  const animBilan = startThinkingAnim('claude-summary', g.name);
+  const animBilan = startThinkingAnim('claude-summary', g.name, 'bilan');
 
   /* ── Construction du prompt ── */
   const ctx = window.AI_CONTEXTS;

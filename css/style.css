@@ -721,6 +721,16 @@ body {
 
 #claude-card #claude-msg {
   font-style: italic;
+  text-align: center;
+}
+
+/* RÔLE : Centrage du message d'attente IA pendant le bilan et les props.
+   POURQUOI : startThinkingAnim() pose text-align:center en JS, mais le reset
+              CSS au stop peut l'effacer — on le fixe aussi en statique ici. */
+#claude-summary,
+#prop-loading {
+  text-align: center;
+  font-style: italic;
 }
 
 .inp {

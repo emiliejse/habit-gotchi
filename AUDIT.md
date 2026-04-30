@@ -246,42 +246,41 @@
 ## 4. `js/render-sprites.js`
 
 ### 4.1 Vue d'ensemble
-620 lignes. Sprites pixel art : `drawDither` (épuisement), `drawSaleteDither` (boue), `drawAccessoires` (pixel-perfect), `drawEgg`, `drawBaby`, `drawTeen`, `drawAdult` (avec poses idle alternées).
+1409 lignes. Sprites pixel art : `drawDither` (épuisement), `drawSaleteDither` (boue), `drawAccessoires` (pixel-perfect), `drawEgg`, `drawBaby`, `drawTeen`, `drawAdult` (avec poses idle alternées). Moteur DSL `renderSprite()` ajouté (session 2026-04-30) — tous les sprites migrent vers des définitions déclaratives `LAYERS_*`.
 
 ### 4.2 Points forts
-- Documentation très soignée des paramètres ([L40-L51]).
-- Sprites paramétrés (cx, cy, sl, en, ha) → réutilisables.
-- `_adultPose` ([L539-L591]) : système de poses idle élégant, pondéré.
-- Retour `{ topY, eyeY, neckY }` exposé pour `drawAccessoires` — anchoring propre.
+- Documentation très soignée des paramètres.
+- Sprites paramétrés (cx, cy, sl, en, ha) → interfaces externes inchangées.
+- `_adultPose` : système de poses idle conservé hors-DSL, machine d'état exécutée dans `drawAdult()` avant `renderSprite()`.
+- Retour `{ topY, eyeY, neckY }` exposé pour `drawAccessoires` — anchoring propre, inchangé.
+- **DSL micro-moteur `renderSprite()` (§0)** : nouveau Gotchi ou stade = nouvelle définition `LAYERS_*`, zéro duplication de logique de dessin. Thème saisonnier = palette alternative passée en paramètre.
 
 ### 4.3 Problèmes
 
 #### ✅ RÉSOLU — `drawSaleteDither` reproduit à la main les silhouettes des sprites (2026-04-30)
-- Lignes d'origine : [L82-L128]
-- Description : Le code redessine manuellemnt la silhouette via `ditherRect` → la boue ne suivait pas automatiquement si un sprite changeait.
-- Solution : Option (b) implémentée — masque alpha généré off-screen via `p.createGraphics()`. Deux nouvelles fonctions privées ajoutées : `_drawSilhouetteOffscreen(g, stage, breathX)` dessine la silhouette du stade sur un canvas off-screen ; `_getSaleteMask(p, stage, breathX)` lit les pixels non-vides et retourne le tableau `[{rx, ry}]`, mis en cache par clé `stage_breathX`. `drawSaleteDither` itère ce masque et applique le damier. Le cache est invalide si breathX change (au plus 3 entrées par stade). `g.remove()` libère la mémoire GPU après lecture.
-- Bénéfice : Si un sprite est modifié, mettre à jour `_drawSilhouetteOffscreen` suffit — la boue suit automatiquement. Plus de risque de désynchronisation silencieuse.
+- Solution : masque alpha généré off-screen via `p.createGraphics()` — `_drawSilhouetteOffscreen` + `_getSaleteMask`. Inchangé après migration DSL : la silhouette off-screen utilise ses propres coordonnées absolues, indépendantes de `cxB`.
 
 #### ✅ RÉSOLU — `dejaDessines` Set créé à chaque frame dans `drawAccessoires` (2026-04-30)
-- Lignes d'origine : [L265]
-- Solution : `const _dejaDessinesObj = {}` déclaré une seule fois au niveau module (§2, avant `drawAccessoires`). En début de chaque appel, les clés existantes sont supprimées via `for (const k in _dejaDessinesObj) delete _dejaDessinesObj[k]` — coût O(nb ancrages actifs, ≤ 3). Les `.has()` / `.add()` remplacés par `_dejaDessinesObj[ancrage]` / `_dejaDessinesObj[ancrage] = true`. Plus d'allocation Set par frame.
+- Solution : `_dejaDessinesObj = {}` module-level, réinitialisé manuellement.
 
 #### ✅ RÉSOLU — `expr.moodTimer > 0 && expr.lastMood === 'X'` répété ~7 fois (2026-04-30)
-- Lignes d'origine : [L440, L479, L492, L497, L503, L583, L622, L635, L640, L646]
-- Solution : Helper `function isMood(name)` ajouté en §4b (avant `drawTeen`). Lit `window._expr` directement. Toutes les occurrences dans `drawTeen` et `drawAdult` remplacées par `isMood('joie')`, `isMood('faim')`, `isMood('surprise')`. Les deux variables locales `isSurprise` conservées (lisibilité des blocs `if/else if` yeux) mais construites via le helper. Modification centralisée : si la logique de `moodTimer` change, une seule ligne à toucher.
+- Solution : helper `isMood(name)` en §4b, utilisé dans les `when` des calques DSL.
 
 #### ✅ RÉSOLU — `walkPause` lu par référence implicite (2026-04-30)
-- Lignes d'origine : [L595]
-- Solution : Cf. render.js — `window._walk.pause` utilisé à la place. Couplage implicite supprimé.
+- Solution : `window._walk.pause` utilisé à la place.
 
-#### 🔵 STYLE — Indentation alternée 2/4 espaces
-- Lignes : passim — `drawTeen`/`drawAdult` mélangent les deux.
+#### ✅ RÉSOLU — Sprites écrits manuellement en px() sans DSL (2026-04-30)
+- Solution : migration DSL complète — voir session ci-dessous.
+
+#### ✅ RÉSOLU — Indentation alternée 2/4 espaces (2026-04-30)
+- Résolu par réécriture des blocs `drawTeen`/`drawAdult` dans le DSL.
 
 ### 4.4 Code mort / redondances
 - Aucune fonction morte détectée.
 
 ### 4.5 Dette technique
-- Les sprites sont écrits "manuellement" en suite de `px()` — si on voulait introduire de nouvelles variantes, il faudrait dupliquer toute la fonction. Pas de DSL ni de format pixel.
+- `_drawSilhouetteOffscreen` doit être maintenue à jour si la géométrie corps/oreilles/bras change dans un `LAYERS_*`. La vérification est documentée en session ci-dessous.
+- Les calques `when` des bouches répètent `!isMood('joie') && !isMood('faim') && !isMood('surprise')` — factorisation possible en helper `isNormalMood()` si de nouvelles humeurs sont ajoutées.
 
 ---
 
@@ -594,6 +593,42 @@ Trois facteurs cumulés causaient le bug :
 
 ---
 
+
+### Session — 2026-04-30 : Refactoring DSL render-sprites.js
+
+**Objectif** : Remplacer les sprites écrits manuellement en `px()` par un micro-DSL objet, pour permettre l'ajout facile de nouveaux stades, variantes visuelles et thèmes de couleur.
+
+**Fichier modifié** : `js/render-sprites.js`
+
+**Ce qui a été fait** :
+
+**§0 — Moteur `renderSprite(p, layers, cx, cy, params, palette)`**
+- `_resolveFill(p, fillKey, palette)` : résout les clés `'C.xxx'` vers la palette courante, ou passe les hex littérales directement. Palette remplaçable pour les thèmes saisonniers.
+- `renderSprite()` : itère les calques, évalue `layer.when(params)`, applique `layer.alpha` via `globalAlpha`, résout la couleur (`fill` ou `fillFn`), dessine les rects via `px()`.
+- Extensions successives du moteur : `rawDxFn/rawDyFn` (offsets dynamiques temporels), `rawW/rawH` (dimensions sub-PX), `fillFn` (couleurs dynamiques type `lerpColor`), `yFn` (positions Y dynamiques type `mouthBaseY`).
+- `window.renderSprite` exposé sur `window` — convention projet.
+
+**Définitions DSL ajoutées** :
+- `LAYERS_EGG` : 3 calques — corps, reflets, craquelures (wobble temporal via `rawDxFn`).
+- `LAYERS_BABY` : 12 calques — corps, highlights, yeux (2 états), reflets yeux, joues, poop, bouche (3 états), pieds, bras tombés.
+- `LAYERS_TEEN` : 20 calques — corps, highlights, oreilles (2), yeux (4 états), reflets (2), poop, joues (2), 7 états de bouche, bras (2 poses), pieds.
+- `LAYERS_ADULT` : 27 calques — corps, highlights, oreilles (2), yeux (4 états), reflets (2), poop, joues (2), 7 états de bouche, bras tombés, bras levés, 5 poses idle, 3 états pieds.
+
+**Fonctions réécrites** (interfaces externes inchangées) :
+- `drawEgg(p, cx, cy)` — délègue à `renderSprite(LAYERS_EGG, ...)`.
+- `drawBaby(p, cx, cy, sl, en, ha)` — délègue à `renderSprite(LAYERS_BABY, ...)`.
+- `drawTeen(p, cx, cy, sl, en, ha)` — calcule `cxB` (cx effectif avec breathX), `mouthBaseY`, `pulse`, puis délègue.
+- `drawAdult(p, cx, cy, sl, en, ha)` — exécute la machine d'état pose idle, calcule `cxB`, `stepPhase`, `mouthBaseY`, `pulse`, puis délègue.
+
+**Hors-DSL conservés** :
+- `drawDither()` (damier épuisement), `drawAccessoires()`, `drawSaleteDither()` — interfaces inchangées.
+- Machine d'état `_adultPose` (timer/cooldown/tirage aléatoire) — exécutée dans `drawAdult()` avant `renderSprite()`.
+
+**`_drawSilhouetteOffscreen`** : non modifiée — vérification §6 confirme que les coordonnées absolues silhouette sont indépendantes de `cxB`. Aucune désynchronisation possible avec la boue.
+
+**Bénéfice** : Nouveau Gotchi = nouveau fichier `LAYERS_*` + appel à `renderSprite()`. Thème = palette alternative passée en 6e argument. Variante visuelle = nouveau calque avec `when`. Zéro duplication de logique de dessin.
+
+---
 
 ### Session — 2026-04-30 : Fix drawSaleteDither — masque off-screen
 

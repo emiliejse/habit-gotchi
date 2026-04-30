@@ -41,14 +41,23 @@ const C = {
 
 const PX = 5, CS = 200;
 const GOTCHI_OFFSET_Y = 20;
+// RÔLE : Dimensions de la zone de tap du Gotchi (hitbox tactile).
+// POURQUOI : Ces valeurs étaient écrites en dur dans touchStarted sous forme de nombres magiques
+//            (±26, ±35, +30). Les regrouper ici les rend lisibles et modifiables en un seul endroit.
+//   rX           → demi-largeur horizontale de la hitbox (couvre le corps)
+//   rY           → demi-hauteur verticale (tête + corps, pas les pattes)
+//   centerOffsetY → décalage Y du centre de la hitbox par rapport à la base du sprite
+const GOTCHI_HITBOX = { rX: 26, rY: 35, centerOffsetY: 30 };
 let bounceT = 0, blinkT = 0, blink = false;
-window._bounceT = 0;
+// window._bounceT = 0  ← SUPPRIMÉ (code mort identifié v3.02 et v4.5) :
+//   La variable globale _bounceT n'était jamais lue — c'est bounceT (local) qui est utilisé partout.
 window.particles = [];
 window.touchReactions = []; 
 window.eatAnim = { active: false, timer: 0, emoji: '' };
-let walkX = 100;      
-let walkDir = 1;        
-let walkStep = 0; 
+let walkX = 100;
+let walkDir = 1;
+// let walkStep = 0  ← SUPPRIMÉ (code mort identifié v4.5) :
+//   walkStep était incrémenté dans la boucle de marche mais jamais lu nulle part.
 let walkTarget = 100;   // destination en X
 let walkPause  = 0;     // frames d'attente avant le prochain déplacement  
 window.triggerGotchiBounce = function() { window._jumpTimer = 20; };
@@ -68,7 +77,11 @@ window.triggerEvoAnim = function(from, to) {
 // POURQUOI : Accès rapide et intuitif, cohérent avec le style pixel art du canvas.
 window._envSelectorOpen  = false;  // true = les 2 cercles flottants sont visibles
 window._envFadeState     = null;   // { from:'parc', to:'chambre', frames:0 } pendant le fondu
-window._envSelectorHits  = [];     // zones de tap calculées à chaque frame (tableau d'objets {env,cx,cy,r})
+window._envSelectorHits  = [];     // zones de tap calculées uniquement quand l'état change
+// RÔLE : Valeurs mémorisées pour éviter de reconstruire _envSelectorHits à chaque frame.
+// POURQUOI : Quand le sélecteur est fermé ET que l'env n'a pas changé, le tableau est déjà
+//            valide — on peut le réutiliser directement (économie GC ~12 allocs/s).
+window._envSelectorCache = { env: null, open: null }; // dernière combinaison calculée
 
 // Variations de bras de l'adulte (animations idle)
 window._adultPose = {
@@ -594,8 +607,21 @@ function drawEnvSelector(p, g, nightRatio) {
     }
   }
 
-  // ── Réinitialise les zones de tap à chaque frame ──
-  window._envSelectorHits = [];
+  // ── Recalcul des zones de tap uniquement si l'état a changé ──
+  // RÔLE : Évite d'allouer + remplir un nouveau tableau à chaque frame (12 fois/s).
+  // POURQUOI : _envSelectorHits est lu dans touchStarted — il suffit qu'il soit à jour
+  //            quand activeEnv ou _envSelectorOpen change, pas à chaque draw().
+  const cacheKey_env  = activeEnv;
+  const cacheKey_open = window._envSelectorOpen;
+  const cacheHit = window._envSelectorCache.env  === cacheKey_env
+                && window._envSelectorCache.open === cacheKey_open;
+  if (!cacheHit) {
+    // On reconstruit le tableau depuis zéro et on mémorise la combinaison.
+    window._envSelectorHits = [];
+    window._envSelectorCache.env  = cacheKey_env;
+    window._envSelectorCache.open = cacheKey_open;
+  }
+  // Si cacheHit === true, on réutilise _envSelectorHits tel quel (pas de réallocation).
 
   // ── Cercle principal (env actif, ou 💤 la nuit) ──
   p.noStroke();
@@ -609,9 +635,13 @@ function drawEnvSelector(p, g, nightRatio) {
   p.text(mainEmoji, envCX, envCY);
   p.textSize(11); // ← reset taille texte
 
-  // ── Zone de tap : n'exposer que si pas verrouillé ──
-  if (!envLocked) {
-    window._envSelectorHits.push({ env: '__main__', cx: envCX, cy: envCY, r: envR });
+  // ── Zones de tap : calculées seulement si le cache est invalidé ──
+  // RÔLE : On n'appelle .push() que lors d'un vrai changement d'état.
+  //        Entre deux frames identiques, _envSelectorHits est réutilisé tel quel.
+  if (!cacheHit) {
+    if (!envLocked) {
+      window._envSelectorHits.push({ env: '__main__', cx: envCX, cy: envCY, r: envR });
+    }
   }
 
   // ── Cercles flottants (seulement si ouvert et env non verrouillé) ──
@@ -633,7 +663,10 @@ function drawEnvSelector(p, g, nightRatio) {
       p.text(ENV_EMOJI[env] || '?', envCX, floatCY);
       p.textSize(11); // ← reset
 
-      window._envSelectorHits.push({ env, cx: envCX, cy: floatCY, r: envR });
+      // N'ajoute au tableau que si le cache est invalidé (évite les doublons)
+      if (!cacheHit) {
+        window._envSelectorHits.push({ env, cx: envCX, cy: floatCY, r: envR });
+      }
     });
   }
 }
@@ -777,12 +810,17 @@ if (!sleeping && ha >= HA_HIGH && en >= HA_HIGH) {  // très heureux + plein d'�
 const XMIN = 35, XMAX = CS - 35;
 
 if (!sleeping) {
-  walkStep++;
+  // RÔLE : Calcule la vitesse de déplacement selon les jauges (énergie + bonheur).
+  // POURQUOI : Ternaire enchaîné → sélection d'une valeur parmi N cas mutuellement exclusifs,
+  //            idiome standard en JS. Lisible car chaque cas tient sur une ligne.
   const speed = (ha >= HA_HIGH && en >= HA_HIGH)  ? 1.4  // vive (≥ 4/5)
               : (ha >= HA_SLOW && en >= HA_WALK)  ? 0.7  // normale (ha≥2.5, en≥3)
               : (en >= EN_TILT)                   ? 0.35 // lente (en≥2)
               : 0.12;                                     // traîne (en < 2)
 
+  // RÔLE : Gestion de la pause entre deux déplacements.
+  // POURQUOI : if/else → logique avec effets de bord (décrémentation, mutation de walkTarget).
+  //            On évite les ternaires ici car le bloc a plusieurs instructions par branche.
   if (walkPause > 0) {
     walkPause--;
     if (walkPause === 0) {
@@ -808,7 +846,8 @@ if (!sleeping) {
 //            est en mouvement. Avant, il accédait à walkPause directement via la scope
 //            globale — couplage implicite qui casserait si on passe en modules ES.
 //            Avec window._walk, la dépendance est explicite et documentée.
-window._walk = { x: walkX, dir: walkDir, pause: walkPause, step: walkStep, target: walkTarget };
+window._walk = { x: walkX, dir: walkDir, pause: walkPause, target: walkTarget };
+// Note : walkStep supprimé de _walk — variable morte (jamais lue, v4.5).
 window._gotchiX = walkX; // ← gardé pour la rétrocompatibilité (hitbox touch, etc.)
 
 const cx = walkX;
@@ -1109,10 +1148,10 @@ if (!window._gotchiActif) return true;
     // Puis on centre la hitbox sur le CORPS entier du Gotchi, pas juste la tête.
     const by = getStageBaseY(window.D.g.stage); // RÔLE : Y de base du Gotchi — centralisé dans getStageBaseY()
 
-    // Centre du corps = by + OFFSET_Y (pour compenser le bobY) + ~30px (milieu du corps)
-    // Hitbox : ±26 en X (largeur corps) et ±35 en Y (tête + corps, PAS au-dessus)
-    const gotchiCenterY = by + GOTCHI_OFFSET_Y + 30;
-    const hit = Math.abs(mx - walkX) < 26 && Math.abs(my - gotchiCenterY) < 35;
+    // Centre du corps = by + OFFSET_Y (pour compenser le bobY) + centerOffsetY (milieu du corps)
+    // Hitbox définie par GOTCHI_HITBOX (constante en haut de fichier)
+    const gotchiCenterY = by + GOTCHI_OFFSET_Y + GOTCHI_HITBOX.centerOffsetY;
+    const hit = Math.abs(mx - walkX) < GOTCHI_HITBOX.rX && Math.abs(my - gotchiCenterY) < GOTCHI_HITBOX.rY;
 
 
     if (hit) {
@@ -1129,8 +1168,9 @@ if (!window._gotchiActif) return true;
     } else {
       // Le jour : compteur de caresses rapprochées
       window._petCount = (window._petCount || 0) + 1;
-      window._lastPetTime = Date.now();
-      
+      // window._lastPetTime ← SUPPRIMÉ (code mort v4.5) : écrit mais jamais relu nulle part.
+      //   Le timing des caresses est géré via _petResetTimer (setTimeout 2s) — Date.now() inutile.
+
       // Reset du compteur après 2s sans caresse
       clearTimeout(window._petResetTimer);
       window._petResetTimer = setTimeout(() => { window._petCount = 0; }, 2000);

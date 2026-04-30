@@ -10,6 +10,8 @@
 >
 > **Session bugs mineurs render.js 2026-04-30** : 3 bugs mineurs résolus dans `render.js` — `_lastTapTime` encapsulé dans `window._tapState { lastTime }`, tableau étoiles extrait en `const STARS` (~L178), commentaire `darkAlpha` reformulé (overlay dessiné AVANT le HUD, pas le contraire).
 >
+> **Session nettoyage render.js 2026-04-30** : 5 corrections dans `render.js` — (1) `_envSelectorHits` mis en cache : tableau reconstruit uniquement quand `activeEnv` ou `_envSelectorOpen` change (`window._envSelectorCache` ajouté) ; (2) magic numbers hitbox remplacés par `const GOTCHI_HITBOX = { rX:26, rY:35, centerOffsetY:30 }` ; (3) commentaires RÔLE/POURQUOI ajoutés pour justifier ternaire vs if/else dans le bloc marche ; (4) code mort supprimé : `window._bounceT` (jamais lu, remplacé par commentaire explicatif), `walkStep` (incrémenté mais jamais lu — variable + `window._walk.step` supprimés), `window._lastPetTime` (écrit mais jamais relu — ligne supprimée, commentaire en place).
+>
 > **Vérification version** : `window.APP_VERSION = 'v4.5'` ([app.js L54](js/app.js#L54)) — ⚠️ la consigne mentionnait `'hg-v4.5'` mais le code stocke uniquement `'v4.5'`. Le `CACHE_VERSION` de `sw.js` ([L7](sw.js#L7)) est aligné `'v4.5'`. Cohérence OK entre les deux fichiers, mais préfixe `hg-` non utilisé.
 
 ---
@@ -204,27 +206,38 @@
 - Lignes d'origine : [L362-L365, L660-L664]
 - Solution : Commentaire reformulé. Le texte "épargne le HUD" (qui laissait entendre que l'overlay évitait le HUD) est remplacé par une explication claire : l'overlay est dessiné AVANT le HUD, donc le HUD est rendu par-dessus et reste lumineux. Aucune modification de logique — comportement inchangé.
 
-#### 🟡 MINEUR — `_envSelectorHits` reconstruit chaque frame
-- Lignes : [L843, L860, L885]
-- Description : Un tableau alloué et rempli à chaque draw même quand le sélecteur est fermé → léger churn GC.
-- Suggestion : Recalculer uniquement quand `D.g.activeEnv` ou `_envSelectorOpen` change.
+#### ✅ RÉSOLU — `_envSelectorHits` reconstruit chaque frame (2026-04-30)
+- Lignes d'origine : [L843, L860, L885]
+- Solution : `window._envSelectorCache = { env: null, open: null }` ajouté en init. Dans `drawEnvSelector()`, guard `cacheHit` calculé avant le reset du tableau — si `activeEnv` et `_envSelectorOpen` sont identiques à la frame précédente, on réutilise `_envSelectorHits` tel quel. Les `.push()` sont protégés par `if (!cacheHit)` pour éviter les doublons en mode cache valide.
 
-#### 🟡 MINEUR — Hitbox magic numbers `±26`, `±35`, `gotchiCenterY = by + 30`
-- Lignes : [L1037-L1039]
-- Suggestion : `const GOTCHI_HITBOX = { rX:26, rY:35, centerOffsetY:30 }`.
+#### ✅ RÉSOLU — Hitbox magic numbers `±26`, `±35`, `gotchiCenterY = by + 30` (2026-04-30)
+- Lignes d'origine : [L1037-L1039]
+- Solution : `const GOTCHI_HITBOX = { rX: 26, rY: 35, centerOffsetY: 30 }` ajouté juste après `GOTCHI_OFFSET_Y` en tête de fichier, avec commentaire RÔLE/POURQUOI. `touchStarted` utilise désormais `GOTCHI_HITBOX.rX`, `GOTCHI_HITBOX.rY`, `GOTCHI_HITBOX.centerOffsetY`.
 
-#### 🔵 STYLE — Mélange `if (...)` et chaînes ternaires sans cohérence
-- Lignes : [L494-L497]
-- Description : Cascade de ternaires pour `speed` puis `if/else` pour walkPause juste après.
+#### ✅ RÉSOLU — Mélange `if (...)` et chaînes ternaires sans cohérence (2026-04-30)
+- Lignes d'origine : [L494-L497]
+- Solution : Commentaires RÔLE/POURQUOI ajoutés sur les deux blocs pour justifier le choix de style : ternaire pour `speed` (sélection d'une valeur parmi N cas sans effets de bord), `if/else` pour `walkPause` (bloc multi-instructions avec mutations). Pas de réécriture — les deux idiomes sont intentionnels et désormais documentés.
 
 ### 3.4 Code mort / redondances
-- `window._bounceT = 0` ([L46]) : déclaré globalement mais le code utilise `bounceT` local ([L44]) — `_bounceT` est mort (déjà identifié en v3.02, **non résolu**).
-- `_lastPetTime` ([L1056]) : écrit mais jamais lu. Dette mineure (déjà identifié en v3.02, **non résolu**).
-- `walkStep` ([L51, L493]) : incrémenté mais jamais lu — code mort.
+- ✅ `window._bounceT = 0` ([L46]) : SUPPRIMÉ (2026-04-30) — jamais lu, `bounceT` local utilisé à la place. Remplacé par un commentaire explicatif en place.
+- ✅ `_lastPetTime` ([L1056]) : SUPPRIMÉ (2026-04-30) — écrit mais jamais relu. Le timing des caresses est géré via `_petResetTimer` (setTimeout 2s). Ligne retirée, commentaire en place.
+- ✅ `walkStep` ([L51, L493]) : SUPPRIMÉ (2026-04-30) — variable déclarée + incrémentée mais jamais lue. Variable retirée, `walkStep++` retiré de la boucle, `window._walk.step` retiré de l'objet partagé. Commentaires en place.
 
 ### 3.5 Dette technique
 - `p.draw` à découper. ✅ Partiellement résolu (2026-04-30) : découpé en 4 sous-fonctions (`drawPropsLayer`, `drawHUD`, `drawBadges`, `drawEnvSelector`).
 - ✅ Couplage implicite avec `render-sprites.js` via variables module — RÉSOLU (2026-04-30) : `window._walk` exposé explicitement.
+
+### 3.6 Évolutions souhaitées
+
+#### 💡 FEATURE — Exagérer l'effet de respiration pour rendre le Gotchi plus vivant
+- Fichiers : `render.js` (~L100), `render-sprites.js` (~L99, L116, L274, L414)
+- Contexte : `getBreath(p, speed = 0.025)` produit une oscillation 0→1 via `Math.sin(frameCount * speed)`. Dans les sprites, cette valeur est réduite à `breathX = Math.round(breath * 2 - 1)` soit ±1 pixel uniquement — effet très subtil.
+- `_expr.breathPhase` est déclaré dans `window._expr` mais jamais utilisé — champ prévu initialement pour moduler la vitesse selon l'état émotionnel, non implémenté (dette résiduelle).
+- Pistes d'implémentation :
+  - Augmenter l'amplitude : `breath * 4 - 2` → ±2px au lieu de ±1px (changement minimal, effet immédiat)
+  - Varier la vitesse selon l'état : `speed` plus élevée si fatigué·e ou excité·e (utiliser `_expr.breathPhase` enfin)
+  - Ajouter un léger gonflement vertical en plus du latéral (modifier `cy` d'un pixel sur le cycle)
+  - Différencier sommeil (respiration lente, ample) vs éveil actif (rapide, petite)
 
 ---
 

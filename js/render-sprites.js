@@ -10,7 +10,8 @@
      - render.js     → px(), C, PX, blink, getBreath(), getCheekPulse(),
                         getPropDef(), drawProp(), walkX, window._expr,
                         window._adultPose, window._gotchiNearPoop,
-                        window._walk  (objet { x, dir, pause, step, target })
+                        window._walk  (objet { x, dir, pause, target })
+                        // Note : .step supprimé de _walk (variable morte, v4.5 — seul .pause est utilisé ici)
 
    NAVIGATION RAPIDE :
    §1  drawDither()       — effet épuisement style Gameboy

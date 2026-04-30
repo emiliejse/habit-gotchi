@@ -781,7 +781,7 @@ if (habEl) floatXP(habEl.closest('.hab'));
 hygiene: { msg: "Tu prends soin de toi… ça me rend joyeux·se ✨", anim: 'sparkle', body: 'bounce',
   spawn: () => { for (let i=0;i<12;i++) { const a=(i/12)*Math.PI*2; window.spawnP?.(gx+Math.cos(a)*25, gy+Math.sin(a)*25, i%2===0?'#fff8b0':'#ffe0f0'); } }
 },
-intel: { msg: "Tu apprends… je sens mon monde s'agrandir 📚", anim: 'flower', body: 'shake',
+intel: { msg: "Tu apprends… je sens mon monde s'agrandir 📚", anim: 'flower', body: 'nod',
   spawn: () => {
     for (let i=0;i<12;i++) window.particles?.push({
       x: gx+(Math.random()-.5)*50,
@@ -793,7 +793,7 @@ intel: { msg: "Tu apprends… je sens mon monde s'agrandir 📚", anim: 'flower'
     });
   }
 },
-serene: { msg: "Tu as médité… je me sens plus calme aussi 💜", anim: 'sparkle', body: 'bounce',
+serene: { msg: "Tu as médité… je me sens plus calme aussi 💜", anim: 'sparkle', body: 'nod',
   spawn: () => { for (let i=0;i<14;i++) window.particles?.push({x:gx+Math.sin(i*.6)*20,y:gy+i*2,vx:Math.sin(i)*.3,vy:-0.5-i*.06,life:45,c:i%3===0?'#c8a0e8':i%3===1?'#f0c0d8':'#e8d8ff'}); }
 },
     };
@@ -810,6 +810,10 @@ serene: { msg: "Tu as médité… je me sens plus calme aussi 💜", anim: 'spar
     });
     if (reaction.body === 'bounce') window.triggerGotchiBounce?.();
     if (reaction.body === 'shake')  window.triggerGotchiShake?.();
+    // RÔLE : Hochement de tête pour les catégories de réflexion/soin (intel, serene).
+    // POURQUOI : Le bounce convient à l'énergie (nutri, hydra) et le shake à l'effort (sport).
+    //            Le hochement est plus doux, pensif — adapté à la méditation et l'apprentissage.
+    if (reaction.body === 'nod')    window.animator?.trigger('hochement');
     reaction.spawn?.(); //
     // ✨ Réaction d'expression : sourire large + joues rouges
 if (typeof window.triggerExpr === 'function') {

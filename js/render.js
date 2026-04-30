@@ -261,6 +261,36 @@ const ANIM_DEFS = {
       yFn: (elapsed) => -(Math.sin(elapsed / 8 * Math.PI) * 18)
     }
   },
+
+  // ── Frisson — tremblement froid déclenché par température < 5°C ou fin de bain ──
+  // RÔLE : Le Gotchi frissonne : oscillation ±1PX en X, alternance tous les 2 frames.
+  // POURQUOI : Carré discret (Math.floor(elapsed/2) % 2) plutôt que sinus flottant —
+  //            l'effet pixelisé est plus lisible à cette petite résolution.
+  //            Amplitude 1PX = 5px canvas, exactement 1 case pixel art.
+  //            18 frames ≈ 1.5s à 12fps — assez long pour être visible, pas agaçant.
+  frisson: {
+    stages: '*',
+    duration: 18,
+    bodyOffset: {
+      // RÔLE : Alterne +PX et -PX toutes les 2 frames — carré discret sur grille PX.
+      xFn: (elapsed) => (Math.floor(elapsed / 2) % 2 === 0 ? PX : -PX),
+    }
+  },
+
+  // ── Hochement de tête — approbation après validation d'habitude ──
+  // RÔLE : 2 cycles de descente +PX / remontée 0, sur 16 frames (~1.3s à 12fps).
+  // POURQUOI : Un seul axe Y, discret (Math.floor), snappé PX — lisible pixel art.
+  //            Déclenché en complément de bounce/shake dans habReactions (type 'nod').
+  //            Distinct du saut : descend au lieu de monter — "hochement" de tête.
+  hochement: {
+    stages: ['teen', 'adult'],
+    duration: 16,
+    bodyOffset: {
+      // RÔLE : 2 cycles sur 16f — chaque cycle fait descendre le Gotchi de 1PX puis revenir.
+      // POURQUOI : (elapsed % 8) < 4 → 1ère moitié du cycle = descente, 2e moitié = remontée.
+      yFn: (elapsed) => (elapsed % 8 < 4 ? PX : 0),
+    }
+  },
 };
 
 // RÔLE : Moteur léger qui gère la pile des animations actives.
@@ -1280,6 +1310,31 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
   }
 }
 
+// RÔLE : Déclencheur frisson automatique par froid extérieur.
+// POURQUOI : Si la météo indique < 5°C et que le Gotchi est éveillé, il frissonne
+//            visuellement toutes les ~60 frames (≈5 sec à 12fps) avec cooldown.
+//            Le frisson est aussi déclenché par la pluie froide (code météo ≥ 61).
+{
+  const g = window.D?.g;
+  const h = typeof hr === 'function' ? hr() : new Date().getHours();
+  const isSleeping = g && (h >= 22 || h < 7);
+  const temp = window.meteoData?.temperature;
+  const wcode = window.meteoData?.weathercode;
+  const isCold = typeof temp === 'number' && temp < 5;
+  const isRainingCold = typeof wcode === 'number' && wcode >= 61 && typeof temp === 'number' && temp < 10;
+  window._frissonCooldown = (window._frissonCooldown || 0);
+  if (!isSleeping && (isCold || isRainingCold)) {
+    window._frissonCooldown--;
+    if (window._frissonCooldown <= 0) {
+      window._frissonCooldown = 72; // ~6 sec à 12fps avant le prochain frisson
+      window.animator?.trigger('frisson');
+    }
+  } else {
+    // Hors condition froide → on laisse le cooldown diminuer sans déclencher
+    if (window._frissonCooldown > 0) window._frissonCooldown--;
+  }
+}
+
     while (window.celebQueue.length) {
       window.celebQueue.shift();
       for (let i = 0; i < 15; i++) {
@@ -1568,6 +1623,11 @@ if (!window._gotchiActif) return true;
               C.star
             );
           }
+
+          // RÔLE : Frisson post-bain — le Gotchi vient d'être frotté avec de l'eau froide.
+          // POURQUOI : Réaction physique réaliste et amusante qui donne du feedback visuel
+          //            à la fin du bain. Déclenché une fois, immédiatement après propre.
+          window.animator?.trigger('frisson');
         }
 
         save();

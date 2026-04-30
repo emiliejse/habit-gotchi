@@ -162,8 +162,8 @@ Animations cataloguées :
 | Nom | Stade | Déclencheur | Description visuelle | Effort | Dépendances |
 |---|---|---|---|---|---|
 | ~~Bâillement~~ ✅ FAIT 2026-04-30 | baby/teen/adult | idle ~3min (`_idleFrames ≥ YAWN_THRESHOLD`) | bouche "O" 2×2PX + yeux-fermes, 18f (~1.5s) | — | calques `bouche-baillement` + condition `yeux-fermes`/`yeux-ouverts` sur `isMood('baillement')` |
-| Frisson | tous | temperature<5 ou bain | oscille ±1px X tous les 2f, 18f | faible | nouveau shiverX |
-| Hochement de tête | teen/adult | habitude validée | `cy +PX` puis 0, 2 cycles 16f | faible | `bodyOffset.yFn` |
+| ~~Frisson~~ ✅ FAIT 2026-04-30 | tous | `meteoData.temperature<5` ou `weathercode≥61 && temp<10` (p.draw, cooldown 72f) + fin de bain (`salete===0`) | `bodyOffset.xFn` : `Math.floor(elapsed/2)%2` alternance ±PX, 18f | — | `animator.trigger('frisson')`, `_frissonCooldown` |
+| ~~Hochement de tête~~ ✅ FAIT 2026-04-30 | teen/adult | `habReactions.intel` + `habReactions.serene` (`body:'nod'`) | `bodyOffset.yFn` : `elapsed%8<4 ? PX : 0`, 2 cycles 16f | — | `animator.trigger('hochement')` dans app.js dispatch |
 | Sourcil interrogatif | teen/adult | nouvelle prop équipée | 1px noir au-dessus œil + "?" 18f | faible | calque conditionnel |
 | Regard latéral suivi crotte | tous | `_gotchiNearPoop` | iris décale 1 PX vers la crotte | faible | lecture `poop.x - cx` |
 | Petits pas tap-tap | baby | en mouvement | alterne calques pieds toutes les 3f | faible | dupliquer pattern teen/adult |

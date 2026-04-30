@@ -18,6 +18,7 @@ const ASSETS = [
   './css/animate.min.css',
 
   // Scripts
+  './js/debug.js',
   './data/config.js',
   './js/app.js',
   './js/render.js',

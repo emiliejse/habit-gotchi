@@ -1142,7 +1142,9 @@ details.settings-section.danger > summary { color: var(--danger); }
    les taps même sur mobile (p5.js attachant ses listeners au document, pas au canvas).
    POURQUOI : Sans cet attribut, un tap sur le fond semi-transparent pouvait traverser
               jusqu'aux éléments HTML de #dynamic-zone derrière la modale. */
-.modal {
+/* POURQUOI : sélecteur #modal (id) plutôt que .modal (class) — élément unique dans le DOM,
+   l'id suffit. La class="modal" a été retirée du HTML (index.html) pour éviter la redondance. */
+#modal {
   position: fixed; inset: 0; background: rgba(56, 48, 74, 0.4); backdrop-filter: blur(3px);
   z-index: 300; display: flex; align-items: center; justify-content: center; padding: 16px;
   pointer-events: auto;

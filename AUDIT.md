@@ -19,6 +19,8 @@
 > **Session bugs mineurs envs.js 2026-04-30** : 5 corrections dans `envs.js` — (1) `drawActiveEnv` découpé en `drawParc`, `drawChambre`, `drawMontagne` + dispatcher `switch` (130 lignes → orchestrateur ~8 lignes + 3 fonctions lisibles) ; (2) magic numbers `drawFog` remplacés par `FOG_LAYERS_GROUND = 5` et `FOG_LAYERS_HIGH = 4` ; (3) `tc()` : fallback `Number(n)` ajouté + valeur par défaut `n=0` pour rétrocompat booléen ; (4) couleur hardcodée `'#304028'` dans `drawTreeTheme` remplacée par `tc(n, colLeaf)` / `tc(n, colLeaf2)` — cohérent avec le reste du système nuit ; (5) convention `p.rect` vs `px()` documentée dans un bloc commentaire au-dessus du dispatcher.
 >
 > **Session bugs modales 2026-04-30** : vérification des 5 bugs signalés — état réel constaté et traité. (1) `ouvrirSnack()` dans `ui-settings.js` : 4 ouvertures directes `modal.style.display + mbox.innerHTML` migrées vers `openModal()`. (2) `ouvrirAgenda()` dans `ui-agenda.js` : migré vers `openModalRaw()`, classes CSS `shop-open`/`agenda-open` conservées et appliquées après. (3) `modalLocked` documenté comme partiellement résolu (reset uniquement via ✕ soutien — risque résiduel crash documenté). (4) Escape sur `USER_CONFIG` documenté comme trusted. (5) `go()` : logique commentée, `getEffectiveEnv()` reporté Phase 2.
+>
+> **Session bugs index.html 2026-04-30** : 4 corrections dans `index.html` et fichiers associés — (1) Debug panel inline (~85 l) extrait dans `js/debug.js`, remplacé par `<script src="js/debug.js">` dans `<head>`, ajouté dans `ASSETS` de `sw.js` ; (2) SRI hash sha384 ajouté sur p5.js CDN + `crossorigin="anonymous"` (hash vérifié par curl/openssl) ; (3) masquage `#btn-menu-agenda` déplacé de `DOMContentLoaded` inline vers `initUI()` dans `ui-settings.js` — guard `typeof` ajouté ; (4) `class="modal"` retiré de `#modal` dans `index.html`, sélecteur `.modal` → `#modal` dans `style.css`.
 
 ---
 
@@ -34,7 +36,7 @@
 | `js/render-sprites.js` | **A** | Sprites bien isolés, `drawSaleteDither` utilise désormais un masque off-screen (auto-synchronisé avec les sprites), code lisible et autonome. |
 | `js/envs.js` | **A** | `drawActiveEnv` découpé en 3 fonctions + dispatcher (2026-04-30). `tc()` robuste, magic numbers nommés, couleur nuit unifiée via `shadeN`. |
 | `js/ui-*.js` (8 modules) | **B+** | `ui.js` splitté en 8 modules (2026-04-30). `ouvrirSnack()` et `ouvrirAgenda()` migrés vers `openModal()`/`openModalRaw()` — lockScroll unifié. `_getEffectiveEnv()` extrait dans `ui-nav.js` — source de vérité unique pour `activeEnv` (2026-04-30). `modalLocked` : guard bootstrap ajouté (2026-04-30). Reste : overlays séparés intentionnels documentés. |
-| `index.html` | **B** | Ordre des scripts correct, debug-panel inline volumineux (~85 l), p5.js CDN sans `integrity`, masquage features RDV/Cycle dans script séparé en bas. |
+| `index.html` | **A-** | Debug panel extrait dans `js/debug.js` (2026-04-30). SRI sha384 ajouté sur p5.js CDN (2026-04-30). Masquage agenda déplacé dans `initUI()` (2026-04-30). `class="modal"` retiré — `#modal` CSS unifié. Reste : pas de CSP (Phase 3). |
 | `sw.js` | **C+** | ✅ `render-sprites.js` ajouté dans `ASSETS` (fix session 2026-04-30). Reste : stratégie cache-first sans `response.ok` (cache des 404), pas de gestion des updates côté client. |
 
 ### Top 3 problèmes critiques
@@ -462,44 +464,48 @@
 ## 7. `index.html`
 
 ### 7.1 Vue d'ensemble
-635 lignes. Squelette PWA : meta tags, debug-panel inline (~85 l), structure DOM (#console-top, #dynamic-zone, panneaux), menu-overlay, modal, toast, tablet-overlay, scripts. Inclut un script `data/config.js` puis 4 JS dans `js/`, puis ui.js, puis enregistrement SW.
+~560 lignes. Squelette PWA : meta tags, `<script src="js/debug.js">` (1 ligne), structure DOM (#console-top, #dynamic-zone, panneaux), menu-overlay, modal, toast, tablet-overlay, scripts. Inclut `data/config.js` puis 8 modules `js/ui-*.js`, puis enregistrement SW.
 
 ### 7.2 Points forts
 - Meta PWA complets ([L7-L114]) : viewport, theme-color, apple-touch-icon, splash, manifest.
-- Ordre des scripts respecté ([L606-L611]) — `render-sprites.js` après `envs.js`, `ui.js` en dernier.
+- Ordre des scripts respecté — `render-sprites.js` après `envs.js`, `ui-nav.js` en dernier.
 - Structure DOM commentée par "SYSTEM" ([L137, L186, L294]).
+- p5.js CDN protégé par SRI hash sha384 + `crossorigin="anonymous"` (2026-04-30).
+- debug-panel extrait dans `js/debug.js` (2026-04-30) — HTML allégé, script cacheable.
 
 ### 7.3 Problèmes
 
-#### 🟠 IMPORTANT — Debug panel inline (~85 lignes) dans `<head>`
-- Lignes : [L13-L98]
-- Description : Le code de capture d'erreurs et d'affichage du panneau debug est inline. Pas chargé en cache, présent en prod.
-- Risque : Pollution du HTML, hooking d'erreurs qui peut masquer des erreurs réelles si toggle activé en prod.
-- Suggestion : Extraire en `js/debug.js` — chargé conditionnellement.
+#### ✅ RÉSOLU — Debug panel inline (~85 lignes) dans `<head>`
+- Résolu le 2026-04-30.
+- Extrait dans `js/debug.js`. Remplacé par `<script src="js/debug.js"></script>` (1 ligne).
+- `js/debug.js` ajouté dans `ASSETS` de `sw.js` — désormais mis en cache.
+- Pour désactiver en prod : retirer la balise `<script src="js/debug.js">` suffit.
 
-#### 🟠 IMPORTANT — p5.js CDN sans `integrity` ni `crossorigin`
-- Lignes : [L131]
-- Description : `<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>` sans SRI hash.
-- Risque : Si CDN compromis, exécution de JS arbitraire avec accès à la clé API Anthropic.
-- Suggestion : Ajouter `integrity="sha384-..."` `crossorigin="anonymous"`.
+#### ✅ RÉSOLU — p5.js CDN sans `integrity` ni `crossorigin`
+- Résolu le 2026-04-30.
+- Hash SRI sha384 ajouté : `integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"`.
+- `crossorigin="anonymous"` ajouté. Hash vérifié via `curl | openssl dgst -sha384 -binary | base64`.
 
-#### 🟡 MINEUR — Masquage features dans script séparé en bas
-- Lignes : [L614-L624]
-- Description : Le DOMContentLoaded en bas masque le bouton agenda si `!showCycle && !showRDV`. Logique métier qui devrait être dans `ui.js`.
-- Suggestion : Déplacer dans `initUI()`.
+#### ✅ RÉSOLU — Masquage features dans script séparé en bas
+- Résolu le 2026-04-30.
+- Le `DOMContentLoaded` inline qui masquait `#btn-menu-agenda` si `!showCycle && !showRDV` a été déplacé dans `initUI()` (`ui-settings.js`, fin de fonction). Guard `typeof` ajouté sur `showCycle`/`showRDV`.
+- Le script inline dans `index.html` remplacé par un commentaire explicatif.
 
-#### 🟡 MINEUR — `id="modal"` mais classe `class="modal"` — l'ID est suffisant
-- Lignes : [L575]
-- Suggestion : Choisir l'un ou l'autre, pas les deux.
+#### ✅ RÉSOLU — `id="modal"` mais classe `class="modal"` — l'ID est suffisant
+- Résolu le 2026-04-30.
+- `class="modal"` retiré de l'élément `#modal` dans `index.html`.
+- Sélecteur CSS `.modal` remplacé par `#modal` dans `style.css` (une seule occurrence — L1145).
+- Commentaire ajouté dans le CSS pour expliquer le choix.
 
 #### 🔵 STYLE — Beaucoup d'`id` à valeur unique (`#g-name`, `#xp-l`, etc.)
 - Description : OK pour une SPA mono-instance.
 
 ### 7.4 Code mort / redondances
-- `<input type="file" id="import-file">` ([L463]) : `importD()` doit exister dans ui.js (non lu intégralement).
+- `<input type="file" id="import-file">` : `importD()` existe dans `ui-settings.js` — non mort.
 
 ### 7.5 Dette technique
-- Inline scripts dans le head, pas de Content-Security-Policy.
+- ✅ Inline scripts dans le head : réduit à zéro (debug extrait, masquage agenda déplacé dans initUI).
+- Reste : pas de Content-Security-Policy. CSP compatible SRI nécessiterait de lister p5.js + toutes les fonts Google dans l'en-tête HTTP — chantier Phase 3 (hors scope HTML seul).
 
 ---
 
@@ -626,8 +632,8 @@ Trois facteurs cumulés causaient le bug :
 | 9 | ~~Étendre `HG_CONFIG` aux constantes XP/EN/HA/POOP~~ ✅ résolu 2026-04-30 | `data/config.js` | S | Hygiène globale |
 | 10 | ~~Persister `tabletLastSeenDate` dans D + exposer `journalLocked` sur `window`~~ ✅ résolu 2026-04-30 | `js/ui-settings.js`, `js/ui-journal.js`, `js/ui-nav.js` | S | Robustesse PWA |
 | 11 | Supprimer code mort `_bounceT`, `_lastPetTime`, `walkStep` | `js/render.js` | S | Lisibilité |
-| 12 | Extraire le debug-panel inline dans `js/debug.js` | `index.html` [L13-L98] | S | Allègement HTML |
-| 13 | Ajouter SRI sur p5.js CDN | `index.html` [L131] | S | Sécurité supply chain |
+| 12 | ✅ Extraire le debug-panel inline dans `js/debug.js` | `index.html` — FAIT 2026-04-30 | S | Allègement HTML — ajouté au cache SW |
+| 13 | ✅ Ajouter SRI sur p5.js CDN | `index.html` — FAIT 2026-04-30 | S | Sécurité supply chain — hash sha384 vérifié |
 | 14 | Notifier l'utilisatrice quand un nouveau SW est dispo | `sw.js` + `index.html` | M | UX update |
 
 ### Phase 3 — Amélioration structurelle (découpage, centralisation, tests)

@@ -1340,5 +1340,16 @@ window.initUI = function() {
     const modalOuverte = modalEl && getComputedStyle(modalEl).display !== 'none';
     if (!window._gotchiActif && !modalOuverte && typeof go === 'function') go('gotchi');
   });
+
+  // RÔLE : Masque le bouton agenda si showRDV et showCycle sont tous les deux false.
+  // POURQUOI : Logique métier liée à USER_CONFIG — centralisée ici plutôt qu'en inline dans
+  //            index.html. Le bouton ouvre un agenda qui contient RDV et Cycle — si les deux
+  //            sont désactivés, il n'a plus de raison d'être affiché.
+  if (typeof showCycle === 'function' && typeof showRDV === 'function') {
+    if (!showCycle() && !showRDV()) {
+      const btn = document.getElementById('btn-menu-agenda');
+      if (btn) btn.style.display = 'none';
+    }
+  }
 }; // ferme window.initUI = function()
 // FIN ui.js

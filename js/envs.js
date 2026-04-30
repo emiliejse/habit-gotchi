@@ -36,11 +36,17 @@ function pxFree(p, x, y, w, h) {
 
 /**
  * Raccourci Thème Color (tc) : Gère le mode Nuit avec transition progressive
- * @param {number} n   - Ratio nuit entre 0 (jour) et 1 (nuit pleine) — anciennement booléen
+ * @param {number} n   - Ratio nuit entre 0 (jour) et 1 (nuit pleine)
+ *                       ⚠️ Anciennement booléen (true/false) — aujourd'hui numeric (0–1).
+ *                       Le fallback Number() assure la rétrocompat : tc(true,…) → n=1 (nuit pleine).
  * @param {string} col - Couleur hex à transformer
  * POURQUOI : n=0 → couleur inchangée, n=1 → nuit pleine, valeurs intermédiaires → fondu doux
  */
-function tc(n, col) { return n > 0 ? shadeN(col, n) : col; }
+function tc(n = 0, col) {
+  // RÔLE : convertit un éventuel booléen legacy en number (true→1, false→0)
+  const ratio = Number(n);
+  return ratio > 0 ? shadeN(col, ratio) : col;
+}
 
 /**
  * Dessine des bourrasques de vent (Lignes horizontales mouvantes)
@@ -59,11 +65,17 @@ function drawWind(p) {
   } 
 }
 
-    function drawFog(p) {
+// RÔLE : Nombre de couches de brouillard — nommés pour éviter les magic numbers
+// POURQUOI : 5 nappes au sol donnent une profondeur progressive (plus denses vers le bas),
+//            4 couches hautes restent légères (opacité très faible) pour ne pas couvrir le Gotchi
+const FOG_LAYERS_GROUND = 5; // nappes basses, depuis la ligne du sol vers le haut
+const FOG_LAYERS_HIGH   = 4; // nuages flottants au-dessus du Gotchi, très transparents
+
+function drawFog(p) {
   p.noStroke();
-  
-  // Nappes au sol
-  for (let i = 0; i < 5; i++) {
+
+  // Nappes au sol — denses et lentes, elles rampent depuis la droite
+  for (let i = 0; i < FOG_LAYERS_GROUND; i++) {
     const speed = 0.3 + i * 0.15;
     const xOffset = (p.frameCount * speed + i * 45) % (CS + 60) - 30;
     const y = 108 + i * 8;
@@ -73,8 +85,8 @@ function drawWind(p) {
       px(p, xOffset + dx, y, PX, PX * 2);
     }
   }
-  // Nuages flottants par-dessus le Gotchi et les objets
-  for (let i = 0; i < 4; i++) {
+  // Nuages flottants par-dessus le Gotchi et les objets — très légers (alpha 35→11)
+  for (let i = 0; i < FOG_LAYERS_HIGH; i++) {
     const speed = 0.2 + i * 0.1;
     const xOffset = (p.frameCount * speed + i * 55) % (CS + 80) - 40;
     const y = 70 + i * 15;
@@ -150,146 +162,178 @@ function drawSun(p) {
 
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME & TOPOGRAPHIE (Les Biomes) ──────────── */
 
+// ── CONVENTION DE DESSIN ────────────────────────────────────────────
+// Deux outils coexistent volontairement dans ce fichier :
+//   • p.rect(x, y, w, h)  → grands aplats de fond (sol, mur, tapis…)
+//                            coordonnées libres, dimensions exactes en pixels CSS.
+//   • px(p, x, y, w, h)   → éléments pixel art (arbres, cactus, détails…)
+//                            arrondit automatiquement à la grille PX (5px).
+// Règle : on utilise p.rect pour tout ce qui couvre une zone large et régulière,
+//         et px() dès qu'on pose un "pixel" discret ou un motif sur la grille.
+
 /**
- * drawActiveEnv() : dessine l'environnement actif (Le Fond)
- * @param {Object} p - Instance p5
+ * drawParc() : biome Parc — sol herbeux + arbres + accents thématiques
+ * POURQUOI : extrait de drawActiveEnv pour isoler chaque biome (~10 lignes chacun)
+ */
+function drawParc(p, theme, n) {
+  // Sol — p.rect car aplat plein, pas de grille nécessaire
+  p.fill(theme.gnd);   p.rect(0, 120, CS, 80);
+  p.fill(theme.gndDk); p.rect(0, 120, CS, PX*2);
+
+  // Arbres — absents du désert (remplacés par des cactus dans drawThemeAccents)
+  if (theme.id !== 'desert') {
+    drawTreeTheme(p, 8,   86, n, theme.leaf1, theme.leaf2, theme.trunk);
+    drawTreeTheme(p, 160, 90, n, theme.leaf1, theme.leaf2, theme.trunk);
+  }
+
+  drawThemeAccents(p, theme, n);
+}
+
+/**
+ * drawChambre() : biome Chambre — intérieur avec fenêtre, sol parquet, bureau
+ * Structure : 1.Mur 2.Fenêtre 3.Rideaux 4.Plinthe 5.Cadre 6.Sol 7.Tapis 8.Bureau
+ * POURQUOI : ~75 lignes mais très linéaires — chaque étape ajoute une couche
+ *            par-dessus la précédente, dans l'ordre z (mur en premier, bureau en dernier).
+ */
+function drawChambre(p, theme, n) {
+  const bx = 138; // position x du bureau
+
+  // 1. MUR — dessiné en 4 morceaux pour laisser un trou à l'emplacement de la fenêtre.
+  // POURQUOI : p5.js ne permet pas de "trouer" un rect. On contourne la zone vitre
+  // (x=18..64, y=66..110) pour que le ciel dessiné en fond reste visible à travers.
+  // Zone vitre (intérieur entre montants) : x=20, y=68, w=42, h=42.
+  // Zone fenêtre (avec cadre) : x=18, y=66, w=46, h=44.
+  p.fill(tc(n, theme.wall));
+  // Bande au-dessus de la fenêtre (y=60 à y=66)
+  p.rect(0, 60, CS, 6);
+  // Bande à gauche de la fenêtre (y=66 à y=120, x=0 à x=18)
+  p.rect(0, 66, 18, 54);
+  // Bande à droite de la fenêtre (y=66 à y=120, x=64 à x=200)
+  p.rect(64, 66, CS - 64, 54);
+  // Bande en dessous de la fenêtre (y=110 à y=120, entre les deux bandes latérales)
+  p.rect(18, 110, 46, 10);
+
+  // 2. FENÊTRE — la vitre est un "trou" : on ne la dessine pas,
+  // le ciel déjà rendu en fond (drawSky) transparaît naturellement.
+  // POURQUOI : drawSky() est appelé avant drawActiveEnv(), donc la couleur
+  // du ciel réel (phases solaires, étoiles, transitions) est déjà là.
+  // On n'a plus besoin de recalculer une couleur approchée ici.
+  // (ancienne ligne supprimée : skyCol + p.rect de la vitre)
+  p.fill(tc(n, theme.windowFrame));
+  p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
+  p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
+  p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
+  p.fill(tc(n, theme.windowSill));
+  p.rect(16, 108, 50, PX);
+
+  // 3. RIDEAUX + TRINGLE
+  p.fill(tc(n, theme.curtain));
+  p.rect(10, 63, 12, 52); p.rect(62, 63, 12, 52);
+  p.fill(tc(n, theme.curtainDk));
+  p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52);
+  p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52);
+  p.fill(tc(n, theme.curtainRod));
+  p.rect(8, 62, 68, 3);
+
+  // 4. PLINTHE
+  p.fill(tc(n, theme.baseboard));
+  p.rect(0, 118, CS, PX);
+
+  // 5. CADRE MURAL — agrandi 36×36
+  p.fill(tc(n, theme.frameOuter));
+  p.rect(85, 65, 36, 36);
+  p.fill(tc(n, theme.frameBg));
+  p.rect(88, 68, 30, 30);
+  drawFrameMotif(p, theme, n);
+
+  // 6. SOL PARQUET
+  p.fill(tc(n, theme.floor));
+  p.rect(0, 120, CS, 80);
+  p.fill(tc(n, theme.floorLine));
+  for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); }
+
+  // 7. TAPIS
+  p.fill(tc(n, theme.rug));
+  p.rect(18, 138, 164, 62);
+  p.fill(tc(n, theme.rugCenter));
+  p.rect(22, 141, 156, 59);
+
+  // 8. BUREAU
+  p.fill(tc(n, theme.desk));
+  p.rect(bx+4, 108, PX, 18); p.rect(bx+46, 108, PX, 18);
+  p.fill(tc(n, theme.deskTop));
+  p.rect(bx, 100, 58, PX*2);
+  p.fill(tc(n, theme.deskShadow));
+  p.rect(bx, 108, 58, PX);
+  p.fill(tc(n, theme.lamp));
+  px(p, bx+38, 90, PX, PX*2);
+  p.fill(tc(n, theme.lampShade));
+  px(p, bx+33, 88, PX*3, PX);
+}
+
+/**
+ * drawMontagne() : biome Montagne — sol + pic enneigé, ou Désert + pyramide
+ * POURQUOI : le thème 'desert' réutilise ce biome en remplaçant la montagne
+ *            par une pyramide — c'est un sous-biome géré dans la même fonction.
+ */
+function drawMontagne(p, theme, n) {
+  // Sol — identique pour tous les sous-thèmes
+  p.fill(tc(n, theme.mntGnd));   p.rect(0, 120, CS, 80);
+  p.fill(tc(n, theme.mntGndDk)); p.rect(0, 120, CS, PX*2);
+
+  if (theme.id !== 'desert') {
+    // Montagne classique avec neige au sommet
+    p.fill(tc(n, theme.mntPeak));  p.triangle(40, 120, 100, 50, 160, 120);
+    p.fill(tc(n, theme.mntSnow));  p.triangle(100, 50, 83, 70, 117, 70);
+  }
+
+  if (theme.id === 'pastel') {
+    // Buissons sur la ligne du sol — px() car détails sur grille
+    p.fill('#78c488');
+    px(p, 10,  115, PX*4, PX*2);
+    px(p, 50,  116, PX*3, PX*2);
+    px(p, 140, 115, PX*4, PX*2);
+    px(p, 175, 116, PX*3, PX);
+  }
+
+  if (theme.id === 'desert') {
+    // Sous-biome Désert : pyramide à deux faces + entrée + stries
+    // Face claire (gauche)
+    p.fill(tc(n, theme.mntPeak));
+    p.triangle(55, 120, 100, 55, 145, 120);
+    // Face ombragée (droite)
+    p.fill(tc(n, theme.mntGndDk));
+    p.triangle(100, 55, 100, 120, 145, 120);
+    // Entrée — px() car pixel art
+    p.fill('#6b3a1f');
+    px(p, 96, 108, PX*2, PX*3);
+    // Stries horizontales — px() car motif sur grille
+    p.fill(tc(n, theme.mntSnow));
+    px(p, 62, 102, 34, PX);
+  }
+}
+
+/**
+ * drawActiveEnv() : dispatcher — choisit le biome à dessiner
+ * @param {Object} p   - Instance p5
  * @param {string} env - 'parc' | 'chambre' | 'montagne' (vient de D.g.activeEnv)
- * @param {boolean} n - true = mode nuit (h≥21 ou h<6)
- * @param {number} h - heure (0–23), utilisé pour la vitre de la fenêtre
- * * POUR AJOUTER UN ENVIRONNEMENT :
+ * @param {number} n   - Ratio nuit 0 (jour) → 1 (nuit pleine)
+ * @param {number} h   - heure (0–23), réservé aux futurs effets horaires
+ *
+ * POUR AJOUTER UN ENVIRONNEMENT :
  * 1. Ajoute un objet { id:'monenv', ... } dans ENV_THEMES (config.js)
- * 2. Ajoute un bloc `else if (env === 'monenv') { ... }` ici.
- * 3. Wrap chaque couleur avec `tc(n, theme.X)` pour le mode nuit.
+ * 2. Crée une fonction drawMonEnv(p, theme, n) dans ce fichier
+ * 3. Ajoute un case 'monenv' dans le switch ci-dessous
  */
 function drawActiveEnv(p, env, n, h) {
   const theme = getEnvC();
   p.noStroke();
 
-  // ── 1. BIOME : PARC ────────────────────────────────────────────────
-  if (env === 'parc') {
-    p.fill(theme.gnd);   p.rect(0, 120, CS, 80);
-    p.fill(theme.gndDk); p.rect(0, 120, CS, PX*2);
-
-    if (theme.id !== 'desert') {
-      drawTreeTheme(p, 8,   86, n, theme.leaf1, theme.leaf2, theme.trunk);
-      drawTreeTheme(p, 160, 90, n, theme.leaf1, theme.leaf2, theme.trunk);
-    }
-
-    drawThemeAccents(p, theme, n);
-  }
-
-  // ── 2. BIOME : CHAMBRE ─────────────────────────────────────────────
-  // Structure : 1.Mur 2.Fenêtre 3.Rideaux 4.Plinthe 5.Cadre 6.Sol 7.Tapis 8.Bureau
-  else if (env === 'chambre') {
-    const bx = 138; // position x du bureau
-
-    // 1. MUR — dessiné en 4 morceaux pour laisser un trou à l'emplacement de la fenêtre.
-    // POURQUOI : p5.js ne permet pas de "trouer" un rect. On contourne la zone vitre
-    // (x=18..64, y=66..110) pour que le ciel dessiné en fond reste visible à travers.
-    // Zone vitre (intérieur entre montants) : x=20, y=68, w=42, h=42.
-    // Zone fenêtre (avec cadre) : x=18, y=66, w=46, h=44.
-    p.fill(tc(n, theme.wall));
-    // Bande au-dessus de la fenêtre (y=60 à y=66)
-    p.rect(0, 60, CS, 6);
-    // Bande à gauche de la fenêtre (y=66 à y=120, x=0 à x=18)
-    p.rect(0, 66, 18, 54);
-    // Bande à droite de la fenêtre (y=66 à y=120, x=64 à x=200)
-    p.rect(64, 66, CS - 64, 54);
-    // Bande en dessous de la fenêtre (y=110 à y=120, entre les deux bandes latérales)
-    p.rect(18, 110, 46, 10);
-
-    // 2. FENÊTRE — la vitre est un "trou" : on ne la dessine pas,
-    // le ciel déjà rendu en fond (drawSky) transparaît naturellement.
-    // POURQUOI : drawSky() est appelé avant drawActiveEnv(), donc la couleur
-    // du ciel réel (phases solaires, étoiles, transitions) est déjà là.
-    // On n'a plus besoin de recalculer une couleur approchée ici.
-    // (ancienne ligne supprimée : skyCol + p.rect de la vitre)
-    p.fill(tc(n, theme.windowFrame));
-    p.rect(18, 66, 46, 3); p.rect(18, 107, 46, 3);
-    p.rect(18, 66, 3, 44); p.rect(62, 66, 3, 44);
-    p.rect(40, 68, 3, 42); p.rect(20, 88, 42, 3);
-    p.fill(tc(n, theme.windowSill));
-    p.rect(16, 108, 50, PX);
-
-    // 3. RIDEAUX + TRINGLE
-    p.fill(tc(n, theme.curtain));
-    p.rect(10, 63, 12, 52); p.rect(62, 63, 12, 52);
-    p.fill(tc(n, theme.curtainDk));
-    p.rect(14, 63, 3, 52); p.rect(20, 63, 2, 52);
-    p.rect(65, 63, 3, 52); p.rect(70, 63, 2, 52);
-    p.fill(tc(n, theme.curtainRod));
-    p.rect(8, 62, 68, 3);
-
-    // 4. PLINTHE
-    p.fill(tc(n, theme.baseboard));
-    p.rect(0, 118, CS, PX);
-
-    // 5. CADRE MURAL — agrandi 36×36
-    p.fill(tc(n, theme.frameOuter));
-    p.rect(85, 65, 36, 36);
-    p.fill(tc(n, theme.frameBg));
-    p.rect(88, 68, 30, 30);
-    drawFrameMotif(p, theme, n);
-
-    // 6. SOL PARQUET
-    p.fill(tc(n, theme.floor));
-    p.rect(0, 120, CS, 80);
-    p.fill(tc(n, theme.floorLine));
-    for (let ly = 130; ly < 200; ly += 13) { p.rect(0, ly, CS, 1); }
-
-    // 7. TAPIS
-    p.fill(tc(n, theme.rug));
-    p.rect(18, 138, 164, 62);
-    p.fill(tc(n, theme.rugCenter));
-    p.rect(22, 141, 156, 59);
-
-    // 8. BUREAU
-    p.fill(tc(n, theme.desk));
-    p.rect(bx+4, 108, PX, 18); p.rect(bx+46, 108, PX, 18);
-    p.fill(tc(n, theme.deskTop));
-    p.rect(bx, 100, 58, PX*2);
-    p.fill(tc(n, theme.deskShadow));
-    p.rect(bx, 108, 58, PX);
-    p.fill(tc(n, theme.lamp));
-    px(p, bx+38, 90, PX, PX*2);
-    p.fill(tc(n, theme.lampShade));
-    px(p, bx+33, 88, PX*3, PX);
-  }
-
-  // ── 3. BIOME : MONTAGNE / DÉSERT ─────────────────────────────────────────
-  else if (env === 'montagne') {
-   p.fill(tc(n, theme.mntGnd));   p.rect(0, 120, CS, 80);
-    p.fill(tc(n, theme.mntGndDk)); p.rect(0, 120, CS, PX*2);
-    
-    if (theme.id !== 'desert') {
-      p.fill(tc(n, theme.mntPeak));  p.triangle(40, 120, 100, 50, 160, 120);
-      p.fill(tc(n, theme.mntSnow));  p.triangle(100, 50, 83, 70, 117, 70);
-    }
-
-    if (theme.id === 'pastel') {
-      // buissons sur la ligne du sol
-      p.fill('#78c488');
-      px(p, 10,  115, PX*4, PX*2);
-      px(p, 50,  116, PX*3, PX*2);
-      px(p, 140, 115, PX*4, PX*2);
-      px(p, 175, 116, PX*3, PX);
-    }
-    
-    // Sous-biome : Désert (remplace la montagne par une pyramide)
-    if (theme.id === 'desert') {
-      // Face claire (gauche)
-      p.fill(tc(n, theme.mntPeak));
-      p.triangle(55, 120, 100, 55, 145, 120);
-      // Face ombragée (droite)
-      p.fill(tc(n, theme.mntGndDk));
-      p.triangle(100, 55, 100, 120, 145, 120);
-      // Entrée
-      p.fill('#6b3a1f');
-      px(p, 96, 108, PX*2, PX*3);
-      // Stries horizontales
-      p.fill(tc(n, theme.mntSnow));
-      px(p, 62, 102, 34, PX);
-    }
+  switch (env) {
+    case 'parc':     drawParc(p, theme, n);     break;
+    case 'chambre':  drawChambre(p, theme, n);  break;
+    case 'montagne': drawMontagne(p, theme, n); break;
+    // default : fond vide — pas de biome connu, on ne dessine rien
   }
 }
 
@@ -353,12 +397,16 @@ else if (theme.id === 'pastel') {
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME (Helpers de Dessin) ─────────────────── */
 
 function drawTreeTheme(p, x, y, n, colLeaf, colLeaf2, colTrunk) {
+  // RÔLE : Dessine un arbre générique (tronc + feuillage en 3 couches)
+  // POURQUOI : tc(n, col) applique shadeN() progressivement — cohérent avec tous les autres
+  //            éléments de la scène. L'ancienne version hardcodait '#304028' (vert très sombre)
+  //            quel que soit le thème, ce qui pouvait casser les arbres pastel/automne en nuit.
   p.fill(colTrunk);
   px(p, x+PX*2, y+PX*4, PX*2, PX*5);
-  p.fill(n ? '#304028' : colLeaf); // Force une couleur sombre si nuit
+  p.fill(tc(n, colLeaf)); // feuillage principal — assombri proportionnellement au ratio nuit
   px(p, x, y+PX, PX*6, PX*3);
   px(p, x+PX, y-PX, PX*4, PX*2);
-  p.fill(n ? '#304028' : colLeaf2);
+  p.fill(tc(n, colLeaf2)); // feuillage secondaire (pointe) — même logique
   px(p, x+PX*2, y-PX*2, PX*2, PX);
 }
 

@@ -15,6 +15,8 @@
 > **Session bugs mineurs render-sprites.js 2026-04-30** : 2 bugs mineurs résolus dans `render-sprites.js` — (1) `dejaDessines` : `new Set()` par frame remplacé par `_dejaDessinesObj = {}` module-level, réinitialisé manuellement à chaque appel (`for...in delete`) — plus d'allocation Set × 12 fps ; (2) `isMood(name)` : helper ajouté en §4b, centralise le test `moodTimer > 0 && lastMood === name` — les ~8 occurrences dupliquées dans `drawTeen` et `drawAdult` remplacées par des appels `isMood('joie')`, `isMood('faim')`, `isMood('surprise')`.
 >
 > **Vérification version** : `window.APP_VERSION = 'v4.5'` ([app.js L54](js/app.js#L54)) — ⚠️ la consigne mentionnait `'hg-v4.5'` mais le code stocke uniquement `'v4.5'`. Le `CACHE_VERSION` de `sw.js` ([L7](sw.js#L7)) est aligné `'v4.5'`. Cohérence OK entre les deux fichiers, mais préfixe `hg-` non utilisé.
+>
+> **Session bugs mineurs envs.js 2026-04-30** : 5 corrections dans `envs.js` — (1) `drawActiveEnv` découpé en `drawParc`, `drawChambre`, `drawMontagne` + dispatcher `switch` (130 lignes → orchestrateur ~8 lignes + 3 fonctions lisibles) ; (2) magic numbers `drawFog` remplacés par `FOG_LAYERS_GROUND = 5` et `FOG_LAYERS_HIGH = 4` ; (3) `tc()` : fallback `Number(n)` ajouté + valeur par défaut `n=0` pour rétrocompat booléen ; (4) couleur hardcodée `'#304028'` dans `drawTreeTheme` remplacée par `tc(n, colLeaf)` / `tc(n, colLeaf2)` — cohérent avec le reste du système nuit ; (5) convention `p.rect` vs `px()` documentée dans un bloc commentaire au-dessus du dispatcher.
 
 ---
 
@@ -28,7 +30,7 @@
 | `js/app.js` | **B+** | Bien commenté, migrations versionnées, mais bootstrap éparpillé, `addEvent` mixe deux signatures, et plusieurs `setInterval` non clearables. |
 | `js/render.js` | **B** | `p.draw()` découpé en 4 sous-fonctions extraites (2026-04-30) — orchestrateur ~85 lignes. Reste : helpers de hitbox dupliqués entre `touchStarted` et `touchMoved`, `walkX`/`walkPause` implicitement partagés avec `render-sprites.js`. |
 | `js/render-sprites.js` | **A** | Sprites bien isolés, `drawSaleteDither` utilise désormais un masque off-screen (auto-synchronisé avec les sprites), code lisible et autonome. |
-| `js/envs.js` | **B+** | Cohérent et factorisé (`tc`, `shadeN`), seul reproche : `drawActiveEnv` mélange parc/chambre/montagne dans une seule fonction de 130 lignes. |
+| `js/envs.js` | **A** | `drawActiveEnv` découpé en 3 fonctions + dispatcher (2026-04-30). `tc()` robuste, magic numbers nommés, couleur nuit unifiée via `shadeN`. |
 | `js/ui.js` | **C+** | 5192 lignes, 5 manières différentes d'ouvrir une modale (`openModal`, accès direct `mbox.innerHTML`, `etats-overlay` créé en JS, `tablet-overlay` HTML, agenda `shop-open`), code dupliqué massif sur les en-têtes de modales, gestion scroll-lock incohérente. |
 | `index.html` | **B** | Ordre des scripts correct, debug-panel inline volumineux (~85 l), p5.js CDN sans `integrity`, masquage features RDV/Cycle dans script séparé en bas. |
 | `sw.js` | **C+** | ✅ `render-sprites.js` ajouté dans `ASSETS` (fix session 2026-04-30). Reste : stratégie cache-first sans `response.ok` (cache des 404), pas de gestion des updates côté client. |
@@ -349,28 +351,27 @@
 
 ### 5.3 Problèmes
 
-#### 🟡 MINEUR — `drawActiveEnv` mélange parc/chambre/montagne en if/else if/else if
-- Lignes : [L164-L294]
-- Description : 130 lignes pour 3 biomes — `chambre` à elle seule fait ~75 lignes.
-- Suggestion : Extraire `drawParc`, `drawChambre`, `drawMontagne` et faire un dispatcher.
+#### ✅ RÉSOLU — `drawActiveEnv` mélange parc/chambre/montagne en if/else if/else if
+- Résolu le 2026-04-30.
+- `drawActiveEnv` (130 lignes) découpé en `drawParc`, `drawChambre`, `drawMontagne` + dispatcher `switch`. L'orchestrateur final fait ~8 lignes. Chaque biome est autonome et lisible. Pour ajouter un biome : créer `drawMonEnv(p, theme, n)` + ajouter un `case` dans le switch.
 
-#### 🟡 MINEUR — `drawFog` : magic numbers
-- Lignes : [L62-L87]
-- Description : `for (let i = 0; i < 5; i++)` puis `for (let i = 0; i < 4; i++)` — pourquoi 5 et 4 ? Suggestion d'extraire `FOG_LAYERS_GROUND = 5`.
+#### ✅ RÉSOLU — `drawFog` : magic numbers
+- Résolu le 2026-04-30.
+- `for (let i = 0; i < 5; ...)` → `FOG_LAYERS_GROUND = 5` et `for (let i = 0; i < 4; ...)` → `FOG_LAYERS_HIGH = 4`. Constantes déclarées juste avant `drawFog` avec commentaires RÔLE/POURQUOI.
 
-#### 🟡 MINEUR — `tc(n, col)` n'accepte qu'un seul paramètre `n` numeric mais le commentaire mentionne "anciennement booléen"
-- Lignes : [L37-L43]
-- Description : Le typage transitoire est documenté mais peut surprendre si on appelle `tc(true, ...)` (rétrocompat possible mais non assurée).
-- Suggestion : `tc(n=0, col)` avec fallback explicite.
+#### ✅ RÉSOLU — `tc(n, col)` sans rétrocompat booléen explicite
+- Résolu le 2026-04-30.
+- `tc(n = 0, col)` avec `const ratio = Number(n)` en tête. `tc(true, '#fff')` → ratio=1 (nuit pleine), `tc(false, '#fff')` → ratio=0 (couleur inchangée). Commentaire JSDoc mis à jour.
 
-#### 🔵 STYLE — Mix `p.rect` direct et `px(p, ...)`
-- Lignes : passim — par exemple [L170-L171] utilisent `p.rect`, [L174-L175] utilisent les helpers `drawTreeTheme`. Choix légitime (rect plein vs grille) mais un commentaire briefait les conventions aiderait.
+#### ✅ RÉSOLU — Mix `p.rect` direct et `px(p, ...)` non documenté
+- Résolu le 2026-04-30.
+- Convention documentée dans un bloc commentaire `// ── CONVENTION DE DESSIN` au-dessus du dispatcher : `p.rect` = aplats larges et réguliers, `px()` = éléments pixel art sur grille.
 
 ### 5.4 Code mort / redondances
 - Aucune fonction morte détectée.
 
 ### 5.5 Dette technique
-- Les couleurs nuit forcées (`'#304028'` dans `drawTreeTheme` [L358]) sont hardcodées hors thème — incohérent avec `tc(n, ...)` utilisé ailleurs.
+- ✅ RÉSOLU (2026-04-30) — Couleurs nuit forcées `'#304028'` dans `drawTreeTheme` remplacées par `tc(n, colLeaf)` et `tc(n, colLeaf2)`. Le feuillage des arbres suit désormais `shadeN()` comme tous les autres éléments — cohérent avec les thèmes pastel, automne, hiver.
 
 ---
 
@@ -637,7 +638,7 @@ Trois facteurs cumulés causaient le bug :
 | 15 | ✅ Découper `p.draw()` en sous-fonctions thématiques | `js/render.js` — `drawPropsLayer`, `drawHUD`, `drawBadges`, `drawEnvSelector` extraits (2026-04-30) | L | Maintenabilité |
 | 16 | ✅ Découper `ui.js` (5192 l) en modules par feature | `js/ui-core.js` (300 l), `js/ui-nav.js` (155 l), `js/ui-habs.js` (179 l), `js/ui-shop.js` (1047 l), `js/ui-ai.js` (918 l), `js/ui-journal.js` (342 l), `js/ui-agenda.js` (1204 l), `js/ui-settings.js` (1307 l) | L | Maintenabilité |
 | 17 | Migrer les inline-styles vers classes CSS | `js/ui.js` + `css/style.css` | L | Thématisation |
-| 18 | Extraire `drawParc/Chambre/Montagne` de `drawActiveEnv` | `js/envs.js` | M | Lisibilité |
+| 18 | ✅ Extraire `drawParc/Chambre/Montagne` de `drawActiveEnv` | `js/envs.js` — `drawParc`, `drawChambre`, `drawMontagne` + dispatcher `switch` (2026-04-30) | M | Lisibilité |
 | 19 | Découpler `render-sprites.js` de `render.js` (variables module) | les deux | M | Modularité |
 | 20 | Ajouter une suite de tests automatisés (Jest/Vitest) | nouveau `tests/` | L | Régressions |
 | 21 | Implémenter focus trap + Escape close pour toutes modales | modules `ui-*.js` | M | Accessibilité — Escape déjà ajouté sur tablet-overlay et etats-overlay, reste #modal et autres |

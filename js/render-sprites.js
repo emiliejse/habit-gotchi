@@ -605,11 +605,12 @@ const LAYERS_BABY = [
   },
 
   // ── Bouche sourire (ha élevé) ───────────────────────────────────
+  // POURQUOI : x:0 centre la bouche entre les deux yeux (gauche x:-2, droit x:1 → centre ~x:0).
   {
     id: 'bouche-sourire',
     fill: 'C.mouth',
     when: (pm) => !pm.sl && pm.ha > HA_HIGH,
-    rects: [{ x: -1, y: 3, w: 2, h: 1 }]
+    rects: [{ x: 0, y: 3, w: 2, h: 1 }]
   },
 
   // ── Bouche triste (ha bas) — rawDy:2 pour l'offset sub-pixel ───
@@ -617,7 +618,7 @@ const LAYERS_BABY = [
     id: 'bouche-triste',
     fill: 'C.mouth',
     when: (pm) => !pm.sl && pm.ha < HA_SAD,
-    rects: [{ x: -1, y: 3, w: 2, h: 1, rawDy: 2 }]
+    rects: [{ x: 0, y: 3, w: 2, h: 1, rawDy: 2 }]
   },
 
   // ── Bouche neutre (état par défaut) ────────────────────────────
@@ -625,7 +626,7 @@ const LAYERS_BABY = [
     id: 'bouche-neutre',
     fill: 'C.mouth',
     when: (pm) => !pm.sl && pm.ha >= HA_SAD && pm.ha <= HA_HIGH,
-    rects: [{ x: -1, y: 3, w: 1, h: 1 }]
+    rects: [{ x: 0, y: 3, w: 1, h: 1 }]
   },
 
   // ── Pieds / membres inférieurs (toujours visibles) ─────────────

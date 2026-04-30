@@ -337,6 +337,14 @@ function lockScroll() {
       // Laisse passer les touchmove qui viennent de l'intérieur d'un élément scrollable de la modale
       // (modal-box, boutique-contenu, soutien-chat, tablet-screen, etats-sheet...)
       // POURQUOI : si on bloque TOUS les touchmove, le scroll interne de la modale est aussi cassé.
+
+      // EXCEPTION : input[type=range] — le drag du curseur envoie des touchmove mais
+      // ce n'est pas un élément scrollable, donc la boucle ci-dessous remonterait jusqu'au
+      // body et appellerait preventDefault(), annulant le drag sur iOS/WebKit.
+      // POURQUOI : on vérifie e.target directement (le thumb est un pseudo-élément, le
+      // touchmove cible toujours l'<input> lui-même sur iOS).
+      if (e.target && e.target.type === 'range') return;
+
       let el = e.target;
       while (el && el !== document.body) {
         const style = getComputedStyle(el);

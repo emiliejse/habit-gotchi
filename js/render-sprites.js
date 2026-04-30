@@ -977,11 +977,12 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     p.fill('#fff');
     p.noStroke();
     // Iris teen : rangée haute 2×PX = 10px large, 1×PX = 5px haut. Reflet 3×3px.
-    // POURQUOI hauteur 3 au lieu de 4 : le reflet à 4px descendait dans la rangée basse
-    // de l'iris (1×PX wide = 5px), où il débordait visuellement hors du noir → pupille
-    // qui "sort" de l'œil. À 3px de haut, le reflet reste confiné dans la rangée haute.
-    // Amplitude : 10px - 3px reflet - 1px marge gauche - 1px marge droite = 5px max.
-    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 3 - 2);
+    // POURQUOI hauteur 3 : confiné dans la rangée haute → ne déborde pas dans la rangée basse.
+    // Espace horizontal disponible : 10px - 1px marge G - 3px reflet - 2px marge D = 4px max.
+    // POURQUOI Math.min : Math.sin flottant peut dépasser légèrement l'amplitude calculée
+    // → on clamp dur pour garantir que le bord droit du reflet ne sort jamais de l'iris.
+    const rxMax = PX * 2 - 3 - 3; // 10 - 3 - 3 = 4px (marge droite portée à 3px)
+    const rx = Math.min((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * rxMax, rxMax);
     p.rect(cxB - PX * 3 + 1 + rx, cy + PX * 2 + 1, 3, 3); // œil gauche
     p.rect(cxB + PX * 1 + 1 + rx, cy + PX * 2 + 1, 3, 3); // œil droit
   }
@@ -1420,12 +1421,12 @@ function drawAdult(p, cx, cy, sl, en, ha) {
     p.fill('#fff');
     p.noStroke();
     // Iris adult : rangée haute 3×PX = 15px large, 1×PX = 5px haut. Reflet 3×3px.
-    // POURQUOI hauteur 3 au lieu de 4 : le reflet à 4px descendait dans la rangée basse
-    // de l'iris adult (x:-2, w:2 = 10px, plus étroite que la rangée haute = 15px),
-    // créant un débordement visible sur le côté gauche → même bug pupille que chez teen.
-    // À 3px de haut, le reflet reste dans la rangée haute (5px d'espace vertical suffit).
-    // Amplitude : 15px - 3px reflet - 1px marge gauche - 1px marge droite = 10px max.
-    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 3 - 2);
+    // POURQUOI hauteur 3 : confiné dans la rangée haute → ne déborde pas dans la rangée basse.
+    // Espace horizontal disponible : 15px - 1px marge G - 3px reflet - 3px marge D = 8px max.
+    // POURQUOI Math.min : même protection que teen — clamp dur pour éviter tout débordement
+    // droit quelle que soit la valeur flottante du sinus.
+    const rxMax = PX * 3 - 3 - 4; // 15 - 3 - 4 = 8px (marge droite portée à 4px)
+    const rx = Math.min((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * rxMax, rxMax);
     p.rect(cxB - PX * 3 + 1 + rx, cy + PX * 3 + 1, 3, 3); // œil gauche
     p.rect(cxB + PX * 1 + 1 + rx, cy + PX * 3 + 1, 3, 3); // œil droit
   }

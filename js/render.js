@@ -841,12 +841,15 @@ function drawEnvSelector(p, g, nightRatio) {
 
 const p5s = (p) => {
   p.setup = function() {
+    // RÔLE : Adapter la résolution interne du canvas à la densité d'écran réelle.
+    // POURQUOI : Sur iPhone/Android Retina (dpr=2 ou 3), le canvas est affiché à une taille CSS
+    //            plus grande que CS px — le navigateur doit l'upscaler et lisse les pixels → flou.
+    //            En passant pixelDensity(dpr) AVANT createCanvas(), p5 crée un canvas interne
+    //            de CS×dpr pixels pour un affichage CSS de CS px → chaque pixel reste net.
+    //            La taille CSS affichée (100% du conteneur) n'est pas modifiée.
+    const dpr = window.devicePixelRatio || 1;
+    p.pixelDensity(dpr);
     p.createCanvas(CS, CS).parent('cbox');
-    // RÔLE : Forcer la densité de pixel à 1 pour éviter le flou sur les écrans Retina.
-    // POURQUOI : Sans pixelDensity(1), p5 multiplie la résolution interne par le devicePixelRatio
-    //            (2x sur iPhone/Mac Retina) — les pixels du Gotchi sont alors interpolés → flou.
-    //            Combiné à noSmooth() et image-rendering:pixelated (CSS), garantit un rendu net.
-    p.pixelDensity(1);
     p.noSmooth();
     p.frameRate(12);
   };

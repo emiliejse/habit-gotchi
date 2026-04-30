@@ -612,19 +612,25 @@ Ton bilan de la semaine apparaîtra ici...
       })
       .catch(e => console.log('SW erreur:', e));
 
-    // RÔLE : Filet de sécurité — affiche le bandeau si le SW prend le contrôle
-    //        sans qu'on l'ait détecté via updatefound (cas du premier install sur page vierge).
-    // POURQUOI : controllerchange se déclenche après skipWaiting() — dans le flux normal
-    //            avec notre nouveau listener, le bandeau est déjà affiché avant ce point.
-    //            Ce listener couvre les cas limites (ex : forceUpdate() → reload).
-    navigator.serviceWorker.addEventListener('controllerchange', _showUpdateBanner);
-
     // RÔLE : Action déclenchée au clic sur le bandeau de mise à jour.
-    // POURQUOI : On envoie SKIP_WAITING au SW en waiting pour qu'il s'active immédiatement
-    //            (le listener dans sw.js reçoit ce message), puis on recharge la page.
-    window._swApplyUpdate = function () {
+    // POURQUOI : Deux cas possibles selon l'état du SW au moment du clic :
+    //   CAS A — reg.waiting non-null : le nouveau SW attend encore d'être activé.
+    //           On lui envoie SKIP_WAITING pour qu'il prenne le contrôle immédiatement,
+    //           puis on recharge pour charger les nouveaux assets depuis le cache frais.
+    //   CAS B — reg.waiting est null : le nouveau SW a déjà appelé skipWaiting() lors
+    //           de son install et est devenu actif, mais ses assets sont peut-être encore
+    //           dans l'ancien cache. On vide tous les caches avant de recharger pour
+    //           forcer le re-téléchargement propre (même logique que forceUpdate()).
+    window._swApplyUpdate = async function () {
       if (_swReg && _swReg.waiting) {
+        // CAS A : SW en attente → on lui demande de s'activer maintenant
         _swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      } else {
+        // CAS B : SW déjà actif → on vide les caches pour charger les nouveaux assets
+        if ('caches' in window) {
+          const names = await caches.keys();
+          await Promise.all(names.map(n => caches.delete(n)));
+        }
       }
       location.reload();
     };

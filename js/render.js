@@ -68,7 +68,12 @@ window.triggerGotchiBounce = function() { animator.trigger('saut_joie'); };
 // Note : window._jumpTimer conservé à 0 pour éviter toute erreur si du code
 //        externe lirait encore cette variable (rétrocompatibilité défensive).
 window._jumpTimer = 0;
-window.triggerGotchiShake  = function() { window.shakeTimer = 12; }; 
+// RÔLE : Déclencher le tremblement du Gotchi après un tap (migré vers animator).
+// POURQUOI : Remplace window.shakeTimer = 12 — plus de variable globale ad hoc.
+//            window.shakeTimer conservé à 0 pour rétrocompatibilité défensive
+//            si du code externe le lirait encore.
+window.triggerGotchiShake  = function() { animator.trigger('shake'); };
+window.shakeTimer = 0; // rétrocompatibilité — ne plus écrire dessus
 window.spawnP = spawnP;
 window._nextBlinkAt = 60;
 window._blinkDuration = 4;
@@ -98,10 +103,18 @@ window._adultPose = {
 };
 // ─── Animation : variables d'expressivité ───
 window._expr = {
-  lastMood: null,      // 'faim', 'surprise', 'joie', null
+  lastMood: null,      // 'faim', 'surprise', 'joie', 'baillement', null
   moodTimer: 0,        // frames restantes de la réaction
   breathPhase: 0
 };
+
+// RÔLE : Timer d'inactivité pour déclencher le bâillement automatique.
+// POURQUOI : Compte les frames depuis la dernière interaction (tap, validation habitude, achat).
+//            Quand il dépasse le seuil, triggerExpr('baillement') est appelé.
+//            Remis à 0 par toute interaction (voir triggerExpr et les handlers tap).
+window._idleFrames = 0;
+const YAWN_THRESHOLD = 12 * 60 * 3; // ~3 min à 12fps = 2160 frames avant bâillement
+const YAWN_COOLDOWN  = 12 * 60 * 5; // ~5 min entre deux bâillements
 
 // Helper : calcule la phase de respiration (0 → 1 → 0 → 1…)
 function getBreath(p, speed = 0.025) {
@@ -117,6 +130,9 @@ function getCheekPulse(p) {
 window.triggerExpr = function(mood, duration = 60) {
   window._expr.lastMood = mood;
   window._expr.moodTimer = duration;
+  // RÔLE : Toute expression autre que le bâillement lui-même remet le timer idle à 0.
+  // POURQUOI : Une interaction vient de se produire → pas besoin de bâiller de suite.
+  if (mood !== 'baillement') window._idleFrames = 0;
 };
 
 /* ─── SYSTÈME D'ANIMATION DÉCLARATIF ────────────────────────────────── */
@@ -187,6 +203,62 @@ const ANIM_DEFS = {
     poses: {
       'bras-normal': { hidden: true },
       'bras-salut':  { visible: true }
+    }
+  },
+
+  // ── Étirement matinal — séquence 3 temps (déclenché à h===7 une fois par jour) ──
+  // RÔLE : Simule un réveil/étirement du Gotchi : bras levés → croisés → repos.
+  // POURQUOI : 3 animations distinctes enchaînées via étirement_t2 et _t3.
+  //            Chaque tranche dure 12f (~1s à 12fps). Zéro nouveau calque.
+  //            Ne s'applique qu'à l'adulte — teen et baby n'ont pas les calques bras DSL.
+  etirement_t1: {
+    stages: ['adult'],
+    duration: 12,
+    poses: {
+      'bras-normal': { hidden: true },
+      'bras-leves':  { visible: true }  // bras levés = joie/élan
+    }
+  },
+  etirement_t2: {
+    stages: ['adult'],
+    duration: 12,
+    poses: {
+      'bras-normal':  { hidden: true },
+      'bras-croises': { visible: true } // bras croisés = étirement retour
+    }
+  },
+  etirement_t3: {
+    stages: ['adult'],
+    duration: 12,
+    // t3 : retour au repos — bras-normal reprend naturellement (aucun calque masqué)
+  },
+
+  // ── Shake — tremblements après tap ──────────────────────────────
+  // RÔLE : Remplace window.shakeTimer (variable ad hoc) par l'animator.
+  // POURQUOI : shakeTimer produisait un offset sinusoïdal appliqué manuellement dans p.draw().
+  //            Migrer ici centralise la logique et supprime la variable globale.
+  //            xFn : sinus rapide (×3) pour vibration horizontale.
+  //            yFn : sinus plus lent (×2) pour vibration verticale légère.
+  //            elapsed/12 normalise sur 0→1 — amplitude 5px X et 3px Y, snappés PX.
+  shake: {
+    stages: '*',
+    duration: 12,
+    bodyOffset: {
+      xFn: (elapsed) => Math.sin(elapsed * 3) * 5,
+      yFn: (elapsed) => Math.sin(elapsed * 2) * 3,
+    }
+  },
+
+  // ── Snack — saut discret au moment où l'emoji arrive au Gotchi ──
+  // RÔLE : Remplace le bobY direct dans le bloc eatAnim.jumped (variable ad hoc).
+  // POURQUOI : L'emoji en vol est conservé dans eatAnim (hors animator — dessin emoji).
+  //            Seul le corps-bond est migré ici : même courbe sin que saut_joie mais
+  //            amplitude réduite (18px vs 22px) et durée courte (8f vs 20f).
+  snack_bond: {
+    stages: '*',
+    duration: 8,
+    bodyOffset: {
+      yFn: (elapsed) => -(Math.sin(elapsed / 8 * Math.PI) * 18)
     }
   },
 };
@@ -504,7 +576,7 @@ function triggerTouchReaction(sleeping) {
   });
 
   if (window.touchReactions.length > 8) window.touchReactions.shift();
-  window.shakeTimer = 8;
+  animator.trigger('shake'); // remplace window.shakeTimer = 8
 
   const touchMsgs = sleeping
     ? ['*grogne* 😤', 'Laisse-moi dormir ! 🌙', '...zzz... 💤']
@@ -953,14 +1025,14 @@ bounceT += sleeping ? 0.04 : 0.12;
 const staticBob = sleeping ? Math.sin(bounceT) : Math.sin(bounceT) * 3;
 let bobY = staticBob + GOTCHI_OFFSET_Y;
 
+// RÔLE : Déclencher le bond snack au bon moment (progress > 0.7) via animator.
+// POURQUOI : Remplace le calcul direct bobY dans ce bloc par 'snack_bond' dans ANIM_DEFS.
+//            Le dessin de l'emoji reste dans le bloc eatAnim plus bas (hors animator).
 if (window.eatAnim?.active) {
   const progress = 1 - (window.eatAnim.timer / 50);
   if (progress > 0.7 && !window.eatAnim.jumped) {
     window.eatAnim.jumped = true;
-  }
-  if (window.eatAnim.jumped) {
-    const t = 1 - (window.eatAnim.timer / (50 * 0.15));
-    bobY -= Math.sin(t * Math.PI) * 18;
+    animator.trigger('snack_bond'); // remplace: bobY -= Math.sin(...) * 18
   }
 }
 
@@ -1024,7 +1096,7 @@ const by = getStageBaseY(g.stage); // RÔLE : Y de base du Gotchi selon son stad
 window._gotchiY = by + (bobY || 0);
 const tilt = (!sleeping && en < EN_TILT) ? Math.sin(p.frameCount * 0.05) * 2 : 0; // balancement si en < 2
 
-if (window.shakeTimer > 0) window.shakeTimer--;
+// shakeTimer supprimé — géré par animator.tick() via l'animation 'shake'
 
 // RÔLE : Faire avancer le moteur d'animation d'un tick, puis calculer le diff visuel
 //        pour ce frame et l'exposer sur window._animOverrides.
@@ -1035,19 +1107,46 @@ if (window.shakeTimer > 0) window.shakeTimer--;
 animator.tick();
 window._animOverrides = animator.resolve(g.stage);
 
+// RÔLE : Étirement matinal — déclenché une seule fois à h===7 pour l'adulte éveillé.
+// POURQUOI : Séquence en 3 temps (bras levés → croisés → repos), 12f chacun.
+//            On garde la date en mémoire pour ne déclencher qu'une fois par jour.
+//            Ne s'applique qu'à l'adulte (les calques bras DSL n'existent pas pour baby/teen).
+{
+  const hNow = typeof hr === 'function' ? hr() : new Date().getHours();
+  const todayStr = new Date().toDateString();
+  if (
+    hNow === 7 &&
+    g.stage === 'adult' &&
+    !sleeping &&
+    window._etirementLastDay !== todayStr &&
+    animator.active.length === 0 // ne pas interrompre une pose idle en cours
+  ) {
+    window._etirementLastDay = todayStr;
+    // Enchaîner les 3 temps : t1 démarre immédiatement, t2 après 12f, t3 après 24f.
+    animator.trigger('etirement_t1');
+    setTimeout(() => animator.trigger('etirement_t2'), (12 / 12) * 1000);  // ~1s à 12fps
+    setTimeout(() => animator.trigger('etirement_t3'), (24 / 12) * 1000);  // ~2s à 12fps
+  }
+}
+
 // 7. Dessin du Gotchi
     let gotchiInfo;
     p.push();
     if (tilt) p.rotate(p.radians(tilt));
     
-    const shakeOffsetX = (window.shakeTimer > 0) ? Math.sin(p.frameCount * 3) * 5 : 0;
-    const shakeOffsetY = (window.shakeTimer > 0) ? Math.sin(p.frameCount * 2) * 3 : 0;
+    // shakeOffsetX/Y supprimés — l'offset shake est maintenant géré par animator ('shake')
+    // et intégré dans _animOverrides.dx / .dy appliqués sur drawX/drawY ci-dessous.
+    const shakeOffsetX = 0; // conservé pour ne pas casser drawX = cx + shakeOffsetX + _animOverrides.dx
+    const shakeOffsetY = 0; // conservé pour ne pas casser drawY = by + bobY + shakeOffsetY + _animOverrides.dy
     // RÔLE : Appliquer l'offset vertical de l'animator (saut, futur : bond, etc.) sur drawY.
     // POURQUOI : drawY est le cy transmis à drawAdult/drawBaby/drawTeen — c'est le bon niveau
     //            pour décaler le Gotchi entier (corps + accessoires + dithering + reflets yeux).
     //            Appliquer dy ici plutôt que dans renderSprite() évite de doubler l'offset.
     const animDy = window._animOverrides?.dy || 0;
-    const drawX = cx + shakeOffsetX;
+    // RÔLE : animDx intègre maintenant le shake (migré depuis shakeOffsetX ad hoc).
+    // POURQUOI : animator.resolve() retourne dx calculé par bodyOffset.xFn de 'shake'.
+    const animDx = window._animOverrides?.dx || 0;
+    const drawX = cx + shakeOffsetX + animDx;
     const drawY = by + bobY + shakeOffsetY + animDy;
 
     if (window._evoAnim && window._evoAnim.active) {
@@ -1122,19 +1221,23 @@ window._animOverrides = animator.resolve(g.stage);
     updateParts(p);
 
     // 11. Animations spécifiques (Snack, Clignement, Célébration)
+    // RÔLE : Dessiner l'emoji en vol + déclencher la réaction tap au bon moment.
+    // POURQUOI : Le bond du corps (eatAnim.jumped) est migré vers animator('snack_bond')
+    //            dans le bloc eatAnim ci-dessus (~L994). Ce bloc gère uniquement l'emoji + timer.
     if (window.eatAnim?.active) {
       const ea = window.eatAnim;
-      const progress = 1 - (ea.timer / 50); 
+      const progress = 1 - (ea.timer / 50);
       const fy = 20 + progress * (by - 30);
       const fx = cx;
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(20);
       p.drawingContext.globalAlpha = 1.0;
       p.text(ea.emoji, fx, fy);
-      
+
       if (progress > 0.7 && !ea.jumped) {
         triggerTouchReaction(false);
         ea.jumped = true;
+        // Note : animator.trigger('snack_bond') déjà appelé dans le bloc ~L994
       }
       ea.timer--;
       if (ea.timer <= 0) ea.active = false;
@@ -1156,6 +1259,26 @@ if (blink) {
 
 // ✨ Décrémente le timer d'expression une fois par frame
 if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
+
+// RÔLE : Bâillement automatique après inactivité prolongée.
+// POURQUOI : Donne vie au Gotchi quand l'utilisatrice ne l'a pas touché depuis ~3 min.
+//            Seulement si éveillé (pas de bâillement en dormant — il dort déjà).
+//            Cooldown YAWN_COOLDOWN pour éviter que ça spamme toutes les 3 min.
+{
+  const g = window.D?.g;
+  const h = typeof hr === 'function' ? hr() : new Date().getHours();
+  const isSleeping = g && (h >= 22 || h < 7);
+  const noExprActive = !window._expr || window._expr.moodTimer === 0;
+  if (!isSleeping && noExprActive) {
+    window._idleFrames = (window._idleFrames || 0) + 1;
+    if (window._idleFrames >= YAWN_THRESHOLD) {
+      window._idleFrames = -(YAWN_COOLDOWN); // cooldown négatif → attend avant de rebâiller
+      window.triggerExpr('baillement', 18);  // 18 frames ≈ 1.5 sec à 12fps
+    }
+  } else if (isSleeping) {
+    window._idleFrames = 0; // reset au réveil
+  }
+}
 
     while (window.celebQueue.length) {
       window.celebQueue.shift();

@@ -117,8 +117,8 @@ Animations cataloguées :
 | `bras-normal` | `when: pm.pose === 'normal'` | → `when: énergie/humeur/sommeil` + masqué par `aov.hidden` |
 | `bounceT`, `bobY` | global + sinus | inchangé (locomotion continue, hors animator) |
 | `walkX`, `walkPause` | machine d'état inline | inchangé (locomotion continue, hors animator) |
-| `shakeTimer` | timer inline | inchangé (candidat futur migration) |
-| `eatAnim` | objet ad hoc | inchangé (candidat futur migration) |
+| `shakeTimer` | timer global + offsets manuels dans `p.draw()` | ✅ `animator.trigger('shake')` — `bodyOffset.xFn/yFn` — 2026-04-30 |
+| `eatAnim` bond corps | `bobY -= Math.sin(...) * 18` inline | ✅ `animator.trigger('snack_bond')` — dessin emoji conservé dans `eatAnim` — 2026-04-30 |
 | `_evoAnim` | objet ad hoc | inchangé (candidat futur migration) |
 | `_expr` | objet `{ mood, timer }` | inchangé (candidat futur migration) |
 | `touchReactions` | tableau de timers | inchangé (candidat futur migration) |
@@ -149,7 +149,7 @@ Animations cataloguées :
 | Yeux surprise | teen/adult | `triggerExpr('surprise')` | 30–50f | `render-sprites.js:761, 1086` |
 | Bouche faim/joie/surprise | teen/adult | `triggerExpr(...)` | 30–80f | `render-sprites.js:836-868, 1157-1189` |
 | Yeux poop écarquillés | tous | `_gotchiNearPoop` | continu | `render-sprites.js:579, 799, 1124` |
-| Reflet pupille flottant | tous | continu | infinie | `render-sprites.js:649, 982, 1423` |
+| Reflet pupille snappé PX + regard crotte | tous | continu | infinie | `render-sprites.js:drawBaby/Teen/Adult — reflets` |
 | Wobble craquelures œuf | egg | continu | infinie | `render-sprites.js:475-477` |
 | Dither épuisement | baby/teen/adult | `en<EN_CRIT` | continu | `render-sprites.js:656, 989, 1430` |
 | Dither saleté (boue) | tous | `salete≥5` | continu | `render-sprites.js:311-344` |
@@ -161,13 +161,13 @@ Animations cataloguées :
 
 | Nom | Stade | Déclencheur | Description visuelle | Effort | Dépendances |
 |---|---|---|---|---|---|
-| Bâillement | baby/teen/adult | idle prolongé / 21h | bouche "O" 3f, yeux mi-clos 6f | faible | calque bouche-baillement |
+| ~~Bâillement~~ ✅ FAIT 2026-04-30 | baby/teen/adult | idle ~3min (`_idleFrames ≥ YAWN_THRESHOLD`) | bouche "O" 2×2PX + yeux-fermes, 18f (~1.5s) | — | calques `bouche-baillement` + condition `yeux-fermes`/`yeux-ouverts` sur `isMood('baillement')` |
 | Frisson | tous | temperature<5 ou bain | oscille ±1px X tous les 2f, 18f | faible | nouveau shiverX |
 | Hochement de tête | teen/adult | habitude validée | `cy +PX` puis 0, 2 cycles 16f | faible | `bodyOffset.yFn` |
 | Sourcil interrogatif | teen/adult | nouvelle prop équipée | 1px noir au-dessus œil + "?" 18f | faible | calque conditionnel |
 | Regard latéral suivi crotte | tous | `_gotchiNearPoop` | iris décale 1 PX vers la crotte | faible | lecture `poop.x - cx` |
 | Petits pas tap-tap | baby | en mouvement | alterne calques pieds toutes les 3f | faible | dupliquer pattern teen/adult |
-| Étirement matinal | adult | h===7 | bras-levés 12f → croisés 12f → normal | moyen | séquentiel animator (0 calque neuf) |
+| ~~Étirement matinal~~ ✅ FAIT 2026-04-30 | adult | h===7 (une fois/jour, `_etirementLastDay`) | bras-levés 12f → croisés 12f → repos 12f via `etirement_t1/t2/t3` (animator) | — | 0 calque neuf — calques existants `bras-leves`, `bras-croises`, `bras-normal` |
 | Pulsation œuf prêt à éclore | egg | `totalXp ≥ 100` | corps plus clair + 1px wobble Y / 8f | moyen | calque corps-pulse |
 | Danse joie 3 temps | teen/adult | `triggerExpr('joie')` haute | hanche_g → hanche_d → bras-levés (3×16f) | moyen | animator séquentiel |
 | Penche-tête curiosité | baby/teen | tap 1× journée | rotate 5° + cy −PX, 12f | moyen | extension du tilt existant |

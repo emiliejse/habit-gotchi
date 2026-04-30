@@ -595,19 +595,21 @@ const LAYERS_BABY = [
     ]
   },
 
-  // ── Yeux fermés (sommeil ou clignotement) ──────────────────────
+  // ── Yeux fermés (sommeil, clignotement, ou bâillement) ──────────
   // RÔLE : Barres fermées alignées avec les yeux ouverts (x:-2,w:2 et x:1,w:2).
+  // POURQUOI : isMood('baillement') → yeux mi-clos pendant la durée du bâillement
+  //            (même rendu que le clignotement — ligne horizontale = paupières baissées).
   {
     id: 'yeux-fermes',
     fill: 'C.eye',
-    when: (pm) => pm.sl || pm.blink,
+    when: (pm) => pm.sl || pm.blink || isMood('baillement'),
     rects: [
       { x: -2, y: 2, w: 2, h: 1 },   // œil gauche fermé (barre, aligné avec œil ouvert)
       { x:  1, y: 2, w: 2, h: 1 },   // œil droit fermé  (barre, aligné avec œil ouvert)
     ]
   },
 
-  // ── Yeux ouverts (éveillé, sans clignotement) ──────────────────
+  // ── Yeux ouverts (éveillé, sans clignotement, sans bâillement) ──
   // RÔLE : Œil 2×1 PX (large) pour un look mignon, cohérent avec la bouche à y:3.
   // POURQUOI : Un œil 1×1 PX (5×5px) laissait trop peu de place pour un reflet vivant.
   //            Un œil 2×1 PX (10×5px) donne plus d'espace horizontal pour que le reflet
@@ -618,7 +620,7 @@ const LAYERS_BABY = [
   {
     id: 'yeux-ouverts',
     fill: 'C.eye',
-    when: (pm) => !pm.sl && !pm.blink,
+    when: (pm) => !pm.sl && !pm.blink && !isMood('baillement'),
     rects: [
       { x: -2, y: 2, w: 2, h: 1 },   // œil gauche (2×1 PX — plus large, même hauteur)
       { x:  1, y: 2, w: 2, h: 1 },   // œil droit  (2×1 PX)
@@ -651,12 +653,24 @@ const LAYERS_BABY = [
     ]
   },
 
+  // ── Bouche bâillement (priorité max — écrase toute autre bouche) ──
+  // RÔLE : Bouche "O" ouverte pendant la durée de l'expression 'baillement'.
+  // POURQUOI : Calque en tête de liste → s'affiche en premier, mais les autres
+  //            bouches ont leur propre `when` — seul ce calque répond à isMood('baillement').
+  //            Forme : 2×2px noir centré = ouverture ronde minimaliste pixel art.
+  {
+    id: 'bouche-baillement',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && isMood('baillement'),
+    rects: [{ x: 0, y: 3, w: 2, h: 2 }]  // carré 2×2 PX = bouche "O"
+  },
+
   // ── Bouche sourire (ha élevé) ───────────────────────────────────
   // POURQUOI : x:0 centre la bouche entre les deux yeux (gauche x:-2, droit x:1 → centre ~x:0).
   {
     id: 'bouche-sourire',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && pm.ha > HA_HIGH,
+    when: (pm) => !pm.sl && !isMood('baillement') && pm.ha > HA_HIGH,
     rects: [{ x: 0, y: 3, w: 2, h: 1 }]
   },
 
@@ -664,7 +678,7 @@ const LAYERS_BABY = [
   {
     id: 'bouche-triste',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && pm.ha < HA_SAD,
+    when: (pm) => !pm.sl && !isMood('baillement') && pm.ha < HA_SAD,
     rects: [{ x: 0, y: 3, w: 2, h: 1, rawDy: 2 }]
   },
 
@@ -672,7 +686,7 @@ const LAYERS_BABY = [
   {
     id: 'bouche-neutre',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && pm.ha >= HA_SAD && pm.ha <= HA_HIGH,
+    when: (pm) => !pm.sl && !isMood('baillement') && pm.ha >= HA_SAD && pm.ha <= HA_HIGH,
     rects: [{ x: 0, y: 3, w: 1, h: 1 }]
   },
 
@@ -705,16 +719,25 @@ function drawBaby(p, cx, cy, sl, en, ha) {
 
   renderSprite(p, LAYERS_BABY, cx, cy, params);
 
-  // RÔLE : Reflet blanc dessiné hors grille pour un glissement sub-pixel vivant.
-  // POURQUOI : p.rect() accepte des flottants — le reflet ne snappe pas comme px(),
-  //            ce qui crée une légère tension visuelle avec l'iris noir (snappé).
+  // RÔLE : Reflet blanc snappé sur grille PX, avec regard latéral vers la crotte si proche.
+  // POURQUOI : Snap PX-grid → le reflet ne sort plus de l'iris aux extrémités (Bug 1 fix).
+  //            Regard crotte : si _gotchiNearPoop, le reflet est poussé du côté de la crotte
+  //            la plus proche — effet "le Gotchi la regarde du coin de l'œil" sans nouveau sprite.
   if (!params.sl && !params.blink) {
     p.fill('#fff');
     p.noStroke();
-    // Iris baby : 2×PX = 10px large, 1×PX = 5px haut. Reflet 3×3px.
-    // Amplitude : 10px - 3px reflet - 1px marge gauche - 1px marge droite = 5px max.
-    // Y : calé au bord haut de l'iris (cy + PX*2), sans décalage, reflet fait 3px → reste dans les 5px.
-    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 3 - 2);
+    // Iris baby : 2×PX = 10px large. Amplitude max = 10 - 3reflet - 1margeG - 1margeD = 5px.
+    const rxMax = PX * 2 - 3 - 2; // 5px
+    // RÔLE : Calculer la position brute du reflet — sinus ou regard crotte.
+    // POURQUOI : Si une crotte est proche, on remplace le sinus par un décalage directionnel
+    //            (0 = crotte à gauche du Gotchi, rxMax = crotte à droite).
+    const nearPoop = window._gotchiNearPoop;
+    const poopDir  = nearPoop ? _poopDirection(cx) : null; // -1 gauche, +1 droite, null aucune
+    const rxRaw    = poopDir !== null
+      ? (poopDir > 0 ? rxMax : 0)                              // regard vers la crotte
+      : (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * rxMax; // oscillation normale
+    // RÔLE : Snap sur grille PX pour rester dans l'iris quelle que soit la valeur flottante.
+    const rx = Math.floor(rxRaw / PX) * PX;
     p.rect(cx - PX * 2 + 1 + rx, cy + PX * 2, 3, 3); // œil gauche
     p.rect(cx + PX * 1 + 1 + rx, cy + PX * 2, 3, 3); // œil droit
   }
@@ -745,6 +768,26 @@ function drawBaby(p, cx, cy, sl, en, ha) {
 function isMood(name) {
   const expr = window._expr;
   return expr && expr.moodTimer > 0 && expr.lastMood === name;
+}
+
+// RÔLE : Déterminer de quel côté se trouve la crotte la plus proche du Gotchi.
+// POURQUOI : Utilisé par les reflets pupille pour simuler un regard latéral vers la crotte —
+//            le Gotchi "la regarde du coin de l'œil" sans nouveau sprite.
+//            Retourne +1 si la crotte est à droite de cx, -1 si à gauche, null si aucune.
+// @param {number} cx - Position X de référence du Gotchi (cx ou cxB selon le stade)
+// @returns {-1 | +1 | null}
+function _poopDirection(cx) {
+  const poops = (window.D && window.D.g && window.D.g.poops) || [];
+  if (!poops.length) return null;
+  // Trouver la crotte la plus proche
+  let nearest = null;
+  let minDist  = Infinity;
+  for (const poop of poops) {
+    const d = Math.abs(poop.x - cx);
+    if (d < minDist) { minDist = d; nearest = poop; }
+  }
+  if (!nearest) return null;
+  return nearest.x >= cx ? 1 : -1; // +1 droite, -1 gauche
 }
 
 /* ─── §5 STADE ADO ──────────────────────────────────────────────── */
@@ -811,11 +854,12 @@ const LAYERS_TEEN = [
     ]
   },
 
-  // ── Yeux fermés — sommeil ou clignotement ──────────────────────
+  // ── Yeux fermés — sommeil, clignotement ou bâillement ───────────
+  // POURQUOI : isMood('baillement') → paupières baissées pendant le bâillement (teen).
   {
     id: 'yeux-fermes',
     fill: 'C.eye',
-    when: (pm) => pm.sl || pm.blink,
+    when: (pm) => pm.sl || pm.blink || isMood('baillement'),
     rects: [
       { x: -3, y: 3, w: 2, h: 1 },   // œil gauche fermé
       { x:  1, y: 3, w: 2, h: 1 },   // œil droit fermé
@@ -845,10 +889,11 @@ const LAYERS_TEEN = [
   },
 
   // ── Yeux ouverts normaux (amande 2 rangées) ─────────────────────
+  // POURQUOI : masqués pendant le bâillement (yeux-fermes prend le dessus).
   {
     id: 'yeux-ouverts',
     fill: 'C.eye',
-    when: (pm) => !pm.sl && !pm.blink && !isMood('surprise'),
+    when: (pm) => !pm.sl && !pm.blink && !isMood('surprise') && !isMood('baillement'),
     rects: [
       { x: -3, y: 2, w: 2, h: 1 },   // œil gauche haut large
       { x: -2, y: 3, w: 1, h: 1 },   // œil gauche bas étroit
@@ -895,13 +940,26 @@ const LAYERS_TEEN = [
     ]
   },
 
+  // ── Bouche bâillement (priorité max — bouche "O" 2×2 PX) ────────
+  // RÔLE : Bouche ouverte ronde pendant le bâillement. Écrase toutes les autres bouches.
+  // POURQUOI : Calque placé avant bouche-joie — la condition isMood('baillement') est
+  //            exclusive, les autres bouches vérifient !isMood('baillement').
+  {
+    id: 'bouche-baillement',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && isMood('baillement'),
+    rects: [
+      { x: -1, y: 0, w: 2, h: 2, yFn: (pm) => pm.mouthBaseY },  // carré 2×2 = bouche "O"
+    ]
+  },
+
   // ── Bouche joie (grand sourire avec coins relevés) ───────────────
   // POURQUOI : mouthBaseY = cy + PX*5 + Math.floor(breath*3) — position Y dynamique ∈ {0,1,2}.
   //            yFn calcule la position absolue du rect à chaque frame.
   {
     id: 'bouche-joie',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && isMood('joie'),
+    when: (pm) => !pm.sl && isMood('joie') && !isMood('baillement'),
     rects: [
       { x: -2, y: 0, w: 4, h: 1, yFn: (pm) => pm.mouthBaseY + PX },   // ligne principale
       { x: -3, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY      },   // coin gauche relevé
@@ -943,7 +1001,7 @@ const LAYERS_TEEN = [
   {
     id: 'bouche-sourire-ha',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha > HA_HAPPY_TEEN,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha > HA_HAPPY_TEEN,
     rects: [
       { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY },   // centre
       { x: -2, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY },   // coin gauche
@@ -955,7 +1013,7 @@ const LAYERS_TEEN = [
   {
     id: 'bouche-neutre',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha <= HA_HAPPY_TEEN && pm.ha > HA_MED,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha <= HA_HAPPY_TEEN && pm.ha > HA_MED,
     rects: [
       { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY },
     ]
@@ -965,7 +1023,7 @@ const LAYERS_TEEN = [
   {
     id: 'bouche-triste',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha < HA_SAD,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha < HA_SAD,
     rects: [
       { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY, rawDy: 2 },
     ]
@@ -975,7 +1033,7 @@ const LAYERS_TEEN = [
   {
     id: 'bouche-defaut',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha >= HA_SAD && pm.ha <= HA_MED,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha >= HA_SAD && pm.ha <= HA_MED,
     rects: [
       { x: -1, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY },
     ]
@@ -1046,20 +1104,21 @@ function drawTeen(p, cx, cy, sl, en, ha) {
   //            le sprite de 4*PX = 20px vers la gauche — c'est le bug du décalage.
   renderSprite(p, LAYERS_TEEN, cx, cy, params);
 
-  // RÔLE : Reflet blanc flottant — même logique que drawBaby.
-  // POURQUOI : p.rect() accepte des flottants — le reflet ne snappe pas comme px(),
-  //            ce qui crée une légère tension visuelle avec l'iris noir (snappé).
+  // RÔLE : Reflet blanc snappé sur grille PX, avec regard latéral vers la crotte si proche.
+  // POURQUOI : Snap PX-grid → reste dans la rangée haute de l'iris (Bug 1 fix).
+  //            Regard crotte : même logique que drawBaby — poopDir pilote la position.
   if (!params.sl && !params.blink && !isMood('surprise')) {
     p.fill('#fff');
     p.noStroke();
-    // Iris teen : rangée haute 2×PX = 10px large, 1×PX = 5px haut. Reflet 3×3px.
-    // POURQUOI hauteur 3 : confiné dans la rangée haute → ne déborde pas dans la rangée basse.
-    // Espace horizontal disponible : 10px - 1px marge G - 3px reflet - 2px marge D = 4px max.
-    // POURQUOI Math.min : Math.sin flottant peut dépasser légèrement l'amplitude calculée
-    // → on clamp dur pour garantir que le bord droit du reflet ne sort jamais de l'iris.
-    const rxMax = PX * 2 - 3 - 3; // 10 - 3 - 3 = 4px (marge droite portée à 3px)
-    const rx = Math.min((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * rxMax, rxMax);
+    // Iris teen rangée haute : 2×PX = 10px. Espace dispo = 10 - 3reflet - 3margeD - 1margeG = 4px (1px de moins que baby).
+    const rxMax = PX * 2 - 3 - 3; // 4px
+    const nearPoop = window._gotchiNearPoop;
+    const poopDir  = nearPoop ? _poopDirection(cxB) : null;
+    const rxRaw    = poopDir !== null
+      ? (poopDir > 0 ? rxMax : 0)
+      : (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * rxMax;
     // Iris teen DSL : œil gauche à x:-3 (cx - 3*PX), œil droit à x:1 (cx + 1*PX)
+    const rx = Math.floor(rxRaw / PX) * PX;
     p.rect(cx - PX * 3 + 1 + rx, cy + PX * 2 + 1, 3, 3); // œil gauche
     p.rect(cx + PX * 1 + 1 + rx, cy + PX * 2 + 1, 3, 3); // œil droit
   }
@@ -1147,11 +1206,12 @@ const LAYERS_ADULT = [
     ]
   },
 
-  // ── Yeux fermés ─────────────────────────────────────────────────
+  // ── Yeux fermés — sommeil, clignotement ou bâillement ───────────
+  // POURQUOI : isMood('baillement') → paupières baissées pendant le bâillement (adult).
   {
     id: 'yeux-fermes',
     fill: 'C.eye',
-    when: (pm) => pm.sl || pm.blink,
+    when: (pm) => pm.sl || pm.blink || isMood('baillement'),
     rects: [
       { x: -3, y: 4, w: 3, h: 1 },   // œil gauche fermé
       { x:  1, y: 4, w: 3, h: 1 },   // œil droit fermé
@@ -1181,10 +1241,11 @@ const LAYERS_ADULT = [
   },
 
   // ── Yeux ouverts normaux (amande 2 rangées) ─────────────────────
+  // POURQUOI : masqués pendant le bâillement (yeux-fermes prend le dessus).
   {
     id: 'yeux-ouverts',
     fill: 'C.eye',
-    when: (pm) => !pm.sl && !pm.blink && !isMood('surprise'),
+    when: (pm) => !pm.sl && !pm.blink && !isMood('surprise') && !isMood('baillement'),
     rects: [
       { x: -3, y: 3, w: 3, h: 1 },   // œil gauche haut large
       { x: -2, y: 4, w: 2, h: 1 },   // œil gauche bas étroit
@@ -1229,11 +1290,22 @@ const LAYERS_ADULT = [
     ]
   },
 
+  // ── Bouche bâillement (priorité max — bouche "O" 2×2 PX) ────────
+  // RÔLE : Bouche ouverte ronde pendant le bâillement (adult).
+  {
+    id: 'bouche-baillement',
+    fill: 'C.mouth',
+    when: (pm) => !pm.sl && isMood('baillement'),
+    rects: [
+      { x: -1, y: 0, w: 2, h: 2, yFn: (pm) => pm.mouthBaseY },  // carré 2×2 = bouche "O"
+    ]
+  },
+
   // ── Bouche joie ─────────────────────────────────────────────────
   {
     id: 'bouche-joie',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && isMood('joie'),
+    when: (pm) => !pm.sl && isMood('joie') && !isMood('baillement'),
     rects: [
       { x: -2, y: 0, w: 4, h: 1, yFn: (pm) => pm.mouthBaseY + PX },   // ligne principale
       { x: -3, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY      },   // coin gauche
@@ -1275,7 +1347,7 @@ const LAYERS_ADULT = [
   {
     id: 'bouche-sourire-ha',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha > HA_HIGH,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha > HA_HIGH,
     rects: [
       { x: -2, y: 0, w: 4, h: 1, yFn: (pm) => pm.mouthBaseY + PX },   // barre bas
       { x: -3, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY      },   // coin gauche
@@ -1287,7 +1359,7 @@ const LAYERS_ADULT = [
   {
     id: 'bouche-neutre',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha <= HA_HIGH && pm.ha > HA_MED_ADULT,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha <= HA_HIGH && pm.ha > HA_MED_ADULT,
     rects: [
       { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY },
     ]
@@ -1297,7 +1369,7 @@ const LAYERS_ADULT = [
   {
     id: 'bouche-triste',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha < HA_SAD,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha < HA_SAD,
     rects: [
       { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY, rawDy: 2 },   // barre décalée
       { x: -2, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY             },   // coin
@@ -1308,7 +1380,7 @@ const LAYERS_ADULT = [
   {
     id: 'bouche-defaut',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha >= HA_SAD && pm.ha <= HA_MED_ADULT,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha >= HA_SAD && pm.ha <= HA_MED_ADULT,
     rects: [
       { x: -1, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY },
     ]
@@ -1513,20 +1585,21 @@ function drawAdult(p, cx, cy, sl, en, ha) {
   //            ce décalage et décalerait le sprite de 5*PX = 25px vers la gauche.
   renderSprite(p, LAYERS_ADULT, cx, cy, params);
 
-  // RÔLE : Reflet blanc flottant — même logique que drawBaby.
-  // POURQUOI : p.rect() accepte des flottants — le reflet ne snappe pas comme px(),
-  //            ce qui crée une légère tension visuelle avec l'iris noir (snappé).
+  // RÔLE : Reflet blanc snappé sur grille PX, avec regard latéral vers la crotte si proche.
+  // POURQUOI : Snap PX-grid → reste dans la rangée haute de l'iris (Bug 1 fix).
+  //            Regard crotte : même logique que baby/teen — poopDir pilote la position.
   if (!params.sl && !params.blink && !isMood('surprise')) {
     p.fill('#fff');
     p.noStroke();
-    // Iris adult : rangée haute 3×PX = 15px large, 1×PX = 5px haut. Reflet 3×3px.
-    // POURQUOI hauteur 3 : confiné dans la rangée haute → ne déborde pas dans la rangée basse.
-    // Espace horizontal disponible : 15px - 1px marge G - 3px reflet - 3px marge D = 8px max.
-    // POURQUOI Math.min : même protection que teen — clamp dur pour éviter tout débordement
-    // droit quelle que soit la valeur flottante du sinus.
-    const rxMax = PX * 3 - 3 - 4; // 15 - 3 - 4 = 8px (marge droite portée à 4px)
-    const rx = Math.min((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * rxMax, rxMax);
+    // Iris adult rangée haute : 3×PX = 15px. Espace dispo = 15 - 3reflet - 4margeD - 0margeG = 8px.
+    const rxMax = PX * 3 - 3 - 4; // 8px
+    const nearPoop = window._gotchiNearPoop;
+    const poopDir  = nearPoop ? _poopDirection(cxB) : null;
+    const rxRaw    = poopDir !== null
+      ? (poopDir > 0 ? rxMax : 0)
+      : (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * rxMax;
     // Iris adult DSL : œil gauche à x:-3 (cx - 3*PX), œil droit à x:1 (cx + 1*PX)
+    const rx = Math.floor(rxRaw / PX) * PX;
     p.rect(cx - PX * 3 + 1 + rx, cy + PX * 3 + 1, 3, 3); // œil gauche
     p.rect(cx + PX * 1 + 1 + rx, cy + PX * 3 + 1, 3, 3); // œil droit
   }

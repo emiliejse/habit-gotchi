@@ -39,94 +39,202 @@ function drawDither(p, x, y, w, h, color) {
 
 /* ─── §1b DITHERING SALETÉ ──────────────────────────────────────── */
 
+// RÔLE : Cache des masques de saleté, un entrée par combinaison stade + breathX.
+// POURQUOI : Générer le masque off-screen est coûteux (lecture pixel par pixel).
+//            On ne recalcule que si le stade ou le décalage de respiration change.
+//            Structure : { [stage]: { key: string, pixels: [{rx, ry}] } }
+//            rx/ry = positions relatives au coin haut-gauche du bounding box du sprite.
+const _saleteMaskCache = {};
+
+// RÔLE : Dimensions du bounding box off-screen pour chaque stade.
+// POURQUOI : On alloue un canvas juste assez grand pour contenir le sprite complet
+//            (corps + oreilles + bras + pieds), avec une petite marge.
+//            ox = décalage cx → bord gauche du bounding box, en multiples de PX.
+const _STAGE_BOX = {
+  egg:   { w: 8,  h: 8,  ox: 4 },
+  baby:  { w: 7,  h: 6,  ox: 4 },
+  teen:  { w: 12, h: 13, ox: 6 }, // bras gauche + oreilles débordent
+  adult: { w: 14, h: 12, ox: 7 }, // bras + oreilles débordent
+};
+
+// RÔLE : Dessine la silhouette d'un stade (couleur unie opaque) sur un p5.Graphics
+//        off-screen, pour en extraire le masque alpha pixel par pixel.
+// POURQUOI : En dessinant avec une couleur pleine, puis en lisant les pixels non-vides,
+//            on obtient un masque fidèle au sprite réel. Si un sprite est modifié dans
+//            drawBaby/drawTeen/drawAdult, il suffit de mettre à jour cette fonction —
+//            drawSaleteDither suit automatiquement.
+// @param {Object} g       - Instance p5.Graphics (canvas off-screen, déjà créé)
+// @param {string} stage   - 'egg' | 'baby' | 'teen' | 'adult'
+// @param {number} breathX - Décalage horizontal de respiration (0 ou ±1)
+function _drawSilhouetteOffscreen(g, stage, breathX) {
+  const box = _STAGE_BOX[stage];
+  // EAR_PAD : marge haute en PX pour que les oreilles (teen/adult) ne débordent pas du canvas.
+  const EAR_PAD = (stage === 'teen' || stage === 'adult') ? 3 : 0;
+  const ox = box.ox * PX;  // décalage horizontal du "cx virtuel" dans le canvas off-screen
+  const oy = EAR_PAD * PX; // décalage vertical pour absorber les oreilles
+
+  g.background(0, 0, 0, 0); // fond transparent
+  g.fill(255);               // blanc opaque — seule la forme compte
+  g.noStroke();
+
+  // Fonction locale calquée sur px() mais qui dessine sur g (canvas off-screen)
+  function gpx(x, y, w, h) { g.rect(ox + x, oy + y, w, h); }
+
+  if (stage === 'egg') {
+    // Même géométrie que drawEgg() — origine relative cx=-3*PX
+    const x = -PX * 3;
+    gpx(x+PX*2, 0,     PX*3, PX);
+    gpx(x+PX,   PX,    PX*5, PX);
+    gpx(x,      PX*2,  PX*7, PX*3);
+    gpx(x+PX,   PX*5,  PX*5, PX);
+    gpx(x+PX*2, PX*6,  PX*3, PX);
+
+  } else if (stage === 'baby') {
+    // Même géométrie que drawBaby() — origine relative cx=-3*PX
+    const x = -PX * 3;
+    gpx(x+PX,  0,     PX*4, PX);
+    gpx(x,     PX,    PX*6, PX*3);
+    gpx(x+PX,  PX*4,  PX*4, PX);
+
+  } else if (stage === 'teen') {
+    // Même géométrie que drawTeen() — origine relative cx=-4*PX-breathX
+    const x = -PX * 4 - breathX;
+    gpx(x+PX*2,    0,     PX*4, PX);
+    gpx(x+PX,      PX,    PX*6, PX);
+    gpx(x,         PX*2,  PX*8, PX*4);
+    gpx(x+PX,      PX*6,  PX*6, PX);
+    gpx(x+PX*2,    PX*7,  PX*4, PX);
+    // Oreilles
+    gpx(x+PX,      -PX,   PX*2, PX*2);
+    gpx(x+PX*5,    -PX,   PX*2, PX*2);
+    gpx(x+PX+2,    -PX*2, PX,   PX);
+    gpx(x+PX*5+2,  -PX*2, PX,   PX);
+    // Bras
+    gpx(x-PX,      PX*4,  PX,   PX*2);
+    gpx(x+PX*8,    PX*4,  PX,   PX*2);
+    // Pieds
+    gpx(x+PX*2,    PX*8,  PX,   PX);
+    gpx(x+PX*5,    PX*8,  PX,   PX);
+
+  } else if (stage === 'adult') {
+    // Même géométrie que drawAdult() — origine relative cx=-5*PX-breathX
+    const x = -PX * 5 - breathX;
+    gpx(x+PX*3,    0,     PX*4,  PX);
+    gpx(x+PX*2,    PX,    PX*6,  PX);
+    gpx(x+PX,      PX*2,  PX*8,  PX);
+    gpx(x,         PX*3,  PX*10, PX*4);
+    gpx(x+PX,      PX*7,  PX*8,  PX);
+    gpx(x+PX*2,    PX*8,  PX*6,  PX);
+    gpx(x+PX*3,    PX*9,  PX*4,  PX);
+    // Oreilles
+    gpx(x+PX*2,    -PX,   PX*2, PX*2);
+    gpx(x+PX*6,    -PX,   PX*2, PX*2);
+    // Bras (poses idle : on couvre toutes les positions possibles)
+    gpx(x-PX,      PX*4,  PX,   PX*2);
+    gpx(x+PX*10,   PX*4,  PX,   PX*2);
+  }
+}
+
+// RÔLE : Construit (ou réutilise depuis le cache) le masque de silhouette pour le dither.
+// POURQUOI : L'appel à loadPixels() est coûteux. On ne régénère le masque que lorsque
+//            la clé stade+breathX change (au plus 3 clés possibles : -1, 0, +1).
+// @param {Object} p       - Instance p5 principale
+// @param {string} stage   - 'egg' | 'baby' | 'teen' | 'adult'
+// @param {number} breathX - Décalage de respiration (0 ou ±1)
+// @returns {Array<{rx:number, ry:number}>} positions relatives au coin haut-gauche du sprite
+function _getSaleteMask(p, stage, breathX) {
+  const key = stage + '_' + breathX;
+
+  // RÔLE : Retourner le masque mis en cache si la clé n'a pas changé.
+  if (_saleteMaskCache[stage] && _saleteMaskCache[stage].key === key) {
+    return _saleteMaskCache[stage].pixels;
+  }
+
+  const box = _STAGE_BOX[stage];
+  const EAR_PAD = (stage === 'teen' || stage === 'adult') ? 3 : 0;
+  const cW = (box.w + 2) * PX; // largeur canvas off-screen (marge 1 PX de chaque côté)
+  const cH = (box.h + EAR_PAD + 1) * PX; // hauteur avec marge oreilles + bas
+
+  // RÔLE : Créer un canvas off-screen temporaire pour rendre la silhouette.
+  // POURQUOI : p.createGraphics() alloue un canvas WebGL/2D isolé — jamais affiché.
+  //            pixelDensity(1) évite le doublement des pixels sur écrans retina.
+  const g = p.createGraphics(cW, cH);
+  g.pixelDensity(1);
+
+  _drawSilhouetteOffscreen(g, stage, breathX);
+
+  // RÔLE : Lire les pixels du canvas off-screen pour extraire la silhouette.
+  // POURQUOI : g.pixels[] est un tableau RGBA linéaire. On retient les positions
+  //            dont l'alpha (indice +3) est non nul = partie visible du sprite.
+  g.loadPixels();
+  const pixels = [];
+  const ox = box.ox * PX;
+  const oy = EAR_PAD * PX;
+
+  for (let ry = 0; ry < cH; ry += PX) {
+    for (let rx = 0; rx < cW; rx += PX) {
+      // RÔLE : Lire l'alpha du premier pixel de chaque macro-pixel PX×PX.
+      // POURQUOI : On travaille en grille PX — lire un seul pixel par case suffit.
+      const idx = (ry * cW + rx) * 4;
+      if (g.pixels[idx + 3] > 0) {
+        // Stocker la position relative au cx/cy du sprite (origine = coin haut-gauche)
+        pixels.push({ rx: rx - ox, ry: ry - oy });
+      }
+    }
+  }
+
+  // RÔLE : Libérer le canvas off-screen après lecture.
+  // POURQUOI : p.createGraphics() alloue de la mémoire GPU — g.remove() la libère.
+  g.remove();
+
+  _saleteMaskCache[stage] = { key, pixels };
+  return pixels;
+}
+
 // RÔLE : Dessine un effet de saleté (taches de boue) par-dessus le sprite du Gotchi.
-// POURQUOI : Reproduit manuellement les px() du sprite correspondant pour rester dans
-//            les limites exactes de la silhouette, sans utiliser p.get() (trop lent sur mobile).
+// POURQUOI : Utilise un masque alpha généré off-screen à partir du sprite réel.
+//            La boue épouse exactement la silhouette — même après modification du sprite.
+//            Si un sprite change, mettre à jour _drawSilhouetteOffscreen suffit.
 //            La densité des taches augmente avec le niveau de saleté (5 → 10).
-//            Couleur boue : marron transparent, opacité progressive.
 //
 // @param {Object} p       - Instance p5
 // @param {string} stage   - 'egg' | 'baby' | 'teen' | 'adult'
 // @param {number} cx      - Centre X du Gotchi (même valeur que drawBaby/Teen/Adult)
 // @param {number} cy      - Y haut du Gotchi (même valeur que draw*)
 // @param {number} salete  - Niveau de saleté 0-10 (rien dessiné si < 5)
-// @param {boolean} sl     - true si le Gotchi dort (pour décalage breathX = 0)
+// @param {boolean} sl     - true si le Gotchi dort (breathX forcé à 0)
 function drawSaleteDither(p, stage, cx, cy, salete, sl) {
   if (!salete || salete < 5) return;
 
   // RÔLE : Calculer l'intensité visuelle selon le niveau de saleté.
-  // POURQUOI : On veut une progression douce de 5 à 10 : quelques taches → Gotchi tout boueux.
-  //            ratio va de 0.0 (saleté=5) à 1.0 (saleté=10).
-  const ratio  = (salete - 5) / 5;          // 0 → 1
+  // POURQUOI : ratio va de 0.0 (saleté=5) à 1.0 (saleté=10) — progression douce.
+  const ratio  = (salete - 5) / 5;            // 0 → 1
   const alpha  = Math.round(40 + ratio * 120); // opacité 40 → 160
   const stride = ratio < 0.5 ? 3 : 2;         // pas du damier : 1 case / 3 puis 1 / 2
+
+  // RÔLE : breathX doit correspondre exactement à celui utilisé dans le sprite.
+  // POURQUOI : Le masque est mis en cache par breathX — s'il diverge,
+  //            la boue sera décalée d'un pixel par rapport au corps.
+  const breathX = (stage === 'teen' || stage === 'adult')
+    ? (sl ? 0 : Math.round(getBreath(p) * 2 - 1))
+    : 0;
+
+  // Récupérer (ou construire) le masque de silhouette
+  const mask = _getSaleteMask(p, stage, breathX);
 
   // Couleur boue
   const boue = p.color(101, 67, 33, alpha);
   p.fill(boue);
   p.noStroke();
 
-  // RÔLE : Helper local — applique le damier de saleté sur un rectangle px-aligné.
-  // POURQUOI : Même logique que drawDither(), mais avec le stride variable.
-  function ditherRect(rx, ry, rw, rh) {
-    for (let row = 0; row < rh; row += PX * stride) {
-      const offset = (row / PX % 2 === 0) ? 0 : PX;
-      for (let col = offset; col < rw; col += PX * stride) {
-        p.rect(rx + col, ry + row, PX, PX);
-      }
-    }
-  }
-
-  // RÔLE : Pour chaque stade, reproduire les px() principaux du corps (silhouette uniquement).
-  // POURQUOI : On ne fait pas de capture canvas (p.get()) → on code la forme manuellement.
-  //            On couvre le corps et les oreilles, pas les yeux ni la bouche.
-
-  if (stage === 'egg') {
-    const x = cx - PX * 3, y = cy;
-    ditherRect(x + PX*2, y,        PX*3, PX);
-    ditherRect(x + PX,   y+PX,     PX*5, PX);
-    ditherRect(x,        y+PX*2,   PX*7, PX*3);
-    ditherRect(x + PX,   y+PX*5,   PX*5, PX);
-    ditherRect(x + PX*2, y+PX*6,   PX*3, PX);
-
-  } else if (stage === 'baby') {
-    const x = cx - PX * 3, y = cy;
-    ditherRect(x+PX,   y,        PX*4, PX);
-    ditherRect(x,      y+PX,     PX*6, PX*3);
-    ditherRect(x+PX,   y+PX*4,   PX*4, PX);
-
-  } else if (stage === 'teen') {
-    const breath  = getBreath(p);
-    const breathX = sl ? 0 : Math.round(breath * 2 - 1);
-    const x = cx - PX * 4 - breathX, y = cy;
-    // Corps principal
-    ditherRect(x+PX*2, y,        PX*4, PX);
-    ditherRect(x+PX,   y+PX,     PX*6, PX);
-    ditherRect(x,      y+PX*2,   PX*8, PX*4);
-    ditherRect(x+PX,   y+PX*6,   PX*6, PX);
-    ditherRect(x+PX*2, y+PX*7,   PX*4, PX);
-    // Oreilles
-    ditherRect(x+PX,   y-PX,     PX*2, PX*2);
-    ditherRect(x+PX*5, y-PX,     PX*2, PX*2);
-    // Pieds
-    ditherRect(x+PX*2, y+PX*8,   PX,   PX);
-    ditherRect(x+PX*5, y+PX*8,   PX,   PX);
-
-  } else if (stage === 'adult') {
-    const breath  = getBreath(p);
-    const breathX = sl ? 0 : Math.round(breath * 2 - 1);
-    const x = cx - PX * 5 - breathX, y = cy;
-    // Corps principal
-    ditherRect(x+PX*3, y,        PX*4, PX);
-    ditherRect(x+PX*2, y+PX,     PX*6, PX);
-    ditherRect(x+PX,   y+PX*2,   PX*8, PX);
-    ditherRect(x,      y+PX*3,   PX*10, PX*4);
-    ditherRect(x+PX,   y+PX*7,   PX*8, PX);
-    ditherRect(x+PX*2, y+PX*8,   PX*6, PX);
-    ditherRect(x+PX*3, y+PX*9,   PX*4, PX);
-    // Oreilles
-    ditherRect(x+PX*2, y-PX,     PX*2, PX*2);
-    ditherRect(x+PX*6, y-PX,     PX*2, PX*2);
+  // RÔLE : Appliquer le damier sur chaque macro-pixel de la silhouette.
+  // POURQUOI : On ne dessine qu'1 case sur stride — effet damier échiquier progressif.
+  //            (row + col) % stride reproduit l'alternance de l'ancienne ditherRect.
+  for (const { rx, ry } of mask) {
+    const row = Math.round(ry / PX);
+    const col = Math.round(rx / PX);
+    if ((row + col) % stride !== 0) continue;
+    p.rect(cx + rx, cy + ry, PX, PX);
   }
 }
 

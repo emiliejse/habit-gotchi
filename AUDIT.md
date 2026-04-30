@@ -25,7 +25,7 @@
 | `data/config.js` | **A** | Constantes pures, namespace `window.HG_CONFIG` propre, palettes documentées. `HG_CONFIG.GAMEPLAY` expose désormais toutes les constantes gameplay (XP, EN, HA, POOP, cycle). |
 | `js/app.js` | **B+** | Bien commenté, migrations versionnées, mais bootstrap éparpillé, `addEvent` mixe deux signatures, et plusieurs `setInterval` non clearables. |
 | `js/render.js` | **B** | `p.draw()` découpé en 4 sous-fonctions extraites (2026-04-30) — orchestrateur ~85 lignes. Reste : helpers de hitbox dupliqués entre `touchStarted` et `touchMoved`, `walkX`/`walkPause` implicitement partagés avec `render-sprites.js`. |
-| `js/render-sprites.js` | **A-** | Sprites bien isolés, `drawSaleteDither` reproduit manuellement les silhouettes (dette fragile mais documentée), code lisible et autonome. |
+| `js/render-sprites.js` | **A** | Sprites bien isolés, `drawSaleteDither` utilise désormais un masque off-screen (auto-synchronisé avec les sprites), code lisible et autonome. |
 | `js/envs.js` | **B+** | Cohérent et factorisé (`tc`, `shadeN`), seul reproche : `drawActiveEnv` mélange parc/chambre/montagne dans une seule fonction de 130 lignes. |
 | `js/ui.js` | **C+** | 5192 lignes, 5 manières différentes d'ouvrir une modale (`openModal`, accès direct `mbox.innerHTML`, `etats-overlay` créé en JS, `tablet-overlay` HTML, agenda `shop-open`), code dupliqué massif sur les en-têtes de modales, gestion scroll-lock incohérente. |
 | `index.html` | **B** | Ordre des scripts correct, debug-panel inline volumineux (~85 l), p5.js CDN sans `integrity`, masquage features RDV/Cycle dans script séparé en bas. |
@@ -254,11 +254,11 @@
 
 ### 4.3 Problèmes
 
-#### 🟠 IMPORTANT — `drawSaleteDither` reproduit à la main les silhouettes des sprites
-- Lignes : [L82-L128]
-- Description : Pour chaque stade, le code redessine grossièrement le contour du sprite via `ditherRect`. Si le sprite change (`drawBaby` modifié dans une future feature), `drawSaleteDither` ne suit pas automatiquement → la boue n'épousera plus la silhouette.
-- Risque : Bug visuel silencieux après refonte des sprites.
-- Suggestion : Soit (a) accepter que c'est une approximation et le documenter en gros (déjà fait [L42-L46]), soit (b) générer un masque alpha à partir d'un canvas off-screen une seule fois.
+#### ✅ RÉSOLU — `drawSaleteDither` reproduit à la main les silhouettes des sprites (2026-04-30)
+- Lignes d'origine : [L82-L128]
+- Description : Le code redessine manuellemnt la silhouette via `ditherRect` → la boue ne suivait pas automatiquement si un sprite changeait.
+- Solution : Option (b) implémentée — masque alpha généré off-screen via `p.createGraphics()`. Deux nouvelles fonctions privées ajoutées : `_drawSilhouetteOffscreen(g, stage, breathX)` dessine la silhouette du stade sur un canvas off-screen ; `_getSaleteMask(p, stage, breathX)` lit les pixels non-vides et retourne le tableau `[{rx, ry}]`, mis en cache par clé `stage_breathX`. `drawSaleteDither` itère ce masque et applique le damier. Le cache est invalide si breathX change (au plus 3 entrées par stade). `g.remove()` libère la mémoire GPU après lecture.
+- Bénéfice : Si un sprite est modifié, mettre à jour `_drawSilhouetteOffscreen` suffit — la boue suit automatiquement. Plus de risque de désynchronisation silencieuse.
 
 #### 🟡 MINEUR — `dejaDessines` Set créé à chaque frame dans `drawAccessoires`
 - Lignes : [L155]
@@ -590,6 +590,28 @@ Trois facteurs cumulés causaient le bug :
 | 20 | Ajouter une suite de tests automatisés (Jest/Vitest) | nouveau `tests/` | L | Régressions |
 | 21 | Implémenter focus trap + Escape close pour toutes modales | modules `ui-*.js` | M | Accessibilité — Escape déjà ajouté sur tablet-overlay et etats-overlay, reste #modal et autres |
 | 22 | Ajouter Content-Security-Policy en meta | `index.html` | S | Sécurité |
+
+---
+
+
+### Session — 2026-04-30 : Fix drawSaleteDither — masque off-screen
+
+**Objectif** : Résoudre le 🟠 IMPORTANT sur `render-sprites.js` — `drawSaleteDither` reproduisait manuellement les silhouettes via `ditherRect`, sans suivre automatiquement les modifications des sprites.
+
+**Fichier modifié** : `js/render-sprites.js`
+
+**Solution retenue** : Option (b) — masque alpha généré à partir d'un canvas off-screen.
+
+**Ce qui a été fait** :
+
+- `_saleteMaskCache` : objet module-level pour mettre en cache les masques par clé `stage_breathX`.
+- `_STAGE_BOX` : constante des dimensions de bounding box off-screen par stade (évite les recalculs).
+- `_drawSilhouetteOffscreen(g, stage, breathX)` : dessine la silhouette du stade sur un `p5.Graphics` off-screen avec une couleur unie opaque. Reproduit la géométrie de `drawEgg/Baby/Teen/Adult` — à mettre à jour en même temps que les sprites.
+- `_getSaleteMask(p, stage, breathX)` : crée le canvas off-screen via `p.createGraphics()`, appelle `loadPixels()`, extrait les positions `{rx, ry}` des macro-pixels non-vides (grille PX×PX), libère le canvas via `g.remove()`, met le résultat en cache. Au plus 3 entrées par stade (breathX ∈ {-1, 0, 1}).
+- `drawSaleteDither` : signature inchangée — itère le masque et applique le damier `(row + col) % stride` sur les positions réelles du sprite.
+- `ditherRect` et les blocs `if/else` manuels par stade : supprimés.
+
+**Bénéfice** : Si un sprite est modifié, mettre à jour `_drawSilhouetteOffscreen` suffit. Plus de risque de bug visuel silencieux après refonte des sprites.
 
 ---
 

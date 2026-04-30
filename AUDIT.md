@@ -282,6 +282,44 @@
 - `_drawSilhouetteOffscreen` doit être maintenue à jour si la géométrie corps/oreilles/bras change dans un `LAYERS_*`. La vérification est documentée en session ci-dessous.
 - Les calques `when` des bouches répètent `!isMood('joie') && !isMood('faim') && !isMood('surprise')` — factorisation possible en helper `isNormalMood()` si de nouvelles humeurs sont ajoutées.
 
+### 4.6 Évolutions souhaitées (débloquées par le DSL)
+
+#### 💡 FEATURE — Nouveau Gotchi alternatif (forme différente)
+- Fichier : nouveau `js/render-sprites-alt.js` ou entrée dans `render-sprites.js`
+- Contexte : Le DSL permet de définir un Gotchi avec une géométrie totalement différente (ex. plus anguleux, oreilles pointues, corps allongé) sans toucher au moteur ni aux fonctions existantes.
+- Implémentation : Créer `LAYERS_MON_GOTCHI_*` par stade, exposer `drawMonGotchi*(p, cx, cy, sl, en, ha)` qui appelle `renderSprite()` avec ces calques. `_drawSilhouetteOffscreen` devra être étendue pour le nouveau stade si la saleté doit le couvrir.
+- Effort : M par stade (S si formes proches du Gotchi actuel).
+
+#### 💡 FEATURE — Thème saisonnier / palette alternative (Halloween, Noël, printemps...)
+- Fichier : `data/config.js` (nouvelles palettes) + appel dans `render.js`
+- Contexte : `renderSprite()` accepte un 6e argument `palette` qui remplace `C`. Aucune modification des `LAYERS_*` nécessaire — seules les couleurs changent.
+- Implémentation : Ajouter `PALETTE_HALLOWEEN = { body: '#ff6a00', eye: '#1a0033', ... }` dans `config.js`. Dans `render.js`, détecter la date ou un flag `D.g.theme` et passer la palette à `drawTeen`/`drawAdult` etc. qui la transmettent à `renderSprite()`.
+- Effort : S (palette) + S (détection et transmission dans render.js).
+
+#### 💡 FEATURE — Nouvelle humeur visuelle (ex. amoureux, endormi debout, concentré)
+- Fichier : `js/render-sprites.js` (`LAYERS_TEEN`, `LAYERS_ADULT`), `js/render.js` (`triggerExpr`)
+- Contexte : Ajouter une humeur = ajouter des calques `when: (pm) => isMood('amoureux')` dans les définitions existantes (yeux en cœur, bouche spéciale, joues très roses). Le moteur gère le reste.
+- Implémentation : (1) Ajouter `'amoureux'` dans `triggerExpr()` de `render.js`. (2) Ajouter les calques yeux/bouche/joues dans `LAYERS_TEEN` et `LAYERS_ADULT`. (3) Ajouter `isNormalMood()` helper pour alléger les `when` existants.
+- Effort : S.
+
+#### 💡 FEATURE — Nouveau stade de croissance (ex. stade "senior" ou stade intermédiaire)
+- Fichier : `js/render-sprites.js`, `js/render.js`, `js/app.js`
+- Contexte : Le DSL rend l'ajout d'un stade très peu coûteux en termes de logique : créer `LAYERS_SENIOR`, écrire `drawSenior()` qui appelle `renderSprite()`, ajouter le stade dans `getSt()` de `app.js` et dans `_drawSilhouetteOffscreen`.
+- Implémentation : (1) Définir `LAYERS_SENIOR` (peut réutiliser des calques de `LAYERS_ADULT` avec `spread`). (2) Étendre `_STAGE_BOX` et `_drawSilhouetteOffscreen`. (3) Ajouter le seuil XP dans `app.js`.
+- Effort : M.
+
+#### 💡 FEATURE — Personnalisation de la forme du Gotchi par l'utilisatrice
+- Fichiers : `data/config.js`, `js/ui-settings.js`, `js/render-sprites.js`, `window.D`
+- Contexte : Permettre de choisir parmi plusieurs "morphologies" de Gotchi (ex. rond, allongé, avec chapeau intégré) via un sélecteur dans les réglages. Chaque morphologie = un set de `LAYERS_*` alternatifs.
+- Implémentation : (1) Stocker `D.g.gotchiShape = 'default' | 'slim' | 'fluffy'` dans la structure de données. (2) Dans `render.js`, sélectionner le bon set de `LAYERS_*` selon `D.g.gotchiShape` avant d'appeler `drawTeen`/`drawAdult`. (3) UI dans `ui-settings.js` (sélecteur morphologie). Nécessite une migration `SCHEMA_VERSION`.
+- Effort : L.
+
+#### 💡 FEATURE — Accessoire intégré au sprite (tatouage, marque, motif permanent)
+- Fichier : `js/render-sprites.js`
+- Contexte : Contrairement aux accessoires de `drawAccessoires()` (qui flottent au-dessus), un motif intégré au corps (ex. étoile sur le ventre, tache de naissance) peut être modélisé comme un calque DSL toujours actif avec une couleur dérivée (`C.bodyDk` légèrement modifié).
+- Implémentation : Ajouter un calque `{ id: 'marque', fill: 'C.bodyDk', rects: [...] }` dans le `LAYERS_*` concerné. Peut être conditionnel à `D.g.gotchiShape` ou à un item acheté en boutique.
+- Effort : S.
+
 ---
 
 ## 5. `js/envs.js`

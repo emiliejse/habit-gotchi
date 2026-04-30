@@ -7,7 +7,7 @@
 
 ## 1. Bugs critiques diagnostiqués
 
-### Bug 1 — Pupilles qui sortent de l'œil
+### Bug 1 — Pupilles qui sortent de l'œil ✅ RÉSOLU 2026-04-30
 
 **Localisation :** reflets/pupilles dessinés hors DSL via `p.rect()` (sub-pixel volontaire) :
 
@@ -15,7 +15,7 @@
 - `drawTeen()` — `render-sprites.js:976-985`
 - `drawAdult()` — `render-sprites.js:1417-1426`
 
-**Calcul actuel (exemple) :**
+**Calcul avant fix :**
 
 ```js
 // render-sprites.js:649 (baby)
@@ -23,24 +23,23 @@ const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 3 - 2);
 p.rect(cx - PX * 2 + 1 + rx, cy + PX * 2, 3, 3);
 ```
 
-**Diagnostic :** aucun `constrain()`, aucun `clamp` explicite. La formule est calibrée sur la rangée haute large de l'iris, mais ignore que la rangée bas est plus étroite (ex. teen rangée bas droite : 5 px de large, alors que le reflet à `rx=3` atteint `cxB+13`). Conséquence visible : aux extrémités du sinus, le reflet déborde sur la rangée bas.
+**Diagnostic :** aucun `constrain()`, aucun `clamp` explicite. La formule était calibrée sur la rangée haute large de l'iris, mais ignorait que la rangée bas est plus étroite → le reflet débordait aux extrémités du sinus.
 
-**Fix minimal — snap PX-grid :**
+**Fix appliqué — snap PX-grid (3 sites) :**
 
 ```js
-// render-sprites.js:649 (drawBaby) — REMPLACER la ligne unique de calcul rx PAR :
-const rxMax = PX * 2 - 3 - 2;
+// drawBaby — rxMax = PX*2-3-2
+// drawTeen  — rxMax = PX*2-4-3
+// drawAdult — rxMax = PX*3-4-4
 const rxRaw = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * rxMax;
 const rx    = Math.floor(rxRaw / PX) * PX;
 ```
-
-Idem `render-sprites.js:982` (`rxMax = PX*2-4-3`) et `render-sprites.js:1423` (`rxMax = PX*3-4-4`).
 
 → Le reflet ne se déplace plus que d'une case PX à la fois, reste toujours dans l'iris large.
 
 ---
 
-### Bug 2 — Désynchronisation props/corps
+### Bug 2 — Désynchronisation props/corps ✅ RÉSOLU 2026-04-30
 
 **Calcul des offsets corps :**
 
@@ -54,30 +53,21 @@ Idem `render-sprites.js:982` (`rxMax = PX*2-4-3`) et `render-sprites.js:1423` (`
 - ligne 398 : `const accX = cx - (def.pixels[0].length * ps) / 2;` → flottant, pas de snap PX
 - ligne 426 : `const accY = baseYraw - def.pixels.length * ps + offsetY;` → flottant
 
-Le commentaire ligne 396-397 explique que le snap a été retiré par peur d'un glissement vertical lié à `bobY`.
+**Diagnostic :** Le sprite (corps) passait par `px()` qui `floor` sur grille PX → corps "saute" tous les 5 px. Les accessoires passaient par `pxFree()` → "rampaient" pixel par pixel. Désynchro franche dès qu'il y avait marche ou `bobY`.
 
-**Diagnostic :**
-Le sprite (corps) passe par `px()` qui `floor` sur grille PX (`envs.js:28`) → corps "saute" tous les 5 px.
-Les accessoires passent par `pxFree()` qui `floor` au pixel mais pas sur grille PX → "rampent" pixel par pixel.
-Désynchro franche dès qu'il y a marche ou `bobY`.
-
-**Fix minimal :**
+**Fix appliqué :**
 
 ```js
-// render-sprites.js:398 — REMPLACER
-const accX = cx - (def.pixels[0].length * ps) / 2;
-// PAR
+// render-sprites.js:398
 const accXraw = cx - (def.pixels[0].length * ps) / 2;
 const accX    = Math.floor(accXraw / PX) * PX;
 
-// render-sprites.js:426 — REMPLACER
-const accY = baseYraw - def.pixels.length * ps + offsetY;
-// PAR
+// render-sprites.js:426
 const accYraw = baseYraw - def.pixels.length * ps + offsetY;
 const accY    = Math.floor(accYraw / PX) * PX;
 ```
 
-`cxB` est déjà passé à `drawAccessoires` (cf. `:1000` et `:1439`) → l'accessoire suivra exactement les mêmes paliers PX que le corps.
+→ Les accessoires suivent exactement les mêmes paliers PX que le corps.
 
 ---
 
@@ -193,65 +183,50 @@ Animations cataloguées :
 
 ## 5. Qualité code pixel art (dette technique)
 
-### Occurrences `Math.round`
+### Occurrences `Math.round` ✅ TOUTES RÉSOLUES 2026-04-30
 
 | Fichier:ligne | Code | Verdict |
 |---|---|---|
 | `render.js:257, 457, 718-719` | alphas, températures | ✅ OK — hors géométrie |
 | `render-sprites.js:317` | alpha boue | ✅ OK |
-| `render-sprites.js:324` | `Math.round(getBreath(p)*2-1)` | ⚠️ À convertir `floor` — distribution biaisée |
+| `render-sprites.js:~342` | `drawSaleteDither` breathX boue | ✅ CONVERTI → `Math.floor(getBreath(p)*3)-1` |
 | `render-sprites.js:339-340` | `Math.round(ry/PX)` lecture pixel | ✅ Laisser `round` — robustesse face aux erreurs flottantes `loadPixels` |
-| `render-sprites.js:955` | `breathX = Math.round(breath*2-1)` (teen) | ⚠️ À convertir |
-| `render-sprites.js:961` | `Math.round(breath*2)` `mouthBaseY` | ⚠️ À convertir |
-| `render-sprites.js:1392` | `breathX` (adult) | ⚠️ À convertir |
-| `render-sprites.js:1400` | `Math.round(breath*2)` `mouthBaseY` adult | ⚠️ À convertir |
+| `render-sprites.js:~1020` | `breathX` teen | ✅ CONVERTI → `Math.floor(breath*3)-1` |
+| `render-sprites.js:~1026` | `mouthBaseY` teen | ✅ CONVERTI → `Math.floor(breath*3)` |
+| `render-sprites.js:~1483` | `breathX` adult | ✅ CONVERTI → `Math.floor(breath*3)-1` |
+| `render-sprites.js:~1491` | `mouthBaseY` adult | ✅ CONVERTI → `Math.floor(breath*3)` |
 
-**Fix-type :**
-
-```js
-// render-sprites.js:955 — REMPLACER
-const breathX = sl ? 0 : Math.round(breath * 2 - 1);
-// PAR
-const breathX = sl ? 0 : Math.floor(breath * 3) - 1; // ∈ {-1, 0, 1} équitable
-
-// render-sprites.js:961 — REMPLACER
-const mouthBaseY = cy + PX * 5 + Math.round(breath * 2);
-// PAR
-const mouthBaseY = cy + PX * 5 + Math.floor(breath * 3); // ∈ {0, 1, 2}
-```
-
-(idem `:1392` et `:1400` pour adult)
+Distribution corrigée : `Math.floor(x*3)-1` donne {-1, 0, 1} équitable ; `Math.floor(x*3)` donne {0, 1, 2} équitable. Plus aucun biais vers le centre.
 
 ---
 
 ### Configuration canvas
 
-- `noSmooth()` ✅ — `render.js:681`
+- `noSmooth()` ✅ — `render.js:845`
 - `image-rendering: pixelated` ✅ — `css/style.css:290-291`
-- `pixelDensity(1)` ❌ manquant sur canvas principal (présent uniquement sur graphics off-screen `render-sprites.js:267`) → **flou retina possible**
+- `pixelDensity(1)` ✅ AJOUTÉ 2026-04-30 — `render.js:849`, avant `noSmooth()` et `createCanvas()`
 
-```js
-// render.js:681 — REMPLACER
-p.noSmooth();
-// PAR
-p.pixelDensity(1);
-p.noSmooth();
-```
+Chaîne anti-flou pixel art complète : `pixelDensity(1)` + `noSmooth()` + `image-rendering: pixelated`. Cohérent avec les canvas off-screen (`render-sprites.js:285`).
 
 ---
 
-### Coordonnées flottantes non snappées — synthèse
+### Coordonnées flottantes non snappées — synthèse ✅ RÉSOLU 2026-04-30
 
-Seules vraies fuites non maîtrisées : accessoires (Bug 2, `render-sprites.js:398, :426`) et reflets pupille (Bug 1, `:649, :982, :1423`). Le reste est soit snappé via `px()`, soit volontairement sub-pixel (pluie, gouttes, wobble œuf).
+~~Seules vraies fuites non maîtrisées : accessoires (Bug 2) et reflets pupille (Bug 1).~~
+
+Plus aucune fuite non maîtrisée. Le reste est soit snappé via `px()`, soit volontairement sub-pixel (pluie, gouttes, wobble œuf).
 
 ---
 
-## Récapitulatif fixes prioritaires
+## Récapitulatif fixes prioritaires — TOUS RÉSOLUS ✅
 
-| # | Fix | Fichier:ligne |
-|---|---|---|
-| 1 | Snap PX reflets pupille | `render-sprites.js:649, 982, 1423` |
-| 2 | Snap PX accessoires | `render-sprites.js:398, 426` |
-| 3 | `Math.round` → `Math.floor` géométrie | `render-sprites.js:324, 955, 961, 1392, 1400` |
-| 4 | `pixelDensity(1)` retina | `render.js:681` |
-| 5 | ✅ Architecture animator | `_adultPose` et `_jumpTimer` migrés (session 2026-04-30). Candidats suivants : `shakeTimer`, `eatAnim`, `_evoAnim`, `_expr` |
+| # | Fix | Fichier:ligne | État |
+|---|---|---|---|
+| 1 | Snap PX reflets pupille | `render-sprites.js:649, 982, 1423` | ✅ FAIT 2026-04-30 |
+| 2 | Snap PX accessoires | `render-sprites.js:398, 426` | ✅ FAIT 2026-04-30 |
+| 3 | `Math.round` → `Math.floor` géométrie | `render-sprites.js:~342, ~1020, ~1026, ~1483, ~1491` | ✅ FAIT 2026-04-30 |
+| 4 | `pixelDensity(1)` retina | `render.js:849` | ✅ FAIT 2026-04-30 |
+| 5 | Architecture animator | `_adultPose` et `_jumpTimer` migrés | ✅ FAIT 2026-04-30 |
+
+**Prochains chantiers candidats (cf. §2 — tableau état animations) :**
+`shakeTimer`, `eatAnim`, `_evoAnim`, `_expr` — migration vers `animator` quand pertinent.

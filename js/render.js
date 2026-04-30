@@ -709,17 +709,17 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     p.textSize(20);
     p.textAlign(p.CENTER, p.CENTER);
 
-    // 🧹 Balai (centre exact, x=100) : opaque si des crottes sont présentes
+    // 🧹 Balai (centre exact, x=70) : opaque si des crottes sont présentes
     const hasPoops = (window.D.g.poops || []).length > 0;
     p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.25;
     p.text('🧹', 70, 14);
 
-        // 🛁 Bain (gauche du centre, x=72) : opaque si salete >= 5, estompé si propre
+        // 🛁 Bain (gauche du centre, x=100) : opaque si salete >= 5, estompé si propre
     const salete = window.D?.g?.salete || 0;
     p.drawingContext.globalAlpha = salete >= 5 ? 1.0 : 0.25;
     p.text('🛁', 100, 14);
 
-    // 🍽️ Assiette (droite du centre, x=128) : opaque si repas disponible
+    // 🍽️ Assiette (droite du centre, x=130) : opaque si repas disponible
     const mealWin = (typeof getCurrentMealWindow === 'function') ? getCurrentMealWindow() : null;
     const meals   = (typeof ensureMealsToday === 'function') ? ensureMealsToday() : null;
     const mealAvailable = mealWin && meals && !meals[mealWin];
@@ -952,19 +952,21 @@ if (!window._gotchiActif) return true;
     const mx = p.touches[0]?.x ?? p.mouseX;
     const my = p.touches[0]?.y ?? p.mouseY;
 
-    // 🛁 Bain (x=72) — tap = expression surprise si sale (rappel de frotter)
-    if (Math.abs(mx - 72) < 14 && my < 26) {
+    // 🧹 Balai (x=70) — nettoyer les crottes
+    if (Math.abs(mx - 70) < 14 && my < 26) {
+      setTimeout(() => cleanPoops(), 0); return false;
+    }
+
+    // 🛁 Bain (x=100) — tap = expression surprise si sale (rappel de frotter)
+    if (Math.abs(mx - 100) < 14 && my < 26) {
       if ((window.D?.g?.salete || 0) >= 5) {
         if (typeof window.triggerExpr === 'function') window.triggerExpr('surprise', 40);
       }
       return false;
     }
-    // 🧹 Balai (x=100) — nettoyer les crottes
-    if (Math.abs(mx - 100) < 14 && my < 26) {
-      setTimeout(() => cleanPoops(), 0); return false;
-    }
-    // 🍽️ Assiette (x=128) — ouvrir le snack
-    if (Math.abs(mx - 128) < 14 && my < 26) {
+
+    // 🍽️ Assiette (x=130) — ouvrir le snack
+    if (Math.abs(mx - 130) < 14 && my < 26) {
       setTimeout(() => ouvrirSnack(), 0); return false;
     }
 

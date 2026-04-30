@@ -1237,6 +1237,13 @@ async function bootstrap() {
     // POURQUOI : La saleté augmente passivement (+1 par 6h d'absence) — on calcule le rattrapage ici.
     if (typeof window.checkSalete === 'function') window.checkSalete();
     catchUpPoops();
+
+    // RÔLE : Guard de dernier recours — remet modalLocked à false au démarrage.
+    // POURQUOI : Si une session soutien crashe avant que l'utilisatrice clique ✕,
+    //            modalLocked reste true et toutes les modales restent verrouillées.
+    //            bootstrap() est le seul point d'entrée garanti à chaque chargement.
+    if (typeof modalLocked !== 'undefined') modalLocked = false;
+
     initApp();
 
     // RÔLE : Lance le premier fetch météo + phases solaires, puis les intervals récurrents.

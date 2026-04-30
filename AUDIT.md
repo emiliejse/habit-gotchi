@@ -33,7 +33,7 @@
 | `js/render.js` | **B** | `p.draw()` découpé en 4 sous-fonctions extraites (2026-04-30) — orchestrateur ~85 lignes. Reste : helpers de hitbox dupliqués entre `touchStarted` et `touchMoved`, `walkX`/`walkPause` implicitement partagés avec `render-sprites.js`. |
 | `js/render-sprites.js` | **A** | Sprites bien isolés, `drawSaleteDither` utilise désormais un masque off-screen (auto-synchronisé avec les sprites), code lisible et autonome. |
 | `js/envs.js` | **A** | `drawActiveEnv` découpé en 3 fonctions + dispatcher (2026-04-30). `tc()` robuste, magic numbers nommés, couleur nuit unifiée via `shadeN`. |
-| `js/ui-*.js` (8 modules) | **B** | `ui.js` splitté en 8 modules (2026-04-30). `ouvrirSnack()` et `ouvrirAgenda()` migrés vers `openModal()`/`openModalRaw()` — lockScroll unifié. Reste : overlays séparés intentionnels documentés, `modalLocked` reset partiel, `go()` trois sources de vérité (Phase 2). |
+| `js/ui-*.js` (8 modules) | **B** | `ui.js` splitté en 8 modules (2026-04-30). `ouvrirSnack()` et `ouvrirAgenda()` migrés vers `openModal()`/`openModalRaw()` — lockScroll unifié. Reste : overlays séparés intentionnels documentés, `go()` trois sources de vérité (Phase 2). `modalLocked` : guard bootstrap ajouté (2026-04-30). |
 | `index.html` | **B** | Ordre des scripts correct, debug-panel inline volumineux (~85 l), p5.js CDN sans `integrity`, masquage features RDV/Cycle dans script séparé en bas. |
 | `sw.js` | **C+** | ✅ `render-sprites.js` ajouté dans `ASSETS` (fix session 2026-04-30). Reste : stratégie cache-first sans `response.ok` (cache des 404), pas de gestion des updates côté client. |
 
@@ -401,11 +401,10 @@
   - `#menu-overlay` (z-index 200) — navigation latérale, gérée via `.open` class.
   - Ces trois overlays vivent volontairement hors du système modal (z-index distincts, comportements propres).
 
-#### 🟠 IMPORTANT — `modalLocked` : reset uniquement via bouton ✕ du soutien
-- Fichiers : `ui-core.js` [L225], `ui-ai.js` [L617, L622]
-- Description : `modalLocked = false` défini dans `ui-core.js`. Set à `true` dans `_genSoutienCore()`. Reset uniquement via le bouton ✕ standardisé (`modalLocked=false;clModal()`). Il existe aussi un patch temporaire sur `window.clModal` dans `_showSoutienConfirm()` qui restaure la fonction originale après confirmation — logique correcte mais fragile.
-- Risque résiduel : Si la session soutien crashe avant que l'utilisatrice ferme la modale, `modalLocked` reste `true` jusqu'au rechargement. Pas de reset automatique côté `bootstrap()`.
-- Suggestion (Phase 2) : Ajouter `modalLocked = false` dans `bootstrap()` ou `clModal()` en guard de dernier recours.
+#### ✅ RÉSOLU — `modalLocked` : guard de dernier recours ajouté dans `bootstrap()` (2026-04-30)
+- Fichiers : `ui-core.js` [L225], `ui-ai.js` [L617, L622], `app.js` [`bootstrap()`]
+- Description : `modalLocked = false` défini dans `ui-core.js`. Set à `true` dans `_genSoutienCore()`. Reset via le bouton ✕ standardisé (`modalLocked=false;clModal()`). Patch temporaire sur `window.clModal` dans `_showSoutienConfirm()` conservé (nettoyage mini p5 zombie, logique correcte).
+- Fix appliqué : `if (typeof modalLocked !== 'undefined') modalLocked = false;` ajouté dans `bootstrap()` avant `initApp()`. Garantit que même si une session soutien crashe avant fermeture de la modale, `modalLocked` est remis à `false` au prochain chargement.
 
 #### ✅ RÉSOLU — Boutons `✕` répliqués inline (2026-04-30)
 - `window._modalCloseBtn()` exposé dans `ui-core.js` et utilisé dans `ui-shop.js`, `ui-agenda.js`, `ui-ai.js`.

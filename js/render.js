@@ -1439,18 +1439,6 @@ if (!window._gotchiActif) return true;
     if (mx < 50 && my < 26) {
       const petales = window.D?.g?.petales || 0;
       const p1 = petales > 1 ? 's' : '';
-
-      // RÔLE : Calcule le prix minimum parmi les props encore non achetés (cout > 0).
-      // POURQUOI : Évite de suggérer la boutique si tout a déjà été acheté ou s'il n'y a
-      //            plus rien à portée de budget — le message serait alors trompeur.
-      const owned = new Set((window.D?.g?.props || []).map(p => p.id));
-      const catalogue = window.PROPS || [];
-      const minCout = catalogue
-        .filter(prop => prop.cout > 0 && !owned.has(prop.id))
-        .reduce((min, prop) => Math.min(min, prop.cout), Infinity);
-      const canAfford  = petales >= minCout;   // peut acheter au moins un truc
-      const hasAnything = minCout < Infinity;  // il reste des choses à acheter
-
       let msgs;
       if (petales === 0) {
         msgs = [
@@ -1458,33 +1446,23 @@ if (!window._gotchiActif) return true;
           'Zéro pétale pour l\'instant — on y travaille ! 🌸',
           'Aucun pétale… mais ça peut changer ! 💪',
         ];
-      } else if (!hasAnything) {
-        // Tout le catalogue payant a été acheté
+      } else if (petales < 10) {
         msgs = [
-          `${petales} pétale${p1} et tout acheté — tu es la meilleure ! 🏆🌸`,
-          `${petales} pétale${p1}… le catalogue est complet, je suis tellement gâté·e 💜`,
-          `Plus rien à acheter, ${petales} pétale${p1} en réserve — tu assures ! ✨`,
+          `${petales} pétale${p1}, merci de prendre soin de moi 🌸`,
+          `${petales} pétale${p1} ! Tu fais du bon boulot ✨`,
+          `${petales} pétale${p1} en réserve 🌷`,
         ];
-      } else if (!canAfford) {
-        // Il reste des choses mais pas encore le budget
+      } else if (petales < 20) {
         msgs = [
-          `${petales} pétale${p1}… encore un peu et tu pourras m'offrir quelque chose ! 🌷`,
-          `${petales} pétale${p1} — continue, il reste des choses sympa en boutique ✨`,
-          `${petales} pétale${p1}, c'est un beau début ! 🌸`,
-        ];
-      } else if (petales < 12) {
-        // Peut acheter, premier nudge boutique
-        msgs = [
-          `${petales} pétale${p1} ! Tu peux m'offrir quelque chose à la boutique 🛍️`,
-          `${petales} pétale${p1}… et si tu allais faire un tour à la boutique ? 🌸`,
-          `${petales} pétale${p1} — j'ai vu des trucs sympa en boutique ! ✨`,
+          `${petales} pétales… et si tu allais faire un tour à la boutique ? 🛍️`,
+          `${petales} pétales ! Il y a des choses sympa en boutique 🌸`,
+          `${petales} pétales — tu pourrais m'offrir quelque chose ! ✨`,
         ];
       } else {
-        // Beaucoup de pétales, encourage à dépenser
         msgs = [
-          `${petales} pétales ! Tu devrais en dépenser quelques-uns à la boutique 🛍️✨`,
-          `Waouh, ${petales} pétales ! Gâte-moi un peu, non ? 🌸💜`,
-          `${petales} pétales… ça déborde ! Va faire un tour en boutique 🛍️🌸`,
+          `${petales} pétales… ça déborde ! Gâte-moi en boutique 🛍️🌸`,
+          `Waouh, ${petales} pétales ! Allez, un petit cadeau ? 💜`,
+          `${petales} pétales en réserve… la boutique t'attend ! 🛍️✨`,
         ];
       }
       flashBubble(msgs[Math.floor(Math.random() * msgs.length)], 2800);

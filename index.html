@@ -566,39 +566,66 @@ Ton bilan de la semaine apparaîtra ici...
 <!-- PWA Service Worker -->
 <script>
   if ('serviceWorker' in navigator) {
-    // RÔLE : Stocke la registration pour y accéder depuis _swApplyUpdate()
-    // POURQUOI : registration.waiting désigne le SW en attente d'activation —
-    //            on en a besoin au moment du clic sur le bandeau.
+    // RÔLE : Stocke la registration pour pouvoir envoyer SKIP_WAITING au bon SW.
+    // POURQUOI : registration.waiting est le SW installé mais pas encore actif.
     let _swReg = null;
+
+    // RÔLE : Affiche le bandeau de mise à jour.
+    // POURQUOI : Fonction partagée — appelée depuis updatefound/statechange ET controllerchange.
+    function _showUpdateBanner() {
+      const banner = document.getElementById('update-banner');
+      if (banner) banner.style.display = 'block';
+    }
+
+    // RÔLE : Pose les listeners de cycle de vie sur une registration.
+    // POURQUOI : updatefound se déclenche quand le navigateur détecte un nouveau sw.js.
+    //            statechange sur le SW installing nous prévient quand il passe en "installed"
+    //            (= il a fini de se mettre en cache et attend d'être activé).
+    //            C'est LE bon moment pour afficher le bandeau — avant skipWaiting(),
+    //            donc avant controllerchange, donc on ne rate pas l'événement.
+    function _watchReg(reg) {
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        if (!newSW) return;
+        newSW.addEventListener('statechange', () => {
+          // "installed" = SW prêt, en attente d'activation (état "waiting")
+          if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+            // navigator.serviceWorker.controller non-null = il y avait déjà un SW actif
+            // → c'est bien une mise à jour, pas le premier install
+            _showUpdateBanner();
+          }
+        });
+      });
+    }
 
     navigator.serviceWorker.register('./sw.js')
       .then(reg => {
         _swReg = reg;
         console.log('✿ SW enregistré');
+        _watchReg(reg);
+
+        // POURQUOI : Si le SW est déjà en waiting au moment du chargement de la page
+        // (ex : onglet rouvert après une mise à jour ratée), on affiche le bandeau immédiatement.
+        if (reg.waiting && navigator.serviceWorker.controller) {
+          _showUpdateBanner();
+        }
       })
       .catch(e => console.log('SW erreur:', e));
 
-    // RÔLE : Affiche le bandeau de mise à jour quand un SW en attente est détecté
-    // POURQUOI : statechange sur le SW installing nous prévient dès qu'il passe
-    //            en état "installed" (= waiting), avant même que controllerchange
-    //            ne se déclenche. Ça permet d'afficher le bandeau plus tôt.
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      const banner = document.getElementById('update-banner');
-      if (banner) banner.style.display = 'block';
-    });
+    // RÔLE : Filet de sécurité — affiche le bandeau si le SW prend le contrôle
+    //        sans qu'on l'ait détecté via updatefound (cas du premier install sur page vierge).
+    // POURQUOI : controllerchange se déclenche après skipWaiting() — dans le flux normal
+    //            avec notre nouveau listener, le bandeau est déjà affiché avant ce point.
+    //            Ce listener couvre les cas limites (ex : forceUpdate() → reload).
+    navigator.serviceWorker.addEventListener('controllerchange', _showUpdateBanner);
 
-    // RÔLE : Action déclenchée au clic sur le bandeau de mise à jour
-    // POURQUOI : On envoie SKIP_WAITING au SW en attente pour qu'il s'active
-    //            immédiatement (grâce au listener ajouté dans sw.js), puis on
-    //            recharge la page pour charger les nouveaux assets.
-    //            Sans postMessage, le rechargement seul ne suffit pas : le nouveau
-    //            SW resterait bloqué en "waiting" si l'onglet n'a pas été fermé.
+    // RÔLE : Action déclenchée au clic sur le bandeau de mise à jour.
+    // POURQUOI : On envoie SKIP_WAITING au SW en waiting pour qu'il s'active immédiatement
+    //            (le listener dans sw.js reçoit ce message), puis on recharge la page.
     window._swApplyUpdate = function () {
       if (_swReg && _swReg.waiting) {
-        // Demande au SW en attente de s'activer sans fermer l'onglet
         _swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
       }
-      // Recharge la page pour charger les nouveaux assets mis en cache
       location.reload();
     };
   }

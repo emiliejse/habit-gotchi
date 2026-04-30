@@ -557,31 +557,10 @@ const LAYERS_BABY = [
     ]
   },
 
-  // ── Reflets blancs mobiles dans les yeux ouverts ───────────────
-  // RÔLE : Petit point blanc 2×2 px qui se déplace doucement dans l'œil.
-  // POURQUOI : rawDxFn fait osciller le reflet horizontalement dans l'œil.
-  //            Amplitude max = PX - 2 = 3px (œil 2×PX = 10px, reflet 2px, marge 1px de chaque côté).
-  //            rawDy:0 — le reflet est calé en haut de l'œil (hauteur 5px, reflet 2px → reste dedans).
-  {
-    id: 'reflets-yeux',
-    fill: '#fff',
-    when: (pm) => !pm.sl && !pm.blink,
-    rects: [
-      {
-        x: -2, y: 2, w: 0, h: 0, rawDy: 0, rawW: 2, rawH: 2,
-        // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 3px).
-        // Amplitude = PX - 2 = 3px pour rester dans les 10px de l'œil (marge 1px à droite).
-        rawDxFn: () => 1 + (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX - 2),
-      },
-      {
-        x:  1, y: 2, w: 0, h: 0, rawDy: 0, rawW: 2, rawH: 2,
-        // RÔLE : Même déplacement pour l'œil droit — synchronisé.
-        rawDxFn: () => 1 + (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX - 2),
-      },
-    ]
-  },
-
   // ── Joues roses ────────────────────────────────────────────────
+  // NOTE : Le calque 'reflets-yeux' a été retiré du DSL.
+  // Les reflets blancs sont désormais dessinés directement via p.rect() dans drawBaby()
+  // pour obtenir un mouvement sub-pixel flottant (pas de snap via px()).
   {
     id: 'joues',
     fill: 'C.cheek',
@@ -657,6 +636,17 @@ function drawBaby(p, cx, cy, sl, en, ha) {
   const params = { sl, en, ha, blink };
 
   renderSprite(p, LAYERS_BABY, cx, cy, params);
+
+  // RÔLE : Reflet blanc dessiné hors grille pour un glissement sub-pixel vivant.
+  // POURQUOI : p.rect() accepte des flottants — le reflet ne snappe pas comme px(),
+  //            ce qui crée une légère tension visuelle avec l'iris noir (snappé).
+  if (!params.sl && !params.blink) {
+    p.fill('#fff');
+    p.noStroke();
+    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX - 2);
+    p.rect(cx - PX * 2 + 1 + rx, cy + PX * 2 + 1, 2, 2); // œil gauche
+    p.rect(cx + PX * 1 + 1 + rx, cy + PX * 2 + 1, 2, 2); // œil droit
+  }
 
   // Épuisement (dither) — géré en dehors du DSL car drawDither() a sa propre logique
   // de damier qui ne passe pas par px() standard.
@@ -796,31 +786,10 @@ const LAYERS_TEEN = [
     ]
   },
 
-  // ── Reflets yeux ouverts mobiles (4×4 px sub-PX) ───────────────
-  // RÔLE : Reflet blanc 4×4 px qui se promène doucement dans la rangée haute de l'œil.
-  // POURQUOI : L'œil haut fait 2×PX = 10px large, 1×PX = 5px haut.
-  //            Reflet 4×4px → marge horizontale = 10 - 4 - 1 = 5px max (avec 1px de marge).
-  //            rawDy:0 — calé en haut de l'œil, 4px de reflet dans 5px de hauteur → reste dedans.
-  {
-    id: 'reflets-yeux-ouverts',
-    fill: '#fff',
-    when: (pm) => !pm.sl && !pm.blink && !isMood('surprise'),
-    rects: [
-      {
-        x: -3, y: 2, w: 0, h: 0, rawDy: 0, rawW: 4, rawH: 4,
-        // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 4px).
-        // Amplitude = PX*2 - 4 - 2 = 4px pour rester dans les 10px (marge 1px à droite).
-        rawDxFn: () => 1 + (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 4 - 2),
-      },
-      {
-        x:  1, y: 2, w: 0, h: 0, rawDy: 0, rawW: 4, rawH: 4,
-        // RÔLE : Même déplacement pour l'œil droit — synchronisé.
-        rawDxFn: () => 1 + (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 4 - 2),
-      },
-    ]
-  },
-
   // ── Dégoût poop (par-dessus les yeux normaux) ───────────────────
+  // NOTE : Le calque 'reflets-yeux-ouverts' a été retiré du DSL (LAYERS_TEEN).
+  // Les reflets blancs sont désormais dessinés directement via p.rect() dans drawTeen()
+  // pour obtenir un mouvement sub-pixel flottant (pas de snap via px()).
   {
     id: 'yeux-poop',
     fill: 'C.eye',
@@ -998,6 +967,17 @@ function drawTeen(p, cx, cy, sl, en, ha) {
 
   renderSprite(p, LAYERS_TEEN, cxB, cy, params);
 
+  // RÔLE : Reflet blanc flottant — même logique que drawBaby.
+  // POURQUOI : p.rect() accepte des flottants — le reflet ne snappe pas comme px(),
+  //            ce qui crée une légère tension visuelle avec l'iris noir (snappé).
+  if (!params.sl && !params.blink && !isMood('surprise')) {
+    p.fill('#fff');
+    p.noStroke();
+    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 4 - 2);
+    p.rect(cxB - PX * 3 + 1 + rx, cy + PX * 2 + 1, 4, 4); // œil gauche
+    p.rect(cxB + PX * 1 + 1 + rx, cy + PX * 2 + 1, 4, 4); // œil droit
+  }
+
   // Épuisement dither — hors DSL (drawDither a sa propre logique de damier).
   // POURQUOI : x original = cxB (déjà décalé), y = cy + PX*4, w = 8*PX, h = 5*PX.
   if (en < EN_CRIT && !sl) {
@@ -1128,29 +1108,10 @@ const LAYERS_ADULT = [
     ]
   },
 
-  // ── Reflets yeux ouverts mobiles (4×4 px sub-PX) ───────────────
-  // RÔLE : Reflet blanc 4×4 px animé dans la rangée haute de l'œil adulte (3×PX = 15px large, 5px haut).
-  // POURQUOI : Amplitude = 3PX - 4px reflet - 2px marge = 9px max.
-  //            rawDy:0 — calé en haut de l'œil, 4px dans 5px de hauteur → reste dedans.
-  {
-    id: 'reflets-yeux-ouverts',
-    fill: '#fff',
-    when: (pm) => !pm.sl && !pm.blink && !isMood('surprise'),
-    rects: [
-      {
-        x: -3, y: 3, w: 0, h: 0, rawDy: 0, rawW: 4, rawH: 4,
-        // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 9px = 3PX - 4 - 2).
-        rawDxFn: () => 1 + (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 4 - 2),
-      },
-      {
-        x:  1, y: 3, w: 0, h: 0, rawDy: 0, rawW: 4, rawH: 4,
-        // RÔLE : Même déplacement pour l'œil droit.
-        rawDxFn: () => 1 + (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 4 - 2),
-      },
-    ]
-  },
-
   // ── Dégoût poop ─────────────────────────────────────────────────
+  // NOTE : Le calque 'reflets-yeux-ouverts' a été retiré du DSL (LAYERS_ADULT).
+  // Les reflets blancs sont désormais dessinés directement via p.rect() dans drawAdult()
+  // pour obtenir un mouvement sub-pixel flottant (pas de snap via px()).
   {
     id: 'yeux-poop',
     fill: 'C.eye',
@@ -1443,6 +1404,17 @@ function drawAdult(p, cx, cy, sl, en, ha) {
   };
 
   renderSprite(p, LAYERS_ADULT, cxB, cy, params);
+
+  // RÔLE : Reflet blanc flottant — même logique que drawBaby.
+  // POURQUOI : p.rect() accepte des flottants — le reflet ne snappe pas comme px(),
+  //            ce qui crée une légère tension visuelle avec l'iris noir (snappé).
+  if (!params.sl && !params.blink && !isMood('surprise')) {
+    p.fill('#fff');
+    p.noStroke();
+    const rx = (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 4 - 2);
+    p.rect(cxB - PX * 3 + 1 + rx, cy + PX * 3 + 1, 4, 4); // œil gauche
+    p.rect(cxB + PX * 1 + 1 + rx, cy + PX * 3 + 1, 4, 4); // œil droit
+  }
 
   // Épuisement dither — hors DSL.
   // POURQUOI : x = cxB + PX (soit offset +1 depuis le bord gauche du sprite).

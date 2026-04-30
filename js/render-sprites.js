@@ -571,12 +571,12 @@ const LAYERS_BABY = [
         x: -2, y: 2, w: 0, h: 0, rawDy: 0, rawW: 2, rawH: 2,
         // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 3px).
         // Amplitude = PX - 2 = 3px pour rester dans les 10px de l'œil (marge 1px à droite).
-        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX - 2)),
+        rawDxFn: () => 1 + (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX - 2),
       },
       {
         x:  1, y: 2, w: 0, h: 0, rawDy: 0, rawW: 2, rawH: 2,
         // RÔLE : Même déplacement pour l'œil droit — synchronisé.
-        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX - 2)),
+        rawDxFn: () => 1 + (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX - 2),
       },
     ]
   },
@@ -810,12 +810,12 @@ const LAYERS_TEEN = [
         x: -3, y: 2, w: 0, h: 0, rawDy: 0, rawW: 4, rawH: 4,
         // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 4px).
         // Amplitude = PX*2 - 4 - 2 = 4px pour rester dans les 10px (marge 1px à droite).
-        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 4 - 2)),
+        rawDxFn: () => 1 + (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 4 - 2),
       },
       {
         x:  1, y: 2, w: 0, h: 0, rawDy: 0, rawW: 4, rawH: 4,
         // RÔLE : Même déplacement pour l'œil droit — synchronisé.
-        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 4 - 2)),
+        rawDxFn: () => 1 + (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 4 - 2),
       },
     ]
   },
@@ -1140,12 +1140,12 @@ const LAYERS_ADULT = [
       {
         x: -3, y: 3, w: 0, h: 0, rawDy: 0, rawW: 4, rawH: 4,
         // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 9px = 3PX - 4 - 2).
-        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 4 - 2)),
+        rawDxFn: () => 1 + (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 4 - 2),
       },
       {
         x:  1, y: 3, w: 0, h: 0, rawDy: 0, rawW: 4, rawH: 4,
         // RÔLE : Même déplacement pour l'œil droit.
-        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 4 - 2)),
+        rawDxFn: () => 1 + (Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 4 - 2),
       },
     ]
   },

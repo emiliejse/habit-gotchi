@@ -776,16 +776,17 @@ const LAYERS_TEEN = [
     ]
   },
 
-  // ── Reflets yeux ouverts (3×3 px sub-PX, décalés +1) ───────────
-  // POURQUOI : rawW:4 faisait déborder le reflet d'1px hors de l'œil gauche sur la 2e rangée
-  //            (rangée basse = 1×PX seulement, soit 5px). Réduire à 3px élimine le dépassement.
+  // ── Reflets yeux ouverts (4×4 px sub-PX, décalés +1) ───────────
+  // POURQUOI : 4×4 px reproduit fidèlement l'original v4.5 (p.rect(x+PX+1, y+PX*2+1, 4, 4)).
+  //            La rangée basse de l'œil amande fait 1×PX (5px) — le reflet de 4px tient
+  //            dans la rangée haute (2×PX = 10px) avec offset +1, sans déborder visuellement.
   {
     id: 'reflets-yeux-ouverts',
     fill: '#fff',
     when: (pm) => !pm.sl && !pm.blink && !isMood('surprise'),
     rects: [
-      { x: -3, y: 2, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 3, rawH: 3 },
-      { x:  1, y: 2, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 3, rawH: 3 },
+      { x: -3, y: 2, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
+      { x:  1, y: 2, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
     ]
   },
 
@@ -973,12 +974,12 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     drawDither(p, cxB, cy + PX * 4, PX * 8, PX * 5, C.bodyDk);
   }
 
-  // RÔLE : Centrer les accessoires sur le vrai centre visuel du sprite, pas sur cx brut.
-  // POURQUOI : Le sprite est rendu à cxB = cx - PX*4 - breathX, dont le centre géométrique
-  //            est cxB + PX*4 = cx - breathX. Passer cx à drawAccessoires les décalait
-  //            de PX*4 vers la droite + les désynchronisait de la respiration.
-  const cxCenter = cx - breathX;
-  drawAccessoires(p, cxCenter, { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 5 }, 'teen', sl);
+  // RÔLE : Passer cx brut (centre de marche) à drawAccessoires.
+  // POURQUOI : drawAccessoires centre l'accessoire sur le cx reçu via accX = cx - largeur/2.
+  //            cx est le centre de marche du gotchi (walkX + shakeOffset) — c'est la référence
+  //            stable et correcte. breathX (±1px) ne crée pas de décalage visible en pratique
+  //            et était absent de l'ancienne version qui fonctionnait bien.
+  drawAccessoires(p, cx, { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 5 }, 'teen', sl);
   drawSaleteDither(p, 'teen', cx, cy, window.D?.g?.salete || 0, sl);
 
   return { topY: cy, eyeY: cy + PX * 2, neckY: cy + PX * 5 };
@@ -1095,16 +1096,16 @@ const LAYERS_ADULT = [
     ]
   },
 
-  // ── Reflets yeux ouverts (3×3 px, décalés +1) ──────────────────
-  // POURQUOI : rawW:4 débordait hors de la 2e rangée de l'œil (rangée étroite 2×PX).
-  //            Même correction que LAYERS_TEEN — réduit à 3px.
+  // ── Reflets yeux ouverts (4×4 px, décalés +1) ──────────────────
+  // POURQUOI : 4×4 px reproduit fidèlement l'original v4.5 (p.rect(x+PX*2+1, y+PX*3+1, 4, 4)).
+  //            La rangée haute de l'œil adulte fait 3×PX (15px) — largement assez pour 4px.
   {
     id: 'reflets-yeux-ouverts',
     fill: '#fff',
     when: (pm) => !pm.sl && !pm.blink && !isMood('surprise'),
     rects: [
-      { x: -3, y: 3, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 3, rawH: 3 },
-      { x:  1, y: 3, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 3, rawH: 3 },
+      { x: -3, y: 3, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
+      { x:  1, y: 3, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
     ]
   },
 
@@ -1408,11 +1409,11 @@ function drawAdult(p, cx, cy, sl, en, ha) {
     drawDither(p, cxB + PX, cy + PX * 5, PX * 8, PX * 5, C.bodyDk);
   }
 
-  // RÔLE : Centrer les accessoires sur le vrai centre visuel du sprite, pas sur cx brut.
-  // POURQUOI : Le sprite est rendu à cxB = cx - PX*5 - breathX, dont le centre géométrique
-  //            est cxB + PX*5 = cx - breathX. Passer cx décalait les accessoires vers la droite.
-  const cxCenter = cx - breathX;
-  drawAccessoires(p, cxCenter, { topY: cy, eyeY: cy + PX * 3, neckY: cy + PX * 6 }, 'adult', sl);
+  // RÔLE : Passer cx brut (centre de marche) à drawAccessoires.
+  // POURQUOI : Même logique que drawTeen — cx est la référence stable (walkX + shakeOffset).
+  //            breathX (±1px) ne crée pas de décalage visible et était absent de l'ancienne
+  //            version qui fonctionnait bien (v4.5 et antérieur).
+  drawAccessoires(p, cx, { topY: cy, eyeY: cy + PX * 3, neckY: cy + PX * 6 }, 'adult', sl);
   drawSaleteDither(p, 'adult', cx, cy, window.D?.g?.salete || 0, sl);
 
   return { topY: cy, eyeY: cy + PX * 3, neckY: cy + PX * 6 };

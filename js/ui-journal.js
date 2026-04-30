@@ -32,8 +32,9 @@
 // RÔLE : Verrou du journal — true = PIN requis pour accéder aux entrées.
 // POURQUOI : Remis à true à chaque navigation vers l'onglet journal (go() dans ui-nav.js)
 //            pour que le verrou se réengage dès qu'on quitte et revient.
-//            Accessible depuis ui-nav.js (go) et ui-agenda.js (ouvrirJournalAuJour).
-let journalLocked = true;
+//            Exposé sur window pour être accessible depuis ui-nav.js et ui-agenda.js
+//            sans dépendance d'ordre de chargement. (remplace l'ancienne `let journalLocked`)
+window.journalLocked = true;
 
 let pinBuf = '', pinMode = 'check';
 
@@ -70,13 +71,13 @@ function pinSubmit() {
   else { if (pinBuf === window.D.pin) unlockJ(); else { msg.textContent = 'Incorrect.'; pinBuf = ''; renderPin(); } }
 }
 function unlockJ() {
-  journalLocked = false;
+  window.journalLocked = false; // POURQUOI : doit être visible par ui-nav.js qui le remet à true
   document.getElementById('pin-gate').style.display = 'none';
   document.getElementById('j-inner').style.display = 'block';
   renderJEntries();
 }
 function renderJ() {
-  if (!journalLocked) { document.getElementById('pin-gate').style.display='none'; document.getElementById('j-inner').style.display='block'; renderJEntries(); return; }
+  if (!window.journalLocked) { document.getElementById('pin-gate').style.display='none'; document.getElementById('j-inner').style.display='block'; renderJEntries(); return; }
   document.getElementById('j-inner').style.display = 'none';
   document.getElementById('pin-gate').style.display = 'block';
   pinBuf = '';

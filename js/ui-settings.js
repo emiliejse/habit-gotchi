@@ -681,8 +681,17 @@ function importD(event) {
   reader.readAsText(file);
 }
 
+// RÔLE : Exécute la suppression réelle des données après confirmation.
+// POURQUOI : Extrait de l'attribut onclick inline pour éviter les problèmes de quote
+//            si SK contenait un guillemet, et pour garder la logique dans le JS plutôt que dans le HTML.
+function doReset() {
+  localStorage.removeItem(SK);
+  location.reload();
+}
+
 function confirmReset() {
-  openModal(`<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="localStorage.removeItem('${SK}');location.reload()" style="flex:1">Oui</button></div>`);
+  // POURQUOI : on appelle doReset() par nom de fonction — plus robuste qu'une chaîne JS inline
+  openModal(`<h3>Tout supprimer ?</h3><div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-s" onclick="clModal()" style="flex:1">Non</button><button class="btn btn-d" onclick="doReset()" style="flex:1">Oui</button></div>`);
 }
 
 /* ─── SYSTÈME 6 : INTROSPECTION & MÉMOIRE (Le Terminal) ──────────── */
@@ -691,7 +700,11 @@ function confirmReset() {
 /* ============================================================
    TABLETTE RÉTRO
    ============================================================ */
-let tabletLastSeenDate = null; // ISO date du dernier événement vu à la dernière ouverture
+// RÔLE : Date du dernier événement vu dans la tablette, persistée dans D pour survivre à un rechargement.
+// POURQUOI : Une variable module-level est perdue si la PWA recharge sans relire ce fichier →
+//            le badge se rallumait à tort. En lisant/écrivant dans D (sauvegardé en localStorage),
+//            la valeur est toujours disponible après reload.
+// (remplace l'ancienne `let tabletLastSeenDate = null`)
 
 function openTablet() {
   const D = window.D;
@@ -729,8 +742,9 @@ function openTablet() {
     }).join('');
   }
 
-  // Masquer le badge + mémoriser la date du plus récent événement
-  tabletLastSeenDate = log.length ? log[0].date : null;
+  // Masquer le badge + mémoriser la date du plus récent événement (persistée dans D)
+  D.tabletLastSeenDate = log.length ? log[0].date : null;
+  save(); // POURQUOI : persiste tabletLastSeenDate en localStorage pour survivre à un reload
   document.getElementById('tablet-badge').style.display = 'none';
 
   document.getElementById('tablet-overlay').classList.add('open');
@@ -764,8 +778,9 @@ function updTabletBadge() {
   if (!badge) return;
   
   // Badge visible si un événement est plus récent que la dernière ouverture
+  // POURQUOI : on lit dans D (persisté) et non plus dans une variable module-level volatile
   const plusRecent = log[0]?.date;
-  if (plusRecent && plusRecent !== tabletLastSeenDate) {
+  if (plusRecent && plusRecent !== (window.D?.tabletLastSeenDate ?? null)) {
     badge.style.display = 'block';
   }
 }

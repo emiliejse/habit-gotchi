@@ -420,22 +420,20 @@
 - Fix appliqué : Extraction de `_getEffectiveEnv(tab, h)` — fonction pure, interne à `ui-nav.js`. Retourne l'env cible selon l'onglet et l'heure, ou `null` si l'env doit rester inchangé (cas `props`). `go()` appelle `_getEffectiveEnv()` et n'applique que si résultat non-null. Reset de `_invEnvForced` séparé du calcul d'env — géré explicitement dans `go()` avant l'appel.
 - Pour ajouter un onglet : mettre à jour uniquement `_getEffectiveEnv()`, pas `go()`.
 
-#### 🟡 MINEUR — `tabletLastSeenDate` non préfixé `window.` (déjà identifié en v3.02, **non résolu**)
-- Lignes : [L3432]
-- Description : Variable module-level. Si la PWA recharge sans relire ce fichier, le badge se rallume à tort.
-- Suggestion : Persister dans `D.tabletLastSeenDate`.
+#### ✅ RÉSOLU — `tabletLastSeenDate` persisté dans `D` (2026-04-30)
+- Fichier : `ui-settings.js`
+- Description : La variable module-level `let tabletLastSeenDate` a été supprimée. La valeur est désormais lue et écrite dans `D.tabletLastSeenDate` (persisté en localStorage via `save()`). `updTabletBadge()` compare contre `window.D?.tabletLastSeenDate`. Le badge ne se rallume plus à tort après un rechargement.
 
-#### 🟡 MINEUR — `journalLocked` global ([L154]) — même problème
-- Suggestion : Idem.
+#### ✅ RÉSOLU — `journalLocked` exposé sur `window.journalLocked` (2026-04-30)
+- Fichiers : `ui-journal.js`, `ui-nav.js`
+- Description : `let journalLocked` remplacé par `window.journalLocked`. Toutes les lectures/écritures mises à jour dans `ui-journal.js` (`unlockJ`, `renderJ`) et `ui-nav.js` (`go()`).
 
-#### 🟡 MINEUR — `_agendaJour` exposé sur `window` mais `_invEnvForced` non
-- Lignes : [L3985] vs [L223, L233, L237]
-- Suggestion : Cohérence — préfixer ou non, mais pas mélangé.
+#### ✅ RÉSOLU — `_agendaJour` / `_invEnvForced` — cohérence vérifiée (2026-04-30)
+- Description : `_invEnvForced` est bien préfixé `window._invEnvForced` dans tous les fichiers (`ui-shop.js`, `ui-nav.js`, `render.js`, `ui.js`). `_agendaJour` initialisé via `window._agendaJour` dans `ui-agenda.js` — les lectures sans préfixe dans le même fichier sont du JS standard (résolution implicite). Pas d'incohérence réelle.
 
-#### 🟡 MINEUR — `confirmReset()` exécute `localStorage.removeItem` puis `location.reload()` inline
-- Lignes : [L3424]
-- Description : Le code fait `onclick="localStorage.removeItem('${SK}');location.reload()"` — chaîne JS dans un attribut HTML. Fragile (si `SK` contient un quote, casse).
-- Suggestion : Wrapper dans une fonction nommée.
+#### ✅ RÉSOLU — `confirmReset()` — chaîne JS inline extraite en `doReset()` (2026-04-30)
+- Fichier : `ui-settings.js`
+- Description : Fonction `doReset()` créée — exécute `localStorage.removeItem(SK); location.reload()`. Le bouton "Oui" appelle désormais `onclick="doReset()"` au lieu d'une chaîne JS inline fragile.
 
 #### 🟡 MINEUR — `setEnergy` / `setHappy` modifient `el.textContent` puis appellent `saveDebounced`
 - Lignes : `app.js` [L827-L838]
@@ -624,7 +622,7 @@ Trois facteurs cumulés causaient le bug :
 | 7 | Extraire `getStageBaseY()` (déduplication 3×) | `js/render.js` | S | Lisibilité |
 | 8 | ~~Extraire `getEffectiveEnv()`~~ ✅ résolu 2026-04-30 | `js/ui-nav.js` | M | Source de vérité unique |
 | 9 | ~~Étendre `HG_CONFIG` aux constantes XP/EN/HA/POOP~~ ✅ résolu 2026-04-30 | `data/config.js` | S | Hygiène globale |
-| 10 | Persister `tabletLastSeenDate` et `journalLocked` dans D | `js/ui.js` | S | Robustesse PWA |
+| 10 | ~~Persister `tabletLastSeenDate` dans D + exposer `journalLocked` sur `window`~~ ✅ résolu 2026-04-30 | `js/ui-settings.js`, `js/ui-journal.js`, `js/ui-nav.js` | S | Robustesse PWA |
 | 11 | Supprimer code mort `_bounceT`, `_lastPetTime`, `walkStep` | `js/render.js` | S | Lisibilité |
 | 12 | Extraire le debug-panel inline dans `js/debug.js` | `index.html` [L13-L98] | S | Allègement HTML |
 | 13 | Ajouter SRI sur p5.js CDN | `index.html` [L131] | S | Sécurité supply chain |

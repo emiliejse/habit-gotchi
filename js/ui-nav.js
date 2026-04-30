@@ -150,7 +150,7 @@ function go(t) {
     window._updInvEnvSwitcher?.();
   }
   if (t === 'perso')   renderPerso();
-  if (t === 'journal') { journalLocked = true; renderJ(); }
+  if (t === 'journal') { window.journalLocked = true; renderJ(); } // POURQUOI : window.journalLocked partagé avec ui-journal.js
 
   document.getElementById('dynamic-zone').scrollTop = 0;
   const wrap = document.getElementById('tama-bubble-wrap');

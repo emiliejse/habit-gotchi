@@ -152,7 +152,11 @@ const STG = [
 
 /* ─── SYSTÈME 3 : COGNITION & IA ───────────────────────────────── */
 
-// Fallback minimal si personality.json absent (Phrases d'urgence)
+// RÔLE : Fallback défensif utilisé uniquement si personality.json n'a pas encore été chargé.
+// POURQUOI : loadDataFiles() charge personality.json de manière asynchrone — dans les rares cas
+//            où updBubbleNow() s'exécute avant la fin du fetch (ex : 1er lancement hors-ligne),
+//            window.PERSONALITY serait null. MSG évite un crash silencieux.
+//            En usage normal, ce fallback n'est jamais affiché.
 const MSG = {
   matin:   ["Bon matin ☀️"], aprem: ["On avance ✿"],
   soir:    ["On se pose ✿"], nuit:  ["Zzz... 🌙"],
@@ -704,7 +708,7 @@ function calcStr() {
     left:${rect.left + rect.width / 2}px;
     top:${rect.top}px;
     transform:translateX(-50%);
-    font-size:11px;font-weight:bold;font-family:var(--font-body);
+    font-size:var(--fs-xs);font-weight:bold;font-family:var(--font-body);
     color:var(--lilac);
     pointer-events:none;
     z-index:9999;

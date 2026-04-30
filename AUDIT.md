@@ -120,24 +120,21 @@
 - Lignes : [L398]
 - Description : `setTimeout 500ms` supprimé. `await Promise.all(...)` garantit que tous les `cache.delete()` sont terminés avant le reload — pas de race condition possible.
 
-#### 🟡 MINEUR — `flashBubble()` modifie directement `el.textContent`
-- Lignes : [L978-L983]
-- Description : Aucune validation de longueur, aucun escape (mais `textContent` est sûr contre XSS).
-- Suggestion : RAS — `textContent` est XSS-safe, OK.
+#### ✅ RÉSOLU — `flashBubble()` modifie directement `el.textContent` (2026-04-30)
+- Lignes : [L998-L1003]
+- Description : `textContent` est XSS-safe par nature — aucun escape supplémentaire nécessaire. Aucune modification de code requise. Item clos.
 
-#### 🟡 MINEUR — `updBubbleNow()` appelle `pool.push(...selection)` sur un tableau de strings non-escapées
-- Lignes : [L1052-L1057]
-- Description : Les "bulles IA" peuvent contenir des `<script>` si l'API est compromise. Mais l'affichage final passe par `el.textContent` ([L1080]) — donc XSS-safe.
-- Suggestion : RAS.
+#### ✅ RÉSOLU — `updBubbleNow()` pool non-escapé (2026-04-30)
+- Lignes : [L1071-L1102]
+- Description : L'affichage final passe par `el.textContent` — XSS-safe même si les bulles IA contiennent du HTML. Aucune modification de code requise. Item clos.
 
-#### 🟡 MINEUR — `MSG` fallback minimal redondant avec `PERSONALITY.bulles`
-- Lignes : [L150-L157]
-- Description : `MSG` est utilisé uniquement si `window.PERSONALITY` est null ([L987]). Vu que `loadDataFiles()` charge systématiquement la personnalité, ce fallback ne sert qu'au tout 1er lancement avant que `loadUserConfig()` ne réponde.
-- Suggestion : Documenter dans le commentaire que ce fallback est défensif ou le supprimer.
+#### ✅ RÉSOLU — `MSG` fallback non documenté (2026-04-30)
+- Lignes : [L155-L167]
+- Description : Commentaire "RÔLE / POURQUOI" ajouté : `MSG` est un fallback défensif, jamais affiché en usage normal, déclenché uniquement si `updBubbleNow()` s'exécute avant la fin du fetch async de `personality.json` (1er lancement hors-ligne). Conservé intentionnellement.
 
-#### 🟡 MINEUR — `floatXP` utilise `font-weight:bold` hardcodé, pas de variable CSS
-- Lignes : [L678-L699]
-- Suggestion : Utiliser `var(--lilac)` (déjà fait) et passer la taille en `var(--fs-xs)`.
+#### ✅ RÉSOLU — `floatXP` taille hardcodée `11px` (2026-04-30)
+- Lignes : [L711]
+- Description : `font-size:11px` remplacé par `font-size:var(--fs-xs)` dans le `cssText`. `font-weight:bold` conservé tel quel — c'est la convention dans tout le codebase (pas de variable `--fw-*` définie). `var(--lilac)` était déjà en place.
 
 #### 🔵 STYLE — Indentation incohérente dans `defs()`
 - Lignes : [L165-L196]
@@ -770,6 +767,26 @@ Trois facteurs cumulés causaient le bug :
 - Étape 2 : `await caches.keys()` + `await Promise.all(names.map(n => caches.delete(n)))` — vide tous les caches en attendant la fin réelle de chaque suppression.
 - Étape 3 : `window.location.reload()` — déclenché seulement une fois les deux étapes async terminées.
 - `setTimeout(500ms)` supprimé — plus de race condition possible.
+
+---
+
+### Session — 2026-04-30 : Résolution des 4 items 🟡 MINEUR app.js (S3/S4)
+
+**Objectif** : Traiter les 4 items mineurs signalés sur `app.js` (bulles, MSG fallback, floatXP).
+
+**Fichier modifié** : `js/app.js`
+
+**Items traités** :
+
+**1. `flashBubble()` + `updBubbleNow()` — XSS (🟡 × 2 → ✅ sans modification code)**
+- `el.textContent` est XSS-safe par construction — aucun risque d'injection. Items clos sans toucher au code.
+
+**2. `MSG` fallback — documentation (🟡 → ✅)**
+- Commentaire "RÔLE / POURQUOI" ajouté au-dessus de `const MSG`. Précise que c'est un fallback défensif (1er lancement hors-ligne / race async), jamais affiché en usage normal. Conservé intentionnellement.
+
+**3. `floatXP` — `font-size` tokenisé (🟡 → ✅)**
+- `font-size:11px` → `font-size:var(--fs-xs)` dans le `cssText` de `floatXP()`. Valeur identique (11px = `--fs-xs`), mais désormais liée au système de design.
+- `font-weight:bold` conservé — pas de variable `--fw-*` dans le projet, `bold` hardcodé est la convention partout.
 
 ---
 

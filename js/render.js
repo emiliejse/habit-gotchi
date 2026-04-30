@@ -146,7 +146,7 @@ const ANIM_DEFS = {
   //   Le résultat est négatif (montée = Y décroissant sur canvas).
   //   Pas de snap ici : bobY est déjà en px canvas, le snap est dans resolve().
   saut_joie: {
-    stages: ['*'],
+    stages: '*',
     duration: 20,
     bodyOffset: {
       yFn: (elapsed) => -(Math.sin(elapsed / 20 * Math.PI) * 22)
@@ -192,8 +192,11 @@ const animator = {
       const { stages, duration, poses, bodyOffset } = a.def;
 
       // RÔLE : Filtrer les animations non applicables au stade courant.
-      // POURQUOI : stages: ['*'] = wildcard tous stades ; sinon on vérifie l'inclusion.
-      if (stages !== '*' && !stages.includes(stage)) continue;
+      // POURQUOI : stages peut être la string '*' (wildcard) ou un tableau de stades.
+      //            ['*'].includes(stage) retournerait false — on teste donc stages === '*'
+      //            en premier pour couvrir le cas wildcard correctement.
+      const isWildcard = stages === '*' || (Array.isArray(stages) && stages[0] === '*');
+      if (!isWildcard && !stages.includes(stage)) continue;
 
       // RÔLE : Calculer le nombre de frames écoulées depuis le début de l'animation.
       // POURQUOI : elapsed va de 0 (début) à duration-1 (fin) — utilisé par yFn/xFn

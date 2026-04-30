@@ -122,11 +122,12 @@ function renderSprite(p, layers, cx, cy, params, palette) {
     //            rawW/rawH permettent des dimensions non-multiples de PX (ex. reflets 2×2 px).
     //            yFn est une fonction (params) => number pour les positions Y dynamiques
     //            (ex. mouthY qui descend avec la respiration).
-    //            aov.dx : offset horizontal d'animation, snappé à PX dans animator.resolve().
     //            aov.dy : NON appliqué ici — absorbé sur drawY dans p.draw() pour décaler
     //                     le Gotchi entier (corps + accessoires + dithering + reflets).
+    //            aov.dx : réservé pour usage futur (Temps 3+) — non appliqué ici pour éviter
+    //                     tout décalage inattendu sur les sprites qui calculent leur propre cxB.
     for (const r of layer.rects) {
-      const rx = cx + r.x * PX + (r.rawDx || 0) + (r.rawDxFn ? r.rawDxFn(params) : 0) + aov.dx;
+      const rx = cx + r.x * PX + (r.rawDx || 0) + (r.rawDxFn ? r.rawDxFn(params) : 0);
       const baseY = r.yFn ? r.yFn(params) : cy + r.y * PX;
       const ry = baseY + (r.rawDy || 0) + (r.rawDyFn ? r.rawDyFn(params) : 0);
       const rw = r.rawW !== undefined ? r.rawW : r.w * PX;
@@ -481,7 +482,7 @@ function drawAccessoires(p, cx, anchors, stage, sl) {
                      :                    ps * 2)   // ← lunettes baby
                     : def.ancrage === 'cou'
                     ? (stage === 'baby'  ? ps * 2   // ← collier baby
-                     :                    ps * 5)   // ← collier teen/adult
+                     :                    ps * 6)   // ← collier teen/adult
                     :                    ps * 1;    // ← chapeau (tous stades)
 
       // accY = position Y finale du coin haut-gauche de l'accessoire.

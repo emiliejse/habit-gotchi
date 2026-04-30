@@ -514,6 +514,13 @@ window.checkSalete = function checkSalete() {
 function maybeSpawnPoop() {
   const now = Date.now();
   window.D.g.lastTick = now; // heartbeat — persisté au prochain save() normal
+
+  // RÔLE : Pas de crotte pendant le sommeil (22h–7h).
+  // POURQUOI : Le Gotchi est au repos — visuellement et logiquement incohérent de spawner.
+  //            Le rattrapage au réveil est géré par catchUpPoops() avec plafond de 2.
+  const hNow = hr();
+  if (hNow >= 22 || hNow < 7) return;
+
   const last = window.D.g.lastPoopSpawn || 0;
   const minDelay = POOP_MIN_DELAY_MS; // 8 minutes minimum entre 2 crottes
 
@@ -1153,13 +1160,40 @@ function handleDailyReset() {
 }
 
 
-// Spawn rétrospecif des crottes accumulées pendant l'inactivité
+// RÔLE : Spawn rétrospecif des crottes accumulées pendant l'inactivité.
+// POURQUOI : Évite d'afficher 5+ crottes dès le réveil (nuit = ~9h sans tick).
+//            On soustrait les heures de sommeil (22h–7h) du delta, car le Gotchi
+//            ne produit pas de crottes en dormant — il est au repos.
+//            On plafonne aussi à 2 crottes max au bootstrap pour étaler l'apparition
+//            dans la journée via l'interval normal (POOP_CHECK_INTERVAL_MS).
 function catchUpPoops() {
   const last = window.D.g.lastTick || 0;
   if (!last) return;
-  const deltMin = Math.min((Date.now() - last) / 60000, 480); // plafond 8h
-  if (deltMin < 10) return;
-  const nb = Math.floor(deltMin / 50); // 1 crotte / 50 min hors-session
+
+  // Calcule la durée d'inactivité réelle en minutes
+  const now = Date.now();
+  const totalMin = (now - last) / 60000;
+  if (totalMin < 10) return;
+
+  // Déduit les heures de sommeil : si l'inactivité couvre la nuit (22h–7h = 9h = 540 min),
+  // on retire ces 540 min du delta — le Gotchi ne produit rien en dormant.
+  const lastDate   = new Date(last);
+  const nowDate    = new Date(now);
+  const lastH      = lastDate.getHours() + lastDate.getMinutes() / 60;
+  const nowH       = nowDate.getHours() + nowDate.getMinutes() / 60;
+  const SLEEP_H    = 9; // 22h → 7h = 9h de sommeil
+
+  // Estimation simple : si on a dormi entre les deux timestamps, on retire SLEEP_H heures
+  const crossedNight = (lastH > 22 || lastH < 7) // était déjà la nuit
+                     || (lastH >= 7 && nowH < 7)  // a traversé une nuit complète
+                     || (totalMin > 12 * 60);     // plus de 12h = forcément une nuit dedans
+  const sleepMin   = crossedNight ? SLEEP_H * 60 : 0;
+  const activeMin  = Math.max(0, Math.min(totalMin - sleepMin, 240)); // plafond 4h actives
+
+  if (activeMin < 10) return;
+
+  // 1 crotte par 50 min actives, mais max 2 au bootstrap — le reste viendra via l'interval
+  const nb = Math.min(Math.floor(activeMin / 50), 2);
   for (let i = 0; i < nb; i++) spawnPoop();
 }
 
@@ -1177,9 +1211,13 @@ function initApp() {
   // 2. Env — la boucle draw calcule dynamiquement chambre/parc selon hr()
   const h = hr();
 
-  // 3. Spawn caca si 10 min écoulées
+  // 3. Spawn caca si 10 min écoulées — seulement si catchUpPoops n'a pas déjà spawné
+  // POURQUOI : catchUpPoops() met à jour lastPoopSpawn via spawnPoop() → si elle a spawné,
+  //            lastSpawn sera récent et cette garde ne se déclenche pas. Évite le double spawn.
   const lastSpawn = window.D.g.lastPoopSpawn || 0;
-  if (Date.now() - lastSpawn > POOP_SPAWN_DELAY_MS) {
+  const hNow = hr();
+  const isSleepTime = hNow >= 22 || hNow < 7;
+  if (!isSleepTime && Date.now() - lastSpawn > POOP_SPAWN_DELAY_MS) {
     maybeSpawnPoop();
   }
 

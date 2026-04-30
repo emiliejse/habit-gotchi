@@ -582,8 +582,12 @@ function updateParts(p) {
       pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.12; pt.life--;
       if (pt.life <= 0) return false;
       const a = pt.life / 16;
+      // RÔLE : Taille de la particule — utilise pt.r si défini, sinon PX (5px) par défaut.
+      // POURQUOI : Permet aux bulles de bain (et futures particules) d'avoir des tailles variées
+      //            sans casser les particules existantes (toutes à PX par défaut).
+      const sz = pt.r || PX;
       p.fill(p.color(...p.color(pt.c)._array.slice(0,3).map(x=>x*255), a * 255));
-      px(p, pt.x, pt.y, PX, PX);
+      px(p, pt.x, pt.y, sz, sz);
       return true;
     });
 }
@@ -1430,15 +1434,50 @@ if (!window._gotchiActif) return true;
     const mx = p.touches[0]?.x ?? p.mouseX;
     const my = p.touches[0]?.y ?? p.mouseY;
 
-    // 🧹 Balai (x=70) — nettoyer les crottes
+    // 🧹 Balai (x=70) — nettoyer les crottes, ou bulle si déjà propre
     if (Math.abs(mx - 70) < 14 && my < 26) {
-      setTimeout(() => cleanPoops(), 0); return false;
+      const poops = window.D?.g?.poops || [];
+      if (poops.length === 0) {
+        // RÔLE : Feedback quand il n'y a rien à ramasser.
+        // POURQUOI : Sans message, le tap semble bugué — rien ne se passe.
+        const msgsNoCrotte = [
+          'Rien à ramasser, c\'est nickel ici ! 🧹',
+          'Pas de crotte en vue ! Tout est propre ✨',
+          'L\'environnement est impeccable !',
+          'Rien à faire, profite ! 🌿',
+        ];
+        flashBubble(msgsNoCrotte[Math.floor(Math.random() * msgsNoCrotte.length)], 2500);
+      } else {
+        setTimeout(() => cleanPoops(), 0);
+      }
+      return false;
     }
 
-    // 🛁 Bain (x=100) — tap = expression surprise si sale (rappel de frotter)
+    // 🛁 Bain (x=100) — tap = bulle contextuelle selon l'état de propreté du Gotchi
     if (Math.abs(mx - 100) < 14 && my < 26) {
-      if ((window.D?.g?.salete || 0) >= 5) {
+      const saleteTap = window.D?.g?.salete || 0;
+      if (saleteTap >= 5) {
+        // RÔLE : Invitation à frotter quand le Gotchi est sale.
+        // POURQUOI : L'utilisatrice ne sait pas forcément qu'il faut frotter (glisser le doigt).
+        //            Un message dans la bulle rend l'interaction intuitive.
+        const msgsSale = [
+          'Fais-moi un petit bain ! Frotte-moi doucement 🛁',
+          'Je sens un peu... frotte-moi s\'il te plaît ! 🧼',
+          'J\'ai besoin d\'un bain… glisse ton doigt sur moi 🫧',
+          'Scrub scrub ! Frotte-moi pour me nettoyer ✨',
+        ];
+        flashBubble(msgsSale[Math.floor(Math.random() * msgsSale.length)], 3000);
         if (typeof window.triggerExpr === 'function') window.triggerExpr('surprise', 40);
+      } else {
+        // RÔLE : Message de satisfaction quand le Gotchi est déjà propre.
+        // POURQUOI : Feedback positif — renforce le soin régulier.
+        const msgsPropre = [
+          'Je brille de propreté ! ✨',
+          'Mmh, quelle bonne odeur ! 🌸',
+          'Pas besoin de bain pour l\'instant, c\'est nickel !',
+          'Je me sens léger·e et propre ! 💙',
+        ];
+        flashBubble(msgsPropre[Math.floor(Math.random() * msgsPropre.length)], 2500);
       }
       return false;
     }
@@ -1591,18 +1630,40 @@ if (!window._gotchiActif) return true;
         // Décrémente de 1 point de saleté
         D.g.salete = Math.max(0, D.g.salete - 1);
 
-        // Particules de nettoyage (bulles bleues/blanches)
-        for (let i = 0; i < 5; i++) {
-          spawnP(
-            walkX + (Math.random() - 0.5) * 30,
-            by + GOTCHI_OFFSET_Y + (Math.random() * 40),
-            Math.random() < 0.5 ? '#88c8e8' : '#ffffff'
-          );
+        // RÔLE : Bulles de savon — plus nombreuses et de tailles variées pour un effet vivant.
+        // POURQUOI : 12 bulles (vs 5 avant) + taille r: PX*2 pour ~60% d'entre elles.
+        //            Mélange grandes (10px) + petites (5px) = aspect mousse réaliste.
+        //            Zone ±40px large pour couvrir tout le corps du Gotchi.
+        for (let i = 0; i < 12; i++) {
+          const isBig = Math.random() < 0.6;
+          window.particles.push({
+            x: walkX + (Math.random() - 0.5) * 40,
+            y: by + GOTCHI_OFFSET_Y + (Math.random() * 50),
+            vx: (Math.random() - 0.5) * 2.5,
+            vy: -Math.random() * 2.5 - 0.8,  // monte doucement comme de la mousse
+            life: isBig ? 22 : 14,            // les grandes bulles durent plus longtemps
+            r: isBig ? PX * 2 : PX,           // grande bulle = 10px, petite = 5px
+            c: Math.random() < 0.55 ? '#88c8e8' : Math.random() < 0.5 ? '#ffffff' : '#b8e8ff'
+          });
         }
 
         // Expression surprise à chaque point retiré
         if (typeof window.triggerExpr === 'function') {
           window.triggerExpr('surprise', 30);
+        }
+
+        // RÔLE : Messages de progression pendant le frottement (toutes les 3 unités de saleté).
+        // POURQUOI : Un message à chaque tick (500ms) serait trop fréquent — on espace à ~3 points
+        //            pour que la bulle reste lisible sans spammer.
+        if (D.g.salete % 3 === 0 && D.g.salete > 0) {
+          const msgsEnCours = [
+            'Aaaah, ça fait du bien ! 🧼',
+            'Ooooh continue ! 🫧',
+            'Scrub scrub scrub… 🛁',
+            'Hmm, c\'est agréable !',
+            'Encore un peu… ✨',
+          ];
+          flashBubble(msgsEnCours[Math.floor(Math.random() * msgsEnCours.length)], 1800);
         }
 
         // RÔLE : Récompense finale quand le Gotchi est parfaitement propre.
@@ -1623,6 +1684,16 @@ if (!window._gotchiActif) return true;
               C.star
             );
           }
+
+          // RÔLE : Message de soulagement/joie à la fin du bain.
+          // POURQUOI : Clôture l'interaction avec une récompense émotionnelle claire.
+          const msgsClean = [
+            'Je me sens tellement mieux ! Merci 🌸',
+            'Tout propre ! Je brille de l\'intérieur ✨',
+            'Aaaaah ! Un vrai bonheur 🛁💙',
+            'Mmh, je sens si bon maintenant ! 🌸',
+          ];
+          flashBubble(msgsClean[Math.floor(Math.random() * msgsClean.length)], 3000);
 
           // RÔLE : Frisson post-bain — le Gotchi vient d'être frotté avec de l'eau froide.
           // POURQUOI : Réaction physique réaliste et amusante qui donne du feedback visuel

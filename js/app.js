@@ -57,7 +57,7 @@ let _meteoIntervalId = null;
 let _poopIntervalId  = null;
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v4.55'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v4.56'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -375,13 +375,28 @@ if (window.D.propsPixels && Object.keys(window.D.propsPixels).length) {
 /* ============================================================
    UTILITAIRES
    ============================================================ */
-// Hard reset : vide le cache du navigateur pour forcer les updates PWA
-function forceUpdate() {
-  if ('caches' in window) {
-    caches.keys().then(names => { names.forEach(name => caches.delete(name)); });
-  }
+// RÔLE : Vide tous les caches PWA, désinstalle le Service Worker, puis recharge la page.
+// POURQUOI : location.reload() seul ne suffit pas — le SW déjà installé peut resservir
+//            l'ancienne version depuis son propre cache avant que les caches soient repeuplés.
+//            On attend que tous les cache.delete() soient finis (await Promise.all)
+//            avant de recharger, pour éviter un timing race avec un cache encore en cours.
+async function forceUpdate() {
   toast(`Mise à jour en cours... ✿`);
-  setTimeout(() => window.location.reload(), 500);
+
+  // Étape 1 : désinstaller le Service Worker actif (empêche de resservir l'ancienne version)
+  if ('serviceWorker' in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map(r => r.unregister()));
+  }
+
+  // Étape 2 : vider tous les caches (on attend la fin avant de recharger)
+  if ('caches' in window) {
+    const names = await caches.keys();
+    await Promise.all(names.map(n => caches.delete(n)));
+  }
+
+  // Étape 3 : rechargement — tous les caches sont vides, le SW est désinstallé
+  window.location.reload();
 }
 
 // Vérifie les mises à jour Service Worker au démarrage
@@ -1204,18 +1219,20 @@ async function bootstrap() {
     if (typeof window.checkSalete === 'function') window.checkSalete();
     catchUpPoops();
     initApp();
+
+    // RÔLE : Lance le premier fetch météo + phases solaires, puis les intervals récurrents.
+    // POURQUOI : Placé ici (derrière _appInitialized) pour garantir qu'on ne crée jamais
+    //            deux séries de timers si bootstrap() est appelée plusieurs fois —
+    //            clearInterval sur null est sans effet, donc le guard est sûr dans tous les cas.
+    fetchMeteo();
+    fetchSolarPhases();
+    clearInterval(_meteoIntervalId);
+    clearInterval(_poopIntervalId);
+    _meteoIntervalId = setInterval(fetchMeteo, 1800000);            // météo toutes les 30 min
+    _poopIntervalId  = setInterval(maybeSpawnPoop, POOP_CHECK_INTERVAL_MS); // check crottes
+
     _appInitialized = true;
   });
-
-  fetchMeteo();
-  fetchSolarPhases();
-
-  // RÔLE : Lance les intervals récurrents en s'assurant de ne pas en empiler plusieurs.
-  // POURQUOI : clearInterval sur null est sans effet — pas besoin de guard if().
-  clearInterval(_meteoIntervalId);
-  clearInterval(_poopIntervalId);
-  _meteoIntervalId = setInterval(fetchMeteo, 1800000);           // météo toutes les 30 min
-  _poopIntervalId  = setInterval(maybeSpawnPoop, POOP_CHECK_INTERVAL_MS); // check crottes
 }
 
 /* ---------- Déclencheurs ---------- */

@@ -108,22 +108,17 @@
 - Lignes : [L648-L659]
 - Description : Branche legacy supprimée. Signature unique : `function addEvent(ev)` — ev est toujours un objet `{ type, subtype, valeur, label }`. Horodatage et spread automatiques. Zéro appel legacy confirmé dans l'ensemble du codebase.
 
-#### 🟠 IMPORTANT — `bootstrap()` non idempotent face aux `setInterval`
-- Lignes : [L1175-L1209]
-- Description : Les deux `setInterval` ([L1207-L1208]) sont placés *en dehors* de la garde `_appInitialized`. Ils s'exécutent à chaque appel de `bootstrap()` — heureusement `bootstrap()` n'est appelée qu'au `load`/`pageshow`(persisted), MAIS si un développeur appelle `bootstrap()` manuellement (ou via cheat), on empile les timers.
-- Risque : Memory leak en environnement de dev, doubles fetch météo.
-- Suggestion : Déplacer les `setInterval` derrière `if (!_appInitialized)` ou stocker les handles.
+#### ✅ RÉSOLU — `bootstrap()` non idempotent face aux `setInterval` (2026-04-30)
+- Lignes : [L1195-L1236]
+- Description : `fetchMeteo()`, `fetchSolarPhases()` et les deux `setInterval` déplacés à l'intérieur du `.then()`, juste avant `_appInitialized = true`. Ils ne s'exécutent plus qu'une seule fois, sous la garde implicite de la promesse de chargement. `clearInterval` conservés (no-op si null, sûrs dans tous les cas).
 
-#### 🟠 IMPORTANT — `forceUpdate()` ne gère pas le service worker
-- Lignes : [L373-L379]
-- Description : La fonction efface seulement `caches.keys()` puis `location.reload()`. Elle n'appelle pas `registration.unregister()` ni `skipWaiting`. Sur certains navigateurs, le SW déjà installé peut servir l'ancienne version persistante avant que les caches ne soient repeuplés.
-- Risque : Bouton "Mettre à jour l'app" qui semble ne rien faire.
-- Suggestion : Ajouter `registration.update()` puis `registration.unregister()` avant `reload()`.
+#### ✅ RÉSOLU — `forceUpdate()` ne gère pas le service worker (2026-04-30)
+- Lignes : [L383-L400]
+- Description : Fonction réécrite en `async`. Elle désinstalle d'abord tous les SW enregistrés (`navigator.serviceWorker.getRegistrations()` + `r.unregister()`), vide tous les caches avec `await Promise.all(names.map(n => caches.delete(n)))`, puis appelle `window.location.reload()`. Le `setTimeout` arbitraire 500 ms supprimé — le rechargement ne se déclenche qu'une fois les deux étapes async terminées.
 
-#### 🟡 MINEUR — `forceUpdate()` ne fait pas un vrai hard reload
-- Lignes : [L378]
-- Description : Cohérent avec audit précédent : `location.reload()` (sans argument) suffit normalement, mais le timing 500 ms est arbitraire et peut court-circuiter un cache.delete encore en cours.
-- Suggestion : `await Promise.all(names.map(n => caches.delete(n)))` puis `reload()`.
+#### ✅ RÉSOLU — `forceUpdate()` ne fait pas un vrai hard reload (2026-04-30)
+- Lignes : [L398]
+- Description : `setTimeout 500ms` supprimé. `await Promise.all(...)` garantit que tous les `cache.delete()` sont terminés avant le reload — pas de race condition possible.
 
 #### 🟡 MINEUR — `flashBubble()` modifie directement `el.textContent`
 - Lignes : [L978-L983]
@@ -753,6 +748,28 @@ Trois facteurs cumulés causaient le bug :
 - Section 2.3 `app.js` : bug addEvent marqué résolu.
 - Section 8.3 `sw.js` : bug render-sprites.js marqué résolu.
 - Plan Phase 1 item 5 : marqué ✅.
+
+---
+
+### Session — 2026-04-30 : Fix 3 bugs bootstrap / forceUpdate
+
+**Objectif** : Résoudre les deux 🟠 IMPORTANT et le 🟡 MINEUR signalés sur `app.js`.
+
+**Fichier modifié** : `js/app.js`
+
+**Corrections appliquées** :
+
+**1. `bootstrap()` — `setInterval` derrière la garde (🟠 → ✅)**
+- `fetchMeteo()`, `fetchSolarPhases()` et les deux `setInterval` déplacés à l'intérieur du `.then()` de `loadDataFiles()`, juste avant `_appInitialized = true`.
+- Résultat : impossible d'empiler des timers même si `bootstrap()` est appelée plusieurs fois — les timers ne s'initialisent qu'une seule fois, sous la condition implicite que la promesse de chargement s'est résolue.
+- `clearInterval` conservés pour la sécurité (no-op si null).
+
+**2. `forceUpdate()` — gestion SW + await (🟠 + 🟡 → ✅)**
+- Fonction réécrite en `async`.
+- Étape 1 : `navigator.serviceWorker.getRegistrations()` + `await Promise.all(regs.map(r => r.unregister()))` — désinstalle tous les SW avant rechargement.
+- Étape 2 : `await caches.keys()` + `await Promise.all(names.map(n => caches.delete(n)))` — vide tous les caches en attendant la fin réelle de chaque suppression.
+- Étape 3 : `window.location.reload()` — déclenché seulement une fois les deux étapes async terminées.
+- `setTimeout(500ms)` supprimé — plus de race condition possible.
 
 ---
 

@@ -2,6 +2,8 @@
 
 > Audit complet sur la branche `main`, version `v4.5`. Lecture intégrale de `data/config.js` (243 l), `js/app.js` (1241 l), `js/render.js` (1173 l), `js/render-sprites.js` (620 l), `js/envs.js` (438 l), `js/ui.js` (5192 l), `index.html` (635 l), `sw.js` (69 l). Parcours rapide de `prompts/ai_contexts.json`, `prompts/ai_system.json`, `data/props.json`. Ancien `AUDIT.md` (v3.02) consulté uniquement comme référence de format.
 >
+> **Session refactoring 2026-04-30** : `ui.js` (5192 l) découpé en 8 modules — voir section "Historique des sessions" en fin de fichier. `sw.js` mis à jour (ajout `render-sprites.js` + 8 modules ui, retrait `ui.js`). `index.html` mis à jour (ordre de chargement). `getWeekId` doublon confirmé absent (déjà supprimé). `escapeHtml` unifié sur `escape` dans `ui-core.js`.
+>
 > **Vérification version** : `window.APP_VERSION = 'v4.5'` ([app.js L54](js/app.js#L54)) — ⚠️ la consigne mentionnait `'hg-v4.5'` mais le code stocke uniquement `'v4.5'`. Le `CACHE_VERSION` de `sw.js` ([L7](sw.js#L7)) est aligné `'v4.5'`. Cohérence OK entre les deux fichiers, mais préfixe `hg-` non utilisé.
 
 ---
@@ -630,7 +632,7 @@ Aucune ligne JS n'est à modifier pour le fix CSS minimal `pointer-events:auto` 
 
 | N° | Titre | Fichiers | Effort | Bénéfice |
 |---|---|---|---|---|
-| 1 | Ajouter `render-sprites.js` à `ASSETS` du SW | `sw.js` [L9-L31] | S | Fix critique offline |
+| 1 | ✅ Ajouter `render-sprites.js` à `ASSETS` du SW | `sw.js` [L9-L31] | S | Fix critique offline |
 | 2 | Vérifier `response.ok` avant `cache.put` | `sw.js` [L62-L66] | S | Évite les 404 cachés |
 | 3 | Fix modale non-bloquante (CSS minimal `pointer-events`) | `css/style.css` + `js/ui.js` openModal | S | Fix bug critique UX |
 | 4 | Bumper sync `APP_VERSION` à `'hg-v4.5'` si convention | `js/app.js` [L54] + `sw.js` [L7] | S | Cohérence |
@@ -655,7 +657,7 @@ Aucune ligne JS n'est à modifier pour le fix CSS minimal `pointer-events:auto` 
 | N° | Titre | Fichiers | Effort | Bénéfice |
 |---|---|---|---|---|
 | 15 | Découper `p.draw()` en sous-fonctions thématiques | `js/render.js` [L330-L896] | L | Maintenabilité |
-| 16 | Découper `ui.js` (5192 l) en modules par feature | `js/ui.js` | L | Maintenabilité |
+| 16 | ✅ Découper `ui.js` (5192 l) en modules par feature | `js/ui-core.js` (300 l), `js/ui-nav.js` (155 l), `js/ui-habs.js` (179 l), `js/ui-shop.js` (1047 l), `js/ui-ai.js` (918 l), `js/ui-journal.js` (342 l), `js/ui-agenda.js` (1204 l), `js/ui-settings.js` (1307 l) | L | Maintenabilité |
 | 17 | Migrer les inline-styles vers classes CSS | `js/ui.js` + `css/style.css` | L | Thématisation |
 | 18 | Extraire `drawParc/Chambre/Montagne` de `drawActiveEnv` | `js/envs.js` | M | Lisibilité |
 | 19 | Découpler `render-sprites.js` de `render.js` (variables module) | les deux | M | Modularité |
@@ -739,6 +741,41 @@ Aucune ligne JS n'est à modifier pour le fix CSS minimal `pointer-events:auto` 
 | `ouvrirModalEtats` / `fermerModalEtats` | bottom sheet | render touch | `setEnergy`, `setHappy` |
 | `confirmReset` | reset total | UI | `openModal`, `localStorage.removeItem` |
 | `initUI()` | init complète UI | `bootstrap()` (app.js) | `updUI`, `syncConsoleHeight`, `renderHabs`, `renderProps`, `restorePerso`, `initMoodPicker`, `checkWelcome`, `updBubbleNow` |
+
+---
+
+## Historique des sessions de refactoring
+
+### Session — 2026-04-30 : Split ui.js + fix SW
+
+**Objectif** : Découper `ui.js` (5192 l) en 8 modules par feature (item #16 du plan Phase 3).
+
+**Fichiers créés** :
+
+| Fichier | Lignes | Contenu |
+|---|---|---|
+| `js/ui-core.js` | 300 | callClaude, escape/escapeHtml (unifiés), chevron, animEl, toast/modal/scroll, menu overlay |
+| `js/ui-nav.js` | 155 | go(), syncConsoleHeight(), syncDuringTransition(), updDate() |
+| `js/ui-habs.js` | 179 | renderHabs, editHabInline, saveHabInline, deplacerHab, ouvrirEditionHabitudes, sauvegarderToutesHabitudes |
+| `js/ui-shop.js` | 1047 | Boutique, props, inventaire, slots, long press, rangement, switcher env, debugProps, viderObjetsIA |
+| `js/ui-ai.js` | 918 | startThinkingAnim, getRegistre, getExemples, askClaude, acheterPropClaude, toastInfo, genSoutien, sendSoutienMsg, genBilanSemaine, navW, navM |
+| `js/ui-journal.js` | 342 | journalLocked (déclaré ici), renderPin, renderJ, initMoodPicker, saveJ, renderJEntries, getWkDates, exportJournal |
+| `js/ui-agenda.js` | 1204 | ouvrirAgenda, renderAgendaJour/Mois/Cycle, sauvegarderRdv, supprimerRdv, declarerRegles, modifierCycle, copierCycles |
+| `js/ui-settings.js` | 1307 | ouvrirSnack, updUI/updThoughtFlowers/updBilanFlowers/updJournalFlowers, renderPerso, renderProg, saveName/saveApi/savePin/exportD/importD, openTablet, checkWelcome, ouvrirModalEtats, window.initUI |
+
+**Ordre de chargement dans `index.html`** :
+`config.js` → `app.js` → `render.js` → `envs.js` → `render-sprites.js` → `ui-core.js` → `ui-habs.js` → `ui-shop.js` → `ui-ai.js` → `ui-journal.js` → `ui-settings.js` → `ui-agenda.js` → `ui-nav.js` *(en dernier car go() dépend de toutes les render*)*
+
+**sw.js mis à jour** : `render-sprites.js` ajouté (fix item #1), `ui.js` remplacé par les 8 modules dans `ASSETS`.
+
+**Corrections additionnelles** :
+- `journalLocked` : variable déplacée de la section navigation vers `ui-journal.js` où elle est gérée
+- `escapeHtml` : alias unifié sur `escape()` dans `ui-core.js` (suppression doublon)
+- `toastInfo()` : bien déclarée dans `ui-ai.js` (modale d'info quota soutien) — ne pas confondre avec toast()
+- `delJEntry` : formatage corrigé (collage `}function` dans l'original)
+- `getWeekId` doublon : confirmé absent de ui.js (déjà résolu en session antérieure — item Session 1 audit clos)
+
+**`ui.js` original** : conservé intact, non supprimé. À archiver ou supprimer manuellement après validation en prod.
 
 ---
 

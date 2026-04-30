@@ -608,7 +608,22 @@ Ton bilan de la semaine apparaîtra ici...
 <script src="js/render.js"></script>
 <script src="js/envs.js"></script>
 <script src="js/render-sprites.js"></script>
-<script src="js/ui.js"></script>
+<!-- ui-core.js en premier : primitives partagées (callClaude, toast, modal, escape, chevron, scroll) -->
+<script src="js/ui-core.js"></script>
+<!-- ui-habs.js : habitudes (pas de dépendance inter-UI) -->
+<script src="js/ui-habs.js"></script>
+<!-- ui-shop.js : boutique et inventaire -->
+<script src="js/ui-shop.js"></script>
+<!-- ui-ai.js : bulle, soutien, bilan IA -->
+<script src="js/ui-ai.js"></script>
+<!-- ui-journal.js : PIN, humeurs, journal (expose getWkDates) -->
+<script src="js/ui-journal.js"></script>
+<!-- ui-settings.js : HUD, perso, progression, réglages, tablette, bienvenue, initUI -->
+<script src="js/ui-settings.js"></script>
+<!-- ui-agenda.js : agenda jour/mois/cycle -->
+<script src="js/ui-agenda.js"></script>
+<!-- ui-nav.js EN DERNIER : go() appelle toutes les render* des modules ci-dessus -->
+<script src="js/ui-nav.js"></script>
 
 <!-- Conditions USER_CONFIG — masquage des features selon config perso -->
 <script>

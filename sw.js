@@ -22,7 +22,15 @@ const ASSETS = [
   './js/app.js',
   './js/render.js',
   './js/envs.js',
-  './js/ui.js',
+  './js/render-sprites.js',
+  './js/ui-core.js',
+  './js/ui-habs.js',
+  './js/ui-shop.js',
+  './js/ui-ai.js',
+  './js/ui-journal.js',
+  './js/ui-settings.js',
+  './js/ui-agenda.js',
+  './js/ui-nav.js',
 
   // Data (JSON — les plus importants à versionner)
   './data/props.json',

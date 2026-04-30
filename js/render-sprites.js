@@ -559,26 +559,24 @@ const LAYERS_BABY = [
 
   // ── Reflets blancs mobiles dans les yeux ouverts ───────────────
   // RÔLE : Petit point blanc 2×2 px qui se déplace doucement dans l'œil.
-  // POURQUOI : Un reflet fixe au coin supérieur-gauche donnait un regard "mort".
-  //            rawDxFn fait osciller le reflet horizontalement dans l'œil (0 → PX-2 = 3px).
-  //            Les deux yeux bougent ensemble — le gotchi semble regarder d'un côté à l'autre.
-  //            rawDyFn est nul (œil sur 1 PX de hauteur = 5px, reflet 2px, juste 3px de jeu
-  //            vertical — on laisse centré verticalement pour éviter la pixellation).
+  // POURQUOI : rawDxFn fait osciller le reflet horizontalement dans l'œil.
+  //            Amplitude max = PX - 2 = 3px (œil 2×PX = 10px, reflet 2px, marge 1px de chaque côté).
+  //            rawDy:0 — le reflet est calé en haut de l'œil (hauteur 5px, reflet 2px → reste dedans).
   {
     id: 'reflets-yeux',
     fill: '#fff',
     when: (pm) => !pm.sl && !pm.blink,
     rects: [
       {
-        x: -2, y: 2, w: 0, h: 0, rawDy: 1, rawW: 2, rawH: 2,
-        // RÔLE : Déplacement horizontal du reflet dans l'œil gauche (0 → PX-2 = 3px).
-        // L'œil fait 2×PX = 10px de large, le reflet 2px — peut se déplacer sur 8px.
-        rawDxFn: () => Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 2)),
+        x: -2, y: 2, w: 0, h: 0, rawDy: 0, rawW: 2, rawH: 2,
+        // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 3px).
+        // Amplitude = PX - 2 = 3px pour rester dans les 10px de l'œil (marge 1px à droite).
+        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX - 2)),
       },
       {
-        x:  1, y: 2, w: 0, h: 0, rawDy: 1, rawW: 2, rawH: 2,
+        x:  1, y: 2, w: 0, h: 0, rawDy: 0, rawW: 2, rawH: 2,
         // RÔLE : Même déplacement pour l'œil droit — synchronisé.
-        rawDxFn: () => Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 2)),
+        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX - 2)),
       },
     ]
   },
@@ -799,25 +797,24 @@ const LAYERS_TEEN = [
 
   // ── Reflets yeux ouverts mobiles (4×4 px sub-PX) ───────────────
   // RÔLE : Reflet blanc 4×4 px qui se promène doucement dans la rangée haute de l'œil.
-  // POURQUOI : Remplacement du reflet statique (rawDx:1, rawDy:1 fixes) par un reflet
-  //            animé — même logique que le baby mais dans un œil amande plus grand.
-  //            L'œil haut fait 2×PX = 10px. Le reflet de 4px peut se déplacer de 0 à 5px
-  //            horizontalement sans sortir de l'œil. L'oscillation est lente (0.0008 rad/ms)
-  //            pour rester subtile — effet "regard vivant" sans être distrayant.
+  // POURQUOI : L'œil haut fait 2×PX = 10px large, 1×PX = 5px haut.
+  //            Reflet 4×4px → marge horizontale = 10 - 4 - 1 = 5px max (avec 1px de marge).
+  //            rawDy:0 — calé en haut de l'œil, 4px de reflet dans 5px de hauteur → reste dedans.
   {
     id: 'reflets-yeux-ouverts',
     fill: '#fff',
     when: (pm) => !pm.sl && !pm.blink && !isMood('surprise'),
     rects: [
       {
-        x: -3, y: 2, w: 0, h: 0, rawDy: 1, rawW: 4, rawH: 4,
-        // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 5px = largeur 2PX - 4px reflet - 1 marge).
-        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * 5),
+        x: -3, y: 2, w: 0, h: 0, rawDy: 0, rawW: 4, rawH: 4,
+        // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 4px).
+        // Amplitude = PX*2 - 4 - 2 = 4px pour rester dans les 10px (marge 1px à droite).
+        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 4 - 2)),
       },
       {
-        x:  1, y: 2, w: 0, h: 0, rawDy: 1, rawW: 4, rawH: 4,
-        // RÔLE : Même déplacement pour l'œil droit — synchronisé avec le gauche.
-        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * 5),
+        x:  1, y: 2, w: 0, h: 0, rawDy: 0, rawW: 4, rawH: 4,
+        // RÔLE : Même déplacement pour l'œil droit — synchronisé.
+        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 2 - 4 - 2)),
       },
     ]
   },
@@ -1131,24 +1128,23 @@ const LAYERS_ADULT = [
   },
 
   // ── Reflets yeux ouverts mobiles (4×4 px sub-PX) ───────────────
-  // RÔLE : Reflet blanc 4×4 px animé dans la rangée haute de l'œil adulte (3×PX = 15px).
-  // POURQUOI : L'œil adulte est plus grand (3 PX de large en haut), ce qui donne plus
-  //            d'espace pour le voyage du reflet (0 → 10px). Oscillation lente synchronisée
-  //            avec teen pour cohérence entre les stades.
+  // RÔLE : Reflet blanc 4×4 px animé dans la rangée haute de l'œil adulte (3×PX = 15px large, 5px haut).
+  // POURQUOI : Amplitude = 3PX - 4px reflet - 2px marge = 9px max.
+  //            rawDy:0 — calé en haut de l'œil, 4px dans 5px de hauteur → reste dedans.
   {
     id: 'reflets-yeux-ouverts',
     fill: '#fff',
     when: (pm) => !pm.sl && !pm.blink && !isMood('surprise'),
     rects: [
       {
-        x: -3, y: 3, w: 0, h: 0, rawDy: 1, rawW: 4, rawH: 4,
-        // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 10px = 3PX - 4px reflet - 1 marge).
-        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * 10),
+        x: -3, y: 3, w: 0, h: 0, rawDy: 0, rawW: 4, rawH: 4,
+        // RÔLE : Déplacement horizontal dans l'œil gauche (0 → 9px = 3PX - 4 - 2).
+        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 4 - 2)),
       },
       {
-        x:  1, y: 3, w: 0, h: 0, rawDy: 1, rawW: 4, rawH: 4,
+        x:  1, y: 3, w: 0, h: 0, rawDy: 0, rawW: 4, rawH: 4,
         // RÔLE : Même déplacement pour l'œil droit.
-        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * 10),
+        rawDxFn: () => 1 + Math.round((Math.sin(Date.now() * 0.0008) * 0.5 + 0.5) * (PX * 3 - 4 - 2)),
       },
     ]
   },

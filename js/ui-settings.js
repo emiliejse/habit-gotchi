@@ -454,14 +454,18 @@ et.innerHTML = window.HG_CONFIG.ENV_THEMES.map(t => `
 
 function applyUIPalette(id, silent = false) {
   const p = window.HG_CONFIG.UI_PALETTES.find(x => x.id === id); if (!p) return;
-  document.documentElement.style.setProperty('--bg',    p.bg);
-  document.documentElement.style.setProperty('--lilac', p.lilac);
-  document.documentElement.style.setProperty('--mint',  p.mint);
-  document.documentElement.style.setProperty('--pink',  p.pink);
-  document.documentElement.style.setProperty('--text',  p.text  || '#38304a');
-  document.documentElement.style.setProperty('--text2', p.text2 || '#887ea0');
-  document.documentElement.style.setProperty('--card',   p.card   || 'rgba(255,255,255,.88)');
-document.documentElement.style.setProperty('--border', p.border || '#ccc4d8');
+  document.documentElement.style.setProperty('--bg',        p.bg);
+  document.documentElement.style.setProperty('--lilac',     p.lilac);
+  document.documentElement.style.setProperty('--mint',      p.mint);
+  document.documentElement.style.setProperty('--pink',      p.pink);
+  document.documentElement.style.setProperty('--text',      p.text      || '#38304a');
+  document.documentElement.style.setProperty('--text2',     p.text2     || '#887ea0');
+  document.documentElement.style.setProperty('--card',      p.card      || 'rgba(255,255,255,.88)');
+  document.documentElement.style.setProperty('--border',    p.border    || '#ccc4d8');
+  // RÔLE : --bubble-bg suit la palette — fond de la bulle de pensée du Gotchi.
+  // POURQUOI : Était #fff hardcodé dans le CSS, la bulle ne suivait pas les palettes.
+  //            Fallback sur #fff si la palette ne définit pas de bubbleBg.
+  document.documentElement.style.setProperty('--bubble-bg', p.bubbleBg  || '#fff');
   window.D.g.uiPalette = id; save(); renderPerso();
   if (!silent) toast(`Palette ${p.label} appliquée ✿`);
 }

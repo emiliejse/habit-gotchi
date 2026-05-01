@@ -126,7 +126,7 @@ Inchangé. Les badges énergie/bonheur sont dessinés dans le canvas p5 (comment
 | `--c-border` | ❌ NON DÉFINIE | ~~`ui-habs.js:139, 145`~~ | ✅ RÉSOLU 2026-05-01 — remplacé par `--border` |
 | `--c-txt2` | ❌ NON DÉFINIE | ~~`ui-habs.js:140, 146`~~ | ✅ RÉSOLU 2026-05-01 — remplacé par `--text2` |
 | `--lilac-rgb` | ✅ `style.css:root` | `ui-agenda.js:197` | ✅ RÉSOLU 2026-05-01 — défini à `176, 144, 208` dans `:root` |
-| `--bubble-bg` | ❌ proposée par audit précédent | `style.css:300, 336` utilisent `#fff` en dur | 🔴 toujours OUVERT |
+| `--bubble-bg` | ✅ `style.css:root` | `.bubble` + `.bubble::before` | ✅ RÉSOLU 2026-05-01 — défini à `#fff` dans `:root`, câblé dans `applyUIPalette()` (`ui-settings.js`), surchargeable via `p.bubbleBg` dans les palettes |
 | `--sab` | ✅ `style.css:40` | utilisée dans `.menu-languette`, `#dynamic-zone`, `#toast` | ✅ RÉSOLU 2026-05-01 — `env(safe-area-inset-bottom, 0px)` |
 | `--sal` / `--sar` | ✅ `style.css:41-42` | `body padding-left/right` `style.css:144-145` | ✅ RÉSOLU 2026-05-01 — `env(safe-area-inset-left/right, 0px)` |
 

@@ -912,10 +912,13 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   const sourceSys = window.USER_CONFIG?.ai?.systemPromptOverride || window.AI_SYSTEM?.soutien || '';
 
   const sysPrompt = sourceSys
-    .replace('{{nameGotchi}}',      D.g.name || P?.nom || 'Gotchi')
-    .replace('{{userName}}', D.g.userName || D.userName || 'toi')
-    .replace('{{style}}',    P?.style || 'Phrases courtes, bienveillant.')
-    .replace('{{traits}}',   P?.traits?.join(', ') || 'doux, curieux')
+    .replace('{{nameGotchi}}',  D.g.name || P?.nom || 'Gotchi')
+    // RÔLE : {{diminutif}} = surnom de l'utilisatrice — cohérent avec les bulles statiques et les autres prompts API
+    // POURQUOI : Migration 2026-05-01 — {{userName}} remplacé par {{diminutif}} dans ai_system.json
+    //            pour unifier la variable de désignation (mimi vs Émilie) sur tous les canaux IA
+    .replace('{{diminutif}}', D.g.userNickname || D.g.userName || D.userName || 'toi')
+    .replace('{{style}}',     P?.style || 'Phrases courtes, bienveillant.')
+    .replace('{{traits}}',    P?.traits?.join(', ') || 'doux, curieux')
     .concat(' ', contexte)
     .trim();
 

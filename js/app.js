@@ -58,7 +58,7 @@ let _poopIntervalId   = null;
 let _bubbleIntervalId = null; // RÔLE : Rotation automatique des bulles passives (updBubbleNow toutes les 45s)
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v5.02'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v5.03'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -294,7 +294,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 12; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 13; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -412,6 +412,14 @@ const MIGRATIONS = [
   //            mais la migration garantit la propreté du schéma.
   function m11(d) {
     d.g.cheekColor = d.g.cheekColor ?? 'rose';
+    return d;
+  },
+  // Migration 11→12 : ajout de D.g.limbColor (couleur des extrémités bras+pieds personnalisable)
+  // RÔLE : Initialise limbColor à 'auto' pour les saves existantes.
+  // POURQUOI : 'auto' = fallback sur C.bodyDk → comportement identique à l'avant-feature,
+  //            aucun changement visuel pour les saves existantes.
+  function m12(d) {
+    d.g.limbColor = d.g.limbColor ?? 'auto';
     return d;
   }
 ];

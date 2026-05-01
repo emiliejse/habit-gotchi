@@ -604,7 +604,13 @@ function getGotchiC() {
   //            sans ça, la couleur de joue reste figée à la valeur initiale (#f0a0b0).
   const cheekId = window.D.g.cheekColor || 'rose';
   const chk = window.HG_CONFIG.CHEEK_COLORS.find(x => x.id === cheekId) || window.HG_CONFIG.CHEEK_COLORS[0];
-  return { body: gc.body, bodyLt: gc.bodyLt, bodyDk: gc.bodyDk, eye: ec.hex, mouth: mc.hex, cheek: chk.hex };
+  // RÔLE : Résoudre aussi la couleur des extrémités (bras + pieds) — personnalisable via D.g.limbColor.
+  // POURQUOI : C.limb est une couleur plate indépendante du corps — si 'auto' ou absent,
+  //            fallback sur C.bodyDk (comportement original). Mis à jour à chaque frame.
+  const limbId = window.D.g.limbColor || 'auto';
+  const limbEntry = window.HG_CONFIG.LIMB_COLORS.find(x => x.id === limbId);
+  const limbHex = (limbEntry && limbEntry.hex) ? limbEntry.hex : gc.bodyDk;
+  return { body: gc.body, bodyLt: gc.bodyLt, bodyDk: gc.bodyDk, eye: ec.hex, mouth: mc.hex, cheek: chk.hex, limb: limbHex };
 }
 
 function getEnvC() {
@@ -1176,7 +1182,7 @@ const p5s = (p) => {
 
     // Initialisation des couleurs
     const gc = getGotchiC();
-    C.body = gc.body; C.bodyLt = gc.bodyLt; C.bodyDk = gc.bodyDk; C.eye = gc.eye; C.mouth = gc.mouth; C.cheek = gc.cheek;
+    C.body = gc.body; C.bodyLt = gc.bodyLt; C.bodyDk = gc.bodyDk; C.eye = gc.eye; C.mouth = gc.mouth; C.cheek = gc.cheek; C.limb = gc.limb;
     const ec = getEnvC();
     C.gnd = ec.gnd; C.gndDk = ec.gndDk; C.skyD1 = ec.sky1; C.skyD2 = ec.sky2;
 

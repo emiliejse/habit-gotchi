@@ -73,6 +73,23 @@ const GOTCHI_COLORS = [
   { id:'jaune',  label:'Jaune',  body:'#e8e0a8', bodyLt:'#f4ecc8', bodyDk:'#c0b878' },
 ];
 
+/* ─── SYSTÈME 5 : PERSONNALISATION (Couleur des extrémités) ─────── */
+
+// RÔLE : Couleurs disponibles pour les bras et pieds du Gotchi (C.limb dans le DSL sprites).
+// POURQUOI : Couleur plate indépendante du corps — 8 teintes douces couvrant chaud/froid/neutre.
+//            Par défaut 'auto' = fallback sur C.bodyDk (comportement original pré-feature).
+const LIMB_COLORS = [
+  { id:'auto',   label:'Auto',   hex:null       },  // défaut — suit la couleur du corps (bodyDk)
+  { id:'brun',   label:'Brun',   hex:'#b89070' },
+  { id:'beige',  label:'Beige',  hex:'#d4b898' },
+  { id:'gris',   label:'Gris',   hex:'#a8a0b0' },
+  { id:'ardoise',label:'Ardoise',hex:'#8090a8' },
+  { id:'marine', label:'Marine', hex:'#607898' },
+  { id:'sauge',  label:'Sauge',  hex:'#8aab88' },
+  { id:'terracotta',label:'Terra',hex:'#c07858'},
+  { id:'prune',  label:'Prune',  hex:'#9878a8' },
+];
+
 /* ─── SYSTÈME 5 : PERSONNALISATION (Reflets des yeux) ────────────── */
 
 // RÔLE : Couleurs disponibles pour les reflets/pupilles du Gotchi (petits points lumineux dans les yeux).
@@ -337,6 +354,7 @@ window.HG_CONFIG = {
   GOTCHI_COLORS,
   PUPIL_COLORS,
   EYE_COLORS,
+  LIMB_COLORS,
   CHEEK_COLORS,
   MOUTH_COLORS,
   ENV_THEMES,

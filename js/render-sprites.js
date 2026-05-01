@@ -744,7 +744,7 @@ const LAYERS_BABY = [
   // ── Pieds / membres inférieurs (toujours visibles) ─────────────
   {
     id: 'pieds',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',   // couleur extrémités personnalisable (fallback bodyDk si 'auto')
     rects: [
       { x: -2, y: 5, w: 1, h: 1 },   // pied gauche
       { x:  1, y: 5, w: 1, h: 1 },   // pied droit
@@ -753,10 +753,10 @@ const LAYERS_BABY = [
 
   // ── Bras tombés (énergie faible, éveillé) ──────────────────────
   // POURQUOI : Quand en < EN_WARN, les bras s'élargissent vers le bas plutôt que
-  //            les côtés — même couleur que les pieds (bodyDk), calque séparé.
+  //            les côtés — même couleur que les pieds (limb), calque séparé.
   {
     id: 'bras-tombes',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',   // couleur extrémités personnalisable
     when: (pm) => pm.en < EN_WARN && !pm.sl,
     rects: [{ x: -1, y: 5, w: 2, h: 1 }]
   },
@@ -801,7 +801,7 @@ function drawBaby(p, cx, cy, sl, en, ha) {
   // Épuisement (dither) — géré en dehors du DSL car drawDither() a sa propre logique
   // de damier qui ne passe pas par px() standard.
   if (en < EN_CRIT && !sl) {
-    drawDither(p, cx - PX * 2, cy + PX * 3, PX * 4, PX * 3, C.bodyDk);
+    drawDither(p, cx - PX * 2, cy + PX * 3, PX * 4, PX * 3, C.limb);  // dither suit la couleur des extrémités
   }
 
   // Accessoires pixel-perfect — interface inchangée
@@ -1090,7 +1090,7 @@ const LAYERS_TEEN = [
   // ── Bras normaux (énergie correcte) ────────────────────────────
   {
     id: 'bras-normaux',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',   // couleur extrémités personnalisable
     when: (pm) => !pm.sl && pm.en >= EN_WARN,
     rects: [
       { x: -5, y: 4, w: 1, h: 2 },   // bras gauche
@@ -1103,7 +1103,7 @@ const LAYERS_TEEN = [
   //            Pixel coude x:-5,y:1 assure la liaison bras (y:2)→main (x:-6,y:1).
   {
     id: 'teen-bras-g-leve',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: () => false,
     rects: [
       { x: -5, y: 2, w: 1, h: 2 },   // bras gauche levé (y:2→3)
@@ -1117,7 +1117,7 @@ const LAYERS_TEEN = [
   // POURQUOI : Pixel coude x:4,y:1 assure la liaison bras (y:2)→main (x:5,y:1).
   {
     id: 'teen-bras-d-leve',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: () => false,
     rects: [
       { x: -5, y: 4, w: 1, h: 2 },   // bras gauche normal
@@ -1130,7 +1130,7 @@ const LAYERS_TEEN = [
   // ── Célébration : les deux bras levés teen (ha=5, pose temporaire via animator) ──
   {
     id: 'teen-bras-2-leves',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: () => false,
     rects: [
       { x: -5, y: 2, w: 1, h: 2 },   // bras gauche levé
@@ -1145,7 +1145,7 @@ const LAYERS_TEEN = [
   // ── Bras tombés (énergie faible) ────────────────────────────────
   {
     id: 'bras-tombes',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: (pm) => !pm.sl && pm.en < EN_WARN,
     rects: [
       { x: -5, y: 5, w: 1, h: 1 },   // bras gauche tombé
@@ -1156,7 +1156,7 @@ const LAYERS_TEEN = [
   // ── Pieds ────────────────────────────────────────────────────────
   {
     id: 'pieds',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',   // couleur extrémités personnalisable
     rects: [
       { x: -2, y: 8, w: 1, h: 1 },   // pied gauche
       { x:  1, y: 8, w: 1, h: 1 },   // pied droit
@@ -1261,7 +1261,7 @@ function drawTeen(p, cx, cy, sl, en, ha) {
   // Épuisement dither — hors DSL (drawDither a sa propre logique de damier).
   // POURQUOI : x original = cxB (déjà décalé), y = cy + PX*4, w = 8*PX, h = 5*PX.
   if (en < EN_CRIT && !sl) {
-    drawDither(p, cxB, cy + PX * 4, PX * 8, PX * 5, C.bodyDk);
+    drawDither(p, cxB, cy + PX * 4, PX * 8, PX * 5, C.limb);  // dither suit la couleur des extrémités
   }
 
   // RÔLE : Passer cx (centre de marche = walkX) à drawAccessoires.
@@ -1518,7 +1518,7 @@ const LAYERS_ADULT = [
   // ── Bras tombés (énergie faible) ────────────────────────────────
   {
     id: 'bras-tombes',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',   // couleur extrémités personnalisable
     when: (pm) => !pm.sl && pm.en < EN_WARN,
     rects: [
       { x: -6, y: 6, w: 1, h: 2 },
@@ -1532,7 +1532,7 @@ const LAYERS_ADULT = [
   //            Pixel coude x:-6,y:2 assure la liaison entre le bras (y:3) et la main (x:-7,y:2).
   {
     id: 'bras-g-leve',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: () => false,
     rects: [
       { x: -6, y: 3, w: 1, h: 2 },   // bras gauche levé (y:3→4)
@@ -1546,7 +1546,7 @@ const LAYERS_ADULT = [
   // POURQUOI : Pixel coude x:5,y:2 assure la liaison entre le bras (y:3) et la main (x:6,y:2).
   {
     id: 'bras-d-leve',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: () => false,
     rects: [
       { x: -6, y: 5, w: 1, h: 2 },   // bras gauche normal
@@ -1559,7 +1559,7 @@ const LAYERS_ADULT = [
   // ── Célébration : les deux bras levés (ha=5, pose temporaire via animator) ──
   {
     id: 'bras-2-leves',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: () => false,
     rects: [
       { x: -6, y: 3, w: 1, h: 2 },   // bras gauche levé
@@ -1576,7 +1576,7 @@ const LAYERS_ADULT = [
   //            (déclenché par animator 'pose_hanche_g'). Sans aov.visible, il reste caché.
   {
     id: 'bras-hanche-g',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: () => false, // caché par défaut — rendu uniquement via aov.visible
     rects: [
       { x: -4, y: 5, w: 2, h: 1 },   // avant-bras horizontal gauche
@@ -1588,7 +1588,7 @@ const LAYERS_ADULT = [
   // ── Pose hanche droite ───────────────────────────────────────────
   {
     id: 'bras-hanche-d',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: () => false, // caché par défaut — rendu uniquement via aov.visible
     rects: [
       { x: -6, y: 5, w: 1, h: 2 },   // bras gauche normal
@@ -1600,7 +1600,7 @@ const LAYERS_ADULT = [
   // ── Pose bras croisés ────────────────────────────────────────────
   {
     id: 'bras-croises',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: () => false, // caché par défaut — rendu uniquement via aov.visible
     rects: [
       { x: -6, y: 4, w: 1, h: 1 },   // coude gauche
@@ -1613,7 +1613,7 @@ const LAYERS_ADULT = [
   // ── Pose salut ───────────────────────────────────────────────────
   {
     id: 'bras-salut',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: () => false, // caché par défaut — rendu uniquement via aov.visible
     rects: [
       { x: -6, y: 2, w: 1, h: 3 },   // bras gauche levé vertical
@@ -1629,7 +1629,7 @@ const LAYERS_ADULT = [
   //            Masqué via aov.hidden quand une pose variante (idle ou célébration) est active.
   {
     id: 'bras-normal',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: (pm) => !pm.sl && pm.en >= EN_WARN,  // plus de condition ha — actif à tous niveaux
     rects: [
       { x: -6, y: 5, w: 1, h: 2 },
@@ -1640,7 +1640,7 @@ const LAYERS_ADULT = [
   // ── Pieds — immobiles (les deux au sol) ──────────────────────────
   {
     id: 'pieds-immobiles',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',   // couleur extrémités personnalisable
     when: (pm) => pm.stepPhase === -1,
     rects: [
       { x: -2, y: 10, w: 2, h: 1 },
@@ -1652,7 +1652,7 @@ const LAYERS_ADULT = [
   // POURQUOI : rawDy:-1 sur le pied levé reproduit le décalage "y+PX*10 - 1" de l'original.
   {
     id: 'pieds-phase0',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: (pm) => pm.stepPhase === 0,
     rects: [
       { x: -2, y: 10, w: 2, h: 1           },   // gauche au sol
@@ -1663,7 +1663,7 @@ const LAYERS_ADULT = [
   // ── Pieds — phase 1 (gauche levé, droit au sol) ─────────────────
   {
     id: 'pieds-phase1',
-    fill: 'C.bodyDk',
+    fill: 'C.limb',
     when: (pm) => pm.stepPhase === 1,
     rects: [
       { x: -2, y: 10, w: 2, h: 1, rawDy: -1},   // gauche levé
@@ -1799,7 +1799,7 @@ function drawAdult(p, cx, cy, sl, en, ha) {
   // Épuisement dither — hors DSL.
   // POURQUOI : x = cxB + PX (soit offset +1 depuis le bord gauche du sprite).
   if (en < EN_CRIT && !sl) {
-    drawDither(p, cxB + PX, cy + PX * 5, PX * 8, PX * 5, C.bodyDk);
+    drawDither(p, cxB + PX, cy + PX * 5, PX * 8, PX * 5, C.limb);  // dither suit la couleur des extrémités
   }
 
   // RÔLE : Passer cx (centre de marche = walkX) à drawAccessoires.

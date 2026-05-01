@@ -437,6 +437,33 @@ function renderPerso() {
     <div style="font-size:var(--fs-xs);font-weight:bold;color:${c.bodyDk};text-align:center">${c.label}</div>
   </div>`).join('');
   }
+  // ── Couleur des extrémités (bras + pieds) ───────────────────────
+  // RÔLE : Afficher le sélecteur de couleur des bras et pieds du Gotchi.
+  // POURQUOI : C.limb est mis à jour à chaque frame dans render.js via D.g.limbColor —
+  //            'auto' = fallback bodyDk (comportement original). Même pattern que les autres.
+  const limbGrid = document.getElementById('limb-colors');
+  if (limbGrid) {
+    const currentLimb = D.g.limbColor || 'auto';
+    // POURQUOI : 'auto' affiche un swatch bicolore (body + bodyDk) pour signaler que la couleur
+    //            suit automatiquement celle du corps.
+    const currentBodyDk = (window.HG_CONFIG.GOTCHI_COLORS.find(x => x.id === (D.g.gotchiColor || 'vert')) || window.HG_CONFIG.GOTCHI_COLORS[0]).bodyDk;
+    limbGrid.innerHTML = window.HG_CONFIG.LIMB_COLORS.map(c => {
+      const swatchBg = c.hex ? c.hex : `linear-gradient(135deg, ${currentBodyDk} 50%, ${currentBodyDk}88 50%)`;
+      const swatchBorder = c.hex ? 'rgba(0,0,0,.12)' : 'rgba(0,0,0,.2)';
+      return `
+      <div onclick="applyLimbColor('${c.id}')" style="
+        border-radius:var(--r-md);cursor:pointer;
+        background:var(--card);
+        border:3px solid ${currentLimb === c.id ? 'var(--lilac)' : 'transparent'};
+        padding:6px 4px;
+        display:flex;flex-direction:column;align-items:center;gap:3px;
+        transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1);">
+        <div style="width:20px;height:20px;border-radius:50%;background:${swatchBg};border:1.5px solid ${swatchBorder}"></div>
+        <div style="font-size:var(--fs-xs);font-weight:bold;color:var(--text);text-align:center">${c.label}</div>
+      </div>`;
+    }).join('');
+  }
+
   // ── Couleur des yeux (iris) ──────────────────────────────────────
   // RÔLE : Afficher le sélecteur de couleur de l'iris du Gotchi.
   // POURQUOI : C.eye est mis à jour à chaque frame dans render.js via D.g.eyeColor —
@@ -579,6 +606,15 @@ function applyMouthColor(id, silent = false) {
   const c = window.HG_CONFIG.MOUTH_COLORS.find(x => x.id === id); if (!c) return;
   window.D.g.mouthColor = id; save(); renderPerso();
   if (!silent) toast(`Bouche ${c.label} appliquée ✿`);
+}
+
+// RÔLE : Sauvegarder la couleur des extrémités choisie et rafraîchir l'UI.
+// POURQUOI : C.limb est mis à jour à chaque frame via getGotchiC() — même pattern que les autres.
+//            'auto' remet le fallback sur C.bodyDk (comportement original).
+function applyLimbColor(id, silent = false) {
+  const c = window.HG_CONFIG.LIMB_COLORS.find(x => x.id === id); if (!c) return;
+  window.D.g.limbColor = id; save(); renderPerso();
+  if (!silent) toast(id === 'auto' ? `Extrémités : couleur automatique ✿` : `Extrémités ${c.label} appliquées ✿`);
 }
 
 // RÔLE : Sauvegarder la couleur de joues choisie et rafraîchir l'UI.

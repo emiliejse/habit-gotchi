@@ -57,7 +57,7 @@ let _meteoIntervalId = null;
 let _poopIntervalId  = null;
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v4.81'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v4.82'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -219,6 +219,7 @@ function defs() {
     cycle:            [],     // { date: "2025-04-10", type: "regles" }
     rdv:              [],     // { id, date, label, heure? }
     streaks:          {},     // { catId: nombreDeJoursConsécutifs } — recalculé à chaque ouverture
+    lastMissedPenalty: null, // date AAAA-MM-JJ de la dernière pénalité XP pour habitudes manquées
   };
 }
 
@@ -260,7 +261,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 6; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 7; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -330,6 +331,13 @@ const MIGRATIONS = [
   //            Les utilisatrices existantes démarrent propres (salete = 0).
   function m6(d) {
     d.g.salete = d.g.salete ?? 0;
+    return d;
+  },
+  // Migration 6→7 : ajout lastMissedPenalty à la racine de D
+  // RÔLE : Mémorise la date de la dernière pénalité XP pour habitudes non cochées.
+  // POURQUOI : Sans ce flag, la pénalité se redéclencherait à chaque ouverture de l'app.
+  function m7(d) {
+    d.lastMissedPenalty = d.lastMissedPenalty ?? null;
     return d;
   }
 ];
@@ -1407,6 +1415,66 @@ async function bootstrap() {
     // POURQUOI : La saleté augmente passivement (+1 par 6h d'absence) — on calcule le rattrapage ici.
     if (typeof window.checkSalete === 'function') window.checkSalete();
     catchUpPoops();
+
+    // ── Pénalité habitudes manquées ──────────────────────────────────────────
+    // RÔLE : Au chargement, vérifie si des habitudes n'ont pas été cochées hier.
+    //        Si oui, applique une pénalité XP légère et affiche une bulle douce.
+    // POURQUOI : Donne une rétro-action visible sans toucher happiness ni energy
+    //            (ces deux variables sont auto-reportées par l'utilisatrice uniquement).
+    // QUAND : Une seule fois par jour (lastMissedPenalty = date d'hier en AAAA-MM-JJ).
+    (function checkMissedHabits() {
+      if (!window.D || !window.D.habits || !window.D.habits.length) return;
+
+      // Calcule la date d'hier en AAAA-MM-JJ (même format que today())
+      const hier = new Date();
+      hier.setDate(hier.getDate() - 1);
+      const hierStr = hier.toISOString().slice(0, 10);
+
+      // Guard : ne déclenche qu'une seule fois par jour manqué
+      if (window.D.lastMissedPenalty === hierStr) return;
+
+      // Habitudes cochées hier (peut être vide ou absent)
+      const loggees = window.D.log[hierStr] || [];
+      const toutes  = window.D.habits.map(h => h.catId);
+      const manquees = toutes.filter(id => !loggees.includes(id));
+
+      // Aucune habitude manquée → rien à faire
+      if (manquees.length === 0) return;
+
+      // Calcul de la pénalité : −5 XP par habitude manquée, plafonnée à −20
+      const penalite = Math.min(manquees.length * 5, 20);
+
+      // Application de la pénalité XP (peut rendre totalXp négatif → addXp le gère)
+      addXp(-penalite);
+
+      // Mémorise la date pour ne plus déclencher aujourd'hui
+      window.D.lastMissedPenalty = hierStr;
+      save();
+
+      // Bulle gotchi — message doux, non-culpabilisant, pool aléatoire
+      const msgs = [
+        `Tu n'as pas coché tes habitudes hier… C'est ok, aujourd'hui c'est une nouvelle page 💜 −${penalite} XP`,
+        "Hier était une journée sans habitudes. Je suis là, on reprend aujourd'hui 🌸",
+        "Hier c'était difficile ? Pas de jugement. Aujourd'hui tu es là, c'est ce qui compte 💜",
+      ];
+      const msg = msgs[Math.floor(Math.random() * msgs.length)];
+
+      // Légère temporisation pour laisser l'UI se monter avant d'afficher la bulle
+      setTimeout(() => {
+        flashBubble(msg, 4000);
+        // Expression douce (pas de joie — état neutre/pensif)
+        window.triggerExpr?.('neutre', 80);
+      }, 1500);
+
+      // Log dans l'historique des événements
+      addEvent({
+        type: 'habitude',
+        subtype: 'manquee',
+        valeur: -penalite,
+        label: `${manquees.length} habitude${manquees.length > 1 ? 's' : ''} manquée${manquees.length > 1 ? 's' : ''} hier — −${penalite} XP`
+      });
+    })();
+    // ── Fin pénalité habitudes manquées ─────────────────────────────────────
 
     // RÔLE : Guard de dernier recours — remet modalLocked à false au démarrage.
     // POURQUOI : Si une session soutien crashe avant que l'utilisatrice clique ✕,

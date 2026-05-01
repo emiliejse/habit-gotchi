@@ -172,6 +172,10 @@
 - Lignes : [L6-L24]
 - Description : Toutes les ancres `§1`–`§17` recalculées sur les vraies lignes actuelles du fichier. Correction notable : `§16 INIT QUOTIDIENNE` était annoncé `~973` — réel : `~1134`. `§17 CONFIG UTILISATEUR` était `~1045` — réel : `~1204`. `haptic()` retiré du §1 (fonction inexistante dans ce fichier), remplacé par `clamp()`.
 
+#### ✅ RÉSOLU — Aucune rétro-action si habitude manquée (2026-05-01)
+- Lignes : `app.js` — `bootstrap()` + `defs()` + `MIGRATIONS`
+- Description : Ajout d'un check `checkMissedHabits()` dans `bootstrap()`, déclenché au chargement. Si des habitudes n'ont pas été cochées la veille, une pénalité XP est appliquée (−5 par habitude manquée, plafonnée à −20) et une bulle douce du gotchi s'affiche après 1500ms. Le déclencheur est gardé par `D.lastMissedPenalty` (nouvelle clé racine, migration m7) pour ne s'exécuter qu'une seule fois par jour manqué. `happiness` et `energy` ne sont pas touchées — ces variables restent auto-reportées uniquement par l'utilisatrice.
+
 ### 2.4 Code mort / redondances
 - ✅ `MSG` ([L160-L167]) : documenté comme fallback défensif intentionnel (session 2026-04-30) — conservé.
 - `forceUpdate()` `toast()` sans guard `typeof` ([L402]) : `toast()` est défini dans `ui-core.js`, chargé après `app.js` — pas de risque en prod. En dev isolé (app.js seul), `toast` serait undefined. Risque négligeable, guard non ajouté pour ne pas surcharger une fonction déjà courte.
@@ -1008,4 +1012,31 @@ Cohérence garantie : `drawSaleteDither` utilise désormais exactement la même 
 
 ---
 
-*Fin de l'audit v4.5 — 2026-04-30*
+### Session — 2026-05-01 : Fix pénalité habitudes manquées (S2 / S4)
+
+**Objectif** : Ajouter une rétro-action visible quand des habitudes n'ont pas été cochées la veille — sans toucher `happiness` ni `energy` (auto-reportés par l'utilisatrice uniquement).
+
+**Fichiers modifiés** : `js/app.js`, `AUDIT.md`
+
+**Corrections appliquées** :
+
+**1. `defs()` — nouveau champ `lastMissedPenalty`**
+- Champ `lastMissedPenalty: null` ajouté à la racine de `D`.
+- Stocke la date AAAA-MM-JJ de la dernière pénalité XP appliquée — guard anti-doublon.
+
+**2. `MIGRATIONS` — m7 ajoutée**
+- `d.lastMissedPenalty = d.lastMissedPenalty ?? null` — les sauvegardes existantes reçoivent `null` à la mise à jour.
+- ⚠️ `SCHEMA_VERSION` à incrémenter manuellement (6 → 7) dans `app.js` et `sw.js`.
+
+**3. `bootstrap()` — `checkMissedHabits()` IIFE**
+- Déclenché après `catchUpPoops()`, avant `initApp()`.
+- Calcule les habitudes non cochées la veille (`D.log[hierStr]` vs `D.habits`).
+- Pénalité : −5 XP par habitude manquée, plafonnée à −20. Appliquée via `addXp()`.
+- Bulle gotchi après 1500ms (pool de 3 messages doux, non-culpabilisants, pool aléatoire).
+- Expression `triggerExpr('neutre', 80)` — pas de joie, ton posé.
+- Log dans `eventLog` : `{ type: 'habitude', subtype: 'manquee', valeur: -N, label: '...' }`.
+- `happiness` et `energy` non modifiées — contrainte respectée.
+
+---
+
+*Fin de l'audit v4.5 — 2026-04-30 / dernière session 2026-05-01*

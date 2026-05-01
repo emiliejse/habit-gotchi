@@ -68,7 +68,7 @@ function ouvrirSnack() {
         <p style="font-size:var(--fs-sm);margin-bottom:var(--sp-md)">
           Ce n'est pas encore l'heure du repas...<br>
           <span style="color:var(--text2);font-size:var(--fs-xs)">
-            Matin 7h-11h • Midi 11h-15h • Goûter 15h-17h 🍪 • Soir 18h-22h
+            Matin 7h-11h • Midi 11h-15h<br>Goûter 15h-17h 🍪 • Soir 18h-22h
           </span>
         </p>
         <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
@@ -1393,9 +1393,9 @@ function ouvrirModalEtats() {
       <div style="width:36px;height:4px;background:var(--border);
         border-radius:2px;margin:0 auto 18px;opacity:.5"></div>
 
-      <!-- Titre principal — plus grand que les labels énergie/bonheur -->
-      <h3 style="font-size:16px;color:var(--lilac);margin-bottom:24px;
-        font-family:var(--font-body);text-align:center;letter-spacing:1px">
+      <!-- Titre principal — Caveat, plus grand que les labels énergie/bonheur -->
+      <h3 style="font-size:26px;color:var(--lilac);margin-bottom:24px;
+        font-family:var(--font-title);font-weight:700;text-align:center;letter-spacing:0.3px">
         Comment tu te sens là ?
       </h3>
 

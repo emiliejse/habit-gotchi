@@ -571,7 +571,7 @@ function confirmerSuppressionCycle(ds, btn) {
   target.insertAdjacentHTML(method, `
     <div id="confirm-inline" style="background:#fff8f8;border:2px solid var(--coral);
       border-radius:var(--r-md);padding:10px;margin-bottom:6px;text-align:center">
-      <div style="font-size:var(--fs-sm);margin-bottom:var(--sp-sm)">
+      <div style="font-size:var(--fs-sm);margin-bottom:var(--sp-sm);margin-top:var(--sp-sm)">
         Supprimer le cycle du <b>${fmt}</b> ?
       </div>
       <div style="display:flex;gap:6px">
@@ -1020,11 +1020,11 @@ const descriptions = {
       </button>
       <div id="acc-saisie" style="max-height:0;overflow:hidden;transition:max-height .3s ease">
         <div style="padding:var(--sp-md) 14px;border-top:1px solid var(--border)">
-          <div style="display:flex;gap:6px;align-items:center">
+          <div style="display:flex;gap:6px;align-items:stretch">
             <input type="date" id="cycle-date-input" class="inp"
               value="${today()}" style="flex:1">
             <button class="btn btn-p" onclick="declarerReglesCycle()"
-              style="white-space:nowrap;font-size:var(--fs-sm)">
+              style="white-space:nowrap;font-size:var(--fs-sm);align-self:stretch;height:auto">
               Enregistrer
             </button>
           </div>

@@ -401,11 +401,10 @@ Ton bilan de la semaine apparaîtra ici...
         </div>
 
         <div style="padding-top:8px;border-top:1px solid var(--border)">
-          <label style="font-size:var(--fs-xs);color:var(--text2)">🔮 Code spécial</label>
+          <label class="slbl">🔮 Code spécial</label>
           <div style="display:flex;gap:6px;margin-top:4px">
-            <input id="cheat-input" type="text" placeholder="Entrer un code..."
-              style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:var(--fs-sm);font-family:var(--font-body)">
-            <button class="btn btn-s" onclick="applyCheatCode()" style="font-size:var(--fs-sm);white-space:nowrap">Activer</button>
+            <input id="cheat-input" type="text" placeholder="Entrer un code..." class="inp">
+            <button class="btn btn-p" onclick="applyCheatCode()">OK</button>
           </div>
         </div>
 
@@ -528,7 +527,7 @@ Ton bilan de la semaine apparaîtra ici...
     <button class="menu-postit menu-postit--lilac"
       onclick="genSoutien();toggleMenu()"
       style="display:flex;flex-direction:column;align-items:center;gap:4px">
-      <span>💜 Besoin de soutien</span>
+      <span style="font-family:var(--font-title);font-size:22px;font-weight:700">💜 Besoin de soutien</span>
       <span id="soutien-flowers" class="thought-flowers"></span>
     </button>
   </div>

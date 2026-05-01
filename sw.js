@@ -34,7 +34,9 @@ const ASSETS = [
   './js/ui-nav.js',
 
   // Data (JSON — les plus importants à versionner)
-  './data/props.json',
+  './data/props_base.json',
+  './data/props_shop.json',
+  './data/props_packs.json',
   './prompts/ai_contexts.json',
   './prompts/ai_system.json',
 ];

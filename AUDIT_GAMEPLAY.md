@@ -36,7 +36,7 @@ Trois priorités d'action :
 | ✅ FIXÉ | S5 Crottes | Probabilité de spawn modulée par état du Gotchi : 25% si faim≥2 / 35% si énergie≤3 / 80% si bien nourri / 60% normal — remplace le 65% fixe (2026-05-01) | `js/app.js:maybeSpawnPoop` |
 | ✅ FIXÉ | S3 États | Bulle dédiée `salete >= 7` sans crottes visibles — Priorité 1b dans `updBubbleNow()`, 5 variantes diurnes ("ça commence à sentir le renard", "*se renifle*", etc.) (2026-05-01) | `js/app.js` (dans `updBubbleNow()`) |
 | 🟢 BAS | S8 Notifications | Aucune notification native (Notification API jamais appelée) — **session dédiée à planifier** | — |
-| 🚫 SKIP | S7 Inventaire | Seuls 2 paliers de prix (0 ou 6) → pas de hiérarchie d'objets désirables — **prix du catalogue non modifiés (décision 2026-05-01)** | `data/props.json` |
+| 🚫 SKIP | S7 Inventaire | Seuls 2 paliers de prix (0 ou 6) → pas de hiérarchie d'objets désirables — **prix du catalogue non modifiés (décision 2026-05-01)** | `data/props_shop.json` |
 
 ---
 
@@ -70,7 +70,7 @@ La fonction `addXp(n)` (`js/app.js:437-456`) gère la transition de stade ; `get
 **Dépenses de pétales**
 | Sortie | Coût | Référence |
 |---|---|---|
-| Objet boutique | 0 ou 6 | `data/props.json` |
+| Objet boutique | 0 ou 6 | `data/props_shop.json` |
 | Génération d'objet IA | 10 | `js/ui-ai.js:301-304` |
 
 **XP** : +15 par habitude validée, +15 par note de journal. Cap à 1200 — **incohérent avec les seuils adulte qui montent à 4000** (`js/app.js:142-151`). Le cap empêche la transition naturelle vers les stades adultes supérieurs si appliqué strictement.
@@ -282,9 +282,13 @@ Matin : 7-11    Midi : 11-15    Soir : 18-22
 
 ### 7a. Diagnostic
 
-**Structure objet** (`data/props.json:4-25, 104-118, 348-360`)
+**Structure objet** — 3 fichiers depuis 2026-05-01 (refactoring props.json)
+- `data/props_base.json` : objets gratuits offerts automatiquement au premier lancement (7 objets)
+- `data/props_shop.json` : objets payants (cout:6) achetables en boutique (16 objets)
+- `data/props_packs.json` : objets exclusifs achetables uniquement via `acheterPack()` (5 objets)
 Champs : `id, nom, type, emoji, categorie, cout, slot, pxSize, palette, pixels[2D]`.
 Optionnels : `ancrage` (accessoires : "tete"), `motion` (ambiance : "fall").
+`window.PROPS_LIB` = concaténation des 3 catalogues (source unique pour tout le code).
 
 **Slots décor** (`js/ui-shop.js:703-710`) : 5 zones — `A` (↖), `B` (↗), `C` (↙), `SOL` (centre bas), `D` (autre). Pas de conflit géré explicitement entre objets dans le même slot — le dernier posé écrase ?
 
@@ -366,7 +370,7 @@ Optionnels : `ancrage` (accessoires : "tete"), `motion` (ambiance : "fall").
 | ~~Objet milestone offert~~ | S7 | ✅ FAIT 2026-05-01 — `offrirPropMilestone()` dans `addXp()`, pools par stade (baby/teen/adult), guard `D.milestoneProps` | — | 🔥🔥 |
 | ~~Goûter 15-17h~~ | S4 | ✅ FAIT 2026-05-01 — fenêtre `gouter` dans `MEAL_WINDOWS` (`bonus:true`), +1 pétale, branche dédiée dans `giveSnack()` | — | 🔥 |
 | ~~Habitude vedette du jour~~ | S2 | ✅ FAIT 2026-05-01 — `refreshCatVedette()` tirage déterministe par date, +2 bonus pétales, badge ⭐ dans `renderHabs()`, classe `.hab--vedette` | — | 🔥🔥 |
-| ~~Pack thématique boutique~~ | S7 | ✅ FAIT 2026-05-01 (v2) — Pack Printemps 🌸 exclusif (5 objets pixel art dédiés `categorie:"pack"`, 20🌸), filtrés hors catalogue normal. `acheterPack()`, `SHOP_PACKS` dans `config.js`. | — | 🔥 |
+| ~~Pack thématique boutique~~ | S7 | ✅ FAIT 2026-05-01 (v2) — Pack Printemps 🌸 exclusif (5 objets pixel art, 20🌸). `acheterPack()`, `SHOP_PACKS` dans `config.js`. Refactorisé 2026-05-01 : objets pack déplacés dans `data/props_packs.json`, chaque objet retrouve son vrai `type`/`categorie` métier (fin du hack `categorie:"pack"`). | — | 🔥 |
 | ~~Bulle "j'ai faim" anticipée~~ | S4 | ✅ FAIT 2026-05-01 — Priorité 2b dans `updBubbleNow()` : 30 min avant prochaine fenêtre non encore prise | — | 🔥🔥 |
 | ~~Easing transitions états~~ | S3 | ✅ FAIT 2026-05-01 — `_dispEnergy`/`_dispHappy` lerp 0.12/frame dans `p.draw()` (`render.js`) | — | 🔥 |
 

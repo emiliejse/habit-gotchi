@@ -245,10 +245,11 @@ const CYCLE_DEFAULT_DURATION = 28;
 //            des constantes visuelles/UI sans créer un second namespace.
 /* ─── PACKS THÉMATIQUES BOUTIQUE (S7) ───────────────────────────── */
 // RÔLE : Packs d'objets EXCLUSIFS vendus uniquement en pack — absents du catalogue normal.
-// POURQUOI : Les objets avec `categorie: "pack"` dans props.json sont filtrés hors du catalogue
-//            standard (renderBoutiqueOnglet l'exclut). Ils ne peuvent être obtenus qu'ici.
+// POURQUOI : Les objets de pack vivent dans data/props_packs.json (cout:0, champ pack:"id_pack").
+//            Le catalogue boutique filtre sur cout>0, ce qui les exclut naturellement.
+//            Ils ne peuvent être obtenus qu'ici via acheterPack().
 //            Chaque pack = 5 objets pixel art dédiés au thème, prix unique 20 🌸.
-// RÈGLE : propIds doivent tous avoir categorie:"pack" dans props.json pour rester exclusifs.
+// RÈGLE : propIds doivent tous exister dans data/props_packs.json pour rester exclusifs.
 const SHOP_PACKS = [
   {
     id: 'pack_printemps',

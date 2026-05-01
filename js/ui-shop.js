@@ -350,12 +350,14 @@ function renderBoutiqueOnglet(onglet) {
   if (!el) return;
 
   if (onglet === 'catalogue') {
+    // RÔLE : Afficher uniquement les objets achetables en boutique (cout > 0, pas encore acquis).
+    // POURQUOI : Avant, il fallait filtrer categorie:"pack" car les packs vivaient dans props.json.
+    //            Maintenant les objets de pack sont dans props_packs.json — ils ont cout:0 et
+    //            ne s'achètent qu'en pack. Filtrer sur cout > 0 suffit pour les exclure du catalogue,
+    //            tout en gardant les objets de base (cout:0) acquis automatiquement hors de la liste.
     const lib = window.PROPS_LIB || [];
-    // RÔLE : Exclure les objets exclusifs de pack (categorie: "pack") du catalogue normal.
-    // POURQUOI : Ces objets ne sont achetables qu'en pack — les voir ici sans pouvoir les acheter
-    //            serait confus. Ils disparaissent du catalogue une fois le pack acheté.
     const libFiltree = lib
-      .filter(prop => prop.categorie !== 'pack')
+      .filter(prop => prop.cout > 0)
       .filter(prop => !(D.g.props || []).find(p => p.id === prop.id))
       .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
 
@@ -1010,7 +1012,7 @@ window._updInvEnvSwitcher = _updInvEnvSwitcher;
 r += `${(D.journal||[]).length} entrées · ${nbBulles} bulles perso\n\n`;
 
   r += `📁 Fichiers data\n`;
-  r += (lib.length > 0 ? '✅' : '❌') + ' props.json\n';
+  r += (lib.length > 0 ? '✅' : '❌') + ' props_base/shop/packs.json (' + lib.length + ' objets)\n';
   r += (window.PERSONALITY ? '✅' : '❌') + ' personality.json\n';
   r += (window.AI_CONTEXTS ? '✅' : '❌') + ' ai_contexts.json\n';
   r += (window.AI_SYSTEM ? '✅' : '❌') + ' ai_system.json\n\n';

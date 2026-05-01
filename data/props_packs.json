@@ -1,0 +1,112 @@
+{
+  "catalogue": [
+    {
+      "id": "pack_printemps_cerisier",
+      "nom": "Branche de Cerisier",
+      "type": "decor",
+      "emoji": "🌸",
+      "categorie": "nature",
+      "cout": 0,
+      "pack": "pack_printemps",
+      "slot": "A",
+      "pxSize": 3,
+      "palette": ["transparent","#5a3a1a","#8b6340","#ffb7c5","#ff85a1","#fff0f5"],
+      "pixels": [
+        [0,0,1,1,0,0,0,0,0,0],
+        [0,1,2,1,1,0,0,0,0,0],
+        [0,1,2,2,1,3,0,0,0,0],
+        [0,0,1,2,1,4,3,0,0,0],
+        [0,0,1,2,2,1,4,3,0,0],
+        [0,0,0,1,2,2,1,3,5,0],
+        [0,0,0,1,1,2,1,3,4,3],
+        [0,0,0,0,1,1,2,1,3,4],
+        [0,0,0,0,0,1,1,1,3,0],
+        [0,0,0,0,0,0,0,0,0,0]
+      ]
+    },
+    {
+      "id": "pack_printemps_coccinelle",
+      "nom": "Petite Coccinelle",
+      "type": "decor",
+      "emoji": "🐞",
+      "categorie": "nature",
+      "cout": 0,
+      "pack": "pack_printemps",
+      "slot": "SOL",
+      "pxSize": 3,
+      "palette": ["transparent","#1a1a1a","#cc2200","#ee4422","#ffffff"],
+      "pixels": [
+        [0,0,1,1,1,1,0,0],
+        [0,1,2,3,3,2,1,0],
+        [1,2,3,1,3,3,2,1],
+        [1,3,3,3,3,3,3,1],
+        [1,3,1,3,1,3,3,1],
+        [0,1,3,3,3,3,1,0],
+        [0,0,1,2,2,1,0,0],
+        [0,0,0,1,1,0,0,0]
+      ]
+    },
+    {
+      "id": "pack_printemps_couronne_fleurs",
+      "nom": "Couronne de Fleurs",
+      "type": "accessoire",
+      "ancrage": "tete",
+      "emoji": "💐",
+      "categorie": "tete",
+      "cout": 0,
+      "pack": "pack_printemps",
+      "pxSize": 3,
+      "palette": ["transparent","#2d5a1b","#55a035","#ff69b4","#ffdd57","#ff9ecd"],
+      "pixels": [
+        [0,3,0,4,0,5,0,3,0,4],
+        [3,2,4,2,3,2,4,2,5,2],
+        [2,2,2,2,2,2,2,2,2,2],
+        [1,2,1,2,2,2,1,2,1,2],
+        [0,1,1,2,2,2,1,1,0,0],
+        [0,0,1,1,1,1,1,0,0,0]
+      ]
+    },
+    {
+      "id": "pack_printemps_pluie_douce",
+      "nom": "Pluie de Printemps",
+      "type": "ambiance",
+      "emoji": "🌦️",
+      "categorie": "ambiance",
+      "cout": 0,
+      "pack": "pack_printemps",
+      "motion": "fall",
+      "pxSize": 2,
+      "palette": ["transparent","#a8d8ea","#7ec8e3","#54b3d6"],
+      "pixels": [
+        [0,1,0,0,1,0,0],
+        [0,2,0,0,2,0,1],
+        [0,0,1,0,0,0,2],
+        [0,0,2,0,1,0,0],
+        [1,0,0,0,2,0,0],
+        [2,0,0,0,0,1,0],
+        [0,0,1,0,0,2,0]
+      ]
+    },
+    {
+      "id": "pack_printemps_nid",
+      "nom": "Petit Nid Douillet",
+      "type": "decor",
+      "emoji": "🪺",
+      "categorie": "nature",
+      "cout": 0,
+      "pack": "pack_printemps",
+      "slot": "SOL",
+      "pxSize": 3,
+      "palette": ["transparent","#8b6340","#a07850","#c8a870","#d4b896","#7ab648"],
+      "pixels": [
+        [0,0,0,1,1,1,0,0,0],
+        [0,0,1,2,2,2,1,0,0],
+        [0,1,2,3,4,3,2,1,0],
+        [1,2,3,4,4,4,3,2,1],
+        [1,2,3,3,3,3,3,2,1],
+        [0,1,2,5,3,5,2,1,0],
+        [0,0,1,1,2,1,1,0,0]
+      ]
+    }
+  ]
+}

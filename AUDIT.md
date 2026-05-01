@@ -178,6 +178,12 @@
 - Lignes : [L6-L24]
 - Description : Toutes les ancres `§1`–`§17` recalculées sur les vraies lignes actuelles du fichier. Correction notable : `§16 INIT QUOTIDIENNE` était annoncé `~973` — réel : `~1134`. `§17 CONFIG UTILISATEUR` était `~1045` — réel : `~1204`. `haptic()` retiré du §1 (fonction inexistante dans ce fichier), remplacé par `clamp()`.
 
+#### ✅ RÉSOLU — S1 Économie : aucune source régulière > 4 pétales/event (2026-05-01)
+- Fichier : `js/app.js` — bloc "Confettis" dans `toggleHab()` (~L1046)
+- Description : Le catalogue boutique était binaire `cout:0` (gratuit) / `cout:6` (premium), sans source de pétales couvrant l'écart. Une journée standard (3 habitudes sans streak + 1 snack + 1 bain) donnait ~10 pétales, rendant les objets premium accessibles mais serrés.
+- Fix : Bonus "journée complète" +2 pétales quand **toutes** les habitudes du jour sont cochées. Guard `'__journee_complete__'` dans `petalesEarned[td]` — 1 seul gain par jour même si l'utilisatrice décoche et recoche. La bulle change selon si le bonus est déjà acquis ou non. Aucune migration nécessaire (utilise `petalesEarned` existant). Maintient les multiples de 2 de l'économie.
+- Résultat : journée complète = +2 pétales supplémentaires → économie ~12 pétales/jour au lieu de 10 pour une journée parfaite.
+
 #### ✅ RÉSOLU — Aucune rétro-action si habitude manquée (2026-05-01)
 - Lignes : `app.js` — `bootstrap()` + `defs()` + `MIGRATIONS`
 - Description : Ajout d'un check `checkMissedHabits()` dans `bootstrap()`, déclenché au chargement. Si des habitudes n'ont pas été cochées la veille, une pénalité XP est appliquée (−5 par habitude manquée, plafonnée à −20) et une bulle douce du gotchi s'affiche après 1500ms. Le déclencheur est gardé par `D.lastMissedPenalty` (nouvelle clé racine, migration m7) pour ne s'exécuter qu'une seule fois par jour manqué. `happiness` et `energy` ne sont pas touchées — ces variables restent auto-reportées uniquement par l'utilisatrice.

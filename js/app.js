@@ -1058,9 +1058,24 @@ if (totalDone === window.D.habits.length) {
   vague();
   setTimeout(vague, 400);
   setTimeout(vague, 800);
-  flashBubble("Tu as tout fait ! Je suis trop content.e 🎉", 3000);
+
+  // RÔLE : Bonus "journée complète" — toutes les habitudes cochées le même jour.
+  // POURQUOI : Crée une source de pétales régulière plafonnée à 1×/jour.
+  //            +2 maintient la cohérence avec les multiples de 2 de l'économie.
+  //            Guard '__journee_complete__' dans petalesEarned empêche le double gain
+  //            si l'utilisatrice décoche puis recoche une habitude.
+  if (!window.D.petalesEarned[td].includes('__journee_complete__')) {
+    window.D.g.petales = (window.D.g.petales || 0) + 2;
+    window.D.petalesEarned[td].push('__journee_complete__');
+    addEvent({ type: 'habitude', subtype: 'journee_complete', valeur: 2,
+      label: 'Toutes les habitudes du jour — +2 🌸' });
+    setTimeout(() => flashBubble("Tu as tout fait ! Bonus +2 🌸🎉", 3500), 200);
+  } else {
+    flashBubble("Tu as tout fait ! Je suis trop content.e 🎉", 3000);
+  }
+
   window.triggerGotchiBounce?.();
-} 
+}
 
  // ✅ UN SEUL save() ici
   save();

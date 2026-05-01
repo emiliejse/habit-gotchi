@@ -31,7 +31,7 @@ Trois priorités d'action :
 | ✅ FIXÉ | S1 Progression | Micro-paliers adultes implémentés — `getMicroPalier(xp)` retourne un indice 0-9 tous les 200 XP à partir de 500. Suffixe romain intégré directement dans le label de stade (`#g-stage`) : "Adepte" → "Adepte II" → "Adepte III"… Aucune modification de STG ni migration. (2026-05-01) | `js/app.js:458-462` (getMicroPalier), `js/ui-settings.js:208-214` (updUI) |
 | ✅ FIXÉ | S6 IA | Limites quotidiennes strictes (3 pensées + 3 soutien + 1 objet) sans compensation visible côté UI — **Fixé 2026-05-01** : fleurs ✿ soutien ajoutées sur le post-it menu (`#soutien-flowers`, même pattern que `#thought-count`) ; infos RDV du jour (icônes extraites du label) + phase cycle (`● Label Jn`) ajoutées sur le post-it agenda (`#agenda-postit-info`, `updAgendaPostit()`). L'objet IA n'a pas de limite — freiné par les pétales. | `js/ui-ai.js:189, 597` · `index.html:486-496` · `js/ui-settings.js:updSoutienFlowers, updAgendaPostit` · `css/style.css:.agenda-postit-info, #soutien-flowers` |
 | ✅ FIXÉ | S4 Snacks | ~~Pas de `lockScroll()` sur la fenêtre snack~~ — les 4 branches de `ouvrirSnack()` passent par `openModal()`, lockScroll unifié. (2026-05-01) | `js/ui-settings.js:43-122` |
-| 🟡 MOY | S1 Économie | Aucune source régulière > 4 pétales/event → boutique premium (cout:6) prend ~3 actions | `data/props.json` (cout:0 ou 6) |
+| ✅ FIXÉ | S1 Économie | Bonus "journée complète" +2 pétales quand toutes les habitudes du jour sont cochées — guard `__journee_complete__` dans `petalesEarned`, 1×/jour, bulle dédiée si bonus disponible. Maintient les multiples de 2 de l'économie. (2026-05-01) | `js/app.js` — `toggleHab()` ~L1046 |
 | 🟡 MOY | S5 Crottes | Spawn aléatoire 65% sans pattern lié aux états (faim, énergie) → événement 100% passif | `js/app.js:514-529` |
 | 🟢 BAS | S7 Inventaire | Seuls 2 paliers de prix (0 ou 6) → pas de hiérarchie d'objets désirables | `data/props.json` |
 | 🟢 BAS | S8 Notifications | Aucune notification native (Notification API jamais appelée) | — |
@@ -59,9 +59,12 @@ La fonction `addXp(n)` (`js/app.js:437-456`) gère la transition de stade ; `get
 | Source | Gain | Référence |
 |---|---|---|
 | Cocher une habitude (1×/jour/hab) | +2 | `js/app.js:771` |
+| Bonus streak habitude (cap 7j) | +N | `js/app.js:926` |
 | Snack basique | +2 | `js/app.js:624` (`gain = 2`) |
 | Snack préféré de la semaine | +4 | `js/app.js:624` (`isFav ? 4 : 2`) |
 | Nettoyer une crotte | +2/crotte | `js/app.js:673` |
+| Bain complet (salete → 0) | +2 | `js/render.js:1845` |
+| ✅ Toutes habitudes cochées (1×/jour) | +2 | `js/app.js:toggleHab()` ~L1046 — guard `__journee_complete__` |
 
 **Dépenses de pétales**
 | Sortie | Coût | Référence |

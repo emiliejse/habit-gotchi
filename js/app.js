@@ -53,8 +53,9 @@ window._gotchiActif = true;
 // RÔLE : Handles des setInterval récurrents — stockés pour pouvoir les annuler avant recréation.
 // POURQUOI : bootstrap() peut être appelée plusieurs fois (pageshow/visibilitychange).
 //            Sans clearInterval préalable, chaque appel empilerait un nouvel interval en doublon.
-let _meteoIntervalId = null;
-let _poopIntervalId  = null;
+let _meteoIntervalId  = null;
+let _poopIntervalId   = null;
+let _bubbleIntervalId = null; // RÔLE : Rotation automatique des bulles passives (updBubbleNow toutes les 45s)
 
 // VERSION À CHANGER
 window.APP_VERSION = 'v5.00'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
@@ -1608,12 +1609,14 @@ function updBubbleNow() {
     return;
   }
 
-  // ── Priorité 2b : Repas oublié (fenêtre active non prise) + anticipation (30 min avant) ──
-  // RÔLE : Deux cas couverts :
-  //   A) On est dans une fenêtre repas ouverte et le repas n'a pas encore été pris.
-  //   B) On est à moins de 30 min de l'ouverture d'une fenêtre non encore prise.
+  // ── Priorité 2b : Repas oublié (fenêtre active non prise) ──
+  // RÔLE : Si on est dans une fenêtre repas ouverte et que le repas n'a pas été pris,
+  //        le Gotchi le signale avec une bulle contextuelle.
   // POURQUOI : Agit comme un rappel doux sans notification native.
   //            Uniquement si hunger < 2 (sinon la Priorité 2 a déjà géré).
+  //            La fenêtre "avant le repas" (-30 min) est supprimée : les bulles de repas
+  //            affichées à l'avance n'avaient plus de sens si elles étaient rejouées
+  //            à d'autres moments de la journée.
   //            ensureMealsToday() est la source de vérité pour les repas du jour.
   //            Le pool est lu depuis user_config (src.repas) pour respecter
   //            la personnalité — fallback sur des phrases contextuelles si absent.
@@ -1628,7 +1631,7 @@ function updBubbleNow() {
     //            sans perdre le contexte de la fenêtre (label/icon) en cas de fallback.
     const poolRepasPerso = src.repas?.length ? src.repas : null;
 
-    // Cas A : fenêtre active sans repas pris (hors goûter — trop léger pour insister)
+    // Fenêtre active sans repas pris (hors goûter — trop léger pour insister)
     let fenetreOubliee = null;
     for (const [key, w] of Object.entries(WINDOWS)) {
       if (w.bonus) continue; // goûter ignoré
@@ -1643,33 +1646,6 @@ function updBubbleNow() {
         `${fenetreOubliee.icon} C'est l'heure du ${fenetreOubliee.label.toLowerCase()}… tu n'as pas oublié ? 🍽️`,
         `Hé ! Le ${fenetreOubliee.label.toLowerCase()} c'est maintenant ! J'ai faim moi 🥺`,
         `*regarde l'heure* ${fenetreOubliee.icon} Le ${fenetreOubliee.label.toLowerCase()} t'attend… 🌸`,
-      ];
-      const el = document.getElementById('bubble');
-      if (el) {
-        let bulle = pool[Math.floor(Math.random() * pool.length)];
-        bulle = bulle.replace('{{diminutif}}', D.g.userNickname || D.g.userName || 'toi');
-        el.textContent = bulle;
-      }
-      return;
-    }
-
-    // Cas B : dans les 30 min avant l'ouverture d'une fenêtre non prise
-    let prochaine = null;
-    for (const [key, w] of Object.entries(WINDOWS)) {
-      if (w.bonus) continue; // goûter ignoré
-      const dist = w.start - hFloat;
-      if (dist > 0 && dist <= 0.5 && !meals[key]) {
-        // On est entre 0 et 30 min avant l'ouverture de cette fenêtre, pas encore mangé
-        prochaine = w;
-        break;
-      }
-    }
-    if (prochaine) {
-      // Si pool perso disponible, on l'utilise — sinon fallback contextuel avec label/icon
-      const pool = poolRepasPerso ?? [
-        `Bientôt l'heure du ${prochaine.label.toLowerCase()} ! J'ai déjà l'eau à la bouche 🍽️`,
-        `${prochaine.icon} Le repas approche… tu penses à moi ? 🌸`,
-        `Encore un peu de patience… l'heure du ${prochaine.label.toLowerCase()} arrive ! 😋`,
       ];
       const el = document.getElementById('bubble');
       if (el) {
@@ -1761,11 +1737,19 @@ if (dernierJournal?.date?.startsWith(today())) {
 }
   if (!pool.length) pool = ["✿"];
 
-  // ── Anti-répétition ───────────────────────────────────────────
-  // Retire la dernière phrase affichée du pool si d'autres options existent
-  const derniere = window._derniereBulle;
-  const poolFiltre = pool.filter(b => b !== derniere);
-  const poolFinal = poolFiltre.length > 0 ? poolFiltre : pool;
+  // ── Anti-répétition (historique des 3 dernières bulles) ──────
+  // RÔLE : Filtre les bulles récemment affichées pour éviter les répétitions sur
+  //        des rotations rapides (intervalle 45s + pool IA potentiellement petit).
+  // POURQUOI : L'ancienne version ne mémorisait qu'une seule bulle (_derniereBulle).
+  //            Avec la rotation toutes les 45s, même un pool de 5-6 bulles IA pouvait
+  //            afficher deux fois la même en quelques minutes.
+  //            On garde un historique glissant de 3 entrées — suffisant pour éviter
+  //            les répétitions immédiates sans sur-contraindre un pool modeste.
+  //            Si toutes les bulles du pool sont dans l'historique (pool très petit),
+  //            on repart sur le pool complet sans filtrage pour ne pas bloquer.
+  if (!Array.isArray(window._bullesRecentes)) window._bullesRecentes = [];
+  const poolFiltre = pool.filter(b => !window._bullesRecentes.includes(b));
+  const poolFinal  = poolFiltre.length > 0 ? poolFiltre : pool; // fallback si pool trop petit
 
   // ── Affichage ─────────────────────────────────────────────────
   const el = document.getElementById('bubble');
@@ -1773,7 +1757,10 @@ if (dernierJournal?.date?.startsWith(today())) {
     let bulle = poolFinal[Math.floor(Math.random() * poolFinal.length)];
     bulle = bulle.replace('{{diminutif}}', D.g.userNickname || D.g.userName || 'toi');
     el.textContent = bulle;
-    window._derniereBulle = bulle; // mémorise pour anti-répétition
+    // RÔLE : Met à jour l'historique glissant (max 3 entrées, la plus ancienne sort en premier)
+    window._bullesRecentes.push(bulle);
+    if (window._bullesRecentes.length > 3) window._bullesRecentes.shift();
+    window._derniereBulle = bulle; // compatibilité rétroactive (utilisé ailleurs ?)
   }
 }
 
@@ -2123,8 +2110,17 @@ async function bootstrap() {
     fetchSolarPhases();
     clearInterval(_meteoIntervalId);
     clearInterval(_poopIntervalId);
+    clearInterval(_bubbleIntervalId);
     _meteoIntervalId = setInterval(fetchMeteo, 1800000);            // météo toutes les 30 min
     _poopIntervalId  = setInterval(maybeSpawnPoop, POOP_CHECK_INTERVAL_MS); // check crottes
+    // RÔLE : Rotation automatique des bulles passives toutes les 45 secondes.
+    // POURQUOI : Sans cet intervalle, la bulle ne changeait que lors d'un événement (touch,
+    //            habitude cochée, askClaude…). Si l'app est ouverte et qu'on ne touche rien,
+    //            la bulle restait figée indéfiniment. 45s = fréquence suffisante pour donner
+    //            de la vie sans être distrayant.
+    //            Si flashBubble() est actif, son propre timer appellera updBubbleNow() à son terme
+    //            — l'intervalle ne gêne pas car updBubbleNow() est idempotent.
+    _bubbleIntervalId = setInterval(updBubbleNow, 25000); // rotation toutes les 25s
 
     // RÔLE : Supprime la barre de navigation clavier iOS (chevrons ‹ › + coche) sur iPhone.
     // POURQUOI : iOS affiche cette barre dès qu'il détecte plusieurs champs de formulaire

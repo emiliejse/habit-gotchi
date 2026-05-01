@@ -304,15 +304,15 @@ async function askClaude() {
     .map(r => r.heure ? `${r.heure} ${r.label}` : r.label)
     .join(', ') || null;
 
-  // RÔLE : Résumé sensoriel du moment (météo + état du Gotchi)
-  // POURQUOI : Données déjà disponibles dans window.D et window.meteoData — les injecter ici
-  //            permet au Gotchi de faire des références concrètes à l'environnement sans les nommer
-  const m = window.meteoData || {};
+  // RÔLE : Contexte situationnel non-temporel pour le Gotchi.
+  // POURQUOI : On exclut volontairement la météo (température, vent, pluie) parce que les bulles
+  //            générées par l'IA sont stockées et rejouées n'importe quand (updBubbleNow, pool
+  //            customBubbles) — une référence à "il fait chaud" ou "il pleut" serait incohérente
+  //            si la bulle réapparaît 3 jours plus tard sous un autre ciel.
+  //            On garde uniquement les crottes : état purement interne au Gotchi, toujours vrai
+  //            au moment où la bulle est générée ET au moment où elle est rejouée.
   const partsCtx = [];
-  if (m.temperature !== undefined) partsCtx.push(`${Math.round(m.temperature)}°C`);
-  if (m.windspeed > 40)            partsCtx.push('vent fort');
-  if (m.weathercode >= 61 && m.weathercode <= 67) partsCtx.push('pluie');
-  if (D.g.poops?.length)           partsCtx.push(`${D.g.poops.length} crotte${D.g.poops.length > 1 ? 's' : ''} au sol`);
+  if (D.g.poops?.length) partsCtx.push(`${D.g.poops.length} crotte${D.g.poops.length > 1 ? 's' : ''} au sol`);
   const contextSensoriel = partsCtx.length ? partsCtx.join(', ') : null;
 
   // RÔLE : Notes écrites dans les dernières 24h (fenêtre glissante, pas uniquement le jour calendaire)
@@ -473,16 +473,27 @@ async function acheterPropClaude() {
   const theme  = themes[Math.floor(Math.random() * themes.length)];
   const ctx    = window.AI_CONTEXTS;
 
-  /* ── Calcul du type le moins représenté (côté JS, fiable) ── */
+  /* ── Calcul du type le moins représenté, pondéré par capacité d'utilisation ── */
+  // RÔLE : choisir le type d'objet à générer selon le besoin réel dans un environnement
+  // POURQUOI : un décor a 4-5 slots, un accessoire 3, une ambiance 1-2 max →
+  //            générer au prorata évite d'accumuler des ambiances inutilisables
   const allProps = [...(D.g.props || []), ...(window.PROPS_LIB || [])];
   const counts = { decor: 0, accessoire: 0, ambiance: 0 };
   allProps.forEach(p => { if (counts[p.type] !== undefined) counts[p.type]++; });
 
-  // Tri : moins représenté en premier, égalité → ambiance > accessoire > decor
-  const priorite = { ambiance: 3, accessoire: 2, decor: 1 };
+  // Capacité d'utilisation par type dans un seul environnement
+  // decor : ~4.5 slots | accessoire : 3 slots (gotchi) | ambiance : ~1.5 slot
+  const capacites = { decor: 4.5, accessoire: 3, ambiance: 1.5 };
+
+  // Ratio de saturation = combien on en a / combien on peut en utiliser
+  // Le ratio le plus bas → le type le plus sous-représenté → prioritaire
+  // Égalité → decor > accessoire > ambiance (ordre de priorité par défaut)
+  const priorite = { decor: 3, accessoire: 2, ambiance: 1 };
   const typeImpose = Object.keys(counts).sort((a, b) => {
-    if (counts[a] !== counts[b]) return counts[a] - counts[b];
-    return priorite[b] - priorite[a];
+    const ratioA = counts[a] / capacites[a];
+    const ratioB = counts[b] / capacites[b];
+    if (ratioA !== ratioB) return ratioA - ratioB;  // ratio le plus bas en premier
+    return priorite[b] - priorite[a];               // égalité → décor prioritaire
   })[0];
 
   console.log('[buyProp] Comptage:', counts, '→ type imposé:', typeImpose);

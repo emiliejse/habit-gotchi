@@ -50,6 +50,8 @@
 
 > **Session snack préféré quotidien 2026-05-01** : Feature modifiée dans `app.js`. `ensureSnackPref()` : comparaison `weekId` (string semaine ISO) remplacée par `dateRef` (date AAAA-MM-JJ via `today()`) — le snack préféré change maintenant chaque jour au lieu de chaque semaine. Migration `m10` ajoutée : supprime `D.g.snackPref` si la structure contient encore `weekId` (ancienne sauvegarde) → recréée proprement avec `dateRef` au prochain appel. `SCHEMA_VERSION` incrémenté `9→10` (⚠️ à synchroniser dans `sw.js`). Aucun impact sur `giveSnack()`, `pickThreeSnacks()` ou l'UI modale — la logique de bonus (+2 pétales si préféré) reste identique.
 
+> **Session bulles gotchi 2026-05-01** : 4 corrections dans `js/ui-ai.js` et `js/app.js`. (1) `ui-ai.js:contextSensoriel` — météo retirée du contexte injecté dans `askClaude()` (température, vent, pluie supprimés de `partsCtx`) : les bulles IA étant stockées et rejouées n'importe quand via `customBubbles`, une référence météo devenait incohérente dès le lendemain. Seules les crottes restent (état interne non-temporel). (2) `app.js:updBubbleNow` — Cas B supprimé dans la Priorité 2b (anticipation 30 min avant l'ouverture d'une fenêtre repas) : les bulles pré-repas n'avaient plus de sens si elles étaient rejouées hors contexte. Les bulles de faim apparaissent uniquement quand `hunger >= 2` (Priorité 2) ou quand la fenêtre est déjà ouverte (Cas A). (3) `app.js:bootstrap()` — `_bubbleIntervalId` ajouté : `setInterval(updBubbleNow, 45000)` démarre avec `_meteoIntervalId` et `_poopIntervalId`. La bulle passive tourne maintenant automatiquement toutes les 45s sans événement utilisateur. `clearInterval(_bubbleIntervalId)` ajouté au même endroit pour éviter les doublons si `bootstrap()` est rappelée. (4) `app.js:updBubbleNow` — anti-répétition renforcée : `window._derniereBulle` (1 entrée) remplacé par `window._bullesRecentes` (historique glissant 3 entrées, shift() au-delà de 3). Rétrocompat : `window._derniereBulle` conservé en écriture. Fallback : si toutes les bulles du pool sont dans l'historique, le pool complet est utilisé sans filtrage.
+
 > **Session fix désynchronisation props/corps 2026-04-30 (v2)** : Bug 2 de `AUDIT_PIXEL_ART.md` résolu dans `render-sprites.js:drawAccessoires`. Diagnostic final : `cx` (= `cxB` pour teen/adult) est flottant car `walkX` accumule des vitesses non-entières (1.4, 0.7, 0.35…). Snapper `accXraw` ou `accYraw` en milieu de calcul ne suffit pas — le corps, lui, est snappé depuis ce même `cx` flottant via `px()` dans `renderSprite`, ce qui peut produire un palier PX différent. Fix : snap de `cx` et des trois ancres Y (`topY`, `eyeY`, `neckY`) **à l'entrée** de `drawAccessoires` (`Math.floor(cx/PX)*PX`) — tous les calculs `accX`/`accY` qui suivent héritent automatiquement du même palier PX que le corps. Les snaps intermédiaires introduits en première tentative supprimés (redondants). Décalage d'1px fluctuant visible sur tous les stades à la marche et au bob résolu.
 
 ---
@@ -861,6 +863,25 @@ Trois facteurs cumulés causaient le bug :
 - `getWeekId` doublon : confirmé absent de ui.js (déjà résolu en session antérieure — item Session 1 audit clos)
 
 **`ui.js` original** : conservé intact, non supprimé. À archiver ou supprimer manuellement après validation en prod.
+
+---
+
+### Session — 2026-05-01 : Pondération de la génération d'objets IA par capacité d'utilisation
+
+**Objectif** : Corriger le déséquilibre dans `acheterPropClaude()` — le gotchi générait trop d'ambiances car le tri par count brut ne tenait pas compte de la capacité réelle d'utilisation par type.
+
+**Fichier modifié** : `js/ui-ai.js` — lignes 476–497
+
+**Changement** : Remplacement du tri par count brut par un calcul de ratio de saturation pondéré par capacité :
+- décor : 4.5 slots/env → ratio cible élevé
+- accessoire : 3 slots/env (portés par le gotchi)
+- ambiance : 1.5 slot/env → se sature très vite
+
+Le type avec le ratio `count / capacite` le plus bas est généré en priorité. En cas d'égalité : décor > accessoire > ambiance.
+
+**Comportement attendu** : à inventaire vide, le gotchi génère ~3× plus de décors que d'ambiances et ~2× plus d'accessoires, reflétant l'usage réel dans un environnement.
+
+**Pas de migration D nécessaire** : aucune structure de données modifiée.
 
 ---
 

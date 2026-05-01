@@ -573,7 +573,7 @@ function confirmerSuppressionCycle(ds, btn) {
 
   target.insertAdjacentHTML(method, `
     <div id="confirm-inline" style="background:#fff8f8;border:2px solid var(--coral);
-      border-radius:var(--r-md);padding:10px;margin-bottom:6px;text-align:center">
+      border-radius:var(--r-md);padding:10px;margin-top:var(--sp-sm);margin-bottom:6px;text-align:center">
       <div style="font-size:var(--fs-sm);margin-bottom:var(--sp-sm);margin-top:var(--sp-sm)">
         Supprimer le cycle du <b>${fmt}</b> ?
       </div>

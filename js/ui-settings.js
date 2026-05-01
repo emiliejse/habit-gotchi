@@ -198,9 +198,19 @@ function updUI() {
   const pct = nt > pt ? ((g.totalXp - pt) / (nt - pt)) * 100 : 100;
   
   if (document.getElementById('g-name'))   document.getElementById('g-name').textContent = g.name;
-  if (document.getElementById('g-stage'))  document.getElementById('g-stage').textContent = s.l;
   if (document.getElementById('xp-l'))     document.getElementById('xp-l').textContent = nt > pt ? `${g.totalXp - pt}/${nt - pt} XP` : `MAX ✿`;
   if (document.getElementById('xp-b'))     document.getElementById('xp-b').style.width = pct + '%';
+  // RÔLE : Enrichir le label de stade avec un suffixe romain en zone adulte (ex : "Adepte III")
+  // POURQUOI : Les 5 stades adultes (500→4000) sont trop espacés — un sous-niveau affiché
+  //            directement dans le titre donne un repère lisible sans effort cognitif,
+  //            comme les niveaux classiques dans les jeux. Au palier 0 (entrée dans le stade),
+  //            pas de suffixe — "Adepte" tout court, puis "Adepte II" à 700 XP, etc.
+  if (document.getElementById('g-stage')) {
+    const mp = getMicroPalier(g.totalXp);
+    const ROMAINS = ['', ' II', ' III', ' IV', ' V', ' VI', ' VII', ' VIII', ' IX'];
+    const suffixe = mp !== null && mp > 0 ? ROMAINS[mp] || ` ${mp + 1}` : '';
+    document.getElementById('g-stage').textContent = s.l + suffixe;
+  }
   // RÔLE : Synchroniser les sliders de la modale d'états si elle est ouverte
   // POURQUOI : Les sliders sont dans une bottom sheet dynamique, pas dans le DOM permanent.
   //            On met à jour les inputs s'ils existent au moment de updateUI().

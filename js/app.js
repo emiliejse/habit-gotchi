@@ -57,7 +57,7 @@ let _meteoIntervalId = null;
 let _poopIntervalId  = null;
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v4.84'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v4.85'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -450,6 +450,16 @@ if ('serviceWorker' in navigator) {
    ============================================================ */
 function getSt(xp)  { let s=STG[0]; for(const st of STG) if(xp>=st.th) s=st; return s; }
 function nxtTh(xp)  { for(const s of STG) if(xp<s.th) return s.th; return XP_MAX; }
+
+// RÔLE : Retourne le numéro de micro-palier adulte (0 à 9) tous les 200 XP à partir de 500
+// POURQUOI : Les 5 stades adultes (500→4000) sont trop espacés pour donner un feedback régulier.
+//            Un micro-palier tous les 200 XP fournit un "ding" visuel sans toucher à la logique STG.
+//            Retourne null si le gotchi n'est pas encore adulte.
+function getMicroPalier(xp) {
+  if (xp < 500) return null;                          // pas encore au stade adulte
+  return Math.min(9, Math.floor((xp - 500) / 200));  // palier 0 (500 XP) → palier 9 (2300 XP+)
+}
+window.getMicroPalier = getMicroPalier;
 
 // Ajout d'expérience et vérification des niveaux (Level Up)
 function addXp(n) {

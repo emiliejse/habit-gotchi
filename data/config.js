@@ -203,7 +203,7 @@ const AI_MODEL = 'claude-sonnet-4-5';
 // XP
 const XP_HABITUDE   = 15;   // XP gagné en cochant une habitude (aussi = pénalité absence / jour)
 const XP_NOTE       = 15;   // XP gagné en écrivant une note journal
-const XP_MAX        = 1200; // XP cap utilisé dans nxtTh() quand tous les seuils sont dépassés
+const XP_MAX        = 4000; // XP du dernier seuil adulte (Déesse) — nxtTh() retourne cette valeur une fois tous les paliers dépassés, affiche "MAX ✿"
 const PETALES_SNACK = 2;    // Pétales bonus accordés pour tout snack mangé
 
 // Crottes

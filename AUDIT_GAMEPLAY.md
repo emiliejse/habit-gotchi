@@ -26,9 +26,9 @@ Trois priorités d'action :
 | ✅ FIXÉ | S5 Saleté | Effet taches organiques : distribution random fixe (hash déterministe), tailles variables (PX/1.5/2), opacité par pixel — remplace le damier uniforme (2026-05-01) | `js/render-sprites.js:261-416` |
 | ✅ FIXÉ | S5 Saleté | Crotte garantie au bootstrap si `poopCount === 0` pour le jour courant — engagement assuré (2026-05-01) | `js/app.js:512-520` (dans `checkSalete`) |
 | ✅ FIXÉ | S2 Habitudes | Streaks par habitude implémentés — `computeStreaks()` relit `D.log`, bonus pétales +N (cap 7), badge 🔥×N dans `renderHabs()`, recalcul au daily reset (2026-05-01) | `js/app.js:760-800`, `js/ui-habs.js:39-55` |
-| 🟠 HAUT | S2 Habitudes | Aucune pénalité / rétro-action si habitude manquée (ni XP négatif, ni bulle, ni baisse de happiness) | `js/app.js:750-831` |
+| ✅ FIXÉ | S2 Habitudes | Pénalité XP implémentée — `checkMissedHabits()` au bootstrap : −5 XP par habitude manquée la veille (cap −20), bulle douce pool ×3, log dans `eventLog`. `happiness` et `energy` non modifiés (auto-report uniquement). Guard `lastMissedPenalty` (migration m7) — une seule fois par jour. (2026-05-01) | `js/app.js:bootstrap`, `defs()`, `MIGRATIONS` |
 | ✅ FIXÉ | S3 États | Jauge `hunger` (0-3) implémentée — monte si fenêtre repas manquée, reset à 0 dès un repas pris, bulle "j'ai faim" si `hunger >= 2`, priorité 2 dans `updBubbleNow()`. `energy` et `happiness` non touchés (auto-report utilisatrice uniquement). Migration m8 ajoutée. (2026-05-01) | `js/app.js:194` (defs), `js/app.js:532-580` (checkHunger), `js/app.js:651-656` (giveSnack reset), `js/app.js:1229-1246` (updBubbleNow) |
-| 🟠 HAUT | S1 Progression | Sauts XP énormes entre stades adultes (500 → 900 → 1500 → 2500 → 4000) sans micro-paliers visibles | `js/app.js:142-151` |
+| ✅ FIXÉ | S1 Progression | Micro-paliers adultes implémentés — `getMicroPalier(xp)` retourne un indice 0-9 tous les 200 XP à partir de 500. Suffixe romain intégré directement dans le label de stade (`#g-stage`) : "Adepte" → "Adepte II" → "Adepte III"… Aucune modification de STG ni migration. (2026-05-01) | `js/app.js:458-462` (getMicroPalier), `js/ui-settings.js:208-214` (updUI) |
 | 🟠 HAUT | S6 IA | Limites quotidiennes strictes (3 pensées + 3 soutien + 1 objet) sans compensation visible côté UI | `js/ui-ai.js:189, 597` |
 | 🟡 MOY | S4 Snacks | Pas de `lockScroll()` sur la fenêtre snack (dette UI déjà connue, impact gameplay : scroll iOS pendant choix) | `js/ui-settings.js:43-122` |
 | 🟡 MOY | S1 Économie | Aucune source régulière > 4 pétales/event → boutique premium (cout:6) prend ~3 actions | `data/props.json` (cout:0 ou 6) |
@@ -83,7 +83,7 @@ La fonction `addXp(n)` (`js/app.js:437-456`) gère la transition de stade ; `get
 1. **Streaks cumulatifs** : une habitude cochée N jours d'affilée donne +N pétales bonus (cap 7).
 2. **Micro-paliers visuels** dans les stades adulte (frame de fond, halo, accessoire automatique tous les +200 XP).
 3. **Burst visuel** à chaque gain de pétale (particule + bobY court sur le gotchi).
-4. **Aligner `XP_MAX` (1200)** avec le dernier seuil adult (4000) ou supprimer le cap.
+4. ✅ **`XP_MAX` aligné à 4000** — `data/config.js:206`. "MAX ✿" s'affiche désormais uniquement au dernier stade (Déesse). L'accumulation d'XP au-delà de 4000 reste illimitée dans `addXp()`. (2026-05-01)
 
 ---
 
@@ -102,8 +102,8 @@ La fonction `addXp(n)` (`js/app.js:437-456`) gère la transition de stade ; `get
 
 **Reset quotidien** : implicite — `D.log[td]` est créé vide chaque jour (`js/app.js:752`). Aucune trace conservée du fait qu'une habitude a été manquée la veille.
 
-**Streaks** : ❌ aucun.
-**Pénalités habitudes manquées** : ❌ aucune.
+**Streaks** : ✅ implémentés — `computeStreaks()` + bonus pétales + jalons 3/7/14j (2026-05-01).
+**Pénalités habitudes manquées** : ✅ implémentées — `checkMissedHabits()` au bootstrap, −5 XP/habitude manquée la veille (cap −20), bulle douce, `happiness`/`energy` non touchés (2026-05-01).
 
 ### 2b. Évaluation TDAH
 
@@ -115,7 +115,7 @@ La fonction `addXp(n)` (`js/app.js:437-456`) gère la transition de stade ; `get
 
 1. ✅ **Compteur de streak par habitude** affiché à côté de la case (🔥×N). Reset si jour sauté. — implémenté 2026-05-01
 2. ✅ **Bulle spéciale du gotchi** aux jalons 3/7/14 jours — 3 variantes par jalon, délai 1.2s, bounce + particules. — implémenté 2026-05-01
-3. **Habitude manquée 2 jours d'affilée** → -1 happiness (rétroaction douce, pas punitive).
+3. ✅ **Pénalité XP si habitude manquée** — `checkMissedHabits()` au bootstrap, −5 XP/hab (cap −20), bulle douce. `happiness` non touché (auto-report uniquement). (2026-05-01)
 4. **Habitude contextuelle simple** : 1 catégorie tirée au sort le matin = "habitude vedette du jour" qui rapporte +4 au lieu de +2.
 
 ---

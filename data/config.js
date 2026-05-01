@@ -342,20 +342,22 @@ const CYCLE_DEFAULT_DURATION = 28;
 // POURQUOI : Les objets de pack vivent dans data/props_packs.json (cout:0, champ pack:"id_pack").
 //            Le catalogue boutique filtre sur cout>0, ce qui les exclut naturellement.
 //            Ils ne peuvent être obtenus qu'ici via acheterPack().
-//            Chaque pack = 5 objets pixel art dédiés au thème, prix unique 20 🌸.
+//            Chaque pack = 5 objets pixel art ou plus dédiés au thème, prix unique 20 🌸.
 // RÈGLE : propIds doivent tous exister dans data/props_packs.json pour rester exclusifs.
 const SHOP_PACKS = [
   {
     id: 'pack_printemps',
     label: 'Pack Printemps',
     emoji: '🌸',
-    description: 'Branche de Cerisier • Petite Coccinelle • Couronne de Fleurs • Pluie de Printemps • Petit Nid Douillet',
+    description: 'Cerisier en Fête • Coco la Coccinelle • Couronne de Fleurs • Pluie de Pétales • Bouquet de Tulipes • Champignons des Prés • Cocon de Chrysalide',
     propIds: [
       'pack_printemps_cerisier',
       'pack_printemps_coccinelle',
       'pack_printemps_couronne_fleurs',
-      'pack_printemps_pluie_douce',
-      'pack_printemps_nid',
+      'pack_printemps_pluie_petales',
+      'pack_printemps_tulipes',
+      'pack_printemps_champignons',
+      'pack_printemps_cocon',
     ],
     cout: 20,
   },

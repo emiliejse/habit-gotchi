@@ -226,11 +226,19 @@
   <!-- Stats globales (SYSTEM 1: Métabolisme + SYSTEM 4: Habitudes) -->
   <div class="card">
     <h2>Stats</h2>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:6px">
       <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
         <div style="font-size:20px;font-weight:bold;color:var(--lilac)" id="s-str">0</div>
-        <div class="slbl">série</div>
+        <div class="slbl">série hab.</div>
       </div>
+      <!-- RÔLE : Streak de présence global — jours consécutifs d'ouverture de l'app -->
+      <!-- POURQUOI : Distinct du streak d'habitudes — récompense juste le fait de revenir -->
+      <div style="text-align:center;padding:8px;background:rgba(245,158,11,.07);border-radius:10px">
+        <div style="font-size:20px;font-weight:bold;color:var(--amber,#f59e0b)" id="s-presence">0</div>
+        <div class="slbl">jours consécutifs 🔥</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
       <div style="text-align:center;padding:8px;background:rgba(176,144,208,.07);border-radius:10px">
         <div style="font-size:20px;font-weight:bold;color:var(--mint)" id="s-xp">0</div>
         <div class="slbl">XP total</div>

@@ -354,7 +354,44 @@ function renderBoutiqueOnglet(onglet) {
     const libFiltree = lib.filter(prop => !(D.g.props || []).find(p => p.id === prop.id))
     .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
 
-    el.innerHTML = libFiltree.map(prop => {
+    // ── Section Packs thématiques ──────────────────────────────────
+    // RÔLE : Affiche les packs groupés en haut du catalogue si au moins 1 est disponible.
+    // POURQUOI : Les packs disparaissent si tous les objets du pack sont déjà acquis.
+    const packs = window.HG_CONFIG?.SHOP_PACKS || [];
+    const packsDispos = packs.filter(pack =>
+      // Un pack est disponible si au moins 1 objet de ses propIds n'est pas encore dans l'inventaire
+      pack.propIds.some(id => !(D.g.props || []).find(p => p.id === id))
+    );
+
+    const packsHtml = packsDispos.length ? `
+      <div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:6px;margin-top:4px">✨ Packs</div>
+      ${packsDispos.map(pack => {
+        const peutAcheter = (D.g.petales || 0) >= pack.cout;
+        // Compte les objets du pack déjà acquis pour ajuster l'affichage
+        const dejaAcquis = pack.propIds.filter(id => (D.g.props || []).find(p => p.id === id)).length;
+        const label = dejaAcquis > 0 ? `${dejaAcquis}/${pack.propIds.length} déjà acquis` : `${pack.propIds.length} objets`;
+        return `
+          <div style="padding:10px 12px;border:2px solid var(--border);border-radius:var(--r-md);margin-bottom:8px;background:rgba(245,158,11,.04)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:18px">${pack.emoji}</span>
+              <span style="font-size:var(--fs-sm);font-weight:bold;flex:1;margin:0 8px">${escape(pack.label)}</span>
+              <button onclick="acheterPack('${pack.id}')"
+                style="padding:5px 12px;border-radius:var(--r-md);border:none;font-size:var(--fs-xs);font-weight:bold;font-family:var(--font-body);
+                cursor:${peutAcheter?'pointer':'not-allowed'};
+                background:${peutAcheter?'linear-gradient(135deg,#f59e0b,#fb923c)':'#ddd'};
+                color:${peutAcheter?'#fff':'#aaa'};
+                border-bottom:${peutAcheter?'2px solid rgba(0,0,0,0.15)':'2px solid transparent'}">
+                🌸 ${pack.cout}
+              </button>
+            </div>
+            <div style="font-size:var(--fs-xs);color:var(--text2)">${escape(pack.description)}</div>
+            <div style="font-size:var(--fs-xs);color:var(--amber,#f59e0b);margin-top:2px">${label}</div>
+          </div>`;
+      }).join('')}
+      <div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin:8px 0 6px">Catalogue</div>
+    ` : '';
+
+    el.innerHTML = packsHtml + libFiltree.map(prop => {
       const peutAcheter = (D.g.petales || 0) >= prop.cout;
       return `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-sm) 12px 8px 10px;border:2px solid var(--border);border-radius:var(--r-md);margin-bottom:6px;background:#fff">
@@ -454,6 +491,50 @@ addEvent({
   updBadgeBoutique();
   ouvrirBoutique();
 }
+// RÔLE : Achète un pack thématique (3 objets cohérents à prix groupé).
+// POURQUOI : Offre une alternative économique à l'achat unitaire.
+//            Seuls les objets non encore acquis sont ajoutés (pas de doublon).
+//            Si tous les objets du pack sont déjà dans l'inventaire → toast d'info.
+function acheterPack(packId) {
+  const pack = (window.HG_CONFIG?.SHOP_PACKS || []).find(p => p.id === packId);
+  if (!pack) return;
+  if ((D.g.petales || 0) < pack.cout) { toast(`Pas assez de pétales 🌸 (il faut ${pack.cout})`); return; }
+
+  const props = window.PROPS_LIB || [];
+  const ajouts = [];
+  pack.propIds.forEach(id => {
+    if ((D.g.props || []).find(p => p.id === id)) return; // déjà acquis
+    const def = props.find(p => p.id === id);
+    if (!def) return;
+    D.g.props.push({
+      id: def.id, nom: def.nom, type: def.type,
+      emoji: def.emoji || '🎁', actif: false,
+      acquis: Date.now()
+    });
+    ajouts.push(def.nom);
+  });
+
+  if (ajouts.length === 0) {
+    toast(`Tu as déjà tous les objets de ce pack 💜`);
+    return;
+  }
+
+  D.g.petales = (D.g.petales || 0) - pack.cout;
+  addEvent({
+    type: 'note', subtype: 'achat',
+    valeur: pack.cout,
+    label: `Pack ${pack.label} — ${ajouts.join(', ')}  -${pack.cout} 🌸`
+  });
+  save();
+  toast(`${pack.emoji} Pack "${pack.label}" débloqué ! ${ajouts.length} objets ajoutés`);
+  flashBubble(`${pack.emoji} Un pack entier ? *yeux qui brillent* 💜`, 2800);
+  renderProps();
+  updUI();
+  updBadgeBoutique();
+  ouvrirBoutique();
+}
+window.acheterPack = acheterPack;
+
 function setPropsFilter(cat) { propsFilterActive = cat; renderProps(); }
 
 // RÔLE : Gère le clic sur un objet dans l'inventaire.

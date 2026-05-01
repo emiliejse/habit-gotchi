@@ -221,6 +221,11 @@ function defs() {
     rdv:              [],     // { id, date, label, heure? }
     streaks:          {},     // { catId: nombreDeJoursConsécutifs } — recalculé à chaque ouverture
     lastMissedPenalty: null, // date AAAA-MM-JJ de la dernière pénalité XP pour habitudes manquées
+    presenceStreak:   0,     // jours consécutifs d'ouverture de l'app
+    lastPresenceDate: null,  // date AAAA-MM-JJ de la dernière ouverture (pour calcul presenceStreak)
+    catVedetteDate:   null,  // date AAAA-MM-JJ où la catégorie vedette a été tirée
+    catVedette:       null,  // catId de l'habitude vedette du jour (+4 pétales au lieu de +2)
+    milestoneProps:   [],    // ids des objets milestone déjà offerts (évite les doublons)
   };
 }
 
@@ -262,7 +267,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 8; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 9; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -347,6 +352,21 @@ const MIGRATIONS = [
   //            Les utilisatrices existantes démarrent rassasiées (hunger = 0).
   function m8(d) {
     d.g.hunger = d.g.hunger ?? 0;
+    return d;
+  },
+  // Migration 8→9 : ajout streak de présence global + habitude vedette du jour + milestone props
+  // RÔLE : Trois nouvelles mécaniques faible-effort ajoutées en session 2026-05-01.
+  //        presenceStreak/lastPresenceDate : jours consécutifs d'ouverture.
+  //        catVedette/catVedetteDate       : catégorie bonus du jour (+4 pétales).
+  //        milestoneProps                  : objets offerts aux transitions de stade.
+  // POURQUOI : Les utilisatrices existantes démarrent avec streak=0 (normal) et
+  //            aucune vedette ni milestone enregistré.
+  function m9(d) {
+    d.presenceStreak   = d.presenceStreak   ?? 0;
+    d.lastPresenceDate = d.lastPresenceDate ?? null;
+    d.catVedetteDate   = d.catVedetteDate   ?? null;
+    d.catVedette       = d.catVedette       ?? null;
+    d.milestoneProps   = d.milestoneProps   ?? [];
     return d;
   }
 ];
@@ -474,14 +494,22 @@ function addXp(n) {
       window.triggerEvoAnim(ancienStade, nouveauStade);
     }
     addEvent({
-  type: 'xp',
-  subtype: 'stade',
-  valeur: window.D.g.totalXp,
-  label: `Nouveau stade : ${nouveauStade}`
-});
+      type: 'xp',
+      subtype: 'stade',
+      valeur: window.D.g.totalXp,
+      label: `Nouveau stade : ${nouveauStade}`
+    });
     animEl(document.querySelector('#p-gotchi .card'), 'flipInX', 800);
     const stageMsgs = ["Je grandis ! ⭐", "*transformation* ✨", "Je suis plus forte ! 💜", "Nouveau stade ! 🌸", "*brillante* ✿"];
     flashBubble(stageMsgs[Math.floor(Math.random() * stageMsgs.length)], 3000);
+
+    // RÔLE : Offre un objet cadeau à chaque transition de stade (milestone).
+    // POURQUOI : Récompense tangible au level-up — rend l'événement mémorable.
+    //            offrirPropMilestone() gère les doublons via D.milestoneProps.
+    //            Guard n > 0 : pas de cadeau si la pénalité XP fait rétrograder.
+    if (n > 0 && typeof offrirPropMilestone === 'function') {
+      offrirPropMilestone(nouveauStade);
+    }
   }
   save(); if (typeof updUI === 'function') updUI();
 }
@@ -728,10 +756,27 @@ function pickThreeSnacks() {
 function giveSnack(emoji) {
   const win = getCurrentMealWindow();
   if (!win) return;                    // hors fenêtre, sécurité
-  
+
   const meals = ensureMealsToday();
   if (meals[win]) return;              // déjà mangé sur cette fenêtre
-  
+
+  // RÔLE : Le goûter (15h-17h) est une fenêtre bonus — +1 pétale seulement.
+  // POURQUOI : Fenêtre optionnelle légère, pas de snack préféré, pas de hunger reset
+  //            (le gotchi n'a pas "faim" au goûter, c'est une petite douceur).
+  const winDef = window.HG_CONFIG?.MEAL_WINDOWS?.[win];
+  if (winDef?.bonus) {
+    meals[win] = true;
+    window.D.g.petales = (window.D.g.petales || 0) + 1;
+    save();
+    addEvent({ type: 'note', subtype: 'meal', valeur: 1,
+      label: `${emoji} goûter  +1 🌸` });
+    const msgs = ["Miam, une petite douceur ! 🍪", "Goûter ! 💜", "*croque*  ✿", "Un petit quelque chose ? Avec plaisir ! 🌸"];
+    flashBubble(msgs[Math.floor(Math.random() * msgs.length)], 2200);
+    window.eatAnim = { active: true, timer: 50, emoji: emoji, jumped: false };
+    if (typeof updUI === 'function') updUI();
+    return;
+  }
+
   const pref = ensureSnackPref();
   const isFav = (emoji === pref);
   const gain = isFav ? 4 : 2;              // +2 base, +2 bonus si préféré
@@ -906,6 +951,136 @@ function computeStreaks() {
 }
 
 /* ============================================================
+   STREAK DE PRÉSENCE GLOBAL (S8)
+   ============================================================ */
+// RÔLE : Met à jour le streak de jours consécutifs d'ouverture de l'app.
+// POURQUOI : Chaque jour où l'utilisatrice ouvre l'app incrémente presenceStreak.
+//            Si elle saute un jour, le streak repart de 1.
+//            Appelée dans handleDailyReset() — une fois par session.
+// JALONS : 3j → toast "3 jours de suite !" · 7j → badge + bulle · 14j → célébration
+function updatePresenceStreak() {
+  const D = window.D;
+  const td = today();
+  if (D.lastPresenceDate === td) return; // déjà compté aujourd'hui
+
+  // Calcule si hier était le dernier jour de présence
+  const hier = new Date();
+  hier.setDate(hier.getDate() - 1);
+  const hierStr = hier.toISOString().slice(0, 10);
+
+  if (D.lastPresenceDate === hierStr) {
+    // Journée consécutive → on incrémente
+    D.presenceStreak = (D.presenceStreak || 0) + 1;
+  } else {
+    // Saut ou premier lancement → repart de 1
+    D.presenceStreak = 1;
+  }
+  D.lastPresenceDate = td;
+
+  // Jalons de célébration
+  const streak = D.presenceStreak;
+  const jalons = {
+    3:  { msg: `3 jours de suite ! Tu reviens chaque jour 💜`, petales: 0 },
+    7:  { msg: `Une semaine d'affilée ! Je suis si content·e de te voir 🌟`, petales: 3 },
+    14: { msg: `14 jours consécutifs !! On est inséparables ✨🔥`, petales: 5 },
+    30: { msg: `30 jours ! Tu es légendaire 👑`, petales: 10 },
+  };
+  if (jalons[streak]) {
+    const j = jalons[streak];
+    // Délai court pour laisser l'UI se charger
+    setTimeout(() => {
+      flashBubble(j.msg, 4500);
+      if (j.petales > 0) {
+        D.g.petales = (D.g.petales || 0) + j.petales;
+        if (typeof toast === 'function') toast(`🎉 ${streak} jours — +${j.petales} 🌸`);
+      }
+      window.triggerGotchiBounce?.();
+      window.triggerExpr?.('joie', 140);
+      // Confettis
+      const gx = window._gotchiX || 100, gy = window._gotchiY || 100;
+      for (let i = 0; i < 30; i++) {
+        window.spawnP?.(gx + (Math.random() - 0.5) * 80, gy - 20,
+          ['#f59e0b','#c084fc','#fb7185','#34d399','#60a5fa'][i % 5]);
+      }
+    }, 800);
+  }
+  save();
+}
+window.updatePresenceStreak = updatePresenceStreak;
+
+/* ============================================================
+   HABITUDE VEDETTE DU JOUR (S2)
+   ============================================================ */
+// RÔLE : Tire au sort une catégorie d'habitude chaque matin → rapporte +4 pétales
+//        au lieu de +2 ce jour-là (bonus en plus du streak existant).
+// POURQUOI : Injecte un élément de surprise quotidien sans complexifier l'UI.
+//            Le tirage est déterministe sur la journée (même catégorie toute la journée).
+//            Appelée dans handleDailyReset() pour garantir un tirage frais chaque jour.
+function refreshCatVedette() {
+  const D = window.D;
+  const td = today();
+  if (D.catVedetteDate === td) return; // déjà tiré aujourd'hui
+
+  // Tirage pseudo-aléatoire déterministe : hash de la date → index dans CATS
+  const hash = td.split('-').reduce((acc, v) => acc + parseInt(v), 0);
+  const idx  = hash % CATS.length;
+  D.catVedette     = CATS[idx].id;
+  D.catVedetteDate = td;
+  save();
+}
+window.refreshCatVedette = refreshCatVedette;
+
+/* ============================================================
+   OBJET MILESTONE OFFERT (S7)
+   ============================================================ */
+// RÔLE : Offre un objet gratuit du catalogue à chaque transition de stade (egg→baby etc.).
+// POURQUOI : Récompense tangible au level-up — rend le stade symboliquement mémorable.
+//            On cible des objets non encore acquis, dans l'ordre d'un pool par stade.
+//            Si tous les objets du pool sont acquis → rien (évite les doublons).
+// APPELÉ par : addXp() quand ancienStade !== nouveauStade et n > 0.
+const MILESTONE_PROPS_POOL = {
+  baby:  ['bougie01', 'tapis01', 'etoiles01'],
+  teen:  ['lunettes01', 'lucioles_forestieres', 'plante01'],
+  adult: ['coussin01', 'nuage_reve01', 'flocon01'],
+};
+
+function offrirPropMilestone(stadeLabel) {
+  const D = window.D;
+  if (!window.PROPS_LIB || !window.PROPS_LIB.length) return; // catalogue pas encore chargé
+
+  // Retrouve la clé de stade (baby/teen/adult) depuis le label
+  const stadeKey = STG.find(s => s.l === stadeLabel)?.k || 'adult';
+  const pool = MILESTONE_PROPS_POOL[stadeKey] || MILESTONE_PROPS_POOL['adult'];
+
+  // Cherche le premier prop du pool non encore acquis
+  const propId = pool.find(id =>
+    !D.g.props.some(p => p.id === id) &&       // pas encore dans l'inventaire
+    !D.milestoneProps.includes(id)             // pas déjà offert comme milestone
+  );
+  if (!propId) return; // tous déjà acquis
+
+  const def = window.PROPS_LIB.find(p => p.id === propId);
+  if (!def) return;
+
+  // Ajoute l'objet à l'inventaire gratuitement
+  D.g.props.push({
+    id: def.id, nom: def.nom, type: def.type,
+    emoji: def.emoji || '🎁', actif: false,
+    acquis: Date.now()
+  });
+  D.milestoneProps.push(propId);
+  save();
+
+  // Notification visuelle
+  setTimeout(() => {
+    if (typeof toast === 'function') toast(`🎁 Cadeau de stade : ${def.emoji} ${def.nom} !`);
+    flashBubble(`Un cadeau pour toi ! ${def.emoji} ${def.nom} est dans ton inventaire 🎁`, 4000);
+    if (typeof updBadgeBoutique === 'function') updBadgeBoutique();
+  }, 1500); // après l'animation de transition de stade
+}
+window.offrirPropMilestone = offrirPropMilestone;
+
+/* ============================================================
    LOGIQUE HABITUDES
    ============================================================ */
 function toggleHab(catId) {
@@ -943,24 +1118,40 @@ function toggleHab(catId) {
       // +2 pétales de base, +N bonus si streak (cap à 7 jours)
       // POURQUOI : le bonus escalant récompense la régularité sans devenir infini
       const bonusStreak = streakActuel >= 2 ? Math.min(streakActuel, 7) : 0;
-      const gainTotal   = 2 + bonusStreak;
+
+      // RÔLE : Bonus vedette du jour (+2 supplémentaires si cette catégorie est la vedette).
+      // POURQUOI : 1 catégorie tirée au sort chaque matin vaut +4 au lieu de +2 (avant streaks).
+      //            isVedette est true uniquement si le tirage du jour correspond à cette catégorie.
+      const isVedette   = (window.D.catVedette === catId && window.D.catVedetteDate === td);
+      const bonusVedette = isVedette ? 2 : 0; // +2 bonus vedette (base 2 → 4)
+
+      const gainTotal   = 2 + bonusStreak + bonusVedette;
       window.D.g.petales = (window.D.g.petales || 0) + gainTotal;
       window.D.petalesEarned[td].push(catId);
+
+      // Toast vedette si c'est la catégorie du jour
+      if (isVedette) {
+        const cat = CATS.find(c => c.id === catId);
+        setTimeout(() => {
+          const el = document.querySelector(`[onclick="toggleHab('${catId}')"]`);
+          if (el) floatXP(el.closest('.hab'), `⭐ Vedette — +${gainTotal} 🌸 !`);
+        }, 200);
+        setTimeout(() => flashBubble(`${cat?.icon || '⭐'} Habitude vedette du jour ! +${gainTotal} 🌸`, 3200), 600);
+      }
 
       // Toast streak si la série est notable (≥2 jours)
       if (streakActuel >= 2) {
         const streakLabel = streakActuel >= 7
           ? `🔥×${streakActuel} MAX — +${gainTotal} 🌸 !`
           : `🔥×${streakActuel} — +${gainTotal} 🌸 !`;
-        // Petit toast flottant non-bloquant au-dessus du bouton
         setTimeout(() => {
           const el = document.querySelector(`[onclick="toggleHab('${catId}')"]`);
           if (el) floatXP(el.closest('.hab'), streakLabel);
-        }, 400);
+        }, isVedette ? 800 : 400); // décalé si vedette déjà affiché
       }
 
       addEvent({ type: 'habitude', subtype: 'check', valeur: 15,
-        label: `${hab?.label || catId} ✓  +15 XP, +${2 + (streakActuel >= 2 ? Math.min(streakActuel, 7) : 0)} 🌸${streakActuel >= 2 ? ` 🔥×${streakActuel}` : ''}` });
+        label: `${hab?.label || catId} ✓  +15 XP, +${gainTotal} 🌸${streakActuel >= 2 ? ` 🔥×${streakActuel}` : ''}${isVedette ? ' ⭐vedette' : ''}` });
     } else {
       addEvent({ type: 'habitude', subtype: 'check', valeur: 15,
         label: `${hab?.label || catId} ✓  +15 XP` });
@@ -1349,6 +1540,39 @@ function updBubbleNow() {
     return;
   }
 
+  // ── Priorité 2b : Anticipation repas (30 min avant la prochaine fenêtre) ──
+  // RÔLE : Si on est à moins de 30 min d'une fenêtre repas et que ce repas n'a pas
+  //        encore été pris aujourd'hui → bulle d'appétit anticipée.
+  // POURQUOI : Agit comme un rappel doux sans notification native.
+  //            Uniquement si hunger < 2 (sinon la Priorité 2 a déjà géré).
+  //            Seulement si la fenêtre n'est pas encore commencée (on évite la redondance
+  //            avec ouvrirSnack() qui gère le cas "hors fenêtre").
+  if (h >= 7 && h < 22) {
+    const mins = new Date().getMinutes();
+    const hFloat = h + mins / 60; // heure en décimal pour comparer aux bornes
+    const meals = (window.D.mealsToday) ? window.D.mealsToday[today()] ?? {} : {};
+    const WINDOWS = window.HG_CONFIG?.MEAL_WINDOWS ?? {};
+    let prochaine = null;
+    for (const [key, w] of Object.entries(WINDOWS)) {
+      const dist = w.start - hFloat; // positif = fenêtre pas encore commencée
+      if (dist > 0 && dist <= 0.5 && !meals[key]) {
+        // On est entre 0 et 30 min avant l'ouverture de cette fenêtre, pas encore mangé
+        prochaine = w;
+        break;
+      }
+    }
+    if (prochaine) {
+      const pool = [
+        `Bientôt l'heure du ${prochaine.label.toLowerCase()} ! J'ai déjà l'eau à la bouche 🍽️`,
+        `${prochaine.icon} Le repas approche… tu penses à moi ? 🌸`,
+        `Encore un peu de patience… l'heure du ${prochaine.label.toLowerCase()} arrive ! 😋`,
+      ];
+      const el = document.getElementById('bubble');
+      if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+      return;
+    }
+  }
+
   // ── Priorité 3 : Nuit ──────────────────────────────────────────
   if (h >= 22 || h < 7) {
     const pool = src.nuit || ["Zzz... 🌙", "*ronfle* 💤", "...zzZZ... 🌛", "Dors bien ✿"];
@@ -1457,6 +1681,14 @@ function handleDailyReset() {
   // POURQUOI : Si l'utilisateur·rice n'a pas coché une habitude hier, le streak doit
   //            être remis à zéro aujourd'hui — sans attendre un cochage.
   computeStreaks();
+
+  // RÔLE : Mise à jour du streak de présence global (jours consécutifs d'ouverture).
+  // POURQUOI : Doit s'exécuter après computeStreaks() — indépendant des habitudes.
+  updatePresenceStreak();
+
+  // RÔLE : Tirage de la catégorie vedette du jour (1 catégorie = +4 pétales au lieu de +2).
+  // POURQUOI : Se renouvelle chaque jour automatiquement au premier lancement.
+  refreshCatVedette();
 
   window.D.lastActive = new Date().toISOString();
   save();

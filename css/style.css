@@ -906,6 +906,13 @@ body {
   border-radius: 3px;
 }
 
+/* RÔLE : Habitude vedette du jour — léger glow doré pour la distinguer */
+/* POURQUOI : Signal doux, non anxiogène — juste une suggestion de priorité */
+.hab--vedette {
+  box-shadow: 0 0 0 2px rgba(245,158,11,0.30);
+  background: rgba(245,158,11,0.07);
+}
+
 /* ─── SLIDERS DE LA BOTTOM SHEET "COMMENT TU TE SENS ?" ─────────── */
 /* RÔLE : Thumb rond pour les sliders énergie/bonheur dans la modale d'états.
    POURQUOI : Les sliders sont dans une bottom sheet dynamique (ouvrirModalEtats).
@@ -1213,8 +1220,10 @@ details.settings-section.danger > summary { color: var(--danger); }
 .meteo-badge { font-size: var(--fs-xs); color: var(--text2); text-align: center; margin-top: 2px; } /* était 9px */
 
 #update-banner {
-  display: none; position: fixed; top: var(--sat); left: 0; right: 0; z-index: 999;
-  background: var(--mint); color: #fff; text-align: center; padding: 8px; font-size: var(--fs-sm); /* était 11px */
+  display: none; position: fixed; top: var(--sat); left: 0; right: 0; z-index: 1001; /* était 999 — passé à 1001 pour couvrir les boutons .hdr et #etats-overlay (1000) */
+  height: calc(44px + 4px + 6px); /* RÔLE : même hauteur que le .hdr — boutons 44px + padding .hdr (2px×2) + padding-top #console-top (6px) */
+  line-height: calc(44px + 4px + 6px); /* POURQUOI : centrage vertical sans flex — compatible avec banner.style.display='block' dans sw.js */
+  background: var(--mint); color: #fff; text-align: center; font-size: var(--fs-sm); /* padding: 8px remplacé par height+line-height fixes */
   font-weight: bold; cursor: pointer;
 }
 

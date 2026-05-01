@@ -1,6 +1,7 @@
 # AUDIT GAMEPLAY — HabitGotchi
 > Généré par Claude Opus — 2026-05-01
 > Version auditée : **v4.81** (`js/app.js:60`)
+> Mise à jour mécaniques faible effort — 2026-05-01
 
 ---
 
@@ -33,9 +34,9 @@ Trois priorités d'action :
 | ✅ FIXÉ | S4 Snacks | ~~Pas de `lockScroll()` sur la fenêtre snack~~ — les 4 branches de `ouvrirSnack()` passent par `openModal()`, lockScroll unifié. (2026-05-01) | `js/ui-settings.js:43-122` |
 | ✅ FIXÉ | S1 Économie | Bonus "journée complète" +2 pétales quand toutes les habitudes du jour sont cochées — guard `__journee_complete__` dans `petalesEarned`, 1×/jour, bulle dédiée si bonus disponible. Maintient les multiples de 2 de l'économie. (2026-05-01) | `js/app.js` — `toggleHab()` ~L1046 |
 | ✅ FIXÉ | S5 Crottes | Probabilité de spawn modulée par état du Gotchi : 25% si faim≥2 / 35% si énergie≤3 / 80% si bien nourri / 60% normal — remplace le 65% fixe (2026-05-01) | `js/app.js:maybeSpawnPoop` |
-| 🟢 BAS | S7 Inventaire | Seuls 2 paliers de prix (0 ou 6) → pas de hiérarchie d'objets désirables | `data/props.json` |
-| 🟢 BAS | S8 Notifications | Aucune notification native (Notification API jamais appelée) | — |
 | ✅ FIXÉ | S3 États | Bulle dédiée `salete >= 7` sans crottes visibles — Priorité 1b dans `updBubbleNow()`, 5 variantes diurnes ("ça commence à sentir le renard", "*se renifle*", etc.) (2026-05-01) | `js/app.js` (dans `updBubbleNow()`) |
+| 🟢 BAS | S8 Notifications | Aucune notification native (Notification API jamais appelée) — **session dédiée à planifier** | — |
+| 🚫 SKIP | S7 Inventaire | Seuls 2 paliers de prix (0 ou 6) → pas de hiérarchie d'objets désirables — **prix du catalogue non modifiés (décision 2026-05-01)** | `data/props.json` |
 
 ---
 
@@ -143,7 +144,7 @@ EN_CRIT=1, EN_WARN=2, EN_TILT=2     → dithering, bras tombants, balancement
 HA_SAD=1, HA_MED=2, HA_MED_ADULT=3, HA_HIGH=4   → bouches, nuages, sourires
 ```
 
-**Saleté visuelle** (`js/render-sprites.js:329-334`) — dithering n'apparaît qu'à `salete >= 5`, ratio normalisé `(salete - 5) / 5`. Donc valeurs 0→4 = invisibles, 5→10 = visibles. **La moitié de l'échelle est inutile.**
+**Saleté visuelle** (`js/render-sprites.js:330,373`) — ✅ seuil dithering abaissé 5→2, ratio recalibré `(salete-2)/8` — saleté visible dès 1-2 crottes (2026-05-01). Effet taches organiques (distribution hash déterministe, tailles variables PX/1.5/2, opacité par pixel) remplace l'ancien damier uniforme.
 
 **États orphelins / dette**
 - ✅ `salete` : bulle dédiée ajoutée dans `updBubbleNow()` (Priorité 1b, seuil >= 7) — 2026-05-01.
@@ -153,14 +154,14 @@ HA_SAD=1, HA_MED=2, HA_MED_ADULT=3, HA_HIGH=4   → bouches, nuages, sourires
 
 - ✅ Lisibilité d'un coup d'œil correcte : posture + expression visage.
 - ❌ **Transitions abruptes** d'état (pas d'easing).
-- ❌ Pas de représentation visuelle de la saleté entre 0-4.
+- ✅ Saleté visible dès 1-2 crottes — seuil et rendu recalibrés (2026-05-01).
 
 ### 3c. Propositions
 
-1. **Recalibrer `salete`** : passer à une échelle 0-5 et afficher dithering progressif dès `salete >= 1`.
+1. ✅ **Recalibrer `salete`** : seuil dithering abaissé à 2, ratio recalibré, taches organiques — dès la 1re-2e crotte. (2026-05-01)
 2. ✅ **Jauge `hunger`** (0-3) implémentée — monte si fenêtre manquée, reset au repas, bulle dédiée. `happiness` non touché (auto-report uniquement). (2026-05-01)
 3. **Easing 1s** sur les changements d'energy/happiness (lerp côté render).
-4. Bulle dédiée dans `personality.json` quand `salete >= 7` ("ça commence à sentir le renard").
+4. ✅ Bulle dédiée dans `updBubbleNow()` quand `salete >= 7` (Priorité 1b, 5 variantes diurnes). (2026-05-01)
 
 ---
 
@@ -207,7 +208,8 @@ Matin : 7-11    Midi : 11-15    Soir : 18-22
 
 **Spawn crottes** (`js/app.js:maybeSpawnPoop`)
 - Délai min entre spawns : 8 min
-- Probabilité par tick : **modulée par état** (25% / 35% / 60% / 80% selon faim + énergie) — fixé 2026-05-01
+- Probabilité par tick : ✅ **modulée par état** (25% si faim≥2 / 35% si énergie≤3 / 80% si bien nourri / 60% normal) — remplace le 65% fixe (2026-05-01)
+- Crotte garantie au bootstrap si `poopCount === 0` pour le jour courant — engagement assuré (2026-05-01)
 - Pas de spawn entre 22h et 7h
 - Max 5 crottes visibles
 - `lastPoopSpawn` stocké dans `D.g`
@@ -221,18 +223,18 @@ Matin : 7-11    Midi : 11-15    Soir : 18-22
 - Max 10
 - **JAMAIS remise à 0**
 
-**Nettoyage** (`js/app.js:665-690`) : `cleanPoops()` vide `D.g.poops`, +2 pétales par crotte, bulle de feedback. **Mais `D.g.salete` n'est pas touché** → bug critique : la jauge gonfle, le dithering s'affiche, et l'utilisateur·rice ne peut pas la faire redescendre.
+**Nettoyage** (`js/app.js:683`) : ✅ `cleanPoops()` vide `D.g.poops` + remet `D.g.salete = 0` après nettoyage — reset confirmé (2026-05-01). +2 pétales par crotte, bulle de feedback.
 
 ### 5b. Évaluation TDAH
 
 - ✅ Système passif léger, peu anxiogène (max 5 crottes).
-- ❌ **Charge invisible** : la saleté qui ne redescend pas est exactement le genre de tâche-fantôme qui crée du stress chronique.
-- ❌ Pas de lien crottes ↔ états (faim, énergie) → pur RNG.
+- ✅ Saleté remise à 0 lors du nettoyage — charge invisible supprimée (2026-05-01).
+- ✅ Lien crottes ↔ états (faim + énergie) — probabilité de spawn modulée (2026-05-01).
 
 ### 5c. Propositions
 
-1. **🔴 Fix critique** : dans `cleanPoops()` (`js/app.js:665-690`), ajouter `window.D.g.salete = 0;` ou une décrémentation proportionnelle.
-2. **Lien hunger → spawn** : si `hunger >= 2`, +30% de probabilité de crotte.
+1. ✅ **Fix critique** : `D.g.salete = 0` ajouté dans `cleanPoops()` — reset après nettoyage. (2026-05-01)
+2. ✅ **Lien hunger → spawn** : probabilité modulée par faim + énergie dans `maybeSpawnPoop`. (2026-05-01)
 3. **Mini-récompense ponctuelle** au 5e nettoyage cumulé (badge ou +1 happiness).
 4. **Bulle de remerciement** distincte selon le nombre de crottes nettoyées (déjà partiellement présent — étendre à 5+).
 
@@ -264,11 +266,12 @@ Matin : 7-11    Midi : 11-15    Soir : 18-22
 - ✅ Limites quotidiennes protègent du surmenage et du shoot compulsif.
 - ✅ Loader animé, pas de freeze visuel.
 - ⚠️ **3 pensées/jour** est asymétrique avec 6 catégories d'habitudes — sentiment de rareté.
-- ❌ Aucune indication UI claire du nombre de pensées/soutiens restants.
+- ✅ Fleurs ✿ soutien affichées sur le post-it menu (`#soutien-flowers`) — compteur visible calqué sur `#thought-count` (2026-05-01).
+- ✅ Infos RDV du jour + phase cycle ajoutées sur le post-it agenda (`#agenda-postit-info`, `updAgendaPostit()`) — compensation visuelle des limites IA (2026-05-01).
 
 ### 6c. Propositions
 
-1. **Compteur visible** sur le bouton IA (ex : "💭 2/3").
+1. ✅ **Compteur visible** soutien sur le post-it menu (fleurs ✿). Pensées toujours affichées via `#thought-count`. (2026-05-01)
 2. **Pensée matinale automatique** offerte au premier ouvrage du jour (consomme 1 sur 3, mais n'est pas "demandée").
 3. **Réduire le coût objet IA à 8 pétales** + introduire une **prime "premier objet de la semaine" gratuit**.
 4. **Variabilité du prompt création d'objet** : injecter un mood-tag (cosy, mystique, fun, naturel) pour éviter la répétition stylistique.
@@ -287,17 +290,17 @@ Optionnels : `ancrage` (accessoires : "tete"), `motion` (ambiance : "fall").
 
 **Environnements** (`js/ui-shop.js:137, 220-221`) : 3 fixes — `parc, chambre, montagne`. Switcher gratuit. `D.g.activeEnv`.
 
-**Prix** : binaire, **0 ou 6 pétales** dans la boutique. Tous les accessoires premium au même tarif.
+**Prix** : binaire, **0 ou 6 pétales** dans la boutique. Tous les accessoires premium au même tarif. ⚠️ **Prix du catalogue non modifiés — décision du 2026-05-01** (pas de refonte de la hiérarchie d'objets pour l'instant).
 
 ### 7b. Évaluation TDAH
 
 - ✅ Catalogue lisible, peu chargé.
-- ❌ **Pas de hiérarchie de désir** : tous les payants au même prix, donc choix 100% esthétique sans tension économique.
+- ⚠️ **Pas de hiérarchie de désir** : tous les payants au même prix — choix assumé pour l'instant (refonte prix non planifiée).
 - ✅ Personnalisation immédiatement visible sur le gotchi.
 
 ### 7c. Propositions
 
-1. **3 paliers de prix** (3 / 6 / 12 pétales) avec rareté graphique correspondante.
+1. ~~**3 paliers de prix** (3 / 6 / 12 pétales)~~ — **non planifié** (prix du catalogue stables par décision du 2026-05-01).
 2. **Objets saisonniers** débloqués selon le mois (cycle d'année).
 3. **Objet "milestone"** offert à chaque transition de stade (egg→baby, baby→teen, etc.).
 4. **Pack thématique** : 3 objets cohérents (ex : "set cosy" = coussin + bougie + tapis) à prix groupé.
@@ -312,7 +315,7 @@ Optionnels : `ancrage` (accessoires : "tete"), `motion` (ambiance : "fall").
 
 **Bootstrap** (`js/app.js:1256-1294`) : `load → checkSalete → catchUpPoops → initApp`.
 
-**Notifications natives** : ❌ aucune (`Notification` API non appelée).
+**Notifications natives** : ❌ aucune (`Notification` API non appelée) — **session dédiée à planifier ultérieurement**.
 
 **Points d'entrée quotidiens** :
 1. Ouverture manuelle de l'app (script parsé)
@@ -351,31 +354,34 @@ Optionnels : `ancrage` (accessoires : "tete"), `motion` (ambiance : "fall").
 
 | Nom | Système | Description courte | Effort | Impact TDAH |
 |-----|---------|--------------------|--------|-------------|
-| Streaks par habitude | S2 | Compteur 🔥 par habitude, +N pétales bonus (cap 7), reset si jour sauté | Moyen | 🔥🔥🔥 |
-| Streak de présence global | S8 | Jours consécutifs d'ouverture, badge progressif | Faible | 🔥🔥🔥 |
-| Jauge hunger | S3 | Nouvelle jauge 0-3, descend avec le temps, snacks remplissent | Moyen | 🔥🔥 |
-| Reset salete au nettoyage | S5 | 1 ligne dans `cleanPoops()` | Trivial | 🔥🔥 (fix) |
-| Notifications PWA opt-in | S8 | Rappel snack manqué, soir sans habitudes | Moyen | 🔥🔥🔥 |
+| ~~Streaks par habitude~~ | S2 | ✅ FAIT 2026-05-01 — `computeStreaks()`, badge 🔥×N, bonus pétales cap 7 | — | 🔥🔥🔥 |
+| ~~Streak de présence global~~ | S8 | ✅ FAIT 2026-05-01 — `updatePresenceStreak()`, jalons 3/7/14/30j, badge `#s-presence` dans Stats | — | 🔥🔥🔥 |
+| ~~Jauge hunger~~ | S3 | ✅ FAIT 2026-05-01 — jauge 0-3, monte si fenêtre manquée, reset au repas, bulle dédiée | — | 🔥🔥 |
+| ~~Reset salete au nettoyage~~ | S5 | ✅ FAIT 2026-05-01 — `D.g.salete = 0` dans `cleanPoops()` | — | 🔥🔥 |
+| Notifications PWA opt-in | S8 | Rappel snack manqué, soir sans habitudes — **session dédiée à planifier** | Moyen | 🔥🔥🔥 |
 | Événement aléatoire quotidien | S8 | 1/3 chance : papillon, visiteur, météo rare | Moyen | 🔥🔥🔥 |
-| Animation "manger" | S4 | 1.5s chew avant créditation | Faible | 🔥🔥 |
-| Compteur IA visible | S6 | Affiche "💭 2/3" sur le bouton | Trivial | 🔥🔥 |
-| 3 paliers de prix shop | S7 | 3/6/12 pétales avec rareté graphique | Moyen | 🔥 |
-| Objet milestone offert | S7 | À chaque transition de stade | Faible | 🔥🔥 |
-| Goûter 15-17h | S4 | Fenêtre bonus +1 pétale | Faible | 🔥 |
-| Habitude vedette du jour | S2 | 1 catégorie tirée au sort = +4 au lieu de +2 | Faible | 🔥🔥 |
-| Pack thématique boutique | S7 | 3 objets cohérents à prix groupé | Faible | 🔥 |
-| Bulle "j'ai faim" anticipée | S4 | 30 min avant fenêtre suivante | Faible | 🔥🔥 |
-| Easing transitions états | S3 | Lerp 1s sur energy/happiness | Faible | 🔥 |
+| ~~Animation "manger"~~ | S4 | ✅ DÉJÀ PRÉSENT — `eatAnim` actif dans `giveSnack()` + `render.js` (emoji descente + bond) | — | 🔥🔥 |
+| ~~Compteur IA visible~~ | S6 | ✅ FAIT 2026-05-01 — fleurs ✿ soutien sur post-it menu, infos agenda sur post-it agenda | — | 🔥🔥 |
+| ~~3 paliers de prix shop~~ | S7 | 🚫 NON PLANIFIÉ — prix du catalogue stables (décision 2026-05-01) | — | 🔥 |
+| ~~Objet milestone offert~~ | S7 | ✅ FAIT 2026-05-01 — `offrirPropMilestone()` dans `addXp()`, pools par stade (baby/teen/adult), guard `D.milestoneProps` | — | 🔥🔥 |
+| ~~Goûter 15-17h~~ | S4 | ✅ FAIT 2026-05-01 — fenêtre `gouter` dans `MEAL_WINDOWS` (`bonus:true`), +1 pétale, branche dédiée dans `giveSnack()` | — | 🔥 |
+| ~~Habitude vedette du jour~~ | S2 | ✅ FAIT 2026-05-01 — `refreshCatVedette()` tirage déterministe par date, +2 bonus pétales, badge ⭐ dans `renderHabs()`, classe `.hab--vedette` | — | 🔥🔥 |
+| ~~Pack thématique boutique~~ | S7 | ✅ FAIT 2026-05-01 — `SHOP_PACKS` dans `config.js` (3 packs), `acheterPack()` dans `ui-shop.js`, section Packs dans catalogue boutique | — | 🔥 |
+| ~~Bulle "j'ai faim" anticipée~~ | S4 | ✅ FAIT 2026-05-01 — Priorité 2b dans `updBubbleNow()` : 30 min avant prochaine fenêtre non encore prise | — | 🔥🔥 |
+| ~~Easing transitions états~~ | S3 | ✅ FAIT 2026-05-01 — `_dispEnergy`/`_dispHappy` lerp 0.12/frame dans `p.draw()` (`render.js`) | — | 🔥 |
 
 ---
 
 ## Prochaines étapes recommandées
 
-1. **🔴 Fix critique immédiat** : reset de `salete` dans `cleanPoops()` (`js/app.js:665-690`).
-2. **🔴 Cohérence XP** : aligner `XP_MAX` (1200, `data/config.js:206`) avec le dernier seuil adult (4000, `js/app.js:142-151`) ou retirer le cap.
-3. **🟠 Streaks par habitude** (S2) — plus haut ROI TDAH pour effort moyen.
-4. **🟠 Streak de présence global** (S8) — relance quotidienne sans dépendre des notifs.
-5. **🟠 Compteur IA visible** + **animation manger** — faible effort, gros gain de feedback.
-6. **🟡 Notifications PWA opt-in** — chantier moyen mais transforme l'app en "compagnon actif".
-7. **🟡 Jauge hunger** + recalibrage de l'échelle `salete` (0-5 au lieu de 0-10).
+> Mise à jour 2026-05-01 — 13 items du tableau de dette résolus.
+
+1. ✅ **Fix critique** : reset de `salete` dans `cleanPoops()` — **FAIT**.
+2. ✅ **Cohérence XP** : `XP_MAX` aligné à 4000 — **FAIT**.
+3. ✅ **Streaks par habitude** (S2) — **FAIT** (`computeStreaks()`, badge 🔥×N, bonus pétales cap 7).
+4. **🟠 Streak de présence global** (S8) — relance quotidienne sans dépendre des notifs — **à faire**.
+5. ✅ **Compteur IA visible** (fleurs soutien sur post-it) — **FAIT**. Animation manger — **à faire** (faible effort).
+6. **🟡 Notifications PWA opt-in** — session dédiée à planifier.
+7. ✅ **Jauge hunger** (S3) + recalibrage saleté — **FAITS**.
 8. **🟢 Événements aléatoires quotidiens** + objets milestone — couche surprise et attachement.
+9. ~~**3 paliers de prix boutique**~~ — **non planifié** (prix stables, décision 2026-05-01).

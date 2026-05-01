@@ -68,7 +68,7 @@ function ouvrirSnack() {
         <p style="font-size:var(--fs-sm);margin-bottom:var(--sp-md)">
           Ce n'est pas encore l'heure du repas...<br>
           <span style="color:var(--text2);font-size:var(--fs-xs)">
-            Matin 7h-11h • Midi 11h-15h • Soir 18h-22h
+            Matin 7h-11h • Midi 11h-15h • Goûter 15h-17h 🍪 • Soir 18h-22h
           </span>
         </p>
         <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
@@ -280,9 +280,11 @@ function updUI() {
     document.getElementById('modal-sl-happy').value = g.happiness;
     document.getElementById('modal-sv-happy').textContent = g.happiness;
   }
-  if (document.getElementById('s-xp'))    document.getElementById('s-xp').textContent = g.totalXp;
-  if (document.getElementById('s-str'))   document.getElementById('s-str').textContent = calcStr();
-  if (document.getElementById('s-jrn'))   document.getElementById('s-jrn').textContent = D.journal.length;
+  if (document.getElementById('s-xp'))       document.getElementById('s-xp').textContent = g.totalXp;
+  if (document.getElementById('s-str'))      document.getElementById('s-str').textContent = calcStr();
+  if (document.getElementById('s-jrn'))      document.getElementById('s-jrn').textContent = D.journal.length;
+  // RÔLE : Affiche le streak de présence global (jours consécutifs d'ouverture).
+  if (document.getElementById('s-presence')) document.getElementById('s-presence').textContent = D.presenceStreak || 0;
   if (document.getElementById('name-inp')) document.getElementById('name-inp').value = g.name;
   if (document.getElementById('env-sel'))  document.getElementById('env-sel').value = g.activeEnv || 'parc';
   if (document.getElementById('api-inp'))  document.getElementById('api-inp').value = D.apiKey || '';

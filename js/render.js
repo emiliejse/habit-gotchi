@@ -52,8 +52,16 @@ let bounceT = 0, blinkT = 0, blink = false;
 // window._bounceT = 0  ← SUPPRIMÉ (code mort identifié v3.02 et v4.5) :
 //   La variable globale _bounceT n'était jamais lue — c'est bounceT (local) qui est utilisé partout.
 window.particles = [];
-window.touchReactions = []; 
+window.touchReactions = [];
 window.eatAnim = { active: false, timer: 0, emoji: '' };
+
+// RÔLE : Valeurs d'affichage lissées pour energy et happiness (easing transitions états).
+// POURQUOI : Sans lerp, tout changement de jauge (slider, setEnergy/setHappy) bascule
+//            frame-à-frame → abrupt visuellement. On suit la valeur réelle à vitesse constante
+//            (pas 0.12 ≈ 1 unité en ~8 frames à 12fps = ~0.7s) pour une transition douce.
+//            _dispEnergy/_dispHappy sont initialisés au premier p.draw() depuis D.g.
+let _dispEnergy  = null; // valeur affichée de energy (float, suit D.g.energy en lerp)
+let _dispHappy   = null; // valeur affichée de happiness (float, suit D.g.happiness en lerp)
 let walkX = 100;
 let walkDir = 1;
 // let walkStep = 0  ← SUPPRIMÉ (code mort identifié v4.5) :
@@ -1088,9 +1096,16 @@ const p5s = (p) => {
     const ec = getEnvC();
     C.gnd = ec.gnd; C.gndDk = ec.gndDk; C.skyD1 = ec.sky1; C.skyD2 = ec.sky2;
 
-    // RÔLE : on lit directement les jauges en 0–5 (plus de ×20)
-    // POURQUOI : les seuils visuels sont désormais exprimés en 0–5 via les constantes EN_*/HA_* de config.js
-    const en = g.energy, ha = g.happiness;
+    // RÔLE : Easing (lerp) sur energy et happiness — transitions visuelles douces.
+    // POURQUOI : Sans lerp, le passage de 3→1 est instantané (1 frame) → trop abrupt.
+    //            On initialise _dispEnergy/_dispHappy à la valeur réelle au 1er frame,
+    //            puis on les approche de la cible à vitesse 0.12/frame (~0.7s à 12fps).
+    //            Les seuils visuels (EN_CRIT, HA_SAD…) lisent toujours la valeur lissée.
+    if (_dispEnergy === null) _dispEnergy = g.energy;
+    if (_dispHappy  === null) _dispHappy  = g.happiness;
+    _dispEnergy += (g.energy    - _dispEnergy) * 0.12;
+    _dispHappy  += (g.happiness - _dispHappy)  * 0.12;
+    const en = _dispEnergy, ha = _dispHappy;
 
     // RÔLE : Calcule le ratio nuit (0 = jour, 1 = nuit pleine) pour une transition progressive
     // POURQUOI : remplace l'ancien booléen n = (h >= 21) qui basculait brutalement d'un coup

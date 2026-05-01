@@ -162,9 +162,10 @@ const ENV_THEMES = [
  * `start` inclus, `end` exclu (ex: matin = 7h, 8h, 9h, 10h).
  */
 const MEAL_WINDOWS = {
-  matin: { start: 7,  end: 11, label: 'Matin', icon: '🌅' },
-  midi:  { start: 11, end: 15, label: 'Midi',  icon: '☀️' },
-  soir:  { start: 18, end: 22, label: 'Soir',  icon: '🌙' },
+  matin:  { start: 7,  end: 11, label: 'Matin',   icon: '🌅' },
+  midi:   { start: 11, end: 15, label: 'Midi',    icon: '☀️' },
+  gouter: { start: 15, end: 17, label: 'Goûter',  icon: '🍪', bonus: true }, // fenêtre bonus +1 🌸 uniquement
+  soir:   { start: 18, end: 22, label: 'Soir',    icon: '🌙' },
 };
 
 /**
@@ -242,6 +243,38 @@ const CYCLE_DEFAULT_DURATION = 28;
 //            Les constantes gameplay (XP, EN, HA, POOP…) sont regroupées
 //            dans le sous-objet HG_CONFIG.GAMEPLAY pour les distinguer
 //            des constantes visuelles/UI sans créer un second namespace.
+/* ─── PACKS THÉMATIQUES BOUTIQUE (S7) ───────────────────────────── */
+// RÔLE : 3 objets cohérents vendus ensemble à prix groupé (économie de 2 pétales vs. achat séparé).
+// POURQUOI : Crée une unité narrative et un sentiment de valeur sans modifier les prix unitaires.
+//            Chaque pack contient des propIds qui doivent exister dans props.json.
+//            prix = 3 × 6 - 2 = 16 pétales pour 3 objets (au lieu de 18).
+const SHOP_PACKS = [
+  {
+    id: 'pack_cosy',
+    label: 'Pack Cosy',
+    emoji: '🕯️',
+    description: 'Bougie • Coussin • Tapis — pour créer un nid douillet',
+    propIds: ['bougie01', 'coussin01', 'tapis01'],
+    cout: 10, // 3 objets à 6 = 18, pack = 10 (-8 de réduction, car certains sont gratuits normalement)
+  },
+  {
+    id: 'pack_nature',
+    label: 'Pack Nature',
+    emoji: '🌿',
+    description: 'Plante Grasse • Petit Cactus • Champignon Luisant',
+    propIds: ['plante01', 'cactus01', 'champignon01'],
+    cout: 8, // plante01 gratuite, cactus01 et champignon01 à 6 chacun = 12, pack = 8
+  },
+  {
+    id: 'pack_mystique',
+    label: 'Pack Mystique',
+    emoji: '✨',
+    description: 'Chapeau de Sorcier • Pluie d\'Étoiles • Flocon Éternel',
+    propIds: ['chapeau_sorcier01', 'etoiles01', 'flocon01'],
+    cout: 10, // etoiles01 gratuite, chapeau et flocon à 6 = 12, pack = 10
+  },
+];
+
 window.HG_CONFIG = {
   // ── UI & thèmes ────────────────────────────────────────────────
   UI_PALETTES,
@@ -249,6 +282,7 @@ window.HG_CONFIG = {
   ENV_THEMES,
   MEAL_WINDOWS,
   SNACKS_POOL,
+  SHOP_PACKS,
 
   // ── Gameplay : toutes les valeurs numériques métier ────────────
   GAMEPLAY: {

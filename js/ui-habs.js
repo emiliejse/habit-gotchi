@@ -51,12 +51,19 @@ function renderHabs() {
     ? `<span class="streak-badge" title="${streak} jours d'affilée" style="font-size:10px;opacity:0.85;margin-right:4px;color:var(--amber,#f59e0b)">🔥×${streak}</span>`
     : '';
 
+  // RÔLE : Badge ⭐ si cette catégorie est la vedette du jour (+4 pétales).
+  // POURQUOI : Signal visuel léger — la case se distingue discrètement sans surcharger.
+  const isVedette = D.catVedette === h.catId && D.catVedetteDate === td;
+  const vedetteBadge = isVedette && !d
+    ? `<span title="Habitude vedette du jour +4 🌸" style="font-size:10px;margin-right:3px;color:#f59e0b">⭐</span>`
+    : '';
+
   return `
-    <div class="hab ${d ? 'done' : ''} ${isNext ? 'hab--next' : ''}" style="position:relative">
+    <div class="hab ${d ? 'done' : ''} ${isNext ? 'hab--next' : ''} ${isVedette && !d ? 'hab--vedette' : ''}" style="position:relative">
       <div class="ck" onclick="toggleHab('${h.catId}')">${d ? '✓' : ''}</div>
       <span id="hab-label-${h.catId}" style="flex:1;font-size:12px;cursor:pointer"
         onclick="toggleHab('${h.catId}')">${libelle}</span>
-      ${streakBadge}
+      ${vedetteBadge}${streakBadge}
       <span style="font-size:16px">${c.icon}</span>
     </div>`;
 }).join('') + `

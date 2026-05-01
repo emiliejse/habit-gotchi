@@ -661,7 +661,9 @@ function renderProg() {
     if (rdvDuJour.length) {
       const match = rdvDuJour[0].label.match(/^\p{Emoji}/u);
       rdvEmoji = match ? match[0] : '📌';
-      if (rdvDuJour.length > 1) rdvEmoji += `<span style="font-size:7px;vertical-align:super">+${rdvDuJour.length - 1}</span>`;
+      // RÔLE : Badge "+X" quand plusieurs RDV le même jour — pill coloré lisible sur mobile.
+      // POURQUOI : L'ancien font-size:7px + vertical-align:super était trop petit pour être lisible.
+      if (rdvDuJour.length > 1) rdvEmoji += `<span style="display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-family:var(--font-body);line-height:1;background:var(--lilac);color:#fff;border-radius:4px;padding:1px 3px;margin-left:1px;vertical-align:middle">+${rdvDuJour.length - 1}</span>`;
     }
 
     wHtml += `
@@ -1329,6 +1331,16 @@ function applyCheatCode() {
     'resetbilan':   () => { D.g.bilanCount = 0; D.g.bilanWeek = ''; toast('📊 Quota bilan → 0/3'); },
     'resetsoutien': () => { D.soutienCount = 0; D.lastSoutienDate = null; toast('💜 Quota soutien → 0/3'); },
     'resetmsg3':    () => { D.thoughtCount = 0; D.lastThoughtDate = null; toast('💬 Quota pensées → 0/3'); },
+    // RÔLE : Vide l'inventaire et remet uniquement les objets de départ (props_base).
+    // POURQUOI : Permet de tester l'état "nouveau joueur·se" sans réinitialiser toute la save.
+    //            Réutilise PROPS_LIB (déjà chargé) filtré sur cout:0 — même logique que bootstrap().
+    'resetinv': () => {
+      // Récupère uniquement les props gratuits (cout:0 = objets de départ)
+      const base = (window.PROPS_LIB || []).filter(p => p.cout === 0);
+      // Reconstruit l'inventaire proprement : seulement les props_base, tous inactifs
+      D.g.props = base.map(p => ({ id: p.id, nom: p.nom, type: p.type, emoji: p.emoji, actif: false }));
+      toast('🗑️ Inventaire remis à zéro (objets de départ uniquement)');
+    },
     // RÔLE : Code cheat anniversaire — offre des pétales et remet les compteurs à zéro.
     // POURQUOI : Le mot de passe et le bonus viennent de user_config.json.
     //            Si birthday.month est null → le code n'existe pas, toast "Code inconnu".

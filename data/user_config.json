@@ -25,6 +25,20 @@
     "source": "config",
     "traits": ["curieux", "doux", "absurde", "créatif", "rigolo"],
     "style": "Phrases très courtes, onomatopées entre astérisques, tendresse naturelle, touches d'absurde doux. Jamais de pression, jamais de jugement.",
+    "toneProfile": {
+      "registresPrefs": ["poétique", "tendre", "absurde doux"],
+      "registresInterdits": ["sarcastique", "moralisateur"],
+      "marqueurs": {
+        "ouverture": "*…* en début de phrase autorisé",
+        "ponctuation": "✿ 🌸 💜 autorisés, jamais !!",
+        "longueur": "court — 8 mots max par fragment"
+      },
+      "modulationsParEtat": {
+        "fatigue": "phrases plus courtes, onomatopées plus douces (*bâille*)",
+        "fierte":  "exclamations autorisées sans excès",
+        "triste":  "uniquement présence, jamais de question"
+      }
+    },
     "bulles": {
       "matin": [
         "*s'étire lentement* 🌸",

@@ -202,6 +202,47 @@ function getExemples(journal, personality) {
   return tout.length ? tout.join(' / ') : '*bâille*, *sourit*';
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// RÔLE : Sérialise toneProfile (user_config.personality.toneProfile) en bloc
+//        texte prêt à être injecté dans les prompts via {{toneBlock}}.
+// POURQUOI : Le champ "style" libre ne suffit pas à discriminer Émilie vs Alexia
+//            côté API — toneProfile donne des instructions explicites sur les
+//            registres autorisés / interdits et les modulations par état émotionnel.
+//            Retourne '' si toneProfile absent → zéro régression sur les configs
+//            qui ne l'ont pas encore.
+// ─────────────────────────────────────────────────────────────────────────────
+function buildToneBlock(P, state) {
+  const tp = P?.toneProfile;
+  if (!tp) return ''; // pas de toneProfile → on n'injecte rien
+
+  const lignes = [];
+
+  // Registres que l'IA doit favoriser
+  if (tp.registresPrefs?.length)
+    lignes.push(`Registres favoris : ${tp.registresPrefs.join(', ')}.`);
+
+  // Registres explicitement interdits
+  if (tp.registresInterdits?.length)
+    lignes.push(`Registres interdits : ${tp.registresInterdits.join(', ')}.`);
+
+  // Contrainte de longueur de fragment
+  if (tp.marqueurs?.longueur)
+    lignes.push(`Longueur : ${tp.marqueurs.longueur}.`);
+
+  // Modulations contextuelles selon l'état émotionnel du Gotchi
+  // POURQUOI : Chaque état mérite un ton légèrement différent — explicitement
+  //            écrit pour l'IA plutôt que laissé à son interprétation
+  const mod = tp.modulationsParEtat || {};
+  if (state.energy <= 1 && mod.fatigue)
+    lignes.push(`Modulation énergie basse : ${mod.fatigue}.`);
+  if (state.happiness >= 4 && mod.fierte)
+    lignes.push(`Modulation bonne humeur : ${mod.fierte}.`);
+  if (state.happiness <= 1 && mod.triste)
+    lignes.push(`Modulation tristesse : ${mod.triste}.`);
+
+  return lignes.join('\n');
+}
+
 /**
  * Demande à Claude une pensée personnalisée (Limité à 3x par jour).
  */
@@ -309,6 +350,11 @@ async function askClaude() {
     //            customBubbles stocke les bulles générées par l'IA (ajoutées dans app.js:1101-1107).
     //            On prend les 6 premières (les plus récentes sont en tête du tableau).
     fragmentsEvites: (D.g.customBubbles || []).slice(0, 6).join(' / ') || 'aucun',
+    // RÔLE : Bloc ton dynamique construit depuis toneProfile (user_config.personality.toneProfile)
+    // POURQUOI : Permet à Claude de connaître les registres autorisés/interdits et les modulations
+    //            selon l'état émotionnel du moment — va bien au-delà du champ "style" libre.
+    //            Rendu '' si toneProfile absent → rétrocompatible, zéro régression.
+    toneBlock: buildToneBlock(P, { energy: g.energy, happiness: g.happiness }),
   };
 
   function fillVars(template) {

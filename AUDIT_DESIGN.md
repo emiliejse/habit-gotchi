@@ -1,422 +1,1059 @@
 # AUDIT_DESIGN.md — HabitGotchi v4.5
 
-Audit design / CSS / accessibilité — **lecture seule**.
-Périmètre : `css/style.css`, `index.html`, parties HTML de `js/ui.js`.
-Hors périmètre : `render.js`, `envs.js`, logique JS pure.
+Audit design / CSS / HTML / assets — mise à jour **2026-05-01**.
+Périmètre : `css/style.css`, `index.html`, `js/ui-*.js` (HTML & styles inline).
+Hors périmètre : `js/render.js`, `js/envs.js`, `js/render-sprites.js`, logique JS pure (`app.js`).
 
-Date de l'audit : 2026-04-30.
+> **Note de version.** L'audit précédent (2026-04-30) ciblait un fichier `js/ui.js` monolithique. Depuis, le code a été refactorisé en 8 modules `ui-*.js` chargés dans l'ordre déclaré dans `index.html:541-561`. Toutes les références ont été mises à jour. Les sections valides de l'ancien audit sont conservées.
 
 ---
 
 ## SECTION 0 — Résumé exécutif
 
-### Tableau de scores
+### 0.1 Tableau de scores (mis à jour)
 
 | # | Catégorie | Note | Justification |
 |---|---|:---:|---|
-| 1 | Hiérarchie visuelle | **B** | Tokens typographiques cohérents (`--fs-*`), titres `--font-title` bien posés, mais beaucoup d'inline `font-size:12px / 13px / 11px` court-circuitent l'échelle. |
-| 2 | Navigation & orientation | **B+** | Menu cahier original et lisible, état `active` clair, post-its séparés. Pas de breadcrumb sur les modales empilées (boutique → IA → confirmation). |
-| 3 | Cohérence graphique | **C+** | 7 variables CSS définies mais **jamais utilisées** (`--success`, `--warning`, `--info`, `--focus-ring`, `--fs-xl`, `--sp-xl`, `--paper-book-line`) + 2 variables **utilisées mais non définies** (`--c-border`, `--c-txt2`) → règles CSS silencieusement cassées. Hardcoded colors fréquents en JS. |
-| 4 | Lisibilité & typographie | **B** | Échelle 11→22 px solide, italics gotchi distinctifs, mais résidus `font-size:12px` et `font-size:9px` historiques en plusieurs endroits. |
-| 5 | Feedback & états interactifs | **B** | `:active` partout, `:focus-visible` global, `.btn:disabled` traité. `:hover` rare (mobile-first assumé), pas d'état `loading` standardisé, animations correctes. |
-| 6 | Accessibilité mobile | **C** | `aria-label` présent sur les boutons sans texte. Mais cibles tactiles **sous 44 px** dans : `.mood-b` (42×42), j-actions (✏️/🗑️ ~24 px), `.inv-env-btn` (~30 px de haut), `.btn-export` (~26 px). |
-| 7 | Adaptation TDAH | **A−** | Mini-bar habitudes, `.hab--next`, fleurs de quota visibles, `prefers-reduced-motion` respecté, settings collapsibles, animations < 400 ms. Très bien pour un projet personnel. Quelques modales empilées posent encore une légère charge. |
+| 1 | Hiérarchie visuelle | **B** | Tokens typographiques `--fs-*` solides et désormais utilisés pour l'essentiel du CSS. Reste ~20 occurrences inline `font-size:12px / 13px / 16px` dans `index.html` (`#g-name` ligne 119, `#j-text` ligne 185, `#claude-summary`…) et dans `ui-habs.js:48-49` (label habitude), `ui-shop.js:498-500`, `ui-ai.js:577-579`, `ui-agenda.js:312-313`. |
+| 2 | Navigation & orientation | **B+** | Menu cahier inchangé, état `.menu-line.active` propre (`ui-nav.js:117`). Toujours pas d'indicateur "onglet courant" en mode `compact` ni de breadcrumb sur les modales empilées. |
+| 3 | Cohérence graphique | **B−** | Refactorisation en modules a permis de consolider `_modalCloseBtn()` (`ui-core.js:249`) — désormais utilisé par boutique, agenda, debug, soutien. Mais bugs de variables fantômes persistent (`--c-border` / `--c-txt2` dans `ui-habs.js:139-149`, `--lilac-rgb` dans `ui-agenda.js:197`). Couleurs hardcodées encore présentes (#e07060, #e07080, #80b8e0, #e0708066…). |
+| 4 | Lisibilité & typographie | **B+** | Excellente échelle `--fs-xs/sm/md/lg/xl`. Polices Caveat / Nunito bien typées. Échelle adoptée à ~85 % dans le CSS, mais incohérence sur les titres de modales (`h3 font-size:13px` hardcodé partout). |
+| 5 | Feedback & états interactifs | **B** | `:focus-visible` global, `.btn:disabled` ok, `prefers-reduced-motion` ok. Toujours pas d'état `.is-loading` standardisé — chaque module IA gère son `startThinkingAnim()` ad hoc (`ui-ai.js:39-92`). |
+| 6 | Accessibilité mobile | **C+** | Cibles tactiles toujours sous 44 px sur `.mood-b` (42×42), `.j-actions button` (~24 px), `.btn-export` (~26 px), `.inv-env-btn` (~30 px). `--sab` est défini en dur à `0px` (`style.css:40`) au lieu de `env(safe-area-inset-bottom, 0px)`. Pas de `aria-live` sur `#bubble`, `#claude-msg`, `#claude-summary`. |
+| 7 | Adaptation TDAH | **A−** | Mini-bar habitudes (`ui-habs.js:31-37`), `.hab--next` (`style.css:863`), fleurs de quota (3×), settings collapsibles, sliders en bottom sheet (`ui-settings.js:1177-1274`). Excellent. Reste : pas de breadcrumb sur les modales empilées. |
 
-### Top 3 problèmes urgents
+### 0.2 Top 3 problèmes urgents
 
-1. **🔴 Variables CSS fantômes utilisées dans `ui.js`**
-   `js/ui.js:808-815` (`deplacerHab` — boutons ↑/↓ de la modale d'édition des habitudes) utilise `var(--c-border)` et `var(--c-txt2)` qui ne sont **définies nulle part** dans `:root`. Résultat : la bordure et la couleur de texte tombent sur la valeur par défaut du navigateur (`currentColor` / `transparent`) → boutons quasi invisibles selon palette.
-   *Impact TDAH :* contrôles de réordonnancement illisibles → frustration sur une action déjà secondaire.
-   *Suggestion :* remplacer par `var(--border)` et `var(--text2)`.
+1. **🔴 Variables CSS fantômes utilisées dans `ui-habs.js`**
+   `js/ui-habs.js:139-149` (modale "✏️ Mes habitudes", boutons ↑/↓) utilise `var(--c-border)` et `var(--c-txt2)` qui ne sont **définies nulle part** dans `:root`. Les boutons de réordonnancement perdent leur bordure et leur couleur de texte.
+   *Impact TDAH :* contrôles invisibles → frustration sur une action déjà secondaire.
+   *Fix :* remplacer par `var(--border)` et `var(--text2)` (4 occurrences au total).
 
-2. **🔴 Bulle de pensée verrouillée en blanc, ignore les palettes**
-   `css/style.css:300-339` (`.bubble`, `.bubble::before`) impose `background:#fff` et un `border-bottom:8px solid #fff` pour la flèche. Les palettes claires ou éventuelles palettes sombres futures perdent toute hiérarchie tama / bulle.
-   *Impact TDAH :* texte du gotchi peut devenir gris pâle sur blanc selon la palette ; `chat-bubble-claude` (`#f0e8ff`) est cohérent avec `--lilac`, mais la bulle principale ne respecte plus le système de tokens.
-   *Suggestion :* `background:var(--solid)` (ou nouvelle var `--bubble-bg`), même chose dans `::before`.
+2. **🔴 `--sab` figé à `0px` au lieu de `env(safe-area-inset-bottom, 0px)`**
+   `style.css:40`. La home indicator iPhone chevauche `.menu-languette` (`style.css:386`), `#dynamic-zone` (`style.css:177`) et `#toast` (`style.css:1204`) puisque tous calculent `var(--sab)` qui retourne 0.
+   *Impact TDAH :* tap raté sur la languette → re-tap → frustration.
+   *Fix :* `--sab: env(safe-area-inset-bottom, 0px);` (et idéalement `--sal`/`--sar` aussi).
 
 3. **🟠 Cibles tactiles sous 44 px sur des actions fréquentes**
-   - `.mood-b` (`css/style.css:1094`) : 42×42 px → 5 boutons d'humeur tapotés à chaque entrée de journal.
-   - `.j-entry .j-actions button` (`css/style.css:979`) : `padding:2px 8px; font-size:var(--fs-xs)` → ✏️ et 🗑️ font ~24 px de haut, à côté l'un de l'autre, gap 4 px → erreurs de tap garanties.
-   - `.btn-export` (`css/style.css:1003`) : `padding:5px 14px` → ~26 px de haut.
-   - `.inv-env-btn` (inline, `index.html:366-368`) : `padding:5px 4px; font-size:var(--fs-xs)` → ~30 px.
-   *Impact TDAH :* taps ratés = re-tap = perte de focus et frustration.
-   *Suggestion :* normaliser `.mood-b` à 44×44, doubler la zone de tap des `.j-actions` (44 px de haut, gap 8 px).
+   - `.mood-b` 42×42 px (`style.css:1115`) — 5 boutons d'humeur tapotés à chaque entrée journal.
+   - `.j-entry .j-actions button` ~24 px haut (`style.css:999-1002`) — édition/suppression note.
+   - `.btn-export` ~26 px haut (`style.css:1023-1025`).
+   - `.inv-env-btn` ~30 px haut (inline `index.html:290-292`).
 
-### Top 3 quick wins design
+### 0.3 Top 3 quick wins
 
-1. **🟢 Supprimer ou utiliser les variables sémantiques mortes**
-   `--success`, `--warning`, `--info`, `--focus-ring` (`css/style.css:32-36`) ne sont référencées nulle part. Soit les câbler (ex. `.btn-m` → `--success`, focus-ring de `:focus-visible` → `--focus-ring` au lieu de `--lilac` hardcodée), soit les retirer pour ne pas mentir au lecteur·ice.
-   *Effort : S — Impact maintenance : élevé.*
+1. **🟢 `lockScroll()` manquant dans `ouvrirSnack()`**
+   `ui-settings.js:43-122` ouvre 4 modales différentes via `openModal()` qui appelle bien `lockScroll()`. ✅ RÉSOLU. **Mais** `ouvrirSnack()` lui-même (en tant que helper appelé depuis un bouton canvas) ne déclenche pas `lockScroll()` au-delà de ce que fait `openModal`. À vérifier en cas de doute. *(Connaissance préalable du brief)* — confirmer.
 
-2. **🟢 Centraliser le bouton ✕ de fermeture des modales**
-   `ouvrirBoutique()` et `ouvrirAgenda()` (lignes 1110-1114 et 3998-4002 de `ui.js`) recodent un `✕` inline avec `min-width:44px;min-height:44px` au lieu d'utiliser `_modalCloseBtn()` + `.modal-close` du CSS. Trois implémentations divergentes coexistent.
-   *Effort : S — Impact cohérence : élevé.*
+2. **🟢 Câbler les variables sémantiques `--success` / `--warning` / `--info` / `--focus-ring`**
+   Définies `style.css:32-36`, jamais référencées. Câbler `:focus-visible` (`style.css:752`) sur `--focus-ring`, `.btn-m` sur `--success`, warnings cycle sur `--warning`. *Effort : S — Impact maintenance : élevé.*
 
-3. **🟢 Remplacer `#a09880`, `#e07080`, `#e07060`, `#38304a` par des tokens**
-   Couleurs paper / cycle / texte hardcodées 4-8 fois en HTML inline + ui.js (cf. tableau §3.3). Une variable `--cycle-red` / `--paper-text-soft` éviterait les divergences quand on change de palette.
-   *Effort : S/M — Impact cohérence : élevé.*
+3. **🟢 Définir `--lilac-rgb` ou retirer le fallback systématique**
+   `js/ui-agenda.js:197` utilise `rgba(var(--lilac-rgb, 180,160,230),0.07)` mais `--lilac-rgb` n'est pas définie dans `:root` ni dans `applyUIPalette()` (`ui-settings.js:361-373`). Le fallback est donc systématique → la note d'agenda n'épouse jamais la palette utilisateur. *Effort : S.*
 
 ---
 
-## SECTION 1 — Inventaire de l'interface
+## SECTION 1 — Inventaire de l'interface (mis à jour)
 
-### 1.1 Panneaux principaux (onglets `.pnl`)
+### 1.1 Panneaux principaux (`.pnl`)
 
-| ID | Déclencheur | Contenu | Actions disponibles |
-|---|---|---|---|
-| `#p-gotchi` | défaut + menu Accueil | Carte état (nom/stade/XP) + zone Claude (pensée IA, fleurs quota) + carte habitudes (mini-bar 6 ronds + liste) | Cocher habitude, demander pensée, info quota, personnaliser habitudes |
-| `#p-progress` | menu Progrès | Stats 3 cellules (série/XP/journal) + calendrier hebdo + bilan IA | Naviguer semaines, ouvrir détail jour, générer/copier bilan |
-| `#p-journal` | menu Journal | PIN gate ou contenu (mood picker, textarea, fleurs quota, accordéon entrées) | Saisir PIN, choisir humeur, écrire, sauver, naviguer semaines, exporter, éditer/supprimer entrée |
-| `#p-props` | menu Inventaire | Switcher env (3 boutons) + filtres ronds + section actifs + section rangés | Filtrer, activer/ranger objet, tout ranger, supprimer IA, long-press export |
-| `#p-perso` | menu Perso | 3 cartes : palette UI / couleur gotchi / ambiance env | Sélectionner palette/couleur/ambiance |
-| `#p-settings` | menu Réglages | 3 `<details>` collapsibles : Compte / Données / Avancé | Saisir nom, clé API, PIN, code, exporter, importer, MAJ, reset, debug |
+| ID | Déclencheur | Contenu | Module rendu | Actions |
+|---|---|---|---|---|
+| `#p-gotchi` | défaut + menu Accueil | Carte état (nom/stade/XP) + zone Claude (pensée IA, fleurs quota) + carte habitudes (mini-bar 6 ronds + liste) | `ui-habs.js` (`renderHabs()`) + `ui-ai.js` (`askClaude()`) | Cocher habitude, demander pensée, info quota, personnaliser habitudes |
+| `#p-progress` | menu Progrès | Stats 3 cellules + calendrier hebdo enrichi (cycle, RDV, journal) + bilan IA | `ui-settings.js` (`renderProg()`) + `ui-ai.js` (`genBilanSemaine()`) | Naviguer semaines, ouvrir détail jour, générer/copier bilan |
+| `#p-journal` | menu Journal | PIN gate ou contenu (mood picker, textarea, fleurs quota, accordéon entrées par jour) | `ui-journal.js` (`renderJ()`) | Saisir PIN, choisir humeur, écrire, sauver, naviguer semaines, exporter, éditer/supprimer |
+| `#p-props` | menu Inventaire | Switcher env (3 boutons) + filtres ronds (5) + section actifs + section rangés + mode suppr | `ui-shop.js` (`renderProps()`) | Filtrer, activer/ranger objet, tout ranger, supprimer IA, long-press export |
+| `#p-perso` | menu Perso | 3 cartes : palette UI / couleur gotchi / ambiance env | `ui-settings.js` (`renderPerso()`) | Sélectionner palette/couleur/ambiance |
+| `#p-settings` | menu Réglages | 3 `<details>` collapsibles : Compte / Données / Avancé | HTML statique + `ui-settings.js` | Saisir nom, clé API, PIN, code, exporter, importer, MAJ, reset, debug |
 
-### 1.2 Modales
+### 1.2 Modales (cartographie consolidée)
 
-Trois mécanismes coexistent — point de friction architectural mineur.
+| Nom | Déclencheur | Mécanisme | Bouton ✕ | ✅ depuis refacto |
+|---|---|---|---|---|
+| Modale info / confirm générique | `toastModal()`, `openModal()` | `ui-core.js:271` `openModal` (✕ auto) | ✅ standardisé | — |
+| Boutique | tap 🛍️ | `ui-shop.js:291` (manipulation directe `mbox.innerHTML`) | ✅ utilise `window._modalCloseBtn()` | OUI |
+| Agenda | tap titre `#hdr-title` ou post-it | `ui-agenda.js:55` via `openModalRaw()` | ✅ utilise `window._modalCloseBtn('fermerAgenda()')` | OUI |
+| Édition habitudes | bouton "✏️ Personnaliser" | `ui-habs.js:154` via `openModal()` | ✅ auto | — |
+| Confirmation soutien | bouton 💜 du menu | `ui-ai.js:415` (`_showSoutienConfirm`, manipulation `mbox`) | ❌ pas de ✕ — boutons "Annuler" / "Parler" uniquement | OUVERT |
+| Chat soutien IA | confirmation OK | `ui-ai.js:613` `_genSoutienCore` | ✅ via `_modalCloseBtn('modalLocked=false;clModal()')` | OUI |
+| Sliders énergie/bonheur | tap canvas badges | `ui-settings.js:1177` overlay séparé `#etats-overlay` | ❌ pas de ✕ — bouton ✓ Enregistrer + tap fond | acceptable (BS) |
+| Tablette terminal | tap 📟 | `ui-settings.js:709` overlay `#tablet-overlay` | ❌ pas de ✕ — clic fond | acceptable (BS) |
+| Menu cahier | tap ☰ | `ui-core.js:379` `toggleMenu()` overlay `#menu-overlay` | ❌ pas de ✕ — clic à côté | acceptable |
+| Snack repas | tap canvas | `ui-settings.js:43` via `openModal()` | ✅ auto | OUI |
+| Formulaire RDV | bouton "Ajouter rdv" | `ui-agenda.js:284` overlay séparé `#rdv-overlay` | ❌ — boutons "Annuler/Enregistrer" | acceptable (BS) |
 
-| Nom | Déclencheur | Contenu | Mécanisme |
-|---|---|---|---|
-| Modale info / confirm générique | `toastModal()`, `openModal()` | Texte + boutons OK/Annuler | `#modal` + `#mbox.innerHTML` (centralisé) |
-| Boutique | tap 🛍️ | Onglets Catalogue / Créations IA, liste pétales | `#mbox.innerHTML` direct (non `openModal()`) + classes `.shop-open .shop-catalogue` |
-| Agenda | tap titre `#hdr-title` ou post-it menu | Onglets Jour / Mois / Cycle | `#mbox.innerHTML` direct + classes `.shop-open .agenda-open` |
-| Édition habitudes | bouton "✏️ Personnaliser" | Liste inputs + ↑/↓ | `openModal()` |
-| Confirmation soutien | bouton 💜 du menu | Mini canvas p5 + 2 boutons | `#mbox.innerHTML` direct |
-| Chat soutien IA | confirmation OK | Bulles user/Claude/system | `#mbox.innerHTML` direct |
-| Sliders énergie/bonheur | tap canvas badges | Bottom sheet `slideUp` | overlay séparé `#etats-overlay` créé dynamiquement |
-| Tablette terminal | tap 📟 | Liste événements `tablet-line` | overlay séparé `#tablet-overlay` |
-| Menu | tap ☰ | Cahier d'ado | overlay dédié `#menu-overlay` |
+**Conclusion :** la centralisation par `_modalCloseBtn()` (`ui-core.js:249`, exposé sur `window` ligne 254) a résolu la duplication de l'audit précédent. Reste : la confirmation soutien pourrait recevoir un ✕ pour cohérence ; les overlays bottom-sheet (RDV, états, tablette) sont volontairement sans ✕ (poignée + tap fond).
 
-Le système est fragmenté : `openModal()` + 6 appels directs `mbox.innerHTML = ...` + 3 overlays séparés. Conséquence : `_modalCloseBtn()` n'est appliqué que par `openModal()`, donc tous les autres recodent leur ✕ à la main → code dupliqué + variations.
+### 1.3 HUD canvas (`.tama-screen` / `#cbox`)
 
-### 1.3 HUD canvas (zone p5.js)
-
-Dans `.tama-screen` (`#cbox`), 1:1, bordure 3 px lilas, dithering pixel art. Les badges énergie/bonheur sont **dessinés dans le canvas** (cf. commentaire `index.html:143`), avec interaction tap → `ouvrirModalEtats()`. Hors périmètre design détaillé, mais les sliders qu'il ouvre sont stylés dans `style.css:874-924`.
+Inchangé. Les badges énergie/bonheur sont dessinés dans le canvas p5 (commentaire `index.html:67-68`), tap → `ouvrirModalEtats()` (`ui-settings.js:1177`). La bottom sheet est stylée par `style.css:894-944`.
 
 ### 1.4 Navigation
 
-- **Languette** `.menu-languette` fixed bottom : ouvre le `#menu-overlay`. Pas d'état "open/closed" visible sur la languette — petit accroc UX, mais l'animation `bookSlideUp` du cahier compense.
-- **Cahier** : 6 lignes en quinconce (`.menu-line` / `.menu-line--indent`) + 2 post-its (Agenda, Soutien). Pas de bouton `Fermer` — clic à côté ferme. Lisible.
-- **État actif** : `.menu-line.active` (lilas + surlignage stabilo) — cohérent.
-- **Pas de bouton "retour" sur les modales empilées** (boutique → confirmation → résultat). Seul ✕ ferme tout.
+- **Languette** `.menu-languette` `style.css:372-396` fixed bottom, ouvre `#menu-overlay` via `toggleMenu()` (`ui-core.js:379`). **Toujours pas d'état "open" visible** sur la languette (icône ☰ figée).
+- **Cahier** : 6 lignes en quinconce (`style.css:494-530`) + 2 post-its (Agenda rose, Soutien lilas). Pas de ✕ — clic à côté ferme.
+- **État actif** : `.menu-line.active` (`style.css:523-527`) — ciblé via `ui-nav.js:115-117`.
+- **Mode compact** (`#console-top.compact`) : `#hdr-title` se replie (`style.css:209-214`), tama réduit à 220 px (`style.css:260-267`). Pas d'indicateur de l'onglet courant en mode compact.
 
 ---
 
-## SECTION 2 — Audit par catégorie
+## SECTION 2 — Audit CSS
 
-### 2.1 Hiérarchie visuelle
+### 2.1 Inventaire complet des variables CSS (`:root`, `style.css:9-100`)
 
-#### 🟠 IMPORTANT — `font-size` inline qui contournent l'échelle
-`js/ui.js` contient ~40 occurrences de `font-size:12px`, `font-size:13px`, `font-size:11px`, `font-size:10px` inline, alors que `--fs-xs/sm/md/lg` couvrent ces tailles. Exemples : `index.html:194` (nom du gotchi en `font-size:16px` inline alors que `#g-name` est défini par `--font-title`), `index.html:261` (textarea journal `font-size:12px`), `js/ui.js:717` (label habitude `font-size:12px`). La plupart datent d'avant la création de l'échelle.
-*Impact :* quand `--fs-sm` est ajusté, ces occurrences ne suivent pas → dérive silencieuse.
-*Suggestion :* remplacer toutes les valeurs px directes des polices par `var(--fs-*)`.
-
-#### 🟡 MINEUR — Doublon de règle `.modal-box`
-`css/style.css:1135` et `css/style.css:1303` redéfinissent `.modal-box`. Le second bloc (word-break) a été ajouté plus tard ; comme indiqué dans le commentaire ligne 1302, les deux propriétés flottaient hors règle. Aujourd'hui c'est OK mais lecture confuse.
-*Suggestion :* fusionner dans le bloc principal.
-
-#### ✅ RÉSOLU — Échelle typographique
-`--fs-xs/sm/md/lg/xl` introduits avec un commentaire clair sur le plancher de lisibilité. Adoption partielle mais réelle dans le CSS principal.
-
-### 2.2 Navigation & orientation
-
-#### 🟠 IMPORTANT — Pas d'indicateur d'onglet courant en dehors du menu
-`#p-gotchi.on` etc. n'ont pas de retour visuel hors du menu. Quand le menu est fermé, rien ne signale "tu es sur Progrès". Pour TDAH ouvrant l'app après notification, perte de contexte possible.
-*Suggestion :* persistant léger (titre dans header `compact` ou subtle indicateur sous la languette).
-
-#### 🟡 MINEUR — Languette muette
-`.menu-languette` n'a pas d'état "ouvert" (rotation, changement d'icône). Pas critique mais symbolique — la languette est la même qu'on ait ou non le menu ouvert.
-
-### 2.3 Cohérence graphique
-
-#### 🔴 CRITIQUE — Variables CSS utilisées mais **non définies**
-`js/ui.js:808-815` utilise `var(--c-border)` et `var(--c-txt2)`. Aucun `:root` ne les déclare. Les boutons de réordonnancement de la modale "✏️ Mes habitudes" perdent bordure et couleur de texte selon la palette.
-*Suggestion :* `var(--border)` + `var(--text2)`.
-
-#### 🟠 IMPORTANT — Variables CSS sémantiques **définies mais jamais utilisées**
-`--success`, `--warning`, `--info`, `--focus-ring` (`css/style.css:32-36`), `--fs-xl`, `--sp-xl`, `--paper-book-line`. Trompe le lecteur·ice : on croit que `--focus-ring` pilote `:focus-visible` mais c'est `--lilac` en dur (`css/style.css:739`).
-*Suggestion :* (a) câbler `--focus-ring` dans `:focus-visible`, (b) utiliser `--success` dans `.btn-m` ou pour les états validés (mini-bar `.done`), (c) supprimer `--fs-xl`/`--sp-xl` si vraiment non nécessaires.
-
-#### 🟠 IMPORTANT — Couleurs hardcodées dans le HTML inline JS
-Très étalé. Cf. §3.3.
-
-#### 🟡 MINEUR — Trois mécanismes d'ouverture de modale
-`openModal()` / `mbox.innerHTML = ...` / overlays séparés (`#etats-overlay`, `#tablet-overlay`). Chaque variante recode son ✕, son `lockScroll`, son `animEl`. Pas critique aujourd'hui mais source de divergences (ex : seul `openModal` injecte `_modalCloseBtn()`).
-
-### 2.4 Lisibilité & typographie
-
-#### 🟡 MINEUR — Italic 300 sur certaines polices d'OS
-`var(--font-gotchi)` → Nunito 300 italic est demandé dans Google Fonts (`index.html:121`). OK. Mais sur les `.chat-bubble-system` (`style.css:363-366`) la classe utilise `font-style:italic` sans préciser le poids → tombera sur 400 ; cohérent avec un message système secondaire mais à confirmer comme intentionnel.
-
-#### 🟡 MINEUR — Police de la `bubble` figée
-La bulle principale est en italic 300, ce qui marche très bien. Mais aucune option d'augmentation de taille — utile si malvoyance / fatigue. Pas urgent.
-
-#### ✅ RÉSOLU — Reset typographique des `<input>`/`<button>`
-`css/style.css:114-116` force `font-family:inherit` — résout l'héritage de Courier System par défaut sur iOS. Excellente prise en compte.
-
-### 2.5 Feedback & états interactifs
-
-#### 🟠 IMPORTANT — Pas d'état `loading` standardisé
-Plusieurs requêtes API (Claude pensée, soutien, bilan) affichent `💭` (`js/ui.js:2100`) ou `⏳` (`js/ui.js:651`) ad hoc. Pas de spinner, pas de classe `.is-loading` réutilisable, pas de `aria-busy`.
-*Impact TDAH :* pendant un appel IA lent, l'utilisatrice ignore si le tap a été pris en compte → re-clic → erreur.
-*Suggestion :* ajouter une classe `.btn.is-loading` avec un pseudo-élément `::after` rotatif et désactivation du `pointer-events`.
-
-#### 🟡 MINEUR — `:hover` quasi inexistant
-Choisi (mobile first), mais sur Chrome desktop / iPad pointer, ça donne une sensation "froide". `.modal-close:hover` existe (style.css:1163), `.btn-info-discret:hover` aussi — pas le reste.
-
-#### ✅ RÉSOLU — `:focus-visible` global
-`css/style.css:732-741` couvre `.btn`, `.menu-btn`, `.menu-circle`, `.nav-a`, `.pin-k`, `.inp`, `.mood-b`. Bonne base d'accessibilité clavier.
-
-#### ✅ RÉSOLU — `.btn:disabled`
-`css/style.css:749-753` : opacité 0.45 + `cursor:not-allowed` + `transform:none !important` désactive l'animation `:active`. Critère TDAH satisfait.
-
-### 2.6 Accessibilité mobile
-
-#### 🔴 CRITIQUE — Cibles tactiles sous 44 px sur des actions fréquentes
-| Élément | Taille effective | Fichier | Action |
-|---|---|---|---|
-| `.mood-b` | 42×42 px | `css/style.css:1094` | Choisir humeur (chaque entrée journal) |
-| `.j-entry .j-actions button` | ~24 px haut | `css/style.css:979-982` | Éditer/supprimer une note |
-| `.btn-export` | ~26 px haut | `css/style.css:1003` | Exporter journal |
-| `.inv-env-btn` | ~30 px haut | inline `index.html:366-368` | Switcher d'environnement (3 boutons) |
-| Filtres ronds inventaire | 52×52 px ✓ | `js/ui.js:977` | OK |
-| `.menu-btn`, `.modal-close`, `.nav-a` | 44×44 px ✓ | style.css | OK |
-
-*Suggestion :* normaliser à 44×44 px (ou 40 px **avec** zone de tap virtuelle via `padding`).
-
-#### 🟠 IMPORTANT — Safe area inset bottom seulement partielle
-`--sab` est défini à `0px` en dur dans `:root` (`style.css:40`) puis utilisé dans `padding-bottom` du `.menu-languette`, `#dynamic-zone`, `#toast`. Or `--sab` lui-même **n'est jamais réécrit avec `env()`** — seul `--sat` l'est (`style.css:39`). Donc tout le code qui fait `var(--sab)` recevra toujours 0 → la home indicator iPhone peut chevaucher la languette.
-*Suggestion :* `--sab: env(safe-area-inset-bottom, 0px);` dans `:root` (cohérent avec `--sat`). Idem pour `--sal`/`--sar` (mode paysage).
-
-#### 🟠 IMPORTANT — `aria-live` absent sur les zones IA
-`#claude-msg`, `#bubble`, `#claude-summary` se mettent à jour de manière asynchrone (réponses Claude) sans `aria-live="polite"`. Lecteur d'écran silencieux.
-*Suggestion :* ajouter `aria-live="polite"` sur `#claude-msg` et `#bubble`.
-
-#### 🟡 MINEUR — `<input type="text" id="cheat-input">` sans `inputmode`
-`index.html:448` — pas de `inputmode` → clavier QWERTY complet sur iOS, alors que les codes sont alphanumériques courts. Mineur.
-
-### 2.7 Adaptation TDAH
-
-#### 🟠 IMPORTANT — Empilement de modales sans breadcrumb
-Boutique → tap "✨ Demander à X" → modale de loading → modale résultat IA. Chaque modale écrase `#mbox.innerHTML`. Un retour en arrière n'est pas possible — seul ✕ ferme tout.
-*Impact :* perte de contexte, surtout si la requête échoue.
-*Suggestion :* à terme, garder une stack légère ou un `data-back="boutique"` pour proposer "← Retour à la boutique".
-
-#### 🟡 MINEUR — Densité visuelle de l'inventaire
-Switcher env (3 boutons) + filtres ronds (5 boutons) + bandeau actif + bandeau rangés + grille 3 colonnes : c'est beaucoup d'information en haut d'écran. Aujourd'hui ça reste lisible grâce aux séparateurs, mais c'est limite.
-
-#### ✅ RÉSOLU — `prefers-reduced-motion`
-`css/style.css:1334-1339` désactive proprement animations et transitions. Critique pour TDAH/troubles vestibulaires.
-
-#### ✅ RÉSOLU — `.hab--next` (Prochaine habitude)
-Glow + label "Prochaine" — réduit le coût décisionnel au démarrage. Implémentation propre (`css/style.css:843-867`).
-
-#### ✅ RÉSOLU — Mini-bar visuelle des habitudes
-6 ronds en haut de la carte habitudes — vue d'ensemble instantanée non-cliquable. Excellent pour TDAH.
-
-#### ✅ RÉSOLU — Settings collapsibles
-`<details class="settings-section">` — ferme la surcharge décisionnelle.
-
-#### ✅ RÉSOLU — Fleurs de quota
-`#thought-count`, `#bilan-flowers`, `#journal-flowers` — feedback visuel immédiat sur ce qui reste, sans chiffres anxiogènes.
-
----
-
-## SECTION 3 — Variables CSS
-
-### 3.1 Tokens définis dans `:root` (`css/style.css:9-100`)
-
-| Groupe | Variables |
-|---|---|
-| **Palette** | `--bg`, `--card`, `--solid`, `--pink`, `--lilac`, `--mint`, `--peach`, `--sky`, `--coral`, `--gold`, `--tama` |
-| **Texte / structure** | `--text`, `--text2`, `--border`, `--shadow` |
-| **Sémantiques** | `--success`, `--danger`, `--warning`, `--info`, `--focus-ring` |
-| **Safe areas** | `--sat`, `--sab`, `--sal`, `--sar` |
-| **Polices** | `--font-terminal`, `--font-title`, `--font-gotchi`, `--font-body` |
-| **Échelle typo** | `--fs-xs` (11), `--fs-sm` (13), `--fs-md` (15), `--fs-lg` (18), `--fs-xl` (22) |
-| **Espacements** | `--sp-xs` (4), `--sp-sm` (8), `--sp-md` (12), `--sp-lg` (16), `--sp-xl` (24), `--app-gutter` (14) |
-| **Border radius** | `--r-sm` (6), `--r-md` (10), `--r-lg` (14), `--r-xl` (20) |
-| **Thème papier** | `--paper-bg`, `--paper-border`, `--paper-text`, `--paper-entry`, `--paper-entry-ts`, `--paper-entry-btn`, `--paper-book-bg`, `--paper-book-border`, `--paper-book-shadow`, `--paper-book-line` |
-| **Thème terminal** | `--terminal-box`, `--terminal-border`, `--terminal-screen`, `--terminal-screen-border`, `--terminal-text`, `--terminal-text-dim`, `--terminal-line-div` |
-
-### 3.2 Variables peu utilisées ou orphelines
-
-| Variable | Statut | Détail |
+| Groupe | Variables | Statut global |
 |---|---|---|
-| `--success` | 🔴 Définie, jamais utilisée | À câbler (`.btn-m`, mini-bar `.done`) ou supprimer |
-| `--warning` | 🔴 Définie, jamais utilisée | À câbler ou supprimer |
-| `--info` | 🔴 Définie, jamais utilisée | À câbler ou supprimer |
-| `--focus-ring` | 🔴 Définie, jamais utilisée | `:focus-visible` utilise `--lilac` en dur — à corriger |
-| `--fs-xl` | 🟠 Définie, jamais utilisée | Aucun titre de panneau ne l'applique vraiment |
-| `--sp-xl` | 🟠 Définie, jamais utilisée | Marges entre blocs majeurs : à utiliser ou retirer |
-| `--paper-book-line` | 🟠 Définie, jamais utilisée | Probablement supplantée par le `repeating-linear-gradient` du cahier |
-| `--c-border` | 🔴 **Utilisée mais non définie** | `js/ui.js:808, 814` |
-| `--c-txt2` | 🔴 **Utilisée mais non définie** | `js/ui.js:809, 815` |
-| `--lilac-rgb` | 🟡 Référencée avec fallback | `js/ui.js:4126` `rgba(var(--lilac-rgb, 180,160,230),0.07)` — non définie, fallback systématique |
+| Palette de base | `--bg`, `--card`, `--solid`, `--pink`, `--lilac`, `--mint`, `--peach`, `--sky`, `--coral`, `--gold`, `--tama` | ✅ utilisées partout |
+| Texte / structure | `--text`, `--text2`, `--border`, `--shadow` | ✅ utilisées |
+| Sémantiques | `--success`, `--danger`, `--warning`, `--info`, `--focus-ring` | ⚠️ seul `--danger` utilisé (`style.css:1081-1082`, `ui-shop.js:956-961`, `ui-settings.js:273`). Les 4 autres sont **mortes**. |
+| Safe areas | `--sat`, `--sab`, `--sal`, `--sar` | ⚠️ seul `--sat` est défini avec `env()`, les 3 autres sont à `0px` en dur |
+| Polices | `--font-terminal`, `--font-title`, `--font-gotchi`, `--font-body` | ✅ utilisées |
+| Échelle typo | `--fs-xs` (11), `--fs-sm` (13), `--fs-md` (15), `--fs-lg` (18), `--fs-xl` (22) | ✅ `xs/sm/md/lg` largement adoptées ; `--fs-xl` jamais utilisée |
+| Espacements | `--sp-xs` (4), `--sp-sm` (8), `--sp-md` (12), `--sp-lg` (16), `--sp-xl` (24), `--app-gutter` (14) | ✅ adoption forte ; `--sp-xl` jamais utilisée |
+| Border radius | `--r-sm`, `--r-md`, `--r-lg`, `--r-xl` | ✅ utilisées |
+| Thème papier | `--paper-bg`, `--paper-border`, `--paper-text`, `--paper-entry`, `--paper-entry-ts`, `--paper-entry-btn`, `--paper-book-bg`, `--paper-book-border`, `--paper-book-shadow`, `--paper-book-line` | ⚠️ `--paper-book-line` jamais utilisée (supplantée par `repeating-linear-gradient` `style.css:429-435`) |
+| Thème terminal | `--terminal-box`, `--terminal-border`, `--terminal-screen`, `--terminal-screen-border`, `--terminal-text`, `--terminal-text-dim`, `--terminal-line-div` | ✅ utilisées |
 
-### 3.3 Couleurs encore hardcodées
+#### Tableau synthèse — variables problématiques
 
-| Fichier | Couleur | Sélecteur / contexte | Variable cible recommandée |
+| Variable | Définie ? | Utilisée dans | Statut |
 |---|---|---|---|
-| `css/style.css:424` | `#c8d8f0` | `.menu-book` lignes du cahier | nouveau token `--paper-rule` |
-| `css/style.css:436` | `#e09090` | `.menu-book::before` reliure rouge | nouveau token ou `--coral` |
-| `css/style.css:446` | `#d4c4a8` | trous de reliure | `--paper-border` ou nouveau token |
-| `css/style.css:552` | `#f9c8dc`, `#7a2848` | `.menu-postit--rose` | tokens `--postit-rose-bg/-fg` |
-| `css/style.css:558` | `#d8bef5`, `#3d1f6e` | `.menu-postit--lilac` | tokens `--postit-lilac-bg/-fg` |
-| `index.html:50, 60-62` | `#1a1a1a`, `#0f0`, `#0066cc`, `#aa4444` | panneau debug PWA inline | acceptable (debug only) |
-| `index.html:204` | `rgba(0,0,0,0.06)` | `#xp-b` background | `--border` ou nouveau `--track-bg` |
-| `index.html:245, 265` | `#a09880` | `pin-msg`, `v-status` | `--paper-entry-ts` (déjà = `#a09880`) |
-| `index.html:261` | `#faf6f0`, `#c8b8a0` | `#j-text` textarea inline | `--paper-entry`, `--paper-border` |
-| `index.html:340` | `rgba(176,144,208,.07)` | `#claude-summary` | nouveau `--lilac-soft` |
-| `js/ui.js:366` | `#38304a`, `#fff` | `toastSnack` background | `--text` foncé / `--solid` |
-| `js/ui.js:659` | `#81c784` | message API "Connecté" | `--success` (à câbler) |
-| `js/ui.js:883` | `#f07` (fallback de `--coral`) | badge NEW | OK avec fallback |
-| `js/ui.js:898` | `#e33` | ✕ suppression IA | `--danger` |
-| `js/ui.js:1067` | `#f55` (fallback de `--coral`) | bouton "Supprimer" actif | OK |
-| `js/ui.js:2223` | `#ffffff` | mini canvas soutien | `--solid` |
-| `js/ui.js:2895, 2966` | `#e07060` | warnings / quota dépassé | `--coral` ou nouveau `--cycle-red` |
-| `js/ui.js:2996` | `#a09880` | message "aucune entrée" | `--paper-entry-ts` |
-| `js/ui.js:3199` | `rgba(80,${g},120,${alpha})` | gradient calendrier hebdo | acceptable (calcul dynamique) |
-| `js/ui.js:3233, 4747, 4800` | `#e07080` | indicateur cycle J1 | nouveau token `--cycle-red` |
-| `js/ui.js:3457` | `#007a1f` | terminal dim | `--terminal-text-dim` (existe !) |
-| `js/ui.js:4463, 4506` | `#fff8f8` | confirm-inline danger bg | nouveau `--danger-soft` |
-| `index.html:103` | `#ddd6e8` | `<meta theme-color>` | impossible à variabiliser, mais à synchroniser avec `--bg` par défaut |
+| `--success` | ✅ `style.css:32` | nulle part | 🔴 morte |
+| `--warning` | ✅ `style.css:34` | nulle part | 🔴 morte |
+| `--info` | ✅ `style.css:35` | nulle part | 🔴 morte |
+| `--focus-ring` | ✅ `style.css:36` | nulle part (`:focus-visible` utilise `--lilac` en dur `style.css:759`) | 🔴 morte |
+| `--fs-xl` | ✅ `style.css:61` | nulle part | 🟠 morte |
+| `--sp-xl` | ✅ `style.css:70` | nulle part | 🟠 morte |
+| `--paper-book-line` | ✅ `style.css:90` | nulle part | 🟠 morte |
+| `--c-border` | ❌ NON DÉFINIE | `ui-habs.js:139, 145` (boutons ↑/↓) | 🔴 BUG silencieux |
+| `--c-txt2` | ❌ NON DÉFINIE | `ui-habs.js:140, 146` | 🔴 BUG silencieux |
+| `--lilac-rgb` | ❌ NON DÉFINIE | `ui-agenda.js:197` (avec fallback `180,160,230`) | 🟠 fallback systématique |
+| `--bubble-bg` | ❌ proposée par audit précédent | `style.css:300, 336` utilisent `#fff` en dur | 🔴 toujours OUVERT |
+| `--sab` | ✅ `style.css:40` à `0px` en dur | utilisée dans `.menu-languette`, `#dynamic-zone`, `#toast` | 🔴 retourne toujours 0 |
+| `--sal` / `--sar` | ✅ à `0px` en dur | `body padding-left/right` `style.css:144-145` | 🟡 paysage iPhone non absorbé |
 
-### 3.4 Animations
+### 2.2 Architecture de thèmes proposée
 
-| Nom | Durée | État | Note |
-|---|---|---|---|
-| `popBounce` (`.hab.done .ck`) | 0.4s | ✅ OK | Bounce satisfaisant, `cubic-bezier` propre |
-| `fu` (`.pnl`) | 0.2s | ✅ OK | Fade up discret |
-| `modalPop` | 0.22s | ✅ OK | Évite le clipping `scale + overflow` (commentaire l'explique bien) |
-| `bookSlideUp` | 0.35s | ✅ OK | Cohérent avec l'esthétique cahier |
-| `shopOpen` | 0.35s | ✅ OK | |
-| `tabletOpen` | 0.2s (référencée style.css:1209) | 🟡 À revoir | Aucune `@keyframes tabletOpen` détectée dans `style.css` — animation silencieuse |
-| `tamaSway` / `tamaSwayStrong` | 1.4s / 0.9s | ✅ OK | |
-| `jEntryFadeIn` | 0.25s | ✅ OK | |
-| `shakeRow` | 0.4s | ✅ OK | Feedback humeur requise |
-| `slideUp` (etats sheet) | 0.25s | ✅ OK | |
+**Objectif :** rendre HabitGotchi facilement extensible (thèmes saisonniers via `USER_CONFIG`, mode nuit, surcharges utilisatrice).
 
-`@media (prefers-reduced-motion: reduce)` neutralise tout (✅ `style.css:1334-1339`).
+#### Couche 1 — Primitives (palette brute, ne change jamais)
 
----
+```css
+:root {
+  /* Lilas (primaire) */
+  --color-lilac-100: #ede0f8;
+  --color-lilac-200: #d8bef5;
+  --color-lilac-400: #b090d0;   /* actuel --lilac */
+  --color-lilac-700: #6e5e8c;   /* actuel --text2 */
 
-## SECTION 4 — Layout
+  /* Rose / pink */
+  --color-pink-200: #f9c8dc;
+  --color-pink-400: #e8a0bf;    /* actuel --pink */
 
-### 4.1 Structure globale
+  /* Mint / vert */
+  --color-mint-400: #80d0a8;    /* actuel --mint */
 
-```
-<body> (flex column, padding-top:--sat)
-├── #console-top (fixed top, z:50, padding latéral --app-gutter)
-│   ├── .hdr (boutique | titre | tablette)
-│   └── #tama-bubble-wrap
-│       ├── .tama-shell #tama-shell-main (canvas p5)
-│       └── .bubble
-├── #dynamic-zone (flex:1, scroll, max-width:460, centré)
-│   └── 6 panneaux .pnl (un seul .on à la fois)
-├── .menu-languette (fixed bottom, z:150)
-├── #menu-overlay (fixed, z:200)
-├── #modal (fixed, z:300)
-├── #toast (fixed, z:500)
-├── #tablet-overlay (fixed, z:400)
-└── overlay etats créé dynamiquement (z:1000)
+  /* Coral / danger */
+  --color-coral-400: #e09090;   /* actuel --coral */
+
+  /* Cycle (nouveau) */
+  --color-cycle-red: #e07080;
+  --color-cycle-warn: #e07060;
+
+  /* Papier */
+  --color-paper-bg: #e8e0d0;
+  --color-paper-rule: #c8d8f0;  /* lignes du cahier menu */
+
+  /* Neutres */
+  --color-text-deep: #38304a;
+  --color-text-soft: #5a5070;
+}
 ```
 
-`#console-top.compact` (déclenché quand on quitte l'accueil) cache le `#hdr-title`, recompacte le tama (220 px max), garde les boutons. Bien pensé.
+#### Couche 2 — Tokens sémantiques (rôles)
 
-### 4.2 Scroll
+```css
+:root {
+  /* Surfaces */
+  --bg:           var(--color-lilac-100);   /* override par palette */
+  --solid:        #ffffff;
+  --card:         rgba(255,255,255,.88);
+  --bubble-bg:    var(--solid);              /* nouveau — corrige .bubble */
 
-- `#dynamic-zone` : zone scrollable principale, `padding-top:320px` fallback avant `syncConsoleHeight()` JS — risque de FOUC ~100 ms au boot. Acceptable.
-- `.modal-box` : `max-height:85dvh; overflow-y:auto; touch-action:pan-y` — bon réflexe pour ne pas bloquer le scroll mobile.
-- `#boutique-contenu` et `#agenda-contenu` : scrollbar masquée (`scrollbar-width:none; ::-webkit-scrollbar{display:none}`) — esthétique mais perte d'indication "il y a plus à voir". Compensé par `touch-action:pan-y` ; sur desktop on perd tout signal.
-- `.soutien-chat` : `max-height:50vh; overflow-y:auto` — OK.
-- `#tablet-screen` : `overflow-y:auto` — OK.
+  /* Texte */
+  --text:         var(--color-text-soft);
+  --text2:        var(--color-lilac-700);
 
-### 4.3 Safe areas
+  /* Bordures */
+  --border:       #ccc4d8;
 
-| Inset | État | Détail |
+  /* Sémantiques */
+  --primary:      var(--color-lilac-400);
+  --success:      var(--color-mint-400);
+  --danger:       var(--color-coral-400);
+  --warning:      #e8c068;
+  --info:         #88bee8;
+  --focus-ring:   var(--color-lilac-400);
+
+  /* Cycle (nouveau) */
+  --cycle-j1:     var(--color-cycle-red);
+  --cycle-warn:   var(--color-cycle-warn);
+
+  /* RGB pour rgba() — nouveau */
+  --lilac-rgb:    176, 144, 208;
+  --primary-rgb:  var(--lilac-rgb);
+}
+```
+
+#### Couche 3 — Thèmes (override)
+
+```css
+/* Saisons */
+[data-theme="hiver"]   { --bg: #c8d8e8; --primary: #6090c0; }
+[data-theme="automne"] { --bg: #e8c068; --primary: #c04818; }
+
+/* Mode nuit (futur) */
+[data-theme="night"] {
+  --bg: #2a2440;
+  --solid: #3a3258;
+  --text: #e8e0f0;
+  --text2: #b8a8d0;
+  --border: #4a4068;
+  --bubble-bg: var(--solid);
+}
+```
+
+#### Articulation avec `UI_PALETTES` (`config.js`)
+
+Aujourd'hui `applyUIPalette()` (`ui-settings.js:361-373`) écrase 8 propriétés CSS individuellement via `setProperty`. Avec l'architecture en couches, **la palette modifierait uniquement la couche 2 sémantique** :
+
+```js
+function applyUIPalette(id) {
+  const p = HG_CONFIG.UI_PALETTES.find(x => x.id === id);
+  const root = document.documentElement.style;
+  root.setProperty('--bg',         p.bg);
+  root.setProperty('--primary',    p.lilac);
+  root.setProperty('--lilac',      p.lilac);   // alias rétro-compat
+  root.setProperty('--success',    p.mint);    // ← nouveau câblage
+  root.setProperty('--mint',       p.mint);    // alias
+  root.setProperty('--pink',       p.pink);
+  root.setProperty('--text',       p.text);
+  root.setProperty('--text2',      p.text2);
+  root.setProperty('--card',       p.card);
+  root.setProperty('--border',     p.border);
+  // RGB pour rgba()
+  const rgb = hexToRgb(p.lilac).join(',');
+  root.setProperty('--lilac-rgb', rgb);
+  root.setProperty('--primary-rgb', rgb);
+}
+```
+
+### 2.3 Audit des styles inline dans les modules JS
+
+| Module | Type d'inline | Volume | Effort migration |
+|---|---|---|---|
+| `ui-habs.js` | `font-size:12px` × 2 (lignes 48-49, 71), `font-size:13px` × 2 (139, 145), couleurs cassées `--c-border`/`--c-txt2` | Faible | **S** |
+| `ui-shop.js` | très nombreux `style="..."` dans les cartes prop, filtres ronds (52×52), boutons d'action ; couleurs ok mais répétition | Élevé (~40 blocs) | **L** — mériterait classes `.shop-card`, `.shop-filter-btn`, `.shop-action-btn` |
+| `ui-ai.js` | `font-size:13px` (h3 modale soutien `ui-ai.js:577, 658`), styles inline canvas mini p5 | Moyen | **M** |
+| `ui-journal.js` | `font-size:12px` (textarea edit `ligne 279`), couleurs `#a09880`, `#e07060` (lignes 104, 174-175, 205, 235) | Faible | **S/M** |
+| `ui-agenda.js` | énorme : tous les boutons jour/mois/cycle, formulaires RDV/cycle, couleurs `#e07080`, `#80b8e0`, `#e0708066`, `#80b8e066`, `var(--coral)22`, `var(--lilac)22`, etc. | Très élevé (~50+ blocs) | **L** |
+| `ui-settings.js` | inline modales bienvenue, debug, snack ; `font-size:12px` × 6, `#81c784` × 1 | Moyen | **M** |
+| `ui-core.js` | `style.cssText` du `#snack` (ligne 204-207) — inline acceptable car élément créé dynamiquement | Très faible | — |
+| `ui-nav.js` | aucun inline | — | ✅ |
+
+**Recommandations migration :**
+- **Phase 1 (S/M) :** créer `.modal-h3` (`font-size:13px;color:var(--lilac)`) → unifier ~10 occurrences.
+- **Phase 2 (M) :** créer `.shop-filter-circle`, `.shop-action-pill` → réduire `ui-shop.js`.
+- **Phase 3 (L) :** classer les boutons RDV/cycle (`.rdv-emoji-btn`, `.rdv-recur-btn`, `.cycle-cell`) → réduire `ui-agenda.js`.
+
+---
+
+## SECTION 3 — Audit HTML
+
+### 3.1 `index.html` — propreté & maintenabilité
+
+**Bonnes pratiques en place :**
+- `aria-label` sur tous les boutons sans texte (`index.html:74, 79, 85, 138, 195, 203, 249, 253, 430`).
+- `role="button"` sur `#hdr-title` cliquable (`ligne 79`).
+- `inputmode="numeric"` sur les inputs PIN (`lignes 359, 362`).
+- `autocomplete="off"` / `new-password` correctement posés.
+
+**Points à corriger :**
+
+| Problème | Localisation | Sévérité |
 |---|---|---|
-| `--sat` | ✅ OK | Défini avec `env(safe-area-inset-top, 0px)`, utilisé dans `body`, `#console-top`, `#update-banner`, `#tablet-overlay` |
-| `--sab` | 🟠 À corriger | **Défini en dur à `0px`**, jamais avec `env()` → tout `var(--sab)` retourne 0. Cf. §2.6. Utilisé dans `#dynamic-zone`, `.menu-languette`, `#toast` — perd l'inset bottom des iPhones avec home indicator. |
-| `--sal` | 🟡 Stub | Défini à 0 px. Utilisé dans `body padding-left`. Pas grave en portrait, mais en paysage iPhone l'encoche latérale n'est pas absorbée. |
-| `--sar` | 🟡 Stub | Idem. |
+| `#hab-count` toujours présent mais `display:none !important` | `index.html:151`, CSS `style.css:635-643` | 🟡 code mort |
+| `<input type="text" id="cheat-input">` sans `inputmode` | `index.html:372` | 🟡 mineur |
+| `#g-name` `font-size:16px` inline alors que `.card-gotchi #g-name` est défini en `font-size:24px` Caveat dans CSS | `index.html:118-123` (le wrapper inline `font-size:16px` écrase visuellement) | 🟠 incohérence hiérarchie |
+| `#claude-summary` `font-size:var(--fs-sm)` inline + style massif (`background:rgba(176,144,208,.07);…`) | `index.html:264` | 🟠 doit être déplacé dans `style.css` (`.claude-summary`) |
+| `#j-text` `font-size:12px;background:#faf6f0;border-color:#c8b8a0` inline | `index.html:185` | 🟠 doit être tokenisé (`--fs-sm`, `--paper-entry`, `--paper-border`) |
+| `#thought-count`, `#bilan-flowers`, `#journal-flowers` ont la même classe `.thought-flowers` mais des contextes différents | `index.html:142, 181, 269` | 🟢 acceptable (override CSS) |
+| `<meta theme-color>` figé à `#ddd6e8` | `index.html:21` | 🟢 limitation HTML — pas variabilisable, à synchroniser manuellement avec la palette par défaut |
+| Pas de `aria-live` sur les zones IA `#bubble`, `#claude-msg`, `#claude-summary` | `index.html:96, 143, 264` | 🟠 a11y — lecteur d'écran muet |
+| `<sub>` utilisé pour la date dans le header (sémantique douteuse) | `index.html:81-83` | 🟡 mineur — `<small>` ou `<span>` plus propre |
+| Le commentaire d'ordre des scripts mentionne encore `ui.js` | `index.html:538` | 🟡 commentaire à mettre à jour vers la liste 8-modules |
 
-**Fix prioritaire :** `--sab: env(safe-area-inset-bottom, 0px);` (et idéalement `--sal`/`--sar` aussi).
+**Ordre de chargement des scripts** (`index.html:541-561`) — ✅ cohérent avec les dépendances :
+```
+config.js → app.js → render.js → envs.js → render-sprites.js
+→ ui-core.js → ui-habs.js → ui-shop.js → ui-ai.js
+→ ui-journal.js → ui-settings.js → ui-agenda.js → ui-nav.js (last)
+```
+
+### 3.2 Cartographie HTML généré dans les modules JS
+
+#### Classes CSS effectivement définies vs utilisées
+
+| Classe | Définie dans `style.css` | Utilisée dans HTML/JS | Statut |
+|---|---|---|---|
+| `.mood-b` | ✅ ligne 1114 | ✅ `ui-journal.js:108, 277` | OK |
+| `.hab-mini`, `.hab-mini-bar` | ✅ lignes 793-815 | ✅ `ui-habs.js:31-37` | OK |
+| `.hab--next` | ✅ ligne 863 | ✅ `ui-habs.js:46` | OK |
+| `.shop-open` | ✅ ligne 1265 | ✅ `ui-shop.js:332-338`, `ui-agenda.js:99` | OK |
+| `.shop-catalogue` | ✅ ligne 1269 | ✅ `ui-shop.js:336-339` | OK |
+| `.agenda-open` | ✅ ligne 1297 | ✅ `ui-agenda.js:99` | OK |
+| `.modal-pop` | ✅ ligne 1139 | ✅ `ui-core.js:281-284` | OK |
+| `.modal-close` | ✅ ligne 1172 | ✅ injecté par `_modalCloseBtn` | OK |
+| `.app-overlay` | ✅ ligne 404 | ✅ `index.html:434, 518` | OK |
+| `.btn-snack` | ❌ non définie | ❌ `ui-settings.js:103` (inline-only) | 🔴 ORPHELINE — uniquement décorative dans la chaîne, le styling vient des `style="…"` inline |
+| `.j-day-toggle` | ✅ lignes 1017-1019 | ✅ `ui-journal.js:233` | OK |
+| `.j-day-sep` | ✅ lignes 1006-1013 | ✅ `ui-journal.js:233` | OK |
+| `.tablet-line`, `.tl-time`, `.tl-icon` | ✅ lignes 1247-1249 | ✅ `ui-settings.js:738-741` | OK |
+| `.soutien-chat`, `.chat-bubble-user/claude/system` | ✅ lignes 342-366 | ✅ `ui-ai.js:661-662, 691, 715, 722, 781, 801` | OK |
+| `.j-entry`, `.j-actions`, `.j-text-content`, `.j-date`, `.mood-{super,bien,ok,bof,dur}` | ✅ lignes 973-995 | ✅ `ui-journal.js:243-253` | OK |
+| `.btn-info-discret` | ✅ ligne 677 | ✅ `index.html:138` | OK |
+| `.thought-flowers`, `.flower-on`, `.flower-off` | ✅ lignes 696-705 | ✅ `ui-settings.js:141-184` | OK |
+| `.j1-ligne` | ✅ inline only | ✅ `ui-agenda.js:1049, 1149` | 🟡 à externaliser |
+| `.settings-section`, `.settings-body`, `.settings-chevron` | ✅ lignes 1048-1082 | ✅ `index.html:332, 379, 394` + injection `ui-settings.js:1329-1335` | OK |
+
+#### Animations CSS — usage
+
+| Animation | Définie | Utilisée | Statut |
+|---|---|---|---|
+| `popBounce` | ✅ `style.css:854` | `.hab.done .ck` | ✅ |
+| `fu` | ✅ `style.css:1128` | `.pnl` | ✅ |
+| `modalPop` | ✅ `style.css:1135` | `.modal-pop` | ✅ |
+| `bookSlideUp` | ✅ `style.css:575` | `.menu-overlay.open .menu-book` | ✅ |
+| `shopOpen` | ✅ `style.css:1260` | `.modal-box.shop-open` | ✅ |
+| `tabletOpen` | 🔴 **NON DÉFINIE** | référencée `style.css:1240` (`#tablet-box`) | 🔴 silencieuse |
+| `tamaSway`, `tamaSwayStrong` | ✅ `style.css:1317-1328` | `.tama-wind`, `.tama-wind-strong` | ✅ |
+| `jEntryFadeIn` | ✅ `style.css:986` | `.j-entry` | ✅ |
+| `shakeRow` | ✅ `style.css:1120` | `#mood-pick.mood-required .mood-b` | ✅ |
+| `slideUp` | ✅ `style.css:1357` | `#etats-sheet`, `#rdv-sheet` (inline) | ✅ |
+
+### 3.3 Cohérence des nommages
+
+**Conventions actuellement observées :**
+- `.btn-*` : `btn-p`, `btn-s`, `btn-d`, `btn-m`, `btn-boutique`, `btn-info-discret`, `btn-export`, `btn-snack` — ✅ stable
+- `.card-*` : `card`, `card-primary`, `card-primary-header`, `card-gotchi` — ✅ stable
+- `.hab-*` : `hab`, `hab-mini`, `hab-mini-bar`, `hab--next`, `hab-count` — ✅ stable, BEM léger sur `--next`
+- `.j-*` (journal) : `j90`, `j-entry`, `j-text-content`, `j-date`, `j-actions`, `j-day-sep`, `j-day-toggle`, `j-week-title`, `j-week-count` — ✅
+- `.menu-*` : `menu-languette`, `menu-overlay`, `menu-book`, `menu-doodle`, `menu-line`, `menu-line--indent`, `menu-postit`, `menu-postit--rose/lilac` — ✅ BEM partiel
+- `.tama-*` : `tama-shell`, `tama-screen`, `tama-wind` — ✅
+- `.tablet-*` : `tablet-line`, `tl-time`, `tl-icon` — ⚠️ incohérence (`tl-` au lieu de `tablet-`)
+- `.pin-*`, `.mood-*`, `.cal-*`, `.nav-*` — ✅ courts et explicites
+
+**Anomalies identifiées :**
+| Classe | Problème | Suggestion |
+|---|---|---|
+| `.tl-time`, `.tl-icon` | préfixe `tl-` ne respecte pas `tablet-*` | renommer `tablet-line-time`, `tablet-line-icon` |
+| `.shop-open` | utilisée aussi par l'agenda → nom trompeur | renommer `modal-box--full` (BEM) ou laisser et documenter |
+| `.j90` | nom obscur (référence années 90) | acceptable (signature design) ou `journal-card` |
+| `.inv-env-btn` | définie inline uniquement (`index.html:290-292`) | externaliser et documenter |
+| `.btn-snack` | classe utilisée mais non définie en CSS (style inline) | définir en CSS pour cohérence |
 
 ---
 
-## SECTION 5 — Roadmap design priorisée
+## SECTION 4 — Propositions de redesign UX/UI
 
-### Priorité haute
+> Contraintes : moderniser sans trahir l'ADN pixel art, tout doit être implémentable en CSS/HTML sans toucher au canvas p5.
 
-**A. Réparer les variables CSS cassées**
-Fichiers : `js/ui.js:808-815`, `css/style.css:40` (`--sab`)
-Effort : **S**
-Impact TDAH : moyen (boutons réordo invisibles, safe area iPhone perdue)
-Détail : remplacer `--c-border`/`--c-txt2` par `--border`/`--text2`, et passer `--sab` à `env(safe-area-inset-bottom, 0px)`. Définir aussi `--sal`/`--sar` avec `env()`.
+### C1. Navigation & orientation
 
-**B. Conformité tactile 44 px**
-Fichiers : `css/style.css:1094` (`.mood-b`), `css/style.css:979-982` (`.j-actions button`), `css/style.css:1003` (`.btn-export`), `index.html:366-368` (`.inv-env-btn` inline)
-Effort : **S**
-Impact TDAH : élevé (taps ratés sur actions quotidiennes)
+#### C1.1 — Languette menu : indicateur ouvert/fermé
 
-**C. Corriger / câbler les variables sémantiques**
-Fichiers : `css/style.css:32-36`, `css/style.css:739`
-Effort : **S**
-Impact TDAH : faible direct, élevé en maintenance
-Détail : faire pointer `:focus-visible` vers `--focus-ring`, brancher `--success` sur `.btn-m` et l'état "Connecté", supprimer `--warning`/`--info` si vraiment inutiles ou les utiliser pour les warnings cycle / quotas.
+**Problème :** `.menu-languette` (`style.css:372`) garde l'icône ☰ figée que le menu soit ouvert ou fermé.
 
-### Priorité moyenne
+**Proposition :**
+```css
+.menu-languette { transition: transform .3s; }
+.menu-languette.is-open { transform: translateX(-50%) rotate(180deg); }
+.menu-languette.is-open::before { content: '✕'; }  /* override */
+```
 
-**D. Bulle de pensée tokenisée**
-Fichiers : `css/style.css:300-339`
-Effort : **S**
-Impact TDAH : moyen (cohérence palette)
-Détail : `--bubble-bg` (default `var(--solid)`), appliqué à `.bubble` et `.bubble::before`.
+```js
+// ui-core.js toggleMenu()
+ov.classList.toggle('open');
+document.querySelector('.menu-languette').classList.toggle('is-open');
+```
+**Effort : S** • **Fichiers :** `style.css:372`, `ui-core.js:379`.
 
-**E. Centraliser l'ouverture des modales lourdes**
-Fichiers : `js/ui.js:1110-1142` (`ouvrirBoutique`), `js/ui.js:3998-4022` (`ouvrirAgenda`)
-Effort : **M**
-Impact : cohérence + maintenabilité
-Détail : passer ces deux modales par `openModal()` ou créer `openShopModal()` qui injecte le ✕ standard et retire le ✕ inline dupliqué.
+#### C1.2 — Indicateur d'onglet courant en mode `compact`
 
-**F. Remplacer les `font-size:Xpx` inline par les tokens `--fs-*`**
-Fichiers : `js/ui.js` (~40 occurrences), `index.html` (résidus)
-Effort : **M**
-Impact : cohérence typo
+**Problème :** quand `#console-top.compact` masque `#hdr-title`, rien ne signale "tu es sur Progrès / Journal / etc." Un retour de notification = perte de contexte.
 
-**G. État `loading` standardisé**
-Fichiers : `css/style.css` (nouvelle classe `.btn.is-loading`), `js/ui.js` (toutes les fonctions IA)
-Effort : **M**
-Impact TDAH : élevé (anxiété pendant requête lente)
+**Proposition (mockup ASCII) :**
+```
+┌──────────────────────────────────┐
+│ 🛍️       [tama 220px]      📟 │
+│       ────●──────                │  ← dot lilac sous le tama, indique l'onglet
+│       prog · jour · …            │
+└──────────────────────────────────┘
+```
+Implémentation : un petit `<span class="compact-tab-label">` dans `.hdr` affiché uniquement quand `.compact`. CSS :
+```css
+.compact-tab-label { display: none; }
+#console-top.compact .compact-tab-label {
+  display: inline-block;
+  font-size: var(--fs-xs);
+  font-family: var(--font-title);
+  color: var(--lilac);
+  text-transform: capitalize;
+}
+```
+**Effort : S** • **Fichiers :** `index.html`, `style.css`, `ui-nav.js:108-128`.
 
-### Priorité basse
+#### C1.3 — Modales empilées : retour navigationnel
 
-**H. Tokeniser les couleurs cycle/post-it/papier hardcodées** (cf. §3.3)
-Effort : **M** | Impact : maintenance
+**Problème :** boutique → "✨ Demander à X" → modale loading → résultat. Chaque étape `mbox.innerHTML = …`. Aucun retour possible.
 
-**I. `aria-live="polite"` sur les zones IA**
-Fichiers : `index.html:172` (`#bubble`), `index.html:219` (`#claude-msg`), `index.html:340` (`#claude-summary`)
-Effort : **S** | Impact : a11y screen readers
+**Proposition légère :** `data-back="boutique"` sur `#mbox`, et un `← Retour` en haut à gauche quand l'attribut est posé.
+```js
+function openModalWithBack(html, backFn) {
+  openModal(`<button class="modal-back" onclick="${backFn}">← Retour</button>${html}`);
+  document.getElementById('mbox').dataset.back = backFn;
+}
+```
+**Effort : M** • **Fichiers :** `ui-core.js`, `ui-shop.js` (chaîne boutique→IA→résultat).
 
-**J. Indicateur d'onglet courant en mode `compact`**
-Effort : **S** | Impact TDAH : moyen
+### C2. Accueil & zone gotchi
 
-**K. Stack de retour pour les modales empilées (boutique → IA)**
-Effort : **L** | Impact TDAH : moyen
+#### C2.1 — Carte d'état (nom / stade / XP) : hiérarchie visuelle
 
-**L. Vérifier / supprimer la référence à `tabletOpen`** (animation manquante)
-Effort : **S** | Impact : visuel (animation silencieuse)
+**Problème :** `#g-name` et `#g-stage` sont sur la même ligne séparés par `|`, taille 16px (inline `index.html:118`). La barre XP est plate (10 px), peu expressive.
 
-**M. Supprimer `#hab-count` du HTML**
-`index.html:227`, `css/style.css:625-633` — l'élément existe mais a `display:none !important`. Code mort.
-Effort : **S** | Impact : propreté
+**Proposition :**
+```
+┌─────────────────────────────────┐
+│        ✿ Lyra ✿                 │  ← Caveat 28px (au lieu de 24)
+│       — Adolescent —            │  ← Caveat 18px italique
+│                                 │
+│   ▰▰▰▰▰▰▰░░░  120/150 XP       │  ← pixel-art bar (cubes 8px) + gradient lilac→pink
+└─────────────────────────────────┘
+```
+La barre devient une suite de cubes pixel art (`background: repeating-linear-gradient(90deg, var(--lilac) 0 8px, transparent 8px 10px)`). À chaque palier franchi, une animation `popBounce` joue sur le cube franchi.
+
+**Effort : M** • **Fichiers :** `index.html:117-130`, `style.css:947-948` (`.pbar/.pfill`).
+
+#### C2.2 — Zone pensée IA : mise en scène
+
+**Problème :** `#claude-card` (`style.css:713-720`) est un simple bloc fond lilac. La pensée Claude apparaît brutalement dans `#claude-msg` sans transition.
+
+**Proposition :**
+- Transformer `#claude-card` en bulle pixel art positionnée au-dessus du tama (relation visuelle directe).
+- Animation d'entrée : `bookSlideUp` adapté ou `fadeInDown` Animate.css.
+- Au repos : carte vide avec placeholder "Demander une pensée" centré + 3 ✿ visibles.
+
+**Effort : M** • **Fichiers :** `style.css:713-734`, `ui-ai.js:255-256`.
+
+#### C2.3 — Mini-bar habitudes : micro-animations de validation
+
+**Problème :** quand on coche une habitude, `popBounce` joue sur la checkbox. Le badge `.hab-mini` correspondant change discrètement de fond. Pas de feedback "fête".
+
+**Proposition (compatible `prefers-reduced-motion`) :**
+```css
+@keyframes pixelConfetti {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1); opacity: 0; }
+}
+.hab-mini.done::after {
+  content: '';
+  position: absolute;
+  width: 4px; height: 4px;
+  background: var(--mint);
+  animation: pixelConfetti .6s ease-out;
+  /* … 4-6 pseudo-éléments via JS pour positions aléatoires */
+}
+```
+Et dans `ui-habs.js`, après cochage, spawner 4 micro-éléments DOM (`.confetti-px`) avec positions randomisées en CSS variable.
+
+**Effort : M** • **Fichiers :** `style.css`, `ui-habs.js`.
+
+#### C2.4 — Quota fleurs : visualisation pixel art SVG
+
+**Problème :** `.thought-flowers` affiche des `✿` Unicode qui s'estompent. Joli mais peu expressif.
+
+**Proposition :** remplacer par 3 SVG inline pixel art `<svg class="flower-icon">` qui poussent progressivement (bourgeon → fleur entière → fanée si quota dépassé). 3 états : `.flower-bloom`, `.flower-bud`, `.flower-wilt`.
+
+**Effort : M** • **Fichiers :** `style.css:696-705`, `ui-settings.js:136-185`.
+
+### C3. Journal & humeurs
+
+#### C3.1 — Mood picker : faces pixel art SVG
+
+**Problème :** `.mood-b` (`style.css:1114`) utilise des emojis système (`🌧️ 😔 😐 😊 🌟`) — rendus différents iOS / Android, taille 42×42 px.
+
+**Proposition :**
+- Remplacer chaque emoji par un SVG pixel art 16×16 dessiné main (5 expressions distinctes).
+- Taille bouton **44×44 px** (corrige la cible tactile).
+- Micro-animation au tap : `transform: scale(1.15)` + `popBounce` léger.
+
+**Effort : M** (création des 5 SVG) • **Fichiers :** `style.css:1114-1120`, `ui-journal.js:89, 108, 277`.
+
+#### C3.2 — Entrées journal : hiérarchie
+
+**Problème :** `.j-entry` (`style.css:981`) plat — date, humeur, texte tous au même poids.
+
+**Proposition :**
+```
+┌─────────────────────────┐
+│  🌟      14:32          │  ← humeur grande, heure petite
+│  ─────────────          │
+│  Texte de la note en    │  ← italique Nunito 15px
+│  italique chaleureux    │
+│  ─────────────          │
+│              ✏️ 🗑️       │  ← actions à droite, plus grandes
+└─────────────────────────┘
+```
+- Humeur en grande icône (24 px) en haut à gauche.
+- Heure plus petite à droite.
+- Séparateur dashed entre humeur et texte.
+- Actions ✏️/🗑️ à 44 px (corrige tap).
+
+**Effort : S** • **Fichiers :** `style.css:973-1002`, `ui-journal.js:241-254`.
+
+#### C3.3 — Export : visibilité
+
+**Problème :** `.btn-export` (`style.css:1023`) discret, ~26 px de haut.
+
+**Proposition :** garder l'esthétique pill mais passer à 36 px avec icône SVG download au lieu du `↓` texte. Centrer dans un bandeau dédié en bas du journal.
+
+**Effort : S** • **Fichiers :** `style.css:1023-1031`, `index.html:209-212`.
+
+### C4. Boutique & inventaire
+
+#### C4.1 — Filtres ronds
+
+**Problème :** filtres 52×52 px (`ui-shop.js:163`) avec icône extraite du label par `[...label][0] + '︎'`. Cibles ok mais peu lisibles (icône seule, label dans `title`).
+
+**Proposition :**
+- Conserver les 52×52 px (cible ok).
+- Ajouter une mini-pastille label sous chaque rond (`.shop-filter-label` 9 px) : `Tous · Décor · Acc · Ambi · IA`.
+- État actif : passer la pastille en lilac.
+
+**Effort : S** • **Fichiers :** `ui-shop.js:140-169`.
+
+#### C4.2 — Carte objet : mise en scène
+
+**Problème :** `_propCard()` (`ui-shop.js:61-113`) est minimaliste (canvas + nom + type).
+
+**Proposition :**
+```
+┌──────────────────┐
+│  NEW             │
+│   ┌──────┐       │
+│   │ 🪑   │       │  ← canvas pixel art, fond lilac très doux
+│   └──────┘       │
+│   Nom Objet      │  ← Caveat 14px
+│   décor          │  ← uppercase 9px text2
+│   ─────────      │
+│   🌸 8 pétales   │  ← prix toujours visible, pas dans le bouton
+└──────────────────┘
+```
+- Fond du canvas : `rgba(176,144,208,0.08)` au lieu de blanc pur — distingue la zone.
+- Prix affiché en bas systématiquement.
+- État actif : bordure mint **+ glow** (au lieu de juste bordure).
+
+**Effort : M** • **Fichiers :** `ui-shop.js:61-113`.
+
+#### C4.3 — Actifs vs Rangés : distinction
+
+**Problème :** les cartes actives ont un fond mint et bordure mint ; les rangées un fond blanc et bordure border. Différence claire mais subtile.
+
+**Proposition :**
+- Actifs : bordure 3 px mint + ombre verte douce + petit badge `● ${env}` en haut à droite.
+- Rangés : fond gris clair, opacité 0.85, badge "rangé" discret en bas.
+
+**Effort : S** • **Fichiers :** `ui-shop.js:94-101`.
+
+### C5. Progrès & stats
+
+#### C5.1 — Calendrier hebdo : heatmap pixel art
+
+Aujourd'hui (`renderProg()` `ui-settings.js:441-508`), le calendrier hebdo est déjà enrichi (couleur habitudes, J1, ovulation, RDV, journal). C'est très bien.
+
+**Proposition d'amélioration :**
+- Remplacer les emojis 📓 et 📌 par des **micro-icônes SVG pixel art** (8×8 px) pour cohérence visuelle.
+- Ajouter une mini face d'humeur (4×4 px) si une note journal du jour a une humeur — actuellement on ne voit que "il y a une note", pas laquelle.
+
+**Effort : M** • **Fichiers :** `ui-settings.js:475-505`, `ui-agenda.js:799-803`.
+
+#### C5.2 — 3 cellules stats (série / XP / journal)
+
+**Problème :** `index.html:227-243` — 3 cartes identiques avec juste une couleur de chiffre.
+
+**Proposition (cartes stat pixel art) :**
+```
+┌────────┐ ┌────────┐ ┌────────┐
+│  🔥    │ │  ⭐    │ │  📓    │  ← icône 24px pixel art
+│  12    │ │  450   │ │  28    │  ← chiffre 28px Caveat
+│ jours  │ │  XP    │ │ notes  │  ← label uppercase 11px
+└────────┘ └────────┘ └────────┘
+```
+Chaque carte a sa propre icône SVG dédiée. Animation `popBounce` sur le chiffre quand il change.
+
+**Effort : S/M** • **Fichiers :** `index.html:227-243`.
+
+#### C5.3 — Bilan IA : mise en forme
+
+**Problème :** `#claude-summary` (`index.html:264`) affiche le bilan en `white-space: pre-wrap` Nunito italique 13 px. Lisible mais bloc dense.
+
+**Proposition :**
+- Ajouter une bordure "papier déchiré" en haut (`border-top: 4px solid var(--paper-border)` + `border-image`).
+- Aérer : `line-height: 1.8`, `padding: 16px 18px`.
+- Si le bilan contient des paragraphes (séparés par `\n\n`), les afficher dans des `<p>` avec marge entre eux.
+
+**Effort : S** • **Fichiers :** `index.html:264`, `ui-ai.js:930` (parser le retour).
+
+### C6. États du gotchi & feedbacks
+
+#### C6.1 — Bottom sheet "Comment tu te sens ?"
+
+**Problème :** `ouvrirModalEtats()` (`ui-settings.js:1177-1274`) est correct, mais peu pixel art — 2 sliders horizontaux génériques.
+
+**Proposition :**
+- Remplacer chaque slider par une **rangée de 5 sprites pixel art** cliquables (échelle 0-5).
+- Pour énergie : ⚡ vide → ⚡ plein progressif.
+- Pour bonheur : visage triste → visage rayonnant, 5 états.
+- Animation : sprite cliqué grossit (`scale(1.15)`) + remplit les précédents.
+
+**Effort : M** • **Fichiers :** `style.css:894-944`, `ui-settings.js:1212-1268`.
+
+#### C6.2 — État `loading` standardisé
+
+**Problème :** chaque fonction IA gère son `startThinkingAnim` (`ui-ai.js:39-92`) en remplaçant le `textContent` d'un élément.
+
+**Proposition :**
+```css
+.btn.is-loading {
+  pointer-events: none;
+  opacity: 0.7;
+  position: relative;
+}
+.btn.is-loading::after {
+  content: '...';
+  position: absolute;
+  right: 12px;
+  animation: dotPulse 1.2s steps(4) infinite;
+  font-family: var(--font-terminal);
+}
+@keyframes dotPulse {
+  0% { content: '·'; } 33% { content: '··'; } 66% { content: '···'; }
+}
+```
++ `aria-busy="true"` quand `is-loading`.
+
+**Effort : S** (CSS) + **M** (migration des appels) • **Fichiers :** `style.css`, `ui-ai.js` (3 fonctions principales).
+
+#### C6.3 — Toasts : variantes typées
+
+**Problème :** `#toast` (`style.css:1202-1221`) a un seul style (fond `rgba(56,48,74,0.88)`). Pas de distinction succès/erreur/info.
+
+**Proposition :**
+```css
+#toast.toast--success { background: var(--success); color: var(--text); }
+#toast.toast--danger  { background: var(--danger);  color: #fff; }
+#toast.toast--warning { background: var(--warning); color: var(--text); }
+```
++ API JS : `toast(msg, type)` où `type` ∈ `'success' | 'danger' | 'warning' | 'info'` (défaut neutre).
+
+**Effort : S** • **Fichiers :** `style.css:1202`, `ui-core.js:174-181`.
 
 ---
 
-## SECTION 6 — Wishlist UX (inspirations)
+## SECTION 5 — Icônes, émojis & assets visuels (NOUVEAU)
+
+### 5.1 Inventaire des emojis fonctionnels
+
+| Emoji | Contexte | Fichier / ligne | Rôle | Candidat remplacement |
+|---|---|---|---|---|
+| 🛍️ | Bouton boutique header | `index.html:75` | Navigation | **OUI** — PNG/SVG pixel art |
+| 📟 | Bouton tablette header | `index.html:86` | Navigation | **OUI** — PNG/SVG pixel art |
+| ☰ | Bouton languette menu | `index.html:430` | Navigation | **OUI** — SVG inline |
+| ✕ | Fermeture modale | `ui-core.js:250` | Action | Non — texte unicode acceptable |
+| ✿ | Marqueur décoratif (omniprésent) | partout | Branding | **NON** — c'est l'ADN visuel du gotchi |
+| 🏠 📊 📓 🎒 🎨 ⚙️ | Lignes du menu cahier | `index.html:456-481` | Navigation | **OUI** — PNG pixel art (priorité haute) |
+| 🗓️ 💜 | Post-its du menu | `index.html:489, 493` | Navigation | **OUI** (pour 🗓️), garder 💜 (charge émotionnelle) |
+| 🌳 🛏️ ⛰️ | Switcher d'env inventaire | `index.html:290-292` | Navigation contextuelle | **OUI** — PNG pixel art (priorité haute) |
+| 💭 ✨ 🎁 ✦ | Bulles, badges IA | `ui-ai.js`, `ui-shop.js` | État/personnalité | **NON** — langage du gotchi |
+| 🌟 😊 😐 😔 🌧️ | Mood picker | `ui-journal.js:89` | Action critique | **OUI** — SVG pixel art (5 faces dédiées) |
+| 🌧️ 😊 😐 😔 🌟 | Affichage humeur entrées | `ui-journal.js:202` | Affichage | **OUI** (mêmes assets) |
+| 🌸 ✿ | Compteur pétales / fleurs quota | `ui-shop.js:304`, `ui-settings.js:141-184` | Compteur | Non — branding |
+| ⏳ 💭 🤔 😴 🌙 💤 | Messages d'attente / nuit | `ui-ai.js`, `ui-settings.js` | Personnalité | **NON** |
+| 📋 📦 🗑️ ✏️ 📥 🔄 🔌 | Boutons d'action settings/inventaire | `index.html:386-404`, `ui-shop.js`, `ui-journal.js:250-251` | Action | **OUI** (priorité moyenne) — PNG pixel art |
+| 🛁 🍽️ 💩 🌱 ⭐ 💤 ✅ 📓 🎁 | Icônes événements tablette | `ui-settings.js:715-727` | Affichage timeline | **OUI** (priorité basse) — PNG pixel art |
+| 🪑 🎀 🌈 ✨ | Icônes filtres inventaire | `ui-shop.js:144-148` | Navigation | **OUI** — SVG pixel art |
+| 🎂 | Badge anniversaire | `index.html:122` | Événement | Non — célébration |
+| 🩺 🦷 👁️ 💆 🧠 🩸 💉 🤰 🐾 🎬 🍽️ ✈️ 📋 🏃 💛 🎉 📚 | Sélecteur emoji RDV agenda | `ui-agenda.js:295-302` | Catégorisation | **NON** — choix utilisateur, doit rester emoji système |
+| ↑ ↓ ← → | Navigation modale habitudes / agenda | `ui-habs.js`, `ui-agenda.js:692, 692` | Action directionnelle | Non — texte acceptable |
+
+**Résumé chiffré :**
+- Emojis fonctionnels candidats au remplacement : **~25**
+- Emojis "langage du gotchi" à conserver : **~30**
+- Emojis "choix utilisateur" (RDV, snacks) : à conserver
+
+### 5.2 Plan de remplacement par assets custom
+
+#### Format cible recommandé : **PNG pixel art** (priorité haute) + **SVG inline** (priorité basse)
+
+| Type d'icône | Format | Taille | Justification |
+|---|---|---|---|
+| Navigation principale (menu cahier, boutique, tablette) | PNG pixel art 24×24 @1x + 48×48 @2x | 24×24 px display | Cohérent avec le canvas p5 (image-rendering: pixelated) ; PNG gère mieux les couleurs mortes du pixel art |
+| Mood picker (5 faces) | SVG inline | 24×24 px display | Permet `currentColor` pour épouser la palette utilisatrice |
+| Filtres inventaire | SVG inline | 22×22 px | Réactive au thème |
+| Stats cards (🔥 ⭐ 📓) | PNG pixel art 32×32 | 32×32 px | Plus expressif, animation possible |
+| Événements tablette | SVG inline ou PNG 16×16 | 14×14 px | Petit, dense — SVG plus net |
+| Switcher env | PNG pixel art 24×24 | 24×24 px | Doit reprendre l'esthétique des décors p5 |
+
+#### Structure de dossier proposée
+
+```
+assets/
+└── icons/
+    ├── nav/                      ← navigation principale
+    │   ├── menu.png              (24×24)
+    │   ├── menu@2x.png           (48×48)
+    │   ├── shop.png
+    │   ├── tablet.png
+    │   └── back.svg
+    ├── menu/                     ← lignes du cahier
+    │   ├── home.png
+    │   ├── progress.png
+    │   ├── journal.png
+    │   ├── inventory.png
+    │   ├── perso.png
+    │   └── settings.png
+    ├── env/                      ← switcher environnement
+    │   ├── parc.png
+    │   ├── chambre.png
+    │   └── montagne.png
+    ├── mood/                     ← humeurs (SVG)
+    │   ├── super.svg
+    │   ├── bien.svg
+    │   ├── ok.svg
+    │   ├── bof.svg
+    │   └── dur.svg
+    ├── filter/                   ← filtres inventaire (SVG)
+    │   ├── all.svg
+    │   ├── decor.svg
+    │   ├── accessory.svg
+    │   ├── ambiance.svg
+    │   └── ai-creation.svg
+    ├── stats/                    ← cartes stats accueil progrès
+    │   ├── streak.png
+    │   ├── xp.png
+    │   └── journal.png
+    └── action/                   ← actions secondaires (PNG 16)
+        ├── edit.png
+        ├── delete.png
+        ├── export.png
+        ├── copy.png
+        └── refresh.png
+```
+
+**Convention de nommage :**
+- `kebab-case` pour les fichiers
+- Suffixe `@2x` pour rétina/HiDPI uniquement quand nécessaire
+- Suffixe d'état dans le nom : `-active`, `-disabled` si variantes (`shop-active.png`)
+
+### 5.3 Système d'icônes pixel art proposé
+
+#### Comparatif des 3 options
+
+| Option | Avantages | Inconvénients | Adapté HabitGotchi ? |
+|---|---|---|---|
+| **A — Sprite sheet PNG + `background-position`** | 1 seul fichier réseau, perf max | Pénible à maintenir, pas de teinte CSS, Source de vérité distante | ⚠️ Trop rigide pour une app évolutive |
+| **B — SVG inline avec `currentColor`** | Hérite de la couleur, pixel-perfect avec `shape-rendering:crispEdges`, accessible | Verbeux dans le HTML/JS, gestion des fichiers (read + inject) | ✅ Idéal pour mood, filtres, actions |
+| **C — `<img src="…png">` avec `image-rendering: pixelated`** | Simple, cache-friendly, mêmes assets pour ailleurs (export, doc) | Pas de teinte CSS, requête réseau par icône (mitigée par SW cache) | ✅ Idéal pour navigation et stats |
+
+#### Recommandation
+
+**Approche hybride C + B :**
+- **PNG `<img>`** pour les icônes de **navigation** et **affichage** (menu, switcher env, stats, événements tablette). Mises en cache par le service worker au premier load.
+- **SVG inline** pour les icônes **interactives à teinte dynamique** (mood picker, filtres, actions edit/delete).
+
+**Pourquoi pas de bundler :** la stack actuelle (HTML/CSS/JS vanilla, scripts en série) ne permet pas un bundling SVG type Vite. Les SVG seront donc inlinés à la main dans des helpers JS de type `iconMood('super')` retournant la chaîne SVG.
+
+#### CSS commun à ajouter
+
+```css
+/* Dans :root */
+:root { --icon-size: 20px; }
+
+/* Dans le bloc des composants */
+.icon {
+  display: inline-block;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.icon--png {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.icon--svg {
+  fill: currentColor;
+  shape-rendering: crispEdges;
+}
+.icon--lg { --icon-size: 32px; }
+.icon--sm { --icon-size: 14px; }
+```
+
+### 5.4 Top 8 icônes prioritaires à créer
+
+Ordre par impact visuel × fréquence d'utilisation :
+
+| # | Icône | Format | Taille | Pourquoi prioritaire |
+|---|---|---|---|---|
+| 1 | **Menu cahier (6 icônes)** : home, progress, journal, inventory, perso, settings | PNG 24×24 @1x+@2x | 24 px | Vu à chaque ouverture de menu, premier point de contact navigation |
+| 2 | **Mood picker (5 faces)** | SVG inline | 24 px | Action quotidienne critique, emoji système incohérent iOS/Android |
+| 3 | **Switcher env (3 icônes)** : parc, chambre, montagne | PNG 24×24 | 24 px | Doit cohabiter avec décors p5, emoji actuel rompt l'esthétique |
+| 4 | **Boutique (🛍️) + Tablette (📟)** header | PNG 24×24 | 24 px | Boutons de navigation persistants, premier coup d'œil |
+| 5 | **Filtres inventaire (5 icônes)** | SVG inline | 22 px | Aujourd'hui caractères Unicode mal contrôlés (✿, 🪑, 🎀…) |
+| 6 | **Stats cards (🔥 série, ⭐ XP, 📓 journal)** | PNG 32×32 | 32 px | 3 visualisations majeures de la page Progrès |
+| 7 | **Actions edit/delete (✏️/🗑️)** | SVG inline | 16 px | Cibles tactiles agrandies, présentes dans journal+agenda+inventaire |
+| 8 | **Languette menu (☰ → ✕)** | SVG inline | 22 px | Animation rotation + état clair |
+
+### 5.5 Emojis à conserver (langage du gotchi)
+
+Liste exhaustive **à NE PAS remplacer** par des assets techniques :
+
+- `✿` ✦ — marqueurs floraux décoratifs (branding)
+- `💭 ✨ 🌟 💜 🌸 🎁` — bulles de pensée et expressions du gotchi
+- `🌙 ☀️ 🌅 🌛 🌷 🌱` — temporalité narrative (matin/nuit/saison)
+- `*action*` — gestuelles entre astérisques (ex: `*bâille*`, `*sourit*`)
+- `🎂` — anniversaire utilisateur (événement intime)
+- Tous les emojis du **sélecteur RDV** (`ui-agenda.js:295-302`) — choix utilisatrice
+- Tous les emojis du **SNACKS_POOL** (`config.js:177-193`) — choix gotchi
+- Tous les emojis des **CATS** (catégories d'habitudes) — personnalisation utilisatrice
+
+**Règle d'or :** un emoji est candidat au remplacement si ses 3 conditions sont remplies :
+1. Il joue un rôle de **navigation** ou d'**action UI**
+2. Il est **figé** (pas un choix utilisateur)
+3. Il apparaît au moins à **2 endroits différents** de l'app
+
+---
+
+## SECTION 6 — Accessibilité & mobile (mis à jour)
+
+### 6.1 Cibles tactiles (état actualisé)
+
+| Élément | Taille effective | Fichier | Action | Statut |
+|---|---|---|---|---|
+| `.menu-btn` (header) | 44×44 ✓ | `style.css:218-222` | Boutique / tablette | ✅ |
+| `.modal-close` | 44×44 ✓ | `style.css:1172-1191` | Fermeture modale | ✅ |
+| `.nav-a` (◀▶ semaine) | 44×44 ✓ | `style.css:1105-1110` | Nav semaine | ✅ |
+| `.menu-line` | 56 px haut | `style.css:495-511` | Menu | ✅ |
+| `.menu-postit` | ~46 px haut | `style.css:544-558` | Agenda/Soutien | ✅ |
+| Filtres ronds inventaire | 52×52 ✓ | `ui-shop.js:163` | Filtre catégorie | ✅ |
+| `.mood-b` | **42×42** | `style.css:1114` | Picker humeur | 🔴 |
+| `.j-entry .j-actions button` | **~24 px** | `style.css:999-1002` | Édition note | 🔴 |
+| `.btn-export` | **~26 px** | `style.css:1023-1031` | Export journal | 🔴 |
+| `.inv-env-btn` | **~30 px** | `index.html:290-292` | Switcher env | 🔴 |
+| Boutons emoji RDV (formulaire) | aspect-ratio:1, ~36 px | `ui-agenda.js:319-323` | Choix emoji | 🟠 limite |
+| Chevrons SVG nav journal | padding 8 px → ~34 px | `index.html:195, 203` | Nav semaine journal | 🟠 limite |
+| Boutons rdv ✏️/🗑️ | font 13 px sans padding | `ui-agenda.js:212-213` | Édit/suppr RDV | 🔴 |
+
+**Toujours OUVERT** : 6 cibles sous 44 px, dont 2 critiques (`.mood-b`, `.j-entry .j-actions`).
+
+### 6.2 Safe areas
+
+| Inset | Définition actuelle | Problème |
+|---|---|---|
+| `--sat` | `env(safe-area-inset-top, 0px)` | ✅ correct |
+| `--sab` | `0px` (en dur) | 🔴 home indicator iPhone non absorbée |
+| `--sal` | `0px` (en dur) | 🟡 paysage iPhone — encoche latérale gauche |
+| `--sar` | `0px` (en dur) | 🟡 idem droite |
+
+**Fix recommandé :**
+```css
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+```
+
+### 6.3 `aria-live` sur les zones IA
+
+| Élément | Mise à jour async | `aria-live` actuel | À ajouter |
+|---|---|---|---|
+| `#bubble` | `flashBubble()`, `updBubbleNow()`, `askClaude` | ❌ | `aria-live="polite"` |
+| `#claude-msg` | `askClaude()` `ui-ai.js:256` | ❌ | `aria-live="polite"` |
+| `#claude-summary` | `genBilanSemaine()` `ui-ai.js:930` | ❌ | `aria-live="polite"` |
+| `#toast` | `toast()` | ❌ | `role="status"` + `aria-live="polite"` |
+| `#api-status` | `testApiKey()` | ❌ | `aria-live="polite"` |
+
+### 6.4 Comportement paysage
+
+`body padding-left: var(--sal)` et `padding-right: var(--sar)` (`style.css:144-145`) sont câblés mais inopérants car les variables sont à 0. En paysage iPhone X+, l'encoche latérale gauche peut chevaucher la languette ou la modale. Fix : voir 6.2.
+
+### 6.5 Parcours TDAH "cocher une habitude"
+
+Test mental étape par étape (utilisatrice TDAH) :
+
+1. **Ouverture app (PWA installée)** → splash icon-512 → boot ~300 ms → `#p-gotchi` affiché. ✅ rapide.
+2. **Lecture du gotchi** → carte `card-gotchi` claire, nom + stade visibles, fleurs quota indiquent le quota IA restant. ✅
+3. **Repérage de la prochaine habitude** → `.hab--next` glow lilac + label "Prochaine" → visible immédiatement. ✅ excellent.
+4. **Tap sur la checkbox** → `.hab .ck` 24×24 (sous 44 px en cible directe, mais `.hab` entière est cliquable et fait ~44 px de haut). 🟡 OK en pratique.
+5. **Animation `popBounce`** sur la `.ck` + classe `.done` ajoutée → feedback immédiat. ✅
+6. **Mise à jour de la mini-bar** → le badge correspondant passe en mint. 🟡 mais pas d'animation sur le badge mini — feedback faible.
+7. **Notification XP** → `toast(+15 XP)` + bulle gotchi joyeuse. ✅
+8. **Quota fleurs** : ne change pas (concerne la pensée IA pas l'habitude). 🟡 pas de "récompense visuelle" pour le streak.
+
+**Friction restante :** étape 6 (mini-bar non animée) et absence de "fête" sur compléments majeurs (3/6, 6/6). Cf. propositions C2.3 et C2.4.
+
+---
+
+## SECTION 7 — Roadmap design priorisée
+
+### 7.1 Items de l'ancienne roadmap — statut actualisé
+
+| Ancien ID | Description | Référence | Statut au 2026-05-01 |
+|---|---|---|---|
+| **A** | Réparer variables CSS cassées (`--c-border`, `--c-txt2`, `--sab`) | ancien `js/ui.js:808-815` → maintenant `js/ui-habs.js:139-149` ; `style.css:40` | 🔴 **TOUJOURS OUVERT** — variables fantômes inchangées, `--sab` toujours à 0px |
+| **B** | Conformité tactile 44 px (.mood-b, .j-actions, .btn-export, .inv-env-btn) | `style.css:1114, 999, 1023`, `index.html:290-292` | 🔴 **TOUJOURS OUVERT** — aucun changement |
+| **C** | Câbler variables sémantiques (`--success`, `--warning`, `--info`, `--focus-ring`) | `style.css:32-36, 752` | 🔄 **PARTIELLEMENT** — `--danger` câblé (`style.css:1081`, `ui-shop.js:956-961`, `ui-settings.js:273`), les 4 autres toujours mortes |
+| **D** | Bulle de pensée tokenisée (`--bubble-bg`) | `style.css:300-339` | 🔴 **TOUJOURS OUVERT** — `.bubble` reste `background:#fff` hardcodé, flèche idem |
+| **E** | Centraliser ouverture des modales lourdes (boutique, agenda) | ancien `ui.js:1110, 3998` → `ui-shop.js:291`, `ui-agenda.js:55` | ✅ **RÉSOLU** — `_modalCloseBtn()` exposé sur `window` (`ui-core.js:254`), utilisé par boutique/agenda/debug/voirBulles/exportObjetIA/soutien. `openModalRaw()` créé pour les cas sans ✕ auto |
+| **F** | Remplacer `font-size:Xpx` inline par `--fs-*` | `js/ui.js` (~40) | 🔄 **PARTIELLEMENT** — gros nettoyage dans le CSS et la plupart des modules. Reste ~20 occurrences (ex `ui-habs.js:48,71`, `ui-ai.js:577,658`, `ui-agenda.js:312,615`, plusieurs h3 modales `font-size:13px`, `index.html:118,185`) |
+| **G** | État `loading` standardisé `.btn.is-loading` | nouveau CSS + `ui-ai.js` | 🔴 **TOUJOURS OUVERT** — chaque appel IA continue avec `startThinkingAnim()` ad hoc (`ui-ai.js:39-92`) |
+| **H** | Tokeniser couleurs cycle/post-it/papier hardcodées | §3.3 ancien audit | 🔴 **TOUJOURS OUVERT** — `#e07060`, `#e07080`, `#80b8e0`, `#e0708066` etc. présents dans `ui-agenda.js`, `ui-journal.js:104, 174, 205`, `ui-settings.js`. Variables `--postit-rose-bg/-fg`, `--postit-lilac-bg/-fg`, `--cycle-red`, `--paper-rule` toujours absentes |
+| **I** | `aria-live="polite"` zones IA | `index.html:96, 143, 264` | 🔴 **TOUJOURS OUVERT** |
+| **J** | Indicateur d'onglet courant en mode `compact` | `style.css:209-214`, `ui-nav.js:108-128` | 🔴 **TOUJOURS OUVERT** |
+| **K** | Stack de retour pour modales empilées (boutique → IA) | `ui-shop.js`, `ui-ai.js` | 🔴 **TOUJOURS OUVERT** |
+| **L** | Vérifier / supprimer référence à `tabletOpen` (animation manquante) | `style.css:1240` | 🔴 **TOUJOURS OUVERT** — `tabletOpen` est référencée mais aucune `@keyframes tabletOpen` n'existe |
+| **M** | Supprimer `#hab-count` du HTML (display:none !important) | `index.html:151`, `style.css:635-643` | 🔴 **TOUJOURS OUVERT** — l'élément est inchangé |
+
+### 7.2 Roadmap consolidée 2026-05-01
+
+| Priorité | ID | Description | Fichiers | Effort | Impact TDAH |
+|---|---|---|---|---|---|
+| 🔴 Haute | A1 | `--c-border` / `--c-txt2` → `--border` / `--text2` | `ui-habs.js:139, 140, 145, 146` | S | Moyen (boutons réordo invisibles) |
+| 🔴 Haute | A2 | `--sab: env(safe-area-inset-bottom, 0px)` (+ sal/sar) | `style.css:40-42` | S | Élevé (home indicator iPhone) |
+| 🔴 Haute | B | Cibles tactiles 44 px (`.mood-b`, `.j-actions`, `.btn-export`, `.inv-env-btn`) | `style.css:1114, 999, 1023`, `index.html:290-292` | S | Élevé |
+| 🔴 Haute | C-bis | `:focus-visible` → `--focus-ring` ; câbler `--success`, `--warning`, `--info` | `style.css:32-36, 752`, `ui-shop.js`, `ui-journal.js` (cycle warnings) | S | Faible (maintenance) |
+| 🔴 Haute | D | Bulle pensée tokenisée `--bubble-bg` | `style.css:300, 336` | S | Moyen (cohérence palette) |
+| 🔴 Haute | I | `aria-live="polite"` sur `#bubble`, `#claude-msg`, `#claude-summary` ; `role="status"` sur `#toast` | `index.html:96, 143, 264, 505` | S | Élevé (a11y screen readers) |
+| 🟠 Moyenne | F | Remplacer ~20 derniers `font-size:Xpx` inline restants | `ui-habs.js:48,71`, `ui-ai.js:577,658`, `ui-agenda.js:312,615`, `index.html:118,185,…` | M | Faible (cohérence) |
+| 🟠 Moyenne | G | `.btn.is-loading` standard + `aria-busy` | `style.css` (nouveau), `ui-ai.js:165-295, 300-401, 858-943` | M | Élevé (anxiété requêtes lentes) |
+| 🟠 Moyenne | H1 | Tokeniser cycle : `--cycle-j1` (#e07080), `--cycle-warn` (#e07060), `--cycle-ovul` (#80b8e0) | `style.css` (nouveau), `ui-agenda.js:781-820`, `ui-journal.js:104, 174, 205`, `ui-settings.js:485-505` | M | Faible (maintenance) |
+| 🟠 Moyenne | H2 | Tokeniser post-its (`--postit-rose-*`, `--postit-lilac-*`) et papier (`--paper-rule`) | `style.css:434, 446, 562, 569` | S | Faible |
+| 🟠 Moyenne | J | Indicateur onglet courant en mode compact (label minuscule sous le tama) | `index.html`, `style.css`, `ui-nav.js:108-128` | S | Moyen |
+| 🟠 Moyenne | M-new | Définir `--lilac-rgb` (et l'écraser dans `applyUIPalette`) ; ou retirer le fallback dans `ui-agenda.js:197` | `style.css:9-42`, `ui-settings.js:361-373` | S | Faible |
+| 🟠 Moyenne | C1.1 | Languette : indicateur ouvert/fermé (rotation ☰ → ✕) | `style.css:372-396`, `ui-core.js:379-389` | S | Moyen |
+| 🟠 Moyenne | C2.3 | Micro-animations validation habitude (mini-confettis pixel) | `style.css`, `ui-habs.js` | M | Élevé (récompense) |
+| 🟢 Basse | C1.3 | Stack retour modales empilées | `ui-core.js`, `ui-shop.js` | L | Moyen |
+| 🟢 Basse | C3.1 | Mood picker : faces SVG pixel art (lié à §5.4 prio 2) | `style.css:1114`, `ui-journal.js:89` | M | Élevé (cohérence iOS/Android) |
+| 🟢 Basse | C2.1 | Carte état : nom Caveat 28px + barre XP pixel art | `index.html:117-130`, `style.css:947` | M | Faible |
+| 🟢 Basse | C5.2 | 3 cartes stats avec icônes dédiées | `index.html:227-243` | S/M | Faible |
+| 🟢 Basse | C6.1 | Bottom sheet états : 5 sprites pixel art au lieu de sliders | `style.css:894-944`, `ui-settings.js:1212-1268` | M | Moyen |
+| 🟢 Basse | C6.3 | Toasts typés (`--success`, `--danger`, `--warning`) | `style.css:1202`, `ui-core.js:174` | S | Faible |
+| 🟢 Basse | L | Supprimer / définir `@keyframes tabletOpen` | `style.css:1240` | S | Faible |
+| 🟢 Basse | M | Supprimer `#hab-count` du HTML | `index.html:151`, `style.css:635-643` | S | Faible (propreté) |
+| 🟢 Basse | 5.4 | Production assets icônes (8 prioritaires) | `assets/icons/` (nouveau) | L | Élevé (esthétique) |
+| 🟢 Basse | E-suite | Centraliser confirmations soutien sous `_modalCloseBtn()` | `ui-ai.js:415-454` | S | Faible (cohérence) |
+
+**Légende effort :** S < 1 h, M = 1-3 h, L > 3 h.
+
+---
+
+## SECTION 8 — Guide de nommage CSS (NOUVEAU)
+
+> À ajouter en tête de `css/style.css` (juste après le commentaire de fichier).
+
+```css
+/* ============================================================
+   CONVENTIONS DE NOMMAGE — HabitGotchi
+   ------------------------------------------------------------
+   1. VARIABLES CSS
+      - --fs-*       : font-size (xs/sm/md/lg/xl)
+      - --sp-*       : spacing/padding (xs/sm/md/lg/xl)
+      - --r-*        : border-radius (sm/md/lg/xl)
+      - --c-*        : NE PAS UTILISER — préférer le rôle direct
+                       (--text, --text2, --border, --primary…)
+      - --color-*    : primitives (palette brute, ne change pas)
+      - --paper-*    : tokens du thème papier (journal, menu cahier)
+      - --terminal-* : tokens du thème terminal (tablette)
+      - --cycle-*    : tokens du cycle menstruel (j1, ovul, warn)
+      - --sat/sab/sal/sar : safe-area-inset (toujours via env())
+
+   2. CLASSES
+      - .btn-{p|s|d|m}     : variantes de bouton (primary/secondary/danger/mint)
+      - .btn-{role}        : boutons spécialisés (.btn-boutique, .btn-export)
+      - .card / .card-*    : conteneurs cartes
+      - .hab / .hab-*      : système habitudes
+      - .hab--{etat}       : modificateurs BEM (.hab--next, .hab--done si nécessaire)
+      - .menu-*            : éléments du menu (.menu-line, .menu-postit, .menu-book)
+      - .menu-*--{variant} : modificateurs (.menu-line--indent, .menu-postit--rose)
+      - .j-*               : système journal (.j-entry, .j-actions, .j-day-sep)
+      - .mood-*            : humeurs (.mood-b, .mood-super, .mood-required)
+      - .pin-*             : composants PIN (.pin-pad, .pin-dots, .pin-k)
+      - .nav-*             : éléments de navigation (.nav-r, .nav-a)
+      - .cal-*             : calendrier (.cal, .cal-c)
+      - .icon              : préfixe partagé pour les icônes (.icon, .icon--lg, .icon--sm)
+
+   3. IDENTIFIANTS DOM
+      - Préfère un id seulement quand l'élément est UNIQUE et référencé en JS.
+      - id = camelCase ou kebab-case court (ex: #cbox, #mbox, #hdr-title).
+
+   4. STYLES INLINE
+      - Interdits sauf cas exceptionnel (élément créé dynamiquement).
+      - Toute couleur, taille, marge inline doit pointer une variable :
+        style="font-size:var(--fs-sm);color:var(--text2)"
+        plutôt que "font-size:13px;color:#7a5060".
+
+   5. SAFE AREAS
+      - Toujours utiliser var(--sat/sab/sal/sar) pour padding/positionnement
+        des éléments fixed/sticky proches des bords.
+
+   6. PALETTE & THÈMES
+      - Une nouvelle palette UI = override des tokens couche 2 (--primary, --bg, --text…)
+        pas des primitives couche 1 (--color-lilac-400…).
+      - Un nouveau thème (saison, nuit) = bloc [data-theme="X"] qui override
+        uniquement la couche 2 sémantique.
+
+   7. NOMMAGE D'UNE NOUVELLE FONCTION/UTILITAIRE
+      - Helper UI réutilisable : préfixé par _ s'il est interne à un module
+        (_modalCloseBtn, _setInert, _fermerMenuSiOuvert).
+      - Helper exposé : sans underscore (openModal, lockScroll, toast).
+
+   8. EMOJIS vs ICÔNES
+      - Emoji conservé : voix/personnalité du gotchi, choix utilisateur,
+        célébration ponctuelle (anniversaire).
+      - Icône custom (PNG/SVG) : navigation, action UI, mood picker, filtres.
+
+   9. ANIMATIONS
+      - @keyframes en kebab-case (popBounce → pop-bounce à terme).
+      - Toujours respecter @media (prefers-reduced-motion: reduce).
+      - Durée < 400 ms pour les feedbacks d'action ; < 600 ms pour les transitions de panneau.
+
+  10. ACCESSIBILITÉ
+      - Tout bouton sans texte : aria-label="…".
+      - Toute zone à mise à jour async (IA, toast) : aria-live="polite".
+      - Toute cible tactile : minimum 44×44 px (Apple HIG).
+   ============================================================ */
+```
+
+---
+
+## SECTION 9 — Wishlist UX
 
 Items non priorisés, pour référence future. **À ne pas implémenter sans demande explicite.**
+
+### Inspirations conservées de l'ancien audit
 
 - **Finch** — État "fatigué" du compagnon qui suggère une mini-pause respirée plutôt que de cocher l'habitude. Pourrait remplacer le label `.hab--next` par un message empathique selon `D.g.energy`.
 - **Bearable** — Vue "corrélations douces" : afficher un toast doux ("Tes meilleures journées contiennent souvent de la marche ✿") quand le bilan IA détecte un pattern. Pourrait s'intégrer en bas du `card-bilan`.
@@ -426,6 +1063,17 @@ Items non priorisés, pour référence future. **À ne pas implémenter sans dem
 - **Noom** — Confirmation par card swipe (gauche/droite) pour cocher une habitude — alternative au tap, pour les jours de fatigue motrice.
 - **Habitica** — "Snooze" doux d'une habitude pour la repousser de 24 h sans casser la série. Compatible avec le pattern TDAH.
 
+### Nouveaux items issus de cet audit
+
+- **Mode nuit (dark theme)** — bloc `[data-theme="night"]` activable via Réglages, avec couche 2 sémantique override. Cohérent avec l'usage en soirée.
+- **Thèmes saisonniers automatiques** — synchroniser `data-theme` sur la saison réelle (printemps lilas, été mint, automne corail, hiver bleu) avec opt-out dans Réglages.
+- **Onboarding pixel art guidé** — au premier lancement, séquence de 3 cartes pixel art (le gotchi te présente l'app) avant le wizard nom. Plus chaleureux que la modale "Comment s'appelle ton compagnon ?".
+- **Achievement micro-celebrations** — quand 7/7 jours d'une habitude dans la semaine, une animation pixel-art douce (1×) sur la carte habitudes.
+- **Picker d'icône de filtre inventaire personnalisable** — ajouter ses propres tags d'objets si on en accumule beaucoup (ex: "Cadeaux d'amis", "Souvenirs vacances").
+- **Réorganisation drag-and-drop des habitudes (avec feedback haptic)** — une fois les cibles tactiles 44 px en place, remplacer ↑/↓ par un drag tactile fluide. Important : conserver l'option boutons pour accessibilité motrice.
+- **Bulle de pensée multi-ligne avec hiérarchie** — quand Claude renvoie un message long, afficher la première phrase en grand + les suivantes en plus petit, comme une carte de tarot.
+- **Vue "Année" dans l'agenda** — heatmap 365 jours type GitHub contributions, avec couleur selon le score habitudes. Pour percevoir les patterns saisonniers.
+
 ---
 
-*Fin de l'audit. Aucun fichier de code modifié.*
+*Fin de l'audit. Aucun fichier de code n'a été modifié — ce document est la source de vérité pour la prochaine itération design.*

@@ -932,7 +932,9 @@ body {
   padding: 4px var(--sp-md) 20px; /* POURQUOI : même padding latéral que .card et #hab-home */
 }
 
-/* RÔLE : Badge individuel — cercle avec icône centré */
+/* RÔLE : Badge individuel — cercle brillant avec reflet, lecture seule */
+/* POURQUOI : L'aspect "badge décoratif" (pas de bordure, reflet brillant) signale visuellement
+   que ce n'est pas un bouton — contrairement à un contour net qui évoque l'interactivité */
 .hab-mini {
   width: 40px;
   height: 40px;
@@ -941,18 +943,34 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 19px;
-  background: rgba(176, 144, 208, 0.1);
-  border: 2px solid var(--border);
-  transition: background 0.3s ease, border-color 0.3s ease;
-  flex-shrink: 0; /* POURQUOI : empêche l'écrasement en ovale dans un conteneur flex */
-  pointer-events: none; /* Non-cliquable */
+  background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.18) 0%, rgba(176, 144, 208, 0.18) 60%, rgba(176, 144, 208, 0.08) 100%);
+  border: none;                /* Supprimé — une bordure nette évoque un bouton cliquable */
+  position: relative;          /* Ancre le pseudo-élément de reflet */
+  overflow: hidden;            /* Confine le reflet dans le cercle */
+  flex-shrink: 0;
+  pointer-events: none;        /* Non-cliquable */
   user-select: none;
+  transition: background 0.3s ease;
 }
 
-/* RÔLE : État coché — fond vert doux, bordure mint */
+/* RÔLE : Reflet brillant — bande lumineuse dans le tiers supérieur du badge */
+/* POURQUOI : Effet "badge en verre" → décoratif, pas interactif */
+.hab-mini::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  width: 55%;
+  height: 35%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+/* RÔLE : État coché — fond vert brillant, reflet conservé */
 .hab-mini.done {
-  background: linear-gradient(135deg, rgba(128, 208, 168, 0.3), rgba(128, 208, 168, 0.15));
-  border-color: var(--mint);
+  background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.25) 0%, rgba(128, 208, 168, 0.55) 55%, rgba(100, 180, 140, 0.35) 100%);
 }
 
 /* Bloc Habitude */

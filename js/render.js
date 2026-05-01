@@ -1100,12 +1100,17 @@ const p5s = (p) => {
     // POURQUOI : Sans lerp, le passage de 3→1 est instantané (1 frame) → trop abrupt.
     //            On initialise _dispEnergy/_dispHappy à la valeur réelle au 1er frame,
     //            puis on les approche de la cible à vitesse 0.12/frame (~0.7s à 12fps).
-    //            Les seuils visuels (EN_CRIT, HA_SAD…) lisent toujours la valeur lissée.
+    // IMPORTANT : le lerp s'applique uniquement aux effets de sprite (posture, expression du gotchi).
+    //             Les éléments de décor (soleil, arc-en-ciel, nuages, pluie, ciel) utilisent
+    //             haReal/enReal — les vraies valeurs entières — pour éviter que les seuils
+    //             de comparaison exacte (=== 4, >= 5) ne soient jamais atteints par un float.
     if (_dispEnergy === null) _dispEnergy = g.energy;
     if (_dispHappy  === null) _dispHappy  = g.happiness;
     _dispEnergy += (g.energy    - _dispEnergy) * 0.12;
     _dispHappy  += (g.happiness - _dispHappy)  * 0.12;
     const en = _dispEnergy, ha = _dispHappy;
+    const enReal = g.energy;    // valeur entière réelle — pour décor/météo
+    const haReal = g.happiness; // valeur entière réelle — pour décor/météo
 
     // RÔLE : Calcule le ratio nuit (0 = jour, 1 = nuit pleine) pour une transition progressive
     // POURQUOI : remplace l'ancien booléen n = (h >= 21) qui basculait brutalement d'un coup
@@ -1131,7 +1136,7 @@ const p5s = (p) => {
                     : 0;
 
 // 1. Fond et Météo
-    drawSky(p, h, ha);
+    drawSky(p, h, haReal); // haReal = valeur entière réelle (pas le float lerp)
     if (window.meteoData && window.meteoData.windspeed > 20) drawWind(p);
 
     const estJour = h < 19;
@@ -1141,9 +1146,11 @@ const p5s = (p) => {
     const enPreviewInv = !!window._invEnvForced;
     let envActif = (!enPreviewInv && nightRatio === 1) ? 'chambre' : (g.activeEnv || 'parc');
     if (!sleeping) {
-      if (ha < HA_MED)                    drawRain(p, ha);  // pluie si ha = 0 ou 1
-      else if (ha === HA_HIGH && estJour) drawSun(p);       // soleil à ha = 4
-      else if (ha >= 5 && estJour)        drawRainbow(p);   // arc-en-ciel à ha = 5 (max)
+      // RÔLE : haReal (entier réel) pour les seuils exacts — ha (float lerp) causerait
+      //        des comparaisons === 4 ou >= 5 jamais vraies pendant la transition.
+      if (haReal < HA_MED)                    drawRain(p, haReal);
+      else if (haReal === HA_HIGH && estJour) drawSun(p);
+      else if (haReal >= 5 && estJour)        drawRainbow(p);
     }
 
     drawActiveEnv(p, envActif, n, h);

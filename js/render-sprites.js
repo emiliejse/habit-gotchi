@@ -258,13 +258,26 @@ function _drawSilhouetteOffscreen(g, stage, breathX) {
   }
 }
 
+// RÔLE : Hash pseudo-aléatoire déterministe à partir de deux entiers.
+// POURQUOI : Permet de générer des valeurs "aléatoires" stables par position (rx, ry)
+//            sans seed externe — le même pixel donne toujours le même résultat,
+//            garantissant des taches fixes entre les frames sans stocker d'état supplémentaire.
+function _hashPx(rx, ry) {
+  let h = ((rx * 73856093) ^ (ry * 19349663)) >>> 0; // XOR de deux produits premiers
+  h = ((h ^ (h >>> 16)) * 0x45d9f3b) >>> 0;
+  h = ((h ^ (h >>> 16)) * 0x45d9f3b) >>> 0;
+  return (h >>> 0) / 0xffffffff; // valeur dans [0, 1]
+}
+
 // RÔLE : Construit (ou réutilise depuis le cache) le masque de silhouette pour le dither.
 // POURQUOI : L'appel à loadPixels() est coûteux. On ne régénère le masque que lorsque
 //            la clé stade+breathX change (au plus 3 clés possibles : -1, 0, +1).
+//            Chaque pixel du masque embarque des propriétés aléatoires fixes (draw, size, alphaBase)
+//            calculées une seule fois et réutilisées à chaque frame — effet taches organiques stable.
 // @param {Object} p       - Instance p5 principale
 // @param {string} stage   - 'egg' | 'baby' | 'teen' | 'adult'
 // @param {number} breathX - Décalage de respiration (0 ou ±1)
-// @returns {Array<{rx:number, ry:number}>} positions relatives au coin haut-gauche du sprite
+// @returns {Array<{rx, ry, draw, size, alphaBase}>} pixels de la silhouette avec propriétés fixes
 function _getSaleteMask(p, stage, breathX) {
   const key = stage + '_' + breathX;
 
@@ -300,8 +313,31 @@ function _getSaleteMask(p, stage, breathX) {
       // POURQUOI : On travaille en grille PX — lire un seul pixel par case suffit.
       const idx = (ry * cW + rx) * 4;
       if (g.pixels[idx + 3] > 0) {
-        // Stocker la position relative au cx/cy du sprite (origine = coin haut-gauche)
-        pixels.push({ rx: rx - ox, ry: ry - oy });
+        const relRx = rx - ox;
+        const relRy = ry - oy;
+
+        // RÔLE : Générer des propriétés visuelles fixes pour ce pixel via hash déterministe.
+        // POURQUOI : Les 3 valeurs h1/h2/h3 indépendantes donnent distribution, taille et opacité
+        //            stables à chaque frame — les taches ne bougent pas.
+        const h1 = _hashPx(relRx,     relRy);      // décide si ce pixel est dessiné
+        const h2 = _hashPx(relRx + 1, relRy);      // décide la taille
+        const h3 = _hashPx(relRx,     relRy + 1);  // décide l'opacité de base
+
+        // draw : ~50% des pixels retenus, avec légère surreprésentation des zones basses
+        // (les pieds/ventre sont plus sales que la tête — facteur y progressif)
+        const yBias = 0.1 * (relRy / (cH * 0.8)); // légèrement plus dense vers le bas
+        const draw = h1 < (0.48 + yBias);
+
+        // size : 60% petits (PX), 30% moyens (PX*1.5), 10% grosses taches (PX*2)
+        // POURQUOI : mélange de tailles = effet organique vs damier uniforme
+        const size = h2 < 0.60 ? PX
+                   : h2 < 0.90 ? PX * 1.5
+                   :              PX * 2;
+
+        // alphaBase : opacité de base dans [25, 160] — modulée ensuite par ratio global
+        const alphaBase = Math.round(25 + h3 * 135);
+
+        pixels.push({ rx: relRx, ry: relRy, draw, size, alphaBase });
       }
     }
   }
@@ -335,8 +371,6 @@ function drawSaleteDither(p, stage, cx, cy, salete, sl) {
   //            ce qui rendait la saleté imperceptible après 1-2 crottes. Désormais
   //            dithering léger dès salete=2, plein à salete=10.
   const ratio  = Math.max(0, Math.min(1, (salete - 2) / 8)); // 0 → 1
-  const alpha  = Math.round(40 + ratio * 120); // opacité 40 → 160
-  const stride = ratio < 0.5 ? 3 : 2;         // pas du damier : 1 case / 3 puis 1 / 2
 
   // RÔLE : breathX doit correspondre exactement à celui utilisé dans le sprite.
   // POURQUOI : Le masque est mis en cache par breathX — s'il diverge,
@@ -351,19 +385,33 @@ function drawSaleteDither(p, stage, cx, cy, salete, sl) {
   // Récupérer (ou construire) le masque de silhouette
   const mask = _getSaleteMask(p, stage, breathX);
 
-  // Couleur boue
-  const boue = p.color(101, 67, 33, alpha);
-  p.fill(boue);
+  // RÔLE : Dessiner les taches organiques — distribution random fixe + opacité variable par pixel.
+  // POURQUOI : Chaque pixel du masque embarque draw/size/alphaBase calculés une seule fois
+  //            au build du cache. Le ratio global module la densité (seuil draw) et l'alpha max
+  //            sans recalculer le cache — les taches restent fixes, leur intensité monte avec salete.
   p.noStroke();
 
-  // RÔLE : Appliquer le damier sur chaque macro-pixel de la silhouette.
-  // POURQUOI : On ne dessine qu'1 case sur stride — effet damier échiquier progressif.
-  //            (row + col) % stride reproduit l'alternance de l'ancienne ditherRect.
-  for (const { rx, ry } of mask) {
-    const row = Math.round(ry / PX);
-    const col = Math.round(rx / PX);
-    if ((row + col) % stride !== 0) continue;
-    p.rect(cx + rx, cy + ry, PX, PX);
+  // density : à ratio=0 on affiche ~30% des pixels "draw", à ratio=1 on en affiche ~100%
+  // POURQUOI : les taches apparaissent progressivement plutôt que d'un coup
+  const densityThreshold = 0.30 + ratio * 0.70;
+
+  // alphaMax : plafond d'opacité modulé par ratio — taches légères au début, opaques à salete=10
+  const alphaMax = Math.round(60 + ratio * 140);
+
+  for (const { rx, ry, draw, size, alphaBase } of mask) {
+    if (!draw) continue; // pixel non retenu par la distribution de base
+
+    // RÔLE : Seuil de densité progressif — à faible ratio, seuls les pixels les plus "forts" passent.
+    // POURQUOI : _hashPx(rx+2, ry) donne une valeur stable différente de h1, pour une sélection
+    //            indépendante de celle qui a décidé draw au build du cache.
+    const densityVal = _hashPx(rx + 2, ry);
+    if (densityVal > densityThreshold) continue;
+
+    // Opacité finale : alphaBase individuel plafonné par alphaMax global
+    const a = Math.min(alphaBase, alphaMax);
+
+    p.fill(101, 67, 33, a); // couleur boue, opacité variable
+    p.rect(cx + rx, cy + ry, size, size);
   }
 }
 

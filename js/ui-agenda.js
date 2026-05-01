@@ -1054,7 +1054,7 @@ const lignesJ1 = cycles.map((ds, i) => {
       <span style="font-size:var(--fs-sm);color:var(--text)">🩸 ${fmt}</span>
       <div style="display:flex;gap:4px">
         <button onclick="confirmerSuppressionCycle('${ds}', this)"
-          style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
+          class="rdv-action-btn" aria-label="Supprimer le cycle">🗑️</button>
       </div>
     </div>`;
 }).join('');
@@ -1081,7 +1081,7 @@ const lignesJ1 = cycles.map((ds, i) => {
                   style="position:absolute;opacity:0;pointer-events:none;width:0;height:0"
                   value="${ds}" onchange="modifierCycle('${ds}', this.value)">
                 <button onclick="confirmerSuppressionCycle('${ds}', this)"
-                  style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
+                  class="rdv-action-btn" aria-label="Supprimer le cycle">🗑️</button>
               </div>
             </div>`;
         }).join('')}

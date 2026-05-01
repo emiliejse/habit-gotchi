@@ -1098,6 +1098,45 @@ const LAYERS_TEEN = [
     ]
   },
 
+  // ── Célébration : bras gauche levé (ha=5, pose temporaire via animator) ──
+  // POURQUOI : when:false → rendu uniquement via aov.visible (animator).
+  //            Symétrique de pose_salut adult, adapté aux coords teen (-4 offset).
+  {
+    id: 'teen-bras-g-leve',
+    fill: 'C.bodyDk',
+    when: () => false,
+    rects: [
+      { x: -5, y: 2, w: 1, h: 3 },   // bras gauche levé vertical
+      { x: -5, y: 1, w: 1, h: 1 },   // main gauche au sommet
+      { x:  4, y: 4, w: 1, h: 2 },   // bras droit normal
+    ]
+  },
+
+  // ── Célébration : bras droit levé (ha=5, pose temporaire via animator) ──
+  {
+    id: 'teen-bras-d-leve',
+    fill: 'C.bodyDk',
+    when: () => false,
+    rects: [
+      { x: -5, y: 4, w: 1, h: 2 },   // bras gauche normal
+      { x:  4, y: 2, w: 1, h: 3 },   // bras droit levé vertical
+      { x:  4, y: 1, w: 1, h: 1 },   // main droite au sommet
+    ]
+  },
+
+  // ── Célébration : les deux bras levés (ha=5, pose temporaire via animator) ──
+  {
+    id: 'teen-bras-2-leves',
+    fill: 'C.bodyDk',
+    when: () => false,
+    rects: [
+      { x: -5, y: 2, w: 1, h: 3 },   // bras gauche levé
+      { x: -5, y: 1, w: 1, h: 1 },   // main gauche
+      { x:  4, y: 2, w: 1, h: 3 },   // bras droit levé
+      { x:  4, y: 1, w: 1, h: 1 },   // main droite
+    ]
+  },
+
   // ── Bras tombés (énergie faible) ────────────────────────────────
   {
     id: 'bras-tombes',
@@ -1121,6 +1160,32 @@ const LAYERS_TEEN = [
 ];
 
 function drawTeen(p, cx, cy, sl, en, ha) {
+  // RÔLE : Scheduler de poses célébration pour le teen (ha=5 uniquement).
+  // POURQUOI : Le teen n'a pas de poses idle normales — ce scheduler se déclenche
+  //            uniquement quand ha > HA_ARMS_UP pour lever les bras de façon dynamique.
+  //            Même mécanique que le scheduler adult : cooldown puis tirage au sort.
+  const teenPose = window._teenPose;
+  const teenPoseIds = ['teen_pose_bras_g_leve', 'teen_pose_bras_d_leve', 'teen_pose_bras_2_leves'];
+  const isTeen  = true; // garde pour clarté
+  const isTJumping = window.animator?.active.some(a => a.id === 'saut_joie') ?? false;
+  const isTPosing  = window.animator?.active.some(a => teenPoseIds.includes(a.id)) ?? false;
+  const canTVary   = !sl && !isTJumping && !isTPosing;
+
+  if (en >= EN_WARN && ha > HA_ARMS_UP && canTVary) {
+    // RÔLE : Décompter le cooldown puis déclencher une pose célébration au sort.
+    // POURQUOI : Même logique que l'adult — on attend la fin du cooldown,
+    //            puis on tire entre les 3 poses bras (gauche, droit, les deux).
+    if (teenPose.cooldown > 0) {
+      teenPose.cooldown--;
+    } else {
+      const r = Math.random();
+      if      (r < 0.33) { window.animator.trigger('teen_pose_bras_g_leve',  { duration: 18 + Math.floor(Math.random() * 12) }); }
+      else if (r < 0.66) { window.animator.trigger('teen_pose_bras_d_leve',  { duration: 18 + Math.floor(Math.random() * 12) }); }
+      else               { window.animator.trigger('teen_pose_bras_2_leves', { duration: 24 + Math.floor(Math.random() * 12) }); }
+      teenPose.cooldown = 60 + Math.floor(Math.random() * 60); // 5–10s avant la prochaine
+    }
+  }
+
   // RÔLE : Calculer la respiration pour les reflets oculaires et le dither.
   // POURQUOI : breathX n'est pas appliqué à cx avant renderSprite() — les x DSL intègrent
   //            déjà le décalage de base (-4). breathX est conservé séparément pour les
@@ -1442,11 +1507,37 @@ const LAYERS_ADULT = [
     ]
   },
 
-  // ── Bras levés joie (ha > HA_ARMS_UP, éveillé, énergie ok) ─────
+  // ── Célébration : bras gauche levé (ha=5, pose temporaire via animator) ──
+  // POURQUOI : when:false → rendu uniquement via aov.visible (animator).
+  //            Le bras droit reste en position normale (bras-normal affiché en dessous).
   {
-    id: 'bras-leves',
+    id: 'bras-g-leve',
     fill: 'C.bodyDk',
-    when: (pm) => !pm.sl && pm.en >= EN_WARN && pm.ha > HA_ARMS_UP,
+    when: () => false,
+    rects: [
+      { x: -6, y: 3, w: 1, h: 2 },   // bras gauche levé
+      { x: -7, y: 2, w: 1, h: 1 },   // main gauche
+      { x:  5, y: 5, w: 1, h: 2 },   // bras droit normal
+    ]
+  },
+
+  // ── Célébration : bras droit levé (ha=5, pose temporaire via animator) ──
+  {
+    id: 'bras-d-leve',
+    fill: 'C.bodyDk',
+    when: () => false,
+    rects: [
+      { x: -6, y: 5, w: 1, h: 2 },   // bras gauche normal
+      { x:  5, y: 3, w: 1, h: 2 },   // bras droit levé
+      { x:  6, y: 2, w: 1, h: 1 },   // main droite
+    ]
+  },
+
+  // ── Célébration : les deux bras levés (ha=5, pose temporaire via animator) ──
+  {
+    id: 'bras-2-leves',
+    fill: 'C.bodyDk',
+    when: () => false,
     rects: [
       { x: -6, y: 3, w: 1, h: 2 },   // bras gauche levé
       { x:  5, y: 3, w: 1, h: 2 },   // bras droit levé
@@ -1507,12 +1598,14 @@ const LAYERS_ADULT = [
   },
 
   // ── Pose normale ─────────────────────────────────────────────────
-  // POURQUOI : Affiché par défaut quand les bras sont en mode idle (éveillé, énergie ok,
-  //            bonheur pas max). Masqué via aov.hidden quand une pose variante est active.
+  // POURQUOI : Affiché par défaut quand les bras sont en mode idle (éveillé, énergie ok).
+  //            S'affiche aussi au niveau 5 — les poses célébration se superposent dessus
+  //            via animator (aov.visible), donc bras-normal sert de fallback entre les poses.
+  //            Masqué via aov.hidden quand une pose variante (idle ou célébration) est active.
   {
     id: 'bras-normal',
     fill: 'C.bodyDk',
-    when: (pm) => !pm.sl && pm.en >= EN_WARN && pm.ha <= HA_ARMS_UP,
+    when: (pm) => !pm.sl && pm.en >= EN_WARN,  // plus de condition ha — actif à tous niveaux
     rects: [
       { x: -6, y: 5, w: 1, h: 2 },
       { x:  5, y: 5, w: 1, h: 2 },
@@ -1567,28 +1660,42 @@ function drawAdult(p, cx, cy, sl, en, ha) {
   const isJumping = window.animator?.active.some(a => a.id === 'saut_joie') ?? false;
   // RÔLE : Vérifier si une pose idle est déjà en cours dans l'animator.
   // POURQUOI : Évite de déclencher une nouvelle pose avant que la précédente soit terminée.
-  const poseIds = ['pose_hanche_g', 'pose_hanche_d', 'pose_croises', 'pose_salut'];
+  // RÔLE : Lister toutes les poses possibles — idle normales + célébration ha=5.
+  // POURQUOI : isPosing bloque le déclenchement d'une nouvelle pose tant que la courante tourne.
+  const poseIds = ['pose_hanche_g', 'pose_hanche_d', 'pose_croises', 'pose_salut',
+                   'pose_bras_g_leve', 'pose_bras_d_leve', 'pose_bras_2_leves'];
   const isPosing = window.animator?.active.some(a => poseIds.includes(a.id)) ?? false;
   const canVary = !sl && !isJumping && !isPosing;
 
-  if (en >= EN_WARN && ha <= HA_ARMS_UP) {
+  if (en >= EN_WARN) {
     // RÔLE : Faire tourner le cooldown entre deux poses, puis tirer au sort.
-    // POURQUOI : isPosing remplace l'ancien pose.timer — tant qu'une animation de pose
-    //            est active dans l'animator, on ne tire pas de nouvelle pose.
-    //            Quand elle se termine (tick() la retire), isPosing repasse à false,
-    //            et on commence le cooldown avant la prochaine.
+    // POURQUOI : Le scheduler tourne maintenant à tous les niveaux de bonheur.
+    //            Quand ha=5, les poses célébration (bras en l'air) s'ajoutent au tirage
+    //            avec 50% de probabilité combinée — les poses idle normales continuent aussi.
     if (canVary) {
       if (pose.cooldown > 0) {
         pose.cooldown--;
       } else {
-        // RÔLE : Tirer une pose au sort et la déclencher via animator.
-        // POURQUOI : On passe { duration } en override pour garder la durée aléatoire
-        //            du scheduler — la def catalogue contient juste une valeur par défaut.
+        // RÔLE : Tirer une pose au sort — normale ou célébration selon le niveau de bonheur.
+        // POURQUOI : À ha=5 on ajoute les poses célébration (50% des cas) ;
+        //            sinon on reste sur les poses idle normales (hanches, croisés, salut).
         const r = Math.random();
-        if      (r < 0.35) { window.animator.trigger('pose_hanche_g', { duration: 60 + Math.floor(Math.random() * 24) }); }
-        else if (r < 0.70) { window.animator.trigger('pose_hanche_d', { duration: 60 + Math.floor(Math.random() * 24) }); }
-        else if (r < 0.90) { window.animator.trigger('pose_croises',  { duration: 72 + Math.floor(Math.random() * 24) }); }
-        else               { window.animator.trigger('pose_salut',    { duration: 12 + Math.floor(Math.random() * 6)  }); }
+        if (ha > HA_ARMS_UP) {
+          // Niveau bonheur max — poses célébration (50%) + poses normales (50%)
+          if      (r < 0.20) { window.animator.trigger('pose_bras_g_leve',  { duration: 18 + Math.floor(Math.random() * 12) }); }
+          else if (r < 0.40) { window.animator.trigger('pose_bras_d_leve',  { duration: 18 + Math.floor(Math.random() * 12) }); }
+          else if (r < 0.50) { window.animator.trigger('pose_bras_2_leves', { duration: 24 + Math.floor(Math.random() * 12) }); }
+          else if (r < 0.70) { window.animator.trigger('pose_hanche_g',     { duration: 60 + Math.floor(Math.random() * 24) }); }
+          else if (r < 0.85) { window.animator.trigger('pose_hanche_d',     { duration: 60 + Math.floor(Math.random() * 24) }); }
+          else if (r < 0.95) { window.animator.trigger('pose_croises',      { duration: 72 + Math.floor(Math.random() * 24) }); }
+          else               { window.animator.trigger('pose_salut',         { duration: 12 + Math.floor(Math.random() * 6)  }); }
+        } else {
+          // Niveau bonheur normal — poses idle uniquement
+          if      (r < 0.35) { window.animator.trigger('pose_hanche_g', { duration: 60 + Math.floor(Math.random() * 24) }); }
+          else if (r < 0.70) { window.animator.trigger('pose_hanche_d', { duration: 60 + Math.floor(Math.random() * 24) }); }
+          else if (r < 0.90) { window.animator.trigger('pose_croises',  { duration: 72 + Math.floor(Math.random() * 24) }); }
+          else               { window.animator.trigger('pose_salut',    { duration: 12 + Math.floor(Math.random() * 6)  }); }
+        }
         pose.cooldown = 60 + Math.floor(Math.random() * 60); // 5-10 sec avant la prochaine
       }
     }

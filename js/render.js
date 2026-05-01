@@ -103,11 +103,18 @@ window._envSelectorHits  = [];     // zones de tap calculées uniquement quand l
 //            valide — on peut le réutiliser directement (économie GC ~12 allocs/s).
 window._envSelectorCache = { env: null, open: null }; // dernière combinaison calculée
 
-// Variations de bras de l'adulte (animations idle)
+// Variations de bras de l'adulte (animations idle + célébration ha=5)
 window._adultPose = {
   current: 'normal',     // 'normal' | 'hanche_g' (étape A) | (à enrichir étape B)
   timer: 0,              // frames restantes dans la pose actuelle
   cooldown: 240          // frames avant la prochaine variation (240 frames = 20 sec à 12 fps)
+};
+
+// RÔLE : Scheduler de poses pour le teen — même mécanique que _adultPose.
+// POURQUOI : Le teen n'avait pas de poses idle. On lui en ajoute uniquement
+//            pour le niveau bonheur 5 (poses célébration bras en l'air).
+window._teenPose = {
+  cooldown: 240 // frames avant la première pose célébration
 };
 // ─── Animation : variables d'expressivité ───
 window._expr = {
@@ -217,6 +224,63 @@ const ANIM_DEFS = {
     }
   },
 
+  // ── Poses célébration adulte (ha=5) — bras en l'air, déclenchées par le scheduler ──
+  // POURQUOI : Identiques aux poses idle en structure (masquent bras-normal, rendent visible
+  //            leur calque). Durée courte (~1.5–3s) pour un effet joyeux et dynamique.
+  //            Le scheduler les pioche avec 50% de chances quand ha > HA_ARMS_UP.
+  pose_bras_g_leve: {
+    stages: ['adult'],
+    duration: 18,
+    poses: {
+      'bras-normal': { hidden: true },
+      'bras-g-leve': { visible: true }
+    }
+  },
+  pose_bras_d_leve: {
+    stages: ['adult'],
+    duration: 18,
+    poses: {
+      'bras-normal': { hidden: true },
+      'bras-d-leve': { visible: true }
+    }
+  },
+  pose_bras_2_leves: {
+    stages: ['adult'],
+    duration: 24,
+    poses: {
+      'bras-normal':  { hidden: true },
+      'bras-2-leves': { visible: true }
+    }
+  },
+
+  // ── Poses célébration ado (ha=5) — bras en l'air, déclenchées par le scheduler ──
+  // POURQUOI : Le teen n'avait pas de scheduler — ces poses sont pilotées par
+  //            _teenPose (même mécanique que _adultPose), initialisé dans render.js.
+  teen_pose_bras_g_leve: {
+    stages: ['teen'],
+    duration: 18,
+    poses: {
+      'bras-normaux':     { hidden: true },
+      'teen-bras-g-leve': { visible: true }
+    }
+  },
+  teen_pose_bras_d_leve: {
+    stages: ['teen'],
+    duration: 18,
+    poses: {
+      'bras-normaux':     { hidden: true },
+      'teen-bras-d-leve': { visible: true }
+    }
+  },
+  teen_pose_bras_2_leves: {
+    stages: ['teen'],
+    duration: 24,
+    poses: {
+      'bras-normaux':      { hidden: true },
+      'teen-bras-2-leves': { visible: true }
+    }
+  },
+
   // ── Étirement matinal — séquence 3 temps (déclenché à h===7 une fois par jour) ──
   // RÔLE : Simule un réveil/étirement du Gotchi : bras levés → croisés → repos.
   // POURQUOI : t1 dure 30f (~2.5s) pour que les bras restent bien visibles en l'air.
@@ -227,8 +291,8 @@ const ANIM_DEFS = {
     stages: ['adult'],
     duration: 30, // augmenté de 12→30 : bras restent en l'air ~2.5s au lieu de 1s
     poses: {
-      'bras-normal': { hidden: true },
-      'bras-leves':  { visible: true }
+      'bras-normal':  { hidden: true },
+      'bras-2-leves': { visible: true } // renommé depuis bras-leves → pose temporaire partagée avec célébration
     },
     bodyOffset: {
       // RÔLE : Monte le corps progressivement de 0 à -PX*2 sur les 30f.

@@ -1546,13 +1546,39 @@ async function bootstrap() {
       window.D.lastMissedPenalty = hierStr;
       save();
 
-      // Bulle gotchi — message doux, non-culpabilisant, pool aléatoire
-      const msgs = [
-        `Tu n'as pas coché tes habitudes hier… C'est ok, aujourd'hui c'est une nouvelle page 💜 −${penalite} XP`,
-        "Hier était une journée sans habitudes. Je suis là, on reprend aujourd'hui 🌸",
-        "Hier c'était difficile ? Pas de jugement. Aujourd'hui tu es là, c'est ce qui compte 💜",
-      ];
-      const msg = msgs[Math.floor(Math.random() * msgs.length)];
+      // Bulle gotchi — message adapté au ratio d'habitudes manquées
+      // RÔLE : Distinguer "quelques habitudes manquées" (effort partiel reconnu)
+      //        de "aucune habitude cochée" (journée sans) — sans culpabiliser dans les deux cas.
+      // POURQUOI : Dire "tu n'as pas coché tes habitudes" quand on en a coché 4/6
+      //            est inexact et démotivant. On reconnaît l'effort réel.
+      const totalHabs   = toutes.length;
+      const cochees     = totalHabs - manquees.length; // nb d'habitudes bien faites hier
+      const ratio       = cochees / totalHabs;         // 0 = rien, 1 = toutes
+
+      let pool;
+      if (ratio === 0) {
+        // Aucune habitude cochée hier
+        pool = [
+          "Hier tu n'étais pas là… c'est ok, ça arrive. Aujourd'hui est une nouvelle page 💜",
+          "Pas d'habitudes hier ? Je t'attendais, sans jugement. On reprend ensemble 🌸",
+          "Une journée sans habitudes, ça arrive. L'essentiel c'est que tu sois là ce matin 💜",
+        ];
+      } else if (ratio < 0.5) {
+        // Moins de la moitié cochée (effort faible mais réel)
+        pool = [
+          `Hier tu en as fait ${cochees} sur ${totalHabs} — c'est déjà quelque chose 🌱 Aujourd'hui on continue ?`,
+          `${cochees} habitude${cochees > 1 ? 's' : ''} hier, c'est pas rien. Les autres attendent aujourd'hui 💜`,
+          `Tu as quand même pris soin de toi un peu hier (${cochees}/${totalHabs}). On repart de là 🌸`,
+        ];
+      } else {
+        // La moitié ou plus cochée — effort significatif, manques mineurs
+        pool = [
+          `Tu en as fait ${cochees} sur ${totalHabs} hier — belle journée. Les ${manquees.length} restante${manquees.length > 1 ? 's' : ''} t'attendent 🌱`,
+          `${cochees} sur ${totalHabs} hier, c'est solide. Juste ${manquees.length} petit${manquees.length > 1 ? 's' : ''} oubli${manquees.length > 1 ? 's' : ''} 💜`,
+          `Tu t'es bien occupé·e de toi hier (${cochees}/${totalHabs}). On complète le tableau aujourd'hui ? 🌸`,
+        ];
+      }
+      const msg = pool[Math.floor(Math.random() * pool.length)];
 
       // Légère temporisation pour laisser l'UI se monter avant d'afficher la bulle
       setTimeout(() => {

@@ -1495,10 +1495,13 @@ if (!window._gotchiActif) return true;
       return false;
     }
 
-    // 🧹 Balai (x=70) — nettoyer les crottes, ou bulle si déjà propre
+    // 🧹 Balai (x=70) — nettoyer les crottes au sol uniquement
+    // POURQUOI : le balai = environnement. La saleté sur le gotchi se nettoie en le frottant.
     if (Math.abs(mx - 70) < 14 && my < 26) {
       const poops = window.D?.g?.poops || [];
-      if (poops.length === 0) {
+      if (poops.length > 0) {
+        setTimeout(() => cleanPoops(), 0);
+      } else {
         // RÔLE : Feedback quand il n'y a rien à ramasser.
         // POURQUOI : Sans message, le tap semble bugué — rien ne se passe.
         const msgsNoCrotte = [
@@ -1508,8 +1511,6 @@ if (!window._gotchiActif) return true;
           'Rien à faire, profite ! 🌿',
         ];
         flashBubble(msgsNoCrotte[Math.floor(Math.random() * msgsNoCrotte.length)], 2500);
-      } else {
-        setTimeout(() => cleanPoops(), 0);
       }
       return false;
     }
@@ -1669,7 +1670,7 @@ if (!window._gotchiActif) return true;
     if (modalEl && getComputedStyle(modalEl).display !== 'none') return true;
 
     const salete = window.D?.g?.salete || 0;
-    if (salete < 5) return true; // Rien à nettoyer
+    if (salete < 2) return true; // Rien à nettoyer — seuil aligné sur le seuil d'affichage du dithering
 
     const mx = p.touches[0]?.x ?? p.mouseX;
     const my = p.touches[0]?.y ?? p.mouseY;

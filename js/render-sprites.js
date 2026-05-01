@@ -1395,24 +1395,27 @@ const LAYERS_ADULT = [
   },
 
   // ── Joues pulsantes ─────────────────────────────────────────────
+  // POURQUOI : Décalées d'1px vers l'extérieur (x:-4 / x:3) pour rester visibles
+  //            quand le sourire occupe x:-3 et x:2 (coins de bouche-joie).
   {
     id: 'joues',
     fillFn: (pm, p) => p.lerpColor(p.color(C.cheek), p.color('#e88098'), pm.pulse),
     rects: [
-      { x: -3, y: 6, w: 1, h: 1 },
-      { x:  2, y: 6, w: 1, h: 1 },
+      { x: -4, y: 6, w: 1, h: 1 },   // joue gauche — 1px plus à gauche qu'avant
+      { x:  3, y: 6, w: 1, h: 1 },   // joue droite — 1px plus à droite qu'avant
     ]
   },
 
   // ── Joues débordantes joie ──────────────────────────────────────
+  // POURQUOI : Décalées d'1px supplémentaire pour ne pas chevaucher les joues principales.
   {
     id: 'joues-joie',
     fillFn: (pm, p) => p.lerpColor(p.color(C.cheek), p.color('#e88098'), pm.pulse),
     alpha: 0.7,
     when: (pm) => isMood('joie'),
     rects: [
-      { x: -4, y: 6, w: 1, h: 1 },
-      { x:  3, y: 6, w: 1, h: 1 },
+      { x: -5, y: 6, w: 1, h: 1 },   // débordement gauche joie
+      { x:  4, y: 6, w: 1, h: 1 },   // débordement droit joie
     ]
   },
 

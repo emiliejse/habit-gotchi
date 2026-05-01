@@ -103,6 +103,17 @@ window._envSelectorHits  = [];     // zones de tap calculées uniquement quand l
 //            valide — on peut le réutiliser directement (économie GC ~12 allocs/s).
 window._envSelectorCache = { env: null, open: null }; // dernière combinaison calculée
 
+// RÔLE : Couleur du flash thématique par environnement de destination.
+// POURQUOI : Chaque biome a une teinte évocatrice — le flash donne une sensation
+//            de "passage" vers un nouveau lieu, plutôt qu'un cut brutal.
+//            Clé = id de l'env (tel que stocké dans D.g.activeEnv).
+const ENV_FLASH_COLOR = {
+  parc:     '#c8f0a8', // vert herbe printanier
+  chambre:  '#f0d8a8', // orangé chaud, lumière intérieure
+  montagne: '#e8f0f8', // blanc neige, air pur
+  plage:    '#a8e8f0', // bleu aqua, écume
+};
+
 // Variations de bras de l'adulte (animations idle + célébration ha=5)
 window._adultPose = {
   current: 'normal',     // 'normal' | 'hanche_g' (étape A) | (à enrichir étape B)
@@ -1063,16 +1074,12 @@ function drawEnvSelector(p, g, nightRatio) {
   const envLocked = nightRatio === 1;
   window._envLocked = envLocked; // exposé pour touchStarted (pas accès à nightRatio là-bas)
 
-  // ── Gestion du fondu d'environnement (crossfade ~18 frames ≈ 0,3s) ──
-  // RÔLE : Incrémente le compteur de fondu à chaque frame si un changement d'env est en cours.
-  // POURQUOI : Transition douce — évite le saut brutal de décor.
-  const FADE_FRAMES = 18;
-  if (window._envFadeState) {
-    window._envFadeState.frames++;
-    if (window._envFadeState.frames >= FADE_FRAMES) {
-      window._envFadeState = null; // fondu terminé, on nettoie
-    }
-  }
+  // ── Flash thématique de transition d'environnement — compteur uniquement ──
+  // RÔLE : Incrémente le compteur de fondu ; le dessin du flash se fait après drawActiveEnv.
+  // POURQUOI : Le flash doit s'afficher PAR-DESSUS le décor — pas avant qu'il soit dessiné.
+  const FADE_FRAMES = 24;
+  if (window._envFadeState) window._envFadeState.frames++;
+  if (window._envFadeState?.frames >= FADE_FRAMES) window._envFadeState = null;
 
   // ── Recalcul des zones de tap uniquement si l'état a changé ──
   // RÔLE : Évite d'allouer + remplir un nouveau tableau à chaque frame (12 fois/s).
@@ -1226,6 +1233,39 @@ const p5s = (p) => {
     }
 
     drawActiveEnv(p, envActif, n, h);
+
+    // ── Flash thématique de transition d'environnement (~24 frames ≈ 0,4s) ──
+    // RÔLE : Dessine un éclair de couleur par-dessus le décor quand l'utilisatrice change d'env.
+    //        Montée rapide (0 → pic à la frame 8), descente douce jusqu'à la frame 24.
+    // POURQUOI : Masque le cut brutal du décor et donne une sensation de "voyage"
+    //            vers un nouveau biome. Chaque couleur évoque la destination.
+    if (window._envFadeState) {
+      const fs = window._envFadeState;
+
+      // RÔLE : Cloche asymétrique — montée en 8f, descente en 16f.
+      // POURQUOI : La montée rapide "coupe" l'ancien décor franchement ;
+      //            la descente lente laisse le nouveau apparaître progressivement.
+      let flashAlpha;
+      if (fs.frames <= 8) {
+        flashAlpha = fs.frames / 8;          // 0 → 1 sur les 8 premières frames
+      } else {
+        flashAlpha = 1 - (fs.frames - 8) / 16; // 1 → 0 sur les 16 frames restantes
+      }
+
+      // RÔLE : Couleur de destination, blanc par défaut si env inconnu.
+      const flashCol = ENV_FLASH_COLOR[fs.to] || '#ffffff';
+
+      // RÔLE : Décompose le hex en r/g/b pour construire un rgba() avec opacité dynamique.
+      const fr = parseInt(flashCol.slice(1, 3), 16);
+      const fg = parseInt(flashCol.slice(3, 5), 16);
+      const fb = parseInt(flashCol.slice(5, 7), 16);
+
+      // RÔLE : Recouvre tout le canvas d'une teinte translucide.
+      // POURQUOI : noStroke() évite un contour parasite sur le bord du canvas.
+      p.noStroke();
+      p.fill(`rgba(${fr},${fg},${fb},${flashAlpha.toFixed(3)})`);
+      p.rect(0, 0, CS, CS);
+    }
 
     // 2. Props Ambiance — filtrées par environnement actif
     // RÔLE : N'afficher que les ambiances assignées à l'env en cours.

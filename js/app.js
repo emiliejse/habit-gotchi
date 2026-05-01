@@ -218,6 +218,7 @@ function defs() {
     lastActive:       null,   // mis à jour à chaque ouverture
     cycle:            [],     // { date: "2025-04-10", type: "regles" }
     rdv:              [],     // { id, date, label, heure? }
+    streaks:          {},     // { catId: nombreDeJoursConsécutifs } — recalculé à chaque ouverture
   };
 }
 
@@ -758,6 +759,45 @@ function calcStr() {
 }
 
 /* ============================================================
+   STREAKS PAR HABITUDE
+   ============================================================ */
+
+// RÔLE : Recalcule le streak (jours consécutifs) pour chaque habitude à partir de D.log.
+// POURQUOI : D.log est la source de vérité — on relit l'historique en remontant jour par jour
+//            jusqu'à trouver un jour sans cochage. Le résultat est mis en cache dans D.streaks
+//            pour être lu par toggleHab() et renderHabs() sans recalcul répété.
+function computeStreaks() {
+  if (!window.D) return;
+  // Initialise ou réutilise l'objet streaks
+  window.D.streaks = window.D.streaks || {};
+
+  // On construit la liste des catégories déclarées
+  const catIds = (window.D.habits || []).map(h => h.catId);
+
+  catIds.forEach(catId => {
+    let streak = 0;
+    // On remonte le calendrier depuis aujourd'hui vers le passé
+    // POURQUOI : on incrémente tant que la catégorie apparaît dans D.log[date]
+    let d = new Date();
+    for (let i = 0; i < 365; i++) {
+      // Formater la date en AAAA-MM-JJ (même format que today())
+      const key = d.toISOString().slice(0, 10);
+      const log = window.D.log[key] || [];
+
+      if (log.includes(catId)) {
+        streak++;
+        // Reculer d'un jour
+        d.setDate(d.getDate() - 1);
+      } else {
+        // Jour manqué : on arrête le comptage
+        break;
+      }
+    }
+    window.D.streaks[catId] = streak;
+  });
+}
+
+/* ============================================================
    LOGIQUE HABITUDES
    ============================================================ */
 function toggleHab(catId) {
@@ -780,14 +820,43 @@ function toggleHab(catId) {
   else {
     window.D.log[td].push(catId);
     const habEl = document.querySelector(`[onclick="toggleHab('${catId}')"]`);
-if (habEl) floatXP(habEl.closest('.hab'));
+    if (habEl) floatXP(habEl.closest('.hab'));
     addXp(15);
+
+    // ── Calcul du streak mis à jour ──
+    // RÔLE : On recalcule les streaks après avoir enregistré le cochage du jour,
+    //        pour que le streak courant reflète déjà aujourd'hui.
+    computeStreaks();
+    const streakActuel = window.D.streaks[catId] || 1; // au moins 1 (le jour courant)
+
+    // ── Créditation pétales (1 seule fois par habitude par jour) ──
     const dejaGagne = window.D.petalesEarned[td].includes(catId);
     if (!dejaGagne) {
-      window.D.g.petales = (window.D.g.petales || 0) + 2;
+      // +2 pétales de base, +N bonus si streak (cap à 7 jours)
+      // POURQUOI : le bonus escalant récompense la régularité sans devenir infini
+      const bonusStreak = streakActuel >= 2 ? Math.min(streakActuel, 7) : 0;
+      const gainTotal   = 2 + bonusStreak;
+      window.D.g.petales = (window.D.g.petales || 0) + gainTotal;
       window.D.petalesEarned[td].push(catId);
+
+      // Toast streak si la série est notable (≥2 jours)
+      if (streakActuel >= 2) {
+        const streakLabel = streakActuel >= 7
+          ? `🔥×${streakActuel} MAX — +${gainTotal} 🌸 !`
+          : `🔥×${streakActuel} — +${gainTotal} 🌸 !`;
+        // Petit toast flottant non-bloquant au-dessus du bouton
+        setTimeout(() => {
+          const el = document.querySelector(`[onclick="toggleHab('${catId}')"]`);
+          if (el) floatXP(el.closest('.hab'), streakLabel);
+        }, 400);
+      }
+
+      addEvent({ type: 'habitude', subtype: 'check', valeur: 15,
+        label: `${hab?.label || catId} ✓  +15 XP, +${2 + (streakActuel >= 2 ? Math.min(streakActuel, 7) : 0)} 🌸${streakActuel >= 2 ? ` 🔥×${streakActuel}` : ''}` });
+    } else {
+      addEvent({ type: 'habitude', subtype: 'check', valeur: 15,
+        label: `${hab?.label || catId} ✓  +15 XP` });
     }
-    addEvent({ type: 'habitude', subtype: 'check', valeur: 15, label: `${hab?.label || catId} ✓  +15 XP${dejaGagne ? '' : ', +2 🌸'}` });
 
     const gx = window._gotchiX || 100;
     const gy = window._gotchiY || 100;
@@ -1158,7 +1227,7 @@ if (dernierJournal?.date?.startsWith(today())) {
 function handleDailyReset() {
   const td = today();
 
-    // ── Reset compteurs quotidiens ──
+  // ── Reset compteurs quotidiens ──
   if (window.D.lastThoughtDate !== td) {
     window.D.lastThoughtDate = td;
     window.D.thoughtCount    = 0;
@@ -1167,6 +1236,11 @@ function handleDailyReset() {
     window.D.lastSoutienDate = td;
     window.D.soutienCount    = 0;
   }
+
+  // RÔLE : Recalculer les streaks à chaque ouverture de l'app.
+  // POURQUOI : Si l'utilisateur·rice n'a pas coché une habitude hier, le streak doit
+  //            être remis à zéro aujourd'hui — sans attendre un cochage.
+  computeStreaks();
 
   window.D.lastActive = new Date().toISOString();
   save();

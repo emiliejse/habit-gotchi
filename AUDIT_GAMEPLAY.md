@@ -25,7 +25,7 @@ Trois priorités d'action :
 | ✅ FIXÉ | S5 Saleté | Seuil dithering abaissé 5→2, ratio recalibré `(salete-2)/8` — saleté visible dès 1-2 crottes (2026-05-01) | `js/render-sprites.js:330,373` |
 | ✅ FIXÉ | S5 Saleté | Effet taches organiques : distribution random fixe (hash déterministe), tailles variables (PX/1.5/2), opacité par pixel — remplace le damier uniforme (2026-05-01) | `js/render-sprites.js:261-416` |
 | ✅ FIXÉ | S5 Saleté | Crotte garantie au bootstrap si `poopCount === 0` pour le jour courant — engagement assuré (2026-05-01) | `js/app.js:512-520` (dans `checkSalete`) |
-| 🔴 CRIT | S2 Habitudes | Aucun streak, aucune mémoire de continuité jour-à-jour | `js/app.js:750-831` |
+| ✅ FIXÉ | S2 Habitudes | Streaks par habitude implémentés — `computeStreaks()` relit `D.log`, bonus pétales +N (cap 7), badge 🔥×N dans `renderHabs()`, recalcul au daily reset (2026-05-01) | `js/app.js:760-800`, `js/ui-habs.js:39-55` |
 | 🟠 HAUT | S2 Habitudes | Aucune pénalité / rétro-action si habitude manquée (ni XP négatif, ni bulle, ni baisse de happiness) | `js/app.js:750-831` |
 | 🟠 HAUT | S3 États | Pas d'état `hunger` indépendant — le repas n'alimente pas une jauge | `js/app.js:183-184`, `data/config.js` |
 | 🟠 HAUT | S1 Progression | Sauts XP énormes entre stades adultes (500 → 900 → 1500 → 2500 → 4000) sans micro-paliers visibles | `js/app.js:142-151` |

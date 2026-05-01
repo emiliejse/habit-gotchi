@@ -57,7 +57,7 @@ let _meteoIntervalId = null;
 let _poopIntervalId  = null;
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v4.93'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v4.94'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -285,7 +285,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 9; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 11; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -385,6 +385,16 @@ const MIGRATIONS = [
     d.catVedetteDate   = d.catVedetteDate   ?? null;
     d.catVedette       = d.catVedette       ?? null;
     d.milestoneProps   = d.milestoneProps   ?? [];
+    return d;
+  },
+  // Migration 9→10 : snackPref passe de rythme hebdomadaire à quotidien
+  // RÔLE : Le snack préféré du Gotchi change maintenant chaque jour au lieu de chaque semaine.
+  // POURQUOI : weekId est remplacé par dateRef — on force un reset en supprimant l'ancienne
+  //            structure pour qu'elle soit recréée proprement dès le premier appel à ensureSnackPref().
+  function m10(d) {
+    if (d.g.snackPref && d.g.snackPref.weekId !== undefined) {
+      delete d.g.snackPref; // supprime l'ancienne structure hebdo → sera recréée avec dateRef
+    }
     return d;
   }
 ];
@@ -732,15 +742,20 @@ function ensureMealsToday() {
 }
 
 /**
- * S'assure que `D.g.snackPref` existe et correspond à la SEMAINE en cours.
- * Si la semaine a changé → tire un nouvel emoji préféré dans SNACKS_POOL.
+ * S'assure que `D.g.snackPref` existe et correspond au JOUR en cours.
+ * Si le jour a changé → tire un nouvel emoji préféré dans SNACKS_POOL.
  * Renvoie l'emoji préféré.
+ *
+ * Métaphore : chaque matin le Gotchi se réveille avec une nouvelle envie —
+ * aujourd'hui c'est 🍇, demain ce sera peut-être 🍩.
  */
 function ensureSnackPref() {
-  const wk = getWeekId();
-  if (!window.D.g.snackPref || window.D.g.snackPref.weekId !== wk) {
+  const td = today(); // ex: "2026-05-01"
+  // RÔLE : Si aucun snack préféré ou si la date a changé, on en tire un nouveau.
+  // POURQUOI : dateRef remplace weekId — la rotation est maintenant quotidienne.
+  if (!window.D.g.snackPref || window.D.g.snackPref.dateRef !== td) {
     const emoji = window.HG_CONFIG.SNACKS_POOL[Math.floor(Math.random() * window.HG_CONFIG.SNACKS_POOL.length)];
-    window.D.g.snackPref = { emoji, weekId: wk };
+    window.D.g.snackPref = { emoji, dateRef: td };
   }
   return window.D.g.snackPref.emoji;
 }

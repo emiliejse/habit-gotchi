@@ -988,6 +988,22 @@ body {
   100% { transform: scale(1); }
 }
 
+/* RÔLE : Rebond doux sur le label XP et la barre quand on gagne de l'XP */
+/* POURQUOI : popBounce part de scale(0.5) — trop brutal pour un élément déjà affiché.
+              xpBounce part de scale(1) et fait un léger overshoot avant de revenir. */
+@keyframes xpBounce {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.12); }
+  70%  { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+.xp-gained {
+  animation: xpBounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@media (prefers-reduced-motion: reduce) {
+  .xp-gained { animation: none; }
+}
+
 /* RÔLE : Met en évidence la prochaine habitude à cocher */
 /* POURQUOI : Sans signal visuel, l'utilisatrice doit scanner toute la liste pour trouver quoi faire
    — coût décisionnel élevé au démarrage, incompatible avec la fatigue TDAH */

@@ -57,7 +57,7 @@ let _meteoIntervalId = null;
 let _poopIntervalId  = null;
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v4.94'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v5.00'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -540,6 +540,19 @@ function addXp(n) {
     }
   }
   save(); if (typeof updUI === 'function') updUI();
+
+  // RÔLE : Rebond visuel sur le label XP et la barre quand on gagne de l'XP.
+  // POURQUOI : Sans feedback, gagner de l'XP est invisible — l'animation confirme l'action.
+  //            On ne rebondit pas sur les pénalités (n <= 0) pour rester subtil.
+  if (n > 0) {
+    ['xp-l', 'xp-b'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove('xp-gained');
+      void el.offsetWidth; // force reflow pour rejouer l'animation si déjà présente
+      el.classList.add('xp-gained');
+    });
+  }
 }
 
 /* ─── SYSTÈME 1 : MÉTABOLISME & CYCLE DE VIE ───────────────────── */

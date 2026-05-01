@@ -420,6 +420,26 @@ function renderPerso() {
     <div style="font-size:var(--fs-xs);font-weight:bold;color:${c.bodyDk};text-align:center">${c.label}</div>
   </div>`).join('');
   }
+  // ── Couleur des yeux (iris) ──────────────────────────────────────
+  // RÔLE : Afficher le sélecteur de couleur de l'iris du Gotchi.
+  // POURQUOI : C.eye est mis à jour à chaque frame dans render.js via D.g.eyeColor —
+  //            le sélecteur suit le même pattern que gotchi-colors et pupil-colors.
+  const eyeGrid = document.getElementById('eye-colors');
+  if (eyeGrid) {
+    const currentEye = D.g.eyeColor || 'noir';
+    eyeGrid.innerHTML = window.HG_CONFIG.EYE_COLORS.map(c => `
+      <div onclick="applyEyeColor('${c.id}')" style="
+        border-radius:var(--r-md);cursor:pointer;
+        background:var(--card);
+        border:3px solid ${currentEye === c.id ? 'var(--lilac)' : 'transparent'};
+        padding:6px 4px;
+        display:flex;flex-direction:column;align-items:center;gap:3px;
+        transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1);">
+        <div style="width:20px;height:20px;border-radius:50%;background:${c.hex};border:1.5px solid rgba(0,0,0,.12)"></div>
+        <div style="font-size:var(--fs-xs);font-weight:bold;color:var(--text);text-align:center">${c.label}</div>
+      </div>`).join('');
+  }
+
   // ── Reflets des yeux (pupilles) ─────────────────────────────────
   // RÔLE : Afficher le sélecteur de couleur des petits points lumineux dans les yeux du Gotchi.
   // POURQUOI : Identique en structure aux autres grilles de personnalisation —
@@ -485,6 +505,15 @@ function applyPupilColor(id, silent = false) {
   const c = window.HG_CONFIG.PUPIL_COLORS.find(x => x.id === id); if (!c) return;
   window.D.g.pupilColor = id; save(); renderPerso();
   if (!silent) toast(`Reflets ${c.label} appliqués ✿`);
+}
+
+// RÔLE : Sauvegarder la couleur d'iris choisie et rafraîchir l'UI.
+// POURQUOI : C.eye est mis à jour à chaque frame dans render.js via getGotchiC() —
+//            il suffit de sauvegarder D.g.eyeColor, le rendu suit automatiquement.
+function applyEyeColor(id, silent = false) {
+  const c = window.HG_CONFIG.EYE_COLORS.find(x => x.id === id); if (!c) return;
+  window.D.g.eyeColor = id; save(); renderPerso();
+  if (!silent) toast(`Yeux ${c.label} appliqués ✿`);
 }
 
 function applyEnvTheme(id, silent = false) {

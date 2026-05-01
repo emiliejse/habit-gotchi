@@ -516,7 +516,12 @@ function getStageBaseY(stage) {
 function getGotchiC() {
   const id = window.D.g.gotchiColor || 'vert';
   const gc = window.HG_CONFIG.GOTCHI_COLORS.find(x => x.id === id) || window.HG_CONFIG.GOTCHI_COLORS[0];
-  return { body: gc.body, bodyLt: gc.bodyLt, bodyDk: gc.bodyDk };
+  // RÔLE : Résoudre aussi la couleur des yeux (iris) — personnalisable via D.g.eyeColor.
+  // POURQUOI : C.eye doit être mis à jour à chaque frame comme C.body/bodyLt/bodyDk —
+  //            sans ça, la couleur d'œil reste figée à la valeur initiale de C (#38304a).
+  const eyeId = window.D.g.eyeColor || 'noir';
+  const ec = window.HG_CONFIG.EYE_COLORS.find(x => x.id === eyeId) || window.HG_CONFIG.EYE_COLORS[0];
+  return { body: gc.body, bodyLt: gc.bodyLt, bodyDk: gc.bodyDk, eye: ec.hex };
 }
 
 function getEnvC() {
@@ -1092,7 +1097,7 @@ const p5s = (p) => {
 
     // Initialisation des couleurs
     const gc = getGotchiC();
-    C.body = gc.body; C.bodyLt = gc.bodyLt; C.bodyDk = gc.bodyDk;
+    C.body = gc.body; C.bodyLt = gc.bodyLt; C.bodyDk = gc.bodyDk; C.eye = gc.eye;
     const ec = getEnvC();
     C.gnd = ec.gnd; C.gndDk = ec.gndDk; C.skyD1 = ec.sky1; C.skyD2 = ec.sky2;
 

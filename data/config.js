@@ -89,6 +89,22 @@ const PUPIL_COLORS = [
   { id:'dore',    label:'Doré',    hex:'#ffd97a' },
 ];
 
+/* ─── SYSTÈME 5 : PERSONNALISATION (Couleur des yeux) ────────────── */
+
+// RÔLE : Couleurs disponibles pour l'iris du Gotchi (le remplissage principal des yeux).
+// POURQUOI : C.eye est mis à jour à chaque frame dans render.js via D.g.eyeColor —
+//            même pattern que C.body. Teintes allant du sombre au pastel doux.
+const EYE_COLORS = [
+  { id:'noir',    label:'Noir',    hex:'#38304a' },
+  { id:'brun',    label:'Brun',    hex:'#6b4226' },
+  { id:'marine',  label:'Marine',  hex:'#2a4a6b' },
+  { id:'vert',    label:'Vert',    hex:'#2d5a3d' },
+  { id:'violet',  label:'Violet',  hex:'#5a3878' },
+  { id:'rose',    label:'Rose',    hex:'#c05878' },
+  { id:'bleu',    label:'Bleu',    hex:'#5890c8' },
+  { id:'menthe',  label:'Menthe',  hex:'#4aaa80' },
+];
+
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME (Décors & Biomes) ───────────────────── */
 
 /**
@@ -288,6 +304,7 @@ window.HG_CONFIG = {
   UI_PALETTES,
   GOTCHI_COLORS,
   PUPIL_COLORS,
+  EYE_COLORS,
   ENV_THEMES,
   MEAL_WINDOWS,
   SNACKS_POOL,

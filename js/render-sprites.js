@@ -770,12 +770,14 @@ function drawBaby(p, cx, cy, sl, en, ha) {
 
   renderSprite(p, LAYERS_BABY, cx, cy, params);
 
-  // RÔLE : Reflet blanc snappé sur grille PX, avec regard latéral vers la crotte si proche.
+  // RÔLE : Reflet snappé sur grille PX, avec regard latéral vers la crotte si proche.
   // POURQUOI : Snap PX-grid → le reflet ne sort plus de l'iris aux extrémités (Bug 1 fix).
   //            Regard crotte : si _gotchiNearPoop, le reflet est poussé du côté de la crotte
   //            la plus proche — effet "le Gotchi la regarde du coin de l'œil" sans nouveau sprite.
+  //            Couleur : D.g.pupilColor (personnalisable dans l'onglet Perso) — blanc par défaut.
   if (!params.sl && !params.blink) {
-    p.fill('#fff');
+    const _pupilEntry = window.HG_CONFIG.PUPIL_COLORS.find(c => c.id === (window.D?.g?.pupilColor ?? 'blanc'));
+    p.fill(_pupilEntry ? _pupilEntry.hex : '#ffffff');
     p.noStroke();
     // Iris baby : 2×PX = 10px large. Amplitude max = 10 - 3reflet - 1margeG - 1margeD = 5px.
     const rxMax = PX * 2 - 3 - 2; // 5px
@@ -1147,14 +1149,16 @@ function drawTeen(p, cx, cy, sl, en, ha) {
   //            le sprite de 4*PX = 20px vers la gauche — c'est le bug du décalage.
   renderSprite(p, LAYERS_TEEN, cx, cy, params);
 
-  // RÔLE : Reflet blanc snappé sur grille PX, avec regard latéral vers la crotte si proche.
+  // RÔLE : Reflet snappé sur grille PX, avec regard latéral vers la crotte si proche.
   // POURQUOI : Snap PX-grid → reste dans la rangée haute de l'iris (Bug 1 fix).
   //            Regard crotte : même logique que drawBaby — poopDir pilote la position.
   // POURQUOI : !isMood('surprise') retiré — les reflets doivent rester visibles même en
   //            mode surprise (les yeux surprise sont plus grands, les reflets y ont leur place).
   //            Les calques reflets-yeux-surprise du DSL ont été retirés pour éviter la superposition.
+  //            Couleur : D.g.pupilColor (personnalisable dans l'onglet Perso) — blanc par défaut.
   if (!params.sl && !params.blink) {
-    p.fill('#fff');
+    const _pupilEntry = window.HG_CONFIG.PUPIL_COLORS.find(c => c.id === (window.D?.g?.pupilColor ?? 'blanc'));
+    p.fill(_pupilEntry ? _pupilEntry.hex : '#ffffff');
     p.noStroke();
     // Iris teen rangée haute : 2×PX = 10px. Espace dispo = 10 - 3reflet - 3margeD - 1margeG = 4px (1px de moins que baby).
     const rxMax = PX * 2 - 3 - 3; // 4px
@@ -1622,12 +1626,14 @@ function drawAdult(p, cx, cy, sl, en, ha) {
   //            ce décalage et décalerait le sprite de 5*PX = 25px vers la gauche.
   renderSprite(p, LAYERS_ADULT, cx, cy, params);
 
-  // RÔLE : Reflet blanc snappé sur grille PX, avec regard latéral vers la crotte si proche.
+  // RÔLE : Reflet snappé sur grille PX, avec regard latéral vers la crotte si proche.
   // POURQUOI : Snap PX-grid → reste dans la rangée haute de l'iris (Bug 1 fix).
   //            Regard crotte : même logique que baby/teen — poopDir pilote la position.
   // POURQUOI : !isMood('surprise') retiré — même raison que drawTeen (voir ci-dessus).
+  //            Couleur : D.g.pupilColor (personnalisable dans l'onglet Perso) — blanc par défaut.
   if (!params.sl && !params.blink) {
-    p.fill('#fff');
+    const _pupilEntry = window.HG_CONFIG.PUPIL_COLORS.find(c => c.id === (window.D?.g?.pupilColor ?? 'blanc'));
+    p.fill(_pupilEntry ? _pupilEntry.hex : '#ffffff');
     p.noStroke();
     // Iris adult rangée haute : 3×PX = 15px. Espace dispo = 15 - 3reflet - 4margeD - 0margeG = 8px.
     const rxMax = PX * 3 - 3 - 4; // 8px

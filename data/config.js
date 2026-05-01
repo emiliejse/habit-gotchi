@@ -73,6 +73,22 @@ const GOTCHI_COLORS = [
   { id:'jaune',  label:'Jaune',  body:'#e8e0a8', bodyLt:'#f4ecc8', bodyDk:'#c0b878' },
 ];
 
+/* ─── SYSTÈME 5 : PERSONNALISATION (Reflets des yeux) ────────────── */
+
+// RÔLE : Couleurs disponibles pour les reflets/pupilles du Gotchi (petits points lumineux dans les yeux).
+// POURQUOI : Centralisé ici comme les autres palettes — ajout d'une option = une ligne.
+//            La valeur 'hex' est utilisée directement dans render-sprites.js via D.g.pupilColor.
+const PUPIL_COLORS = [
+  { id:'blanc',   label:'Blanc',   hex:'#ffffff' },
+  { id:'creme',   label:'Crème',   hex:'#fff3d6' },
+  { id:'rose',    label:'Rose',    hex:'#ffb3d1' },
+  { id:'lilas',   label:'Lilas',   hex:'#d4b8f0' },
+  { id:'bleu',    label:'Bleu',    hex:'#b8d8ff' },
+  { id:'menthe',  label:'Menthe',  hex:'#b8f0d8' },
+  { id:'peche',   label:'Pêche',   hex:'#ffd4b8' },
+  { id:'dore',    label:'Doré',    hex:'#ffd97a' },
+];
+
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME (Décors & Biomes) ───────────────────── */
 
 /**
@@ -271,6 +287,7 @@ window.HG_CONFIG = {
   // ── UI & thèmes ────────────────────────────────────────────────
   UI_PALETTES,
   GOTCHI_COLORS,
+  PUPIL_COLORS,
   ENV_THEMES,
   MEAL_WINDOWS,
   SNACKS_POOL,

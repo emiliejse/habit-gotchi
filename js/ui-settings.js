@@ -416,6 +416,26 @@ function renderPerso() {
     <div style="font-size:var(--fs-xs);font-weight:bold;color:${c.bodyDk};text-align:center">${c.label}</div>
   </div>`).join('');
   }
+  // ── Reflets des yeux (pupilles) ─────────────────────────────────
+  // RÔLE : Afficher le sélecteur de couleur des petits points lumineux dans les yeux du Gotchi.
+  // POURQUOI : Identique en structure aux autres grilles de personnalisation —
+  //            un clic → applyPupilColor() → sauvegarde + re-render.
+  const pupilGrid = document.getElementById('pupil-colors');
+  if (pupilGrid) {
+    const currentPupil = D.g.pupilColor || 'blanc';
+    pupilGrid.innerHTML = window.HG_CONFIG.PUPIL_COLORS.map(c => `
+      <div onclick="applyPupilColor('${c.id}')" style="
+        border-radius:var(--r-md);cursor:pointer;
+        background:var(--card);
+        border:3px solid ${currentPupil === c.id ? 'var(--lilac)' : 'transparent'};
+        padding:6px 4px;
+        display:flex;flex-direction:column;align-items:center;gap:3px;
+        transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1);">
+        <div style="width:20px;height:20px;border-radius:50%;background:${c.hex};border:1.5px solid rgba(0,0,0,.12)"></div>
+        <div style="font-size:var(--fs-xs);font-weight:bold;color:var(--text);text-align:center">${c.label}</div>
+      </div>`).join('');
+  }
+
   const et = document.getElementById('env-themes');
   if (et) {
     const current = D.g.envTheme || 'pastel';
@@ -450,6 +470,15 @@ function applyGotchiColor(id, silent = false) {
   window.D.g.gotchiColor = id; save(); renderPerso();
   if (!silent) toast(`Couleur ${c.label} appliquée ✿`);
 }
+// RÔLE : Sauvegarder la couleur de reflet choisie et rafraîchir l'UI.
+// POURQUOI : Même pattern que applyGotchiColor() — la valeur est lue à chaque frame
+//            dans render-sprites.js via D.g.pupilColor. Pas de CSS variable à modifier.
+function applyPupilColor(id, silent = false) {
+  const c = window.HG_CONFIG.PUPIL_COLORS.find(x => x.id === id); if (!c) return;
+  window.D.g.pupilColor = id; save(); renderPerso();
+  if (!silent) toast(`Reflets ${c.label} appliqués ✿`);
+}
+
 function applyEnvTheme(id, silent = false) {
   const t = window.HG_CONFIG.ENV_THEMES.find(x => x.id === id); if (!t) return;
   window.D.g.envTheme = id; save(); renderPerso();

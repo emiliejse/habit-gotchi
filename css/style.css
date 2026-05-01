@@ -752,14 +752,13 @@ body {
 .thought-flowers .flower-on  { opacity: 1;   color: var(--lilac); }
 .thought-flowers .flower-off { opacity: 0.2; color: var(--text2); }
 
-/* RÔLE : Fleurs de quota bilan — inline dans le bouton, pas de margin-top ni centrage */
-/* POURQUOI : Override du style .thought-flowers pour usage dans un flex button */
-#bilan-flowers.thought-flowers { margin-top: 0; justify-content: flex-start; font-size: 16px; }
-/* RÔLE : Couleur des fleurs bilan sur fond lilac (bouton .btn-p = #fff texte) */
-/* POURQUOI : .flower-on héritait de color:#fff du bouton, disparaissant sur fond lilac.
-              On override explicitement pour que les fleurs on/off soient lisibles sur ce fond. */
-#bilan-flowers .flower-on  { color: #fff;         opacity: 1;   }
-#bilan-flowers .flower-off { color: rgba(255,255,255,0.35); opacity: 1; }
+/* RÔLE : Fleurs de quota bilan — sous le bouton, sur fond blanc, centrées */
+/* POURQUOI : Fleurs déplacées hors du bouton dans un div autonome — plus besoin d'override flex ni de blanc */
+#bilan-flowers.thought-flowers { margin-top: 2px; justify-content: center; font-size: 16px; }
+/* RÔLE : Couleur des fleurs bilan sur fond blanc */
+/* POURQUOI : Même palette que thought-count et journal-flowers — lilac pour on, text2 estompé pour off */
+#bilan-flowers .flower-on  { color: var(--lilac); opacity: 1;   }
+#bilan-flowers .flower-off { color: var(--text2);  opacity: 0.2; }
 
 /* RÔLE : Zone info agenda dans le post-it menu — RDV du jour + phase cycle */
 /* POURQUOI : flex pour aligner cercle couleur + texte phase sur la même ligne */

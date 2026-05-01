@@ -113,8 +113,9 @@ window._expr = {
 //            Quand il dépasse le seuil, triggerExpr('baillement') est appelé.
 //            Remis à 0 par toute interaction (voir triggerExpr et les handlers tap).
 window._idleFrames = 0;
-const YAWN_THRESHOLD = 12 * 60 * 3; // ~3 min à 12fps = 2160 frames avant bâillement
-const YAWN_COOLDOWN  = 12 * 60 * 5; // ~5 min entre deux bâillements
+const YAWN_THRESHOLD_NORMAL = 12 * 60 * 3; // ~3 min à 12fps = 2160 frames (énergie normale)
+const YAWN_THRESHOLD_LOW    = 12 * 60 * 1; // ~1 min à 12fps = 720 frames (énergie ≤ 30)
+const YAWN_COOLDOWN         = 12 * 60 * 5; // ~5 min entre deux bâillements
 
 // Helper : calcule la phase de respiration (0 → 1 → 0 → 1…)
 function getBreath(p, speed = 0.025) {
@@ -379,6 +380,29 @@ const animator = {
 //        déclencher des animations sans importer render.js.
 // POURQUOI : Convention du projet — toute globale partagée passe par window.*.
 window.animator = animator;
+
+// RÔLE : Déclenche la séquence d'étirement matinal si les conditions sont remplies.
+// POURQUOI : Déplacé hors de p.draw() pour être appelé à l'ouverture de l'app (bootstrap)
+//            plutôt que d'attendre que h===7 passe dans la boucle de rendu.
+//            Peut aussi être appelé quand une bulle "*s'étire*" est affichée.
+// CONDITIONS : stade adult, heure entre 7h et 11h, non endormi, verrou journalier.
+// @param {boolean} force — si true, ignore le verrou (pour les bulles *s'étire*)
+window.triggerEtirementMatin = function(force = false) {
+  const g = window.D?.g;
+  if (!g || g.stage !== 'adult') return; // calques bras inexistants sur baby/teen
+  const h = typeof hr === 'function' ? hr() : new Date().getHours();
+  const sleeping = h >= 22 || h < 7;
+  if (sleeping) return;
+  const todayStr = new Date().toDateString();
+  if (!force && window._etirementLastDay === todayStr) return; // déjà fait aujourd'hui
+  window._etirementLastDay = todayStr;
+  // Légère temporisation pour laisser l'UI finir de se monter avant l'animation
+  setTimeout(() => {
+    window.animator.trigger('etirement_t1');
+    setTimeout(() => window.animator.trigger('etirement_t2'), (30 / 12) * 1000); // ~2.5s
+    setTimeout(() => window.animator.trigger('etirement_t3'), (42 / 12) * 1000); // ~3.5s
+  }, 800);
+};
 
 // RÔLE : Initialiser _animOverrides à vide au démarrage.
 // POURQUOI : renderSprite() y accède dès le premier frame — on garantit que l'objet
@@ -1234,27 +1258,7 @@ const tilt = (!sleeping && en < EN_TILT) ? Math.sin(p.frameCount * 0.05) * 2 : 0
 animator.tick();
 window._animOverrides = animator.resolve(g.stage);
 
-// RÔLE : Étirement matinal — déclenché une seule fois à h===7 pour l'adulte éveillé.
-// POURQUOI : Séquence en 3 temps (bras levés → croisés → repos), 12f chacun.
-//            On garde la date en mémoire pour ne déclencher qu'une fois par jour.
-//            Ne s'applique qu'à l'adulte (les calques bras DSL n'existent pas pour baby/teen).
-{
-  const hNow = typeof hr === 'function' ? hr() : new Date().getHours();
-  const todayStr = new Date().toDateString();
-  if (
-    hNow === 7 &&
-    g.stage === 'adult' &&
-    !sleeping &&
-    window._etirementLastDay !== todayStr &&
-    animator.active.length === 0 // ne pas interrompre une pose idle en cours
-  ) {
-    window._etirementLastDay = todayStr;
-    // Enchaîner les 3 temps : t1 dure 30f (~2.5s), t2 après 30f, t3 après 30+12f.
-    animator.trigger('etirement_t1');
-    setTimeout(() => animator.trigger('etirement_t2'), (30 / 12) * 1000);  // ~2.5s à 12fps
-    setTimeout(() => animator.trigger('etirement_t3'), (42 / 12) * 1000);  // ~3.5s à 12fps
-  }
-}
+// (étirement matinal retiré de p.draw — déclenché depuis app.js via triggerEtirementMatin)
 
 // 7. Dessin du Gotchi
     let gotchiInfo;
@@ -1388,9 +1392,10 @@ if (blink) {
 if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
 
 // RÔLE : Bâillement automatique après inactivité prolongée.
-// POURQUOI : Donne vie au Gotchi quand l'utilisatrice ne l'a pas touché depuis ~3 min.
-//            Seulement si éveillé (pas de bâillement en dormant — il dort déjà).
-//            Cooldown YAWN_COOLDOWN pour éviter que ça spamme toutes les 3 min.
+// POURQUOI : Donne vie au Gotchi quand l'utilisatrice ne l'a pas touché depuis un moment.
+//            Le seuil est réduit de 3 min → 1 min si l'énergie est basse (≤ 30) —
+//            un Gotchi fatigué bâille plus souvent, c'est plus naturel.
+//            Cooldown YAWN_COOLDOWN pour éviter que ça spamme.
 {
   const g = window.D?.g;
   const h = typeof hr === 'function' ? hr() : new Date().getHours();
@@ -1398,7 +1403,11 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
   const noExprActive = !window._expr || window._expr.moodTimer === 0;
   if (!isSleeping && noExprActive) {
     window._idleFrames = (window._idleFrames || 0) + 1;
-    if (window._idleFrames >= YAWN_THRESHOLD) {
+    // RÔLE : Seuil dynamique selon l'énergie — fatigue = bâillements plus fréquents.
+    // POURQUOI : energy ≤ 30 → seuil 3× plus bas (720f vs 2160f).
+    const energieBasse = g && (g.energy ?? 100) <= 30;
+    const seuil = energieBasse ? YAWN_THRESHOLD_LOW : YAWN_THRESHOLD_NORMAL;
+    if (window._idleFrames >= seuil) {
       window._idleFrames = -(YAWN_COOLDOWN); // cooldown négatif → attend avant de rebâiller
       window.triggerExpr('baillement', 18);  // 18 frames ≈ 1.5 sec à 12fps
     }

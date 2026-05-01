@@ -68,6 +68,30 @@ function syncDuringTransition(shell) {
   setTimeout(stop, 600);
 }
 
+/**
+ * RÔLE : Observe en continu la hauteur de #console-top et resynchronise #dynamic-zone dès qu'elle change.
+ * POURQUOI : La bulle (#bubble) peut s'étirer sur 1 ou 2 lignes selon le texte reçu de l'IA.
+ *            syncConsoleHeight() est appelée à la navigation et pendant les transitions, mais pas
+ *            lors d'un simple changement de texte dans la bulle — ce ResizeObserver comble ce vide.
+ *            Résultat : #dynamic-zone se repositionne automatiquement quelle que soit la hauteur
+ *            de la console, sans aucun timer ni calcul manuel supplémentaire.
+ */
+(function _watchConsoleResize() {
+  const top = document.getElementById('console-top');
+  if (!top || typeof ResizeObserver === 'undefined') return;
+
+  // POURQUOI : ResizeObserver est natif sur tous les navigateurs modernes (iOS 13.4+, Chrome 64+).
+  //            Il observe les changements de taille de la boîte de rendu, pas du contenu seul.
+  //            Parfait ici : la bulle gonfle → #console-top grandit → callback déclenché immédiatement.
+  const ro = new ResizeObserver(() => {
+    // POURQUOI : pas de debounce — syncConsoleHeight() utilise déjà un requestAnimationFrame interne.
+    //            Le RAF garantit qu'on lit offsetHeight après le reflow, sans pile de callbacks.
+    syncConsoleHeight();
+  });
+
+  ro.observe(top); // surveille #console-top dans son ensemble
+})();
+
 /* ─── ROUTEUR SPA ─────────────────────────────────────────── */
 
 /**

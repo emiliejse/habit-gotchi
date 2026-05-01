@@ -57,7 +57,7 @@ let _meteoIntervalId = null;
 let _poopIntervalId  = null;
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v4.83'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v4.84'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -1233,6 +1233,20 @@ function flashBubble(msg, duree = 2500) {
   if (el) el.textContent = msg;
   clearTimeout(window._bubbleTimer);
   window._bubbleTimer = setTimeout(() => updBubbleNow(), duree);
+
+  // RÔLE : Déclenche l'animation d'étirement si la bulle contient "*s'étire*".
+  // POURQUOI : getMorningMsg() produit des bulles avec cette action gestuelle —
+  //            le Gotchi doit s'étirer visuellement en même temps que le texte l'indique.
+  //            force=true : pas de verrou journalier — la bulle peut apparaître plusieurs fois
+  //            (streak 7j, fallback matin…) et chaque occurrence mérite l'animation.
+  if (msg.includes("*s'étire*")) {
+    setTimeout(() => window.triggerEtirementMatin?.(true), 300);
+  }
+  // RÔLE : Saut si la bulle contient "*saute*" ou "*sautille*" ou "*fait des bonds*".
+  // POURQUOI : Cohérence geste/animation pour les bulles du streak élevé.
+  if (msg.includes('*sautille*') || msg.includes('*saute') || msg.includes('*fait des bonds*')) {
+    setTimeout(() => window.triggerGotchiBounce?.(), 300);
+  }
 }
 
 function updBubbleNow() {
@@ -1605,6 +1619,38 @@ async function bootstrap() {
     if (typeof modalLocked !== 'undefined') modalLocked = false;
 
     initApp();
+
+    // RÔLE : Étirement matinal au premier chargement — si la session s'ouvre entre 7h et 11h.
+    // POURQUOI : Auparavant déclenché dans p.draw() à h===7 précis (souvent manqué).
+    //            Ici on détecte simplement "c'est le matin et ce n'est pas encore fait aujourd'hui".
+    //            triggerEtirementMatin() gère son propre verrou (_etirementLastDay).
+    {
+      const hNow = hr();
+      if (hNow >= 7 && hNow < 12) {
+        // Délai suffisant pour que p5 soit initialisé et le Gotchi dessiné
+        setTimeout(() => window.triggerEtirementMatin?.(), 1500);
+      }
+    }
+
+    // RÔLE : Bâillement à l'ouverture — aléatoire, plus probable si énergie basse.
+    // POURQUOI : Donne l'impression que le Gotchi "se réveille" quand on ouvre l'app,
+    //            sans que ça soit systématique (sinon ça perd son naturel).
+    //            Probabilité de base 15%, montée à 35% si energy ≤ 30.
+    {
+      const g = window.D?.g;
+      if (g && g.stage !== 'egg') {
+        const energieBasse = (g.energy ?? 100) <= 30;
+        const proba = energieBasse ? 0.35 : 0.15;
+        if (Math.random() < proba) {
+          // Délai légèrement décalé par rapport à l'étirement pour ne pas se superposer
+          setTimeout(() => {
+            if (typeof window.triggerExpr === 'function') {
+              window.triggerExpr('baillement', 18);
+            }
+          }, 2800);
+        }
+      }
+    }
 
     // RÔLE : Lance le premier fetch météo + phases solaires, puis les intervals récurrents.
     // POURQUOI : Placé ici (derrière _appInitialized) pour garantir qu'on ne crée jamais

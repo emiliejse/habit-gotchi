@@ -252,15 +252,17 @@ function renderJEntries() {
     html += `<div id="j-group-${dateKey}" style="display:${ouvert ? 'block' : 'none'}">`;
     group.forEach(({ e, gi }) => {
       const d = new Date(e.date);
+      // RÔLE : Carte d'entrée journal — humeur grande à gauche, heure petite à droite, séparateur, texte, actions
       html += `<div class="j-entry mood-${e.mood || 'ok'}">
-        <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="j-entry-header">
+          <span class="j-entry-mood">${me[e.mood] || '😐'}</span>
           <span class="j-date">${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-          <span style="font-size:16px">${me[e.mood] || '😐'}</span>
         </div>
-        <div class="j-text-content" style="font-size:var(--fs-sm);margin-top:3px">${e.text || '—'}</div>
+        <hr class="j-entry-divider">
+        <div class="j-text-content" style="font-size:var(--fs-sm)">${escape(e.text) || '—'}</div>
         <div class="j-actions">
-          <button onclick="editJEntry(${gi})">✏️</button>
-          <button onclick="delJEntry(${gi})">🗑️</button>
+          <button onclick="editJEntry(${gi})" aria-label="Modifier">✏️</button>
+          <button onclick="delJEntry(${gi})" aria-label="Supprimer">🗑️</button>
         </div>
       </div>`;
     });

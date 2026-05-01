@@ -1074,11 +1074,50 @@ body {
 .j-entry.mood-bof   { background: rgba(200, 180, 220, 0.30); }
 .j-entry.mood-dur   { background: rgba(200, 160, 160, 0.28); }
 
-.j-entry .j-date { font-size: var(--fs-xs); color: var(--paper-entry-ts); }
-.j-entry .j-actions { display: flex; gap: 4px; margin-top: 4px; }
+/* RÔLE : En-tête d'entrée — humeur grande à gauche, heure petite à droite */
+.j-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-xs);
+}
+/* RÔLE : Icône d'humeur mise en avant — taille expressive, pas un détail */
+.j-entry-mood {
+  font-size: 24px;
+  line-height: 1;
+}
+/* RÔLE : Heure de l'entrée — discrète, secondaire par rapport à l'humeur */
+.j-entry .j-date {
+  font-size: var(--fs-xs);
+  color: var(--paper-entry-ts);
+}
+/* RÔLE : Séparateur visuel entre l'humeur et le texte — dashed pour rester dans l'esthétique papier */
+.j-entry-divider {
+  border: none;
+  border-top: 1px dashed var(--paper-border);
+  margin: var(--sp-xs) 0;
+}
+/* RÔLE : Actions édition/suppression — alignées à droite, cibles tactiles agrandies */
+/* POURQUOI : Les ~24px d'origine étaient trop petits (audit C3.2), on monte à 36px min */
+.j-entry .j-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-xs);
+  margin-top: var(--sp-xs);
+}
 .j-entry .j-actions button {
-  font-size: var(--fs-xs); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--paper-border);
-  background: var(--paper-entry-btn); cursor: pointer; font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  min-height: 36px;
+  min-width: 36px;
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--paper-border);
+  background: var(--paper-entry-btn);
+  cursor: pointer;
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* RÔLE : Séparateur visuel de date dans la liste des entrées — distingue les notes du même jour */

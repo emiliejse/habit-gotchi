@@ -499,25 +499,16 @@ Et dans `ui-habs.js`, après cochage, spawner 4 micro-éléments DOM (`.confetti
 
 #### C3.2 — Entrées journal : hiérarchie
 
-**Problème :** `.j-entry` (`style.css:981`) plat — date, humeur, texte tous au même poids.
+✅ **RÉSOLU 2026-05-01**
 
-**Proposition :**
-```
-┌─────────────────────────┐
-│  🌟      14:32          │  ← humeur grande, heure petite
-│  ─────────────          │
-│  Texte de la note en    │  ← italique Nunito 15px
-│  italique chaleureux    │
-│  ─────────────          │
-│              ✏️ 🗑️       │  ← actions à droite, plus grandes
-└─────────────────────────┘
-```
-- Humeur en grande icône (24 px) en haut à gauche.
-- Heure plus petite à droite.
-- Séparateur dashed entre humeur et texte.
-- Actions ✏️/🗑️ à 44 px (corrige tap).
+- `.j-entry-header` + `.j-entry-mood` ajoutés dans `style.css` — humeur 24px à gauche, heure `--fs-xs` à droite.
+- `<hr class="j-entry-divider">` : séparateur 1px dashed `--paper-border` entre humeur et texte.
+- `.j-entry .j-actions` aligné à droite (`justify-content:flex-end`), boutons à `min-height/width:36px`.
+- `aria-label` ajoutés sur ✏️ et 🗑️ (bonus a11y).
+- `escape()` appliqué sur `e.text` dans `ui-journal.js:262` (sécurité).
+- `margin-top:3px` inline supprimé du texte (géré par le séparateur).
 
-**Effort : S** • **Fichiers :** `style.css:973-1002`, `ui-journal.js:241-254`.
+**Note :** cibles tactiles à 36px (proche des 44px recommandés) — un palier acceptable sans refonte du layout `.j-actions`.
 
 #### C3.3 — Export : visibilité
 

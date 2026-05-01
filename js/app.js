@@ -851,9 +851,6 @@ function cleanPoops() {
   window._cleanPositions = [...window.D.g.poops];
   
   window.D.g.poops = [];
-  window.D.g.salete = 0; // RÔLE : reset complet de la jauge de saleté après nettoyage
-                          // POURQUOI : sans ce reset, salete monte indéfiniment et le dithering
-                          //            ne disparaît jamais même après nettoyage — bug critique
   window.D.g.petales = (window.D.g.petales || 0) + (count * 2); // 2 pétales par crotte
   if (typeof toast === 'function') toast(`Propre ! +${count * 2} 🌸`);
   

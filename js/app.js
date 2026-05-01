@@ -1540,18 +1540,76 @@ function flashBubble(msg, duree = 2500) {
   clearTimeout(window._bubbleTimer);
   window._bubbleTimer = setTimeout(() => updBubbleNow(), duree);
 
-  // RÔLE : Déclenche l'animation d'étirement si la bulle contient "*s'étire*".
-  // POURQUOI : getMorningMsg() produit des bulles avec cette action gestuelle —
-  //            le Gotchi doit s'étirer visuellement en même temps que le texte l'indique.
-  //            force=true : pas de verrou journalier — la bulle peut apparaître plusieurs fois
-  //            (streak 7j, fallback matin…) et chaque occurrence mérite l'animation.
+  // RÔLE : Annule toute boucle d'animation précédente avant d'en lancer une nouvelle.
+  // POURQUOI : Si deux bulles se succèdent rapidement, on ne veut pas que la boucle
+  //            de la bulle précédente continue à déclencher des animations.
+  if (window._bubbleAnimLoop) {
+    clearInterval(window._bubbleAnimLoop);
+    window._bubbleAnimLoop = null;
+  }
+
+  // RÔLE : Détecte les verbes d'action dans la bulle et boucle l'animation correspondante.
+  // POURQUOI : Quand le texte décrit un geste (*saute*, *tremble*…), le Gotchi doit
+  //            reproduire ce geste visuellement pendant toute la durée de la bulle.
+  //            On repète le trigger à intervalles réguliers (légèrement plus longs que
+  //            la durée de l'animation) pour que chaque cycle soit visible sans se chevaucher.
+
+  // Tableau de correspondances : [liste de mots-clés à détecter] → { animId, intervalMs }
+  // intervalMs = durée d'une répétition en ms (légèrement > durée de l'anim en frames × ~83ms)
+  const ACTION_ANIMS = [
+    // Saut : 12 frames × 83ms ≈ 1000ms — on repart tous les 1200ms pour un léger temps de pause
+    {
+      keywords: ['*saut', '*sautille*', '*bondit*', '*fait des bonds*', '*rebondit*'],
+      animId: 'saut_joie',
+      intervalMs: 1200
+    },
+    // Frisson : 22 frames × 83ms ≈ 1800ms — on repart tous les 2200ms
+    {
+      keywords: ['*tremble*', '*frissonne*', '*grelotte*', '*frémit*'],
+      animId: 'frisson',
+      intervalMs: 2200
+    },
+    // Shake : 12 frames × 83ms ≈ 1000ms — on repart tous les 1400ms
+    {
+      keywords: ['*secoue*', '*s\'agite*', '*agite*', '*se débat*'],
+      animId: 'shake',
+      intervalMs: 1400
+    },
+  ];
+
+  // RÔLE : Vérifie si le message contient l'un des mots-clés d'un groupe d'actions.
+  // POURQUOI : Un seul groupe peut matcher — on s'arrête au premier trouvé.
+  let matched = null;
+  for (const entry of ACTION_ANIMS) {
+    if (entry.keywords.some(kw => msg.includes(kw))) {
+      matched = entry;
+      break;
+    }
+  }
+
+  if (matched) {
+    // RÔLE : Déclenche immédiatement le premier cycle, puis boucle jusqu'à la fin de la bulle.
+    // POURQUOI : Sans délai initial, le geste et le texte sont synchrones dès l'affichage.
+    //            clearInterval stoppe la boucle à la fin de la durée de la bulle.
+    setTimeout(() => {
+      window.animator?.trigger(matched.animId);
+      window._bubbleAnimLoop = setInterval(() => {
+        window.animator?.trigger(matched.animId);
+      }, matched.intervalMs);
+      // Arrêt de la boucle quand la bulle disparaît (duree - délai initial de 300ms)
+      setTimeout(() => {
+        clearInterval(window._bubbleAnimLoop);
+        window._bubbleAnimLoop = null;
+      }, duree - 300);
+    }, 300);
+  }
+
+  // RÔLE : Étirement matinal — séquence spéciale à 3 temps, gérée séparément.
+  // POURQUOI : L'étirement a sa propre logique de séquençage (t1→t2→t3) et son verrou
+  //            journalier — on délègue à triggerEtirementMatin() qui gère tout ça.
+  //            force=true : chaque bulle *s'étire* mérite l'animation, même si déjà vue.
   if (msg.includes("*s'étire*")) {
     setTimeout(() => window.triggerEtirementMatin?.(true), 300);
-  }
-  // RÔLE : Saut si la bulle contient "*saute*" ou "*sautille*" ou "*fait des bonds*".
-  // POURQUOI : Cohérence geste/animation pour les bulles du streak élevé.
-  if (msg.includes('*sautille*') || msg.includes('*saute') || msg.includes('*fait des bonds*')) {
-    setTimeout(() => window.triggerGotchiBounce?.(), 300);
   }
 }
 

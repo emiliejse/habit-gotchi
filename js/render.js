@@ -378,6 +378,98 @@ window.animator = animator;
 //            existe même avant le premier tick().
 window._animOverrides = { hidden: new Set(), visible: new Set(), dx: 0, dy: 0 };
 
+// ── Commandes de debug console ─────────────────────────────────────────────────
+// RÔLE : Objet global pour tester les animations depuis la console du navigateur
+//        sans attendre les conditions de jeu (heure, météo, inactivité...).
+// POURQUOI : Les 4 animations récentes ont des déclencheurs très contraints
+//            (h===7, 3 min d'idle, temp<5°C, habitudes spécifiques) — impossible
+//            à vérifier visuellement sans ces helpers.
+// USAGE (console DevTools) :
+//   __hg.etirement()    → séquence bras levés → croisés → repos (adult uniquement)
+//   __hg.baillement()   → bouche O + yeux mi-clos, 18f
+//   __hg.frisson()      → tremblement horizontal ±1PX, 18f
+//   __hg.hochement()    → descente tête 2 cycles, 16f (teen/adult)
+//   __hg.saut()         → saut joie (référence)
+//   __hg.etat()         → snapshot état courant
+window.__hg = {
+
+  // RÔLE : Force l'étirement matinal — contourne h===7 et _etirementLastDay.
+  // POURQUOI : L'étirement n'est déclenchable qu'une fois par jour à 7h pile —
+  //            ce helper permet de le voir à tout moment en réinitialisant le verrou.
+  etirement() {
+    const g = window.D?.g;
+    if (g?.stage !== 'adult') {
+      console.warn('[__hg.etirement] Stade adulte requis — stade actuel :', g?.stage);
+      return;
+    }
+    window._etirementLastDay = null; // reset du verrou pour pouvoir rejouer
+    window.animator.trigger('etirement_t1');
+    setTimeout(() => window.animator.trigger('etirement_t2'), 1000);
+    setTimeout(() => window.animator.trigger('etirement_t3'), 2000);
+    console.log('[__hg.etirement] ✅ Séquence lancée : bras-levés → croisés → repos');
+  },
+
+  // RÔLE : Force le bâillement — contourne les 3 min d'inactivité.
+  // POURQUOI : _idleFrames doit atteindre 2160 frames en conditions normales.
+  baillement() {
+    const g = window.D?.g;
+    if (!g || g.stage === 'egg') {
+      console.warn('[__hg.baillement] Pas de bâillement pour l\'œuf');
+      return;
+    }
+    window._idleFrames = 0;
+    window.triggerExpr('baillement', 18);
+    console.log('[__hg.baillement] ✅ Bâillement déclenché — bouche O + yeux mi-clos, 18f');
+  },
+
+  // RÔLE : Force le frisson — contourne la condition météo (temp < 5°C).
+  // POURQUOI : Le frisson dépend de window.meteoData qui reflète la météo réelle.
+  frisson() {
+    window._frissonCooldown = 0; // reset cooldown
+    window.animator.trigger('frisson');
+    console.log('[__hg.frisson] ✅ Frisson déclenché — oscillation ±1PX, 18f');
+  },
+
+  // RÔLE : Force le hochement de tête — contourne la validation d'habitude intel/serene.
+  hochement() {
+    const g = window.D?.g;
+    if (g?.stage !== 'teen' && g?.stage !== 'adult') {
+      console.warn('[__hg.hochement] Stade teen ou adult requis — stade actuel :', g?.stage);
+      return;
+    }
+    window.animator.trigger('hochement');
+    console.log('[__hg.hochement] ✅ Hochement déclenché — descente tête 2 cycles, 16f');
+  },
+
+  // RÔLE : Déclenche un saut joie — animation de référence pour comparer.
+  saut() {
+    window.triggerGotchiBounce();
+    console.log('[__hg.saut] ✅ Saut joie déclenché — 20f');
+  },
+
+  // RÔLE : Snapshot de l'état courant — pour diagnostiquer pourquoi une animation
+  //        ne se déclenche pas automatiquement en conditions normales.
+  etat() {
+    const g = window.D?.g;
+    const expr = window._expr;
+    const h = new Date().getHours();
+    const temp = window.meteoData?.temperature;
+    const wcode = window.meteoData?.weathercode;
+    console.group('[__hg.etat] ─── État animations HabitGotchi ───');
+    console.log('Stade :', g?.stage ?? '⚠️ D non chargé');
+    console.log('Heure :', h, '— sleeping :', h >= 22 || h < 7);
+    console.log('Météo : temp =', temp, '°C | weathercode =', wcode);
+    console.log('animator.active :', window.animator.active.map(a => `${a.id}(${a.t}f)`).join(', ') || '(vide)');
+    console.log('_expr :', expr ? `${expr.lastMood} (${expr.moodTimer}f restantes)` : '(vide)');
+    console.log('_idleFrames :', window._idleFrames, '/ seuil bâillement :', 12 * 60 * 3);
+    console.log('_frissonCooldown :', window._frissonCooldown ?? 0);
+    console.log('_etirementLastDay :', window._etirementLastDay ?? '(jamais)');
+    console.log('Frisson auto — isCold :', typeof temp === 'number' && temp < 5, '| isRainingCold :', typeof wcode === 'number' && wcode >= 61 && typeof temp === 'number' && temp < 10);
+    console.log('Étirement auto — h===7 :', h === 7, '| verrou today :', window._etirementLastDay === new Date().toDateString());
+    console.groupEnd();
+  },
+};
+
 /**
  * RÔLE : Retourne la position Y de base du Gotchi en fonction de son stade de développement.
  * POURQUOI : Ce ternaire était copié-collé 3 fois (draw, touchStarted, touchMoved) —
@@ -747,9 +839,11 @@ function drawHUD(p, g, h) {
   p.drawingContext.globalAlpha = hasPoops ? 1.0 : 0.25;
   p.text('🧹', 70, 14);
 
-  // 🛁 Bain (gauche du centre, x=100) : opaque si salete >= 5, estompé si propre
+  // 🛁 Bain (gauche du centre, x=100) : opaque si salete >= 2, estompé si propre
+  // POURQUOI : seuil aligné sur celui du dithering et du frottement — l'icône s'allume
+  //            exactement quand les taches apparaissent et que le frottement est disponible.
   const salete = window.D?.g?.salete || 0;
-  p.drawingContext.globalAlpha = salete >= 5 ? 1.0 : 0.25;
+  p.drawingContext.globalAlpha = salete >= 2 ? 1.0 : 0.25;
   p.text('🛁', 100, 14);
 
   // 🍽️ Assiette (droite du centre, x=130) : opaque si repas disponible
@@ -1517,7 +1611,7 @@ if (!window._gotchiActif) return true;
     // 🛁 Bain (x=100) — tap = bulle contextuelle selon l'état de propreté du Gotchi
     if (Math.abs(mx - 100) < 14 && my < 26) {
       const saleteTap = window.D?.g?.salete || 0;
-      if (saleteTap >= 5) {
+      if (saleteTap >= 2) {
         // RÔLE : Invitation à frotter quand le Gotchi est sale.
         // POURQUOI : L'utilisatrice ne sait pas forcément qu'il faut frotter (glisser le doigt).
         //            Un message dans la bulle rend l'interaction intuitive.

@@ -73,6 +73,7 @@ Côté API, 4 templates actifs (`askClaude.base + withGift|withoutGift`, `buyPro
 | ✅ ~~🟡 P2~~ | Anti-répétition API | ~~Aucune mémoire des N derniers fragments envoyés à Claude~~ **CORRIGÉ 2026-05-01** — `{{fragmentsEvites}}` ajouté dans `askClaude.base` (fin de l'Action 2) + construit dans `vars` depuis `D.g.customBubbles.slice(0,6)`. L'IA reçoit les 6 derniers fragments et ne doit ni les reproduire ni les paraphraser. | `prompts/ai_contexts.json:3`, `js/ui-ai.js:vars` |
 | ✅ ~~🟢 P3~~ | `MSG` (`app.js:155-167`) | ~~Fallback obsolète depuis suppression de `personality.json`~~ **DOCUMENTÉ 2026-05-01** — `MSG` reste utile : `user_config.json` n'est pas dans le cache SW → offline sans cache = `PERSONALITY null` = `MSG` seul filet. Commentaire mis à jour pour refléter la raison réelle (offline) plutôt que l'ancienne raison (fetch async `personality.json`). | `js/app.js:172-178` |
 | ✅ ~~🟢 P3~~ | `genBilanSemaine` | ~~`{{traits}}`, `{{style}}` non injectés~~  **CORRIGÉ 2026-05-01** — `{{style}}` + `Traits : {{traits}}.` ajoutés dans `ai_contexts.json:13` + `.replace()` correspondants dans `ui-ai.js:909-910` | `prompts/ai_contexts.json:13`, `js/ui-ai.js:909` |
+| ✅ ~~🔴 P0~~ | `genBilanSemaine` | ~~`{{diminutif}}` non résolu dans le prompt envoyé à l'IA → l'IA reçoit le placeholder brut et le recrache dans sa réponse~~ **CORRIGÉ 2026-05-01** — `.replaceAll('{{diminutif}}', ...)` ajouté (1) dans la construction du prompt (`ui-ai.js:1090`) et (2) dans le post-traitement de la réponse (`ui-ai.js:1109`) | `js/ui-ai.js:1090, 1109` |
 
 ---
 

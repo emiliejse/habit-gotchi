@@ -519,14 +519,11 @@ Et dans `ui-habs.js`, après cochage, spawner 4 micro-éléments DOM (`.confetti
 
 #### C4.1 — Filtres ronds
 
-**Problème :** filtres 52×52 px (`ui-shop.js:163`) avec icône extraite du label par `[...label][0] + '︎'`. Cibles ok mais peu lisibles (icône seule, label dans `title`).
-
-**Proposition :**
-- Conserver les 52×52 px (cible ok).
-- Ajouter une mini-pastille label sous chaque rond (`.shop-filter-label` 9 px) : `Tous · Décor · Acc · Ambi · IA`.
-- État actif : passer la pastille en lilac.
-
-**Effort : S** • **Fichiers :** `ui-shop.js:140-169`.
+✅ **RÉSOLU 2026-05-01**
+- Chaque filtre est maintenant dans un `<div flex-column>` : bouton rond 52×52 (inchangé) + `<span>` 9px sous le rond.
+- Label coloré en `var(--lilac)` + bold quand actif, `var(--text2)` sinon.
+- `title=` remplacé par `aria-label=` (accessibilité).
+- Cible tactile conservée à 52×52 sur le bouton. Fichier : `ui-shop.js`.
 
 #### C4.2 — Carte objet : mise en scène
 

@@ -158,13 +158,20 @@ function renderProps() {
       //            et évite que ✿ s'affiche en bleu (rendu emoji couleur) sur iOS/Safari.
       const icon = [...label][0] + '︎';
       const nom  = label.replace(/^\S+\s*/, '');
-      return `<button onclick="setPropsFilter('${key}')"
-        title="${nom}"
-        style="width:52px;height:52px;border-radius:50%;padding:0;flex-shrink:0;
-        border:2px solid ${active ? 'var(--lilac)' : 'var(--border)'};
-        font-size:22px;cursor:pointer;
-        background:${active ? 'var(--lilac)' : 'rgba(0,0,0,.03)'};
-        transition:.15s;">${icon}</button>`;
+      // RÔLE : enveloppe bouton + label dans un conteneur flex-column pour afficher le nom sous le rond.
+      // POURQUOI : l'icône seule dans title= était invisible sans survol — ajouter le label en dessous
+      //            améliore la lisibilité sans toucher à la cible tactile (52×52 sur le bouton lui-même).
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;">
+        <button onclick="setPropsFilter('${key}')"
+          aria-label="${nom}"
+          style="width:52px;height:52px;border-radius:50%;padding:0;
+          border:2px solid ${active ? 'var(--lilac)' : 'var(--border)'};
+          font-size:22px;cursor:pointer;
+          background:${active ? 'var(--lilac)' : 'rgba(0,0,0,.03)'};
+          transition:.15s;">${icon}</button>
+        <span style="font-size:9px;font-family:var(--font-body);color:${active ? 'var(--lilac)' : 'var(--text2)'};
+          font-weight:${active ? 'bold' : 'normal'};letter-spacing:.3px;transition:.15s;">${nom}</span>
+      </div>`;
     }).join('');
   }
 

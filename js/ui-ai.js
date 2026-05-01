@@ -1086,6 +1086,7 @@ if (semaineEnCours) {
     ? ctx.genBilanSemaine
         .replaceAll('{{nameGotchi}}',   g.name)
         .replaceAll('{{userName}}',     D.g.userName || D.userName || 'ton utilisatrice')
+        .replaceAll('{{diminutif}}',    D.g.userNickname || D.g.userName || D.userName || 'toi') // BUGFIX : {{diminutif}} non résolu dans le prompt → IA recrache le placeholder brut
         .replace('{{style}}',        P?.style  || 'Phrases courtes, bienveillant.')  // RÔLE : injecte le style de personnalité dans le bilan
         .replace('{{traits}}',       P?.traits?.join(', ') || 'doux, curieux')       // RÔLE : injecte les traits pour différencier Émilie / Alexia
         .replace('{{weekStart}}',    wd[0])
@@ -1105,7 +1106,8 @@ if (semaineEnCours) {
     const d = await callClaude({ messages:[{ role:'user', content:prompt }] });
     const bilan = (d.content?.[0]?.text || 'Je n\'ai pas pu générer le bilan.')
       .replaceAll('{{nameGotchi}}', g.name)
-      .replaceAll('{{userName}}',   D.g.userName || D.userName || 'toi');
+      .replaceAll('{{userName}}',   D.g.userName || D.userName || 'toi')
+      .replaceAll('{{diminutif}}',  D.g.userNickname || D.g.userName || D.userName || 'toi'); // BUGFIX : nettoyage du placeholder si l'IA le recrache malgré la résolution en amont
 
     stopThinkingAnim(animBilan);
     if (btnBilan) btnBilan.classList.remove('is-loading');

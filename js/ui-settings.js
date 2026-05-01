@@ -695,7 +695,7 @@ function renderProg() {
         btnBilan.style.opacity = '0.5';
       } else {
         btnBilan.disabled      = false;
-        lblBilan.textContent   = '✿ Générer le bilan';
+        lblBilan.textContent   = 'Générer le bilan';
         btnBilan.style.opacity = '1';
       }
     }

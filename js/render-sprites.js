@@ -775,7 +775,10 @@ function drawBaby(p, cx, cy, sl, en, ha) {
   //            Regard crotte : si _gotchiNearPoop, le reflet est poussé du côté de la crotte
   //            la plus proche — effet "le Gotchi la regarde du coin de l'œil" sans nouveau sprite.
   //            Couleur : D.g.pupilColor (personnalisable dans l'onglet Perso) — blanc par défaut.
-  if (!params.sl && !params.blink) {
+  //            Guard baillement : isMood('baillement') ferme les yeux (calque yeux-fermes) mais
+  //            n'est pas dans params — on l'exclut explicitement pour ne pas afficher les reflets
+  //            par-dessus des paupières baissées.
+  if (!params.sl && !params.blink && !isMood('baillement')) {
     const _pupilEntry = window.HG_CONFIG.PUPIL_COLORS.find(c => c.id === (window.D?.g?.pupilColor ?? 'blanc'));
     p.fill(_pupilEntry ? _pupilEntry.hex : '#ffffff');
     p.noStroke();
@@ -1156,7 +1159,8 @@ function drawTeen(p, cx, cy, sl, en, ha) {
   //            mode surprise (les yeux surprise sont plus grands, les reflets y ont leur place).
   //            Les calques reflets-yeux-surprise du DSL ont été retirés pour éviter la superposition.
   //            Couleur : D.g.pupilColor (personnalisable dans l'onglet Perso) — blanc par défaut.
-  if (!params.sl && !params.blink) {
+  //            Guard baillement : même raison que drawBaby — yeux fermés pendant bâillement.
+  if (!params.sl && !params.blink && !isMood('baillement')) {
     const _pupilEntry = window.HG_CONFIG.PUPIL_COLORS.find(c => c.id === (window.D?.g?.pupilColor ?? 'blanc'));
     p.fill(_pupilEntry ? _pupilEntry.hex : '#ffffff');
     p.noStroke();
@@ -1631,7 +1635,8 @@ function drawAdult(p, cx, cy, sl, en, ha) {
   //            Regard crotte : même logique que baby/teen — poopDir pilote la position.
   // POURQUOI : !isMood('surprise') retiré — même raison que drawTeen (voir ci-dessus).
   //            Couleur : D.g.pupilColor (personnalisable dans l'onglet Perso) — blanc par défaut.
-  if (!params.sl && !params.blink) {
+  //            Guard baillement : même raison que drawBaby — yeux fermés pendant bâillement.
+  if (!params.sl && !params.blink && !isMood('baillement')) {
     const _pupilEntry = window.HG_CONFIG.PUPIL_COLORS.find(c => c.id === (window.D?.g?.pupilColor ?? 'blanc'));
     p.fill(_pupilEntry ? _pupilEntry.hex : '#ffffff');
     p.noStroke();

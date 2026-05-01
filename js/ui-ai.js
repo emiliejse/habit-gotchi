@@ -262,7 +262,13 @@ async function askClaude() {
       "...zzzZZZ... 💤",
       "Le Gotchi ronfle doucement. Reviens demain ✿"
     ];
-    if (msgEl) msgEl.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+    if (msgEl) {
+      msgEl.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+      // RÔLE : déclenche l'animation d'entrée CSS (claudeMsgIn)
+      msgEl.classList.remove('has-msg');
+      void msgEl.offsetWidth; // force reflow pour rejouer l'animation si déjà présente
+      msgEl.classList.add('has-msg');
+    }
     return;
   }
 
@@ -380,7 +386,13 @@ async function askClaude() {
     stopThinkingAnim(animThought);
 
     /* ── Message affiché ── */
-    if (msgEl) msgEl.textContent = data.message;
+    if (msgEl) {
+      msgEl.textContent = data.message;
+      // RÔLE : déclenche l'animation d'entrée CSS (claudeMsgIn) à chaque nouvelle pensée
+      msgEl.classList.remove('has-msg');
+      void msgEl.offsetWidth; // force reflow pour rejouer l'animation
+      msgEl.classList.add('has-msg');
+    }
 
  /* ── Bulles enrichies (pool glissant 20 max) ── */
 if (Array.isArray(data.bulles) && data.bulles.length) {

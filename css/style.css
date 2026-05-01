@@ -790,20 +790,44 @@ body {
 #soutien-flowers .flower-on  { color: #3d1f6e; opacity: 0.9; }
 #soutien-flowers .flower-off { color: #3d1f6e; opacity: 0.2; }
 
-/* RÔLE : Zone pensée IA — intégrée dans la carte Gotchi avec fond légèrement plus foncé */
-/* POURQUOI : distingue visuellement la section IA sans en faire une carte séparée */
+/* RÔLE : Zone pensée IA — séparée de la carte par un trait pointillé lilas */
+/* POURQUOI : C2.2 — le trait est plus léger qu'un fond coloré et crée une relation visuelle
+              directe avec l'esthétique "cahier" du reste de l'app */
 #claude-card {
-  background: rgba(176,144,208,0.22); /* POURQUOI : fond plus marqué pour distinguer la zone IA dans la carte */
+  background: transparent;
   border: none;
-  border-radius: var(--r-md);
-  padding: var(--sp-sm) var(--sp-md);
+  border-top: 1.5px dashed rgba(var(--lilac-rgb), 0.35);
+  border-radius: 0;
+  padding: var(--sp-md) var(--sp-sm) var(--sp-xs);
   margin-top: var(--sp-md);
-  text-align: left;
+  text-align: center;
 }
 
+/* RÔLE : Message de pensée IA — italic, fade-in doux à chaque nouvelle pensée */
 #claude-card #claude-msg {
   font-style: italic;
   text-align: center;
+}
+
+/* RÔLE : Animation d'entrée du message IA — glisse depuis le haut, s'estompe */
+/* POURQUOI : rend l'apparition de la pensée vivante, pas brutale */
+@keyframes claudeMsgIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+#claude-card #claude-msg.has-msg {
+  animation: claudeMsgIn .35s ease both;
+}
+
+/* RÔLE : Placeholder quand aucune pensée n'a encore été demandée */
+/* POURQUOI : évite une zone vide qui donne l'impression que l'appli est cassée */
+#claude-card #claude-msg:empty::before {
+  content: 'Demande une pensée à ton Gotchi…';
+  font-style: italic;
+  font-size: var(--fs-xs);
+  color: rgba(var(--lilac-rgb), 0.45);
+  display: block;
+  margin-top: var(--sp-xs);
 }
 
 /* RÔLE : Centrage du message d'attente IA pendant le bilan et les props.

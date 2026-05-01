@@ -439,14 +439,15 @@ function openModalWithBack(html, backFn) {
 
 #### C2.2 — Zone pensée IA : mise en scène
 
-**Problème :** `#claude-card` (`style.css:713-720`) est un simple bloc fond lilac. La pensée Claude apparaît brutalement dans `#claude-msg` sans transition.
+✅ **RÉSOLU 2026-05-01** (version allégée — sans refonte canvas)
 
-**Proposition :**
-- Transformer `#claude-card` en bulle pixel art positionnée au-dessus du tama (relation visuelle directe).
-- Animation d'entrée : `bookSlideUp` adapté ou `fadeInDown` Animate.css.
-- Au repos : carte vide avec placeholder "Demander une pensée" centré + 3 ✿ visibles.
+- `#claude-card` : fond supprimé, remplacé par `border-top: 1.5px dashed rgba(--lilac-rgb, 0.35)` — esthétique cahier.
+- `@keyframes claudeMsgIn` : `opacity 0→1` + `translateY(-6px→0)` en 0.35s — apparition douce.
+- `.has-msg` : classe ajoutée via JS (`ui-ai.js`) au moment du peuplement de `#claude-msg`, avec reflow forcé pour rejouer l'animation à chaque pensée.
+- `#claude-msg:empty::before` : placeholder CSS discret ("Demande une pensée à ton Gotchi…") visible quand la zone est vide.
+- `aria-live="polite"` ajouté sur `#claude-msg` dans `index.html` (dette a11y).
 
-**Effort : M** • **Fichiers :** `style.css:713-734`, `ui-ai.js:255-256`.
+**Non implémenté :** repositionnement en bulle au-dessus du tama (touche le canvas p5 — chantier séparé).
 
 #### C2.3 — Mini-bar habitudes : micro-animations de validation
 

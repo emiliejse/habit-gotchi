@@ -1,7 +1,5 @@
 # AUDIT GAMEPLAY — HabitGotchi
 
-> **Usage :** Coller ce prompt dans Claude Code (modèle Opus) à la racine du repo `habit-gotchi`.
-> Opus lira les fichiers lui-même. Chaque section est indépendante — tu peux les envoyer une par une.
 > **Fichier de sortie attendu :** `AUDIT_GAMEPLAY.md` à la racine du repo.
 
 ---

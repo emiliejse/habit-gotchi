@@ -21,7 +21,9 @@ Trois priorités d'action :
 
 | Priorité | Système | Problème | Fichier / ligne |
 |----------|---------|----------|-----------------|
-| 🔴 CRIT | S5 Saleté | `D.g.salete` n'est jamais remis à 0 lors du nettoyage — accumulation indéfinie | `js/app.js:665-690` (cleanPoops sans reset salete) |
+| ✅ FIXÉ | S5 Saleté | `D.g.salete = 0` ajouté dans `cleanPoops()` — reset après nettoyage (2026-05-01) | `js/app.js:683` |
+| ✅ FIXÉ | S5 Saleté | Seuil dithering abaissé 5→2, ratio recalibré `(salete-2)/8` — saleté visible dès 1-2 crottes (2026-05-01) | `js/render-sprites.js:330,337` |
+| ✅ FIXÉ | S5 Saleté | Crotte garantie au bootstrap si `poopCount === 0` pour le jour courant — engagement assuré (2026-05-01) | `js/app.js:512-520` (dans `checkSalete`) |
 | 🔴 CRIT | S2 Habitudes | Aucun streak, aucune mémoire de continuité jour-à-jour | `js/app.js:750-831` |
 | 🟠 HAUT | S2 Habitudes | Aucune pénalité / rétro-action si habitude manquée (ni XP négatif, ni bulle, ni baisse de happiness) | `js/app.js:750-831` |
 | 🟠 HAUT | S3 États | Pas d'état `hunger` indépendant — le repas n'alimente pas une jauge | `js/app.js:183-184`, `data/config.js` |

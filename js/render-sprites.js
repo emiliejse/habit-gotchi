@@ -327,11 +327,14 @@ function _getSaleteMask(p, stage, breathX) {
 // @param {number} salete  - Niveau de saleté 0-10 (rien dessiné si < 5)
 // @param {boolean} sl     - true si le Gotchi dort (breathX forcé à 0)
 function drawSaleteDither(p, stage, cx, cy, salete, sl) {
-  if (!salete || salete < 5) return;
+  if (!salete || salete < 2) return;
 
   // RÔLE : Calculer l'intensité visuelle selon le niveau de saleté.
-  // POURQUOI : ratio va de 0.0 (saleté=5) à 1.0 (saleté=10) — progression douce.
-  const ratio  = (salete - 5) / 5;            // 0 → 1
+  // POURQUOI : ratio va de 0.0 (saleté=2) à 1.0 (saleté=10) — progression douce.
+  //            Seuil abaissé de 5 → 2 : l'échelle 0-4 était entièrement invisible,
+  //            ce qui rendait la saleté imperceptible après 1-2 crottes. Désormais
+  //            dithering léger dès salete=2, plein à salete=10.
+  const ratio  = Math.max(0, Math.min(1, (salete - 2) / 8)); // 0 → 1
   const alpha  = Math.round(40 + ratio * 120); // opacité 40 → 160
   const stride = ratio < 0.5 ? 3 : 2;         // pas du damier : 1 case / 3 puis 1 / 2
 

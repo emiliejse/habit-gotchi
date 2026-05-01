@@ -508,6 +508,16 @@ window.checkSalete = function checkSalete() {
     D.g.salete = Math.min(10, (D.g.salete || 0) + pointsTemps);
     // pas de save() ici — le bootstrap appellera save() après checkWelcome()
   }
+
+  // RÔLE : Garantit au moins 1 crotte par jour au bootstrap si aucune n'a spawné aujourd'hui.
+  // POURQUOI : Si l'app est ouverte très peu (2-3 min), l'interval 30 min ne tourne pas assez
+  //            pour que le spawn aléatoire se déclenche. Sans cette garde, le gotchi peut passer
+  //            une journée entière sans crotte → saleté invisible → pas de boucle d'engagement.
+  const td = today();
+  const poopAujourdhui = D.g.poopDay === td && (D.g.poopCount || 0) > 0;
+  if (!poopAujourdhui && (D.g.poops || []).length < 5) {
+    spawnPoop(); // 1 crotte garantie au premier lancement du jour
+  }
 };
 
 // Probabilité d'apparition
@@ -670,6 +680,9 @@ function cleanPoops() {
   window._cleanPositions = [...window.D.g.poops];
   
   window.D.g.poops = [];
+  window.D.g.salete = 0; // RÔLE : reset complet de la jauge de saleté après nettoyage
+                          // POURQUOI : sans ce reset, salete monte indéfiniment et le dithering
+                          //            ne disparaît jamais même après nettoyage — bug critique
   window.D.g.petales = (window.D.g.petales || 0) + (count * 2); // 2 pétales par crotte
   if (typeof toast === 'function') toast(`Propre ! +${count * 2} 🌸`);
   

@@ -41,11 +41,12 @@ Hors périmètre : `js/render.js`, `js/envs.js`, `js/render-sprites.js`, logique
 1. **🟢 `lockScroll()` manquant dans `ouvrirSnack()`**
    `ui-settings.js:43-122` ouvre 4 modales différentes via `openModal()` qui appelle bien `lockScroll()`. ✅ RÉSOLU. **Mais** `ouvrirSnack()` lui-même (en tant que helper appelé depuis un bouton canvas) ne déclenche pas `lockScroll()` au-delà de ce que fait `openModal`. À vérifier en cas de doute. *(Connaissance préalable du brief)* — confirmer.
 
-2. **🟢 Câbler les variables sémantiques `--success` / `--warning` / `--info` / `--focus-ring`**
-   Définies `style.css:32-36`, jamais référencées. Câbler `:focus-visible` (`style.css:752`) sur `--focus-ring`, `.btn-m` sur `--success`, warnings cycle sur `--warning`. *Effort : S — Impact maintenance : élevé.*
+2. ~~**🟢 Câbler `--focus-ring` sur `:focus-visible`**~~
+   ✅ **RÉSOLU 2026-05-01** — `:focus-visible` utilise désormais `var(--focus-ring)` au lieu de `var(--lilac)` en dur (`style.css`).
+   **Reste ouvert :** câbler `--success` sur `.btn-m` et `--warning` sur les warnings cycle — effort M.
 
-3. **🟢 Définir `--lilac-rgb` ou retirer le fallback systématique**
-   `js/ui-agenda.js:197` utilise `rgba(var(--lilac-rgb, 180,160,230),0.07)` mais `--lilac-rgb` n'est pas définie dans `:root` ni dans `applyUIPalette()` (`ui-settings.js:361-373`). Le fallback est donc systématique → la note d'agenda n'épouse jamais la palette utilisateur. *Effort : S.*
+3. ~~**🟢 Définir `--lilac-rgb` ou retirer le fallback systématique**~~
+   ✅ **RÉSOLU 2026-05-01** — `--lilac-rgb: 176, 144, 208` ajouté dans `:root` (`style.css`). La note d'agenda épouse maintenant la palette par défaut. Note : `applyUIPalette()` ne recalcule pas encore `--lilac-rgb` dynamiquement (à compléter si les palettes personnalisées doivent en bénéficier).
 
 ---
 
@@ -86,7 +87,7 @@ Inchangé. Les badges énergie/bonheur sont dessinés dans le canvas p5 (comment
 
 ### 1.4 Navigation
 
-- **Languette** `.menu-languette` `style.css:372-396` fixed bottom, ouvre `#menu-overlay` via `toggleMenu()` (`ui-core.js:379`). **Toujours pas d'état "open" visible** sur la languette (icône ☰ figée).
+- **Languette** `.menu-languette` — refactorisée 2026-05-01 en **ruban diagonal** ancré en bas à gauche (coin triangle `clip-path`). Icône ☰ via `::after` (✕ quand ouverte). État `.is-open` → monte de 10 px (`translateY(-10px)`) + ombre renforcée. `--sab` remis à `0px` (pas de home indicator sur l'appareil cible).
 - **Cahier** : 6 lignes en quinconce (`style.css:494-530`) + 2 post-its (Agenda rose, Soutien lilas). Pas de ✕ — clic à côté ferme.
 - **État actif** : `.menu-line.active` (`style.css:523-527`) — ciblé via `ui-nav.js:115-117`.
 - **Mode compact** (`#console-top.compact`) : `#hdr-title` se replie (`style.css:209-214`), tama réduit à 220 px (`style.css:260-267`). Pas d'indicateur de l'onglet courant en mode compact.
@@ -114,16 +115,16 @@ Inchangé. Les badges énergie/bonheur sont dessinés dans le canvas p5 (comment
 
 | Variable | Définie ? | Utilisée dans | Statut |
 |---|---|---|---|
-| `--success` | ✅ `style.css:32` | nulle part | 🔴 morte |
-| `--warning` | ✅ `style.css:34` | nulle part | 🔴 morte |
-| `--info` | ✅ `style.css:35` | nulle part | 🔴 morte |
-| `--focus-ring` | ✅ `style.css:36` | nulle part (`:focus-visible` utilise `--lilac` en dur `style.css:759`) | 🔴 morte |
+| `--success` | ✅ `style.css:32` | `#toast.toast--success` | ✅ RÉSOLU 2026-05-01 — câblé sur les variantes toast |
+| `--warning` | ✅ `style.css:34` | `#toast.toast--warning` | ✅ RÉSOLU 2026-05-01 — câblé sur les variantes toast |
+| `--info` | ✅ `style.css:35` | nulle part | 🟠 encore morte — à câbler (warnings cycle, bilan, etc.) |
+| `--focus-ring` | ✅ `style.css:36` | `:focus-visible` | ✅ RÉSOLU 2026-05-01 — remplace `--lilac` en dur |
 | `--fs-xl` | ✅ `style.css:61` | nulle part | 🟠 morte |
 | `--sp-xl` | ✅ `style.css:70` | nulle part | 🟠 morte |
 | `--paper-book-line` | ✅ `style.css:90` | nulle part | 🟠 morte |
 | `--c-border` | ❌ NON DÉFINIE | ~~`ui-habs.js:139, 145`~~ | ✅ RÉSOLU 2026-05-01 — remplacé par `--border` |
 | `--c-txt2` | ❌ NON DÉFINIE | ~~`ui-habs.js:140, 146`~~ | ✅ RÉSOLU 2026-05-01 — remplacé par `--text2` |
-| `--lilac-rgb` | ❌ NON DÉFINIE | `ui-agenda.js:197` (avec fallback `180,160,230`) | 🟠 fallback systématique |
+| `--lilac-rgb` | ✅ `style.css:root` | `ui-agenda.js:197` | ✅ RÉSOLU 2026-05-01 — défini à `176, 144, 208` dans `:root` |
 | `--bubble-bg` | ❌ proposée par audit précédent | `style.css:300, 336` utilisent `#fff` en dur | 🔴 toujours OUVERT |
 | `--sab` | ✅ `style.css:40` | utilisée dans `.menu-languette`, `#dynamic-zone`, `#toast` | ✅ RÉSOLU 2026-05-01 — `env(safe-area-inset-bottom, 0px)` |
 | `--sal` / `--sar` | ✅ `style.css:41-42` | `body padding-left/right` `style.css:144-145` | ✅ RÉSOLU 2026-05-01 — `env(safe-area-inset-left/right, 0px)` |

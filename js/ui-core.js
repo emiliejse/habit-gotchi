@@ -170,10 +170,15 @@ let _toastTimer;
 
 /**
  * Toast : Notification éphémère douce en bas de l'écran (non-bloquante)
+ * RÔLE : Affiche un message court avec variante visuelle optionnelle
+ * POURQUOI : Un seul style neutre ne distingue pas une confirmation d'une erreur.
+ *            Le paramètre `type` accepte : 'success' | 'danger' | 'warning' (défaut : neutre)
  */
-function toast(m) {
+function toast(m, type = '') {
   let el = document.getElementById('toast');
   if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
+  // Réinitialise les classes de variante avant d'en appliquer une nouvelle
+  el.className = type ? `toast--${type}` : '';
   el.textContent = _noOrphan(m);
   el.classList.add('show');
   clearTimeout(_toastTimer);
@@ -386,6 +391,9 @@ function toggleMenu() {
     unlockScroll();
   }
   ov.classList.toggle('open');
+  // RÔLE : Synchronise l'état visuel de la languette avec l'ouverture du menu
+  // POURQUOI : Sans ça, l'icône ☰ reste figée que le menu soit ouvert ou fermé
+  document.querySelector('.menu-languette')?.classList.toggle('is-open');
 }
 
 // RÔLE : Ferme silencieusement le menu-overlay s'il est ouvert, sans appeler unlockScroll()
@@ -394,6 +402,8 @@ function toggleMenu() {
 //            On retire juste la classe .open — lockScroll() reste géré par la modale qui s'ouvre.
 function _fermerMenuSiOuvert() {
   document.getElementById('menu-overlay')?.classList.remove('open');
+  // Synchronise aussi la languette quand le menu est fermé sans passer par toggleMenu()
+  document.querySelector('.menu-languette')?.classList.remove('is-open');
 }
 
 function goMenu(t) { toggleMenu(); go(t); }

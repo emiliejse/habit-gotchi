@@ -435,7 +435,8 @@ Ton bilan de la semaine apparaîtra ici...
   ============================================================
 -->
 <!-- Languette du menu (SYSTEM 5: UI/Design) -->
-<button class="menu-languette" onclick="toggleMenu()" aria-label="Ouvrir le menu">☰</button>
+<!-- Le ☰ est géré par .menu-languette::after en CSS (clip-path triangle — contenu texte inutile) -->
+<button class="menu-languette" onclick="toggleMenu()" aria-label="Ouvrir le menu"></button>
 
 <!-- Menu overlay (SYSTEM 5: UI/Design) -->
 <!-- POURQUOI .app-overlay : garantit position:fixed;inset:0;pointer-events:auto sur cet overlay -->
@@ -542,12 +543,20 @@ Ton bilan de la semaine apparaîtra ici...
 <!--
   ============================================================
   SCRIPTS — Ordre impératif (SYSTEM 7: Ingénierie/Layout)
-  - config.js       : Configuration globale (SYSTEM 7: Ingénierie/Layout)
-  - app.js          : Logique métier principale (SYSTEM 1 à SYSTEM 7)
-  - render.js       : Rendu graphique principal (SYSTEM 3: IA & Cognition + SYSTEM 5: UI/Design)
-  - envs.js         : Gestion des environnements (SYSTEM 2: Écosystème)
-  - render-sprites.js : Sprites du Gotchi — dépend de render.js ET envs.js (pxFree)
-  - ui.js           : Gestion de l'interface (SYSTEM 5: UI/Design)
+  Chaque module dépend de ceux qui le précèdent — NE PAS réordonner.
+  - config.js         : Constantes et palettes globales (S7)
+  - app.js            : Cerveau : données, save/load, XP, habitudes, bootstrap (S1-S7)
+  - render.js         : Boucle p5, gotchi, ciel, animations, touch (S5)
+  - envs.js           : Biomes, météo, helpers px/tc/shadeN (S2)
+  - render-sprites.js : Sprites pixel art — dépend de render.js + envs.js (S5)
+  - ui-core.js        : callClaude, toast/modal/scroll, menu overlay (S3/S5)
+  - ui-habs.js        : renderHabs, édition habitudes (S4)
+  - ui-shop.js        : Boutique, props, inventaire, switcher env (S5)
+  - ui-ai.js          : askClaude, genSoutien, genBilanSemaine (S3)
+  - ui-journal.js     : Journal, PIN, mood picker, export (S6)
+  - ui-settings.js    : initUI, renderPerso, renderProg, ouvrirSnack (S5)
+  - ui-agenda.js      : Agenda jour/mois/cycle, RDV, règles (S6)
+  - ui-nav.js         : go(), syncConsoleHeight(), updDate() — DOIT RESTER EN DERNIER (S7)
   ============================================================
 -->
 <script src="data/config.js"></script>

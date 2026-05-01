@@ -99,13 +99,22 @@ function stopThinkingAnim(interval) {
    API CLAUDE — CADEAU / BULLE
    ============================================================ */
 
-// RÔLE : Choisit un registre d'expression selon l'état du gotchi + aléatoire
+// RÔLE : Mémorise le dernier registre tiré pour éviter deux fois de suite le même
+// POURQUOI : Variable module (hors fonction) — persiste entre les appels sans polluer window.*
+let _dernierRegistre = null;
+
+// RÔLE : Choisit un registre d'expression selon l'état du gotchi + traits de personnalité
 // POURQUOI : Force la variété réelle des pensées sans dépendre du modèle seul
 // POURQUOI : Le paramètre h (heure) a été retiré — les registres temporels ne sont plus utilisés.
-function getRegistre(energy, happiness) {
+// SIGNATURE : getRegistre(energy, happiness, traits) — traits est optionnel (tableau de strings)
+function getRegistre(energy, happiness, traits = []) {
+  // RÔLE : Normalise les traits en minuscules pour comparer sans souci de casse
+  const t = (traits || []).map(s => s.toLowerCase());
+  const aTraits = (...keys) => keys.some(k => t.includes(k));
+
   const registres = [];
 
-  // Selon l'énergie
+  // ── Selon l'énergie ──
   if (energy <= 1) registres.push(
     "autodérision douce (tu es épuisé·e mais tu l'assumes avec humour)",
     "observation absurde sur le fait de survivre à une journée difficile"
@@ -115,7 +124,7 @@ function getRegistre(energy, happiness) {
     "taquin·e et complice, comme quelqu'un de trop réveillé"
   );
 
-  // Selon le bonheur
+  // ── Selon le bonheur ──
   if (happiness <= 2) registres.push(
     "tendresse maladroite, comme quelqu'un qui cherche ses mots",
     "humour très léger sur les petits riens qui vont pas"
@@ -125,19 +134,54 @@ function getRegistre(energy, happiness) {
     "fierté un peu excessive pour quelque chose de minuscule"
   );
 
-  // POURQUOI : Les registres temporels (matin, après-midi, nuit) ont été retirés.
-  // Les bulles sont rejouées n'importe quand → un registre "matin naïf" lu à 23h est incohérent.
-  // Le ton est désormais ancré uniquement sur l'énergie et l'humeur du Gotchi.
+  // ── Registres conditionnels par traits de personnalité ──
 
-  // Registres universels (toujours disponibles)
-  registres.push(
-    "non-sequitur poétique totalement inattendu",
-    "observation microscopique sur quelque chose d'insignifiant",
-    "mini-déclaration dramatique pour un détail du quotidien"
+  // RÔLE : Registres spécifiques au trait "pince-sans-rire" (profil Alexia)
+  // POURQUOI : Un non-sequitur poétique tombe à plat pour un Gotchi sec et décalé — ces registres lui conviennent mieux
+  if (aTraits('pince-sans-rire')) registres.push(
+    "comparaison administrative douce (ex : vibes à jour, solde positif)",
+    "constat factuel livré avec un enthousiasme parfaitement plat"
   );
 
-  // Tire un registre au hasard dans ce qui est pertinent
-  return registres[Math.floor(Math.random() * registres.length)];
+  // RÔLE : Registres spécifiques au trait "absurde" (profil Émilie)
+  // POURQUOI : Pousse plus loin l'absurde doux déjà présent dans le style d'Émilie
+  if (aTraits('absurde')) registres.push(
+    "non-sequitur botanique légèrement vexant (ex : tu es plus courageuse qu'une fougère)",
+    "souvenir inventé d'un instant qui n'a probablement pas eu lieu"
+  );
+
+  // RÔLE : Registres spécifiques au trait "créatif"
+  // POURQUOI : Joue sur l'imaginaire visuel, cohérent avec une illustratrice
+  if (aTraits('créatif', 'creatif')) registres.push(
+    "observation factuelle déguisée en haïku raté",
+    "description d'une scène minuscule comme si c'était une peinture flamande"
+  );
+
+  // ── Registres universels (toujours disponibles) ──
+  // POURQUOI : Le registre poétique inattendu est exclu si "pince-sans-rire" est actif — il sonnerait faux
+  if (!aTraits('pince-sans-rire')) {
+    registres.push("non-sequitur poétique totalement inattendu");
+  }
+  registres.push(
+    "observation microscopique sur quelque chose d'insignifiant",
+    "mini-déclaration dramatique pour un détail du quotidien",
+    // RÔLE : Nouveaux registres universels (ajoutés v4.81 — §3c AUDIT_IA_PERSONNALITE.md)
+    "micro-confidence chuchotée comme si c'était un secret",
+    "interjection courte suivie d'un silence révélateur (trois points)"
+  );
+
+  // ── Blacklist du dernier registre tiré ──
+  // POURQUOI : Évite de tomber deux fois de suite sur le même registre
+  // On exclut le dernier seulement si le pool a au moins 2 options (sécurité si pool très petit)
+  let pool = registres;
+  if (_dernierRegistre && registres.length >= 2) {
+    pool = registres.filter(r => r !== _dernierRegistre);
+  }
+
+  // Tire un registre au hasard dans le pool filtré
+  const choix = pool[Math.floor(Math.random() * pool.length)];
+  _dernierRegistre = choix; // mémorise pour le prochain appel
+  return choix;
 }
 
 // RÔLE : Construit les exemples de style pour le prompt IA
@@ -235,7 +279,9 @@ async function askClaude() {
     nameGotchi:    D.g.name         || P?.nom    || 'Petit·e Gotchi',
     userName:      D.g.userName     || D.userName || 'ton utilisatrice',
     diminutif:     D.g.userNickname || D.g.userName || D.userName || 'toi',
-    registre:      getRegistre(g.energy, g.happiness),
+    // RÔLE : Passe les traits de personnalité à getRegistre pour activer les registres conditionnels
+    // POURQUOI : Permet au pool de s'adapter au profil (Émilie ≠ Alexia) sans changer le template
+    registre:      getRegistre(g.energy, g.happiness, P?.traits),
     style:         P?.style         || 'Phrases courtes, onomatopées entre astérisques, bienveillant.',
     traits:        P?.traits?.join(', ') || 'doux, joueur, curieux',
     energy:        g.energy,
@@ -258,6 +304,11 @@ async function askClaude() {
       ...(window.PROPS_LIB || []).map(p => `${p.nom} (${p.type})`)
     ])].join(', ') || 'aucun',
     timestamp:     Date.now(),
+    // RÔLE : Injecte les 6 derniers fragments envoyés à Claude pour éviter les répétitions inter-appels
+    // POURQUOI : Sans ça, l'IA ne sait pas ce qu'elle a écrit hier et peut reproduire la même structure.
+    //            customBubbles stocke les bulles générées par l'IA (ajoutées dans app.js:1101-1107).
+    //            On prend les 6 premières (les plus récentes sont en tête du tableau).
+    fragmentsEvites: (D.g.customBubbles || []).slice(0, 6).join(' / ') || 'aucun',
   };
 
   function fillVars(template) {

@@ -63,9 +63,9 @@ Côté API, 4 templates actifs (`askClaude.base + withGift|withoutGift`, `buyPro
 | 🟠 P1 | Cohérence bulles ↔ API | Les bulles utilisent `{{diminutif}}` (résolu dans `app.js:1129`) mais les prompts API utilisent `{{userName}}` ou `diminutif` (`ui-ai.js:214`). Deux variables coexistent pour la même intention, risque de drift | `js/app.js:1129` ↔ `js/ui-ai.js:213-214` |
 | 🟠 P1 | Catégorie `journal` non câblée | 6 bulles `journal` définies dans les deux user_config mais aucun appel `flashBubble(src.journal[...])` — contenu mort | `data/user_config.json:162-169` |
 | 🟠 P1 | Catégorie `cadeau` partiellement câblée | Le pool `personality.bulles.cadeau` n'est jamais lu : `askClaude` réécrit son propre pool en dur (`ui-ai.js:275-276`) | `js/ui-ai.js:275-277` |
-| 🟡 P2 | `getRegistre()` | Ne mixe jamais 2 registres ; pas de blacklist du dernier registre tiré → on peut avoir 3 jours de suite la même tonalité | `js/ui-ai.js:105-141` |
+| ✅ ~~🟡 P2~~ | `getRegistre()` | ~~Ne mixe jamais 2 registres ; pas de blacklist du dernier registre tiré~~ **CORRIGÉ 2026-05-01** — Blacklist du dernier registre (`_dernierRegistre`), filtrage par `traits` (registres conditionnels pour `pince-sans-rire` / `absurde` / `créatif`), 2 nouveaux registres universels, `non-sequitur poétique` exclu si `pince-sans-rire`. Signature étendue : `getRegistre(energy, happiness, traits = [])` | `js/ui-ai.js:102-185` |
 | 🟡 P2 | Bulle nuit fallback | `app.js:1056` redéfinit un pool nuit en dur si `src.nuit` est absent — duplique l'info avec `MSG.nuit` (`app.js:160-167`) | `js/app.js:1054-1066` |
-| 🟡 P2 | Anti-répétition API | Aucune mémoire des N derniers fragments envoyés à Claude pour `askClaude` → l'IA peut renvoyer des structures très proches d'un jour à l'autre | `js/ui-ai.js:164-295` |
+| ✅ ~~🟡 P2~~ | Anti-répétition API | ~~Aucune mémoire des N derniers fragments envoyés à Claude~~ **CORRIGÉ 2026-05-01** — `{{fragmentsEvites}}` ajouté dans `askClaude.base` (fin de l'Action 2) + construit dans `vars` depuis `D.g.customBubbles.slice(0,6)`. L'IA reçoit les 6 derniers fragments et ne doit ni les reproduire ni les paraphraser. | `prompts/ai_contexts.json:3`, `js/ui-ai.js:vars` |
 | 🟢 P3 | `MSG` (`app.js:160-167`) | Fallback obsolète depuis suppression de `personality.json` — il ne sera plus jamais atteint si `USER_CONFIG.personality` est présent | `js/app.js:155-167` |
 | ✅ ~~🟢 P3~~ | `genBilanSemaine` | ~~`{{traits}}`, `{{style}}` non injectés~~  **CORRIGÉ 2026-05-01** — `{{style}}` + `Traits : {{traits}}.` ajoutés dans `ai_contexts.json:13` + `.replace()` correspondants dans `ui-ai.js:909-910` | `prompts/ai_contexts.json:13`, `js/ui-ai.js:909` |
 
@@ -561,8 +561,8 @@ COHÉRENCE PERSONNALITÉ
 4. **🟠 Activer `ai.systemPromptOverride`** dans `js/ui-ai.js:766` ou supprimer le champ — éviter la dette de promesses non tenues.
 5. **🟠 Câbler les bulles `journal` et `cadeau`** (déjà écrites mais mortes) dans `app.js` — ouverture journal → `flashBubble(src.journal[...])`, réception cadeau IA → utiliser `src.cadeau` au lieu du pool en dur.
 6. **🟡 Introduire `toneProfile`** dans `user_config.personality` + fonction `buildToneBlock()` (cf. §4b). Migration progressive : variable `{{toneBlock}}` rendue vide si absente.
-7. **🟡 Anti-répétition API** : injecter les 6 derniers fragments via `{{fragmentsEvites}}`.
-8. **🟡 Étendre `getRegistre()`** : 3-4 nouveaux registres universels + filtrage par `traits` (ex : "pince-sans-rire" exclut les registres poétiques).
+7. ✅ **~~🟡 Anti-répétition API~~** — **FAIT 2026-05-01.** `{{fragmentsEvites}}` injecté en fin d'Action 2 dans `askClaude.base` + construit dans `vars` (`D.g.customBubbles.slice(0,6).join(' / ')`). Fallback `'aucun'` si le tableau est vide.
+8. ✅ **~~🟡 Étendre `getRegistre()`~~** — **FAIT 2026-05-01.** Filtrage par `traits`, blacklist du dernier registre, 2 nouveaux registres universels, registres conditionnels pour `pince-sans-rire` / `absurde` / `créatif`, exclusion `non-sequitur poétique` si `pince-sans-rire` actif.
 9. **🟢 Ajouter les 5 catégories de bulles manquantes** (`repas`, `retour`, `pluie`, `bain`, `cycle_regles`) dans les deux user_config et leurs déclencheurs dans `app.js:1068-1117`.
 10. **🟢 Plafond explicite de longueur** dans `genSoutien` (ex : "Maximum 50 mots, 3 phrases.") pour garantir la lisibilité mobile TDAH.
 

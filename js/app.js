@@ -57,7 +57,7 @@ let _meteoIntervalId = null;
 let _poopIntervalId  = null;
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v4.86'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v4.87'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -95,18 +95,18 @@ async function loadDataFiles() {
     const packs_  = results[2].status === 'fulfilled' ? results[2].value.catalogue || [] : [];
     window.PROPS_LIB = [...base_, ...shop_, ...packs_];
 
-    // RÔLE : Charge un catalogue d'objets exclusifs si user_config définit extraPropsFile.
-    // POURQUOI : Permet à Alexia d'avoir ses propres objets sans polluer le catalogue commun.
-    //            Chez Émilie, extraPropsFile est absent → ce bloc est ignoré.
-    if (window.USER_CONFIG?.extraPropsFile) {
-      try {
-        const r = await fetch(window.USER_CONFIG.extraPropsFile);
-        if (r.ok) {
-          const extra = await r.json();
-          window.PROPS_LIB = window.PROPS_LIB.concat(extra.catalogue || []);
-        }
-      } catch(e) { console.log('extraPropsFile introuvable — ignoré'); }
-    }
+      // RÔLE : Charge un catalogue d'objets exclusifs si user_config définit extraPropsFile.
+      // POURQUOI : Permet à Alexia d'avoir ses propres objets sans polluer le catalogue commun.
+      //            Chez Émilie, extraPropsFile est absent → ce bloc est ignoré.
+      if (window.USER_CONFIG?.extraPropsFile) {
+        try {
+          const r = await fetch(window.USER_CONFIG.extraPropsFile);
+          if (r.ok) {
+            const extra = await r.json();
+            window.PROPS_LIB = window.PROPS_LIB.concat(extra.catalogue || []);
+          }
+        } catch(e) { console.log('extraPropsFile introuvable — ignoré'); }
+      }
 
     // RÔLE : Ajoute automatiquement les objets de props_base.json à l'inventaire.
     // POURQUOI : Tous les objets de base ont cout:0 — plus besoin de filtrer par
@@ -998,8 +998,8 @@ function updatePresenceStreak() {
   const streak = D.presenceStreak;
   const jalons = {
     3:  { msg: `3 jours de suite ! Tu reviens chaque jour 💜`, petales: 0 },
-    7:  { msg: `Une semaine d'affilée ! Je suis si content·e de te voir 🌟`, petales: 3 },
-    14: { msg: `14 jours consécutifs !! On est inséparables ✨🔥`, petales: 5 },
+    7:  { msg: `Une semaine d'affilée ! Je suis si content·e de te voir 🌟`, petales: 4 },
+    14: { msg: `14 jours consécutifs !! On est inséparables ✨🔥`, petales: 6 },
     30: { msg: `30 jours ! Tu es légendaire 👑`, petales: 10 },
   };
   if (jalons[streak]) {
@@ -1604,6 +1604,7 @@ function updBubbleNow() {
       if (w.bonus) continue; // goûter ignoré
       const dist = w.start - hFloat;
       if (dist > 0 && dist <= 0.5 && !meals[key]) {
+        // On est entre 0 et 30 min avant l'ouverture de cette fenêtre, pas encore mangé
         prochaine = w;
         break;
       }

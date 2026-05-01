@@ -57,9 +57,9 @@ Côté API, 4 templates actifs (`askClaude.base + withGift|withoutGift`, `buyPro
 
 | Priorité | Système | Problème | Fichier / ligne |
 |---|---|---|---|
-| 🔴 P0 | Prompt `askClaude.withGift` | Variable `{{existingNames}}` jamais remplacée — `vars` expose `nomsExistants` (`ui-ai.js:226`) mais le template attend `existingNames` (`ai_contexts.json:5`) → l'IA reçoit `{{existingNames}}` brut, ce qui pollue son contexte et peut faire fuiter la chaîne dans la sortie JSON | `prompts/ai_contexts.json:5` ↔ `js/ui-ai.js:211-231` |
+| ✅ ~~🔴 P0~~ | Prompt `askClaude.withGift` | ~~Variable `{{existingNames}}` jamais remplacée~~ **CORRIGÉ 2026-05-01** — `{{existingNames}}` renommé en `{{nomsExistants}}` dans `ai_contexts.json:5` pour matcher la variable injectée par `ui-ai.js:226` | `prompts/ai_contexts.json:5` |
 | 🔴 P0 | Personnalité multi-utilisateur | Aucun mécanisme ne distingue le ton d'Émilie de celui d'Alexia côté API au-delà du champ `style` libre — `getRegistre()` (`ui-ai.js:105-141`) impose des registres qui supposent un Gotchi humoristique / poétique, mais Alexia est "pince-sans-rire" : un registre "non-sequitur poétique" tombera à plat | `js/ui-ai.js:105-141`, `data/user_config.json:24-27`, `data/user_config.ALEXIA.json:24-27` |
-| 🟠 P1 | `askClaude.base` | `{{notesRecentes}}` est injectée mais aucune météo, RDV ou phase de cycle — données pourtant déjà calculées dans `genSoutien` (`ui-ai.js:629-634`) | `prompts/ai_contexts.json:3` |
+| ✅ ~~🟠 P1~~ | `askClaude.base` | ~~`{{notesRecentes}}` est injectée mais aucune météo, RDV ou phase de cycle~~ **CORRIGÉ 2026-05-01** — `{{contextSensoriel}}` ajouté dans le template et construit dans `ui-ai.js` (météo, pluie, vent, crottes, cycle, RDV) — rendu vide si rien à signaler, zéro régression | `prompts/ai_contexts.json:3`, `js/ui-ai.js:201-255` |
 | 🟠 P1 | Cohérence bulles ↔ API | Les bulles utilisent `{{diminutif}}` (résolu dans `app.js:1129`) mais les prompts API utilisent `{{userName}}` ou `diminutif` (`ui-ai.js:214`). Deux variables coexistent pour la même intention, risque de drift | `js/app.js:1129` ↔ `js/ui-ai.js:213-214` |
 | 🟠 P1 | Catégorie `journal` non câblée | 6 bulles `journal` définies dans les deux user_config mais aucun appel `flashBubble(src.journal[...])` — contenu mort | `data/user_config.json:162-169` |
 | 🟠 P1 | Catégorie `cadeau` partiellement câblée | Le pool `personality.bulles.cadeau` n'est jamais lu : `askClaude` réécrit son propre pool en dur (`ui-ai.js:275-276`) | `js/ui-ai.js:275-277` |
@@ -67,7 +67,7 @@ Côté API, 4 templates actifs (`askClaude.base + withGift|withoutGift`, `buyPro
 | 🟡 P2 | Bulle nuit fallback | `app.js:1056` redéfinit un pool nuit en dur si `src.nuit` est absent — duplique l'info avec `MSG.nuit` (`app.js:160-167`) | `js/app.js:1054-1066` |
 | 🟡 P2 | Anti-répétition API | Aucune mémoire des N derniers fragments envoyés à Claude pour `askClaude` → l'IA peut renvoyer des structures très proches d'un jour à l'autre | `js/ui-ai.js:164-295` |
 | 🟢 P3 | `MSG` (`app.js:160-167`) | Fallback obsolète depuis suppression de `personality.json` — il ne sera plus jamais atteint si `USER_CONFIG.personality` est présent | `js/app.js:155-167` |
-| 🟢 P3 | `genBilanSemaine` | `{{traits}}`, `{{style}}` non injectés → bilan ne sait pas qu'il est "pince-sans-rire" pour Alexia | `prompts/ai_contexts.json:13` |
+| ✅ ~~🟢 P3~~ | `genBilanSemaine` | ~~`{{traits}}`, `{{style}}` non injectés~~  **CORRIGÉ 2026-05-01** — `{{style}}` + `Traits : {{traits}}.` ajoutés dans `ai_contexts.json:13` + `.replace()` correspondants dans `ui-ai.js:909-910` | `prompts/ai_contexts.json:13`, `js/ui-ai.js:909` |
 
 ---
 
@@ -80,48 +80,18 @@ Côté API, 4 templates actifs (`askClaude.base + withGift|withoutGift`, `buyPro
 - `{{notesRecentes}}` : OK, calcul fenêtre glissante 24h propre (`ui-ai.js:204-209`).
 - `{{registre}}` : OK mais voir §3a (variété limitée).
 - `{{exemples}}` : OK (`getExemples` ligne 145).
-- 🔴 **`{{existingNames}}` (dans `withGift`)** : le template attend cette clé mais `vars` expose `nomsExistants`. Bug confirmé.
-- 🔴 **`{{timestamp}}`** : utilisée seulement dans le JSON de sortie pour générer un `id`, OK.
-
-**Proposition d'extrait corrigé** (cibler `js/ui-ai.js:211-231`) :
-
-```js
-// js/ui-ai.js — bloc `vars` autour de la ligne 226
-nomsExistants: …,                       // garde l'ancien nom pour compat
-existingNames: [...new Set([…])].join(', ') || 'aucun',  // ← AJOUT pour matcher le template
-```
-
-Ou, alternative préférable : renommer dans le template (`prompts/ai_contexts.json:5`) `{{existingNames}}` → `{{nomsExistants}}` pour s'aligner sur tout le reste du code.
+- ✅ **`{{existingNames}}` (dans `withGift`)** : **CORRIGÉ 2026-05-01** — renommé en `{{nomsExistants}}` dans `ai_contexts.json:5` pour s'aligner sur la variable injectée côté JS.
+- `{{timestamp}}` : utilisée seulement dans le JSON de sortie pour générer un `id`, OK.
 
 ### 2b — `genSoutien`
 
 - Toutes les variables sont peuplées correctement (`ui-ai.js:635-650`).
 - Le prompt interdit explicitement le jugement et impose UNE seule question : excellent.
-- 🟠 N'utilise pas `{{traits}}` (présent dans `ai_system.soutien` mais pas dans `genSoutien` initial). Asymétrie à corriger.
-
-**Proposition** (`prompts/ai_contexts.json:12`, après la ligne `Tu es {{nameGotchi}}…`) :
-
-```text
-… compagnon pixel de {{userName}}. {{style}}
-Traits : {{traits}}.   ← AJOUT
-```
-
-Et dans `js/ui-ai.js:639` ajouter `.replace('{{traits}}', P?.traits?.join(', ') || 'doux, curieux')`.
+- ✅ **CORRIGÉ 2026-05-01** — `Traits : {{traits}}.` ajouté dans le template `ai_contexts.json:12`. Le `.replace()` existait déjà côté JS (`ui-ai.js:642`) — c'était le template qui ne l'utilisait pas.
 
 ### 2c — `genBilanSemaine`
 
-- 🟠 Aucune injection de `{{style}}` ni `{{traits}}` → le bilan d'Alexia sonnera identique à celui d'Émilie.
-
-**Proposition** (`prompts/ai_contexts.json:13`, début) :
-
-```text
-Tu es {{nameGotchi}}, compagnon pixel bienveillant de {{userName}}.
-{{style}}
-Traits : {{traits}}.
-Voici les données …
-```
-
-Et dans `js/ui-ai.js:907-919` ajouter `.replace('{{style}}', P?.style || '…')` et `.replace('{{traits}}', P?.traits?.join(', ') || '…')`.
+- ✅ **CORRIGÉ 2026-05-01** — `{{style}}` + `Traits : {{traits}}.` ajoutés dans le template `ai_contexts.json:13` et les `.replace()` correspondants dans `ui-ai.js:909-910`. Le bilan hebdomadaire connaît maintenant la personnalité de l'utilisatrice.
 
 ### 2d — `buyProp`
 
@@ -131,13 +101,13 @@ Très propre, contrôles explicites avant réponse, instructions de format stric
 
 | Donnée | Présente dans | Utilisée dans prompts ? |
 |---|---|---|
-| `meteoData.temperature` / `windspeed` | `app.js` (global) | ❌ jamais — opportunité forte (cf. bulles `chaud/froid/vent`) |
+| `meteoData.temperature` / `windspeed` / `weathercode` | `app.js` (global) | ✅ **ajouté dans `askClaude` via `{{contextSensoriel}}` (2026-05-01)** — `genSoutien` non modifié (météo pas encore dans son contexte, à faire si besoin) |
 | `D.g.solarPhases` | `D.g` | ❌ jamais |
 | `D.g.salete` | `D.g` | ❌ jamais — pourrait moduler le ton |
-| `D.g.poops.length` | `D.g` | ❌ jamais — pourtant gros vecteur d'humeur dégradée |
+| `D.g.poops.length` | `D.g` | ✅ **ajouté dans `askClaude` via `{{contextSensoriel}}` (2026-05-01)** |
 | `D.g.stage` (egg/baby/teen/adult) | `D.g` | ✅ uniquement `genBilanSemaine` |
-| `getCyclePhase()` | global | ✅ `genSoutien` uniquement, pas `askClaude` |
-| `D.rdv` | `D.g` | ✅ `genSoutien` uniquement |
+| `getCyclePhase()` | global | ✅ `genSoutien` + **`askClaude` via `{{contextSensoriel}}` (2026-05-01)** |
+| `D.rdv` | `D.g` | ✅ `genSoutien` + **`askClaude` via `{{contextSensoriel}}` (2026-05-01)** |
 
 ---
 
@@ -585,9 +555,9 @@ COHÉRENCE PERSONNALITÉ
 
 ## Prochaines étapes recommandées
 
-1. **🔴 Bug fix `{{existingNames}}`** — renommer la variable dans `prompts/ai_contexts.json:5` pour matcher `nomsExistants` injecté par `js/ui-ai.js:226`. 5 minutes, gain immédiat.
-2. **🔴 Injecter `{{traits}}` dans `genSoutien` et `genBilanSemaine`** (`prompts/ai_contexts.json:12-13` + `js/ui-ai.js:639,907`). Sans ça, Alexia n'a pas de voix différenciée hors `askClaude`.
-3. **🟠 Brancher la météo, le cycle et les RDV dans `askClaude`** — données déjà calculées, copier la logique de `_genSoutienCore` (`ui-ai.js:629-634`) dans `askClaude` et ajouter `{{contextSensoriel}}` au template.
+1. ✅ **~~🔴 Bug fix `{{existingNames}}`~~** — **FAIT 2026-05-01.** `{{existingNames}}` → `{{nomsExistants}}` dans `prompts/ai_contexts.json:5`.
+2. ✅ **~~🔴 Injecter `{{traits}}` dans `genSoutien` et `genBilanSemaine`~~** — **FAIT 2026-05-01.** Template `ai_contexts.json:12` + `13` mis à jour. `.replace()` ajoutés dans `ui-ai.js:909-910` pour `genBilanSemaine` (déjà présent ligne 642 pour `genSoutien`).
+3. ✅ **~~🟠 Brancher la météo, le cycle et les RDV dans `askClaude`~~** — **FAIT 2026-05-01.** `{{contextSensoriel}}` ajouté dans `ai_contexts.json:3` (template `askClaude.base`) + construit dans `ui-ai.js` (météo temp/vent/pluie, crottes, cycle, RDV). Rendu vide si rien à signaler — rétrocompatible.
 4. **🟠 Activer `ai.systemPromptOverride`** dans `js/ui-ai.js:766` ou supprimer le champ — éviter la dette de promesses non tenues.
 5. **🟠 Câbler les bulles `journal` et `cadeau`** (déjà écrites mais mortes) dans `app.js` — ouverture journal → `flashBubble(src.journal[...])`, réception cadeau IA → utiliser `src.cadeau` au lieu du pool en dur.
 6. **🟡 Introduire `toneProfile`** dans `user_config.personality` + fonction `buildToneBlock()` (cf. §4b). Migration progressive : variable `{{toneBlock}}` rendue vide si absente.

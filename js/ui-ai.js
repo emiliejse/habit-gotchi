@@ -198,6 +198,29 @@ async function askClaude() {
   const P   = window.PERSONALITY;
   const CTX = window.AI_CONTEXTS?.askClaude;
 
+  // RÔLE : Contexte cycle menstruel (si activé dans user_config)
+  // POURQUOI : Déjà utilisé dans genSoutien — cohérence de la voix du Gotchi entre les deux modes IA
+  const cycleDataAsk  = showCycle() ? getCyclePhase(td) : null;
+  const cycleInfoAsk  = cycleDataAsk ? `${cycleDataAsk.label} (J${cycleDataAsk.j})` : null;
+
+  // RÔLE : RDV du jour (si présents dans D.rdv)
+  // POURQUOI : Un RDV stressant ou important peut colorer la voix du Gotchi sans le nommer explicitement
+  const rdvAujourdhuiAsk = (D.rdv || [])
+    .filter(r => r.date === td)
+    .map(r => r.heure ? `${r.heure} ${r.label}` : r.label)
+    .join(', ') || null;
+
+  // RÔLE : Résumé sensoriel du moment (météo + état du Gotchi)
+  // POURQUOI : Données déjà disponibles dans window.D et window.meteoData — les injecter ici
+  //            permet au Gotchi de faire des références concrètes à l'environnement sans les nommer
+  const m = window.meteoData || {};
+  const partsCtx = [];
+  if (m.temperature !== undefined) partsCtx.push(`${Math.round(m.temperature)}°C`);
+  if (m.windspeed > 40)            partsCtx.push('vent fort');
+  if (m.weathercode >= 61 && m.weathercode <= 67) partsCtx.push('pluie');
+  if (D.g.poops?.length)           partsCtx.push(`${D.g.poops.length} crotte${D.g.poops.length > 1 ? 's' : ''} au sol`);
+  const contextSensoriel = partsCtx.length ? partsCtx.join(', ') : null;
+
   // RÔLE : Notes écrites dans les dernières 24h (fenêtre glissante, pas uniquement le jour calendaire)
   // POURQUOI : Une note écrite à 23h hier est encore pertinente à 10h ce matin — le filtre par date coupait ce contexte
   // NOTE : j.date est une string ISO complète (ex: "2026-04-28T23:45:00.000Z") → new Date(j.date).getTime() pour comparer
@@ -222,7 +245,14 @@ async function askClaude() {
     notesRecentes: notesRecentes
       ? `Ambiance récente : ${notesRecentes}`
       : '',
-    exemples:      getExemples(D.journal, P),
+    exemples:          getExemples(D.journal, P),
+    // RÔLE : bloc contexte du moment — météo, cycle, RDV — rendu vide si rien à signaler
+    // POURQUOI : Une seule variable {{contextSensoriel}} suffit dans le template pour éviter les lignes vides
+    contextSensoriel: [
+      contextSensoriel  ? `Contexte : ${contextSensoriel}.`  : '',
+      cycleInfoAsk      ? `Cycle : ${cycleInfoAsk}.`          : '',
+      rdvAujourdhuiAsk  ? `RDV du jour : ${rdvAujourdhuiAsk}.` : '',
+    ].filter(Boolean).join(' ') || '',
     nomsExistants: [...new Set([
       ...(D.g.props || []).map(p => `${p.nom} (${p.type})`),
       ...(window.PROPS_LIB || []).map(p => `${p.nom} (${p.type})`)
@@ -909,6 +939,8 @@ if (semaineEnCours) {
     ? ctx.genBilanSemaine
         .replaceAll('{{nameGotchi}}',   g.name)
         .replaceAll('{{userName}}',     D.g.userName || D.userName || 'ton utilisatrice')
+        .replace('{{style}}',        P?.style  || 'Phrases courtes, bienveillant.')  // RÔLE : injecte le style de personnalité dans le bilan
+        .replace('{{traits}}',       P?.traits?.join(', ') || 'doux, curieux')       // RÔLE : injecte les traits pour différencier Émilie / Alexia
         .replace('{{weekStart}}',    wd[0])
         .replace('{{weekEnd}}',      wd[6])
         .replace('{{stage}}',        s.l)

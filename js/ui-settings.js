@@ -160,10 +160,52 @@ function updSoutienFlowers() {
 window.updSoutienFlowers = updSoutienFlowers;
 
 /**
- * RÔLE : Met à jour les fleurs de quota dans #bilan-flowers (onglet Progrès)
- * POURQUOI : Même logique visuelle que les fleurs de pensée — 3 ✿ qui s'estompent au fil des bilans générés.
- *            N'affiche les fleurs que si on est sur la semaine en cours et en fin de semaine.
+ * RÔLE : Met à jour le post-it agenda avec les icônes RDV du jour + la phase cycle en cours
+ * POURQUOI : Donne un aperçu rapide de la journée sans ouvrir l'agenda —
+ *            visible directement sur le post-it dans le menu
  */
+function updAgendaPostit() {
+  const el = document.getElementById('agenda-postit-info');
+  if (!el) return;
+
+  const D  = window.D;
+  const td = today(); // "YYYY-MM-DD"
+
+  // ── RDV du jour : on extrait l'emoji de chaque label ──
+  // POURQUOI : l'emoji est préfixé dans r.label ("🩺 Kiné") — on prend le 1er segment Unicode
+  const rdvAujourdhui = (D.rdv || []).filter(r => r.date === td);
+  let rdvPart = '';
+
+  if (rdvAujourdhui.length === 0) {
+    // POURQUOI : feedback explicite — pas de RDV ≠ oubli d'ouvrir l'agenda
+    rdvPart = `<span style="font-size:var(--fs-xs);opacity:0.5">Pas de RDV</span>`;
+  } else {
+    // POURQUOI : [...label] découpe la string en points de code Unicode → gère les emojis multi-octets
+    const icones = rdvAujourdhui.map(r => {
+      const premier = [...(r.label || '')][0] || '';
+      // On vérifie que c'est bien un emoji (code point > 127) — pas une lettre ordinaire
+      return premier.codePointAt(0) > 127 ? premier : '🗓️';
+    });
+    rdvPart = icones.join(' ');
+  }
+
+  // ── Phase cycle (si feature activée et données disponibles) ──
+  // POURQUOI : showCycle() respecte la config user — ne pas afficher si désactivé
+  let cyclePart = '';
+  if (typeof showCycle === 'function' && showCycle()) {
+    const phase = typeof getCyclePhase === 'function' ? getCyclePhase(td) : null;
+    if (phase) {
+      // POURQUOI : petit cercle coloré + label court — lisible sans prendre trop de place
+      cyclePart = `<span style="color:${phase.couleur};font-size:10px">●</span> <span style="font-size:var(--fs-xs);opacity:0.75">${phase.label} J${phase.j}</span>`;
+    }
+  }
+
+  // ── Assemblage ──
+  const separator = rdvPart && cyclePart ? ' · ' : '';
+  el.innerHTML = rdvPart + separator + cyclePart;
+}
+window.updAgendaPostit = updAgendaPostit;
+
 /**
  * RÔLE : Met à jour les fleurs de quota dans #bilan-flowers (onglet Progrès)
  * POURQUOI : Même logique visuelle que les fleurs de pensée — 3 ✿ qui s'estompent au fil des bilans générés.
@@ -253,6 +295,8 @@ function updUI() {
   updThoughtFlowers();
   // RÔLE : Synchroniser les fleurs de quota soutien sur le post-it menu
   updSoutienFlowers();
+  // RÔLE : Mettre à jour les infos RDV + cycle sur le post-it agenda
+  updAgendaPostit();
   // RÔLE : Synchroniser les fleurs de quota journal à chaque mise à jour globale de l'UI
   updJournalFlowers();
   // RÔLE : Met à jour le label du bouton avec le nom du Gotchi

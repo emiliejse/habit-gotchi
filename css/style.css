@@ -708,6 +708,19 @@ body {
 /* POURQUOI : Override du style .thought-flowers pour usage dans un flex button */
 #bilan-flowers.thought-flowers { margin-top: 0; justify-content: flex-start; font-size: 16px; }
 
+/* RÔLE : Zone info agenda dans le post-it menu — RDV du jour + phase cycle */
+/* POURQUOI : flex pour aligner cercle couleur + texte phase sur la même ligne */
+.agenda-postit-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: #7a2848;
+  line-height: 1.3;
+  flex-wrap: wrap;
+}
+
 /* RÔLE : Fleurs de quota soutien — dans le post-it menu, centrées sous le texte */
 /* POURQUOI : Override margin-top et font-size pour s'intégrer dans le bouton post-it sans trop de place */
 #soutien-flowers.thought-flowers { margin-top: 0; font-size: 14px; letter-spacing: 2px; }

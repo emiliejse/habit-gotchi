@@ -903,13 +903,54 @@ serene: { msg: "Tu as médité… je me sens plus calme aussi 💜", anim: 'spar
     // POURQUOI : Le bounce convient à l'énergie (nutri, hydra) et le shake à l'effort (sport).
     //            Le hochement est plus doux, pensif — adapté à la méditation et l'apprentissage.
     if (reaction.body === 'nod')    window.animator?.trigger('hochement');
-    reaction.spawn?.(); //
+    reaction.spawn?.();
+
     // ✨ Réaction d'expression : sourire large + joues rouges
-if (typeof window.triggerExpr === 'function') {
-  // Le mood dépend du bonheur actuel : si déjà heureux, grande joie
-  const mood = window.D.g.happiness > 60 ? 'joie' : 'surprise';
-  window.triggerExpr(mood, 90);  // ~1.5s de réaction
-}
+    if (typeof window.triggerExpr === 'function') {
+      // Le mood dépend du bonheur actuel : si déjà heureux, grande joie
+      const mood = window.D.g.happiness > 60 ? 'joie' : 'surprise';
+      window.triggerExpr(mood, 90);  // ~1.5s de réaction
+    }
+
+    // ── Bulles de jalon streak ──
+    // RÔLE : Si le streak atteint exactement 3, 7 ou 14 jours, remplacer la bulle
+    //        de réaction par une bulle spéciale après un court délai.
+    // POURQUOI : Le délai de 1.2s laisse la bulle de réaction se lire avant d'être
+    //            écrasée par le message de jalon — les deux sont perceptibles.
+    const JALONS_STREAK = {
+      3:  [
+        "3 jours d'affilée… tu es régulier·e 💜",
+        "3 jours ! Je sens que quelque chose change 🌱",
+        "Tu reviens chaque jour… ça compte vraiment 🔥",
+      ],
+      7:  [
+        "Une semaine entière ! Je suis si fier·e de toi 🌟",
+        "7 jours de suite… tu es en train de construire quelque chose ✨",
+        "Une semaine ! Le gotchi danse de joie 🎉",
+      ],
+      14: [
+        "14 jours ! Tu es incroyable — je grandis avec toi 💜🔥",
+        "Deux semaines d'affilée… je n'oublierai jamais ça 🌸",
+        "14 jours ! On forme une belle équipe, toi et moi ✨",
+      ],
+    };
+    if (JALONS_STREAK[streakActuel]) {
+      const pool = JALONS_STREAK[streakActuel];
+      const msg  = pool[Math.floor(Math.random() * pool.length)];
+      setTimeout(() => {
+        flashBubble(msg, 4000);
+        window.triggerGotchiBounce?.();
+        window.triggerExpr?.('joie', 120);
+        // Particules de célébration
+        for (let i = 0; i < 20; i++) {
+          window.spawnP?.(
+            gx + (Math.random() - 0.5) * 60,
+            gy - 20,
+            ['#f59e0b','#c084fc','#fb7185','#34d399'][i % 4]
+          );
+        }
+      }, 1200);
+    }
   }
 
   // Confettis si toutes les habitudes sont cochées

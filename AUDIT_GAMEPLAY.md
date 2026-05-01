@@ -113,8 +113,8 @@ La fonction `addXp(n)` (`js/app.js:437-456`) gère la transition de stade ; `get
 
 ### 2c. Propositions
 
-1. **Compteur de streak par habitude** affiché à côté de la case (🔥×3). Reset si jour sauté.
-2. **Bulle spéciale du gotchi** au 3e/7e/14e jour de streak ("Tu es régulier·e, ça me fait du bien").
+1. ✅ **Compteur de streak par habitude** affiché à côté de la case (🔥×N). Reset si jour sauté. — implémenté 2026-05-01
+2. ✅ **Bulle spéciale du gotchi** aux jalons 3/7/14 jours — 3 variantes par jalon, délai 1.2s, bounce + particules. — implémenté 2026-05-01
 3. **Habitude manquée 2 jours d'affilée** → -1 happiness (rétroaction douce, pas punitive).
 4. **Habitude contextuelle simple** : 1 catégorie tirée au sort le matin = "habitude vedette du jour" qui rapporte +4 au lieu de +2.
 

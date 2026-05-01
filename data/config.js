@@ -73,6 +73,20 @@ const GOTCHI_COLORS = [
   { id:'jaune',  label:'Jaune',  body:'#e8e0a8', bodyLt:'#f4ecc8', bodyDk:'#c0b878' },
 ];
 
+/* ─── SYSTÈME 5 : PERSONNALISATION (Style du haut de la tête) ────── */
+
+// RÔLE : Styles disponibles pour le haut de la tête du Gotchi (oreilles, antennes, ailes).
+// POURQUOI : Centralisé ici comme les autres palettes — ajout d'un style = une entrée.
+//            Applicable uniquement aux stades teen et adult (baby n'a pas d'oreilles).
+//            La valeur 'id' est lue dans render-sprites.js via D.g.headStyle.
+const HEAD_STYLES = [
+  { id: 'lapin',       label: 'Lapin',        icon: '🐰' },
+  { id: 'ourson',      label: 'Ourson',        icon: '🐻' },
+  { id: 'chat',        label: 'Chat',          icon: '🐱' },
+  { id: 'insecte',     label: 'Insecte',       icon: '🐛' },
+  { id: 'chauve-souris', label: 'Chauve-souris', icon: '🦇' },
+];
+
 /* ─── SYSTÈME 5 : PERSONNALISATION (Couleur des extrémités) ─────── */
 
 // RÔLE : Couleurs disponibles pour les bras et pieds du Gotchi (C.limb dans le DSL sprites).
@@ -356,6 +370,7 @@ window.HG_CONFIG = {
   LIMB_COLORS,
   CHEEK_COLORS,
   MOUTH_COLORS,
+  HEAD_STYLES,
   ENV_THEMES,
   MEAL_WINDOWS,
   SNACKS_POOL,

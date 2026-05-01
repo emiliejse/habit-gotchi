@@ -885,29 +885,130 @@ const LAYERS_TEEN = [
     ]
   },
 
-  // ── Oreilles d'ourson — corps (demi-cercles, couleur body) ─────
-  // POURQUOI : Dessinées AVANT les yeux dans l'original — même ordre ici.
-  //            rawDx:2 sur les sommets = sub-pixel +2px (arrondi pixel art).
+  // ══════════════════════════════════════════════════════════════
+  // STYLES HAUT DE LA TÊTE — teen
+  // RÔLE : Calques conditionnels selon D.g.headStyle — un seul groupe actif à la fois.
+  // POURQUOI : Chaque style a ses propres rects + animations (rawDyFn/rawDxFn).
+  //            pm.headStyle est injecté dans params par drawTeen().
+  // ══════════════════════════════════════════════════════════════
+
+  // ── LAPIN — oreilles longues verticales (style actuel) ─────────
+  // RÔLE : 3 rangées de haut, 2px de large, creux intérieur.
+  // Animation : oscillation latérale lente et douce (sinus très lent).
   {
-    id: 'oreilles-corps',
+    id: 'oreilles-lapin-corps',
     fill: 'C.body',
+    when: (pm) => (pm.headStyle || 'lapin') === 'lapin',
     rects: [
-      { x: -3, y: -1, w: 2, h: 1 },           // oreille gauche base
-      { x: -3, y: -2, w: 2, h: 1 },           // oreille gauche milieu
-      { x: -3, y: -3, w: 1, h: 1, rawDx: 2 }, // oreille gauche sommet arrondi
-      { x:  1, y: -1, w: 2, h: 1 },           // oreille droite base
-      { x:  1, y: -2, w: 2, h: 1 },           // oreille droite milieu
-      { x:  1, y: -3, w: 1, h: 1, rawDx: 2 }, // oreille droite sommet arrondi
+      { x: -3, y: -1, w: 2, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.0005) * 1 },
+      { x: -3, y: -2, w: 2, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.0005) * 1 },
+      { x: -3, y: -3, w: 1, h: 1, rawDx: 2, rawDxFn: () => Math.sin(Date.now() * 0.0005) * 1 },
+      { x:  1, y: -1, w: 2, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.0005) * 1 },
+      { x:  1, y: -2, w: 2, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.0005) * 1 },
+      { x:  1, y: -3, w: 1, h: 1, rawDx: 2, rawDxFn: () => -Math.sin(Date.now() * 0.0005) * 1 },
+    ]
+  },
+  {
+    id: 'oreilles-lapin-interieur',
+    fill: 'C.cheek',
+    when: (pm) => (pm.headStyle || 'lapin') === 'lapin',
+    rects: [
+      { x: -3, y: -1, w: 1, h: 1, rawDx: 2, rawDxFn: () => Math.sin(Date.now() * 0.0005) * 1 },
+      { x:  1, y: -1, w: 1, h: 1, rawDx: 2, rawDxFn: () => -Math.sin(Date.now() * 0.0005) * 1 },
     ]
   },
 
-  // ── Oreilles — intérieur rose (creux) ──────────────────────────
+  // ── OURSON — oreilles rondes basses et bien espacées ───────────
+  // RÔLE : 2px de haut × 2px de large, forme ramassée et ronde.
+  // Animation : petite pulsation verticale (battement doux, les deux oreilles ensemble).
   {
-    id: 'oreilles-interieur',
+    id: 'oreilles-ourson-corps',
+    fill: 'C.body',
+    when: (pm) => pm.headStyle === 'ourson',
+    rects: [
+      { x: -3, y: -1, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x: -3, y: -2, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x:  1, y: -1, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x:  1, y: -2, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+    ]
+  },
+  {
+    id: 'oreilles-ourson-interieur',
     fill: 'C.cheek',
+    when: (pm) => pm.headStyle === 'ourson',
+    rects: [
+      { x: -3, y: -1, w: 1, h: 1, rawDx: 2, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x:  1, y: -1, w: 1, h: 1, rawDx: 2, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+    ]
+  },
+
+  // ── CHAT — oreilles pointues triangulaires ──────────────────────
+  // RÔLE : Triangle pixel art 3 rangées — base 2px, milieu 1px décalé, sommet 1px.
+  // Animation : tressaillement bref et rapide à intervalles irréguliers (sinus à haute fréquence).
+  {
+    id: 'oreilles-chat-corps',
+    fill: 'C.body',
+    when: (pm) => pm.headStyle === 'chat',
+    rects: [
+      { x: -3, y: -1, w: 2, h: 1 },                                                              // base gauche
+      { x: -3, y: -2, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? 2 : 0 }, // milieu gauche (tressaille)
+      { x: -3, y: -3, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? 2 : 0 }, // pointe gauche
+      { x:  2, y: -1, w: 2, h: 1 },                                                              // base droite
+      { x:  2, y: -2, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? -2 : 0 }, // milieu droit (tressaille symétrique)
+      { x:  2, y: -3, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? -2 : 0 }, // pointe droite
+    ]
+  },
+  {
+    id: 'oreilles-chat-interieur',
+    fill: 'C.cheek',
+    when: (pm) => pm.headStyle === 'chat',
     rects: [
       { x: -3, y: -1, w: 1, h: 1, rawDx: 2 }, // creux gauche
-      { x:  1, y: -1, w: 1, h: 1, rawDx: 2 }, // creux droit
+      { x:  2, y: -1, w: 1, h: 1 },            // creux droit
+    ]
+  },
+
+  // ── INSECTE — antennes fines qui oscillent ──────────────────────
+  // RÔLE : 2 antennes de 1px de large, 4px de haut, avec boule au sommet.
+  //        Montées haut sur la tête, légèrement écartées.
+  // Animation : oscillation sinusoïdale lente et ample, en opposition de phase (balancement).
+  {
+    id: 'oreilles-insecte-corps',
+    fill: 'C.body',
+    when: (pm) => pm.headStyle === 'insecte',
+    rects: [
+      { x: -2, y: -1, w: 1, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.0012) * 2 },           // antenne gauche base
+      { x: -2, y: -2, w: 1, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.0012) * 2.5 },         // antenne gauche milieu-bas
+      { x: -2, y: -3, w: 1, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.0012) * 3 },           // antenne gauche milieu-haut
+      { x: -2, y: -4, w: 1, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.0012) * 3.5 },         // antenne gauche sommet (boule)
+      { x:  1, y: -1, w: 1, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.0012) * 2 },          // antenne droite base
+      { x:  1, y: -2, w: 1, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.0012) * 2.5 },        // antenne droite milieu-bas
+      { x:  1, y: -3, w: 1, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.0012) * 3 },          // antenne droite milieu-haut
+      { x:  1, y: -4, w: 2, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.0012) * 3.5 },        // antenne droite sommet (boule — 2px pour visibilité)
+    ]
+  },
+
+  // ── CHAUVE-SOURIS — ailes évasées en V ─────────────────────────
+  // RÔLE : Forme en V dentelé — s'élargit vers l'extérieur, 3 rangées de haut.
+  //        1px au centre, 2px puis 3px en s'évasant.
+  // Animation : battement d'ailes — montée/descente verticale lente et coordonnée.
+  {
+    id: 'oreilles-chausouris-corps',
+    fill: 'C.body',
+    when: (pm) => pm.headStyle === 'chauve-souris',
+    rects: [
+      // Aile gauche — s'évase vers la gauche
+      { x: -2, y: -1, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015) * 2 },           // base gauche intérieure
+      { x: -3, y: -1, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015) * 2 },           // base gauche extérieure
+      { x: -3, y: -2, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015 + 0.3) * 2.5 },  // milieu gauche (légère avance de phase)
+      { x: -4, y: -2, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015 + 0.3) * 2.5 },  // pointe gauche basse
+      { x: -4, y: -3, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015 + 0.6) * 3 },    // pointe gauche haute (dent)
+      // Aile droite — s'évase vers la droite (symétrique)
+      { x:  1, y: -1, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015) * 2 },
+      { x:  2, y: -1, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015) * 2 },
+      { x:  1, y: -2, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015 + 0.3) * 2.5 },
+      { x:  3, y: -2, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015 + 0.3) * 2.5 },
+      { x:  3, y: -3, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015 + 0.6) * 3 },
     ]
   },
 
@@ -1225,6 +1326,10 @@ function drawTeen(p, cx, cy, sl, en, ha) {
     breath,
     pulse: getCheekPulse(p),
     mouthBaseY,
+    // RÔLE : headStyle transmis aux calques d'oreilles pour activer le bon groupe.
+    // POURQUOI : Lire D.g.headStyle ici (une seule fois par frame) évite de le lire
+    //            dans chaque rawDyFn — plus propre et sans risque d'accès null.
+    headStyle: window.D?.g?.headStyle || 'lapin',
   };
 
   // RÔLE : Passer cx (centre de marche) à renderSprite, pas cxB.
@@ -1318,27 +1423,114 @@ const LAYERS_ADULT = [
     ]
   },
 
-  // ── Oreilles d'ourson — corps ───────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+  // STYLES HAUT DE LA TÊTE — adult
+  // RÔLE : Mêmes 5 styles que teen, proportions légèrement adaptées au corps adulte.
+  // ══════════════════════════════════════════════════════════════
+
+  // ── LAPIN ───────────────────────────────────────────────────────
   {
-    id: 'oreilles-corps',
+    id: 'oreilles-lapin-corps',
     fill: 'C.body',
+    when: (pm) => (pm.headStyle || 'lapin') === 'lapin',
     rects: [
-      { x: -3, y: -1, w: 2, h: 1 },           // oreille gauche base
-      { x: -3, y: -2, w: 2, h: 1 },           // oreille gauche milieu
-      { x: -3, y: -3, w: 1, h: 1, rawDx: 2 }, // oreille gauche sommet
-      { x:  1, y: -1, w: 2, h: 1 },           // oreille droite base
-      { x:  1, y: -2, w: 2, h: 1 },           // oreille droite milieu
-      { x:  1, y: -3, w: 1, h: 1, rawDx: 2 }, // oreille droite sommet
+      { x: -3, y: -1, w: 2, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.0005) * 1 },
+      { x: -3, y: -2, w: 2, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.0005) * 1 },
+      { x: -3, y: -3, w: 1, h: 1, rawDx: 2, rawDxFn: () => Math.sin(Date.now() * 0.0005) * 1 },
+      { x:  1, y: -1, w: 2, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.0005) * 1 },
+      { x:  1, y: -2, w: 2, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.0005) * 1 },
+      { x:  1, y: -3, w: 1, h: 1, rawDx: 2, rawDxFn: () => -Math.sin(Date.now() * 0.0005) * 1 },
+    ]
+  },
+  {
+    id: 'oreilles-lapin-interieur',
+    fill: 'C.cheek',
+    when: (pm) => (pm.headStyle || 'lapin') === 'lapin',
+    rects: [
+      { x: -3, y: -1, w: 1, h: 1, rawDx: 2, rawDxFn: () => Math.sin(Date.now() * 0.0005) * 1 },
+      { x:  1, y: -1, w: 1, h: 1, rawDx: 2, rawDxFn: () => -Math.sin(Date.now() * 0.0005) * 1 },
     ]
   },
 
-  // ── Oreilles — intérieur rose ───────────────────────────────────
+  // ── OURSON ──────────────────────────────────────────────────────
   {
-    id: 'oreilles-interieur',
+    id: 'oreilles-ourson-corps',
+    fill: 'C.body',
+    when: (pm) => pm.headStyle === 'ourson',
+    rects: [
+      { x: -3, y: -1, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x: -3, y: -2, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x:  1, y: -1, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x:  1, y: -2, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+    ]
+  },
+  {
+    id: 'oreilles-ourson-interieur',
     fill: 'C.cheek',
+    when: (pm) => pm.headStyle === 'ourson',
+    rects: [
+      { x: -3, y: -1, w: 1, h: 1, rawDx: 2, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x:  1, y: -1, w: 1, h: 1, rawDx: 2, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+    ]
+  },
+
+  // ── CHAT ────────────────────────────────────────────────────────
+  {
+    id: 'oreilles-chat-corps',
+    fill: 'C.body',
+    when: (pm) => pm.headStyle === 'chat',
+    rects: [
+      { x: -3, y: -1, w: 2, h: 1 },
+      { x: -3, y: -2, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? 2 : 0 },
+      { x: -3, y: -3, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? 2 : 0 },
+      { x:  2, y: -1, w: 2, h: 1 },
+      { x:  2, y: -2, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? -2 : 0 },
+      { x:  2, y: -3, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? -2 : 0 },
+    ]
+  },
+  {
+    id: 'oreilles-chat-interieur',
+    fill: 'C.cheek',
+    when: (pm) => pm.headStyle === 'chat',
     rects: [
       { x: -3, y: -1, w: 1, h: 1, rawDx: 2 },
-      { x:  1, y: -1, w: 1, h: 1, rawDx: 2 },
+      { x:  2, y: -1, w: 1, h: 1 },
+    ]
+  },
+
+  // ── INSECTE ─────────────────────────────────────────────────────
+  {
+    id: 'oreilles-insecte-corps',
+    fill: 'C.body',
+    when: (pm) => pm.headStyle === 'insecte',
+    rects: [
+      { x: -2, y: -1, w: 1, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.0012) * 2 },
+      { x: -2, y: -2, w: 1, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.0012) * 2.5 },
+      { x: -2, y: -3, w: 1, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.0012) * 3 },
+      { x: -2, y: -4, w: 2, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.0012) * 3.5 },
+      { x:  1, y: -1, w: 1, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.0012) * 2 },
+      { x:  1, y: -2, w: 1, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.0012) * 2.5 },
+      { x:  1, y: -3, w: 1, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.0012) * 3 },
+      { x:  1, y: -4, w: 2, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.0012) * 3.5 },
+    ]
+  },
+
+  // ── CHAUVE-SOURIS ───────────────────────────────────────────────
+  {
+    id: 'oreilles-chausouris-corps',
+    fill: 'C.body',
+    when: (pm) => pm.headStyle === 'chauve-souris',
+    rects: [
+      { x: -2, y: -1, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015) * 2 },
+      { x: -3, y: -1, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015) * 2 },
+      { x: -3, y: -2, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015 + 0.3) * 2.5 },
+      { x: -4, y: -2, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015 + 0.3) * 2.5 },
+      { x: -4, y: -3, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015 + 0.6) * 3 },
+      { x:  1, y: -1, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015) * 2 },
+      { x:  2, y: -1, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015) * 2 },
+      { x:  1, y: -2, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015 + 0.3) * 2.5 },
+      { x:  3, y: -2, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015 + 0.3) * 2.5 },
+      { x:  3, y: -3, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0015 + 0.6) * 3 },
     ]
   },
 
@@ -1766,6 +1958,8 @@ function drawAdult(p, cx, cy, sl, en, ha) {
     pulse: getCheekPulse(p),
     mouthBaseY,
     stepPhase,
+    // RÔLE : headStyle transmis aux calques d'oreilles pour activer le bon groupe.
+    headStyle: window.D?.g?.headStyle || 'lapin',
   };
 
   // RÔLE : Passer cx (centre de marche) à renderSprite, pas cxB.

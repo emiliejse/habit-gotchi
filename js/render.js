@@ -97,6 +97,9 @@ window.triggerEvoAnim = function(from, to) {
 // POURQUOI : Accès rapide et intuitif, cohérent avec le style pixel art du canvas.
 window._envSelectorOpen  = false;  // true = les 2 cercles flottants sont visibles
 window._envFadeState     = null;   // { from:'parc', to:'chambre', frames:0 } pendant le fondu
+// RÔLE : Empêche le flash de transition "nuit → chambre" de se rejouer à chaque frame.
+// POURQUOI : Le flash est déclenché une seule fois à 22h30 — ce verrou est remis à false le matin.
+window._nightFlashDone   = false;
 window._envSelectorHits  = [];     // zones de tap calculées uniquement quand l'état change
 // RÔLE : Valeurs mémorisées pour éviter de reconstruire _envSelectorHits à chaque frame.
 // POURQUOI : Quand le sélecteur est fermé ET que l'env n'a pas changé, le tableau est déjà
@@ -474,7 +477,9 @@ window.triggerEtirementMatin = function(force = false) {
   const g = window.D?.g;
   if (!g || g.stage !== 'adult') return; // calques bras inexistants sur baby/teen
   const h = typeof hr === 'function' ? hr() : new Date().getHours();
-  const sleeping = h >= 22 || h < 7;
+  // RÔLE : même seuil que dans p.draw() — le gotchi dort à partir de 23h30.
+  const minsEtir = new Date().getMinutes();
+  const sleeping = (h === 23 && minsEtir >= 30) || (h >= 0 && h < 7);
   if (sleeping) return;
   const todayStr = new Date().toDateString();
   if (!force && window._etirementLastDay === todayStr) return; // déjà fait aujourd'hui
@@ -563,7 +568,8 @@ window.__hg = {
     const wcode = window.meteoData?.weathercode;
     console.group('[__hg.etat] ─── État animations HabitGotchi ───');
     console.log('Stade :', g?.stage ?? '⚠️ D non chargé');
-    console.log('Heure :', h, '— sleeping :', h >= 22 || h < 7);
+    const minsDebug = new Date().getMinutes();
+    console.log('Heure :', h, 'min :', minsDebug, '— sleeping :', (h === 23 && minsDebug >= 30) || (h >= 0 && h < 7));
     console.log('Météo : temp =', temp, '°C | weathercode =', wcode);
     console.log('animator.active :', window.animator.active.map(a => `${a.id}(${a.t}f)`).join(', ') || '(vide)');
     console.log('_expr :', expr ? `${expr.lastMood} (${expr.moodTimer}f restantes)` : '(vide)');
@@ -1079,9 +1085,8 @@ function drawEnvSelector(p, g, nightRatio) {
   const activeEnv = g.activeEnv || 'parc';
 
   // ── Détermination du mode nuit pour le sélecteur ──
-  // RÔLE : On bloque le sélecteur dès que nightRatio === 1 (à partir de 21h),
+  // RÔLE : On bloque le sélecteur dès que nightRatio === 1 (à partir de 22h30),
   //        car l'env est forcé chambre et l'utilisatrice ne peut pas changer d'env.
-  // POURQUOI : sleeping (>= 22h) est trop tardif — à 21h l'env est déjà verrouillé.
   const envLocked = nightRatio === 1;
   window._envLocked = envLocked; // exposé pour touchStarted (pas accès à nightRatio là-bas)
 
@@ -1115,7 +1120,7 @@ function drawEnvSelector(p, g, nightRatio) {
   p.textAlign(p.CENTER, p.CENTER);
   p.textSize(14);
   p.fill(255);
-  // RÔLE : Affiche 💤 dès que l'env est verrouillé (nightRatio === 1, soit dès 21h).
+  // RÔLE : Affiche 💤 dès que l'env est verrouillé (nightRatio === 1, soit dès 22h30).
   const mainEmoji = envLocked ? '💤' : ENV_EMOJI[activeEnv] || '🌳';
   p.text(mainEmoji, envCX, envCY);
   p.textSize(11); // ← reset taille texte
@@ -1178,7 +1183,11 @@ const p5s = (p) => {
 
   p.draw = function() {
     if (!window.D) return;
-    const g = window.D.g, h = hr(), sleeping = (h >= 22 || h < 7);
+    const g = window.D.g, h = hr(), mins = new Date().getMinutes();
+    // RÔLE : sleeping = true à partir de 23h30 (le gotchi pose, Zzz, mouvements arrêtés).
+    // POURQUOI : La chambre est forcée à 22h30 (nightRatio), mais le gotchi ne dort
+    //            vraiment (pose + Zzz) qu'à 23h30 — il se prépare dans l'intervalle.
+    const sleeping = (h === 23 && mins >= 30) || (h >= 0 && h < 7);
 
     // Initialisation des couleurs
     const gc = getGotchiC();
@@ -1202,20 +1211,24 @@ const p5s = (p) => {
     const enReal = g.energy;    // valeur entière réelle — pour décor/météo
     const haReal = g.happiness; // valeur entière réelle — pour décor/météo
 
-    // RÔLE : Calcule le ratio nuit (0 = jour, 1 = nuit pleine) pour une transition progressive
-    // POURQUOI : remplace l'ancien booléen n = (h >= 21) qui basculait brutalement d'un coup
-    // Transition soir : 20h → 21h (ratio monte de 0 à 1 sur 60 minutes)
-    // Transition matin : 5h → 6h (ratio descend de 1 à 0 sur 60 minutes)
-    const mins = new Date().getMinutes(); // minutes dans l'heure courante (0–59)
-    let nightRatio;
-    if (h === 20) {
-      nightRatio = mins / 60;            // 20h00 → 0, 20h59 → ~1
-    } else if (h === 5) {
-      nightRatio = 1 - (mins / 60);     // 5h00 → 1, 5h59 → ~0
-    } else if (h >= 21 || h < 5) {
-      nightRatio = 1;                    // nuit pleine
-    } else {
-      nightRatio = 0;                    // plein jour
+    // RÔLE : nightRatio détermine si le gotchi est en mode nuit (chambre forcée, sélecteur verrouillé).
+    //        Pas de transition progressive — le passage se fait via le flash thématique (ENV_FLASH_COLOR),
+    //        exactement comme quand l'utilisatrice change d'env manuellement.
+    // Chambre forcée à partir de 22h30 (soir) jusqu'à 6h00 (matin).
+    const nightRatio = ((h === 22 && mins >= 30) || h >= 23 || h < 6) ? 1 : 0;
+
+    // RÔLE : Déclenche le flash de transition chambre une seule fois à 22h30, pas à chaque frame.
+    // POURQUOI : Sans ce verrou, _envFadeState serait réinitialisé à chaque draw() entre 22h30 et 23h,
+    //            ce qui provoquerait un flash infini. On mémorise si le flash a déjà été joué.
+    const isNightTime = nightRatio === 1;
+    if (isNightTime && !window._nightFlashDone) {
+      const prevEnv = g.activeEnv || 'parc';
+      if (prevEnv !== 'chambre') {
+        window._envFadeState = { from: prevEnv, to: 'chambre', frames: 0 };
+      }
+      window._nightFlashDone = true; // verrou : ne se redéclenche pas jusqu'au lendemain
+    } else if (!isNightTime) {
+      window._nightFlashDone = false; // reset le matin pour que le prochain soir fonctionne
     }
     const n = nightRatio; // alias court pour compatibilité avec drawActiveEnv(p, env, n, h)
 

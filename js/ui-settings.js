@@ -543,6 +543,26 @@ function renderPerso() {
       </div>`).join('');
   }
 
+  // ── Style du haut de la tête (oreilles, antennes, ailes) ────────
+  // RÔLE : Afficher le picker d'icônes pour choisir le style d'oreilles du Gotchi.
+  // POURQUOI : Même pattern que les autres sélecteurs — un clic → applyHeadStyle() → sauvegarde.
+  //            Visible uniquement aux stades teen et adult (baby n'a pas d'oreilles).
+  const headStyleGrid = document.getElementById('head-styles');
+  if (headStyleGrid) {
+    const currentHead = D.g.headStyle || 'lapin';
+    headStyleGrid.innerHTML = window.HG_CONFIG.HEAD_STYLES.map(s => `
+      <div onclick="applyHeadStyle('${s.id}')" style="
+        border-radius:var(--r-md);cursor:pointer;
+        background:var(--card);
+        border:3px solid ${currentHead === s.id ? 'var(--lilac)' : 'transparent'};
+        padding:6px 4px;
+        display:flex;flex-direction:column;align-items:center;gap:3px;
+        transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1);">
+        <div style="font-size:24px;line-height:1">${s.icon}</div>
+        <div style="font-size:var(--fs-xs);font-weight:bold;color:var(--text);text-align:center">${s.label}</div>
+      </div>`).join('');
+  }
+
   const et = document.getElementById('env-themes');
   if (et) {
     const current = D.g.envTheme || 'pastel';
@@ -615,6 +635,15 @@ function applyLimbColor(id, silent = false) {
   const c = window.HG_CONFIG.LIMB_COLORS.find(x => x.id === id); if (!c) return;
   window.D.g.limbColor = id; save(); renderPerso();
   if (!silent) toast(id === 'auto' ? `Extrémités : couleur automatique ✿` : `Extrémités ${c.label} appliquées ✿`);
+}
+
+// RÔLE : Sauvegarder le style de haut de tête choisi et rafraîchir l'UI.
+// POURQUOI : D.g.headStyle est lu à chaque frame dans render-sprites.js via params.headStyle —
+//            il suffit de sauvegarder, le rendu suit automatiquement au prochain frame.
+function applyHeadStyle(id, silent = false) {
+  const s = window.HG_CONFIG.HEAD_STYLES.find(x => x.id === id); if (!s) return;
+  window.D.g.headStyle = id; save(); renderPerso();
+  if (!silent) toast(`Style ${s.label} appliqué ✿`);
 }
 
 // RÔLE : Sauvegarder la couleur de joues choisie et rafraîchir l'UI.

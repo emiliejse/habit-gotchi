@@ -229,6 +229,7 @@ function defs() {
       cycleDuree:      CYCLE_DEFAULT_DURATION, // durée du cycle en jours (défaut = 28)
       birthdayShown:   false, // true une fois la modale anniversaire affichée ce jour-là
       birthdayCodeUsed: false, // true une fois le code cheat anniversaire utilisé
+      headStyle:       'lapin', // style du haut de la tête (teen + adult uniquement) — 'lapin' | 'ourson' | 'chat' | 'insecte' | 'chauve-souris'
     },
     habits:           CATS.map(c => ({catId:c.id, label:c.label})),
     log:              {},
@@ -294,7 +295,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 13; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 14; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -420,6 +421,14 @@ const MIGRATIONS = [
   //            aucun changement visuel pour les saves existantes.
   function m12(d) {
     d.g.limbColor = d.g.limbColor ?? 'auto';
+    return d;
+  },
+  // Migration 12→13 : ajout de D.g.headStyle (style du haut de la tête — oreilles, antennes, ailes)
+  // RÔLE : Initialise headStyle à 'lapin' pour les saves existantes.
+  // POURQUOI : 'lapin' = style actuel dessiné depuis l'origine → aucun changement visuel
+  //            pour les saves existantes. Les nouveaux styles sont un ajout, pas un remplacement.
+  function m13(d) {
+    d.g.headStyle = d.g.headStyle ?? 'lapin';
     return d;
   }
 ];
@@ -703,11 +712,13 @@ function maybeSpawnPoop() {
   const now = Date.now();
   window.D.g.lastTick = now; // heartbeat — persisté au prochain save() normal
 
-  // RÔLE : Pas de crotte pendant le sommeil (22h–7h).
-  // POURQUOI : Le Gotchi est au repos — visuellement et logiquement incohérent de spawner.
-  //            Le rattrapage au réveil est géré par catchUpPoops() avec plafond de 2.
+  // RÔLE : Pas de crotte pendant le sommeil (23h30–7h).
+  // POURQUOI : Le Gotchi est au repos à partir de 23h30 — spawner des crottes pendant qu'il
+  //            dort serait incohérent. Le rattrapage au réveil est géré par catchUpPoops().
   const hNow = hr();
-  if (hNow >= 22 || hNow < 7) return;
+  const minsNow = new Date().getMinutes();
+  const isSleeping = (hNow === 23 && minsNow >= 30) || (hNow >= 0 && hNow < 7);
+  if (isSleeping) return;
 
   const last = window.D.g.lastPoopSpawn || 0;
   const minDelay = POOP_MIN_DELAY_MS; // 8 minutes minimum entre 2 crottes
@@ -1740,7 +1751,9 @@ function updBubbleNow() {
   }
 
   // ── Priorité 3 : Nuit ──────────────────────────────────────────
-  if (h >= 22 || h < 7) {
+  // RÔLE : Bulles "nuit" à partir de 23h30 (sommeil effectif du Gotchi).
+  const minsNuit = new Date().getMinutes();
+  if ((h === 23 && minsNuit >= 30) || (h >= 0 && h < 7)) {
     const pool = src.nuit || MSG.nuit;  // fallback → pool défensif centralisé (cf. MSG l.179)
     const el = document.getElementById('bubble');
     if (el) {
@@ -1943,7 +1956,9 @@ function initApp() {
   //            lastSpawn sera récent et cette garde ne se déclenche pas. Évite le double spawn.
   const lastSpawn = window.D.g.lastPoopSpawn || 0;
   const hNow = hr();
-  const isSleepTime = hNow >= 22 || hNow < 7;
+  const minsBootstrap = new Date().getMinutes();
+  // RÔLE : isSleepTime = vrai à partir de 23h30 (cohérent avec le seuil sleeping de render.js).
+  const isSleepTime = (hNow === 23 && minsBootstrap >= 30) || (hNow >= 0 && hNow < 7);
   if (!isSleepTime && Date.now() - lastSpawn > POOP_SPAWN_DELAY_MS) {
     maybeSpawnPoop();
   }

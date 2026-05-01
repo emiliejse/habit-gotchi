@@ -1312,6 +1312,25 @@ function updBubbleNow() {
     return;
   }
 
+  // ── Priorité 1b : Saleté élevée sans crottes visibles ──────────
+  // RÔLE : Si salete >= 7 sans que le seuil de crottes (>=3) ait été atteint,
+  //        le gotchi exprime son inconfort corporel.
+  // POURQUOI : La saleté peut monter par inactivité (checkSalete) sans spawn
+  //            de crottes — ce cas était silencieux. Uniquement le jour
+  //            pour rester cohérent avec les autres priorités diurnes.
+  if (h >= 7 && h < 22 && (window.D.g.salete ?? 0) >= 7) {
+    const pool = [
+      "Ça commence à sentir le renard par ici… 🦊",
+      "*se renifle* Mmh. J'aurais besoin d'un bain. 🛁",
+      "Je me sens un peu... crade. 😬",
+      "*regarde ses pattes* C'est quoi ce truc ? 🤔",
+      "Un peu de propreté ça ferait pas de mal 🧼",
+    ];
+    const el = document.getElementById('bubble');
+    if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+    return;
+  }
+
   // ── Priorité 2 : Faim (hunger >= 2) ───────────────────────────
   // RÔLE : Si le gotchi a faim, il le dit en priorité — mais uniquement le jour.
   // POURQUOI : hunger est un état passif (fenêtres repas manquées) qui mérite

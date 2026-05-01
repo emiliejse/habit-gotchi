@@ -35,7 +35,7 @@ Trois priorités d'action :
 | ✅ FIXÉ | S5 Crottes | Probabilité de spawn modulée par état du Gotchi : 25% si faim≥2 / 35% si énergie≤3 / 80% si bien nourri / 60% normal — remplace le 65% fixe (2026-05-01) | `js/app.js:maybeSpawnPoop` |
 | 🟢 BAS | S7 Inventaire | Seuls 2 paliers de prix (0 ou 6) → pas de hiérarchie d'objets désirables | `data/props.json` |
 | 🟢 BAS | S8 Notifications | Aucune notification native (Notification API jamais appelée) | — |
-| 🟢 BAS | S3 États | Aucun mapping état→bulle pour `salete` élevée seule (sans crottes) | `data/personality.json` |
+| ✅ FIXÉ | S3 États | Bulle dédiée `salete >= 7` sans crottes visibles — Priorité 1b dans `updBubbleNow()`, 5 variantes diurnes ("ça commence à sentir le renard", "*se renifle*", etc.) (2026-05-01) | `js/app.js` (dans `updBubbleNow()`) |
 
 ---
 
@@ -146,7 +146,7 @@ HA_SAD=1, HA_MED=2, HA_MED_ADULT=3, HA_HIGH=4   → bouches, nuages, sourires
 **Saleté visuelle** (`js/render-sprites.js:329-334`) — dithering n'apparaît qu'à `salete >= 5`, ratio normalisé `(salete - 5) / 5`. Donc valeurs 0→4 = invisibles, 5→10 = visibles. **La moitié de l'échelle est inutile.**
 
 **États orphelins / dette**
-- `salete` : pas de bulle dédiée dans `data/personality.json`.
+- ✅ `salete` : bulle dédiée ajoutée dans `updBubbleNow()` (Priorité 1b, seuil >= 7) — 2026-05-01.
 - `energy` et `happiness` n'ont pas de transition animée — changement abrupt frame à frame.
 
 ### 3b. Évaluation TDAH

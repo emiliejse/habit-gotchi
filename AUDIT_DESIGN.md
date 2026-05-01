@@ -616,43 +616,19 @@ Chaque carte a sa propre icône SVG dédiée. Animation `popBounce` sur le chiff
 
 #### C6.2 — État `loading` standardisé
 
-**Problème :** chaque fonction IA gère son `startThinkingAnim` (`ui-ai.js:39-92`) en remplaçant le `textContent` d'un élément.
+✅ **RÉSOLU 2026-05-01**
+- `.btn.is-loading` ajouté dans `style.css` : `pointer-events:none`, `opacity:0.65`, `::after` animé (`dotPulse` steps) en terminal.
+- `prefers-reduced-motion` : animation remplacée par `' …'` statique.
+- `askClaude()` : `#btn-ask-claude` reçoit `.is-loading` au départ, retiré à l'arrivée (succès + erreur).
+- `genBilanSemaine()` : `id="btn-gen-bilan"` ajouté dans `index.html`, même pattern.
+- `startThinkingAnim` conservé sur les zones texte — les deux mécanismes coexistent sans conflit.
+- Reste ouvert : `acheterPropClaude()` (bouton boutique, moins prioritaire) et `aria-busy="true"` (accessibilité lecteur d'écran).
 
-**Proposition :**
-```css
-.btn.is-loading {
-  pointer-events: none;
-  opacity: 0.7;
-  position: relative;
-}
-.btn.is-loading::after {
-  content: '...';
-  position: absolute;
-  right: 12px;
-  animation: dotPulse 1.2s steps(4) infinite;
-  font-family: var(--font-terminal);
-}
-@keyframes dotPulse {
-  0% { content: '·'; } 33% { content: '··'; } 66% { content: '···'; }
-}
-```
-+ `aria-busy="true"` quand `is-loading`.
-
-**Effort : S** (CSS) + **M** (migration des appels) • **Fichiers :** `style.css`, `ui-ai.js` (3 fonctions principales).
+**Fichiers modifiés :** `style.css`, `ui-ai.js`, `index.html`.
 
 #### C6.3 — Toasts : variantes typées
 
-**Problème :** `#toast` (`style.css:1202-1221`) a un seul style (fond `rgba(56,48,74,0.88)`). Pas de distinction succès/erreur/info.
-
-**Proposition :**
-```css
-#toast.toast--success { background: var(--success); color: var(--text); }
-#toast.toast--danger  { background: var(--danger);  color: #fff; }
-#toast.toast--warning { background: var(--warning); color: var(--text); }
-```
-+ API JS : `toast(msg, type)` où `type` ∈ `'success' | 'danger' | 'warning' | 'info'` (défaut neutre).
-
-**Effort : S** • **Fichiers :** `style.css:1202`, `ui-core.js:174-181`.
+✅ **RÉSOLU** (déjà en place) — CSS `toast--success / --danger / --warning` dans `style.css`, API `toast(msg, type)` dans `ui-core.js:177`.
 
 ---
 
@@ -848,9 +824,9 @@ Liste exhaustive **à NE PAS remplacer** par des assets techniques :
 | `.inv-env-btn` | ~~~30 px~~ → **min 44px** ✓ | `style.css` (externalisé) | Switcher env | ✅ RÉSOLU 2026-05-01 |
 | Boutons emoji RDV (formulaire) | aspect-ratio:1, ~36 px | `ui-agenda.js:319-323` | Choix emoji | 🟠 limite |
 | Chevrons SVG nav journal | padding 8 px → ~34 px | `index.html:195, 203` | Nav semaine journal | 🟠 limite |
-| Boutons rdv ✏️/🗑️ | font 13 px sans padding | `ui-agenda.js:212-213` | Édit/suppr RDV | 🔴 |
+| Boutons rdv ✏️/🗑️ | ~~font 13px~~ → **min 44×44px** ✓ | `style.css` + `ui-agenda.js:212-213` | Édit/suppr RDV | ✅ RÉSOLU 2026-05-01 |
 
-**Toujours OUVERT** : boutons RDV ✏️/🗑️ dans `ui-agenda.js:212-213` (~13px, sans padding). Les 4 cibles critiques listées ci-dessus sont désormais résolues.
+**Toutes les cibles tactiles critiques sont résolues.** Reste : boutons emoji RDV (~36px) et chevrons journal (~34px) — limites acceptables.
 
 ### 6.2 Safe areas
 

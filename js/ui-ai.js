@@ -284,6 +284,9 @@ async function askClaude() {
 
   /* ── Animation de chargement ── */
   const animThought = startThinkingAnim('claude-msg', g.name, 'thought');
+  // RÔLE : bloque le bouton pendant l'appel IA et indique visuellement l'attente (.is-loading)
+  const btnAsk = document.getElementById('btn-ask-claude');
+  if (btnAsk) btnAsk.classList.add('is-loading');
 
   /* ── Construction du prompt ── */
   const P   = window.PERSONALITY;
@@ -384,6 +387,7 @@ async function askClaude() {
     const data = JSON.parse(match[0]);
 
     stopThinkingAnim(animThought);
+    if (btnAsk) btnAsk.classList.remove('is-loading');
 
     /* ── Message affiché ── */
     if (msgEl) {
@@ -437,6 +441,7 @@ if (Array.isArray(data.bulles) && data.bulles.length) {
 
   } catch(e) {
     stopThinkingAnim(animThought);
+    if (btnAsk) btnAsk.classList.remove('is-loading');
     if (msgEl) msgEl.textContent = '*soupir* Je n\'arrive pas à me connecter... ✿';
     console.error('Erreur askClaude :', e);
   }
@@ -1071,6 +1076,9 @@ if (semaineEnCours) {
   }
 
   const animBilan = startThinkingAnim('claude-summary', g.name, 'bilan');
+  // RÔLE : bloque le bouton pendant l'appel IA (.is-loading)
+  const btnBilan = document.getElementById('btn-gen-bilan');
+  if (btnBilan) btnBilan.classList.add('is-loading');
 
   /* ── Construction du prompt ── */
   const ctx = window.AI_CONTEXTS;
@@ -1100,6 +1108,7 @@ if (semaineEnCours) {
       .replaceAll('{{userName}}',   D.g.userName || D.userName || 'toi');
 
     stopThinkingAnim(animBilan);
+    if (btnBilan) btnBilan.classList.remove('is-loading');
     summaryEl.textContent = bilan;
     document.getElementById('bil-txt-hidden').value = bilan;
     document.getElementById('btn-copy-bilan').style.display = 'block';
@@ -1112,6 +1121,7 @@ if (semaineEnCours) {
 
   } catch(e) {
     stopThinkingAnim(animBilan);
+    if (btnBilan) btnBilan.classList.remove('is-loading');
     summaryEl.textContent = '❌ Une erreur est survenue, réessaie plus tard 💜';
     console.error('Erreur bilan IA :', e);
   }

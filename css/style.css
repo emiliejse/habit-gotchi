@@ -1226,6 +1226,25 @@ body {
   justify-content: center;
 }
 
+/* RÔLE : Boutons ✏️/🗑️ sur les items RDV de l'agenda */
+/* POURQUOI : Style était 100% inline à ~13px sans padding — sous les 44px recommandés */
+/* AUDIT 6.1 : externalisé + cible portée à 44×44px min */
+.rdv-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--fs-md);
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  transition: background .12s;
+}
+.rdv-action-btn:hover  { background: rgba(0,0,0,.05); }
+.rdv-action-btn:active { transform: scale(.9); }
+
 /* Le Code PIN du Journal */
 .pin-dots { display: flex; gap: 10px; justify-content: center; margin: 12px 0; }
 .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--border); transition: .2s; }
@@ -1425,6 +1444,32 @@ details.settings-section.danger > summary { color: var(--danger); }
 #toast.toast--success { background: var(--success); color: var(--text); }
 #toast.toast--danger  { background: var(--danger);  color: #fff; }
 #toast.toast--warning { background: var(--warning); color: var(--text); }
+
+/* RÔLE : État de chargement standardisé sur les boutons IA */
+/* POURQUOI : Chaque appel IA animait sa propre zone texte de façon ad hoc.
+              .is-loading bloque le bouton et signale visuellement l'attente. */
+@keyframes dotPulse {
+  0%   { content: ' ·'; }
+  33%  { content: ' ··'; }
+  66%  { content: ' ···'; }
+  100% { content: ' ·'; }
+}
+.btn.is-loading {
+  pointer-events: none;
+  opacity: 0.65;
+  position: relative;
+  padding-right: 28px; /* RÔLE : fait de la place pour les points animés à droite */
+}
+.btn.is-loading::after {
+  content: ' ·';
+  position: absolute;
+  right: 10px;
+  font-family: var(--font-terminal);
+  animation: dotPulse 1.2s steps(3, end) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn.is-loading::after { animation: none; content: ' …'; }
+}
 
 
 /* ─── SYSTÈME 6 : LE TERMINAL (Événements Cachés) ────────────────── */

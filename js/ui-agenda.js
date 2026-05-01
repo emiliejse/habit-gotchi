@@ -209,8 +209,8 @@ function renderAgendaJour(el) {
       border:1px solid var(--border);margin-bottom:5px">
       <span style="font-size:var(--fs-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;display:inline-block">${r.heure ? `<b>${escape(r.heure)}</b> · ` : '🗓️ Journée · '}${escape(r.label)}</span>
       <div style="display:flex;gap:6px">
-        <button onclick="editerRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">✏️</button>
-        <button onclick="confirmerSuppressionRdv('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px">🗑️</button>
+        <button onclick="editerRdv('${r.id}')" class="rdv-action-btn" aria-label="Modifier le rendez-vous">✏️</button>
+        <button onclick="confirmerSuppressionRdv('${r.id}')" class="rdv-action-btn" aria-label="Supprimer le rendez-vous">🗑️</button>
       </div>
     </div>`).join('');
 

@@ -1,0 +1,374 @@
+# AUDIT GAMEPLAY — HabitGotchi
+> Généré par Claude Opus — 2026-05-01
+> Version auditée : **v4.81** (`js/app.js:60`)
+
+---
+
+## Résumé exécutif
+
+L'économie pétales est lisible et stable, mais elle est **trop linéaire et trop maigre** : +2 pétales par habitude validée, +2 par snack (4 si préféré), +2 par crotte nettoyée — aucune mécanique de streak, aucun pic de récompense, aucune montée en intensité. Pour un public TDAH, **le shoot dopaminergique est trop plat** et la rétention repose presque entièrement sur la curiosité (IA, évolution).
+
+Côté états, le gotchi expose `energy` et `happiness` (0-5), plus `salete` (0-10), mais **aucun état "faim" indépendant** : le repas ne nourrit qu'une fenêtre horaire, pas une jauge. Le système est sous-exploité visuellement. Les transitions de stade (8 paliers de XP, jusqu'à 4000) sont solides mais probablement **trop longues à atteindre** sans micro-paliers visibles.
+
+Trois priorités d'action :
+1. **Ajouter une jauge ou un compteur de streak** par habitude avec récompense escalante.
+2. **Reset explicite de `salete`** lors du nettoyage (actuellement la jauge ne redescend jamais → dette critique).
+3. **Densifier le feedback visuel** à chaque gain de pétale (toast, particule, son court).
+
+---
+
+## Dette gameplay (triée par criticité)
+
+| Priorité | Système | Problème | Fichier / ligne |
+|----------|---------|----------|-----------------|
+| 🔴 CRIT | S5 Saleté | `D.g.salete` n'est jamais remis à 0 lors du nettoyage — accumulation indéfinie | `js/app.js:665-690` (cleanPoops sans reset salete) |
+| 🔴 CRIT | S2 Habitudes | Aucun streak, aucune mémoire de continuité jour-à-jour | `js/app.js:750-831` |
+| 🟠 HAUT | S2 Habitudes | Aucune pénalité / rétro-action si habitude manquée (ni XP négatif, ni bulle, ni baisse de happiness) | `js/app.js:750-831` |
+| 🟠 HAUT | S3 États | Pas d'état `hunger` indépendant — le repas n'alimente pas une jauge | `js/app.js:183-184`, `data/config.js` |
+| 🟠 HAUT | S1 Progression | Sauts XP énormes entre stades adultes (500 → 900 → 1500 → 2500 → 4000) sans micro-paliers visibles | `js/app.js:142-151` |
+| 🟠 HAUT | S6 IA | Limites quotidiennes strictes (3 pensées + 3 soutien + 1 objet) sans compensation visible côté UI | `js/ui-ai.js:189, 597` |
+| 🟡 MOY | S4 Snacks | Pas de `lockScroll()` sur la fenêtre snack (dette UI déjà connue, impact gameplay : scroll iOS pendant choix) | `js/ui-settings.js:43-122` |
+| 🟡 MOY | S1 Économie | Aucune source régulière > 4 pétales/event → boutique premium (cout:6) prend ~3 actions | `data/props.json` (cout:0 ou 6) |
+| 🟡 MOY | S5 Crottes | Spawn aléatoire 65% sans pattern lié aux états (faim, énergie) → événement 100% passif | `js/app.js:514-529` |
+| 🟢 BAS | S7 Inventaire | Seuls 2 paliers de prix (0 ou 6) → pas de hiérarchie d'objets désirables | `data/props.json` |
+| 🟢 BAS | S8 Notifications | Aucune notification native (Notification API jamais appelée) | — |
+| 🟢 BAS | S3 États | Aucun mapping état→bulle pour `salete` élevée seule (sans crottes) | `data/personality.json` |
+
+---
+
+## Section 1 — Progression & Économie
+
+### 1a. Diagnostic
+
+**Constantes (`data/config.js:204-212`)**
+```
+XP_HABITUDE     = 15
+XP_NOTE         = 15
+XP_MAX          = 1200
+PETALES_SNACK   = 2
+```
+
+**Stades de vie (`js/app.js:142-151`)**
+8 paliers : `egg(0) → baby(90) → teen(240) → adult(500, 900, 1500, 2500, 4000)`.
+La fonction `addXp(n)` (`js/app.js:437-456`) gère la transition de stade ; `getSt(xp)` retourne le stade courant.
+
+**Sources de pétales**
+| Source | Gain | Référence |
+|---|---|---|
+| Cocher une habitude (1×/jour/hab) | +2 | `js/app.js:771` |
+| Snack basique | +2 | `js/app.js:624` (`gain = 2`) |
+| Snack préféré de la semaine | +4 | `js/app.js:624` (`isFav ? 4 : 2`) |
+| Nettoyer une crotte | +2/crotte | `js/app.js:673` |
+
+**Dépenses de pétales**
+| Sortie | Coût | Référence |
+|---|---|---|
+| Objet boutique | 0 ou 6 | `data/props.json` |
+| Génération d'objet IA | 10 | `js/ui-ai.js:301-304` |
+
+**XP** : +15 par habitude validée, +15 par note de journal. Cap à 1200 — **incohérent avec les seuils adulte qui montent à 4000** (`js/app.js:142-151`). Le cap empêche la transition naturelle vers les stades adultes supérieurs si appliqué strictement.
+
+### 1b. Évaluation TDAH
+
+- ❌ **Rétroaction trop faible** : +2 pétales par habitude n'est pas un événement émotionnel.
+- ❌ **Aucun streak / combo** : la régularité n'est pas valorisée alors que c'est exactement ce qui manque structurellement aux profils TDAH.
+- ❌ **Sauts de stade rares** : entre teen (240 XP) et adult-2 (900 XP) il faut ~44 habitudes — au-delà du seuil "j'oublie pourquoi je le fais".
+- ✅ La logique de gain est **immédiate** (synchrone, sans cooldown).
+
+### 1c. Propositions
+
+1. **Streaks cumulatifs** : une habitude cochée N jours d'affilée donne +N pétales bonus (cap 7).
+2. **Micro-paliers visuels** dans les stades adulte (frame de fond, halo, accessoire automatique tous les +200 XP).
+3. **Burst visuel** à chaque gain de pétale (particule + bobY court sur le gotchi).
+4. **Aligner `XP_MAX` (1200)** avec le dernier seuil adult (4000) ou supprimer le cap.
+
+---
+
+## Section 2 — Habitudes
+
+### 2a. Diagnostic
+
+**Catégories** (`js/app.js:132-139`) — 6 fixes : `sport, nutri, hydra, hygiene, intel, serene`. Définies en dur, non extensibles côté UI.
+
+**Cycle d'une habitude** (`js/app.js:750-831`)
+1. `toggleHab()` ajoute l'entrée dans `D.log[today]`.
+2. +15 XP via `addXp()`.
+3. +2 pétales **une seule fois par jour par habitude** (garde via `petalesEarned` ligne 772-776).
+4. Bulle de réaction du gotchi.
+5. `save()`.
+
+**Reset quotidien** : implicite — `D.log[td]` est créé vide chaque jour (`js/app.js:752`). Aucune trace conservée du fait qu'une habitude a été manquée la veille.
+
+**Streaks** : ❌ aucun.
+**Pénalités habitudes manquées** : ❌ aucune.
+
+### 2b. Évaluation TDAH
+
+- ✅ Cycle simple, pas de friction de configuration (catégories prédéfinies).
+- ❌ **Aucune mémoire émotionnelle** entre les jours. Pour un profil TDAH, c'est la régularité qui mérite la récompense la plus forte — précisément ce qui manque ici.
+- ⚠️ Risque de **désengagement passif** : on coche, on encaisse +2, on referme. Pas de "ça vaut le coup d'y revenir demain".
+
+### 2c. Propositions
+
+1. **Compteur de streak par habitude** affiché à côté de la case (🔥×3). Reset si jour sauté.
+2. **Bulle spéciale du gotchi** au 3e/7e/14e jour de streak ("Tu es régulier·e, ça me fait du bien").
+3. **Habitude manquée 2 jours d'affilée** → -1 happiness (rétroaction douce, pas punitive).
+4. **Habitude contextuelle simple** : 1 catégorie tirée au sort le matin = "habitude vedette du jour" qui rapporte +4 au lieu de +2.
+
+---
+
+## Section 3 — États & Visuels
+
+### 3a. Diagnostic
+
+**États tracés** (`js/app.js:183-184, 193`)
+```
+energy: 3      (échelle 0-5)
+happiness: 3   (échelle 0-5)
+salete: 0      (échelle 0-10)
+```
+
+**Pas de hunger indépendant** — le repas est géré comme un événement horaire (`meals.matin/midi/soir`), pas comme une jauge.
+
+**Seuils visuels** (`data/config.js:221-233`)
+```
+EN_CRIT=1, EN_WARN=2, EN_TILT=2     → dithering, bras tombants, balancement
+HA_SAD=1, HA_MED=2, HA_MED_ADULT=3, HA_HIGH=4   → bouches, nuages, sourires
+```
+
+**Saleté visuelle** (`js/render-sprites.js:329-334`) — dithering n'apparaît qu'à `salete >= 5`, ratio normalisé `(salete - 5) / 5`. Donc valeurs 0→4 = invisibles, 5→10 = visibles. **La moitié de l'échelle est inutile.**
+
+**États orphelins / dette**
+- `salete` : pas de bulle dédiée dans `data/personality.json`.
+- `energy` et `happiness` n'ont pas de transition animée — changement abrupt frame à frame.
+
+### 3b. Évaluation TDAH
+
+- ✅ Lisibilité d'un coup d'œil correcte : posture + expression visage.
+- ❌ **Transitions abruptes** d'état (pas d'easing).
+- ❌ Pas de représentation visuelle de la saleté entre 0-4.
+
+### 3c. Propositions
+
+1. **Recalibrer `salete`** : passer à une échelle 0-5 et afficher dithering progressif dès `salete >= 1`.
+2. Ajouter une **jauge `hunger`** (0-3) qui descend avec le temps et que les snacks remplissent. Lier à `happiness` (faim → tristesse).
+3. **Easing 1s** sur les changements d'energy/happiness (lerp côté render).
+4. Bulle dédiée dans `personality.json` quand `salete >= 7` ("ça commence à sentir le renard").
+
+---
+
+## Section 4 — Repas & Snacks
+
+### 4a. Diagnostic
+
+**Fenêtres horaires** (`data/config.js:164-168`)
+```
+Matin : 7-11    Midi : 11-15    Soir : 18-22
+```
+
+**Logique `ouvrirSnack()`** (`js/ui-settings.js:43-122`) — 4 états UI :
+1. **Nuit** (`>= 22h || < 7h`) : modale "le gotchi dort" (l. 50)
+2. **Hors fenêtre** (entre les créneaux) : modale "ce n'est pas l'heure" (l. 64)
+3. **Déjà mangé** : modale "tu as déjà mangé ce matin/midi/soir" (l. 81)
+4. **Choix** : 3 emojis tirés via `pickThreeSnacks()`, dont 1 toujours préféré (l. 96)
+
+**Snack préféré rotatif** (`js/app.js:580-587, 594-604`) : 1 emoji tiré par semaine ISO, persisté dans `D.snackPref`. `pickThreeSnacks()` garantit que le préféré est l'un des 3 proposés.
+
+**Bonus pétales** (`js/app.js:624-633`) : `gain = isFav ? 4 : 2`, créditation atomique.
+
+**Fenêtre 15h-18h non couverte** : le goûter n'existe pas → trou conscient ou dette ?
+
+### 4b. Évaluation TDAH
+
+- ✅ Routine cadrée, peu d'options → faible charge cognitive.
+- ✅ Bonus snack préféré = mini-quête de la semaine.
+- ❌ Le feedback est sec (toast + pétales) — manque un effet "manger" sur le gotchi (chew, sourire +1s).
+- ❌ Pas de `lockScroll()` sur la fenêtre snack (dette UI connue).
+
+### 4c. Propositions
+
+1. **Animation manger** : 1.5s avant créditation (chew + emoji du snack qui descend dans le gotchi).
+2. **Effet sur happiness** : +1 happiness temporaire (1h) après un repas pris dans la fenêtre.
+3. **Goûter optionnel 15h-17h** : fenêtre bonus, +1 pétale seulement, ouverte 1×/jour.
+4. **Bulle "j'ai faim"** déclenchée 30 min avant la fenêtre suivante.
+
+---
+
+## Section 5 — Événements Passifs (crottes & saleté)
+
+### 5a. Diagnostic
+
+**Spawn crottes** (`js/app.js:465-489, 514-529`)
+- Délai min entre spawns : 8 min
+- Probabilité par tick : 65%
+- Pas de spawn entre 22h et 7h
+- Max 5 crottes visibles
+- `lastPoopSpawn` stocké dans `D.g`
+
+**Catch-up au réveil** (`js/app.js:1194-1197`) : 1 crotte par 50 min d'absence active, max 2.
+
+**Saleté** (`js/app.js:193, 492, 502-510`)
+- Init 0
+- +1 lors de chaque spawn de crotte
+- +1 par tranche de 6h d'inactivité (`checkSalete()`)
+- Max 10
+- **JAMAIS remise à 0**
+
+**Nettoyage** (`js/app.js:665-690`) : `cleanPoops()` vide `D.g.poops`, +2 pétales par crotte, bulle de feedback. **Mais `D.g.salete` n'est pas touché** → bug critique : la jauge gonfle, le dithering s'affiche, et l'utilisateur·rice ne peut pas la faire redescendre.
+
+### 5b. Évaluation TDAH
+
+- ✅ Système passif léger, peu anxiogène (max 5 crottes).
+- ❌ **Charge invisible** : la saleté qui ne redescend pas est exactement le genre de tâche-fantôme qui crée du stress chronique.
+- ❌ Pas de lien crottes ↔ états (faim, énergie) → pur RNG.
+
+### 5c. Propositions
+
+1. **🔴 Fix critique** : dans `cleanPoops()` (`js/app.js:665-690`), ajouter `window.D.g.salete = 0;` ou une décrémentation proportionnelle.
+2. **Lien hunger → spawn** : si `hunger >= 2`, +30% de probabilité de crotte.
+3. **Mini-récompense ponctuelle** au 5e nettoyage cumulé (badge ou +1 happiness).
+4. **Bulle de remerciement** distincte selon le nombre de crottes nettoyées (déjà partiellement présent — étendre à 5+).
+
+---
+
+## Section 6 — Interactions IA
+
+### 6a. Diagnostic
+
+**4 interactions IA** (`js/ui-ai.js`)
+
+| Interaction | Limite | Coût | Référence |
+|---|---|---|---|
+| Pensée quotidienne (`askClaude`) | 3/jour | 0 | l. 164-295 |
+| Soutien (`genSoutien`) | 3/jour, 6 messages/session | 0 | l. 568-605, 690 |
+| Bilan semaine (`genBilanSemaine`) | implicite ven/sam/dim | 0 | l. 858-952 |
+| Création d'objet (`acheterPropClaude`) | 1 sur fond pétales | 10 pétales | l. 300-399 |
+
+**Reset quotidien** : `handleDailyReset()` (`js/app.js:1145-1160`) compare `lastThoughtDate` / `lastSoutienDate` à `today()` et réinitialise les compteurs.
+
+**Variables prompt** (`prompts/ai_contexts.json`) — bien synchronisées avec `window.D` : `nameGotchi, userName, energy, happiness, notesRecentes, traits, style, exemples, heure, date, habitsDone, habitsUndone, cycleInfo, rdvAujourdhui, weekStart, weekEnd, totalHabDays`.
+
+**Loading** : `startThinkingAnim()` / `stopThinkingAnim()` (`js/ui-ai.js:195-310`) anime "💭" pendant le fetch — feedback OK.
+
+**Coût objet IA** : 10 pétales = ~5 habitudes ou ~5 snacks. **Ratio honnête** mais pas excitant ; aucun upsell.
+
+### 6b. Évaluation TDAH
+
+- ✅ Limites quotidiennes protègent du surmenage et du shoot compulsif.
+- ✅ Loader animé, pas de freeze visuel.
+- ⚠️ **3 pensées/jour** est asymétrique avec 6 catégories d'habitudes — sentiment de rareté.
+- ❌ Aucune indication UI claire du nombre de pensées/soutiens restants.
+
+### 6c. Propositions
+
+1. **Compteur visible** sur le bouton IA (ex : "💭 2/3").
+2. **Pensée matinale automatique** offerte au premier ouvrage du jour (consomme 1 sur 3, mais n'est pas "demandée").
+3. **Réduire le coût objet IA à 8 pétales** + introduire une **prime "premier objet de la semaine" gratuit**.
+4. **Variabilité du prompt création d'objet** : injecter un mood-tag (cosy, mystique, fun, naturel) pour éviter la répétition stylistique.
+
+---
+
+## Section 7 — Inventaire & Personnalisation
+
+### 7a. Diagnostic
+
+**Structure objet** (`data/props.json:4-25, 104-118, 348-360`)
+Champs : `id, nom, type, emoji, categorie, cout, slot, pxSize, palette, pixels[2D]`.
+Optionnels : `ancrage` (accessoires : "tete"), `motion` (ambiance : "fall").
+
+**Slots décor** (`js/ui-shop.js:703-710`) : 5 zones — `A` (↖), `B` (↗), `C` (↙), `SOL` (centre bas), `D` (autre). Pas de conflit géré explicitement entre objets dans le même slot — le dernier posé écrase ?
+
+**Environnements** (`js/ui-shop.js:137, 220-221`) : 3 fixes — `parc, chambre, montagne`. Switcher gratuit. `D.g.activeEnv`.
+
+**Prix** : binaire, **0 ou 6 pétales** dans la boutique. Tous les accessoires premium au même tarif.
+
+### 7b. Évaluation TDAH
+
+- ✅ Catalogue lisible, peu chargé.
+- ❌ **Pas de hiérarchie de désir** : tous les payants au même prix, donc choix 100% esthétique sans tension économique.
+- ✅ Personnalisation immédiatement visible sur le gotchi.
+
+### 7c. Propositions
+
+1. **3 paliers de prix** (3 / 6 / 12 pétales) avec rareté graphique correspondante.
+2. **Objets saisonniers** débloqués selon le mois (cycle d'année).
+3. **Objet "milestone"** offert à chaque transition de stade (egg→baby, baby→teen, etc.).
+4. **Pack thématique** : 3 objets cohérents (ex : "set cosy" = coussin + bougie + tapis) à prix groupé.
+
+---
+
+## Section 8 — Boucle Quotidienne
+
+### 8a. Diagnostic
+
+**Reset quotidien** (`js/app.js:1145-1160`) : ne touche que `thoughtCount`, `soutienCount`, `lastActive`. Pas de reset explicite des habitudes (réimplicite via clé `D.log[today]`), pas de reset des meals (géré par `ensureMealsToday()` `js/app.js:568-572`).
+
+**Bootstrap** (`js/app.js:1256-1294`) : `load → checkSalete → catchUpPoops → initApp`.
+
+**Notifications natives** : ❌ aucune (`Notification` API non appelée).
+
+**Points d'entrée quotidiens** :
+1. Ouverture manuelle de l'app (script parsé)
+2. `visibilitychange` / `pageshow`
+3. Aucune relance externe possible (pas de push)
+
+**Boucle journée type reconstituée**
+1. Ouvrir → bulle d'accueil + état du gotchi
+2. (Matin 7-11) Snack matin → +2/+4 pétales
+3. Cocher 1-3 habitudes au fil de la journée → +6 XP / +6 pétales max
+4. (Midi 11-15) Snack midi
+5. Nettoyer 1-2 crottes → +2/+4 pétales
+6. (Optionnel) Pensée IA → narration
+7. (Soir 18-22) Snack soir
+8. (Optionnel) Note journal → +15 XP
+
+**Durée totale** : ~5-8 min cumulées sur la journée, en 4-6 micro-sessions.
+
+### 8b. Évaluation TDAH
+
+- ✅ **Compatible quick-check 30s** : ouvrir, état visible, action rapide possible.
+- ✅ Sessions courtes naturelles via fenêtres repas.
+- ❌ Pas de relance externe → l'app dépend de l'initiative de l'utilisateur·rice (gros défaut TDAH).
+- ❌ Aucun événement-surprise → la journée de J est identique à celle de J+30.
+
+### 8c. Propositions
+
+1. **Notifications PWA opt-in** sur les 3 fenêtres repas + 1 le soir si <2 habitudes cochées.
+2. **Événement aléatoire** quotidien (1/3 chance) : papillon, météo spéciale, visiteur, mini-cadeau (+3 pétales).
+3. **Streak global de présence** (jours consécutifs d'ouverture) avec récompense visible (badge progressif).
+4. **"Pensée du matin" offerte** au premier lancement du jour (consomme 1 sur 3 mais ressentie comme un cadeau).
+
+---
+
+## Propositions de nouvelles mécaniques
+
+| Nom | Système | Description courte | Effort | Impact TDAH |
+|-----|---------|--------------------|--------|-------------|
+| Streaks par habitude | S2 | Compteur 🔥 par habitude, +N pétales bonus (cap 7), reset si jour sauté | Moyen | 🔥🔥🔥 |
+| Streak de présence global | S8 | Jours consécutifs d'ouverture, badge progressif | Faible | 🔥🔥🔥 |
+| Jauge hunger | S3 | Nouvelle jauge 0-3, descend avec le temps, snacks remplissent | Moyen | 🔥🔥 |
+| Reset salete au nettoyage | S5 | 1 ligne dans `cleanPoops()` | Trivial | 🔥🔥 (fix) |
+| Notifications PWA opt-in | S8 | Rappel snack manqué, soir sans habitudes | Moyen | 🔥🔥🔥 |
+| Événement aléatoire quotidien | S8 | 1/3 chance : papillon, visiteur, météo rare | Moyen | 🔥🔥🔥 |
+| Animation "manger" | S4 | 1.5s chew avant créditation | Faible | 🔥🔥 |
+| Compteur IA visible | S6 | Affiche "💭 2/3" sur le bouton | Trivial | 🔥🔥 |
+| 3 paliers de prix shop | S7 | 3/6/12 pétales avec rareté graphique | Moyen | 🔥 |
+| Objet milestone offert | S7 | À chaque transition de stade | Faible | 🔥🔥 |
+| Goûter 15-17h | S4 | Fenêtre bonus +1 pétale | Faible | 🔥 |
+| Habitude vedette du jour | S2 | 1 catégorie tirée au sort = +4 au lieu de +2 | Faible | 🔥🔥 |
+| Pack thématique boutique | S7 | 3 objets cohérents à prix groupé | Faible | 🔥 |
+| Bulle "j'ai faim" anticipée | S4 | 30 min avant fenêtre suivante | Faible | 🔥🔥 |
+| Easing transitions états | S3 | Lerp 1s sur energy/happiness | Faible | 🔥 |
+
+---
+
+## Prochaines étapes recommandées
+
+1. **🔴 Fix critique immédiat** : reset de `salete` dans `cleanPoops()` (`js/app.js:665-690`).
+2. **🔴 Cohérence XP** : aligner `XP_MAX` (1200, `data/config.js:206`) avec le dernier seuil adult (4000, `js/app.js:142-151`) ou retirer le cap.
+3. **🟠 Streaks par habitude** (S2) — plus haut ROI TDAH pour effort moyen.
+4. **🟠 Streak de présence global** (S8) — relance quotidienne sans dépendre des notifs.
+5. **🟠 Compteur IA visible** + **animation manger** — faible effort, gros gain de feedback.
+6. **🟡 Notifications PWA opt-in** — chantier moyen mais transforme l'app en "compagnon actif".
+7. **🟡 Jauge hunger** + recalibrage de l'échelle `salete` (0-5 au lieu de 0-10).
+8. **🟢 Événements aléatoires quotidiens** + objets milestone — couche surprise et attachement.

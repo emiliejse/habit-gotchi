@@ -928,16 +928,8 @@ const LAYERS_TEEN = [
     ]
   },
 
-  // ── Reflets yeux surprise (4×4 px sub-PX, décalés +1) ──────────
-  {
-    id: 'reflets-yeux-surprise',
-    fill: '#fff',
-    when: (pm) => !pm.sl && !pm.blink && isMood('surprise'),
-    rects: [
-      { x: -3, y: 2, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
-      { x:  1, y: 2, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
-    ]
-  },
+  // NOTE : reflets-yeux-surprise supprimé — les reflets normaux (p.rect dans drawTeen)
+  // restent désormais actifs pendant surprise, ce qui est plus propre et évite la superposition.
 
   // ── Yeux ouverts normaux (amande 2 rangées) ─────────────────────
   // POURQUOI : masqués pendant le bâillement (yeux-fermes prend le dessus).
@@ -1158,7 +1150,10 @@ function drawTeen(p, cx, cy, sl, en, ha) {
   // RÔLE : Reflet blanc snappé sur grille PX, avec regard latéral vers la crotte si proche.
   // POURQUOI : Snap PX-grid → reste dans la rangée haute de l'iris (Bug 1 fix).
   //            Regard crotte : même logique que drawBaby — poopDir pilote la position.
-  if (!params.sl && !params.blink && !isMood('surprise')) {
+  // POURQUOI : !isMood('surprise') retiré — les reflets doivent rester visibles même en
+  //            mode surprise (les yeux surprise sont plus grands, les reflets y ont leur place).
+  //            Les calques reflets-yeux-surprise du DSL ont été retirés pour éviter la superposition.
+  if (!params.sl && !params.blink) {
     p.fill('#fff');
     p.noStroke();
     // Iris teen rangée haute : 2×PX = 10px. Espace dispo = 10 - 3reflet - 3margeD - 1margeG = 4px (1px de moins que baby).
@@ -1280,16 +1275,7 @@ const LAYERS_ADULT = [
     ]
   },
 
-  // ── Reflets yeux surprise (4×4 px, décalés +1) ─────────────────
-  {
-    id: 'reflets-yeux-surprise',
-    fill: '#fff',
-    when: (pm) => !pm.sl && !pm.blink && isMood('surprise'),
-    rects: [
-      { x: -3, y: 3, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
-      { x:  1, y: 3, w: 0, h: 0, rawDx: 1, rawDy: 1, rawW: 4, rawH: 4 },
-    ]
-  },
+  // NOTE : reflets-yeux-surprise supprimé — même raison que LAYERS_TEEN.
 
   // ── Yeux ouverts normaux (amande 2 rangées) ─────────────────────
   // POURQUOI : masqués pendant le bâillement (yeux-fermes prend le dessus).
@@ -1639,7 +1625,8 @@ function drawAdult(p, cx, cy, sl, en, ha) {
   // RÔLE : Reflet blanc snappé sur grille PX, avec regard latéral vers la crotte si proche.
   // POURQUOI : Snap PX-grid → reste dans la rangée haute de l'iris (Bug 1 fix).
   //            Regard crotte : même logique que baby/teen — poopDir pilote la position.
-  if (!params.sl && !params.blink && !isMood('surprise')) {
+  // POURQUOI : !isMood('surprise') retiré — même raison que drawTeen (voir ci-dessus).
+  if (!params.sl && !params.blink) {
     p.fill('#fff');
     p.noStroke();
     // Iris adult rangée haute : 3×PX = 15px. Espace dispo = 15 - 3reflet - 4margeD - 0margeG = 8px.

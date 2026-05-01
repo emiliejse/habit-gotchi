@@ -7,6 +7,22 @@
 
 ## 1. Bugs critiques diagnostiqués
 
+### Bug 3 — Pupilles blanches disparaissent lors du cochage d'habitudes ✅ RÉSOLU 2026-05-01
+
+**Stades concernés :** teen, adult uniquement.
+
+**Cause :** La condition des reflets `p.rect` dans `drawTeen()` et `drawAdult()` incluait `!isMood('surprise')`. Lors du cochage d'une habitude, `triggerExpr('surprise', 90)` est déclenché quand `happiness ≤ 60` — masquant les reflets normaux pendant toute la durée de l'expression. Les calques `reflets-yeux-surprise` du DSL (censés prendre le relais) étaient mal dimensionnés via `px()` (arrondissement à `Math.max(PX, ...)`) et peu visibles.
+
+**Fix appliqué :**
+- `drawTeen()` : suppression de `&& !isMood('surprise')` dans la condition des reflets (`p.rect`)
+- `drawAdult()` : idem
+- `LAYERS_TEEN` : suppression du calque `reflets-yeux-surprise` (devenu redondant)
+- `LAYERS_ADULT` : idem
+
+Les reflets normaux restent désormais actifs pendant toute expression visuelle (joie, surprise, bâillement inclus), sauf pendant le clignotement (`blink`) et le sommeil (`sl`).
+
+---
+
 ### Bug 1 — Pupilles qui sortent de l'œil ✅ RÉSOLU 2026-04-30
 
 **Localisation :** reflets/pupilles dessinés hors DSL via `p.rect()` (sub-pixel volontaire) :

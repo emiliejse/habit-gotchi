@@ -194,6 +194,10 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start; /* boutons et slot tama alignés en haut */
+  position: relative; /* POURQUOI : nécessaire pour que z-index soit appliqué */
+  z-index: 1; /* POURQUOI : en mode compact, #tama-bubble-wrap remonte de -48px et passe
+                              par-dessus .hdr, bloquant les clics sur les boutons boutique/tablette.
+                              Ce z-index garantit que .hdr reste au premier plan. */
 }
 /* RÔLE : Titre central du header (Habit-Gotchi + date) */
 #hdr-title {

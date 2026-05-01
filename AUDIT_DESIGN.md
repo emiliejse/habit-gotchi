@@ -389,11 +389,12 @@ document.querySelector('.menu-languette').classList.toggle('is-open');
 #### C1.2 — Indicateur d'onglet courant en mode `compact`
 
 ✅ **RÉSOLU 2026-05-01**
-- `<span id="compact-tab-label">` ajouté dans `.hdr` (`index.html`), entre `#hdr-title` et `#btn-tablet`.
-- `display:none` par défaut ; `display:inline-block` uniquement sous `#console-top.compact` (`style.css`).
-- Style : `var(--font-title)`, `var(--fs-sm)`, `var(--lilac)`, `opacity:0.85`.
+- `<span id="compact-tab-label">` ajouté dans `#tama-bubble-wrap` (`index.html`), positionné en `absolute` à gauche du tama.
+- `display:none` par défaut ; `display:block` + `position:absolute;left:4px;top:50%` uniquement sous `#console-top.compact` (`style.css`).
+- Style : `var(--font-title)`, `var(--fs-md)`, `var(--lilac)`, `opacity:0.7`, écriture verticale (`writing-mode:vertical-rl`).
 - `go()` dans `ui-nav.js` met à jour le texte via `TAB_LABELS` (ex: `✿ Progrès`, `✿ Journal`…).
 - `aria-live="polite"` pour les lecteurs d'écran.
+- ⚠️ **Bug corrigé 2026-05-01** : en mode compact, `#tama-bubble-wrap` remontait de `-48px` et passait par-dessus `.hdr`, bloquant les clics sur `#btn-boutique-hdr` et `#btn-tablet`. **Fix** : `position:relative` + `z-index:1` ajouté sur `.hdr` (`style.css`), sans toucher au layout ni aux animations.
 
 #### C1.3 — Modales empilées : retour navigationnel
 

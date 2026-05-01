@@ -521,7 +521,10 @@ function getGotchiC() {
   //            sans ça, la couleur d'œil reste figée à la valeur initiale de C (#38304a).
   const eyeId = window.D.g.eyeColor || 'noir';
   const ec = window.HG_CONFIG.EYE_COLORS.find(x => x.id === eyeId) || window.HG_CONFIG.EYE_COLORS[0];
-  return { body: gc.body, bodyLt: gc.bodyLt, bodyDk: gc.bodyDk, eye: ec.hex };
+  // RÔLE : Résoudre aussi la couleur de la bouche — personnalisable via D.g.mouthColor.
+  const mouthId = window.D.g.mouthColor || 'noir';
+  const mc = window.HG_CONFIG.MOUTH_COLORS.find(x => x.id === mouthId) || window.HG_CONFIG.MOUTH_COLORS[0];
+  return { body: gc.body, bodyLt: gc.bodyLt, bodyDk: gc.bodyDk, eye: ec.hex, mouth: mc.hex };
 }
 
 function getEnvC() {
@@ -1097,7 +1100,7 @@ const p5s = (p) => {
 
     // Initialisation des couleurs
     const gc = getGotchiC();
-    C.body = gc.body; C.bodyLt = gc.bodyLt; C.bodyDk = gc.bodyDk; C.eye = gc.eye;
+    C.body = gc.body; C.bodyLt = gc.bodyLt; C.bodyDk = gc.bodyDk; C.eye = gc.eye; C.mouth = gc.mouth;
     const ec = getEnvC();
     C.gnd = ec.gnd; C.gndDk = ec.gndDk; C.skyD1 = ec.sky1; C.skyD2 = ec.sky2;
 

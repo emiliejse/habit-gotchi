@@ -105,6 +105,22 @@ const EYE_COLORS = [
   { id:'menthe',  label:'Menthe',  hex:'#4aaa80' },
 ];
 
+/* ─── SYSTÈME 5 : PERSONNALISATION (Couleur de la bouche) ────────── */
+
+// RÔLE : Couleurs disponibles pour la bouche du Gotchi (C.mouth dans le DSL sprites).
+// POURQUOI : C.mouth est mis à jour à chaque frame dans render.js via D.g.mouthColor —
+//            même pattern que C.eye. Teintes allant du sombre au rose vif.
+const MOUTH_COLORS = [
+  { id:'noir',    label:'Noir',    hex:'#38304a' },
+  { id:'brun',    label:'Brun',    hex:'#6b4226' },
+  { id:'rose',    label:'Rose',    hex:'#e0608a' },
+  { id:'corail',  label:'Corail',  hex:'#e07858' },
+  { id:'rouge',   label:'Rouge',   hex:'#c03848' },
+  { id:'lilas',   label:'Lilas',   hex:'#9870c0' },
+  { id:'peche',   label:'Pêche',   hex:'#e0a880' },
+  { id:'fuchsia', label:'Fuchsia', hex:'#d040a0' },
+];
+
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME (Décors & Biomes) ───────────────────── */
 
 /**
@@ -305,6 +321,7 @@ window.HG_CONFIG = {
   GOTCHI_COLORS,
   PUPIL_COLORS,
   EYE_COLORS,
+  MOUTH_COLORS,
   ENV_THEMES,
   MEAL_WINDOWS,
   SNACKS_POOL,

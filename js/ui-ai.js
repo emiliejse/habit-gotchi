@@ -574,9 +574,7 @@ function _showSoutienConfirm(onConfirm) {
   document.getElementById('mbox').innerHTML = `
     <div style="text-align:center;padding:12px 8px 8px">
 
-      <p style="font-size:var(--fs-sm);color:var(--lilac);font-weight:bold;margin-bottom:10px;text-align:left">
-        💜 Besoin de soutien
-      </p>
+      <h2 style="color:var(--text);margin-bottom:10px">💜 Besoin de soutien</h2>
 
       <!-- RÔLE : Zone du mini canvas p5 — fond blanc, coins arrondis -->
       <!-- Hauteur 90px : assez pour adult (oreilles -10px + corps 50px + marge 30px) -->

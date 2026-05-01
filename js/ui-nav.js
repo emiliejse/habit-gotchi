@@ -188,7 +188,15 @@ function go(t) {
   if (t === 'perso')   renderPerso();
   if (t === 'journal') { window.journalLocked = true; renderJ(); } // POURQUOI : window.journalLocked partagé avec ui-journal.js
 
-  document.getElementById('dynamic-zone').scrollTop = 0;
+  // RÔLE : Remettre la zone de contenu en haut à chaque changement d'onglet.
+  // POURQUOI : Le scroll immédiat n'est pas suffisant — le render (renderHabs, renderProps…)
+  //            et la transition CSS de compact peuvent décaler le contenu après ce point.
+  //            On force donc le retour en haut : une fois immédiatement, et une fois
+  //            après la fin de la transition (via setTimeout calé sur la durée de la transition).
+  const dz = document.getElementById('dynamic-zone');
+  dz.scrollTop = 0;
+  setTimeout(() => { dz.scrollTop = 0; }, 420); // 420ms > durée transition compact (400ms)
+
   const wrap = document.getElementById('tama-bubble-wrap');
   syncDuringTransition(wrap);
 }

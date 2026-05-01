@@ -30,11 +30,12 @@ Hors périmètre : `js/render.js`, `js/envs.js`, `js/render-sprites.js`, logique
 2. ~~**🔴 `--sab` figé à `0px` au lieu de `env(safe-area-inset-bottom, 0px)`**~~
    ✅ **RÉSOLU 2026-05-01** — `style.css:40-42` : `--sab`, `--sal`, `--sar` utilisent désormais `env(safe-area-inset-*, 0px)`.
 
-3. **🟠 Cibles tactiles sous 44 px sur des actions fréquentes**
-   - `.mood-b` 42×42 px (`style.css:1115`) — 5 boutons d'humeur tapotés à chaque entrée journal.
-   - `.j-entry .j-actions button` ~24 px haut (`style.css:999-1002`) — édition/suppression note.
-   - `.btn-export` ~26 px haut (`style.css:1023-1025`).
-   - `.inv-env-btn` ~30 px haut (inline `index.html:290-292`).
+3. ~~**🟠 Cibles tactiles sous 44 px sur des actions fréquentes**~~
+   ✅ **RÉSOLU 2026-05-01**
+   - `.mood-b` → 44×44 px (`style.css`).
+   - `.j-entry .j-actions button` → `min-height: 44px` (`style.css`).
+   - `.btn-export` → `min-height: 44px` + `display:inline-flex` pour centrage vertical (`style.css`).
+   - `.inv-env-btn` → externalisé dans `style.css` + `min-height: 44px` (styles inline retirés de `index.html:303-305`).
 
 ### 0.3 Top 3 quick wins
 
@@ -841,15 +842,15 @@ Liste exhaustive **à NE PAS remplacer** par des assets techniques :
 | `.menu-line` | 56 px haut | `style.css:495-511` | Menu | ✅ |
 | `.menu-postit` | ~46 px haut | `style.css:544-558` | Agenda/Soutien | ✅ |
 | Filtres ronds inventaire | 52×52 ✓ | `ui-shop.js:163` | Filtre catégorie | ✅ |
-| `.mood-b` | **42×42** | `style.css:1114` | Picker humeur | 🔴 |
-| `.j-entry .j-actions button` | **~24 px** | `style.css:999-1002` | Édition note | 🔴 |
-| `.btn-export` | **~26 px** | `style.css:1023-1031` | Export journal | 🔴 |
-| `.inv-env-btn` | **~30 px** | `index.html:290-292` | Switcher env | 🔴 |
+| `.mood-b` | ~~42×42~~ → **44×44** ✓ | `style.css` | Picker humeur | ✅ RÉSOLU 2026-05-01 |
+| `.j-entry .j-actions button` | ~~~24 px~~ → **min 44px** ✓ | `style.css` | Édition note | ✅ RÉSOLU 2026-05-01 |
+| `.btn-export` | ~~~26 px~~ → **min 44px** ✓ | `style.css` | Export journal | ✅ RÉSOLU 2026-05-01 |
+| `.inv-env-btn` | ~~~30 px~~ → **min 44px** ✓ | `style.css` (externalisé) | Switcher env | ✅ RÉSOLU 2026-05-01 |
 | Boutons emoji RDV (formulaire) | aspect-ratio:1, ~36 px | `ui-agenda.js:319-323` | Choix emoji | 🟠 limite |
 | Chevrons SVG nav journal | padding 8 px → ~34 px | `index.html:195, 203` | Nav semaine journal | 🟠 limite |
 | Boutons rdv ✏️/🗑️ | font 13 px sans padding | `ui-agenda.js:212-213` | Édit/suppr RDV | 🔴 |
 
-**Toujours OUVERT** : 6 cibles sous 44 px, dont 2 critiques (`.mood-b`, `.j-entry .j-actions`).
+**Toujours OUVERT** : boutons RDV ✏️/🗑️ dans `ui-agenda.js:212-213` (~13px, sans padding). Les 4 cibles critiques listées ci-dessus sont désormais résolues.
 
 ### 6.2 Safe areas
 

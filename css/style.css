@@ -1153,7 +1153,7 @@ body {
   margin: var(--sp-xs) 0;
 }
 /* RÔLE : Actions édition/suppression — alignées à droite, cibles tactiles agrandies */
-/* POURQUOI : Les ~24px d'origine étaient trop petits (audit C3.2), on monte à 36px min */
+/* POURQUOI : Les ~24px d'origine étaient trop petits (audit C3.2), on monte à 44px min (recommandation Apple HIG) */
 .j-entry .j-actions {
   display: flex;
   justify-content: flex-end;
@@ -1162,8 +1162,8 @@ body {
 }
 .j-entry .j-actions button {
   font-size: var(--fs-sm);
-  min-height: 36px;
-  min-width: 36px;
+  min-height: 44px;
+  min-width: 44px;
   padding: 4px 10px;
   border-radius: var(--r-sm);
   border: 1px solid var(--paper-border);
@@ -1194,15 +1194,37 @@ body {
 
 /* RÔLE : Boutons export discrets — pill léger, moins encombrants que les btn-s standard */
 /* POURQUOI : Les grands btn-s blancs attiraient trop l'attention pour une action secondaire */
+/* AUDIT C3.3 : min-height passé à 44px (était ~26px, sous les recommandations Apple HIG) */
 .btn-export {
   font-size: var(--fs-xs); font-weight: bold; font-family: var(--font-body); line-height: 1;
-  padding: 5px 14px; border-radius: var(--r-md);
+  padding: 0 14px; border-radius: var(--r-md);
+  min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--paper-border);
   background: var(--paper-entry-btn); color: var(--paper-text);
   cursor: pointer; transition: .12s; letter-spacing: .5px;
 }
 .btn-export:hover  { background: var(--paper-border); }
 .btn-export:active { transform: scale(.94); }
+
+/* RÔLE : Boutons switcher d'environnement dans l'inventaire */
+/* POURQUOI : Style était 100% inline dans index.html (~30px de hauteur, sous les 44px recommandés) */
+/* AUDIT 6.1 : externalisé + cible portée à 44px min */
+.inv-env-btn {
+  flex: 1;
+  min-height: 44px;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: none;
+  font-size: var(--fs-xs);
+  font-weight: bold;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* Le Code PIN du Journal */
 .pin-dots { display: flex; gap: 10px; justify-content: center; margin: 12px 0; }
@@ -1285,8 +1307,9 @@ details.settings-section.danger > summary { color: var(--danger); }
 .nav-a:active { background: var(--border); }
 
 /* Picker d'Humeur (Saisie du journal) */
+/* AUDIT 6.1 : cible portée à 44×44px (était 42×42, sous les recommandations Apple HIG) */
 .mood-b {
-  width: 42px; height: 42px; border-radius: 10px; border: 3px solid var(--border); background: #fff;
+  width: 44px; height: 44px; border-radius: 10px; border: 3px solid var(--border); background: #fff;
   font-size: 20px; cursor: pointer; transition: .2s; display: flex; align-items: center; justify-content: center;
 }
 .mood-b.sel { border-color: var(--lilac); background: rgba(176,144,208,.1); transform: scale(1.1); }

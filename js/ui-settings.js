@@ -616,12 +616,12 @@ function renderProg() {
   // RÔLE : Cherche le bilan de la semaine affichée ; se rabat sur bilanText si c'est la semaine en cours (rétrocompat).
   const savedBilan   = bilansDico[weekIdActuel] || (wOff === 0 ? window.D.g.bilanText || '' : '');
 
+  // RÔLE : Reset systématique de l'opacity du texte bilan — elle ne doit jamais rester grisée entre navigations.
+  if (summaryEl) summaryEl.style.opacity = '1';
+
   if (wOff > 0) {
     // ── Semaine future : section visible mais désactivée
-    if (summaryEl) {
-      summaryEl.textContent  = 'Pas encore disponible ✿';
-      summaryEl.style.opacity = '0.45';
-    }
+    if (summaryEl) summaryEl.textContent = 'Pas encore disponible ✿';
     if (btnCopier) btnCopier.style.display = 'none';
     if (btnBilan)  { btnBilan.disabled = true; btnBilan.style.opacity = '0.4'; }
     if (lblBilan)  lblBilan.textContent = '⏳ Pas encore disponible';
@@ -630,8 +630,7 @@ function renderProg() {
   } else if (wOff < 0) {
     // ── Semaine passée : afficher le bilan archivé de CETTE semaine en lecture seule
     if (summaryEl) {
-      summaryEl.textContent  = savedBilan || 'Aucun bilan généré pour cette semaine ✿';
-      summaryEl.style.opacity = '1';
+      summaryEl.textContent = savedBilan || 'Aucun bilan généré pour cette semaine ✿';
     }
     if (hidEl) hidEl.value = savedBilan;
     if (btnCopier) btnCopier.style.display = savedBilan ? 'block' : 'none';

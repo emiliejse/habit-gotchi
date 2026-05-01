@@ -235,7 +235,7 @@
       <!-- POURQUOI : Distinct du streak d'habitudes — récompense juste le fait de revenir -->
       <div style="text-align:center;padding:8px;background:rgba(245,158,11,.07);border-radius:10px">
         <div style="font-size:20px;font-weight:bold;color:var(--amber,#f59e0b)" id="s-presence">0</div>
-        <div class="slbl">présence 🔥</div>
+        <div class="slbl">présence</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
@@ -250,9 +250,11 @@
     </div>
   </div>
 
-  <!-- Calendrier hebdomadaire interactif (SYSTEM 2: Écosystème) -->
-  <div class="card">
-    <!-- RÔLE : Navigation semaine progrès — chevrons SVG sans bouton, couleur lilac -->
+  <!-- Calendrier hebdomadaire + bilan IA fusionnés (SYSTEM 2 + SYSTEM 3) -->
+  <!-- RÔLE : Une seule card regroupe la semaine et son bilan — visuellement cohérent -->
+  <!-- POURQUOI : Le bilan appartient à la semaine affichée, les deux étaient confusément séparés -->
+  <div class="card" id="card-bilan" style="position:relative">
+    <!-- Navigation semaine -->
     <div class="nav-r">
       <span onclick="navW(-1)" aria-label="Semaine précédente" style="cursor:pointer;padding:8px;display:flex;align-items:center">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lilac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -264,21 +266,22 @@
     </div>
     <!-- RÔLE : Conteneur du calendrier hebdo — en-têtes et cases générés par renderProg() en JS -->
     <div id="w-view"></div>
-  </div>
 
-  <!-- Bilan hebdomadaire généré par IA (SYSTEM 3: IA & Cognition) -->
-  <div class="card" id="card-bilan" style="position:relative">
-    <h2 id="bilan-titre">🧠 Bilan Hebdo</h2>
-    <div id="claude-summary" style="background:rgba(176,144,208,.07);padding:12px;border-radius:8px;font-size:var(--fs-sm);border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);font-family:var(--font-gotchi);font-style:italic;font-weight:300;"> <!-- était 11px -->
+    <!-- Séparateur entre calendrier et bilan -->
+    <hr style="border:none;border-top:1px solid var(--border);margin:14px 0 12px;">
+
+    <!-- Bilan IA de la semaine affichée -->
+    <h2 id="bilan-titre" style="margin-bottom:10px;">🌼 Bilan</h2>
+    <div id="claude-summary" style="background:rgba(176,144,208,.07);padding:12px;border-radius:8px;font-size:var(--fs-sm);border:1px dashed var(--border);margin-bottom:12px;white-space:pre-wrap;line-height:1.6;color:var(--text);font-family:var(--font-gotchi);font-style:italic;font-weight:300;">
 Ton bilan de la semaine apparaîtra ici...
     </div>
     <textarea id="bil-txt-hidden" style="display:none"></textarea>
-    <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%;font-size:var(--fs-sm);margin-bottom:2px;display:flex;align-items:center;justify-content:center;gap:6px;"> <!-- était 10px -->
+    <button class="btn btn-p" onclick="genBilanSemaine()" style="width:100%;font-size:var(--fs-sm);margin-bottom:2px;display:flex;align-items:center;justify-content:center;gap:6px;">
       <span id="bilan-btn-label">✿ Générer le bilan</span>
     </button>
-    <!-- RÔLE : Fleurs de quota bilan — affichées sous le bouton, comme thought-count et journal-flowers -->
+    <!-- RÔLE : Fleurs de quota bilan -->
     <div id="bilan-flowers" class="thought-flowers" style="text-align:center;margin-bottom:4px;"></div>
-    <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="width:100%;font-size:var(--fs-sm);display:none;"> <!-- était 10px -->
+    <button class="btn btn-s" id="btn-copy-bilan" onclick="copyBilanSemaine()" style="width:100%;font-size:var(--fs-sm);display:none;">
       📋 Copier le bilan
     </button>
   </div>

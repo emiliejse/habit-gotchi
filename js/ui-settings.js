@@ -609,6 +609,13 @@ function renderProg() {
   if (!cardBilan) { updUI(); return; }
   cardBilan.style.display = ''; // toujours visible, peu importe la semaine
 
+  // RÔLE : Calcule la clé weekId de la semaine affichée pour retrouver son bilan dans D.g.bilans.
+  // POURQUOI : On indexe les bilans par semaine — le mercredi (wd[3]) est le pivot ISO le plus fiable.
+  const weekIdActuel = getWeekId(new Date(wd[3] + 'T12:00'));
+  const bilansDico   = window.D.g.bilans ?? {};
+  // RÔLE : Cherche le bilan de la semaine affichée ; se rabat sur bilanText si c'est la semaine en cours (rétrocompat).
+  const savedBilan   = bilansDico[weekIdActuel] || (wOff === 0 ? window.D.g.bilanText || '' : '');
+
   if (wOff > 0) {
     // ── Semaine future : section visible mais désactivée
     if (summaryEl) {
@@ -621,8 +628,7 @@ function renderProg() {
     if (bilanFlowers) bilanFlowers.innerHTML = '';
 
   } else if (wOff < 0) {
-    // ── Semaine passée : afficher le dernier bilan archivé en lecture seule
-    const savedBilan = window.D.g.bilanText || '';
+    // ── Semaine passée : afficher le bilan archivé de CETTE semaine en lecture seule
     if (summaryEl) {
       summaryEl.textContent  = savedBilan || 'Aucun bilan généré pour cette semaine ✿';
       summaryEl.style.opacity = '1';
@@ -635,8 +641,6 @@ function renderProg() {
 
   } else {
     // ── Semaine en cours : comportement normal
-    if (summaryEl) summaryEl.style.opacity = '1';
-    const savedBilan = window.D.g.bilanText || '';
     if (summaryEl && savedBilan) {
       summaryEl.textContent = savedBilan;
       if (hidEl) hidEl.value = savedBilan;

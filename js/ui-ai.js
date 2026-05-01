@@ -1041,12 +1041,19 @@ if (semaineEnCours) {
 }
 
   /* ── Sans clé API ── */
+  // RÔLE : Calcule l'identifiant ISO de la semaine affichée (ex: "2025-W18") pour indexer le bon bilan.
+  // POURQUOI : Chaque semaine a son propre bilan dans D.g.bilans — on ne peut plus utiliser bilanText unique.
+  const weekIdBilan = getWeekId(new Date(wd[3] + 'T12:00')); // mercredi = pivot ISO fiable
+
   if (!key) {
     const lignes = habitudes.map(h=>`• ${h.habitude} : ${h.jours_faits}/7 jours`).join('\n');
-    summaryEl.textContent = `Semaine du ${wd[0]} au ${wd[6]}\n\n${lignes}\n\n${notes.length} note(s) de journal.\n\nAjoute ta clé API pour un bilan personnalisé ✿`;
+    const texte = `Semaine du ${wd[0]} au ${wd[6]}\n\n${lignes}\n\n${notes.length} note(s) de journal.\n\nAjoute ta clé API pour un bilan personnalisé ✿`;
+    summaryEl.textContent = texte;
     document.getElementById('btn-copy-bilan').style.display = 'block';
-    document.getElementById('bil-txt-hidden').value = summaryEl.textContent;
-    window.D.g.bilanText = summaryEl.textContent;
+    document.getElementById('bil-txt-hidden').value = texte;
+    window.D.g.bilans = window.D.g.bilans ?? {};           // RÔLE : initialise l'objet d'archives si absent
+    window.D.g.bilans[weekIdBilan] = texte;                // RÔLE : archive ce bilan sous la clé de sa semaine
+    window.D.g.bilanText = texte;                          // RÔLE : compatibilité rétroactive
     save();
     return;
   }
@@ -1085,7 +1092,9 @@ if (semaineEnCours) {
     document.getElementById('bil-txt-hidden').value = bilan;
     document.getElementById('btn-copy-bilan').style.display = 'block';
     window.D.g.bilanCount = (window.D.g.bilanCount || 0) + 1;
-    window.D.g.bilanText  = bilan;
+    window.D.g.bilans = window.D.g.bilans ?? {};           // RÔLE : initialise l'objet d'archives si absent
+    window.D.g.bilans[weekIdBilan] = bilan;                // RÔLE : archive ce bilan sous la clé de sa semaine
+    window.D.g.bilanText = bilan;                          // RÔLE : compatibilité rétroactive
     save();
     renderProg(); // rafraîchit l'état du bouton
 

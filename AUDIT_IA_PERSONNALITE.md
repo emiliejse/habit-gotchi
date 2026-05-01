@@ -569,6 +569,6 @@ COHÉRENCE PERSONNALITÉ
 7. ✅ **~~🟡 Anti-répétition API~~** — **FAIT 2026-05-01.** `{{fragmentsEvites}}` injecté en fin d'Action 2 dans `askClaude.base` + construit dans `vars` (`D.g.customBubbles.slice(0,6).join(' / ')`). Fallback `'aucun'` si le tableau est vide.
 8. ✅ **~~🟡 Étendre `getRegistre()`~~** — **FAIT 2026-05-01.** Filtrage par `traits`, blacklist du dernier registre, 2 nouveaux registres universels, registres conditionnels pour `pince-sans-rire` / `absurde` / `créatif`, exclusion `non-sequitur poétique` si `pince-sans-rire` actif.
 9. ✅ **~~🟢 Ajouter les 5 catégories de bulles manquantes~~** — **FAIT 2026-05-01.** `repas`, `retour`, `pluie`, `bain`, `cycle_regles` ajoutés dans `data/user_config.json` et `data/user_config.ALEXIA.json`. Déclencheurs câblés dans `app.js` : `bain` (Priorité 1b → `src.bain`), `repas` (Priorité 2b → `src.repas`), `pluie` (Priorité 4, poids 1), `cycle_regles` (Priorité 4, poids 2 + boot à 5s), `retour` (boot à 3.5s si absence > 24h).
-10. **🟢 Plafond explicite de longueur** dans `genSoutien` (ex : "Maximum 50 mots, 3 phrases.") pour garantir la lisibilité mobile TDAH.
+10. ✅ **~~🟢 Plafond explicite de longueur~~** — **FAIT 2026-05-01** — `Maximum 50 mots, 3 phrases.` ajouté dans `prompts/ai_contexts.json:12` (template `genSoutien`), avant `Jamais de jugement.`.
 
 > Toutes les modifications proposées sont **additives** ou **localisées** : aucun fichier à réécrire entièrement, aucun appel API existant cassé.

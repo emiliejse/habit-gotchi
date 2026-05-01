@@ -513,6 +513,8 @@ function supprimerRdv(id) {
   window.D.rdv = (window.D.rdv || []).filter(r => r.id !== id);
   save();
   renderAgendaJour(document.getElementById('agenda-contenu'));
+  // RÔLE : Rafraîchit le post-it après suppression d'un RDV
+  if (typeof updAgendaPostit === 'function') updAgendaPostit();
 }
 
 function confirmerSuppressionRdv(id) {
@@ -704,6 +706,10 @@ function confirmerEditRdv(mode) {
   save();
   annulerFormulaireRdv();
   renderAgendaJour(document.getElementById('agenda-contenu'));
+  // RÔLE : Rafraîchit le post-it agenda après ajout/édition d'un RDV
+  // POURQUOI : updAgendaPostit() n'est appelée qu'à l'init — sans ce call,
+  //            le post-it reste figé jusqu'au prochain chargement de l'app.
+  if (typeof updAgendaPostit === 'function') updAgendaPostit();
 }
 
 function declarerRegles(ds) {

@@ -195,13 +195,17 @@ function updAgendaPostit() {
   if (typeof showCycle === 'function' && showCycle()) {
     const phase = typeof getCyclePhase === 'function' ? getCyclePhase(td) : null;
     if (phase) {
-      // POURQUOI : petit cercle coloré + label court — lisible sans prendre trop de place
-      cyclePart = `<span style="color:${phase.couleur};font-size:10px">●</span> <span style="font-size:var(--fs-xs);opacity:0.75">${phase.label} J${phase.j}</span>`;
+      // POURQUOI : white-space:nowrap sur le conteneur garantit que le badge ●, le label et le JX
+      //            restent toujours sur la même ligne — white-space:nowrap ne gêne pas le layout
+      //            car le post-it est lui-même flex avec wrap désactivé sur cette ligne.
+      cyclePart = `<span style="white-space:nowrap"><span style="color:${phase.couleur};font-size:10px">●</span>&nbsp;<span style="font-size:var(--fs-xs);opacity:0.75">${phase.label}&nbsp;J${phase.j}</span></span>`;
     }
   }
 
   // ── Assemblage ──
-  const separator = rdvPart && cyclePart ? ' · ' : '';
+  // POURQUOI : &nbsp;·&nbsp; empêche le point médian de se retrouver seul en début de ligne
+  //            si les deux parts tiennent sur des largeurs différentes.
+  const separator = rdvPart && cyclePart ? '&nbsp;·&nbsp;' : '';
   el.innerHTML = rdvPart + separator + cyclePart;
 }
 window.updAgendaPostit = updAgendaPostit;

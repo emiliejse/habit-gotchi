@@ -526,7 +526,7 @@ body {
 /* Titre du cahier */
 .menu-book h2 {
   text-align: center;
-  font-size: 16px;
+  font-size: 18px;
   font-family: var(--font-title);
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -615,7 +615,7 @@ body {
 /* RÔLE : Post-it collé en bas du cahier */
 /* POURQUOI rotate léger : effet post-it à la va-vite, comme dans un vrai cahier d'ado */
 .menu-postit {
-  width: 72%; /* POURQUOI : réduit depuis 100% — post-its moins larges, plus vraisemblables */
+  width: 90%; /* POURQUOI : réduit depuis 100% — post-its moins larges, plus vraisemblables */
   padding: 10px 14px;
   font-size: var(--fs-md); /* POURQUOI : était fs-sm — plus lisible, plus présent */
   font-weight: bold;

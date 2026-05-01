@@ -978,10 +978,11 @@ serene: { msg: "Tu as médité… je me sens plus calme aussi 💜", anim: 'spar
     });
     if (reaction.body === 'bounce') window.triggerGotchiBounce?.();
     if (reaction.body === 'shake')  window.triggerGotchiShake?.();
-    // RÔLE : Hochement de tête pour les catégories de réflexion/soin (intel, serene).
-    // POURQUOI : Le bounce convient à l'énergie (nutri, hydra) et le shake à l'effort (sport).
-    //            Le hochement est plus doux, pensif — adapté à la méditation et l'apprentissage.
-    if (reaction.body === 'nod')    window.animator?.trigger('hochement');
+    // RÔLE : Saut court pour les catégories de réflexion/soin (intel, serene).
+    // POURQUOI : Le hochement a été supprimé — effet trop peu lisible à cette résolution.
+    //            On réutilise saut_joie (plus court depuis le réglage 12f) qui reste doux
+    //            et cohérent avec le feedback positif attendu pour intel et serene.
+    if (reaction.body === 'nod')    window.triggerGotchiBounce?.();
     reaction.spawn?.();
 
     // ✨ Réaction d'expression : sourire large + joues rouges

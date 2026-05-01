@@ -163,9 +163,11 @@ const ANIM_DEFS = {
   //   Pas de snap ici : bobY est déjà en px canvas, le snap est dans resolve().
   saut_joie: {
     stages: '*',
-    duration: 20,
+    duration: 12, // réduit de 20→12 : saut plus vif, moins planant — ressemble à un vrai bond
     bodyOffset: {
-      yFn: (elapsed) => -(Math.sin(elapsed / 20 * Math.PI) * 22)
+      // RÔLE : Cloche sin 0→π sur 12f, amplitude 28px — montée rapide, retombée nette.
+      // POURQUOI : Durée courte + amplitude haute = impression de vivacité pixel art.
+      yFn: (elapsed) => -(Math.sin(elapsed / 12 * Math.PI) * 28)
     }
   },
 
@@ -208,15 +210,22 @@ const ANIM_DEFS = {
 
   // ── Étirement matinal — séquence 3 temps (déclenché à h===7 une fois par jour) ──
   // RÔLE : Simule un réveil/étirement du Gotchi : bras levés → croisés → repos.
-  // POURQUOI : 3 animations distinctes enchaînées via étirement_t2 et _t3.
-  //            Chaque tranche dure 12f (~1s à 12fps). Zéro nouveau calque.
+  // POURQUOI : t1 dure 30f (~2.5s) pour que les bras restent bien visibles en l'air.
+  //            yFn en t1 monte le corps de 0 → -PX*2 progressivement (illusion d'allongement).
+  //            t2 et t3 restent à 12f. Zéro nouveau calque.
   //            Ne s'applique qu'à l'adulte — teen et baby n'ont pas les calques bras DSL.
   etirement_t1: {
     stages: ['adult'],
-    duration: 12,
+    duration: 30, // augmenté de 12→30 : bras restent en l'air ~2.5s au lieu de 1s
     poses: {
       'bras-normal': { hidden: true },
-      'bras-leves':  { visible: true }  // bras levés = joie/élan
+      'bras-leves':  { visible: true }
+    },
+    bodyOffset: {
+      // RÔLE : Monte le corps progressivement de 0 à -PX*2 sur les 30f.
+      // POURQUOI : Simule l'allongement du corps pendant l'étirement — lerp discret snappé PX.
+      //            elapsed/30 normalise sur 0→1, ×2 donne 0→2 PX, floor snappe à 0 ou PX.
+      yFn: (elapsed) => -(Math.floor(elapsed / 30 * 2) * PX)
     }
   },
   etirement_t2: {
@@ -263,34 +272,24 @@ const ANIM_DEFS = {
   },
 
   // ── Frisson — tremblement froid déclenché par température < 5°C ou fin de bain ──
-  // RÔLE : Le Gotchi frissonne : oscillation ±1PX en X, alternance tous les 2 frames.
-  // POURQUOI : Carré discret (Math.floor(elapsed/2) % 2) plutôt que sinus flottant —
-  //            l'effet pixelisé est plus lisible à cette petite résolution.
-  //            Amplitude 1PX = 5px canvas, exactement 1 case pixel art.
-  //            18 frames ≈ 1.5s à 12fps — assez long pour être visible, pas agaçant.
+  // RÔLE : Le Gotchi frissonne : micro-oscillation ±2px canvas (sous la grille PX).
+  // POURQUOI : L'ancienne amplitude ±PX (5px) donnait l'impression d'un déplacement latéral.
+  //            noSnapX: true bypass le Math.floor(val/PX)*PX dans resolve() pour ce seul axe —
+  //            le tremblement reste sub-pixel (2px), lisible comme une vibration fine.
+  //            Alternance toutes les frames (pas toutes les 2f) pour un tremblotement rapide.
   frisson: {
     stages: '*',
-    duration: 18,
+    duration: 22, // allongé légèrement pour compenser la discrétion de l'amplitude fine
+    noSnapX: true, // RÔLE : désactive le snap PX sur dx — permet l'amplitude sub-PX (2px)
     bodyOffset: {
-      // RÔLE : Alterne +PX et -PX toutes les 2 frames — carré discret sur grille PX.
-      xFn: (elapsed) => (Math.floor(elapsed / 2) % 2 === 0 ? PX : -PX),
+      // RÔLE : Alterne +2 et -2 px canvas à chaque frame — tremblotement fin, pas un déplacement.
+      // POURQUOI : 2px sub-PX sans snap = micro-vibration visible mais non intrusive.
+      xFn: (elapsed) => (elapsed % 2 === 0 ? 2 : -2),
     }
   },
 
-  // ── Hochement de tête — approbation après validation d'habitude ──
-  // RÔLE : 2 cycles de descente +PX / remontée 0, sur 16 frames (~1.3s à 12fps).
-  // POURQUOI : Un seul axe Y, discret (Math.floor), snappé PX — lisible pixel art.
-  //            Déclenché en complément de bounce/shake dans habReactions (type 'nod').
-  //            Distinct du saut : descend au lieu de monter — "hochement" de tête.
-  hochement: {
-    stages: ['teen', 'adult'],
-    duration: 16,
-    bodyOffset: {
-      // RÔLE : 2 cycles sur 16f — chaque cycle fait descendre le Gotchi de 1PX puis revenir.
-      // POURQUOI : (elapsed % 8) < 4 → 1ère moitié du cycle = descente, 2e moitié = remontée.
-      yFn: (elapsed) => (elapsed % 8 < 4 ? PX : 0),
-    }
-  },
+  // hochement supprimé — l'effet descendant n'était pas lisible comme un hochement de tête.
+  // Le dispatch habReactions 'nod' dans app.js utilise désormais saut_joie à la place.
 };
 
 // RÔLE : Moteur léger qui gère la pile des animations actives.
@@ -358,10 +357,18 @@ const animator = {
       }
 
       // RÔLE : Cumuler les offsets de position, snappés à la grille PX.
-      // POURQUOI : Le snap (Math.floor / PX * PX) est obligatoire pour le pixel art —
-      //            un offset flottant produit des positions sub-pixel qui floutent le sprite.
-      if (bodyOffset?.yFn) out.dy += Math.floor(bodyOffset.yFn(elapsed) / PX) * PX;
-      if (bodyOffset?.xFn) out.dx += Math.floor(bodyOffset.xFn(elapsed) / PX) * PX;
+      // POURQUOI : Le snap est obligatoire pour le pixel art — un offset flottant produit
+      //            des positions sub-pixel qui floutent le sprite.
+      //            Exception : noSnapX/noSnapY permettent à une animation (ex. frisson)
+      //            de travailler en amplitude sub-PX sans être ramenée à 0 par le floor.
+      if (bodyOffset?.yFn) {
+        const rawY = bodyOffset.yFn(elapsed);
+        out.dy += a.def.noSnapY ? rawY : Math.floor(rawY / PX) * PX;
+      }
+      if (bodyOffset?.xFn) {
+        const rawX = bodyOffset.xFn(elapsed);
+        out.dx += a.def.noSnapX ? rawX : Math.floor(rawX / PX) * PX;
+      }
     }
 
     return out;
@@ -404,9 +411,9 @@ window.__hg = {
     }
     window._etirementLastDay = null; // reset du verrou pour pouvoir rejouer
     window.animator.trigger('etirement_t1');
-    setTimeout(() => window.animator.trigger('etirement_t2'), 1000);
-    setTimeout(() => window.animator.trigger('etirement_t3'), 2000);
-    console.log('[__hg.etirement] ✅ Séquence lancée : bras-levés → croisés → repos');
+    setTimeout(() => window.animator.trigger('etirement_t2'), (30 / 12) * 1000); // ~2.5s
+    setTimeout(() => window.animator.trigger('etirement_t3'), (42 / 12) * 1000); // ~3.5s
+    console.log('[__hg.etirement] ✅ Séquence lancée : bras-levés (2.5s) → croisés → repos');
   },
 
   // RÔLE : Force le bâillement — contourne les 3 min d'inactivité.
@@ -430,16 +437,8 @@ window.__hg = {
     console.log('[__hg.frisson] ✅ Frisson déclenché — oscillation ±1PX, 18f');
   },
 
-  // RÔLE : Force le hochement de tête — contourne la validation d'habitude intel/serene.
-  hochement() {
-    const g = window.D?.g;
-    if (g?.stage !== 'teen' && g?.stage !== 'adult') {
-      console.warn('[__hg.hochement] Stade teen ou adult requis — stade actuel :', g?.stage);
-      return;
-    }
-    window.animator.trigger('hochement');
-    console.log('[__hg.hochement] ✅ Hochement déclenché — descente tête 2 cycles, 16f');
-  },
+  // hochement() supprimé — la def ANIM_DEFS['hochement'] a été retirée (effet illisible).
+  // Les habitudes intel/serene déclenchent désormais saut_joie via triggerGotchiBounce().
 
   // RÔLE : Déclenche un saut joie — animation de référence pour comparer.
   saut() {
@@ -1250,10 +1249,10 @@ window._animOverrides = animator.resolve(g.stage);
     animator.active.length === 0 // ne pas interrompre une pose idle en cours
   ) {
     window._etirementLastDay = todayStr;
-    // Enchaîner les 3 temps : t1 démarre immédiatement, t2 après 12f, t3 après 24f.
+    // Enchaîner les 3 temps : t1 dure 30f (~2.5s), t2 après 30f, t3 après 30+12f.
     animator.trigger('etirement_t1');
-    setTimeout(() => animator.trigger('etirement_t2'), (12 / 12) * 1000);  // ~1s à 12fps
-    setTimeout(() => animator.trigger('etirement_t3'), (24 / 12) * 1000);  // ~2s à 12fps
+    setTimeout(() => animator.trigger('etirement_t2'), (30 / 12) * 1000);  // ~2.5s à 12fps
+    setTimeout(() => animator.trigger('etirement_t3'), (42 / 12) * 1000);  // ~3.5s à 12fps
   }
 }
 

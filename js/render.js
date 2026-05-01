@@ -599,7 +599,12 @@ function getGotchiC() {
   // RÔLE : Résoudre aussi la couleur de la bouche — personnalisable via D.g.mouthColor.
   const mouthId = window.D.g.mouthColor || 'noir';
   const mc = window.HG_CONFIG.MOUTH_COLORS.find(x => x.id === mouthId) || window.HG_CONFIG.MOUTH_COLORS[0];
-  return { body: gc.body, bodyLt: gc.bodyLt, bodyDk: gc.bodyDk, eye: ec.hex, mouth: mc.hex };
+  // RÔLE : Résoudre aussi la couleur des joues — personnalisable via D.g.cheekColor.
+  // POURQUOI : C.cheek doit être mis à jour à chaque frame comme les autres couleurs —
+  //            sans ça, la couleur de joue reste figée à la valeur initiale (#f0a0b0).
+  const cheekId = window.D.g.cheekColor || 'rose';
+  const chk = window.HG_CONFIG.CHEEK_COLORS.find(x => x.id === cheekId) || window.HG_CONFIG.CHEEK_COLORS[0];
+  return { body: gc.body, bodyLt: gc.bodyLt, bodyDk: gc.bodyDk, eye: ec.hex, mouth: mc.hex, cheek: chk.hex };
 }
 
 function getEnvC() {
@@ -1171,7 +1176,7 @@ const p5s = (p) => {
 
     // Initialisation des couleurs
     const gc = getGotchiC();
-    C.body = gc.body; C.bodyLt = gc.bodyLt; C.bodyDk = gc.bodyDk; C.eye = gc.eye; C.mouth = gc.mouth;
+    C.body = gc.body; C.bodyLt = gc.bodyLt; C.bodyDk = gc.bodyDk; C.eye = gc.eye; C.mouth = gc.mouth; C.cheek = gc.cheek;
     const ec = getEnvC();
     C.gnd = ec.gnd; C.gndDk = ec.gndDk; C.skyD1 = ec.sky1; C.skyD2 = ec.sky2;
 

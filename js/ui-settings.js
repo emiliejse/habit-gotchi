@@ -496,6 +496,26 @@ function renderPerso() {
       </div>`).join('');
   }
 
+  // ── Couleur des joues ────────────────────────────────────────────
+  // RÔLE : Afficher le sélecteur de couleur des joues du Gotchi.
+  // POURQUOI : C.cheek est mis à jour à chaque frame dans render.js via D.g.cheekColor —
+  //            même pattern que C.eye et C.mouth.
+  const cheekGrid = document.getElementById('cheek-colors');
+  if (cheekGrid) {
+    const currentCheek = D.g.cheekColor || 'rose';
+    cheekGrid.innerHTML = window.HG_CONFIG.CHEEK_COLORS.map(c => `
+      <div onclick="applyCheekColor('${c.id}')" style="
+        border-radius:var(--r-md);cursor:pointer;
+        background:var(--card);
+        border:3px solid ${currentCheek === c.id ? 'var(--lilac)' : 'transparent'};
+        padding:6px 4px;
+        display:flex;flex-direction:column;align-items:center;gap:3px;
+        transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.1);">
+        <div style="width:20px;height:20px;border-radius:50%;background:${c.hex};border:1.5px solid rgba(0,0,0,.12)"></div>
+        <div style="font-size:var(--fs-xs);font-weight:bold;color:var(--text);text-align:center">${c.label}</div>
+      </div>`).join('');
+  }
+
   const et = document.getElementById('env-themes');
   if (et) {
     const current = D.g.envTheme || 'pastel';
@@ -559,6 +579,15 @@ function applyMouthColor(id, silent = false) {
   const c = window.HG_CONFIG.MOUTH_COLORS.find(x => x.id === id); if (!c) return;
   window.D.g.mouthColor = id; save(); renderPerso();
   if (!silent) toast(`Bouche ${c.label} appliquée ✿`);
+}
+
+// RÔLE : Sauvegarder la couleur de joues choisie et rafraîchir l'UI.
+// POURQUOI : C.cheek est mis à jour à chaque frame dans render.js via getGotchiC() —
+//            il suffit de sauvegarder D.g.cheekColor, le rendu suit automatiquement.
+function applyCheekColor(id, silent = false) {
+  const c = window.HG_CONFIG.CHEEK_COLORS.find(x => x.id === id); if (!c) return;
+  window.D.g.cheekColor = id; save(); renderPerso();
+  if (!silent) toast(`Joues ${c.label} appliquées ✿`);
 }
 
 function applyEnvTheme(id, silent = false) {

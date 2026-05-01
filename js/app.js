@@ -58,7 +58,7 @@ let _poopIntervalId   = null;
 let _bubbleIntervalId = null; // RÔLE : Rotation automatique des bulles passives (updBubbleNow toutes les 45s)
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v5.01'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v5.02'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -294,7 +294,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 11; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 12; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -404,6 +404,14 @@ const MIGRATIONS = [
     if (d.g.snackPref && d.g.snackPref.weekId !== undefined) {
       delete d.g.snackPref; // supprime l'ancienne structure hebdo → sera recréée avec dateRef
     }
+    return d;
+  },
+  // Migration 10→11 : ajout de D.g.cheekColor (couleur des joues personnalisable)
+  // RÔLE : Initialise cheekColor à 'rose' (valeur par défaut = C.cheek d'origine) pour les saves existantes.
+  // POURQUOI : Sans migration, D.g.cheekColor serait undefined → fallback 'rose' dans getGotchiC(),
+  //            mais la migration garantit la propreté du schéma.
+  function m11(d) {
+    d.g.cheekColor = d.g.cheekColor ?? 'rose';
     return d;
   }
 ];

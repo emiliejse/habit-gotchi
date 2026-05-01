@@ -105,6 +105,22 @@ const EYE_COLORS = [
   { id:'menthe',  label:'Menthe',  hex:'#4aaa80' },
 ];
 
+/* ─── SYSTÈME 5 : PERSONNALISATION (Couleur des joues) ───────────── */
+
+// RÔLE : Couleurs disponibles pour les joues du Gotchi (C.cheek dans le DSL sprites).
+// POURQUOI : C.cheek est mis à jour à chaque frame dans render.js via D.g.cheekColor —
+//            même pattern que C.eye et C.mouth. Teintes douces centrées sur le rose/pêche/naturel.
+const CHEEK_COLORS = [
+  { id:'rose',   label:'Rose',   hex:'#f0a0b0' },  // défaut — valeur initiale de C.cheek
+  { id:'peche',  label:'Pêche',  hex:'#f0b898' },
+  { id:'corail', label:'Corail', hex:'#f09080' },
+  { id:'lilas',  label:'Lilas',  hex:'#c8a8e0' },
+  { id:'bleu',   label:'Bleu',   hex:'#a8c8f0' },
+  { id:'menthe', label:'Menthe', hex:'#98dcc0' },
+  { id:'dore',   label:'Doré',   hex:'#f0d080' },
+  { id:'nude',   label:'Nude',   hex:'#d4aa90' },
+];
+
 /* ─── SYSTÈME 5 : PERSONNALISATION (Couleur de la bouche) ────────── */
 
 // RÔLE : Couleurs disponibles pour la bouche du Gotchi (C.mouth dans le DSL sprites).
@@ -321,6 +337,7 @@ window.HG_CONFIG = {
   GOTCHI_COLORS,
   PUPIL_COLORS,
   EYE_COLORS,
+  CHEEK_COLORS,
   MOUTH_COLORS,
   ENV_THEMES,
   MEAL_WINDOWS,

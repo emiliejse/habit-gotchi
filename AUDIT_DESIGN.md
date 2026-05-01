@@ -1,6 +1,6 @@
 # AUDIT_DESIGN.md — HabitGotchi v4.5
 
-Audit design / CSS / HTML / assets — mise à jour **2026-05-01**.
+Audit design / CSS / HTML / assets — mise à jour **2026-05-01** (modif. joues 2026-05-01).
 Périmètre : `css/style.css`, `index.html`, `js/ui-*.js` (HTML & styles inline).
 Hors périmètre : `js/render.js`, `js/envs.js`, `js/render-sprites.js`, logique JS pure (`app.js`).
 

@@ -169,11 +169,12 @@ const STG = [
 
 /* ─── SYSTÈME 3 : COGNITION & IA ───────────────────────────────── */
 
-// RÔLE : Fallback défensif utilisé uniquement si personality.json n'a pas encore été chargé.
-// POURQUOI : loadDataFiles() charge personality.json de manière asynchrone — dans les rares cas
-//            où updBubbleNow() s'exécute avant la fin du fetch (ex : 1er lancement hors-ligne),
-//            window.PERSONALITY serait null. MSG évite un crash silencieux.
-//            En usage normal, ce fallback n'est jamais affiché.
+// RÔLE : Fallback défensif utilisé si window.PERSONALITY est null au moment d'appeler updBubbleNow().
+// POURQUOI : personality.json est supprimé — la personnalité vient maintenant de user_config.json.
+//            user_config.json N'EST PAS dans le cache SW (voir sw.js ASSETS) → si l'app s'ouvre
+//            hors-ligne sans cache disponible, loadUserConfig() échoue silencieusement et
+//            window.PERSONALITY reste null. MSG est le seul filet dans ce cas.
+//            En usage normal (en ligne ou après 1er chargement), ce fallback n'est jamais affiché.
 const MSG = {
   matin:   ["Bon matin ☀️"], aprem: ["On avance ✿"],
   soir:    ["On se pose ✿"], nuit:  ["Zzz... 🌙"],
@@ -1643,7 +1644,7 @@ function updBubbleNow() {
 
   // ── Priorité 3 : Nuit ──────────────────────────────────────────
   if (h >= 22 || h < 7) {
-    const pool = src.nuit || ["Zzz... 🌙", "*ronfle* 💤", "...zzZZ... 🌛", "Dors bien ✿"];
+    const pool = src.nuit || MSG.nuit;  // fallback → pool défensif centralisé (cf. MSG l.179)
     const el = document.getElementById('bubble');
     if (el) {
       // BUGFIX : appliquer le replace {{diminutif}} comme dans le chemin principal

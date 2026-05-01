@@ -1011,6 +1011,7 @@ async function genBilanSemaine() {
   const summaryEl = document.getElementById('claude-summary');
   const wd = getWkDates(wOff);
   const g = D.g, s = getSt(g.totalXp);
+  const P = window.PERSONALITY; // RÔLE : personnalité du gotchi (style + traits) pour personnaliser le bilan
   const habitudes = D.habits.map(h => ({ habitude:h.label, jours_faits:wd.filter(d=>(D.log[d]||[]).includes(h.catId)).length, sur:7 }));
   const notes = D.journal.filter(j=>wd.includes(j.date.split('T')[0])).map(j=>({humeur:j.mood,texte:j.text,date:j.date.split('T')[0]}));
   const totalHabDays = wd.reduce((acc,d)=>acc+(D.log[d]||[]).length, 0);

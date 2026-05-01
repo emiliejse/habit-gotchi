@@ -1589,9 +1589,8 @@ const LAYERS_ADULT = [
     when: () => false, // caché par défaut — rendu uniquement via aov.visible
     rects: [
       { x: -6, y: 5, w: 1, h: 2 },   // bras gauche normal
-      { x:  5, y: 5, w: 1, h: 1 },   // haut du bras droit (liaison épaule→coude)
-      { x:  5, y: 6, w: 1, h: 2 },   // coude droit
-      { x:  2, y: 7, w: 2, h: 1 },   // avant-bras horizontal droit
+      { x:  5, y: 5, w: 1, h: 2 },   // coude droit (y:5→6, symétrique de hanche-g)
+      { x:  2, y: 6, w: 2, h: 1 },   // avant-bras horizontal droit
     ]
   },
 

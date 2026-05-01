@@ -968,7 +968,7 @@ if (totalDone === window.D.habits.length) {
   vague();
   setTimeout(vague, 400);
   setTimeout(vague, 800);
-  flashBubble("Tu as tout fait ! Je suis trop heureuse 🎉", 3000);
+  flashBubble("Tu as tout fait ! Je suis trop content.e 🎉", 3000);
   window.triggerGotchiBounce?.();
 } 
 

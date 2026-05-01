@@ -181,12 +181,15 @@ function updAgendaPostit() {
     rdvPart = `<span style="font-size:var(--fs-xs);opacity:0.5">Pas de RDV</span>`;
   } else {
     // POURQUOI : [...label] découpe la string en points de code Unicode → gère les emojis multi-octets
+    // POURQUOI : chaque emoji est un <span> autonome pour que le flex-wrap de .agenda-postit-info
+    //            puisse faire passer les emojis à la ligne quand il y en a plusieurs
     const icones = rdvAujourdhui.map(r => {
       const premier = [...(r.label || '')][0] || '';
       // On vérifie que c'est bien un emoji (code point > 127) — pas une lettre ordinaire
-      return premier.codePointAt(0) > 127 ? premier : '🗓️';
+      const emoji = premier.codePointAt(0) > 127 ? premier : '🗓️';
+      return `<span style="line-height:1">${emoji}</span>`;
     });
-    rdvPart = icones.join(' ');
+    rdvPart = `<span style="display:flex;flex-wrap:wrap;gap:2px;justify-content:center">${icones.join('')}</span>`;
   }
 
   // ── Phase cycle (si feature activée et données disponibles) ──

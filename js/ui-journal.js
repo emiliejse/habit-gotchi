@@ -75,6 +75,18 @@ function unlockJ() {
   document.getElementById('pin-gate').style.display = 'none';
   document.getElementById('j-inner').style.display = 'block';
   renderJEntries();
+  // RÔLE : Affiche une bulle d'accueil du pool "journal" à l'ouverture de la vue journal
+  // POURQUOI : unlockJ() est le seul point d'entrée commun — appelé après validation du PIN
+  //            ET appelé directement par renderJ() si le journal n'est pas verrouillé.
+  //            Les 6 bulles du pool (user_config.json) ne s'affichaient jamais à l'ouverture.
+  //            Délai 400ms pour laisser l'UI se monter avant l'animation de la bulle.
+  setTimeout(() => {
+    const srcJ  = window.PERSONALITY ? window.PERSONALITY.bulles : {};
+    const poolJ = srcJ.journal?.length ? srcJ.journal : ["Je t'écoute ✿"];
+    const idx   = Math.floor(Math.random() * poolJ.length);
+    const bulle = poolJ[idx].replace('{{diminutif}}', D.g.userNickname || D.userName || 'toi');
+    flashBubble(bulle, 3500);
+  }, 400);
 }
 function renderJ() {
   if (!window.journalLocked) { document.getElementById('pin-gate').style.display='none'; document.getElementById('j-inner').style.display='block'; renderJEntries(); return; }
@@ -143,14 +155,14 @@ function saveJ() {
   selMood = null;
   document.querySelectorAll('.mood-b').forEach(b => b.classList.remove('sel'));
   renderJEntries();
-  const srcJ = window.PERSONALITY ? window.PERSONALITY.bulles : MSG;
-  const poolJ = srcJ.journal || ["Je t'écoute ✿"];
-  const el = document.getElementById('bubble');
-  if (el) {
-    let bulle = poolJ[Math.floor(Math.random() * poolJ.length)];
-    bulle = bulle.replace('{{diminutif}}', D.g.userNickname || D.userName || 'toi');
-    el.textContent = bulle;
-  }
+  // RÔLE : Affiche une bulle du pool "journal" après l'enregistrement d'une note
+  // POURQUOI : Passe par flashBubble() pour l'animation et le timer (3s)
+  //            L'écriture directe dans el.textContent figeait la bulle indéfiniment
+  const srcJ  = window.PERSONALITY ? window.PERSONALITY.bulles : {};
+  const poolJ = srcJ.journal?.length ? srcJ.journal : ["Je t'écoute ✿"];
+  const idx   = Math.floor(Math.random() * poolJ.length);
+  const bulle = poolJ[idx].replace('{{diminutif}}', D.g.userNickname || D.userName || 'toi');
+  flashBubble(bulle, 3000);
 }
 
 let jWeekOff = 0;

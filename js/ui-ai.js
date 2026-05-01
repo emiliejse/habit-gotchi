@@ -353,9 +353,18 @@ if (Array.isArray(data.bulles) && data.bulles.length) {
         window.PROPS_LOCAL           = Object.values(D.propsPixels);
         D.lastGiftDate               = td;
 
-        const poolCadeau = ["Oh ! Un cadeau ! 🎁", "*yeux brillants* ✨", `${data.cadeau.emoji} Pour moi ?! 💜`, "J'adore ! 🌸"];
-        const bulleCadeau = poolCadeau[Math.floor(Math.random() * poolCadeau.length)];
-        flashBubble(bulleCadeau.replace('{{nom}}', D.g.name || 'toi'), 3000);
+        // RÔLE : Tire la bulle cadeau depuis le pool user_config (personality.bulles.cadeau)
+        // POURQUOI : Le pool était redéfini en dur ici — user_config.json était ignoré,
+        //            Émilie et Alexia avaient donc la même réaction cadeau, identité perdue.
+        //            Fallback sur 4 bulles neutres si le pool user_config est absent.
+        const P_bulles    = window.PERSONALITY ? window.PERSONALITY.bulles : {};
+        const poolCadeau  = P_bulles.cadeau?.length
+          ? P_bulles.cadeau
+          : ["Oh ! Un cadeau ! 🎁", "*yeux brillants* ✨", `${data.cadeau.emoji} Pour moi ?! 💜`, "J'adore ! 🌸"];
+        const bulleCadeau = poolCadeau[Math.floor(Math.random() * poolCadeau.length)]
+          .replace('{{nom}}',       D.g.name           || 'toi')
+          .replace('{{diminutif}}', D.g.userNickname   || D.userName || 'toi');
+        flashBubble(bulleCadeau, 3000);
         toast(`🎁 Nouveau cadeau : ${data.cadeau.nom} !`);
         addEvent({ type:'cadeau', subtype:'ia', valeur:0, label:`${data.cadeau.nom} reçu en cadeau !` });
         updBadgeBoutique();
@@ -831,7 +840,11 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
   .map(r => r.heure ? `${r.heure} ${r.label}` : r.label)
   .join(', ') || 'aucun';
 
-  const contexte = (window.AI_SYSTEM?.soutien_contexte || '')
+  // RÔLE : Sélectionne la source du contexte — override user_config en priorité, sinon ai_system.json
+  // POURQUOI : ai.contexteOverride permet à l'utilisatrice de personnaliser le bloc contexte sans toucher au JSON système
+  const sourceContexte = window.USER_CONFIG?.ai?.contexteOverride || window.AI_SYSTEM?.soutien_contexte || '';
+
+  const contexte = sourceContexte
     .replace('{{nameGotchi}}',              D.g.name || P?.nom || 'Gotchi')
     .replace('{{userName}}',         D.g.userName || D.userName || 'toi')
     .replace('{{style}}',            P?.style || 'Phrases courtes, bienveillant.')
@@ -846,7 +859,13 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
     .replace('{{rdvAujourdhui}}', rdvDuJour)
     .replace('{{messages_restants}}', 6 - window._soutienCount);
 
-  const sysPrompt = (window.AI_SYSTEM?.soutien || '')
+  // RÔLE : Sélectionne la source du system prompt — override user_config en priorité, sinon ai_system.json
+  // POURQUOI : ai.systemPromptOverride permet de remplacer entièrement la voix du Gotchi en mode soutien
+  //            sans modifier ai_system.json — utile pour un profil très différent (ex : Alexia, ou test de ton)
+  //            Les .replace() des variables et la concaténation du contexte s'appliquent dans tous les cas.
+  const sourceSys = window.USER_CONFIG?.ai?.systemPromptOverride || window.AI_SYSTEM?.soutien || '';
+
+  const sysPrompt = sourceSys
     .replace('{{nameGotchi}}',      D.g.name || P?.nom || 'Gotchi')
     .replace('{{userName}}', D.g.userName || D.userName || 'toi')
     .replace('{{style}}',    P?.style || 'Phrases courtes, bienveillant.')

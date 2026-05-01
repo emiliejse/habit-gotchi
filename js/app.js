@@ -71,40 +71,55 @@ async function loadDataFiles() {
   const base = 'data/';
   const promptsBase = 'prompts/';
   try {
+    // RÔLE : Charge les 3 fichiers props + les prompts IA en parallèle.
+    // POURQUOI : props.json est remplacé par 3 fichiers distincts —
+    //   props_base.json  → objets gratuits offerts au premier lancement
+    //   props_shop.json  → objets payants achetables en boutique
+    //   props_packs.json → objets exclusifs achetables uniquement en pack
+    //   Cette séparation permet à chaque objet pack d'avoir son vrai type/categorie
+    //   métier (ex: "tete", "nature") sans hack via categorie:"pack".
     const results = await Promise.allSettled([
-      fetch(base + 'props.json').then(r => r.json()),              // 0
-      Promise.resolve(null),              // 1 — personality supprimé, chargé via user_config
-      fetch(promptsBase + 'ai_contexts.json').then(r => r.json()), // 2
-      fetch(promptsBase + 'ai_system.json').then(r => r.json()),   // 3
+      fetch(base + 'props_base.json').then(r => r.json()),          // 0
+      fetch(base + 'props_shop.json').then(r => r.json()),          // 1
+      fetch(base + 'props_packs.json').then(r => r.json()),         // 2
+      Promise.resolve(null),              // 3 — personality supprimé, chargé via user_config
+      fetch(promptsBase + 'ai_contexts.json').then(r => r.json()),  // 4
+      fetch(promptsBase + 'ai_system.json').then(r => r.json()),    // 5
     ]);
 
-    // Initialisation du catalogue d'objets
-    if (results[0].status === 'fulfilled') {
-      window.PROPS_LIB = results[0].value.catalogue || [];
+    // RÔLE : Concatène les 3 catalogues en une seule liste unifiée dans PROPS_LIB.
+    // POURQUOI : Tout le code existant (IA, inventaire, debug) lit window.PROPS_LIB —
+    //            garder cette globale unique évite de propager le changement partout.
+    const base_   = results[0].status === 'fulfilled' ? results[0].value.catalogue || [] : [];
+    const shop_   = results[1].status === 'fulfilled' ? results[1].value.catalogue || [] : [];
+    const packs_  = results[2].status === 'fulfilled' ? results[2].value.catalogue || [] : [];
+    window.PROPS_LIB = [...base_, ...shop_, ...packs_];
 
-      // RÔLE : Charge un catalogue d'objets exclusifs si user_config définit extraPropsFile.
-      // POURQUOI : Permet à Alexia d'avoir ses propres objets sans polluer le catalogue commun.
-      //            Chez Émilie, extraPropsFile est absent → ce bloc est ignoré.
-      if (window.USER_CONFIG?.extraPropsFile) {
-        try {
-          const r = await fetch(window.USER_CONFIG.extraPropsFile);
-          if (r.ok) {
-            const extra = await r.json();
-            window.PROPS_LIB = window.PROPS_LIB.concat(extra.catalogue || []);
-          }
-        } catch(e) { console.log('extraPropsFile introuvable — ignoré'); }
-      }
+    // RÔLE : Charge un catalogue d'objets exclusifs si user_config définit extraPropsFile.
+    // POURQUOI : Permet à Alexia d'avoir ses propres objets sans polluer le catalogue commun.
+    //            Chez Émilie, extraPropsFile est absent → ce bloc est ignoré.
+    if (window.USER_CONFIG?.extraPropsFile) {
+      try {
+        const r = await fetch(window.USER_CONFIG.extraPropsFile);
+        if (r.ok) {
+          const extra = await r.json();
+          window.PROPS_LIB = window.PROPS_LIB.concat(extra.catalogue || []);
+        }
+      } catch(e) { console.log('extraPropsFile introuvable — ignoré'); }
+    }
 
-      window.PROPS_LIB.forEach(prop => {
-        // Ajoute automatiquement les objets gratuits (cout = 0) à l'inventaire
-        // POURQUOI : les objets categorie:"pack" sont exclusifs — ils ne doivent PAS
-        //            être offerts automatiquement même si leur cout vaut 0.
-        if (prop.cout === 0 && prop.categorie !== 'pack' && window.D && !window.D.g.props.find(p => p.id === prop.id)) {
+    // RÔLE : Ajoute automatiquement les objets de props_base.json à l'inventaire.
+    // POURQUOI : Tous les objets de base ont cout:0 — plus besoin de filtrer par
+    //            categorie:"pack" (ce hack n'existe plus dans les nouveaux fichiers).
+    if (window.D) {
+      base_.forEach(prop => {
+        if (!window.D.g.props.find(p => p.id === prop.id)) {
           D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
         }
       });
       save(); renderProps(); updBadgeBoutique();
     }
+
     // RÔLE : Charge la personnalité depuis user_config.json directement.
     // POURQUOI : personality.json est supprimé — toute la personnalité
     //            est maintenant dans user_config.json pour les deux repos.
@@ -117,10 +132,10 @@ async function loadDataFiles() {
         bulles: p.bulles
       };
     }
-    if (results[2].status === 'fulfilled') window.AI_CONTEXTS = results[2].value;
-    if (results[3].status === 'fulfilled') window.AI_SYSTEM   = results[3].value;
+    if (results[4].status === 'fulfilled') window.AI_CONTEXTS = results[4].value;
+    if (results[5].status === 'fulfilled') window.AI_SYSTEM   = results[5].value;
 
-    console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props');
+    console.log('✿ Data chargée:', window.PROPS_LIB.length, 'props (' + base_.length + ' base, ' + shop_.length + ' shop, ' + packs_.length + ' packs)');
   } catch(e) { console.log('Mode local (fichiers data absents)'); }
 }
 
@@ -1346,9 +1361,12 @@ function changeEnv(v) { window.D.g.activeEnv = v; save(); }
 function initBaseProps() {
   if (window.D.propsInitialized) return;
 
-  // 1. Objets gratuits (cout = 0) — hors objets exclusifs de pack
-  // POURQUOI : categorie:"pack" = exclusifs achetables uniquement en pack, pas en cadeau auto.
-  const base = (window.PROPS_LIB || []).filter(p => p.cout === 0 && p.categorie !== 'pack');
+  // 1. Objets gratuits — on filtre simplement sur cout:0 dans PROPS_LIB.
+  // POURQUOI : Avant, il fallait exclure categorie:"pack" car les packs avaient cout:0
+  //            dans l'ancien props.json. Maintenant props_packs.json est une source
+  //            séparée et ses objets ont des catégories métier normales — le filtre
+  //            categorie!=="pack" est supprimé, il n'a plus de sens.
+  const base = (window.PROPS_LIB || []).filter(p => p.cout === 0);
   base.forEach(b => {
     if (!window.D.g.props.find(p => p.id === b.id)) {
       window.D.g.props.push({ id:b.id, nom:b.nom, type:b.type, emoji:b.emoji||'🎁', actif:false });

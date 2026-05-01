@@ -708,6 +708,13 @@ body {
 /* POURQUOI : Override du style .thought-flowers pour usage dans un flex button */
 #bilan-flowers.thought-flowers { margin-top: 0; justify-content: flex-start; font-size: 16px; }
 
+/* RÔLE : Fleurs de quota soutien — dans le post-it menu, centrées sous le texte */
+/* POURQUOI : Override margin-top et font-size pour s'intégrer dans le bouton post-it sans trop de place */
+#soutien-flowers.thought-flowers { margin-top: 0; font-size: 14px; letter-spacing: 2px; }
+/* POURQUOI : Sur le fond lilac foncé (#d8bef5), utiliser la couleur texte du post-it (#3d1f6e) */
+#soutien-flowers .flower-on  { color: #3d1f6e; opacity: 0.9; }
+#soutien-flowers .flower-off { color: #3d1f6e; opacity: 0.2; }
+
 /* RÔLE : Zone pensée IA — intégrée dans la carte Gotchi avec fond légèrement plus foncé */
 /* POURQUOI : distingue visuellement la section IA sans en faire une carte séparée */
 #claude-card {

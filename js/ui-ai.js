@@ -613,6 +613,8 @@ function genSoutien() {
 function _genSoutienCore(D, td) {
   // RÔLE : Décompte la session ici, APRÈS confirmation de l'utilisatrice
   D.soutienCount++;
+  // RÔLE : Met à jour les fleurs sur le post-it menu immédiatement après consommation d'une session
+  if (typeof updSoutienFlowers === 'function') updSoutienFlowers();
   save();
 
   const habsDuJour  = D.habits.map(h => ({ label:h.label, faite:(D.log[td]||[]).includes(h.catId) }));

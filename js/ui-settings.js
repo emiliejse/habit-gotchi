@@ -144,6 +144,22 @@ function updThoughtFlowers() {
 }
 
 /**
+ * RÔLE : Met à jour les fleurs de quota dans #soutien-flowers (post-it menu)
+ * POURQUOI : Rend visible la limite de 3 sessions/jour directement sur le bouton,
+ *            avant même de cliquer — même pattern que updThoughtFlowers()
+ */
+function updSoutienFlowers() {
+  const sf = document.getElementById('soutien-flowers');
+  if (!sf) return;
+  const used  = window.D.soutienCount || 0;
+  const total = 3;
+  sf.innerHTML = Array.from({ length: total }, (_, i) =>
+    `<span class="${i < (total - used) ? 'flower-on' : 'flower-off'}">✿</span>`
+  ).join('');
+}
+window.updSoutienFlowers = updSoutienFlowers;
+
+/**
  * RÔLE : Met à jour les fleurs de quota dans #bilan-flowers (onglet Progrès)
  * POURQUOI : Même logique visuelle que les fleurs de pensée — 3 ✿ qui s'estompent au fil des bilans générés.
  *            N'affiche les fleurs que si on est sur la semaine en cours et en fin de semaine.
@@ -235,6 +251,8 @@ function updUI() {
   if (petalesBoutique) petalesBoutique.textContent = `${D.g.petales || 0}`;
   
   updThoughtFlowers();
+  // RÔLE : Synchroniser les fleurs de quota soutien sur le post-it menu
+  updSoutienFlowers();
   // RÔLE : Synchroniser les fleurs de quota journal à chaque mise à jour globale de l'UI
   updJournalFlowers();
   // RÔLE : Met à jour le label du bouton avec le nom du Gotchi

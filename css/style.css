@@ -37,9 +37,9 @@
   
   /* Variables d'environnement PWA (Encoches iPhone / Android) */
   --sat: env(safe-area-inset-top, 0px); /* rétabli — protège l'encoche/Dynamic Island en haut */
-  --sab: 0px;
-  --sal: 0px;
-  --sar: 0px;
+  --sab: env(safe-area-inset-bottom, 0px); /* protège la home indicator iPhone */
+  --sal: env(safe-area-inset-left, 0px);  /* absorbe le bord gauche en paysage */
+  --sar: env(safe-area-inset-right, 0px); /* absorbe le bord droit en paysage */
 
   /* ─── FAMILLES TYPOGRAPHIQUES ─────────────────────────────────────── */
   /* RÔLE : 4 rôles distincts pour 4 registres visuels de l'app */
@@ -707,6 +707,11 @@ body {
 /* RÔLE : Fleurs de quota bilan — inline dans le bouton, pas de margin-top ni centrage */
 /* POURQUOI : Override du style .thought-flowers pour usage dans un flex button */
 #bilan-flowers.thought-flowers { margin-top: 0; justify-content: flex-start; font-size: 16px; }
+/* RÔLE : Couleur des fleurs bilan sur fond lilac (bouton .btn-p = #fff texte) */
+/* POURQUOI : .flower-on héritait de color:#fff du bouton, disparaissant sur fond lilac.
+              On override explicitement pour que les fleurs on/off soient lisibles sur ce fond. */
+#bilan-flowers .flower-on  { color: #fff;         opacity: 1;   }
+#bilan-flowers .flower-off { color: rgba(255,255,255,0.35); opacity: 1; }
 
 /* RÔLE : Zone info agenda dans le post-it menu — RDV du jour + phase cycle */
 /* POURQUOI : flex pour aligner cercle couleur + texte phase sur la même ligne */
@@ -842,7 +847,7 @@ body {
 
 /* Bloc Habitude */
 .hab {
-  display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-sm) var(--sp-md); border-radius: var(--r-md);
+  display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-sm) var(--sp-md); border-radius: var(--r-md); min-width: 0;
   /* POURQUOI margin-bottom var(--sp-md) : le label Prochain ✿ en ::before dépasse de ~12px au-dessus — l'espace
      entre habitudes doit compenser pour que le label ne chevauche pas le bloc précédent */
   /* POURQUOI : fond lilas très doux sans bordure — respire mieux, moins de bruit visuel */

@@ -61,7 +61,7 @@ function renderHabs() {
   return `
     <div class="hab ${d ? 'done' : ''} ${isNext ? 'hab--next' : ''} ${isVedette && !d ? 'hab--vedette' : ''}" style="position:relative">
       <div class="ck" onclick="toggleHab('${h.catId}')">${d ? '✓' : ''}</div>
-      <span id="hab-label-${h.catId}" style="flex:1;font-size:12px;cursor:pointer"
+      <span id="hab-label-${h.catId}" style="flex:1;min-width:0;font-size:12px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
         onclick="toggleHab('${h.catId}')">${libelle}</span>
       ${vedetteBadge}${streakBadge}
       <span style="font-size:16px">${c.icon}</span>
@@ -153,14 +153,14 @@ function ouvrirEditionHabitudes() {
         </div>
         <div style="display:flex;gap:6px;padding-left:32px">
           <button onclick="deplacerHab(${i}, -1)"
-            style="flex:1;padding:5px 0;font-size:13px;border:1px solid var(--c-border);
-                   border-radius:6px;background:transparent;color:var(--c-txt2);
+            style="flex:1;padding:5px 0;font-size:13px;border:1px solid var(--border);
+                   border-radius:6px;background:transparent;color:var(--text2);
                    cursor:${peutMonter ? 'pointer' : 'default'};
                    opacity:${peutMonter ? '0.6' : '0.2'}"
             ${peutMonter ? '' : 'disabled'}>↑</button>
           <button onclick="deplacerHab(${i}, 1)"
-            style="flex:1;padding:5px 0;font-size:13px;border:1px solid var(--c-border);
-                   border-radius:6px;background:transparent;color:var(--c-txt2);
+            style="flex:1;padding:5px 0;font-size:13px;border:1px solid var(--border);
+                   border-radius:6px;background:transparent;color:var(--text2);
                    cursor:${peutDescendre ? 'pointer' : 'default'};
                    opacity:${peutDescendre ? '0.6' : '0.2'}"
             ${peutDescendre ? '' : 'disabled'}>↓</button>

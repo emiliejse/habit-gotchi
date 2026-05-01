@@ -24,15 +24,11 @@ Hors périmètre : `js/render.js`, `js/envs.js`, `js/render-sprites.js`, logique
 
 ### 0.2 Top 3 problèmes urgents
 
-1. **🔴 Variables CSS fantômes utilisées dans `ui-habs.js`**
-   `js/ui-habs.js:139-149` (modale "✏️ Mes habitudes", boutons ↑/↓) utilise `var(--c-border)` et `var(--c-txt2)` qui ne sont **définies nulle part** dans `:root`. Les boutons de réordonnancement perdent leur bordure et leur couleur de texte.
-   *Impact TDAH :* contrôles invisibles → frustration sur une action déjà secondaire.
-   *Fix :* remplacer par `var(--border)` et `var(--text2)` (4 occurrences au total).
+1. ~~**🔴 Variables CSS fantômes utilisées dans `ui-habs.js`**~~
+   ✅ **RÉSOLU 2026-05-01** — `--c-border` et `--c-txt2` remplacées par `--border` et `--text2` dans `js/ui-habs.js` (boutons ↑/↓ de la modale "✏️ Mes habitudes", 4 occurrences).
 
-2. **🔴 `--sab` figé à `0px` au lieu de `env(safe-area-inset-bottom, 0px)`**
-   `style.css:40`. La home indicator iPhone chevauche `.menu-languette` (`style.css:386`), `#dynamic-zone` (`style.css:177`) et `#toast` (`style.css:1204`) puisque tous calculent `var(--sab)` qui retourne 0.
-   *Impact TDAH :* tap raté sur la languette → re-tap → frustration.
-   *Fix :* `--sab: env(safe-area-inset-bottom, 0px);` (et idéalement `--sal`/`--sar` aussi).
+2. ~~**🔴 `--sab` figé à `0px` au lieu de `env(safe-area-inset-bottom, 0px)`**~~
+   ✅ **RÉSOLU 2026-05-01** — `style.css:40-42` : `--sab`, `--sal`, `--sar` utilisent désormais `env(safe-area-inset-*, 0px)`.
 
 3. **🟠 Cibles tactiles sous 44 px sur des actions fréquentes**
    - `.mood-b` 42×42 px (`style.css:1115`) — 5 boutons d'humeur tapotés à chaque entrée journal.
@@ -125,12 +121,12 @@ Inchangé. Les badges énergie/bonheur sont dessinés dans le canvas p5 (comment
 | `--fs-xl` | ✅ `style.css:61` | nulle part | 🟠 morte |
 | `--sp-xl` | ✅ `style.css:70` | nulle part | 🟠 morte |
 | `--paper-book-line` | ✅ `style.css:90` | nulle part | 🟠 morte |
-| `--c-border` | ❌ NON DÉFINIE | `ui-habs.js:139, 145` (boutons ↑/↓) | 🔴 BUG silencieux |
-| `--c-txt2` | ❌ NON DÉFINIE | `ui-habs.js:140, 146` | 🔴 BUG silencieux |
+| `--c-border` | ❌ NON DÉFINIE | ~~`ui-habs.js:139, 145`~~ | ✅ RÉSOLU 2026-05-01 — remplacé par `--border` |
+| `--c-txt2` | ❌ NON DÉFINIE | ~~`ui-habs.js:140, 146`~~ | ✅ RÉSOLU 2026-05-01 — remplacé par `--text2` |
 | `--lilac-rgb` | ❌ NON DÉFINIE | `ui-agenda.js:197` (avec fallback `180,160,230`) | 🟠 fallback systématique |
 | `--bubble-bg` | ❌ proposée par audit précédent | `style.css:300, 336` utilisent `#fff` en dur | 🔴 toujours OUVERT |
-| `--sab` | ✅ `style.css:40` à `0px` en dur | utilisée dans `.menu-languette`, `#dynamic-zone`, `#toast` | 🔴 retourne toujours 0 |
-| `--sal` / `--sar` | ✅ à `0px` en dur | `body padding-left/right` `style.css:144-145` | 🟡 paysage iPhone non absorbé |
+| `--sab` | ✅ `style.css:40` | utilisée dans `.menu-languette`, `#dynamic-zone`, `#toast` | ✅ RÉSOLU 2026-05-01 — `env(safe-area-inset-bottom, 0px)` |
+| `--sal` / `--sar` | ✅ `style.css:41-42` | `body padding-left/right` `style.css:144-145` | ✅ RÉSOLU 2026-05-01 — `env(safe-area-inset-left/right, 0px)` |
 
 ### 2.2 Architecture de thèmes proposée
 

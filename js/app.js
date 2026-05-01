@@ -57,7 +57,7 @@ let _meteoIntervalId = null;
 let _poopIntervalId  = null;
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v4.9'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v4.91'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -1160,9 +1160,7 @@ function toggleHab(catId) {
 
       // Toast streak si la série est notable (≥2 jours)
       if (streakActuel >= 2) {
-        const streakLabel = streakActuel >= 7
-          ? `🔥×${streakActuel} MAX — +${gainTotal} 🌸 !`
-          : `🔥×${streakActuel} — +${gainTotal} 🌸 !`;
+        const streakLabel = `${streakActuel} jours 🔥`;
         setTimeout(() => {
           const el = document.querySelector(`[onclick="toggleHab('${catId}')"]`);
           if (el) floatXP(el.closest('.hab'), streakLabel);

@@ -146,6 +146,10 @@ async function loadDataFiles() {
    CONSTANTES MÉTIER
    ============================================================ */
 const SK = 'hg4'; // Clé du LocalStorage (HabitGotchi v4)
+window.SK = SK;   // RÔLE : Expose SK globalement pour que doReset() dans ui-settings.js puisse y accéder.
+                  // POURQUOI : const au top-level d'un script classique n'est pas accessible depuis
+                  //            d'autres fichiers JS — contrairement à var. Sans window.SK, doReset()
+                  //            appelle localStorage.removeItem(undefined) et ne supprime rien.
 
 const CATS = [
   {id:'sport',   icon:'🏋️', label:'Sport',       def:'Bouger → énergie pour nous deux'},

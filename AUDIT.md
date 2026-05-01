@@ -483,6 +483,11 @@
 - Fichier : `ui-settings.js`
 - Description : Fonction `doReset()` créée — exécute `localStorage.removeItem(SK); location.reload()`. Le bouton "Oui" appelle désormais `onclick="doReset()"` au lieu d'une chaîne JS inline fragile.
 
+#### ✅ RÉSOLU — `doReset()` — `SK` inaccessible depuis `ui-settings.js` (2026-05-01)
+- Fichier : `app.js` (ligne ~148)
+- Description : `SK` était défini comme `const SK = 'hg4'` dans `app.js` mais jamais exposé sur `window`. En JS classique (non-module), `const` au top-level n'est pas accessible depuis les autres fichiers scripts — seul `var` irait sur `window`. Résultat : `doReset()` appelait `localStorage.removeItem(undefined)`, ne supprimait rien, et la page rechargée gardait toutes les données intactes.
+- Fix : `window.SK = SK` ajouté juste après la déclaration dans `app.js`.
+
 #### 🟡 MINEUR — `setEnergy` / `setHappy` modifient `el.textContent` puis appellent `saveDebounced`
 - Lignes : `app.js` [L827-L838]
 - Description : OK fonctionnellement, mais les anciens IDs `#sv-energy` ne sont plus utilisés que dans la modale dynamique.

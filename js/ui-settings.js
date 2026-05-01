@@ -180,13 +180,27 @@ function updAgendaPostit() {
     // POURQUOI : feedback explicite — pas de RDV ≠ oubli d'ouvrir l'agenda
     rdvPart = `<span style="font-size:var(--fs-xs);opacity:0.5">Pas de RDV</span>`;
   } else {
-    // POURQUOI : [...label] découpe la string en points de code Unicode → gère les emojis multi-octets
     // POURQUOI : chaque emoji est un <span> autonome pour que le flex-wrap de .agenda-postit-info
     //            puisse faire passer les emojis à la ligne quand il y en a plusieurs
     const icones = rdvAujourdhui.map(r => {
-      const premier = [...(r.label || '')][0] || '';
-      // On vérifie que c'est bien un emoji (code point > 127) — pas une lettre ordinaire
-      const emoji = premier.codePointAt(0) > 127 ? premier : '🗓️';
+      // RÔLE : extrait le premier cluster graphème du label (emoji complet, variation selector inclus)
+      // POURQUOI : [...str][0] découpe en points de code — ça coupe ✈️ en [✈, FE0F] et on perd le FE0F.
+      //            Intl.Segmenter (API moderne) itère par cluster graphème complet.
+      //            Fallback regex : \p{Emoji_Presentation}️?|\p{Emoji}️ capture le caractère + son VS-16.
+      let emoji = '🗓️';
+      const label = r.label || '';
+      if (label) {
+        if (typeof Intl?.Segmenter === 'function') {
+          // Chemin moderne — segmentation par cluster graphème
+          const seg = new Intl.Segmenter('fr', { granularity: 'grapheme' });
+          const premier = [...seg.segment(label)][0]?.segment || '';
+          if (premier.codePointAt(0) > 127) emoji = premier;
+        } else {
+          // Chemin fallback — regex Unicode qui capture l'emoji + variation selector FE0F éventuel
+          const m = label.match(/\p{Emoji_Presentation}️?|\p{Emoji}️/u);
+          if (m) emoji = m[0];
+        }
+      }
       return `<span style="line-height:1">${emoji}</span>`;
     });
     rdvPart = `<span style="display:flex;flex-wrap:wrap;gap:2px;justify-content:center">${icones.join('')}</span>`;

@@ -1273,16 +1273,15 @@ body {
 /* RÔLE : Switchers à onglets (boutique Catalogue/Créations, agenda Jour/Mois/Cycle) */
 /* POURQUOI : padding:7px seul donnait ~30px — sous les 44px recommandés Apple HIG */
 /* AUDIT 6.1 : min-height 44px, styles inline externalisés */
-/* RÔLE typo : font-title (Caveat) pour harmoniser avec les titres de l'app */
 .tab-switcher-btn {
   flex: 1;
   min-height: 44px;
   padding: 0 4px;
   border-radius: 999px;
   border: none;
-  font-size: var(--fs-lg);
-  font-weight: 700;
-  font-family: var(--font-title);
+  font-size: var(--fs-sm);
+  font-weight: bold;
+  font-family: var(--font-body);
   cursor: pointer;
   transition: .15s;
   display: flex;

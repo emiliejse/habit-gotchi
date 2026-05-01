@@ -374,7 +374,7 @@ function renderBoutiqueOnglet(onglet) {
     );
 
     const packsHtml = packsDispos.length ? `
-      <div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:6px;margin-top:4px">✨ Packs</div>
+      <div style="font-family:var(--font-title);font-size:var(--fs-xl);font-weight:700;color:var(--text);margin-bottom:6px;margin-top:4px">✨ Packs</div>
       ${packsDispos.map(pack => {
         const peutAcheter = (D.g.petales || 0) >= pack.cout;
         // Compte les objets du pack déjà acquis pour ajuster l'affichage
@@ -398,7 +398,7 @@ function renderBoutiqueOnglet(onglet) {
             <div style="font-size:var(--fs-xs);color:var(--amber,#f59e0b);margin-top:2px">${label}</div>
           </div>`;
       }).join('')}
-      <div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin:8px 0 6px">Catalogue</div>
+      <div style="font-family:var(--font-title);font-size:var(--fs-xl);font-weight:700;color:var(--text);margin:8px 0 6px">Catalogue</div>
     ` : '';
 
     el.innerHTML = packsHtml + libFiltree.map(prop => {

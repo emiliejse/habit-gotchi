@@ -493,6 +493,9 @@ function sauvegarderRdv() {
   save();
   annulerFormulaireRdv();
   renderAgendaJour(document.getElementById('agenda-contenu'));
+  // RÔLE : Rafraîchit le post-it agenda après ajout d'un nouveau RDV
+  // POURQUOI : supprimerRdv() et confirmerEditRdv() l'appellent déjà — sauvegarderRdv() l'oubliait.
+  if (typeof updAgendaPostit === 'function') updAgendaPostit();
 }
 
 function toggleJourneeEntiere(checked) {

@@ -1224,6 +1224,13 @@ const p5s = (p) => {
     // auquel cas on respecte le choix de l'utilisatrice pour qu'elle puisse voir parc/montagne.
     const enPreviewInv = !!window._invEnvForced;
     let envActif = (!enPreviewInv && nightRatio === 1) ? 'chambre' : (g.activeEnv || 'parc');
+    // RÔLE : Pendant la première moitié du flash (frames 0–8), on continue d'afficher
+    //        l'ancien env (fs.from) pour que le flash "cache" vraiment le cut.
+    //        À partir du pic (frame 8), le nouvel env peut apparaître sous le flash descendant.
+    // POURQUOI : Sans ça, le nouvel env est visible dès le premier frame — le flash arrive trop tard.
+    if (window._envFadeState && window._envFadeState.frames <= 8) {
+      envActif = window._envFadeState.from;
+    }
     if (!sleeping) {
       // RÔLE : haReal (entier réel) pour les seuils exacts — ha (float lerp) causerait
       //        des comparaisons === 4 ou >= 5 jamais vraies pendant la transition.

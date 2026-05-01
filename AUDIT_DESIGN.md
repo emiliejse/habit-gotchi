@@ -427,20 +427,15 @@ function openModalWithBack(html, backFn) {
 
 #### C2.1 — Carte d'état (nom / stade / XP) : hiérarchie visuelle
 
-**Problème :** `#g-name` et `#g-stage` sont sur la même ligne séparés par `|`, taille 16px (inline `index.html:118`). La barre XP est plate (10 px), peu expressive.
+✅ **RÉSOLU 2026-05-01**
 
-**Proposition :**
-```
-┌─────────────────────────────────┐
-│        ✿ Lyra ✿                 │  ← Caveat 28px (au lieu de 24)
-│       — Adolescent —            │  ← Caveat 18px italique
-│                                 │
-│   ▰▰▰▰▰▰▰░░░  120/150 XP       │  ← pixel-art bar (cubes 8px) + gradient lilac→pink
-└─────────────────────────────────┘
-```
-La barre devient une suite de cubes pixel art (`background: repeating-linear-gradient(90deg, var(--lilac) 0 8px, transparent 8px 10px)`). À chaque palier franchi, une animation `popBounce` joue sur le cube franchi.
+- `index.html:118-129` : wrapper inline `font-size:16px` supprimé. `#g-name` et `#g-stage` séparés sur deux lignes via `.g-name-row` (flex centré).
+- `#g-stage` : 16px Caveat italique `opacity:0.85` — secondaire par rapport au nom (CSS `style.css`).
+- `#birthday-badge` : `aria-label` ajouté.
+- `.pbar` : hauteur 12px, fond en cubes pixel art vides (`repeating-linear-gradient`, `--lilac-rgb 0.12`).
+- `.pfill` : cubes pleins gradient `var(--lilac)` 8px → `var(--pink)` 2px de gap. Styles inline `background` et `border-radius` retirés de `index.html`.
 
-**Effort : M** • **Fichiers :** `index.html:117-130`, `style.css:947-948` (`.pbar/.pfill`).
+**Non implémenté :** animation `popBounce` au palier (nécessite JS dans `app.js`) — conservé comme amélioration future.
 
 #### C2.2 — Zone pensée IA : mise en scène
 

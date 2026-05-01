@@ -713,12 +713,22 @@ body {
   font-size: 24px;
 }
 
-/* RÔLE : Stade du gotchi — Caveat pour marquer l'importance du moment */
-/* POURQUOI : Le stade (Œuf → Bébé → Enfant…) est un des moments forts de l'app */
+/* RÔLE : Ligne nom + badge anniversaire — centrée, espacée */
+.g-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-xs);
+  margin-bottom: 2px;
+}
+
+/* RÔLE : Stade du gotchi — même ligne que le nom, taille proche */
 #g-stage {
   font-family: var(--font-title);
   font-weight: 600;
+  font-style: italic;
   font-size: 22px;
+  color: var(--lilac);
 }
 
 /* RÔLE : Bouton info — cercle lilas discret mais lisible */
@@ -1023,8 +1033,30 @@ body {
 }
 
 /* Barre d'XP */
-.pbar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
-.pfill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.34, 1.56, .64, 1); }
+/* RÔLE : Piste de la barre XP — fond en damier de petits cubes pixel art vides */
+/* POURQUOI : repeating-linear-gradient simule des cubes 8px séparés de 2px, sans image externe */
+.pbar {
+  height: 12px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(var(--lilac-rgb), 0.12) 0px 8px,
+    transparent              8px 10px
+  );
+}
+/* RÔLE : Remplissage de la barre XP — cubes pleins gradient lilac→pink */
+/* POURQUOI : Le rebond .64,1 donne un ressenti "vivant" à chaque gain d'XP */
+.pfill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .6s cubic-bezier(.34, 1.56, .64, 1);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--lilac) 0px 8px,
+    var(--pink)  8px 10px
+  );
+}
 .slbl { font-size: var(--fs-xs); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); } /* était 9px */
 
 

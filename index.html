@@ -114,19 +114,19 @@
 
     <!-- Carte d'état du Gotchi + pensée IA (SYSTEM 1 + SYSTEM 3) -->
     <div class="card card-gotchi">
-      <!-- Nom, stade, XP -->
-      <div style="font-size:16px;font-weight:bold;color:var(--text);text-align:center;">
+      <!-- Nom, stade, XP — C2.1 : hiérarchie visuelle restructurée -->
+      <div class="g-name-row">
         <span id="g-name">Petit·e Gotchi</span>
         <span style="color:var(--lilac);opacity:0.3;"> | </span>
-        <span id="g-stage" style="color:var(--lilac);">Œuf</span>
-        <span id="birthday-badge" style="display:none;cursor:pointer;margin-left:6px;">🎂</span>
+        <span id="g-stage">Œuf</span>
+        <span id="birthday-badge" style="display:none;cursor:pointer;" aria-label="Anniversaire">🎂</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:var(--fs-xs);margin-top:10px;font-weight:bold;">
+      <div style="display:flex;justify-content:space-between;font-size:var(--fs-xs);margin-top:6px;font-weight:bold;">
         <span class="slbl" style="color:var(--lilac)">Progression</span>
         <span class="slbl" id="xp-l" style="color:var(--text);">0/150 XP</span>
       </div>
-      <div class="pbar" style="height:10px;margin-top:5px;background:rgba(0,0,0,0.06);border-radius:5px;">
-        <div class="pfill" id="xp-b" style="width:0%;background:linear-gradient(90deg,var(--lilac),var(--pink));border-radius:5px;"></div>
+      <div class="pbar" style="margin-top:5px;">
+        <div class="pfill" id="xp-b" style="width:0%;"></div>
       </div>
 
       <!-- Séparateur + zone pensée IA (SYSTEM 3: IA & Cognition) -->

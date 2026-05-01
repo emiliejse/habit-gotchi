@@ -27,7 +27,7 @@ Trois priorités d'action :
 | ✅ FIXÉ | S5 Saleté | Crotte garantie au bootstrap si `poopCount === 0` pour le jour courant — engagement assuré (2026-05-01) | `js/app.js:512-520` (dans `checkSalete`) |
 | ✅ FIXÉ | S2 Habitudes | Streaks par habitude implémentés — `computeStreaks()` relit `D.log`, bonus pétales +N (cap 7), badge 🔥×N dans `renderHabs()`, recalcul au daily reset (2026-05-01) | `js/app.js:760-800`, `js/ui-habs.js:39-55` |
 | 🟠 HAUT | S2 Habitudes | Aucune pénalité / rétro-action si habitude manquée (ni XP négatif, ni bulle, ni baisse de happiness) | `js/app.js:750-831` |
-| 🟠 HAUT | S3 États | Pas d'état `hunger` indépendant — le repas n'alimente pas une jauge | `js/app.js:183-184`, `data/config.js` |
+| ✅ FIXÉ | S3 États | Jauge `hunger` (0-3) implémentée — monte si fenêtre repas manquée, reset à 0 dès un repas pris, bulle "j'ai faim" si `hunger >= 2`, priorité 2 dans `updBubbleNow()`. `energy` et `happiness` non touchés (auto-report utilisatrice uniquement). Migration m8 ajoutée. (2026-05-01) | `js/app.js:194` (defs), `js/app.js:532-580` (checkHunger), `js/app.js:651-656` (giveSnack reset), `js/app.js:1229-1246` (updBubbleNow) |
 | 🟠 HAUT | S1 Progression | Sauts XP énormes entre stades adultes (500 → 900 → 1500 → 2500 → 4000) sans micro-paliers visibles | `js/app.js:142-151` |
 | 🟠 HAUT | S6 IA | Limites quotidiennes strictes (3 pensées + 3 soutien + 1 objet) sans compensation visible côté UI | `js/ui-ai.js:189, 597` |
 | 🟡 MOY | S4 Snacks | Pas de `lockScroll()` sur la fenêtre snack (dette UI déjà connue, impact gameplay : scroll iOS pendant choix) | `js/ui-settings.js:43-122` |
@@ -124,14 +124,15 @@ La fonction `addXp(n)` (`js/app.js:437-456`) gère la transition de stade ; `get
 
 ### 3a. Diagnostic
 
-**États tracés** (`js/app.js:183-184, 193`)
+**États tracés** (`js/app.js:183-194`)
 ```
-energy: 3      (échelle 0-5)
-happiness: 3   (échelle 0-5)
+energy: 3      (échelle 0-5) — auto-report utilisatrice uniquement
+happiness: 3   (échelle 0-5) — auto-report utilisatrice uniquement
 salete: 0      (échelle 0-10)
+hunger: 0      (échelle 0-3) — ✅ IMPLÉMENTÉ 2026-05-01
 ```
 
-**Pas de hunger indépendant** — le repas est géré comme un événement horaire (`meals.matin/midi/soir`), pas comme une jauge.
+**hunger** : monte d'1 par fenêtre repas manquée (fin de créneau passée sans repas pris), plafonné à 3. Reset à 0 dans `giveSnack()`. Bulle dédiée au bootstrap si `hunger >= 2`. `energy` et `happiness` ne sont jamais modifiés automatiquement.
 
 **Seuils visuels** (`data/config.js:221-233`)
 ```
@@ -154,7 +155,7 @@ HA_SAD=1, HA_MED=2, HA_MED_ADULT=3, HA_HIGH=4   → bouches, nuages, sourires
 ### 3c. Propositions
 
 1. **Recalibrer `salete`** : passer à une échelle 0-5 et afficher dithering progressif dès `salete >= 1`.
-2. Ajouter une **jauge `hunger`** (0-3) qui descend avec le temps et que les snacks remplissent. Lier à `happiness` (faim → tristesse).
+2. ✅ **Jauge `hunger`** (0-3) implémentée — monte si fenêtre manquée, reset au repas, bulle dédiée. `happiness` non touché (auto-report uniquement). (2026-05-01)
 3. **Easing 1s** sur les changements d'energy/happiness (lerp côté render).
 4. Bulle dédiée dans `personality.json` quand `salete >= 7` ("ça commence à sentir le renard").
 

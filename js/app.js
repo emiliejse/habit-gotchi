@@ -191,6 +191,7 @@ function defs() {
       snackDone:       '',
       snackEmoji:      '',
       salete:          0,     // niveau de saleté du Gotchi — 0 (propre) à 10 (très sale)
+      hunger:          0,     // niveau de faim — 0 (rassasié·e) à 3 (très faim)
       props:           [],
       customBubbles:   [],
       bilanCount:      0,
@@ -261,7 +262,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 7; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 8; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -338,6 +339,14 @@ const MIGRATIONS = [
   // POURQUOI : Sans ce flag, la pénalité se redéclencherait à chaque ouverture de l'app.
   function m7(d) {
     d.lastMissedPenalty = d.lastMissedPenalty ?? null;
+    return d;
+  },
+  // Migration 7→8 : ajout du champ hunger dans D.g
+  // RÔLE : Jauge de faim du Gotchi (0 = rassasié·e, 3 = très faim).
+  // POURQUOI : Nouvelle feature — hunger descend si une fenêtre repas est manquée.
+  //            Les utilisatrices existantes démarrent rassasiées (hunger = 0).
+  function m8(d) {
+    d.g.hunger = d.g.hunger ?? 0;
     return d;
   }
 ];
@@ -529,6 +538,62 @@ window.checkSalete = function checkSalete() {
   }
 };
 
+/* ─── FAIM PASSIVE ────────────────────────────────────────────────── */
+// RÔLE : Calcule la faim accumulée depuis la dernière session.
+//        Pour chaque fenêtre repas passée dans la journée sans repas pris,
+//        hunger monte d'1 point (plafonné à 3).
+//        Si hunger >= 2 au bootstrap → bulle "j'ai faim" déclenchée 1.5s après l'ouverture.
+// POURQUOI : Pas de timer interne — le check se fait à l'ouverture de l'app (bootstrap)
+//            et à chaque retour foreground via initApp() → cohérent avec checkSalete().
+//            energy et happiness ne sont JAMAIS modifiés automatiquement (auto-report utilisatrice).
+window.checkHunger = function checkHunger() {
+  const D = window.D;
+  const h = hr(); // heure courante (entier 0–23)
+  const meals = ensureMealsToday();
+
+  // RÔLE : Liste les fenêtres repas dont la fin est déjà passée aujourd'hui.
+  // POURQUOI : Une fenêtre manquée = le créneau est fermé ET le repas n'a pas été pris.
+  const windows = window.HG_CONFIG?.MEAL_WINDOWS ?? {
+    matin: { start: 7,  end: 11 },
+    midi:  { start: 11, end: 15 },
+    soir:  { start: 18, end: 22 },
+  };
+
+  let fenetresManquees = 0;
+  for (const [key, w] of Object.entries(windows)) {
+    // La fenêtre est "passée" si l'heure actuelle dépasse sa fermeture ET que le repas n'a pas été pris
+    if (h >= w.end && !meals[key]) {
+      fenetresManquees++;
+    }
+  }
+
+  // RÔLE : hunger = nombre de fenêtres manquées, plafonné à 3.
+  // POURQUOI : Chaque repas raté = +1 faim. 3 repas ratés = faim max.
+  //            On prend le max entre la valeur courante et le calcul,
+  //            pour ne pas faire redescendre hunger si l'utilisatrice a ouvert l'app en cours de journée.
+  const nouvelleHunger = Math.min(3, fenetresManquees);
+  D.g.hunger = Math.max(D.g.hunger ?? 0, nouvelleHunger);
+
+  // RÔLE : Bulle "j'ai faim" si hunger >= 2 au bootstrap.
+  // POURQUOI : Signal expressif sans modifier energy ni happiness (auto-report uniquement).
+  //            Délai 1.5s pour laisser l'UI se monter correctement avant d'afficher la bulle.
+  if (D.g.hunger >= 2) {
+    const bullesFaim = [
+      "J'ai le ventre qui gargouille… 🍽️",
+      "*regardes de ton côté* Tu as oublié mon repas ? 🥺",
+      "Un peu de nourriture ça serait pas de refus… 🌸",
+      "J'ai faim ! Est-ce que tu as mangé toi aussi ? 🍎",
+      "*grommelle* Mon estomac me parle… 😮‍💨",
+    ];
+    setTimeout(() => {
+      flashBubble(bullesFaim[Math.floor(Math.random() * bullesFaim.length)], 3500);
+      if (typeof window.triggerExpr === 'function') {
+        window.triggerExpr('faim', 60); // expression bouche ouverte
+      }
+    }, 1500);
+  }
+};
+
 // Probabilité d'apparition
 function maybeSpawnPoop() {
   const now = Date.now();
@@ -650,6 +715,12 @@ function giveSnack(emoji) {
   // Marque la fenêtre + crédite les pétales
   meals[win] = true;
   window.D.g.petales = (window.D.g.petales || 0) + gain;
+
+  // RÔLE : Manger rassasie complètement le Gotchi.
+  // POURQUOI : hunger est une jauge de manque — dès qu'un repas est pris,
+  //            le besoin est satisfait → reset à 0.
+  window.D.g.hunger = 0;
+
   save();
   
   // Log dans le journal (forme objet privilégiée)
@@ -1182,7 +1253,25 @@ function updBubbleNow() {
     return;
   }
 
-  // ── Priorité 2 : Nuit ──────────────────────────────────────────
+  // ── Priorité 2 : Faim (hunger >= 2) ───────────────────────────
+  // RÔLE : Si le gotchi a faim, il le dit en priorité — mais uniquement le jour.
+  // POURQUOI : hunger est un état passif (fenêtres repas manquées) qui mérite
+  //            une expression dédiée, sans écraser les bulles de nuit.
+  //            On ne modifie pas energy ni happiness (auto-report utilisatrice uniquement).
+  if (h >= 7 && h < 22 && (window.D.g.hunger ?? 0) >= 2) {
+    const pool = [
+      "J'ai le ventre qui gargouille… 🍽️",
+      "*regardes de ton côté* Tu as oublié mon repas ? 🥺",
+      "Un peu de nourriture ça serait pas de refus… 🌸",
+      "J'ai faim ! Est-ce que tu as mangé toi aussi ? 🍎",
+      "*grommelle* Mon estomac me parle… 😮‍💨",
+    ];
+    const el = document.getElementById('bubble');
+    if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+    return;
+  }
+
+  // ── Priorité 3 : Nuit ──────────────────────────────────────────
   if (h >= 22 || h < 7) {
     const pool = src.nuit || ["Zzz... 🌙", "*ronfle* 💤", "...zzZZ... 🌛", "Dors bien ✿"];
     const el = document.getElementById('bubble');
@@ -1196,7 +1285,7 @@ function updBubbleNow() {
     return;
   }
 
-  // ── Priorité 3 : Pool pondéré ──────────────────────────────────
+  // ── Priorité 4 : Pool pondéré ──────────────────────────────────
   // Chaque état a un poids : plus le poids est élevé, plus ses phrases
   // ont de chances d'être choisies. On ajoute les phrases N fois selon le poids.
 
@@ -1414,6 +1503,12 @@ async function bootstrap() {
     // RÔLE : Met à jour la saleté du Gotchi selon le temps écoulé depuis la dernière session.
     // POURQUOI : La saleté augmente passivement (+1 par 6h d'absence) — on calcule le rattrapage ici.
     if (typeof window.checkSalete === 'function') window.checkSalete();
+
+    // RÔLE : Calcule la faim accumulée depuis la dernière session.
+    // POURQUOI : Symétrique à checkSalete() — vérifie les fenêtres repas manquées
+    //            et déclenche la bulle "j'ai faim" si hunger >= 2.
+    if (typeof window.checkHunger === 'function') window.checkHunger();
+
     catchUpPoops();
 
     // ── Pénalité habitudes manquées ──────────────────────────────────────────

@@ -1098,42 +1098,47 @@ const LAYERS_TEEN = [
     ]
   },
 
-  // ── Célébration : bras gauche levé (ha=5, pose temporaire via animator) ──
+  // ── Célébration : bras gauche levé teen (ha≥4, pose temporaire via animator) ──
   // POURQUOI : when:false → rendu uniquement via aov.visible (animator).
-  //            Symétrique de pose_salut adult, adapté aux coords teen (-4 offset).
+  //            Pixel coude x:-5,y:1 assure la liaison bras (y:2)→main (x:-6,y:1).
   {
     id: 'teen-bras-g-leve',
     fill: 'C.bodyDk',
     when: () => false,
     rects: [
-      { x: -5, y: 2, w: 1, h: 3 },   // bras gauche levé vertical
-      { x: -5, y: 1, w: 1, h: 1 },   // main gauche au sommet
+      { x: -5, y: 2, w: 1, h: 2 },   // bras gauche levé (y:2→3)
+      { x: -5, y: 1, w: 1, h: 1 },   // coude gauche — liaison bras→main
+      { x: -6, y: 1, w: 1, h: 1 },   // main gauche (décalée à gauche)
       { x:  4, y: 4, w: 1, h: 2 },   // bras droit normal
     ]
   },
 
-  // ── Célébration : bras droit levé (ha=5, pose temporaire via animator) ──
+  // ── Célébration : bras droit levé teen (ha≥4, pose temporaire via animator) ──
+  // POURQUOI : Pixel coude x:4,y:1 assure la liaison bras (y:2)→main (x:5,y:1).
   {
     id: 'teen-bras-d-leve',
     fill: 'C.bodyDk',
     when: () => false,
     rects: [
       { x: -5, y: 4, w: 1, h: 2 },   // bras gauche normal
-      { x:  4, y: 2, w: 1, h: 3 },   // bras droit levé vertical
-      { x:  4, y: 1, w: 1, h: 1 },   // main droite au sommet
+      { x:  4, y: 2, w: 1, h: 2 },   // bras droit levé (y:2→3)
+      { x:  4, y: 1, w: 1, h: 1 },   // coude droit — liaison bras→main
+      { x:  5, y: 1, w: 1, h: 1 },   // main droite (décalée à droite)
     ]
   },
 
-  // ── Célébration : les deux bras levés (ha=5, pose temporaire via animator) ──
+  // ── Célébration : les deux bras levés teen (ha=5, pose temporaire via animator) ──
   {
     id: 'teen-bras-2-leves',
     fill: 'C.bodyDk',
     when: () => false,
     rects: [
-      { x: -5, y: 2, w: 1, h: 3 },   // bras gauche levé
-      { x: -5, y: 1, w: 1, h: 1 },   // main gauche
-      { x:  4, y: 2, w: 1, h: 3 },   // bras droit levé
-      { x:  4, y: 1, w: 1, h: 1 },   // main droite
+      { x: -5, y: 2, w: 1, h: 2 },   // bras gauche levé
+      { x: -5, y: 1, w: 1, h: 1 },   // coude gauche
+      { x: -6, y: 1, w: 1, h: 1 },   // main gauche
+      { x:  4, y: 2, w: 1, h: 2 },   // bras droit levé
+      { x:  4, y: 1, w: 1, h: 1 },   // coude droit
+      { x:  5, y: 1, w: 1, h: 1 },   // main droite
     ]
   },
 
@@ -1171,17 +1176,28 @@ function drawTeen(p, cx, cy, sl, en, ha) {
   const isTPosing  = window.animator?.active.some(a => teenPoseIds.includes(a.id)) ?? false;
   const canTVary   = !sl && !isTJumping && !isTPosing;
 
-  if (en >= EN_WARN && ha > HA_ARMS_UP && canTVary) {
+  if (en >= EN_WARN && ha >= HA_ARMS_UP && canTVary) {
     // RÔLE : Décompter le cooldown puis déclencher une pose célébration au sort.
-    // POURQUOI : Même logique que l'adult — on attend la fin du cooldown,
-    //            puis on tire entre les 3 poses bras (gauche, droit, les deux).
+    // POURQUOI : Actif à ha=4 (HA_ARMS_UP) et ha=5 — avec un tirage plus rare à ha=4
+    //            (1 chance sur 3 de déclencher une vraie pose, sinon on recharge le cooldown)
+    //            pour refléter un enthousiasme modéré plutôt que de l'exubérance.
     if (teenPose.cooldown > 0) {
       teenPose.cooldown--;
     } else {
       const r = Math.random();
-      if      (r < 0.33) { window.animator.trigger('teen_pose_bras_g_leve',  { duration: 18 + Math.floor(Math.random() * 12) }); }
-      else if (r < 0.66) { window.animator.trigger('teen_pose_bras_d_leve',  { duration: 18 + Math.floor(Math.random() * 12) }); }
-      else               { window.animator.trigger('teen_pose_bras_2_leves', { duration: 24 + Math.floor(Math.random() * 12) }); }
+      if (ha > HA_ARMS_UP) {
+        // ha=5 — les 3 poses à égalité
+        if      (r < 0.33) { window.animator.trigger('teen_pose_bras_g_leve',  { duration: 18 + Math.floor(Math.random() * 12) }); }
+        else if (r < 0.66) { window.animator.trigger('teen_pose_bras_d_leve',  { duration: 18 + Math.floor(Math.random() * 12) }); }
+        else               { window.animator.trigger('teen_pose_bras_2_leves', { duration: 24 + Math.floor(Math.random() * 12) }); }
+      } else {
+        // ha=4 — seulement bras gauche ou droit (pas les deux levés), 67% de déclenchement
+        // POURQUOI : Les deux bras levés = joie maximale, réservé au niveau 5.
+        //            À ha=4 on lève un bras sur deux, et 33% du temps on ne fait rien.
+        if      (r < 0.33) { window.animator.trigger('teen_pose_bras_g_leve', { duration: 18 + Math.floor(Math.random() * 12) }); }
+        else if (r < 0.66) { window.animator.trigger('teen_pose_bras_d_leve', { duration: 18 + Math.floor(Math.random() * 12) }); }
+        // else : 34% du temps, pas de pose — le cooldown repart quand même
+      }
       teenPose.cooldown = 60 + Math.floor(Math.random() * 60); // 5–10s avant la prochaine
     }
   }
@@ -1510,26 +1526,30 @@ const LAYERS_ADULT = [
   // ── Célébration : bras gauche levé (ha=5, pose temporaire via animator) ──
   // POURQUOI : when:false → rendu uniquement via aov.visible (animator).
   //            Le bras droit reste en position normale (bras-normal affiché en dessous).
+  //            Pixel coude x:-6,y:2 assure la liaison entre le bras (y:3) et la main (x:-7,y:2).
   {
     id: 'bras-g-leve',
     fill: 'C.bodyDk',
     when: () => false,
     rects: [
-      { x: -6, y: 3, w: 1, h: 2 },   // bras gauche levé
-      { x: -7, y: 2, w: 1, h: 1 },   // main gauche
+      { x: -6, y: 3, w: 1, h: 2 },   // bras gauche levé (y:3→4)
+      { x: -6, y: 2, w: 1, h: 1 },   // coude gauche — liaison bras→main
+      { x: -7, y: 2, w: 1, h: 1 },   // main gauche (décalée à gauche)
       { x:  5, y: 5, w: 1, h: 2 },   // bras droit normal
     ]
   },
 
   // ── Célébration : bras droit levé (ha=5, pose temporaire via animator) ──
+  // POURQUOI : Pixel coude x:5,y:2 assure la liaison entre le bras (y:3) et la main (x:6,y:2).
   {
     id: 'bras-d-leve',
     fill: 'C.bodyDk',
     when: () => false,
     rects: [
       { x: -6, y: 5, w: 1, h: 2 },   // bras gauche normal
-      { x:  5, y: 3, w: 1, h: 2 },   // bras droit levé
-      { x:  6, y: 2, w: 1, h: 1 },   // main droite
+      { x:  5, y: 3, w: 1, h: 2 },   // bras droit levé (y:3→4)
+      { x:  5, y: 2, w: 1, h: 1 },   // coude droit — liaison bras→main
+      { x:  6, y: 2, w: 1, h: 1 },   // main droite (décalée à droite)
     ]
   },
 
@@ -1540,8 +1560,10 @@ const LAYERS_ADULT = [
     when: () => false,
     rects: [
       { x: -6, y: 3, w: 1, h: 2 },   // bras gauche levé
-      { x:  5, y: 3, w: 1, h: 2 },   // bras droit levé
+      { x: -6, y: 2, w: 1, h: 1 },   // coude gauche
       { x: -7, y: 2, w: 1, h: 1 },   // main gauche
+      { x:  5, y: 3, w: 1, h: 2 },   // bras droit levé
+      { x:  5, y: 2, w: 1, h: 1 },   // coude droit
       { x:  6, y: 2, w: 1, h: 1 },   // main droite
     ]
   },
@@ -1681,7 +1703,7 @@ function drawAdult(p, cx, cy, sl, en, ha) {
         //            sinon on reste sur les poses idle normales (hanches, croisés, salut).
         const r = Math.random();
         if (ha > HA_ARMS_UP) {
-          // Niveau bonheur max — poses célébration (50%) + poses normales (50%)
+          // ha=5 — poses célébration (50%) + poses normales (50%)
           if      (r < 0.20) { window.animator.trigger('pose_bras_g_leve',  { duration: 18 + Math.floor(Math.random() * 12) }); }
           else if (r < 0.40) { window.animator.trigger('pose_bras_d_leve',  { duration: 18 + Math.floor(Math.random() * 12) }); }
           else if (r < 0.50) { window.animator.trigger('pose_bras_2_leves', { duration: 24 + Math.floor(Math.random() * 12) }); }
@@ -1689,8 +1711,19 @@ function drawAdult(p, cx, cy, sl, en, ha) {
           else if (r < 0.85) { window.animator.trigger('pose_hanche_d',     { duration: 60 + Math.floor(Math.random() * 24) }); }
           else if (r < 0.95) { window.animator.trigger('pose_croises',      { duration: 72 + Math.floor(Math.random() * 24) }); }
           else               { window.animator.trigger('pose_salut',         { duration: 12 + Math.floor(Math.random() * 6)  }); }
+        } else if (ha === HA_ARMS_UP) {
+          // ha=4 — poses célébration légères (25%) + poses normales (75%)
+          // POURQUOI : Bonheur élevé mais pas max — quelques éclats de joie spontanés,
+          //            sans l'exubérance permanente du niveau 5.
+          if      (r < 0.10) { window.animator.trigger('pose_bras_g_leve',  { duration: 18 + Math.floor(Math.random() * 12) }); }
+          else if (r < 0.20) { window.animator.trigger('pose_bras_d_leve',  { duration: 18 + Math.floor(Math.random() * 12) }); }
+          else if (r < 0.25) { window.animator.trigger('pose_bras_2_leves', { duration: 24 + Math.floor(Math.random() * 12) }); }
+          else if (r < 0.50) { window.animator.trigger('pose_hanche_g',     { duration: 60 + Math.floor(Math.random() * 24) }); }
+          else if (r < 0.70) { window.animator.trigger('pose_hanche_d',     { duration: 60 + Math.floor(Math.random() * 24) }); }
+          else if (r < 0.88) { window.animator.trigger('pose_croises',      { duration: 72 + Math.floor(Math.random() * 24) }); }
+          else               { window.animator.trigger('pose_salut',         { duration: 12 + Math.floor(Math.random() * 6)  }); }
         } else {
-          // Niveau bonheur normal — poses idle uniquement
+          // ha < 4 — poses idle normales uniquement
           if      (r < 0.35) { window.animator.trigger('pose_hanche_g', { duration: 60 + Math.floor(Math.random() * 24) }); }
           else if (r < 0.70) { window.animator.trigger('pose_hanche_d', { duration: 60 + Math.floor(Math.random() * 24) }); }
           else if (r < 0.90) { window.animator.trigger('pose_croises',  { duration: 72 + Math.floor(Math.random() * 24) }); }

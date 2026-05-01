@@ -918,18 +918,21 @@ const LAYERS_TEEN = [
     ]
   },
 
-  // ── OURSON — oreilles rondes basses et bien espacées ───────────
-  // RÔLE : 2px de haut × 2px de large, forme ramassée et ronde.
-  // Animation : petite pulsation verticale (battement doux, les deux oreilles ensemble).
+  // ── OURSON — oreilles rondes larges et bien espacées ───────────
+  // RÔLE : 3px de haut × 3px de large, bien écartées du corps, forme ronde.
+  //        Rangée du bas 3px, milieu 3px, sommet 1px centré = silhouette demi-cercle.
+  // Animation : pulsation verticale douce, les deux ensemble.
   {
     id: 'oreilles-ourson-corps',
     fill: 'C.body',
     when: (pm) => pm.headStyle === 'ourson',
     rects: [
-      { x: -3, y: -1, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
-      { x: -3, y: -2, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
-      { x:  1, y: -1, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
-      { x:  1, y: -2, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x: -4, y: -1, w: 3, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 }, // base gauche (3px)
+      { x: -4, y: -2, w: 3, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 }, // milieu gauche (3px)
+      { x: -3, y: -3, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 }, // sommet gauche centré (1px)
+      { x:  1, y: -1, w: 3, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 }, // base droite (3px)
+      { x:  1, y: -2, w: 3, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 }, // milieu droit (3px)
+      { x:  2, y: -3, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 }, // sommet droit centré (1px)
     ]
   },
   {
@@ -937,25 +940,30 @@ const LAYERS_TEEN = [
     fill: 'C.cheek',
     when: (pm) => pm.headStyle === 'ourson',
     rects: [
-      { x: -3, y: -1, w: 1, h: 1, rawDx: 2, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
-      { x:  1, y: -1, w: 1, h: 1, rawDx: 2, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      // Creux intérieur 2×1 PX au centre de chaque oreille
+      { x: -4, y: -1, w: 2, h: 1, rawDx: 2, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 }, // creux gauche
+      { x:  1, y: -1, w: 2, h: 1, rawDx: 2, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 }, // creux droit
     ]
   },
 
-  // ── CHAT — oreilles pointues triangulaires ──────────────────────
-  // RÔLE : Triangle pixel art 3 rangées — base 2px, milieu 1px décalé, sommet 1px.
-  // Animation : tressaillement bref et rapide à intervalles irréguliers (sinus à haute fréquence).
+  // ── CHAT — triangles pointus vers le haut-extérieur ─────────────
+  // RÔLE : Triangle pixel art — base large en bas (3px), se rétrécit vers la pointe externe en haut.
+  //        Oreille gauche : base à x:-4, pointe vers x:-2 (haut-extérieur gauche).
+  //        Oreille droite : base à x:1,  pointe vers x:3  (haut-extérieur droit).
+  // Animation : micro-tressaillement à la pointe seulement (chat qui dresse les oreilles).
   {
     id: 'oreilles-chat-corps',
     fill: 'C.body',
     when: (pm) => pm.headStyle === 'chat',
     rects: [
-      { x: -3, y: -1, w: 2, h: 1 },                                                              // base gauche
-      { x: -3, y: -2, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? 2 : 0 }, // milieu gauche (tressaille)
-      { x: -3, y: -3, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? 2 : 0 }, // pointe gauche
-      { x:  2, y: -1, w: 2, h: 1 },                                                              // base droite
-      { x:  2, y: -2, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? -2 : 0 }, // milieu droit (tressaille symétrique)
-      { x:  2, y: -3, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? -2 : 0 }, // pointe droite
+      { x: -4, y: -1, w: 3, h: 1 },           // base gauche (large — 3px)
+      { x: -4, y: -2, w: 2, h: 1 },           // milieu gauche (se rétrécit)
+      { x: -4, y: -3, w: 1, h: 1,             // pointe gauche (1px — tressaille vers l'ext)
+        rawDxFn: () => Math.sin(Date.now() * 0.006) * 1.2 },
+      { x:  1, y: -1, w: 3, h: 1 },           // base droite
+      { x:  2, y: -2, w: 2, h: 1 },           // milieu droit
+      { x:  3, y: -3, w: 1, h: 1,             // pointe droite (tressaille vers l'ext)
+        rawDxFn: () => -Math.sin(Date.now() * 0.006) * 1.2 },
     ]
   },
   {
@@ -963,8 +971,8 @@ const LAYERS_TEEN = [
     fill: 'C.cheek',
     when: (pm) => pm.headStyle === 'chat',
     rects: [
-      { x: -3, y: -1, w: 1, h: 1, rawDx: 2 }, // creux gauche
-      { x:  2, y: -1, w: 1, h: 1 },            // creux droit
+      { x: -4, y: -1, w: 1, h: 1, rawDx: 3 }, // creux gauche (intérieur, décalé vers le centre)
+      { x:  1, y: -1, w: 1, h: 1, rawDx: 2 }, // creux droit
     ]
   },
 
@@ -1458,10 +1466,12 @@ const LAYERS_ADULT = [
     fill: 'C.body',
     when: (pm) => pm.headStyle === 'ourson',
     rects: [
-      { x: -3, y: -1, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
-      { x: -3, y: -2, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
-      { x:  1, y: -1, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
-      { x:  1, y: -2, w: 2, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x: -4, y: -1, w: 3, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x: -4, y: -2, w: 3, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x: -3, y: -3, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x:  1, y: -1, w: 3, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x:  1, y: -2, w: 3, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x:  2, y: -3, w: 1, h: 1, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
     ]
   },
   {
@@ -1469,8 +1479,8 @@ const LAYERS_ADULT = [
     fill: 'C.cheek',
     when: (pm) => pm.headStyle === 'ourson',
     rects: [
-      { x: -3, y: -1, w: 1, h: 1, rawDx: 2, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
-      { x:  1, y: -1, w: 1, h: 1, rawDx: 2, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x: -4, y: -1, w: 2, h: 1, rawDx: 2, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
+      { x:  1, y: -1, w: 2, h: 1, rawDx: 2, rawDyFn: () => Math.sin(Date.now() * 0.0018) * 1.5 },
     ]
   },
 
@@ -1480,12 +1490,12 @@ const LAYERS_ADULT = [
     fill: 'C.body',
     when: (pm) => pm.headStyle === 'chat',
     rects: [
-      { x: -3, y: -1, w: 2, h: 1 },
-      { x: -3, y: -2, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? 2 : 0 },
-      { x: -3, y: -3, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? 2 : 0 },
-      { x:  2, y: -1, w: 2, h: 1 },
-      { x:  2, y: -2, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? -2 : 0 },
-      { x:  2, y: -3, w: 1, h: 1, rawDxFn: () => Math.abs(Math.sin(Date.now() * 0.003)) < 0.08 ? -2 : 0 },
+      { x: -4, y: -1, w: 3, h: 1 },           // base gauche
+      { x: -4, y: -2, w: 2, h: 1 },           // milieu gauche
+      { x: -4, y: -3, w: 1, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.006) * 1.2 }, // pointe gauche
+      { x:  1, y: -1, w: 3, h: 1 },           // base droite
+      { x:  2, y: -2, w: 2, h: 1 },           // milieu droit
+      { x:  3, y: -3, w: 1, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.006) * 1.2 }, // pointe droite
     ]
   },
   {
@@ -1493,8 +1503,8 @@ const LAYERS_ADULT = [
     fill: 'C.cheek',
     when: (pm) => pm.headStyle === 'chat',
     rects: [
-      { x: -3, y: -1, w: 1, h: 1, rawDx: 2 },
-      { x:  2, y: -1, w: 1, h: 1 },
+      { x: -4, y: -1, w: 1, h: 1, rawDx: 3 },
+      { x:  1, y: -1, w: 1, h: 1, rawDx: 2 },
     ]
   },
 

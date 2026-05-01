@@ -95,6 +95,10 @@ async function loadDataFiles() {
     const shop_   = results[1].status === 'fulfilled' ? results[1].value.catalogue || [] : [];
     const packs_  = results[2].status === 'fulfilled' ? results[2].value.catalogue || [] : [];
     window.PROPS_LIB = [...base_, ...shop_, ...packs_];
+    // RÔLE : Mémorise séparément les objets de départ pour pouvoir reconstruire l'inventaire initial.
+    // POURQUOI : Le cheat code "resetinv" en a besoin — PROPS_LIB mélange base/shop/packs
+    //            sans moyen fiable de les distinguer après coup.
+    window.PROPS_BASE = base_;
 
       // RÔLE : Charge un catalogue d'objets exclusifs si user_config définit extraPropsFile.
       // POURQUOI : Permet à Alexia d'avoir ses propres objets sans polluer le catalogue commun.

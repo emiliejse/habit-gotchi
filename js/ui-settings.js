@@ -1333,11 +1333,10 @@ function applyCheatCode() {
     'resetmsg3':    () => { D.thoughtCount = 0; D.lastThoughtDate = null; toast('💬 Quota pensées → 0/3'); },
     // RÔLE : Vide l'inventaire et remet uniquement les objets de départ (props_base).
     // POURQUOI : Permet de tester l'état "nouveau joueur·se" sans réinitialiser toute la save.
-    //            Les props de pack ont aussi cout:0 — on les distingue via l'absence du champ "pack".
-    //            C'est la même logique que bootstrap() qui charge uniquement base_.
+    //            On utilise window.PROPS_BASE (exposé dans app.js au chargement) qui contient
+    //            exclusivement le catalogue props_base.json — sans shop ni packs.
     'resetinv': () => {
-      // Récupère uniquement les props sans champ "pack" = objets de props_base uniquement
-      const base = (window.PROPS_LIB || []).filter(p => !p.pack);
+      const base = window.PROPS_BASE || [];
       // Reconstruit l'inventaire proprement : seulement les props_base, tous inactifs
       D.g.props = base.map(p => ({ id: p.id, nom: p.nom, type: p.type, emoji: p.emoji, actif: false }));
       toast('🗑️ Inventaire remis à zéro (objets de départ uniquement)');

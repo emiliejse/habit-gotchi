@@ -1252,6 +1252,25 @@ body {
 .btn-export:hover  { background: var(--paper-border); }
 .btn-export:active { transform: scale(.94); }
 
+/* RÔLE : Switchers à onglets (boutique Catalogue/Créations, agenda Jour/Mois/Cycle) */
+/* POURQUOI : padding:7px seul donnait ~30px — sous les 44px recommandés Apple HIG */
+/* AUDIT 6.1 : min-height 44px, styles inline externalisés */
+.tab-switcher-btn {
+  flex: 1;
+  min-height: 44px;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: none;
+  font-size: var(--fs-sm);
+  font-weight: bold;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* RÔLE : Boutons switcher d'environnement dans l'inventaire */
 /* POURQUOI : Style était 100% inline dans index.html (~30px de hauteur, sous les 44px recommandés) */
 /* AUDIT 6.1 : externalisé + cible portée à 44px min */

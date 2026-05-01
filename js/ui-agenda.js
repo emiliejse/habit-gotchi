@@ -73,20 +73,14 @@ function ouvrirAgenda(dateStr) {
     ${window._modalCloseBtn('fermerAgenda()')} <!-- RÔLE : bouton ✕ standardisé — appelle fermerAgenda() au lieu de clModal() -->
   </div>
   <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px">
-    <button onclick="switchAgenda('jour')" id="atab-jour"
-      style="flex:1;padding:7px;border-radius:999px;border:none;font-size:var(--fs-sm);
-      cursor:pointer;font-weight:bold;font-family:var(--font-body);transition:.15s">
+    <button onclick="switchAgenda('jour')" id="atab-jour" class="tab-switcher-btn">
       📅 Jour
     </button>
-    <button onclick="switchAgenda('mois')" id="atab-mois"
-      style="flex:1;padding:7px;border-radius:999px;border:none;font-size:var(--fs-sm);
-      cursor:pointer;font-weight:bold;font-family:var(--font-body);transition:.15s">
+    <button onclick="switchAgenda('mois')" id="atab-mois" class="tab-switcher-btn">
       🗓️ Mois
     </button>
     ${showCycle() ? `
-    <button onclick="switchAgenda('cycle')" id="atab-cycle"
-      style="flex:1;padding:7px;border-radius:999px;border:none;font-size:var(--fs-sm);
-      cursor:pointer;font-weight:bold;font-family:var(--font-body);transition:.15s">
+    <button onclick="switchAgenda('cycle')" id="atab-cycle" class="tab-switcher-btn">
       🌸 Cycle
     </button>` : ''}
   </div>

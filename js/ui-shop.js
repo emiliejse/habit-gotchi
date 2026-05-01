@@ -313,20 +313,16 @@ function ouvrirBoutique() {
     </div>
 
     <div style="display:flex;gap:6px;margin-bottom:14px;background:rgba(0,0,0,0.05);border-radius:20px;padding:3px;margin-right:2px">
-      <button onclick="switchBoutiqueOnglet('catalogue')"
-        style="flex:1;padding:7px;border-radius:var(--r-xl);border:none;font-size:var(--fs-xs);cursor:pointer;font-weight:bold;font-family:var(--font-body);
-        background:${onglet==='catalogue'?'#fff':'transparent'};
+      <button onclick="switchBoutiqueOnglet('catalogue')" class="tab-switcher-btn"
+        style="background:${onglet==='catalogue'?'#fff':'transparent'};
         color:${onglet==='catalogue'?'var(--lilac)':'var(--text2)'};
-        box-shadow:${onglet==='catalogue'?'0 1px 4px rgba(0,0,0,.1)':'none'};
-        transition:.15s">
+        box-shadow:${onglet==='catalogue'?'0 1px 4px rgba(0,0,0,.1)':'none'}">
         🌸 Catalogue
       </button>
-      <button onclick="switchBoutiqueOnglet('claude')"
-        style="flex:1;padding:7px;border-radius:var(--r-xl);border:none;font-size:var(--fs-xs);cursor:pointer;font-weight:bold;font-family:var(--font-body);
-        background:${onglet==='claude'?'#fff':'transparent'};
+      <button onclick="switchBoutiqueOnglet('claude')" class="tab-switcher-btn"
+        style="background:${onglet==='claude'?'#fff':'transparent'};
         color:${onglet==='claude'?'var(--lilac)':'var(--text2)'};
-        box-shadow:${onglet==='claude'?'0 1px 4px rgba(0,0,0,.1)':'none'};
-        transition:.15s">
+        box-shadow:${onglet==='claude'?'0 1px 4px rgba(0,0,0,.1)':'none'}">
         ✨ Créations
       </button>
     </div>

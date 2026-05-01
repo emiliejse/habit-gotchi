@@ -32,7 +32,7 @@ Trois priorités d'action :
 | ✅ FIXÉ | S6 IA | Limites quotidiennes strictes (3 pensées + 3 soutien + 1 objet) sans compensation visible côté UI — **Fixé 2026-05-01** : fleurs ✿ soutien ajoutées sur le post-it menu (`#soutien-flowers`, même pattern que `#thought-count`) ; infos RDV du jour (icônes extraites du label) + phase cycle (`● Label Jn`) ajoutées sur le post-it agenda (`#agenda-postit-info`, `updAgendaPostit()`). L'objet IA n'a pas de limite — freiné par les pétales. | `js/ui-ai.js:189, 597` · `index.html:486-496` · `js/ui-settings.js:updSoutienFlowers, updAgendaPostit` · `css/style.css:.agenda-postit-info, #soutien-flowers` |
 | ✅ FIXÉ | S4 Snacks | ~~Pas de `lockScroll()` sur la fenêtre snack~~ — les 4 branches de `ouvrirSnack()` passent par `openModal()`, lockScroll unifié. (2026-05-01) | `js/ui-settings.js:43-122` |
 | ✅ FIXÉ | S1 Économie | Bonus "journée complète" +2 pétales quand toutes les habitudes du jour sont cochées — guard `__journee_complete__` dans `petalesEarned`, 1×/jour, bulle dédiée si bonus disponible. Maintient les multiples de 2 de l'économie. (2026-05-01) | `js/app.js` — `toggleHab()` ~L1046 |
-| 🟡 MOY | S5 Crottes | Spawn aléatoire 65% sans pattern lié aux états (faim, énergie) → événement 100% passif | `js/app.js:514-529` |
+| ✅ FIXÉ | S5 Crottes | Probabilité de spawn modulée par état du Gotchi : 25% si faim≥2 / 35% si énergie≤3 / 80% si bien nourri / 60% normal — remplace le 65% fixe (2026-05-01) | `js/app.js:maybeSpawnPoop` |
 | 🟢 BAS | S7 Inventaire | Seuls 2 paliers de prix (0 ou 6) → pas de hiérarchie d'objets désirables | `data/props.json` |
 | 🟢 BAS | S8 Notifications | Aucune notification native (Notification API jamais appelée) | — |
 | 🟢 BAS | S3 États | Aucun mapping état→bulle pour `salete` élevée seule (sans crottes) | `data/personality.json` |
@@ -205,9 +205,9 @@ Matin : 7-11    Midi : 11-15    Soir : 18-22
 
 ### 5a. Diagnostic
 
-**Spawn crottes** (`js/app.js:465-489, 514-529`)
+**Spawn crottes** (`js/app.js:maybeSpawnPoop`)
 - Délai min entre spawns : 8 min
-- Probabilité par tick : 65%
+- Probabilité par tick : **modulée par état** (25% / 35% / 60% / 80% selon faim + énergie) — fixé 2026-05-01
 - Pas de spawn entre 22h et 7h
 - Max 5 crottes visibles
 - `lastPoopSpawn` stocké dans `D.g`

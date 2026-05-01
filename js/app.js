@@ -619,7 +619,26 @@ function maybeSpawnPoop() {
   const minDelay = POOP_MIN_DELAY_MS; // 8 minutes minimum entre 2 crottes
 
   if (now - last < minDelay) return;
-  if (Math.random() < 0.65) spawnPoop();
+
+  // RÔLE : Probabilité de spawn modulée par l'état du Gotchi.
+  // POURQUOI : Rend les crottes cohérentes avec le système de jeu —
+  //            un gotchi affamé ou épuisé a un métabolisme ralenti,
+  //            un gotchi bien nourri digère activement.
+  const hunger = window.D.g.hunger || 0;
+  const energy = window.D.g.energy ?? 5;
+
+  let spawnChance;
+  if (hunger >= 2) {
+    spawnChance = 0.25;       // affamé → système digestif en souffrance
+  } else if (energy <= 3) {
+    spawnChance = 0.35;       // épuisé → métabolisme ralenti
+  } else if (hunger === 0) {
+    spawnChance = 0.80;       // bien nourri → digestion active
+  } else {
+    spawnChance = 0.60;       // état normal
+  }
+
+  if (Math.random() < spawnChance) spawnPoop();
 }
 
 /* ─── SYSTÈME 1 : Repas (Fenêtres + Snack préféré hebdo) ─────────── */

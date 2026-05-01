@@ -366,7 +366,7 @@ Optionnels : `ancrage` (accessoires : "tete"), `motion` (ambiance : "fall").
 | ~~Objet milestone offert~~ | S7 | ✅ FAIT 2026-05-01 — `offrirPropMilestone()` dans `addXp()`, pools par stade (baby/teen/adult), guard `D.milestoneProps` | — | 🔥🔥 |
 | ~~Goûter 15-17h~~ | S4 | ✅ FAIT 2026-05-01 — fenêtre `gouter` dans `MEAL_WINDOWS` (`bonus:true`), +1 pétale, branche dédiée dans `giveSnack()` | — | 🔥 |
 | ~~Habitude vedette du jour~~ | S2 | ✅ FAIT 2026-05-01 — `refreshCatVedette()` tirage déterministe par date, +2 bonus pétales, badge ⭐ dans `renderHabs()`, classe `.hab--vedette` | — | 🔥🔥 |
-| ~~Pack thématique boutique~~ | S7 | ✅ FAIT 2026-05-01 — `SHOP_PACKS` dans `config.js` (3 packs), `acheterPack()` dans `ui-shop.js`, section Packs dans catalogue boutique | — | 🔥 |
+| ~~Pack thématique boutique~~ | S7 | ✅ FAIT 2026-05-01 (v2) — Pack Printemps 🌸 exclusif (5 objets pixel art dédiés `categorie:"pack"`, 20🌸), filtrés hors catalogue normal. `acheterPack()`, `SHOP_PACKS` dans `config.js`. | — | 🔥 |
 | ~~Bulle "j'ai faim" anticipée~~ | S4 | ✅ FAIT 2026-05-01 — Priorité 2b dans `updBubbleNow()` : 30 min avant prochaine fenêtre non encore prise | — | 🔥🔥 |
 | ~~Easing transitions états~~ | S3 | ✅ FAIT 2026-05-01 — `_dispEnergy`/`_dispHappy` lerp 0.12/frame dans `p.draw()` (`render.js`) | — | 🔥 |
 

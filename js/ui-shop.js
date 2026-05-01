@@ -351,8 +351,13 @@ function renderBoutiqueOnglet(onglet) {
 
   if (onglet === 'catalogue') {
     const lib = window.PROPS_LIB || [];
-    const libFiltree = lib.filter(prop => !(D.g.props || []).find(p => p.id === prop.id))
-    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+    // RÔLE : Exclure les objets exclusifs de pack (categorie: "pack") du catalogue normal.
+    // POURQUOI : Ces objets ne sont achetables qu'en pack — les voir ici sans pouvoir les acheter
+    //            serait confus. Ils disparaissent du catalogue une fois le pack acheté.
+    const libFiltree = lib
+      .filter(prop => prop.categorie !== 'pack')
+      .filter(prop => !(D.g.props || []).find(p => p.id === prop.id))
+      .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
 
     // ── Section Packs thématiques ──────────────────────────────────
     // RÔLE : Affiche les packs groupés en haut du catalogue si au moins 1 est disponible.

@@ -244,34 +244,25 @@ const CYCLE_DEFAULT_DURATION = 28;
 //            dans le sous-objet HG_CONFIG.GAMEPLAY pour les distinguer
 //            des constantes visuelles/UI sans créer un second namespace.
 /* ─── PACKS THÉMATIQUES BOUTIQUE (S7) ───────────────────────────── */
-// RÔLE : 3 objets cohérents vendus ensemble à prix groupé (économie de 2 pétales vs. achat séparé).
-// POURQUOI : Crée une unité narrative et un sentiment de valeur sans modifier les prix unitaires.
-//            Chaque pack contient des propIds qui doivent exister dans props.json.
-//            prix = 3 × 6 - 2 = 16 pétales pour 3 objets (au lieu de 18).
+// RÔLE : Packs d'objets EXCLUSIFS vendus uniquement en pack — absents du catalogue normal.
+// POURQUOI : Les objets avec `categorie: "pack"` dans props.json sont filtrés hors du catalogue
+//            standard (renderBoutiqueOnglet l'exclut). Ils ne peuvent être obtenus qu'ici.
+//            Chaque pack = 5 objets pixel art dédiés au thème, prix unique 20 🌸.
+// RÈGLE : propIds doivent tous avoir categorie:"pack" dans props.json pour rester exclusifs.
 const SHOP_PACKS = [
   {
-    id: 'pack_cosy',
-    label: 'Pack Cosy',
-    emoji: '🕯️',
-    description: 'Bougie • Coussin • Tapis — pour créer un nid douillet',
-    propIds: ['bougie01', 'coussin01', 'tapis01'],
-    cout: 10, // 3 objets à 6 = 18, pack = 10 (-8 de réduction, car certains sont gratuits normalement)
-  },
-  {
-    id: 'pack_nature',
-    label: 'Pack Nature',
-    emoji: '🌿',
-    description: 'Plante Grasse • Petit Cactus • Champignon Luisant',
-    propIds: ['plante01', 'cactus01', 'champignon01'],
-    cout: 8, // plante01 gratuite, cactus01 et champignon01 à 6 chacun = 12, pack = 8
-  },
-  {
-    id: 'pack_mystique',
-    label: 'Pack Mystique',
-    emoji: '✨',
-    description: 'Chapeau de Sorcier • Pluie d\'Étoiles • Flocon Éternel',
-    propIds: ['chapeau_sorcier01', 'etoiles01', 'flocon01'],
-    cout: 10, // etoiles01 gratuite, chapeau et flocon à 6 = 12, pack = 10
+    id: 'pack_printemps',
+    label: 'Pack Printemps',
+    emoji: '🌸',
+    description: 'Branche de Cerisier • Petite Coccinelle • Couronne de Fleurs • Pluie de Printemps • Petit Nid Douillet',
+    propIds: [
+      'pack_printemps_cerisier',
+      'pack_printemps_coccinelle',
+      'pack_printemps_couronne_fleurs',
+      'pack_printemps_pluie_douce',
+      'pack_printemps_nid',
+    ],
+    cout: 20,
   },
 ];
 

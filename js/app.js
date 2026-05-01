@@ -97,7 +97,9 @@ async function loadDataFiles() {
 
       window.PROPS_LIB.forEach(prop => {
         // Ajoute automatiquement les objets gratuits (cout = 0) à l'inventaire
-        if (prop.cout === 0 && window.D && !window.D.g.props.find(p => p.id === prop.id)) {
+        // POURQUOI : les objets categorie:"pack" sont exclusifs — ils ne doivent PAS
+        //            être offerts automatiquement même si leur cout vaut 0.
+        if (prop.cout === 0 && prop.categorie !== 'pack' && window.D && !window.D.g.props.find(p => p.id === prop.id)) {
           D.g.props.push({ id: prop.id, nom: prop.nom, type: prop.type, emoji: prop.emoji, actif: false });
         }
       });
@@ -760,16 +762,16 @@ function giveSnack(emoji) {
   const meals = ensureMealsToday();
   if (meals[win]) return;              // déjà mangé sur cette fenêtre
 
-  // RÔLE : Le goûter (15h-17h) est une fenêtre bonus — +1 pétale seulement.
+  // RÔLE : Le goûter (15h-17h) est une fenêtre bonus — +2 pétales (multiple de 2 comme tout le reste).
   // POURQUOI : Fenêtre optionnelle légère, pas de snack préféré, pas de hunger reset
   //            (le gotchi n'a pas "faim" au goûter, c'est une petite douceur).
   const winDef = window.HG_CONFIG?.MEAL_WINDOWS?.[win];
   if (winDef?.bonus) {
     meals[win] = true;
-    window.D.g.petales = (window.D.g.petales || 0) + 1;
+    window.D.g.petales = (window.D.g.petales || 0) + 2;
     save();
-    addEvent({ type: 'note', subtype: 'meal', valeur: 1,
-      label: `${emoji} goûter  +1 🌸` });
+    addEvent({ type: 'note', subtype: 'meal', valeur: 2,
+      label: `${emoji} goûter  +2 🌸` });
     const msgs = ["Miam, une petite douceur ! 🍪", "Goûter ! 💜", "*croque*  ✿", "Un petit quelque chose ? Avec plaisir ! 🌸"];
     flashBubble(msgs[Math.floor(Math.random() * msgs.length)], 2200);
     window.eatAnim = { active: true, timer: 50, emoji: emoji, jumped: false };
@@ -1038,10 +1040,12 @@ window.refreshCatVedette = refreshCatVedette;
 //            On cible des objets non encore acquis, dans l'ordre d'un pool par stade.
 //            Si tous les objets du pool sont acquis → rien (évite les doublons).
 // APPELÉ par : addXp() quand ancienStade !== nouveauStade et n > 0.
+// POURQUOI : Uniquement des objets à cout 6 (les cout 0 sont déjà dans l'inventaire par défaut).
+//            On offre dans l'ordre du pool — le 1er non-acquis est choisi.
 const MILESTONE_PROPS_POOL = {
-  baby:  ['bougie01', 'tapis01', 'etoiles01'],
-  teen:  ['lunettes01', 'lucioles_forestieres', 'plante01'],
-  adult: ['coussin01', 'nuage_reve01', 'flocon01'],
+  baby:  ['noeud01', 'champignon01', 'cactus01'],
+  teen:  ['echarpe01', 'toque01', 'lampe01'],
+  adult: ['couronne01', 'chapeau_sorcier01', 'nuage_reve01', 'flocon01', 'coussin01'],
 };
 
 function offrirPropMilestone(stadeLabel) {
@@ -1129,9 +1133,11 @@ function toggleHab(catId) {
       window.D.g.petales = (window.D.g.petales || 0) + gainTotal;
       window.D.petalesEarned[td].push(catId);
 
-      // Toast vedette si c'est la catégorie du jour
+      // Toast + console vedette si c'est la catégorie du jour
       if (isVedette) {
         const cat = CATS.find(c => c.id === catId);
+        // Toast discret dans la console du jeu (terminal/eventLog)
+        if (typeof toast === 'function') toast(`⭐ Vedette du jour ! +${bonusVedette} 🌸 bonus`);
         setTimeout(() => {
           const el = document.querySelector(`[onclick="toggleHab('${catId}')"]`);
           if (el) floatXP(el.closest('.hab'), `⭐ Vedette — +${gainTotal} 🌸 !`);
@@ -1340,8 +1346,9 @@ function changeEnv(v) { window.D.g.activeEnv = v; save(); }
 function initBaseProps() {
   if (window.D.propsInitialized) return;
 
-  // 1. Objets gratuits (cout = 0) — comportement existant
-  const base = (window.PROPS_LIB || []).filter(p => p.cout === 0);
+  // 1. Objets gratuits (cout = 0) — hors objets exclusifs de pack
+  // POURQUOI : categorie:"pack" = exclusifs achetables uniquement en pack, pas en cadeau auto.
+  const base = (window.PROPS_LIB || []).filter(p => p.cout === 0 && p.categorie !== 'pack');
   base.forEach(b => {
     if (!window.D.g.props.find(p => p.id === b.id)) {
       window.D.g.props.push({ id:b.id, nom:b.nom, type:b.type, emoji:b.emoji||'🎁', actif:false });
@@ -1540,23 +1547,45 @@ function updBubbleNow() {
     return;
   }
 
-  // ── Priorité 2b : Anticipation repas (30 min avant la prochaine fenêtre) ──
-  // RÔLE : Si on est à moins de 30 min d'une fenêtre repas et que ce repas n'a pas
-  //        encore été pris aujourd'hui → bulle d'appétit anticipée.
+  // ── Priorité 2b : Repas oublié (fenêtre active non prise) + anticipation (30 min avant) ──
+  // RÔLE : Deux cas couverts :
+  //   A) On est dans une fenêtre repas ouverte et le repas n'a pas encore été pris.
+  //   B) On est à moins de 30 min de l'ouverture d'une fenêtre non encore prise.
   // POURQUOI : Agit comme un rappel doux sans notification native.
   //            Uniquement si hunger < 2 (sinon la Priorité 2 a déjà géré).
-  //            Seulement si la fenêtre n'est pas encore commencée (on évite la redondance
-  //            avec ouvrirSnack() qui gère le cas "hors fenêtre").
+  //            ensureMealsToday() est la source de vérité pour les repas du jour.
   if (h >= 7 && h < 22) {
     const mins = new Date().getMinutes();
-    const hFloat = h + mins / 60; // heure en décimal pour comparer aux bornes
-    const meals = (window.D.mealsToday) ? window.D.mealsToday[today()] ?? {} : {};
+    const hFloat = h + mins / 60;
+    const meals   = typeof ensureMealsToday === 'function' ? ensureMealsToday() : {};
     const WINDOWS = window.HG_CONFIG?.MEAL_WINDOWS ?? {};
+
+    // Cas A : fenêtre active sans repas pris (hors goûter — trop léger pour insister)
+    let fenetreOubliee = null;
+    for (const [key, w] of Object.entries(WINDOWS)) {
+      if (w.bonus) continue; // goûter ignoré
+      if (hFloat >= w.start && hFloat < w.end && !meals[key]) {
+        fenetreOubliee = w;
+        break;
+      }
+    }
+    if (fenetreOubliee) {
+      const pool = [
+        `${fenetreOubliee.icon} C'est l'heure du ${fenetreOubliee.label.toLowerCase()}… tu n'as pas oublié ? 🍽️`,
+        `Hé ! Le ${fenetreOubliee.label.toLowerCase()} c'est maintenant ! J'ai faim moi 🥺`,
+        `*regarde l'heure* ${fenetreOubliee.icon} Le ${fenetreOubliee.label.toLowerCase()} t'attend… 🌸`,
+      ];
+      const el = document.getElementById('bubble');
+      if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+      return;
+    }
+
+    // Cas B : dans les 30 min avant l'ouverture d'une fenêtre non prise
     let prochaine = null;
     for (const [key, w] of Object.entries(WINDOWS)) {
-      const dist = w.start - hFloat; // positif = fenêtre pas encore commencée
+      if (w.bonus) continue; // goûter ignoré
+      const dist = w.start - hFloat;
       if (dist > 0 && dist <= 0.5 && !meals[key]) {
-        // On est entre 0 et 30 min avant l'ouverture de cette fenêtre, pas encore mangé
         prochaine = w;
         break;
       }

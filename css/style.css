@@ -1495,6 +1495,17 @@ details.settings-section.danger > summary { color: var(--danger); }
 
 /* ─── SYSTÈME 6 : LE TERMINAL (Événements Cachés) ────────────────── */
 
+/* RÔLE : Animation d'ouverture de la tablette — slide depuis le coin supérieur droit */
+/* POURQUOI : @keyframes tabletOpen était référencé dans #tablet-box mais jamais défini —
+              la tablette s'ouvrait donc sans transition (bug silencieux). */
+@keyframes tabletOpen {
+  from { opacity: 0; transform: scale(0.9) translateY(-8px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #tablet-box { animation: none; }
+}
+
 #tablet-overlay {
   /* RÔLE : position/inset/pointer-events hérités de .app-overlay (ajouté dans index.html).
      POURQUOI : #tablet-overlay est à z-index:400 — au-dessus de .modal (300).

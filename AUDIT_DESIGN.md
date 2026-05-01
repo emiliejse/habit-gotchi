@@ -333,7 +333,7 @@ config.js → app.js → render.js → envs.js → render-sprites.js
 | `modalPop` | ✅ `style.css:1135` | `.modal-pop` | ✅ |
 | `bookSlideUp` | ✅ `style.css:575` | `.menu-overlay.open .menu-book` | ✅ |
 | `shopOpen` | ✅ `style.css:1260` | `.modal-box.shop-open` | ✅ |
-| `tabletOpen` | 🔴 **NON DÉFINIE** | référencée `style.css:1240` (`#tablet-box`) | 🔴 silencieuse |
+| `tabletOpen` | ✅ `style.css` | `#tablet-box` | ✅ RÉSOLU 2026-05-01 — `scale(0.9)+translateY(-8px)` → `scale(1)` en 0.2s, `prefers-reduced-motion` respecté |
 | `tamaSway`, `tamaSwayStrong` | ✅ `style.css:1317-1328` | `.tama-wind`, `.tama-wind-strong` | ✅ |
 | `jEntryFadeIn` | ✅ `style.css:986` | `.j-entry` | ✅ |
 | `shakeRow` | ✅ `style.css:1120` | `#mood-pick.mood-required .mood-b` | ✅ |

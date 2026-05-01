@@ -1082,9 +1082,11 @@ const LAYERS_TEEN = [
   // ── Joues pulsantes (couleur interpolée dynamiquement) ──────────
   // POURQUOI : p.lerpColor ne peut pas être une clé statique — fillFn calcule
   //            la couleur à chaque frame à partir de getCheekPulse().
+  //            La couleur d'arrivée du lerp est calculée depuis C.cheek (version saturée)
+  //            pour que le pulse reste cohérent quelle que soit la couleur choisie.
   {
     id: 'joues',
-    fillFn: (pm, p) => p.lerpColor(p.color(C.cheek), p.color('#e88098'), pm.pulse),
+    fillFn: (pm, p) => { const base = p.color(C.cheek); const sat = p.color(p.red(base)*0.85, p.green(base)*0.72, p.blue(base)*0.82); return p.lerpColor(base, sat, pm.pulse); },
     rects: [
       { x: -3, y: 4, w: 1, h: 1 },   // joue gauche
       { x:  2, y: 4, w: 1, h: 1 },   // joue droite
@@ -1094,7 +1096,7 @@ const LAYERS_TEEN = [
   // ── Joues débordantes si joie (semi-transparentes) ──────────────
   {
     id: 'joues-joie',
-    fillFn: (pm, p) => p.lerpColor(p.color(C.cheek), p.color('#e88098'), pm.pulse),
+    fillFn: (pm, p) => { const base = p.color(C.cheek); const sat = p.color(p.red(base)*0.85, p.green(base)*0.72, p.blue(base)*0.82); return p.lerpColor(base, sat, pm.pulse); },
     alpha: 0.7,
     when: (pm) => isMood('joie'),
     rects: [
@@ -1610,9 +1612,11 @@ const LAYERS_ADULT = [
   // ── Joues pulsantes ─────────────────────────────────────────────
   // POURQUOI : Décalées d'1px vers l'extérieur (x:-4 / x:3) pour rester visibles
   //            quand le sourire occupe x:-3 et x:2 (coins de bouche-joie).
+  //            La couleur de pulse est calculée depuis C.cheek (version saturée) —
+  //            pas de couleur fixe hardcodée, le pulse s'adapte à la couleur choisie.
   {
     id: 'joues',
-    fillFn: (pm, p) => p.lerpColor(p.color(C.cheek), p.color('#e88098'), pm.pulse),
+    fillFn: (pm, p) => { const base = p.color(C.cheek); const sat = p.color(p.red(base)*0.85, p.green(base)*0.72, p.blue(base)*0.82); return p.lerpColor(base, sat, pm.pulse); },
     rects: [
       { x: -4, y: 6, w: 1, h: 1 },   // joue gauche — 1px plus à gauche qu'avant
       { x:  3, y: 6, w: 1, h: 1 },   // joue droite — 1px plus à droite qu'avant
@@ -1623,7 +1627,7 @@ const LAYERS_ADULT = [
   // POURQUOI : Décalées d'1px supplémentaire pour ne pas chevaucher les joues principales.
   {
     id: 'joues-joie',
-    fillFn: (pm, p) => p.lerpColor(p.color(C.cheek), p.color('#e88098'), pm.pulse),
+    fillFn: (pm, p) => { const base = p.color(C.cheek); const sat = p.color(p.red(base)*0.85, p.green(base)*0.72, p.blue(base)*0.82); return p.lerpColor(base, sat, pm.pulse); },
     alpha: 0.7,
     when: (pm) => isMood('joie'),
     rects: [

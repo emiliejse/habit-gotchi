@@ -409,8 +409,8 @@ body {
   bottom: 0;
   right: 0;
   /* RÔLE : crée le triangle de coin via clip-path — pointe vers le haut à droite */
-  width: 72px;
-  height: 72px;
+  width: 82px;
+  height: 82px;
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
   background: var(--lilac);
   border: none;
@@ -431,8 +431,8 @@ body {
 .menu-languette::after {
   content: '☰';
   position: absolute;
-  bottom: 8px;
-  right: 8px;
+  bottom: 20px;
+  right: 20px;
   font-size: 18px;
   color: #fff;
   line-height: 1;
@@ -443,8 +443,8 @@ body {
 
 /* RÔLE : Feedback tactile — légère expansion au tap */
 .menu-languette:active {
-  width: 82px;
-  height: 82px;
+  width: 92px;
+  height: 92px;
 }
 
 /* RÔLE : État menu ouvert — le triangle s'agrandit comme une feuille qu'on tire */

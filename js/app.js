@@ -57,7 +57,7 @@ let _meteoIntervalId = null;
 let _poopIntervalId  = null;
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v4.91'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v4.92'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -941,12 +941,23 @@ function computeStreaks() {
 
   // On construit la liste des catégories déclarées
   const catIds = (window.D.habits || []).map(h => h.catId);
+  const td = today();
 
   catIds.forEach(catId => {
     let streak = 0;
-    // On remonte le calendrier depuis aujourd'hui vers le passé
-    // POURQUOI : on incrémente tant que la catégorie apparaît dans D.log[date]
+
+    // RÔLE : Détermine le point de départ du calcul selon si aujourd'hui est coché ou non.
+    // POURQUOI : Si aujourd'hui n'est pas encore coché, on part d'hier pour que la série
+    //            de la veille reste visible toute la journée — le badge ne disparaît pas
+    //            au réveil avant d'avoir eu le temps de cocher.
+    //            Si aujourd'hui est coché, on part d'aujourd'hui normalement.
+    const logAujourdHui = (window.D.log[td] || []).includes(catId);
     let d = new Date();
+    if (!logAujourdHui) {
+      // Partir d'hier — la série affichée est celle construite jusqu'à hier
+      d.setDate(d.getDate() - 1);
+    }
+
     for (let i = 0; i < 365; i++) {
       // Formater la date en AAAA-MM-JJ (même format que today())
       const key = d.toISOString().slice(0, 10);
@@ -1113,6 +1124,8 @@ function toggleHab(catId) {
   if (idx >= 0) {
     window.D.log[td].splice(idx, 1);
     addXp(-15);
+    // Recalcule les streaks pour que le badge se mette à jour immédiatement
+    computeStreaks();
     // Pétales acquis définitivement, on ne les retire pas
     flashBubble("Oh... pas grave 💜", 2000);
   }

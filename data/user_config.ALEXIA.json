@@ -221,7 +221,31 @@
         "Iris reste collée ce soir 🐱",
         "Le quota d'énergie est réduit. Normal. 💜",
         "Bouillotte > productivité ✿"
-      ]
+      ],
+
+      "changeEnv": {
+        "parc": [
+          "*déploiement extérieur* ✿",
+          "Air frais chargé. ✿",
+          "Sortie autorisée 🌿",
+          "*respawn en plein air* ✿",
+          "Iris restera dedans mais bon 🐱"
+        ],
+        "chambre": [
+          "*retour à la base* 💜",
+          "Mode intérieur activé ✿",
+          "Iris approuve ce choix 🐱",
+          "*ferme la porte derrière* ✿",
+          "Recharge en cours 💜"
+        ],
+        "montagne": [
+          "*chargement du niveau montagne* 🏔️",
+          "Vue dégagée. Bilan positif. ✿",
+          "*oxygène max* 🌸",
+          "Nouveau biome débloqué ✿",
+          "Iris a le vertige 🐱"
+        ]
+      }
     }
   },
 

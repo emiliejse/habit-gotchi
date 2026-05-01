@@ -1720,6 +1720,17 @@ if (!window._gotchiActif) return true;
             window._envFadeState = { from: prevEnv, to: zone.env, frames: 0 };
             if (typeof changeEnv === 'function') changeEnv(zone.env);
             window._envSelectorOpen = false;
+
+            // RÔLE : Flashbubble contextuel quand l'utilisateur change d'env depuis l'accueil (tama).
+            // POURQUOI : Chaque destination a son pool distinct dans personality.bulles.changeEnv.
+            //            Ne se déclenche que si l'env change réellement — évite une bulle inutile
+            //            si on tape deux fois la même destination.
+            if (zone.env !== prevEnv) {
+              const pools = window.PERSONALITY?.bulles?.changeEnv
+                         || window.USER_CONFIG?.personality?.bulles?.changeEnv;
+              const msgs  = pools?.[zone.env];
+              if (msgs?.length) flashBubble(msgs[Math.floor(Math.random() * msgs.length)], 2500);
+            }
           }
           break; // un seul hit traité par tap
         }

@@ -43,12 +43,12 @@ function renderHabs() {
   // Ajoute .hab--next uniquement sur la première habitude non-cochée (si toutes pas finies)
   const isNext = !d && i === firstUndoneIndex && done < D.habits.length;
 
-  // RÔLE : Affiche le badge streak 🔥×N à droite du label si streak ≥ 2.
+  // RÔLE : Affiche le badge streak à droite du label si streak ≥ 2.
   // POURQUOI : Visible seulement à partir de 2 jours pour ne pas polluer la vue
   //            dès le premier cochage — le feedback commence à la régularité.
   const streak = (D.streaks || {})[h.catId] || 0;
   const streakBadge = streak >= 2
-    ? `<span class="streak-badge" title="${streak} jours d'affilée" style="font-size:10px;opacity:0.85;margin-right:4px;color:var(--amber,#f59e0b)">🔥×${streak}</span>`
+    ? `<span class="streak-badge" title="${streak} jours d'affilée" style="font-size:10px;opacity:0.85;margin-right:4px;color:var(--amber,#f59e0b)">${streak} jours 🔥</span>`
     : '';
 
   // RÔLE : Badge ⭐ si cette catégorie est la vedette du jour (+4 pétales).

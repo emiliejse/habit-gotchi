@@ -221,7 +221,31 @@
         "Ton corps travaille fort 🌸",
         "*s'assoit près de toi* 💜",
         "Règles = permission de ralentir ✿"
-      ]
+      ],
+
+      "changeEnv": {
+        "parc": [
+          "*sort la tête dehors* ✿",
+          "L'air frais ! 🌿",
+          "*respire un grand coup* 🌸",
+          "Le parc, enfin ! ✿",
+          "*regarde le ciel* 💜"
+        ],
+        "chambre": [
+          "*rentre doucement* 🏠",
+          "Cocooning mode ✿",
+          "*allume une bougie pixel* 💜",
+          "On se pose là 🌸",
+          "*ferme la porte* ✿"
+        ],
+        "montagne": [
+          "*grimpe avec entrain* 🏔️",
+          "La vue de là-haut ! ✿",
+          "*prend une grande inspiration* 🌸",
+          "Ici c'est plus calme 💜",
+          "*regarde l'horizon* ✿"
+        ]
+      }
     }
   },
 

@@ -623,7 +623,7 @@ Trois facteurs cumulés causaient le bug :
 ### État résiduel (non bloquant)
 
 - Les 14+ ouvertures directes de `#modal` (ouvrirSnack, confirmerSuppressionIA, voirBulles, etc.) **bypassent encore `openModal()`** mais appellent toutes `lockScroll()` via la chaîne → le scroll iOS est bloqué partout. La centralisation complète vers `openModal()`/`openModalRaw()` reste souhaitable pour la cohérence (item #6 Phase 2) mais n'est plus urgente.
-- `ouvrirSnack()` (4 cas) n'appelle pas `lockScroll()` → scroll encore possible pendant l'affichage snack. À corriger en Phase 2.
+- ~~`ouvrirSnack()` (4 cas) n'appelle pas `lockScroll()`~~ ✅ résolu 2026-05-01 — les 4 branches passent par `openModal()`, lockScroll unifié.
 - Focus trap et `aria-hidden` non implémentés — accessibilité clavier encore partielle (item #21 Phase 3).
 
 ### Z-index hiérarchie (inchangée)
@@ -874,7 +874,7 @@ Trois facteurs cumulés causaient le bug :
 **Résultat** : scroll iOS bloqué derrière toutes les modales qui appellent `lockScroll()`. Vérifié sur navigateur desktop (DevTools) et iPhone.
 
 **Reste à faire (non urgent)** :
-- `ouvrirSnack()` (4 cas) n'appelle pas `lockScroll()` → scroll encore possible pendant le snack → item #6 Phase 2.
+- ~~`ouvrirSnack()` (4 cas) n'appelle pas `lockScroll()`~~ ✅ résolu 2026-05-01 — les 4 branches passent par `openModal()`, lockScroll unifié.
 - Centralisation complète des 14+ ouvertures directes vers `openModal()`/`openModalRaw()` → item #6 Phase 2.
 - Focus trap et `aria-hidden` → item #21 Phase 3.
 

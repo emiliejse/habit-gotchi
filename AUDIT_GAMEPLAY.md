@@ -29,8 +29,8 @@ Trois priorités d'action :
 | ✅ FIXÉ | S2 Habitudes | Pénalité XP implémentée — `checkMissedHabits()` au bootstrap : −5 XP par habitude manquée la veille (cap −20), bulle douce pool ×3, log dans `eventLog`. `happiness` et `energy` non modifiés (auto-report uniquement). Guard `lastMissedPenalty` (migration m7) — une seule fois par jour. (2026-05-01) | `js/app.js:bootstrap`, `defs()`, `MIGRATIONS` |
 | ✅ FIXÉ | S3 États | Jauge `hunger` (0-3) implémentée — monte si fenêtre repas manquée, reset à 0 dès un repas pris, bulle "j'ai faim" si `hunger >= 2`, priorité 2 dans `updBubbleNow()`. `energy` et `happiness` non touchés (auto-report utilisatrice uniquement). Migration m8 ajoutée. (2026-05-01) | `js/app.js:194` (defs), `js/app.js:532-580` (checkHunger), `js/app.js:651-656` (giveSnack reset), `js/app.js:1229-1246` (updBubbleNow) |
 | ✅ FIXÉ | S1 Progression | Micro-paliers adultes implémentés — `getMicroPalier(xp)` retourne un indice 0-9 tous les 200 XP à partir de 500. Suffixe romain intégré directement dans le label de stade (`#g-stage`) : "Adepte" → "Adepte II" → "Adepte III"… Aucune modification de STG ni migration. (2026-05-01) | `js/app.js:458-462` (getMicroPalier), `js/ui-settings.js:208-214` (updUI) |
-| 🟠 HAUT | S6 IA | Limites quotidiennes strictes (3 pensées + 3 soutien + 1 objet) sans compensation visible côté UI | `js/ui-ai.js:189, 597` |
-| 🟡 MOY | S4 Snacks | Pas de `lockScroll()` sur la fenêtre snack (dette UI déjà connue, impact gameplay : scroll iOS pendant choix) | `js/ui-settings.js:43-122` |
+| ✅ FIXÉ | S6 IA | Limites quotidiennes strictes (3 pensées + 3 soutien + 1 objet) sans compensation visible côté UI — **Fixé 2026-05-01** : fleurs ✿ soutien ajoutées sur le post-it menu (`#soutien-flowers`, même pattern que `#thought-count`) ; infos RDV du jour (icônes extraites du label) + phase cycle (`● Label Jn`) ajoutées sur le post-it agenda (`#agenda-postit-info`, `updAgendaPostit()`). L'objet IA n'a pas de limite — freiné par les pétales. | `js/ui-ai.js:189, 597` · `index.html:486-496` · `js/ui-settings.js:updSoutienFlowers, updAgendaPostit` · `css/style.css:.agenda-postit-info, #soutien-flowers` |
+| ✅ FIXÉ | S4 Snacks | ~~Pas de `lockScroll()` sur la fenêtre snack~~ — les 4 branches de `ouvrirSnack()` passent par `openModal()`, lockScroll unifié. (2026-05-01) | `js/ui-settings.js:43-122` |
 | 🟡 MOY | S1 Économie | Aucune source régulière > 4 pétales/event → boutique premium (cout:6) prend ~3 actions | `data/props.json` (cout:0 ou 6) |
 | 🟡 MOY | S5 Crottes | Spawn aléatoire 65% sans pattern lié aux états (faim, énergie) → événement 100% passif | `js/app.js:514-529` |
 | 🟢 BAS | S7 Inventaire | Seuls 2 paliers de prix (0 ou 6) → pas de hiérarchie d'objets désirables | `data/props.json` |
@@ -187,7 +187,7 @@ Matin : 7-11    Midi : 11-15    Soir : 18-22
 - ✅ Routine cadrée, peu d'options → faible charge cognitive.
 - ✅ Bonus snack préféré = mini-quête de la semaine.
 - ❌ Le feedback est sec (toast + pétales) — manque un effet "manger" sur le gotchi (chew, sourire +1s).
-- ❌ Pas de `lockScroll()` sur la fenêtre snack (dette UI connue).
+- ✅ `lockScroll()` sur la fenêtre snack — résolu 2026-05-01 via `openModal()`.
 
 ### 4c. Propositions
 

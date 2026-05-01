@@ -90,6 +90,10 @@
 
   <!-- WRAPPER tama + bulle : animé ensemble en mode compact (glissement vers le haut) -->
   <div id="tama-bubble-wrap">
+    <!-- RÔLE : Label vertical de l'onglet courant — visible uniquement en mode compact -->
+    <!-- POURQUOI : Le tama occupe la place du titre en compact, ce span ancré à gauche du wrapper
+                    indique l'onglet sans perturber le layout. -->
+    <span id="compact-tab-label" aria-live="polite"></span>
     <div class="tama-shell" id="tama-shell-main">
       <div class="tama-screen" id="cbox"></div>
     </div>

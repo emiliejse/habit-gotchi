@@ -151,6 +151,18 @@ function go(t) {
     consoleTop.classList.add('compact');
   }
 
+  // RÔLE : Met à jour le label d'onglet visible en mode compact (remplace #hdr-title masqué).
+  // POURQUOI : Sans repère visuel, l'utilisatrice ne sait plus sur quel onglet elle est.
+  const TAB_LABELS = {
+    progress: '✿ Progrès',
+    journal:  '✿ Journal',
+    props:    '✿ Inventaire',
+    perso:    '✿ Personnalisation',
+    settings: '✿ Réglages',
+  };
+  const labelEl = document.getElementById('compact-tab-label');
+  if (labelEl) labelEl.textContent = TAB_LABELS[t] || '';
+
   // RÔLE : Reset du flag preview inventaire — toujours remis à false en changeant d'onglet.
   // POURQUOI : _invEnvForced n'est actif que pendant la navigation dans l'inventaire.
   //            Dès qu'on quitte props (ou qu'on y revient en navigation normale), on repart

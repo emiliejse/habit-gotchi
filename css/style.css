@@ -218,6 +218,28 @@ body {
   max-height: 0;
   pointer-events: none;
 }
+/* RÔLE : Label vertical de l'onglet courant — ancré à gauche du tama en mode compact */
+/* POURQUOI : Le tama occupe la place du titre en mode compact.
+              Ce label vertical comble le vide à gauche sans toucher au layout. */
+#compact-tab-label {
+  display: none;
+}
+#console-top.compact #compact-tab-label {
+  display: block;
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%) rotate(180deg);
+  writing-mode: vertical-rl;
+  font-size: var(--fs-md);
+  font-family: var(--font-title);
+  color: var(--lilac);
+  opacity: 0.7;
+  letter-spacing: 1px;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
 /* RÔLE : Titre "Habit-Gotchi" dans le header — --font-terminal conservé pour l'identité pixel */
 .hdr h1 { font-size: 20px; color: var(--lilac); letter-spacing: 0.5px; line-height: 1.1; font-family: var(--font-title); font-weight: 700; }
 .hdr sub { font-size: var(--fs-xs); color: var(--text2); }
@@ -249,7 +271,9 @@ body {
 }
 
 /* RÔLE : Wrapper tama + bulle — en mode normal, dans le flux */
+/* position:relative nécessaire pour ancrer #compact-tab-label en absolute à l'intérieur */
 #tama-bubble-wrap {
+  position: relative;
   transition: margin-top 0.4s cubic-bezier(0.25, 1.15, 0.5, 1);
 }
 

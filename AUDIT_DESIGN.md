@@ -388,28 +388,12 @@ document.querySelector('.menu-languette').classList.toggle('is-open');
 
 #### C1.2 — Indicateur d'onglet courant en mode `compact`
 
-**Problème :** quand `#console-top.compact` masque `#hdr-title`, rien ne signale "tu es sur Progrès / Journal / etc." Un retour de notification = perte de contexte.
-
-**Proposition (mockup ASCII) :**
-```
-┌──────────────────────────────────┐
-│ 🛍️       [tama 220px]      📟 │
-│       ────●──────                │  ← dot lilac sous le tama, indique l'onglet
-│       prog · jour · …            │
-└──────────────────────────────────┘
-```
-Implémentation : un petit `<span class="compact-tab-label">` dans `.hdr` affiché uniquement quand `.compact`. CSS :
-```css
-.compact-tab-label { display: none; }
-#console-top.compact .compact-tab-label {
-  display: inline-block;
-  font-size: var(--fs-xs);
-  font-family: var(--font-title);
-  color: var(--lilac);
-  text-transform: capitalize;
-}
-```
-**Effort : S** • **Fichiers :** `index.html`, `style.css`, `ui-nav.js:108-128`.
+✅ **RÉSOLU 2026-05-01**
+- `<span id="compact-tab-label">` ajouté dans `.hdr` (`index.html`), entre `#hdr-title` et `#btn-tablet`.
+- `display:none` par défaut ; `display:inline-block` uniquement sous `#console-top.compact` (`style.css`).
+- Style : `var(--font-title)`, `var(--fs-sm)`, `var(--lilac)`, `opacity:0.85`.
+- `go()` dans `ui-nav.js` met à jour le texte via `TAB_LABELS` (ex: `✿ Progrès`, `✿ Journal`…).
+- `aria-live="polite"` pour les lecteurs d'écran.
 
 #### C1.3 — Modales empilées : retour navigationnel
 

@@ -975,8 +975,9 @@ const LAYERS_TEEN = [
     fill: 'C.cheek',
     when: (pm) => pm.headStyle === 'chat',
     rects: [
-      { x: -4, y: -1, w: 1, h: 1, rawDx: 3 }, // creux gauche
-      { x:  1, y: -1, w: 1, h: 1, rawDx: 2 }, // creux droit
+      // Rose à la pointe extérieure — suit le tressaillement de la pointe
+      { x: -4, y: -3, w: 1, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.006) * 1.2 },  // pointe gauche
+      { x:  3, y: -3, w: 1, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.006) * 1.2 }, // pointe droite
     ]
   },
 
@@ -1511,8 +1512,9 @@ const LAYERS_ADULT = [
     fill: 'C.cheek',
     when: (pm) => pm.headStyle === 'chat',
     rects: [
-      { x: -4, y: -1, w: 1, h: 1, rawDx: 3 },
-      { x:  1, y: -1, w: 1, h: 1, rawDx: 2 },
+      // Rose à la pointe extérieure — suit le tressaillement de la pointe
+      { x: -4, y: -3, w: 1, h: 1, rawDxFn: () => Math.sin(Date.now() * 0.006) * 1.2 },  // pointe gauche
+      { x:  3, y: -3, w: 1, h: 1, rawDxFn: () => -Math.sin(Date.now() * 0.006) * 1.2 }, // pointe droite
     ]
   },
 

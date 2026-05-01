@@ -1022,16 +1022,15 @@ const p5s = (p) => {
     //            Rétrocompat : si env non défini (ancienne sauvegarde), on affiche quand même.
     drawPropsLayer(p, g, envActif, 'ambiance');
 
-    // 3. Détection proximité Gotchi/Crotte (calcul anticipé, dessin reporté après SOL)
-    // RÔLE : On calcule ici si le gotchi est près d'une crotte, mais on ne dessine PAS encore.
-    // POURQUOI : Les crottes doivent être dessinées APRÈS les props de fond/sol et AVANT le gotchi,
-    //            pour apparaître au même niveau visuel que lui (devant le fond, derrière le premier plan).
+    // 3. Détection crottes — regard gotchi (calcul anticipé, dessin reporté après SOL)
+    // RÔLE : Déclenche le regard latéral du gotchi vers la crotte la plus proche dès qu'il y en a une.
+    // POURQUOI : L'ancienne condition (< 25px) était trop restrictive — le gotchi ne passait
+    //            presque jamais à moins de 25px d'une crotte fixe, donc le regard ne s'activait jamais.
+    //            Désormais : dès qu'il y a au moins 1 crotte dans D.g.poops, _gotchiNearPoop = true.
+    //            _poopDirection() (render-sprites.js) calcule ensuite le côté (gauche/droite) à partir
+    //            de la crotte la plus proche, quelle que soit la distance — c'est lui qui pilote le reflet.
     const poops = window.D.g.poops || [];
-    let gotchiNearPoop = false;
-    poops.forEach(poop => {
-      if (Math.abs(poop.x - walkX) < 25) gotchiNearPoop = true;
-    });
-    window._gotchiNearPoop = gotchiNearPoop;
+    window._gotchiNearPoop = poops.length > 0;
 
     // 4. Props Décor — Fond (A, B) — filtrées par environnement actif
     // RÔLE : N'afficher que les décors de fond assignés à l'env en cours.

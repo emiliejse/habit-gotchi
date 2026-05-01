@@ -57,7 +57,7 @@ let _meteoIntervalId = null;
 let _poopIntervalId  = null;
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v4.88'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v4.89'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -1531,8 +1531,10 @@ function updBubbleNow() {
   // POURQUOI : La saleté peut monter par inactivité (checkSalete) sans spawn
   //            de crottes — ce cas était silencieux. Uniquement le jour
   //            pour rester cohérent avec les autres priorités diurnes.
+  //            Le pool est lu depuis user_config (src.bain) pour respecter
+  //            la personnalité — fallback sur des phrases neutres si absent.
   if (h >= 7 && h < 22 && (window.D.g.salete ?? 0) >= 7) {
-    const pool = [
+    const pool = src.bain?.length ? src.bain : [
       "Ça commence à sentir le renard par ici… 🦊",
       "*se renifle* Mmh. J'aurais besoin d'un bain. 🛁",
       "Je me sens un peu... crade. 😬",
@@ -1540,7 +1542,11 @@ function updBubbleNow() {
       "Un peu de propreté ça ferait pas de mal 🧼",
     ];
     const el = document.getElementById('bubble');
-    if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+    if (el) {
+      let bulle = pool[Math.floor(Math.random() * pool.length)];
+      bulle = bulle.replace('{{diminutif}}', D.g.userNickname || D.g.userName || 'toi');
+      el.textContent = bulle;
+    }
     return;
   }
 
@@ -1569,11 +1575,18 @@ function updBubbleNow() {
   // POURQUOI : Agit comme un rappel doux sans notification native.
   //            Uniquement si hunger < 2 (sinon la Priorité 2 a déjà géré).
   //            ensureMealsToday() est la source de vérité pour les repas du jour.
+  //            Le pool est lu depuis user_config (src.repas) pour respecter
+  //            la personnalité — fallback sur des phrases contextuelles si absent.
   if (h >= 7 && h < 22) {
     const mins = new Date().getMinutes();
     const hFloat = h + mins / 60;
     const meals   = typeof ensureMealsToday === 'function' ? ensureMealsToday() : {};
     const WINDOWS = window.HG_CONFIG?.MEAL_WINDOWS ?? {};
+
+    // RÔLE : Pool personnalisé depuis user_config.bulles.repas.
+    // POURQUOI : Permet à chaque profil d'avoir sa propre façon de rappeler les repas,
+    //            sans perdre le contexte de la fenêtre (label/icon) en cas de fallback.
+    const poolRepasPerso = src.repas?.length ? src.repas : null;
 
     // Cas A : fenêtre active sans repas pris (hors goûter — trop léger pour insister)
     let fenetreOubliee = null;
@@ -1585,13 +1598,18 @@ function updBubbleNow() {
       }
     }
     if (fenetreOubliee) {
-      const pool = [
+      // Si pool perso disponible, on l'utilise — sinon fallback contextuel avec label/icon
+      const pool = poolRepasPerso ?? [
         `${fenetreOubliee.icon} C'est l'heure du ${fenetreOubliee.label.toLowerCase()}… tu n'as pas oublié ? 🍽️`,
         `Hé ! Le ${fenetreOubliee.label.toLowerCase()} c'est maintenant ! J'ai faim moi 🥺`,
         `*regarde l'heure* ${fenetreOubliee.icon} Le ${fenetreOubliee.label.toLowerCase()} t'attend… 🌸`,
       ];
       const el = document.getElementById('bubble');
-      if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+      if (el) {
+        let bulle = pool[Math.floor(Math.random() * pool.length)];
+        bulle = bulle.replace('{{diminutif}}', D.g.userNickname || D.g.userName || 'toi');
+        el.textContent = bulle;
+      }
       return;
     }
 
@@ -1607,13 +1625,18 @@ function updBubbleNow() {
       }
     }
     if (prochaine) {
-      const pool = [
+      // Si pool perso disponible, on l'utilise — sinon fallback contextuel avec label/icon
+      const pool = poolRepasPerso ?? [
         `Bientôt l'heure du ${prochaine.label.toLowerCase()} ! J'ai déjà l'eau à la bouche 🍽️`,
         `${prochaine.icon} Le repas approche… tu penses à moi ? 🌸`,
         `Encore un peu de patience… l'heure du ${prochaine.label.toLowerCase()} arrive ! 😋`,
       ];
       const el = document.getElementById('bubble');
-      if (el) el.textContent = pool[Math.floor(Math.random() * pool.length)];
+      if (el) {
+        let bulle = pool[Math.floor(Math.random() * pool.length)];
+        bulle = bulle.replace('{{diminutif}}', D.g.userNickname || D.g.userName || 'toi');
+        el.textContent = bulle;
+      }
       return;
     }
   }
@@ -1661,6 +1684,21 @@ function updBubbleNow() {
   if (meteoData?.windspeed > 40)        ajouter(src.vent,   1);
   if (meteoData?.temperature >= 30)     ajouter(src.chaud,  1);
   if (meteoData?.temperature <= 10)     ajouter(src.froid,  1);
+
+  // RÔLE : Pluie — déclenché si weathercode météo indique précipitations.
+  // POURQUOI : Symétrique à vent/chaud/froid. Codes Open-Meteo : 61-67 (pluie),
+  //            80-82 (averses). Poids 1 = contexte doux, non prioritaire.
+  const _wcPluie = window.meteoData?.weathercode;
+  if (_wcPluie && [61,62,63,65,66,67,80,81,82].includes(_wcPluie)) ajouter(src.pluie, 1);
+
+  // RÔLE : Cycle menstruel — présence douce dans le pool si on est en phase règles.
+  // POURQUOI : getCyclePhase() calcule déjà la phase — il suffit de brancher le pool.
+  //            Poids 2 : plus présent que la météo, moins urgent qu'un état émotionnel.
+  //            Conditionné à ui.showCycleFeature pour respecter la config utilisatrice.
+  if (window.USER_CONFIG?.ui?.showCycleFeature) {
+    const _phase = getCyclePhase(today());
+    if (_phase?.phase === 'menstruelle') ajouter(src.cycle_regles, 2);
+  }
 
   // Idle en fallback seulement si pool trop petit
   if (pool.length < 5)            ajouter(src.idle, 1);
@@ -1959,6 +1997,51 @@ async function bootstrap() {
     if (typeof modalLocked !== 'undefined') modalLocked = false;
 
     initApp();
+
+    // ── Bulle "retour" après longue absence ──────────────────────────────────
+    // RÔLE : Si l'utilisatrice n'a pas ouvert l'app depuis plus de 24h,
+    //        le Gotchi exprime un accueil doux au retour.
+    // POURQUOI : D.lastActive est mis à jour en fin de handleDailyReset() —
+    //            on lit l'ancienne valeur ICI, avant qu'elle soit réécrite.
+    //            Délai 3.5s pour ne pas collisionner avec la bulle checkMissedHabits (1.5s).
+    //            Conditionné à un pool non vide dans user_config pour éviter le silence.
+    {
+      const _srcRetour = window.PERSONALITY?.bulles?.retour;
+      const _lastActive = window.D?.lastActive;
+      const _absenceMs = _lastActive ? (Date.now() - new Date(_lastActive)) : 0;
+      if (_srcRetour?.length && _absenceMs > 86400000) { // > 24h
+        const _bulleRetour = _srcRetour[Math.floor(Math.random() * _srcRetour.length)];
+        setTimeout(() => {
+          flashBubble(
+            _bulleRetour.replace('{{diminutif}}', window.D?.g?.userNickname || window.D?.g?.userName || 'toi'),
+            4000
+          );
+          window.triggerExpr?.('neutre', 80);
+        }, 3500);
+      }
+    }
+
+    // ── Bulle "cycle_regles" au boot si phase menstruelle ────────────────────
+    // RÔLE : Si l'utilisatrice est en phase menstruelle aujourd'hui,
+    //        le Gotchi l'accueille avec une bulle douce dès l'ouverture.
+    // POURQUOI : En plus du pool pondéré (updBubbleNow), une bulle de bienvenue
+    //            au démarrage renforce la présence à un moment physiquement difficile.
+    //            Conditionné à showCycleFeature + pool défini dans user_config.
+    //            Délai 5s pour ne pas se superposer à retour ni checkMissedHabits.
+    if (window.USER_CONFIG?.ui?.showCycleFeature) {
+      const _srcCycle = window.PERSONALITY?.bulles?.cycle_regles;
+      const _cycleBoot = getCyclePhase(today());
+      if (_srcCycle?.length && _cycleBoot?.phase === 'menstruelle') {
+        const _bulleCycle = _srcCycle[Math.floor(Math.random() * _srcCycle.length)];
+        setTimeout(() => {
+          flashBubble(
+            _bulleCycle.replace('{{diminutif}}', window.D?.g?.userNickname || window.D?.g?.userName || 'toi'),
+            4000
+          );
+        }, 5000);
+      }
+    }
+    // ── Fin bulles boot ──────────────────────────────────────────────────────
 
     // RÔLE : Étirement matinal au premier chargement — si la session s'ouvre entre 7h et 11h.
     // POURQUOI : Auparavant déclenché dans p.draw() à h===7 précis (souvent manqué).

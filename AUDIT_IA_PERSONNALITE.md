@@ -29,7 +29,7 @@ Côté API, 4 templates actifs (`askClaude.base + withGift|withoutGift`, `buyPro
 
 ### 1b — Bulles statiques (`data/user_config.json`, bloc `personality.bulles`)
 
-17 catégories au total dans le fichier d'Émilie et le template Alexia :
+22 catégories au total dans le fichier d'Émilie et le template Alexia :
 
 | Catégorie | Variantes Émilie | Variantes Alexia | Déclencheur (`updBubbleNow()` / `flashBubble()`) |
 |---|---|---|---|
@@ -50,6 +50,11 @@ Côté API, 4 templates actifs (`askClaude.base + withGift|withoutGift`, `buyPro
 | `journal` | 6 | 6 | Aucun déclencheur observé — voir §5 (catégorie morte) |
 | `custom` | 0 | 0 | Réservé extensions |
 | `cb` (customBubbles dynamiques) | runtime | runtime | Pool 50% injecté par `askClaude` (`app.js:1101-1107`) |
+| ✅ `repas` | 5 | 5 | **AJOUTÉ 2026-05-01** — Priorité 2b dans `updBubbleNow()` : pool `src.repas` lu depuis user_config (fallback contextuel label/icon si absent). Couvre fenêtre repas ouverte non prise (Cas A) et anticipation 30 min avant (Cas B). |
+| ✅ `retour` | 5 | 5 | **AJOUTÉ 2026-05-01** — `bootstrap()` : `flashBubble` à 3.5s si `(Date.now() - D.lastActive) > 86400000` (>24h). Conditionné à pool non vide. Ne se déclenche qu'une fois à l'ouverture. |
+| ✅ `pluie` | 5 | 5 | **AJOUTÉ 2026-05-01** — Priorité 4 dans `updBubbleNow()` : `meteoData.weathercode ∈ [61,62,63,65,66,67,80,81,82]` (poids 1, symétrique à `vent/chaud/froid`). |
+| ✅ `bain` | 5 | 5 | **AJOUTÉ 2026-05-01** — Priorité 1b dans `updBubbleNow()` : pool `src.bain` lu depuis user_config (fallback pool en dur si absent). Seuil `salete >= 7`, diurne uniquement. |
+| ✅ `cycle_regles` | 5 | 5 | **AJOUTÉ 2026-05-01** — Double déclenchement : (1) Priorité 4 `updBubbleNow()` si phase menstruelle (poids 2) ; (2) `bootstrap()` : `flashBubble` à 5s si phase menstruelle. Conditionné à `ui.showCycleFeature`. |
 
 ---
 
@@ -302,14 +307,14 @@ Les états du Gotchi proviennent de :
 |---|---|---|
 | Œuf (avant éclosion) | ❌ | Pas de pool `egg` — silence d'un Gotchi qui ne parle pas encore : intentionnel ou oubli ? |
 | Bébé / Ado / Adulte | ❌ | Aucune modulation par stade dans `updBubbleNow()` |
-| `salete >= 5` (sale) | ❌ | Aucune bulle "j'ai besoin d'un bain" |
+| `salete >= 5` (sale) | ✅ **CORRIGÉ 2026-05-01** | Pool `bain` ajouté dans user_config + lu depuis Priorité 1b (`salete >= 7`, fallback pool en dur) |
 | `poops >= 1` (mais < 3) | ❌ | Le pool "porcherie" ne se déclenche qu'à `>= 3` (`app.js:1041`) |
 | Snack mangé | partiellement | `flashBubble` ad hoc dans `app.js:646-649`, pas de pool dans `personality.bulles` |
-| Repas manqué (fenêtre passée) | ❌ | Aucune bulle |
+| Repas manqué (fenêtre passée) | ✅ **CORRIGÉ 2026-05-01** | Pool `repas` ajouté dans user_config + lu depuis Priorité 2b (remplace les bulles en dur, fallback contextuel conservé) |
 | Habitude cochée (réussite isolée) | partiellement | `app.js:811` `flashBubble(reaction.msg)` — `reaction` hardcodée hors `personality.bulles` |
-| Retour après absence (`lastActive` ancien) | ❌ | Aucun pool `retour` |
-| Pluie / Beau temps stable | ❌ | Seuls `vent / chaud / froid` existent, pas `pluie` ni `soleil` |
-| Phase cycle (règles, ovulation) | ❌ | Cycle calculé mais aucune bulle dédiée |
+| Retour après absence (`lastActive` ancien) | ✅ **CORRIGÉ 2026-05-01** | Pool `retour` ajouté dans user_config + déclenché dans `bootstrap()` à 3.5s si absence > 24h |
+| Pluie / Beau temps stable | ✅ **CORRIGÉ 2026-05-01** | Pool `pluie` ajouté dans user_config + déclenché dans Priorité 4 si `weathercode ∈ [61–67, 80–82]` |
+| Phase cycle (règles, ovulation) | ✅ **CORRIGÉ 2026-05-01** | Pool `cycle_regles` ajouté dans user_config + déclenché dans Priorité 4 (poids 2) ET au boot à 5s si phase menstruelle |
 | Niveau XP atteint / changement de stade | partiellement | Hardcodé dans `app.js:456` (`stageMsgs`) |
 | Pool `journal` | défini, **non câblé** | 6 bulles mortes par profil |
 | Pool `cadeau` | défini, **non câblé** par `updBubbleNow` | Lu uniquement par `askClaude` qui réécrit son propre pool |
@@ -563,7 +568,7 @@ COHÉRENCE PERSONNALITÉ
 6. ✅ **~~🟡 Introduire `toneProfile`~~** — **FAIT 2026-05-01.** `toneProfile` ajouté dans `data/user_config.json` (profil Émilie) et `data/user_config.ALEXIA.json` (profil Alexia) sous `personality`. Fonction `buildToneBlock(P, state)` ajoutée dans `js/ui-ai.js` (juste avant `askClaude`) — sérialise registresPrefs, registresInterdits, longueur, et modulations par état (fatigue/fierte/triste). Variable `toneBlock` construite dans `vars` via `buildToneBlock(P, { energy, happiness })`. `{{toneBlock}}` injecté dans `prompts/ai_contexts.json:3` (`askClaude.base`), après `Traits : {{traits}}.`. Retourne `''` si `toneProfile` absent → zéro régression.
 7. ✅ **~~🟡 Anti-répétition API~~** — **FAIT 2026-05-01.** `{{fragmentsEvites}}` injecté en fin d'Action 2 dans `askClaude.base` + construit dans `vars` (`D.g.customBubbles.slice(0,6).join(' / ')`). Fallback `'aucun'` si le tableau est vide.
 8. ✅ **~~🟡 Étendre `getRegistre()`~~** — **FAIT 2026-05-01.** Filtrage par `traits`, blacklist du dernier registre, 2 nouveaux registres universels, registres conditionnels pour `pince-sans-rire` / `absurde` / `créatif`, exclusion `non-sequitur poétique` si `pince-sans-rire` actif.
-9. **🟢 Ajouter les 5 catégories de bulles manquantes** (`repas`, `retour`, `pluie`, `bain`, `cycle_regles`) dans les deux user_config et leurs déclencheurs dans `app.js:1068-1117`.
+9. ✅ **~~🟢 Ajouter les 5 catégories de bulles manquantes~~** — **FAIT 2026-05-01.** `repas`, `retour`, `pluie`, `bain`, `cycle_regles` ajoutés dans `data/user_config.json` et `data/user_config.ALEXIA.json`. Déclencheurs câblés dans `app.js` : `bain` (Priorité 1b → `src.bain`), `repas` (Priorité 2b → `src.repas`), `pluie` (Priorité 4, poids 1), `cycle_regles` (Priorité 4, poids 2 + boot à 5s), `retour` (boot à 3.5s si absence > 24h).
 10. **🟢 Plafond explicite de longueur** dans `genSoutien` (ex : "Maximum 50 mots, 3 phrases.") pour garantir la lisibilité mobile TDAH.
 
 > Toutes les modifications proposées sont **additives** ou **localisées** : aucun fichier à réécrire entièrement, aucun appel API existant cassé.

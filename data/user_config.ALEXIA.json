@@ -181,7 +181,47 @@
         "Les mots font du bien Alexia ✿",
         "Chaque mot compte 💜"
       ],
-      "custom": []
+      "custom": [],
+
+      "repas": [
+        "Inventaire stomacal : 0 😋",
+        "*regarde l'assiette* validé",
+        "Iris veut goûter aussi 🐱",
+        "Carburant niveau bas ✿",
+        "Pause ravito méritée 💜"
+      ],
+
+      "retour": [
+        "*reconnexion en cours* ✿",
+        "Alexia t'es revenue ! 💜",
+        "*redémarre en mode doux* 🌸",
+        "Iris t'a attendue 🐱",
+        "On reprend là où on s'est arrêté·es ✿"
+      ],
+
+      "pluie": [
+        "*écoute la pluie* 🌧️",
+        "Jour parfait pour rester dedans ✿",
+        "Iris + pluie = combo doudou 🐱",
+        "*tasse de thé chaud* 💜",
+        "L'extérieur peut attendre ✿"
+      ],
+
+      "bain": [
+        "*diagnostique : hygiène requise* 🧼",
+        "Iris refuse de s'approcher 🐱",
+        "Protocole douche activé ✿",
+        "*se renifle* ...confirmed 💜",
+        "Niveau propreté : critique ✿"
+      ],
+
+      "cycle_regles": [
+        "*pause règles déclenchée* 💜",
+        "Corps en maintenance ✿",
+        "Iris reste collée ce soir 🐱",
+        "Le quota d'énergie est réduit. Normal. 💜",
+        "Bouillotte > productivité ✿"
+      ]
     }
   },
 

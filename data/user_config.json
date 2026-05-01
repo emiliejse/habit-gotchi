@@ -181,7 +181,47 @@
         "Les mots libèrent {{diminutif}} ✿",
         "Chaque mot compte 💜"
       ],
-      "custom": []
+      "custom": [],
+
+      "repas": [
+        "Miam ?? 🌸",
+        "*renifle* sent bon ✿",
+        "On grignote ensemble 💜",
+        "*tend une assiette pixel*",
+        "Une bouchée pour {{diminutif}} ✿"
+      ],
+
+      "retour": [
+        "*revient en sautillant* 🌸",
+        "Tu m'as manquée {{diminutif}} 💜",
+        "*sort de sa cachette* ✿",
+        "On reprend doucement 🌸",
+        "Pas grave d'être partie ✿"
+      ],
+
+      "pluie": [
+        "*écoute la pluie* 🌧️",
+        "Plic ploc plic ✿",
+        "Café et pluie 💜",
+        "*colle le nez à la fenêtre*",
+        "Le ciel pleure un peu 🌸"
+      ],
+
+      "bain": [
+        "*se renifle* ...🛁",
+        "Un bain ça ferait du bien ✿",
+        "*regarde ses pattes* oh non 🌸",
+        "On sent un peu le renfermé là 💜",
+        "Petite toilette pixel ? ✿"
+      ],
+
+      "cycle_regles": [
+        "*pose une bouillotte pixel* 💜",
+        "Doux et lent aujourd'hui ✿",
+        "Ton corps travaille fort 🌸",
+        "*s'assoit près de toi* 💜",
+        "Règles = permission de ralentir ✿"
+      ]
     }
   },
 

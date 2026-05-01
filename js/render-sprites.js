@@ -713,16 +713,17 @@ const LAYERS_BABY = [
     id: 'bouche-baillement',
     fill: 'C.mouth',
     when: (pm) => !pm.sl && isMood('baillement'),
-    rects: [{ x: 0, y: 3, w: 2, h: 2 }]  // carré 2×2 PX = bouche "O"
+    rects: [{ x: -1, y: 3, w: 2, h: 2 }]  // carré 2×2 PX = bouche "O" — décalé -1 PX vers la gauche
   },
 
   // ── Bouche sourire (ha élevé) ───────────────────────────────────
-  // POURQUOI : x:0 centre la bouche entre les deux yeux (gauche x:-2, droit x:1 → centre ~x:0).
+  // POURQUOI : x:-1 centre la bouche entre les deux yeux — décalé -1 PX vers la gauche
+  //            pour éviter la proximité avec la joue droite (x:2).
   {
     id: 'bouche-sourire',
     fill: 'C.mouth',
     when: (pm) => !pm.sl && !isMood('baillement') && pm.ha > HA_HIGH,
-    rects: [{ x: 0, y: 3, w: 2, h: 1 }]
+    rects: [{ x: -1, y: 3, w: 2, h: 1 }]
   },
 
   // ── Bouche triste (ha bas) — rawDy:2 pour l'offset sub-pixel ───
@@ -730,7 +731,7 @@ const LAYERS_BABY = [
     id: 'bouche-triste',
     fill: 'C.mouth',
     when: (pm) => !pm.sl && !isMood('baillement') && pm.ha < HA_SAD,
-    rects: [{ x: 0, y: 3, w: 2, h: 1, rawDy: 2 }]
+    rects: [{ x: -1, y: 3, w: 2, h: 1, rawDy: 2 }]
   },
 
   // ── Bouche neutre (état par défaut) ────────────────────────────
@@ -738,7 +739,7 @@ const LAYERS_BABY = [
     id: 'bouche-neutre',
     fill: 'C.mouth',
     when: (pm) => !pm.sl && !isMood('baillement') && pm.ha >= HA_SAD && pm.ha <= HA_HIGH,
-    rects: [{ x: 0, y: 3, w: 1, h: 1 }]
+    rects: [{ x: -1, y: 3, w: 1, h: 1 }]
   },
 
   // ── Pieds / membres inférieurs (toujours visibles) ─────────────

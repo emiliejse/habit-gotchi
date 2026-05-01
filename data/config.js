@@ -80,14 +80,13 @@ const GOTCHI_COLORS = [
 //            Par défaut 'auto' = fallback sur C.bodyDk (comportement original pré-feature).
 const LIMB_COLORS = [
   { id:'auto',   label:'Auto',   hex:null       },  // défaut — suit la couleur du corps (bodyDk)
-  { id:'brun',   label:'Brun',   hex:'#b89070' },
-  { id:'beige',  label:'Beige',  hex:'#d4b898' },
-  { id:'gris',   label:'Gris',   hex:'#a8a0b0' },
-  { id:'ardoise',label:'Ardoise',hex:'#8090a8' },
-  { id:'marine', label:'Marine', hex:'#607898' },
-  { id:'sauge',  label:'Sauge',  hex:'#8aab88' },
-  { id:'terracotta',label:'Terra',hex:'#c07858'},
-  { id:'prune',  label:'Prune',  hex:'#9878a8' },
+  { id:'brun',   label:'Brun',   hex:'#b07848' },
+  { id:'corail', label:'Corail', hex:'#d07060' },
+  { id:'olive',  label:'Olive',  hex:'#7a9848' },
+  { id:'nuit',   label:'Nuit',   hex:'#3a4870' },
+  { id:'ciel',   label:'Ciel',   hex:'#60a0c8' },
+  { id:'lilas',  label:'Lilas',  hex:'#9070c0' },
+  { id:'noir',   label:'Noir',   hex:'#3a3048' },
 ];
 
 /* ─── SYSTÈME 5 : PERSONNALISATION (Reflets des yeux) ────────────── */

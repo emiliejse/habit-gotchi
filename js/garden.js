@@ -1608,6 +1608,44 @@ function drawJardinFond(p, theme, n) {
   p.fill(tc(n, theme.gnd));    p.rect(0, 120, CS, 80); // herbe principale
   p.fill(tc(n, theme.gndDk));  p.rect(0, 120, CS, PX * 2); // lisière sombre (2 pixels)
 
+  // ── Paramètres contextuels — calculés UNE SEULE FOIS avant le forEach ────
+  // RÔLE : Prépare les données météo, habitudes et état du Gotchi
+  //        pour moduler le rendu des éléments du jardin.
+  // RÈGLE PHASE 4 : lecture seule — aucun save(), aucune écriture dans D.
+  // POURQUOI ici et pas dans la boucle : calcul O(1) fait une fois par frame,
+  //          pas N fois. Cohérence garantie sur toute la passe fond.
+
+  // — Météo (window.meteoData, mis à jour par app.js) —
+  // RÔLE : windspeed → inclinaison latérale des fleurs (flowerTilt).
+  //        Plafonnée à 1.0 pour ne pas déborder hors du sprite.
+  const wind        = window.meteoData?.windspeed ?? 0;
+  const flowerTilt  = Math.min(wind / 80, 1) * 3; // 0→3 : décalage X en unités PX
+
+  // RÔLE : rain > 0.5 → pluie considérée comme active → gouttes animées.
+  const rainVal     = window.meteoData?.rain ?? 0;
+  const isRaining   = rainVal > 0.5;
+
+  // — Habitudes (D.log[today()] + D.habits) —
+  // RÔLE : Ratio de complétion des habitudes aujourd'hui (0 → 1).
+  // POURQUOI ?? [] : si aucune habitude cochée aujourd'hui, on traite comme 0.
+  // POURQUOI 0.5 si habsTotal=0 : pas d'habitudes définies → jardin neutre, ni triste ni euphorique.
+  const habsDone    = (window.D?.log?.[today()] ?? []).length;
+  const habsTotal   = (window.D?.habits ?? []).length;
+  const habRatio    = habsTotal > 0 ? habsDone / habsTotal : 0.5;
+
+  // — État du Gotchi (D.g.happiness + D.g.energy) —
+  // RÔLE : vitalité globale = somme happiness + energy normalisée sur 10.
+  // POURQUOI /10 : happiness et energy sont chacun sur 0–5, somme max = 10.
+  // POURQUOI ?? 2.5 : valeur neutre si D absent (démarrage ou crash partiel).
+  const happiness   = window.D?.g?.happiness ?? 2.5;
+  const energy      = window.D?.g?.energy    ?? 2.5;
+  const vitalite    = (happiness + energy) / 10; // 0→1
+
+  // — Objets regroupés passés aux fonctions de dessin —
+  // RÔLE : Évite de passer 5+ paramètres individuels à chaque sprite.
+  const meteoParams = { flowerTilt, isRaining, rainVal };
+  const habParams   = { habRatio, vitalite };
+
   // ── Éléments génératifs de fond ──────────────────────────────────
   // RÔLE : Itère sur window._gardenElements et dessine uniquement les éléments
   //        dont layer === 'fond' (derrière le Gotchi).
@@ -1623,26 +1661,27 @@ function drawJardinFond(p, theme, n) {
     // RÔLE : Dispatch vers la bonne fonction de dessin selon le type.
     // POURQUOI switch plutôt que if/else : plus lisible quand les cas sont nombreux,
     //          et plus facile à étendre (Phase 3 pourrait ajouter 'buisson', 'arbre', etc.).
-    // RÔLE : Dispatch avec les nouveaux paramètres procéduraux (colorVariant, scalePX).
     // POURQUOI el.colorVariant ?? el.variant : gardenState anciens (Phase 1) n'ont pas
     //          colorVariant → fallback sur variant pour éviter un undefined silencieux.
+    // POURQUOI pierres sans meteoParams/habParams : les pierres sont inertes —
+    //          elles ne réagissent ni au vent ni à l'humeur.
     switch (el.type) {
       case 'fleur':
-        drawFleur(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 3, theme, n, el.age ?? 0, el.maxAge ?? 7);
+        drawFleur(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 3, theme, n, el.age ?? 0, el.maxAge ?? 7, meteoParams, habParams);
         break;
       case 'herbe':
-        drawHerbe(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n, el.age ?? 0, el.maxAge ?? 14);
+        drawHerbe(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n, el.age ?? 0, el.maxAge ?? 14, meteoParams, habParams);
         break;
       case 'pierre':
         drawPierre(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n, el.age ?? 0, el.maxAge ?? 999);
         break;
       case 'champignon':
-        drawChampignon(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 4, n, el.age ?? 0, el.maxAge ?? 5);
+        drawChampignon(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 4, n, el.age ?? 0, el.maxAge ?? 5, meteoParams);
         break;
       case 'arbuste':
-        drawArbuste(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 8, n, el.age ?? 0, el.maxAge ?? 20);
+        drawArbuste(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 8, n, el.age ?? 0, el.maxAge ?? 20, habParams);
         break;
-      // default : type inconnu → ignoré silencieusement (forward-compat Phase 3)
+      // default : type inconnu → ignoré silencieusement (forward-compat Phase 3+)
     }
   });
 }

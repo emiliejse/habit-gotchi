@@ -327,7 +327,7 @@ function openCanvasFullscreen() {
   overlay.id        = 'canvas-fs-overlay';
   overlay.className = 'canvas-fullscreen-overlay';
 
-  // RÔLE : Bouton ✕ positionné en absolu dans l'overlay
+  // RÔLE : Bouton ✕ en position fixed (z:851) — toujours cliquable au-dessus du canvas
   const closeBtn = document.createElement('button');
   closeBtn.className   = 'canvas-fs-close';
   closeBtn.textContent = '✕';
@@ -335,7 +335,10 @@ function openCanvasFullscreen() {
   closeBtn.onclick     = closeCanvasFullscreen;
 
   // ── Bloc infos jardin ────────────────────────────────────────────
-  // RÔLE : Infos contextuelles en bas de l'overlay — uniquement pour l'env jardin
+  // RÔLE : Infos contextuelles sous le canvas — uniquement pour l'env jardin
+  // POURQUOI positionné dans l'overlay (pas dans #console-top) : l'overlay est z:800,
+  //          en dessous du canvas (z:850). Les infos s'affichent donc sous le tama,
+  //          dans la zone libre du fond coloré. Le padding-top CSS les décale.
   const infoHTML = _buildGardenInfo();
   const infoEl   = document.createElement('div');
   infoEl.className = 'canvas-fs-info';
@@ -348,12 +351,16 @@ function openCanvasFullscreen() {
   overlay.appendChild(infoEl);
   document.body.appendChild(overlay);
 
+  // RÔLE : Active la classe sur body — masque l'UI et reconfigure #console-top
+  // POURQUOI avant le double RAF : les styles doivent être en place avant la transition
+  document.body.classList.add('garden-fullscreen');
+
   // RÔLE : Double RAF — le premier frame active display:flex, le second déclenche
   //        la transition CSS translateY (sans ça la transition est ignorée car
   //        l'élément n'était pas encore dans le flux au moment de l'ajout de .open)
   requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('open')));
 
-  // RÔLE : Tap sur l'overlay (hors bouton et infos) ferme le plein écran
+  // RÔLE : Tap sur le fond de l'overlay (hors bouton et infos) ferme le plein écran
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) closeCanvasFullscreen();
   });
@@ -370,6 +377,8 @@ function openCanvasFullscreen() {
 function closeCanvasFullscreen() {
   const overlay = document.getElementById('canvas-fs-overlay');
   if (overlay) overlay.remove();
+  // RÔLE : Retire la classe garden-fullscreen — l'UI normale reprend son layout
+  document.body.classList.remove('garden-fullscreen');
   unlockScroll();
 }
 

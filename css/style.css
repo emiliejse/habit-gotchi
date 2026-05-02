@@ -1763,27 +1763,31 @@ input[type="time"] {
 
 /* ─── SYSTÈME 5 : CANVAS PLEIN ÉCRAN ─────────────────────────────── */
 
-/* RÔLE : Drawer qui remonte du bas de l'écran par-dessus le contenu.
-   Le canvas reste intact dans #console-top — cet overlay ne le couvre pas.
-   Il apporte le fond sombre + les infos jardin + le bouton de fermeture.
-   POURQUOI position fixed + bottom:0 : s'ancre en bas du viewport, indépendant du scroll.
-   POURQUOI z-index 800 : entre #tablet-overlay (400) et #etats-overlay (1000). */
+/*
+  RÔLE : Overlay full-viewport qui couvre toute l'UI quand on ouvre le jardin en plein écran.
+  POURQUOI inset:0 (au lieu de bottom:0) : couvre tout le viewport, pas juste le bas.
+  POURQUOI z-index 800 : entre #tablet-overlay (400) et #etats-overlay (1000).
+  POURQUOI fond palette app : cohérent avec --bg, légèrement teinté lilas via color-mix().
+  Le canvas reste dans #console-top — body.garden-fullscreen le fait passer au-dessus (z:850).
+*/
 .canvas-fullscreen-overlay {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  inset: 0;
   z-index: 800;
-  background: rgba(10, 10, 10, 0.96);
-  border-radius: 20px 20px 0 0;
-  padding: 20px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(
+    160deg,
+    var(--bg) 0%,
+    color-mix(in srgb, var(--lilac) 12%, var(--bg)) 100%
+  );
   display: none;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  /* POURQUOI justify-content flex-start : le canvas (dans #console-top z:850) s'ancre en haut,
+     les infos jardin dans l'overlay se positionnent juste en dessous via padding-top calculé. */
+  justify-content: flex-start;
   /* POURQUOI transform : animation de slide-up à l'ouverture */
   transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.25, 1.15, 0.5, 1);
+  transition: transform 0.35s cubic-bezier(0.25, 1.15, 0.5, 1);
 }
 /* RÔLE : État ouvert — slide up depuis le bas */
 .canvas-fullscreen-overlay.open {
@@ -1791,47 +1795,119 @@ input[type="time"] {
   transform: translateY(0);
 }
 
-/* RÔLE : Petite poignée visuelle en haut du drawer — indique qu'il est dismissable */
+/* RÔLE : Supprimé — la poignée ne fait plus sens sur un overlay full-viewport */
 .canvas-fullscreen-overlay::before {
-  content: '';
-  display: block;
-  width: 36px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 2px;
-  margin-bottom: 4px;
+  display: none;
 }
 
-/* RÔLE : Zone d'infos contextuelles jardin */
+/*
+  RÔLE : Quand le plein écran jardin est actif, #console-top passe au-dessus de l'overlay
+  et est reconfiguré pour n'afficher que le canvas (sans fond ni bordure).
+  POURQUOI z-index 850 : dépasse l'overlay (800) mais reste sous #etats-overlay (1000).
+  POURQUOI bottom:0 : la console occupe tout le viewport en hauteur — le canvas s'ancre en haut,
+  le reste de l'espace est laissé à l'overlay pour les infos jardin.
+*/
+body.garden-fullscreen #console-top {
+  z-index: 850;
+  background: var(--bg); /* cohérent avec l'overlay en dessous */
+  border-bottom: none;
+  box-shadow: none;
+  bottom: 0; /* occupe tout le viewport — le canvas reste ancré en haut */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: calc(var(--sat) + 10px);
+  padding-left: var(--app-gutter);
+  padding-right: var(--app-gutter);
+  padding-bottom: 10px;
+}
+
+/* RÔLE : Masque tout le contenu UI dans #console-top sauf le canvas */
+body.garden-fullscreen .hdr,
+body.garden-fullscreen .bubble,
+body.garden-fullscreen #compact-tab-label {
+  display: none !important;
+}
+
+/* RÔLE : Masque les éléments UI hors #console-top */
+body.garden-fullscreen #dynamic-zone,
+body.garden-fullscreen .menu-languette {
+  display: none !important;
+}
+
+/* RÔLE : Libère le wrapper tama de ses décalages compact — retour position neutre */
+body.garden-fullscreen #tama-bubble-wrap {
+  margin-top: 0 !important;
+  width: 100%;
+  max-width: 420px; /* confortable sur grand et petit écran */
+}
+
+/* RÔLE : Le shell occupe toute la largeur disponible en plein écran */
+body.garden-fullscreen .tama-shell {
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+/* RÔLE : Légère mise en valeur du canvas en plein écran — bord plus fin, coins plus arrondis */
+body.garden-fullscreen .tama-screen {
+  border-radius: 14px;
+  border-width: 2px;
+}
+
+/*
+  RÔLE : Bloc d'infos jardin — positionné dans l'overlay, sous le canvas.
+  POURQUOI padding-top calculé : le canvas occupe la place haute via #console-top (z:850),
+  l'overlay ne peut pas "voir" sa hauteur réelle → le padding-top pousse les infos
+  en dessous du canvas de façon approximative. La valeur est réglée pour couvrir
+  la hauteur typique du canvas sur mobile (portrait ~55vw + padding console).
+  POURQUOI Caveat (--font-title) : style pixel-art-ish, chaleureux, cohérent avec le gotchi.
+  POURQUOI max 4 lignes via max-height + overflow hidden : contrainte brief.
+*/
 .canvas-fs-info {
-  color: #e0d8f0;
-  font-size: 15px;
-  line-height: 1.7;
+  padding-top: calc(var(--sat) + 10px + min(55vw, 420px) + 20px);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.65;
   text-align: center;
-  max-width: 320px;
-  font-family: 'Caveat', cursive;
+  width: 100%;
+  max-width: 360px;
+  font-family: var(--font-title); /* Caveat */
+  font-weight: 400;
+  /* RÔLE : Limite à 4 lignes max comme demandé dans le brief */
+  max-height: calc(16px * 1.65 * 4 + 20px);
   overflow: hidden;
+  opacity: 0.82; /* légère transparence pour ne pas concurrencer le canvas */
 }
 
-/* RÔLE : Bouton ✕ de fermeture — positionné en absolu dans le drawer */
-/* POURQUOI z-index 801 : passe au-dessus du drawer */
+/* RÔLE : Séparateur décoratif pixel-art entre les lignes d'infos — discret */
+.canvas-fs-info br + br {
+  display: none; /* évite les doubles sauts si _buildGardenInfo() génère des lignes vides */
+}
+
+/*
+  RÔLE : Bouton ✕ de fermeture — coin supérieur droit, en position fixed pour rester
+  ancré même si l'overlay flex scroll (ne scrolle pas mais sécurité).
+  POURQUOI z-index 851 : au-dessus de #console-top (850) — toujours cliquable.
+  POURQUOI style palette app : cohérent, pas de blanc-sur-noir.
+*/
 .canvas-fs-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 801;
-  width: 32px;
-  height: 32px;
+  position: fixed;
+  top: calc(var(--sat) + 10px);
+  right: 16px;
+  z-index: 851;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  font-size: 16px;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.15s;
+  box-shadow: 0 1px 4px var(--shadow);
 }
-.canvas-fs-close:hover  { background: rgba(255, 255, 255, 0.3); }
-.canvas-fs-close:active { transform: scale(0.9); }
+.canvas-fs-close:active { transform: scale(0.9); background: var(--border); }

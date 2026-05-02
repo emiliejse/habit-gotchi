@@ -1856,30 +1856,23 @@ body.garden-fullscreen .tama-screen {
 }
 
 /*
-  RÔLE : Bloc d'infos jardin — position fixed dans le viewport, sous le canvas.
-  POURQUOI position:fixed (et non dans le flux de l'overlay) : #console-top est z:850
-  et couvre le haut du viewport. L'overlay (z:800) est derrière lui — tout élément
-  dans le flux de l'overlay qui se retrouve "sous" #console-top est invisible.
-  En position:fixed avec top calculé en JS (bas de #console-top + 12px), les infos
-  s'affichent dans la zone visible de l'overlay, sous le canvas.
-  POURQUOI z-index 802 : au-dessus de l'overlay (800) mais sous #console-top (850).
+  RÔLE : Bloc d'infos jardin — injecté dans #console-top (flex column, z:850)
+  par openCanvasFullscreen(), s'affiche naturellement sous .tama-screen dans le flux.
+  POURQUOI dans #console-top et pas dans l'overlay : #console-top couvre tout le viewport
+  (bottom:0, z:850) — tout ce qui est derrière lui (overlay z:800) est invisible même en
+  position:fixed. En étant enfant de #console-top, infoEl est dans le bon contexte de stacking.
   POURQUOI Caveat (--font-title) : style pixel-art-ish, chaleureux, cohérent avec le gotchi.
   POURQUOI max 4 lignes via max-height + overflow hidden : contrainte brief.
-  top : injecté en JS par openCanvasFullscreen() via infoEl.style.top.
 */
 .canvas-fs-info {
-  position: fixed;
-  /* top injecté par JS — voir openCanvasFullscreen() dans ui-nav.js */
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 802;
+  width: 100%;
+  max-width: 360px;
+  margin: 12px auto 0;
   padding: 0 20px;
   color: var(--text);
   font-size: 16px;
   line-height: 1.65;
   text-align: center;
-  width: 100%;
-  max-width: 360px;
   font-family: var(--font-title); /* Caveat */
   font-weight: 400;
   /* RÔLE : Limite à 4 lignes max comme demandé dans le brief */

@@ -358,30 +358,25 @@ function openCanvasFullscreen() {
   if (!infoHTML) infoEl.style.display = 'none';
 
   // ── Assemblage et injection ──────────────────────────────────────
+  // POURQUOI closeBtn dans l'overlay : le bouton ✕ est en position:fixed, pas affecté
+  //          par le contexte de stacking de l'overlay.
   overlay.appendChild(closeBtn);
-  overlay.appendChild(infoEl);
   document.body.appendChild(overlay);
 
-  // RÔLE : Active la classe sur body — masque l'UI et reconfigure #console-top
-  // POURQUOI avant le double RAF : les styles CSS doivent être appliqués avant qu'on mesure
+  // RÔLE : Active la classe sur body — masque l'UI et reconfigure #console-top (z:850)
   document.body.classList.add('garden-fullscreen');
 
-  // RÔLE : Double RAF — 1er frame applique les styles CSS, 2e mesure la hauteur réelle
-  //        de #console-top (après reflow) pour positionner .canvas-fs-info juste en dessous.
-  //        Le 3e RAF déclenche la transition de l'overlay (.open).
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      // RÔLE : Mesure le bas du canvas (tama-screen) après reflow CSS garden-fullscreen.
-      // POURQUOI .tama-screen et pas #console-top : en mode garden-fullscreen, #console-top
-      //          s'étend sur tout le viewport (bottom:0) donc son .getBoundingClientRect().bottom
-      //          retourne la hauteur totale du viewport (~953px) — bien trop bas.
-      //          .tama-screen est le canvas lui-même — son .bottom donne la vraie limite visuelle.
-      const screen = document.querySelector('.tama-screen');
-      const canvasBottom = screen ? screen.getBoundingClientRect().bottom : 200;
-      infoEl.style.top = (canvasBottom + 12) + 'px';
+  // RÔLE : Injecte infoEl dans #console-top (z:850) et non dans l'overlay (z:800).
+  // POURQUOI : #console-top avec bottom:0 couvre tout le viewport et masque tout ce qui
+  //            est derrière lui (z < 850), y compris les éléments en position:fixed z:802.
+  //            En injectant infoEl directement dans #console-top, il partage son contexte
+  //            de stacking et s'affiche au-dessus du fond de l'overlay, sous le canvas.
+  const consoleTop = document.getElementById('console-top');
+  if (consoleTop) consoleTop.appendChild(infoEl);
 
-      requestAnimationFrame(() => overlay.classList.add('open'));
-    });
+  // RÔLE : Double RAF — laisse le reflow CSS s'appliquer avant de déclencher la transition
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => overlay.classList.add('open'));
   });
 
   // RÔLE : Tap sur le fond de l'overlay (hors bouton et infos) ferme le plein écran
@@ -401,6 +396,9 @@ function openCanvasFullscreen() {
 function closeCanvasFullscreen() {
   const overlay = document.getElementById('canvas-fs-overlay');
   if (overlay) overlay.remove();
+  // RÔLE : Retire infoEl de #console-top — injecté là par openCanvasFullscreen()
+  const infoEl = document.querySelector('.canvas-fs-info');
+  if (infoEl) infoEl.remove();
   // RÔLE : Retire la classe garden-fullscreen — l'UI normale reprend son layout
   document.body.classList.remove('garden-fullscreen');
   // RÔLE : Restaure l'env qui était actif avant l'ouverture du plein écran.

@@ -1763,58 +1763,61 @@ input[type="time"] {
 
 /* ─── SYSTÈME 5 : CANVAS PLEIN ÉCRAN ─────────────────────────────── */
 
-/* RÔLE : Overlay vertical couvrant tout l'écran — flex column, canvas en haut, infos en bas */
-/* POURQUOI z-index 800 : entre #tablet-overlay (400) et #etats-overlay (1000).
-   display:none par défaut — injecté et activé dynamiquement par openCanvasFullscreen() */
+/* RÔLE : Drawer qui remonte du bas de l'écran par-dessus le contenu.
+   Le canvas reste intact dans #console-top — cet overlay ne le couvre pas.
+   Il apporte le fond sombre + les infos jardin + le bouton de fermeture.
+   POURQUOI position fixed + bottom:0 : s'ancre en bas du viewport, indépendant du scroll.
+   POURQUOI z-index 800 : entre #tablet-overlay (400) et #etats-overlay (1000). */
 .canvas-fullscreen-overlay {
   position: fixed;
-  inset: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 800;
-  background: #0a0a0a;
+  background: rgba(10, 10, 10, 0.96);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 20px calc(16px + env(safe-area-inset-bottom, 0px));
   display: none;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding-top: env(safe-area-inset-top, 0px);
+  gap: 12px;
+  /* POURQUOI transform : animation de slide-up à l'ouverture */
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.25, 1.15, 0.5, 1);
 }
-/* RÔLE : Affiche l'overlay quand openCanvasFullscreen() l'active */
+/* RÔLE : État ouvert — slide up depuis le bas */
 .canvas-fullscreen-overlay.open {
   display: flex;
+  transform: translateY(0);
 }
 
-/* RÔLE : Wrapper autour du canvas — flex 0 0 auto pour ne pas s'étirer sur la hauteur */
-/* POURQUOI : le canvas est centré horizontalement dans ce wrapper, sans débordement */
-.canvas-fs-wrap {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  /* POURQUOI padding-top 12px : espace visuel au-dessus du canvas, sous le bouton ✕ */
-  padding-top: 12px;
+/* RÔLE : Petite poignée visuelle en haut du drawer — indique qu'il est dismissable */
+.canvas-fullscreen-overlay::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+  margin-bottom: 4px;
 }
 
-/* RÔLE : Zone d'infos contextuelles sous le canvas — visible uniquement pour l'env jardin */
-/* POURQUOI flex:1 : prend tout l'espace vertical restant sous le canvas */
+/* RÔLE : Zone d'infos contextuelles jardin */
 .canvas-fs-info {
-  flex: 1;
-  padding: 16px;
   color: #e0d8f0;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.7;
   text-align: center;
   max-width: 320px;
-  /* Caveat si disponible — dégradation gracieuse sur cursive si absente */
   font-family: 'Caveat', cursive;
-  /* POURQUOI overflow hidden : pas de scroll — max 4 lignes par design */
   overflow: hidden;
 }
 
-/* RÔLE : Bouton ✕ de fermeture — positionné en absolu dans l'overlay */
-/* POURQUOI z-index 801 : passe au-dessus du canvas dans l'overlay */
+/* RÔLE : Bouton ✕ de fermeture — positionné en absolu dans le drawer */
+/* POURQUOI z-index 801 : passe au-dessus du drawer */
 .canvas-fs-close {
   position: absolute;
-  top: max(12px, env(safe-area-inset-top, 12px));
+  top: 12px;
   right: 12px;
   z-index: 801;
   width: 32px;
@@ -1823,7 +1826,7 @@ input[type="time"] {
   border: none;
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;

@@ -348,8 +348,10 @@ function openCanvasFullscreen() {
   overlay.appendChild(infoEl);
   document.body.appendChild(overlay);
 
-  // RÔLE : RAF pour que display:flex soit calculé avant .open (évite flash)
-  requestAnimationFrame(() => overlay.classList.add('open'));
+  // RÔLE : Double RAF — le premier frame active display:flex, le second déclenche
+  //        la transition CSS translateY (sans ça la transition est ignorée car
+  //        l'élément n'était pas encore dans le flux au moment de l'ajout de .open)
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('open')));
 
   // RÔLE : Tap sur l'overlay (hors bouton et infos) ferme le plein écran
   overlay.addEventListener('click', (e) => {

@@ -2119,20 +2119,18 @@ async function bootstrap() {
   await loadUserConfig(); // Charge la config perso avant tout le reste
   loadDataFiles().then(() => {
     initBaseProps();
-    // RÔLE : Initialise userNickname / userName / gotchiName depuis user_config.json
-    //        UNIQUEMENT si la valeur correspondante de D.g est encore vide.
-    // POURQUOI le guard "vide" : la modification depuis Réglages doit être respectée.
-    //          Sans ce guard, le rename via l'UI Réglages serait écrasé au prochain reload.
-    //          Conséquence assumée : pour changer un nom déjà personnalisé via user_config,
-    //          il faut soit éditer le nom dans Réglages, soit reset l'app (defs() repose tout).
+    // RÔLE : Force userNickname et userName depuis user_config.json à chaque démarrage.
+    // POURQUOI : DÉCISION EXPLICITE — user_config.json est la SEULE source de vérité pour
+    //            ces deux champs. Aucun champ UI ne permet de les modifier (seul gotchiName
+    //            est éditable depuis Réglages). Pour changer son surnom, l'utilisatrice
+    //            édite directement data/user_config.json → identity.userNickname.
+    //            Cet écrasement systématique garantit que la config et l'app sont toujours
+    //            synchronisées (utile aussi pour Alexia qui synchronise son fichier).
     if (window.USER_CONFIG?.identity && window.D?.g) {
-      if (window.USER_CONFIG.identity.userNickname && !window.D.g.userNickname) {
-        window.D.g.userNickname = window.USER_CONFIG.identity.userNickname;
-      }
-      if (window.USER_CONFIG.identity.userName && !window.D.g.userName) {
-        window.D.g.userName = window.USER_CONFIG.identity.userName;
-      }
-      // RÔLE : N'applique gotchiName que si l'utilisatrice n'a pas encore personnalisé le nom.
+      if (window.USER_CONFIG.identity.userNickname) window.D.g.userNickname = window.USER_CONFIG.identity.userNickname;
+      if (window.USER_CONFIG.identity.userName)     window.D.g.userName     = window.USER_CONFIG.identity.userName;
+      // RÔLE : N'applique gotchiName que si l'utilisatrice n'a pas encore personnalisé le nom
+      //        depuis Réglages (champ #name-inp → saveName() dans ui-settings.js).
       // POURQUOI : évite d'écraser le nom choisi dans le wizard à chaque mise à jour.
       if (window.USER_CONFIG.identity.gotchiName && window.D.g.name === 'Petit·e Gotchi') {
         window.D.g.name = window.USER_CONFIG.identity.gotchiName;

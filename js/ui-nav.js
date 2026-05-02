@@ -536,6 +536,18 @@ function openCanvasFullscreen() {
     // Il est posé immédiatement au tap (voir ci-dessous) pour que p5 bascule en mode
     // contemplatif instantanément — le canvas ne doit pas afficher le HUD pendant la
     // transition compact. L'overlay s'ouvre une fois le layout stabilisé.
+
+    // RÔLE : Réactive l'opacité du tama — masqué pendant la transition compact via
+    //        body.garden-preparing #tama-shell-main { opacity:0 }.
+    // POURQUOI transition inline : garden-preparing est déjà retiré à ce stade,
+    //          donc la règle CSS opacity:0 n'est plus active — on repart de 0 vers 1
+    //          avec un fondu court (200ms) pour que le tama apparaisse proprement.
+    const shell = document.getElementById('tama-shell-main');
+    if (shell) {
+      shell.style.transition = 'opacity 0.2s ease';
+      shell.style.opacity    = '1';
+    }
+
     overlay.classList.add('open');
 
     lockScroll();
@@ -571,6 +583,12 @@ function openCanvasFullscreen() {
     function _waitForLayout() {
       const mt = wrap ? parseFloat(getComputedStyle(wrap).marginTop) : 0;
       if (Math.abs(mt) < 1) {
+        // RÔLE : Verrouille opacity:0 en inline sur le shell AVANT de retirer garden-preparing.
+        // POURQUOI : retirer garden-preparing supprime la règle CSS `opacity:0` — si on ne
+        //            fixe pas la valeur en inline au préalable, le tama flashe à opacity:1
+        //            une frame avant que _doOpen() pose la transition de fondu.
+        const shell = document.getElementById('tama-shell-main');
+        if (shell) shell.style.opacity = '0';
         // Layout stabilisé — retire la classe de préparation et ouvre l'overlay
         document.body.classList.remove('garden-preparing');
         _doOpen();
@@ -601,6 +619,11 @@ function closeCanvasFullscreen() {
   if (infoEl) infoEl.remove();
   // RÔLE : Retire la classe garden-fullscreen — l'UI normale reprend son layout
   document.body.classList.remove('garden-fullscreen');
+  // RÔLE : Remet le style inline opacity sur le tama — posé par _waitForLayout() pour
+  //        éviter un flash avant le fondu d'ouverture. Sans nettoyage, la prochaine
+  //        ouverture depuis l'accueil (non compact) hériterait de l'opacity:1 inline.
+  const shell = document.getElementById('tama-shell-main');
+  if (shell) { shell.style.opacity = ''; shell.style.transition = ''; }
   // RÔLE : Retire le focus du bouton ✕ avant de remettre aria-hidden sur son parent.
   // POURQUOI : Si le bouton garde le focus au moment où aria-hidden est posé sur .hdr-garden,
   //            le navigateur lève un warning "Blocked aria-hidden on focused element".

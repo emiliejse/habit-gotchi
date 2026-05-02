@@ -1901,6 +1901,16 @@ body.garden-preparing #dynamic-zone,
 body.garden-preparing .menu-languette {
   display: none !important;
 }
+/* RÔLE : Masque le tama pendant la transition compact (400ms) — il réapparaît en fondu
+          une fois le layout stabilisé, à sa taille finale.
+   POURQUOI : En mode compact, #tama-shell-main a max-width:220px + une transition CSS.
+              Quand compact est retiré, le tama grossit de 220px → sa taille normale pendant
+              400ms — visuellement il "arrive du coin gauche". Le masquer pendant ce temps
+              et le révéler seulement dans _doOpen() donne le même résultat qu'une ouverture
+              depuis l'onglet accueil (tama déjà à taille finale). */
+body.garden-preparing #tama-shell-main {
+  opacity: 0;
+}
 
 /* RÔLE : Masque le header normal et la bulle — remplacés par .hdr-garden */
 body.garden-fullscreen .hdr,

@@ -176,28 +176,31 @@ function initGarden() {
   // IMPORTANT : toutes les valeurs Y doivent être des multiples de PX=5.
   // px() arrondit les coordonnées sur la grille PX — si y n'est pas multiple de 5,
   // le snap crée un décalage entre y calculé et y réel → espaces entre les pixels des sprites.
+  // ORDRE IMPÉRATIF : les grands éléments (arbustes) sont placés EN PREMIER,
+  // pendant que le jardin est encore vide → garantit qu'ils trouvent toujours une place.
+  // Les petits éléments (herbes, fleurs) se glissent ensuite dans les espaces restants.
   const SLOTS = [
+    // Arbustes fond — EN PREMIER : grands éléments dominants, placés avant tout
+    { type: 'arbuste',    layer: 'fond',          count: 2,
+      xMin: 15, xMax: 175, y: 120, maxAge: 20,  hauteurPX: 10, scaleMin: 5, scaleMax: 14 },
     // Fleurs fond — grandes tailles pour les éléments derrière le Gotchi
     { type: 'fleur',      layer: 'fond',          count: 5,
       xMin: 10, xMax: 185, y: 120, maxAge: 7,   hauteurPX: 4,  scaleMin: 1, scaleMax: 8  },
-    // Fleurs premier plan — petites, ne doivent pas cacher le Gotchi
-    { type: 'fleur',      layer: 'premier_plan',  count: 3,
-      xMin: 10, xMax: 185, y: 160, maxAge: 7,   hauteurPX: 2,  scaleMin: 1, scaleMax: 3  },
     // Herbes fond — peuvent être hautes derrière le Gotchi
     { type: 'herbe',      layer: 'fond',          count: 3,
       xMin: 10, xMax: 185, y: 120, maxAge: 14,  hauteurPX: 3,  scaleMin: 1, scaleMax: 7  },
-    // Herbes premier plan — lisière basse, ras du sol
-    { type: 'herbe',      layer: 'premier_plan',  count: 2,
-      xMin: 10, xMax: 185, y: 160, maxAge: 14,  hauteurPX: 2,  scaleMin: 1, scaleMax: 3  },
     // Pierres fond — du caillou au rocher
     { type: 'pierre',     layer: 'fond',          count: 4,
       xMin: 10, xMax: 185, y: 120, maxAge: 999, hauteurPX: 2,  scaleMin: 1, scaleMax: 5  },
     // Champignons fond — petits à moyens, éphémères
     { type: 'champignon', layer: 'fond',          count: 3,
       xMin: 10, xMax: 185, y: 120, maxAge: 5,   hauteurPX: 3,  scaleMin: 1, scaleMax: 6  },
-    // Arbustes fond — éléments dominants, toujours grands, toujours derrière tout
-    { type: 'arbuste',    layer: 'fond',          count: 2,
-      xMin: 15, xMax: 175, y: 120, maxAge: 20,  hauteurPX: 10, scaleMin: 5, scaleMax: 14 },
+    // Fleurs premier plan — petites, ne doivent pas cacher le Gotchi
+    { type: 'fleur',      layer: 'premier_plan',  count: 3,
+      xMin: 10, xMax: 185, y: 160, maxAge: 7,   hauteurPX: 2,  scaleMin: 1, scaleMax: 3  },
+    // Herbes premier plan — lisière basse, ras du sol
+    { type: 'herbe',      layer: 'premier_plan',  count: 2,
+      xMin: 10, xMax: 185, y: 160, maxAge: 14,  hauteurPX: 2,  scaleMin: 1, scaleMax: 3  },
   ];
 
   // ── 4. Génération de la liste d'éléments avec zone d'exclusion ──
@@ -226,15 +229,24 @@ function initGarden() {
   const MAX_ATTEMPTS = 12; // max retentatives avant de skipper — augmenté pour réduire les skips
 
   // RÔLE : Vérifie si la position x empiète horizontalement sur un élément déjà placé.
-  // POURQUOI uniquement horizontal : Y est fixe par layer (même ligne de sol) — pas de superposition verticale.
-  // MARGE HORIZONTALE : PX*3 = 15px fixes — assez pour éviter les sprites qui se touchent,
-  //   pas trop pour laisser la place à 20 éléments sur 175px de large.
-  //   (175px / 20 éléments ≈ 8px d'espacement moyen — on autorise jusqu'à 15px de zone morte)
-  function _estBloque(x, y, layer, placed) {
-    const MARGE = PX * 3; // 15px de chaque côté — empreinte fixe, indépendante de la taille
+  // POURQUOI uniquement horizontal : Y est fixe par layer (même ligne de sol).
+  //
+  // MARGE ADAPTATIVE : la marge dépend du plus grand des deux éléments (candidat ou existant).
+  //   Formule : max(scalePX_A, scalePX_B) × PX × 0.6
+  //   Exemples :
+  //     herbe s=2 vs herbe s=2  → max(2,2) × 5 × 0.6 = 6px   (petits éléments, serrés)
+  //     fleur s=5 vs herbe s=2  → max(5,2) × 5 × 0.6 = 15px  (fleur moyenne, espace raisonnable)
+  //     arbuste s=10 vs tout    → max(10,x) × 5 × 0.6 = 30px (grand élément, espace suffisant)
+  //   POURQUOI 0.6 : les sprites ne remplissent pas tout leur scalePX en largeur —
+  //   une fougère s=7 fait ~4 colonnes de large. 0.6 donne une marge honnête sans être
+  //   trop agressive sur les petits éléments.
+  //
+  // scalePX du candidat est passé en paramètre pour le calcul.
+  function _estBloque(x, layer, scalePXCandidat, placed) {
     for (const el of placed) {
-      if (el.layer !== layer) continue; // pas de collision entre layers différents (y différents)
-      if (Math.abs(x - el.x) < MARGE) return true; // trop proche horizontalement
+      if (el.layer !== layer) continue;
+      const marge = Math.max(scalePXCandidat, el.scalePX) * PX * 0.4;
+      if (Math.abs(x - el.x) < marge) return true;
     }
     return false;
   }
@@ -245,44 +257,33 @@ function initGarden() {
   SLOTS.forEach(slot => {
     for (let i = 0; i < slot.count; i++) {
 
+      // RÔLE : On tire scalePX EN PREMIER pour que la marge de collision soit
+      //        proportionnelle à la taille de l'élément candidat dès le premier essai.
+      // POURQUOI avant les positions X : _estBloque() a besoin de scalePX pour calculer
+      //   la marge adaptative — on ne peut pas tirer X avant de connaître la taille.
+
+      // variant : tiré avant le placement (détermine aussi des comportements de marge future)
+      const variant      = Math.floor(_gardenRng(seed, idxTotal++) * 4);
+      const colorVariant = Math.floor(_gardenRng(seed, idxTotal++) * 8);
+
+      // scalePX : distribution pondérée rng² → beaucoup de petits, rares grands.
+      const rngScale  = _gardenRng(seed, idxTotal++);
+      const scalePX   = slot.scaleMin + Math.floor(rngScale * rngScale * (slot.scaleMax - slot.scaleMin + 1));
+      const scaleFinal = Math.max(slot.scaleMin, Math.min(slot.scaleMax, scalePX));
+
       let x, placed = false;
 
       for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-        // Position X : tirage dans la plage du slot, aligné sur la grille PX
-        // POURQUOI on retente uniquement sur X : Y est fixe par slot (ligne de sol unique).
-        // Un nouvel index à chaque tentative → valeur différente mais toujours déterministe.
+        // Position X : tirage dans la plage du slot, aligné sur la grille PX.
         const xRaw = slot.xMin + _gardenRng(seed, idxTotal++) * (slot.xMax - slot.xMin);
         x = Math.floor(xRaw / PX) * PX;
 
-        // RÔLE : Vérifie si cette position X empiète sur un élément déjà placé du même layer.
-        if (!_estBloque(x, slot.y, slot.layer, elements)) {
+        // RÔLE : Vérifie collision avec marge proportionnelle à la taille du candidat.
+        if (!_estBloque(x, slot.layer, scaleFinal, elements)) {
           placed = true;
-          break; // position libre trouvée → on sort de la boucle de tentatives
+          break;
         }
-        // Position bloquée → on continue avec un nouvel idxTotal (prochain _gardenRng)
       }
-
-      // RÔLE : Tirages déterministes post-placement — toujours après les tentatives
-      //        pour ne pas perturber la séquence d'idxTotal des positions X.
-
-      // variant : forme du sprite (0–3) — détermine la silhouette, indépendant de la couleur
-      const variant = Math.floor(_gardenRng(seed, idxTotal++) * 4);
-
-      // colorVariant : couleur du sprite (0–7) — palette large, indépendante de la forme.
-      // POURQUOI séparer forme et couleur : variant=0 + colorVariant=3 ≠ variant=0 + colorVariant=5
-      // → 4 formes × 8 couleurs = 32 combinaisons par type, sans compter la taille.
-      const colorVariant = Math.floor(_gardenRng(seed, idxTotal++) * 8);
-
-      // scalePX : taille réelle du sprite — distribution pondérée vers les petites valeurs.
-      // FORMULE : rng² écrase les grandes valeurs.
-      //   Exemple scaleMax=8 : rng=0.9 → 0.81 → scalePX≈7 (rare)
-      //                        rng=0.5 → 0.25 → scalePX≈2 (fréquent)
-      //                        rng=0.3 → 0.09 → scalePX≈1 (très fréquent)
-      // POURQUOI pas uniforme : on veut beaucoup de petits éléments discrets,
-      //   quelques moyens, et des grands comme événements visuels rares.
-      const rngScale  = _gardenRng(seed, idxTotal++);
-      const scalePX   = slot.scaleMin + Math.floor(rngScale * rngScale * (slot.scaleMax - slot.scaleMin + 1));
-      const scaleFinal = Math.max(slot.scaleMin, Math.min(slot.scaleMax, scalePX)); // clamp défensif
 
       // hauteurPX effective = scalePX réel (pour la zone d'exclusion et gardenState)
       const hauteurPXEffective = scaleFinal;
@@ -424,7 +425,7 @@ window.initGarden = initGarden;
    Règle : les éléments de taille s=1 sont des formes minuscules (1–2 pixels),
            les éléments s=8–9 sont des formes imposantes qui montent haut dans le ciel.
 */
-
+ 
 /**
  * drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n)
  * RÔLE : Fleur pixel art — complexité croissante avec scalePX.

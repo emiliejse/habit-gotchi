@@ -141,7 +141,7 @@ function renderProps() {
   // POURQUOI : Forme carrée avec coins légèrement arrondis vs boutons d'action pill-shape,
   //            pour distinguer visuellement les deux types de contrôles.
   const cats = [
-    { key: 'tous',       label: '✼ Tous' },
+    { key: 'tous',       label: '🗂️ Tous' },
     { key: 'decor',      label: '🪑 Décor' },
     { key: 'accessoire', label: '🎀 Accessoires' },
     { key: 'ambiance',   label: '🌈 Ambiances' },

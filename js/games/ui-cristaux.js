@@ -396,20 +396,30 @@ function _cx_sketch(p) {
 
     cristaux.forEach((c, idx) => {
 
-      // ── Cristal perdu — animation rouge + chute rapide puis suppression ──
+      // ── Cristal perdu — animation rouge traversant les zones, puis suppression ──
       if (c.perdu) {
         if (c.flashBlanc > 0) {
-          // RÔLE : ratio d'avancement de l'animation (1.0 au début → 0.0 à la fin)
+          // RÔLE : ratio 1.0 (début) → 0.0 (fin) — pilote l'estompage
           const t = c.flashBlanc / _CX_FLASH_PERDU;
 
-          // RÔLE : Le cristal continue de tomber rapidement pendant l'animation
-          // POURQUOI : renforce le sentiment de "raté" — le cristal s'échappe vers le bas
-          c.y += 4;
+          // RÔLE : Chute accélérée à travers les zones de tri
+          // POURQUOI vitesse × 3 : le cristal parcourt toute la hauteur des zones pendant
+          //   les ~22 frames d'animation — on le voit clairement passer à travers les bandes
+          c.y += c.vy * 3;
 
-          // RÔLE : Flash rouge vif qui s'estompe — bien plus lisible que le blanc
-          // POURQUOI rouge : couleur universelle d'erreur, contraste fort sur tous les fonds
-          p.fill(255, 60, 60, p.lerp(0, 220, t));
-          _cx_losange(c.x, c.y, c.taille * p.lerp(0.8, 1.3, t)); // léger agrandissement au début
+          // RÔLE : Corps rouge vif, opacité élevée au début puis qui s'efface
+          p.fill(255, 50, 50, p.lerp(30, 230, t));
+          _cx_losange(c.x, c.y, c.taille * 1.2);
+
+          // RÔLE : Croix ✕ blanche au centre — signal visuel d'erreur universel
+          // POURQUOI dessinée en trait et non en texte : plus robuste cross-platform
+          p.stroke(255, 255, 255, p.lerp(0, 200, t));
+          p.strokeWeight(3);
+          const s = c.taille * 0.45;
+          p.line(c.x - s, c.y - s, c.x + s, c.y + s);
+          p.line(c.x + s, c.y - s, c.x - s, c.y + s);
+          p.noStroke();
+
           c.flashBlanc--;
         } else {
           aSupprimer.push(idx);
@@ -437,8 +447,16 @@ function _cx_sketch(p) {
         c.y += c.vy; // RÔLE : chute d'une frame
       }
 
-      // ── Cristal sorti par le bas → flash blanc ────────
-      if (c.y - c.taille > CH && !c.actif) {
+      // ── Cristal au milieu de la zone de tri sans être tenu → perdu ─
+      // POURQUOI détection au MILIEU de la zone (et non au bord supérieur ni sous CH) :
+      //   - Bord supérieur : trop tôt — le cristal vient d'entrer, l'utilisatrice peut encore
+      //     le rattraper en le glissant depuis la zone. On laisse une demi-zone de marge.
+      //   - Sous CH (ancien comportement) : trop tard — animation dans le vide, invisible.
+      //   - Milieu de zone : compromis — le cristal est clairement "tombé dedans",
+      //     l'animation rouge traverse la moitié basse de la zone, bien visible.
+      // POURQUOI !c.actif : si le cristal est tenu (drag en cours), on attend touchEnded.
+      const seuilPerte = CH - _CX_HAUTEUR_ZONES / 2; // milieu vertical de la zone
+      if (!c.actif && !c.perdu && c.y >= seuilPerte) {
         c.perdu      = true;
         c.flashBlanc = _CX_FLASH_PERDU;
         return;

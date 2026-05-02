@@ -68,6 +68,76 @@ function _gardenRng(seed, index) {
 // Exposée globalement pour pouvoir être testée dans la console
 window._gardenRng = _gardenRng;
 
+/* ─── §0a bis : HELPER COULEUR ───────────────────────────────────── */
+
+/**
+ * _lerpGray(hex, t) — Désature une couleur vers le gris
+ *
+ * RÔLE : Mélange une couleur hex vers son équivalent gris selon t.
+ *        t = 0 → couleur intacte | t = 1 → gris pur.
+ *
+ * POURQUOI luminance perceptuelle (0.299 / 0.587 / 0.114) :
+ *        L'œil humain est plus sensible au vert qu'au rouge, et très peu au bleu.
+ *        Ces coefficients (standard ITU-R BT.601) donnent un gris visuellement
+ *        neutre — un gris mathématique (r+g+b)/3 paraît trop bleuté ou trop sombre.
+ *
+ * POURQUOI indépendant de tc(n, ...) :
+ *        tc() gère l'assombrissement nuit. _lerpGray() gère la saturation émotionnelle.
+ *        Les deux s'appliquent séquentiellement — d'abord désaturer, ensuite assombrir
+ *        pour la nuit : tc(n, _lerpGray(hex, t)).
+ *
+ * @param {string} hex - Couleur hexadécimale '#rrggbb'
+ * @param {number} t   - Ratio de grisaillement [0, 1]
+ * @returns {string}   Couleur hex résultante
+ */
+function _lerpGray(hex, t) {
+  if (t <= 0) return hex; // RÔLE : Optimisation — si t=0, aucune transformation
+  const r    = parseInt(hex.slice(1, 3), 16);
+  const g    = parseInt(hex.slice(3, 5), 16);
+  const b    = parseInt(hex.slice(5, 7), 16);
+  // RÔLE : Calcule la luminance perceptuelle — valeur de gris "juste" pour cette couleur
+  const gray = Math.round(r * 0.299 + g * 0.587 + b * 0.114);
+  // RÔLE : Interpole chaque canal vers le gris selon t
+  const ri   = Math.round(r + (gray - r) * t);
+  const gi   = Math.round(g + (gray - g) * t);
+  const bi   = Math.round(b + (gray - b) * t);
+  return `#${ri.toString(16).padStart(2, '0')}${gi.toString(16).padStart(2, '0')}${bi.toString(16).padStart(2, '0')}`;
+}
+
+/**
+ * _grayT(habParams) — Calcule le ratio de désaturation depuis habitudes + Gotchi
+ *
+ * RÔLE : Retourne t ∈ [0, 0.45] à passer à _lerpGray().
+ *        0   = couleurs vives (jardin en forme)
+ *        0.45 = désaturation marquée (jardin triste)
+ *
+ * LOGIQUE :
+ *   • habRatio > 0.6 ET vitalite > 0.7 → t = 0       (tout va bien, couleurs pleines)
+ *   • habRatio < 0.3 OU vitalite < 0.4 → t = 0.45    (jardin fatigué)
+ *   • Entre les deux → interpolation linéaire douce
+ *
+ * POURQUOI le minimum des deux (hab et vitalité) :
+ *   Un Gotchi en pleine forme ne compense pas des habitudes nulles, et vice-versa.
+ *   Le jardin reflète l'état global — le maillon le plus faible s'impose.
+ *
+ * @param {Object} habParams - { habRatio: number, vitalite: number }
+ * @returns {number} t ∈ [0, 0.45]
+ */
+function _grayT(habParams) {
+  if (!habParams) return 0; // RÔLE : Garde — si pas de params, pas de désaturation
+  const { habRatio = 0.5, vitalite = 0.5 } = habParams;
+  // RÔLE : Score global = le pire des deux indicateurs
+  const score = Math.min(habRatio, vitalite); // 0→1
+  // RÔLE : Mapping score → t
+  //   score ≥ 0.6 → t = 0    (vif)
+  //   score ≤ 0.3 → t = 0.45 (terne)
+  //   entre 0.3 et 0.6 → interpolation linéaire
+  if (score >= 0.6) return 0;
+  if (score <= 0.3) return 0.45;
+  // Interpolation : score descend de 0.6 à 0.3 → t monte de 0 à 0.45
+  return 0.45 * (1 - (score - 0.3) / 0.3);
+}
+
 /* ─── §0b : INIT JARDIN ──────────────────────────────────────────── */
 
 /**
@@ -635,7 +705,7 @@ window._ageGarden = _ageGarden;
  *
  * variant 0 = classique | 1 = marguerite | 2 = tulipe | 3 = sauvage
  */
-function drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n, age, maxAge) {
+function drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n, age, maxAge, meteoParams, habParams) {
   const s  = scalePX;
   const ag = age    ?? 0;
   const ma = maxAge ?? 7;
@@ -645,14 +715,23 @@ function drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n, age, maxAg
     '#f0a0b0', '#e84868', '#f0d870', '#e8b020',
     '#c888e8', '#7830c0', '#80c8e8', '#f8f8f8',
   ];
-  const colP = PETALES[colorVariant % 8];
-  const colT = '#4a8840';  // tige verte
-  const colC = (colorVariant % 2 === 0) ? '#f0d060' : '#e09020'; // cœur
-  const colF = '#3a7030';  // feuilles
+  // RÔLE : Désaturation émotionnelle — t=0 (vif) à t=0.45 (terne).
+  // Les couleurs végétales passent par _lerpGray avant tc() pour la nuit.
+  const gt   = _grayT(habParams);
+  const colP = _lerpGray(PETALES[colorVariant % 8], gt);
+  const colT = _lerpGray('#4a8840', gt);  // tige verte
+  const colC = _lerpGray((colorVariant % 2 === 0) ? '#f0d060' : '#e09020', gt); // cœur
+  const colF = _lerpGray('#3a7030', gt);  // feuilles
 
   // ── Tige ─────────────────────────────────────────────────────────
   // Hauteur de tige : s rangées. Vieux → tige décalée d'1 PX à droite.
-  const dx = m > 0.85 ? PX : 0; // tige penchée si vieux
+  // RÔLE : dx = inclinaison totale (vieillesse + vent). Toute la plante penche ensemble.
+  // POURQUOI Math.round : flowerTilt est un flottant (0→3) — on l'arrondit en unités PX
+  //          entières pour rester sur la grille pixel et éviter les demi-pixels flous.
+  // POURQUOI + et non max : vieillesse et vent s'accumulent — une vieille fleur par vent
+  //          fort penche plus qu'une jeune par vent faible. Plafonné à 4PX pour rester lisible.
+  const windTilt = Math.round(meteoParams?.flowerTilt ?? 0); // 0→3 PX
+  const dx = Math.min(4, (m > 0.85 ? 1 : 0) + windTilt) * PX; // en px réels
   p.fill(tc(n, colT));
   px(p, x + dx, y - PX*s, PX, PX*s); // colonne pleine de s rangées
 
@@ -786,6 +865,30 @@ function drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n, age, maxAg
       }
     }
   }
+
+  // ── Gouttes de pluie animées ─────────────────────────────────────
+  // RÔLE : Si pluie active, dessine 1–3 pixels bleus qui tombent sur/autour du sprite.
+  // POURQUOI frameCount : la position Y de la goutte avance à chaque frame → animation.
+  // POURQUOI modulo (s * PX * 2) : la goutte boucle sur une hauteur de 2× le sprite —
+  //          elle apparaît au-dessus, tombe jusqu'en bas, recommence. Cycle fluide.
+  // POURQUOI positions X déterministes (variant, x) : pas de Math.random() — positions
+  //          stables d'une frame à l'autre, juste la Y qui change.
+  // NOMBRE DE GOUTTES : proportionnel à la taille du sprite.
+  //   s ≤ 3  → 1 goutte   (petite fleur, 1 seule chute)
+  //   s 4–6  → 2 gouttes  (fleur moyenne)
+  //   s ≥ 7  → 3 gouttes  (grande fleur, zone large)
+  if (meteoParams?.isRaining) {
+    const nbGouttes = s <= 3 ? 1 : s <= 6 ? 2 : 3;
+    p.fill(tc(n, '#80b8e8')); // bleu pluie — fixe, pas de tc() sur la teinte (pluie = neutre)
+    for (let g = 0; g < nbGouttes; g++) {
+      // Position X : décalage déterministe basé sur x + variant + index goutte
+      const gx  = x + dx + PX * ((variant + g * 2) % (s + 1));
+      // Position Y : chute animée — cycle de hauteur 2×sprite, décalée par x pour désynchroniser
+      const gy  = ((p.frameCount * 2 + x * 3 + g * 17) % (s * PX * 2));
+      // Dessin : 1 pixel qui tombe dans la zone du sprite (du sommet à la base)
+      px(p, gx, y - PX * s + gy - PX, PX, PX);
+    }
+  }
 }
 
 /**
@@ -804,7 +907,7 @@ function drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n, age, maxAg
  *
  * variant 0 = graminée | 1 = jonc | 2 = touffe | 3 = fougère
  */
-function drawHerbe(p, x, y, variant, colorVariant, scalePX, n, age, maxAge) {
+function drawHerbe(p, x, y, variant, colorVariant, scalePX, n, age, maxAge, meteoParams, habParams) {
   const s  = scalePX;
   const ag = age    ?? 0;
   const ma = maxAge ?? 14;
@@ -814,12 +917,16 @@ function drawHerbe(p, x, y, variant, colorVariant, scalePX, n, age, maxAge) {
     '#90d060', '#70b858', '#509040', '#a8d870',
     '#c8e060', '#304828', '#78c848', '#b0d890',
   ];
-  const colV = VERTS[colorVariant % 8];
-  const colD = VERTS[(colorVariant + 3) % 8]; // ton sombre
-  const colC = VERTS[(colorVariant + 1) % 8]; // ton clair
+  // RÔLE : Désaturation émotionnelle appliquée à toutes les teintes de verdure.
+  const gt   = _grayT(habParams);
+  const colV = _lerpGray(VERTS[colorVariant % 8], gt);
+  const colD = _lerpGray(VERTS[(colorVariant + 3) % 8], gt); // ton sombre
+  const colC = _lerpGray(VERTS[(colorVariant + 1) % 8], gt); // ton clair
 
   // Tige penchée si vieille (m > 0.85)
-  const dx   = m > 0.85 ? PX : 0;
+  // RÔLE : vent également intégré pour l'herbe (même logique que drawFleur)
+  const windTilt = Math.round(meteoParams?.flowerTilt ?? 0);
+  const dx   = Math.min(4, (m > 0.85 ? 1 : 0) + windTilt) * PX;
   // Teinte fanée : légèrement assombrie
   const nH   = m > 0.85 ? Math.min(1, n + 0.3) : n;
 
@@ -988,6 +1095,21 @@ function drawHerbe(p, x, y, variant, colorVariant, scalePX, n, age, maxAge) {
         px(p, x + dx - PX*lg, y - PX*(yP - 1), PX, PX); // bout gauche
         px(p, x + dx + PX*(lg + 1), y - PX*(yP - 1), PX, PX); // bout droit
       });
+    }
+  }
+
+  // ── Gouttes de pluie animées ─────────────────────────────────────
+  // RÔLE : Même logique que drawFleur — 1–3 pixels bleus qui tombent sur le sprite.
+  // NOMBRE : s ≤ 3 → 1 goutte | s 4–6 → 2 gouttes | s ≥ 7 → 3 gouttes.
+  // POURQUOI + g * 13 (vs 17 dans drawFleur) : décalage de phase différent →
+  //          les gouttes herbe et fleur ne tombent pas exactement en même temps.
+  if (meteoParams?.isRaining) {
+    const nbGouttes = s <= 3 ? 1 : s <= 6 ? 2 : 3;
+    p.fill(tc(n, '#80b8e8'));
+    for (let g = 0; g < nbGouttes; g++) {
+      const gx = x + dx + PX * ((variant + g * 2 + 1) % (s + 1));
+      const gy = ((p.frameCount * 2 + x * 3 + g * 13) % (s * PX * 2));
+      px(p, gx, y - PX * s + gy - PX, PX, PX);
     }
   }
 }
@@ -1180,7 +1302,7 @@ function drawPierre(p, x, y, variant, colorVariant, scalePX, n, age, maxAge) {
  *
  * variant 0 = amanite | 1 = bolet | 2 = marasme | 3 = pleurote
  */
-function drawChampignon(p, x, y, variant, colorVariant, scalePX, n, age, maxAge) {
+function drawChampignon(p, x, y, variant, colorVariant, scalePX, n, age, maxAge, meteoParams, habParams) {
   const s  = scalePX;
   const ag = age    ?? 0;
   const ma = maxAge ?? 5;
@@ -1190,11 +1312,14 @@ function drawChampignon(p, x, y, variant, colorVariant, scalePX, n, age, maxAge)
     '#d04040', '#e06820', '#806040', '#8040a0',
     '#d0c030', '#40a060', '#c08050', '#f0f0d0',
   ];
-  const colCh = CHAPEAUX[colorVariant % 8];
-  const colPi = colorVariant % 3 === 0 ? '#e8e0d0' : '#c8b898';
-  const colPt = colorVariant % 2 === 0 ? '#ffffff' : '#fff8d0';
-  const colLa = CHAPEAUX[(colorVariant + 4) % 8]; // lamelles
-  const colOm = CHAPEAUX[(colorVariant + 5) % 8]; // ombre chapeau
+  // RÔLE : Désaturation émotionnelle — les champignons aussi reflètent l'humeur du jardin.
+  // POURQUOI pas colPt (points blancs) : le blanc désaturé reste blanc → transformation inutile.
+  const gt    = _grayT(habParams);
+  const colCh = _lerpGray(CHAPEAUX[colorVariant % 8], gt);
+  const colPi = _lerpGray(colorVariant % 3 === 0 ? '#e8e0d0' : '#c8b898', gt);
+  const colPt = colorVariant % 2 === 0 ? '#ffffff' : '#fff8d0'; // blanc : non désaturé
+  const colLa = _lerpGray(CHAPEAUX[(colorVariant + 4) % 8], gt); // lamelles
+  const colOm = _lerpGray(CHAPEAUX[(colorVariant + 5) % 8], gt); // ombre chapeau
 
   // Chapeau penché si vieux
   const dx  = m > 0.85 ? PX : 0;
@@ -1355,6 +1480,24 @@ function drawChampignon(p, x, y, variant, colorVariant, scalePX, n, age, maxAge)
       px(p, cx - PX * 2, yChap, PX, PX);
     }
   }
+
+  // ── Gouttes de pluie sur le chapeau ─────────────────────────────
+  // RÔLE : Gouttes qui tombent SUR le chapeau du champignon, pas sur toute la hauteur.
+  // POURQUOI zone restreinte au chapeau : le chapeau est la surface réceptrice —
+  //          visuellement plus juste qu'une goutte qui tombe dans le pied.
+  // NOMBRE : s ≤ 3 → 1 goutte | s 4–6 → 2 gouttes | s ≥ 7 → 3 gouttes.
+  if (meteoParams?.isRaining) {
+    const nbGouttes = s <= 3 ? 1 : s <= 6 ? 2 : 3;
+    p.fill(tc(n, '#80b8e8'));
+    for (let g = 0; g < nbGouttes; g++) {
+      // Gouttes centrées sur le chapeau (zone cx ± wCh/2 approximée par s)
+      const gx  = x + PX * ((variant + g * 3) % (s + 2)) - PX * Math.floor(s / 2);
+      // Chute sur une hauteur égale à celle du chapeau uniquement
+      const hChap = Math.max(1, s - Math.max(1, Math.floor(s * 0.45)));
+      const gy    = ((p.frameCount * 2 + x * 5 + g * 11) % (hChap * PX * 2));
+      px(p, gx, y - PX * s + gy - PX, PX, PX);
+    }
+  }
 }
 
 /**
@@ -1373,7 +1516,7 @@ function drawChampignon(p, x, y, variant, colorVariant, scalePX, n, age, maxAge)
  *
  * variant 0 = buisson rond | 1 = arbuste à tiges | 2 = conifère | 3 = arbuste fleuri
  */
-function drawArbuste(p, x, y, variant, colorVariant, scalePX, n, age, maxAge) {
+function drawArbuste(p, x, y, variant, colorVariant, scalePX, n, age, maxAge, habParams) {
   const s  = scalePX;
   const ag = age    ?? 0;
   const ma = maxAge ?? 10;
@@ -1384,11 +1527,14 @@ function drawArbuste(p, x, y, variant, colorVariant, scalePX, n, age, maxAge) {
     '#508040', '#406830', '#60a050', '#385828',
     '#70a848', '#284820', '#88c060', '#4a7038',
   ];
-  const colF  = FEUILLAGES[colorVariant % 8];          // feuillage principal
-  const colFD = FEUILLAGES[(colorVariant + 3) % 8];    // feuillage sombre (ombre)
-  const colFC = FEUILLAGES[(colorVariant + 1) % 8];    // feuillage clair (reflets)
-  const colT  = '#4a3020';                              // tronc/tiges brun
-  const colTD = '#382818';                              // tronc ombre
+  // RÔLE : Désaturation émotionnelle — le feuillage de l'arbuste reflète l'état du jardin.
+  // POURQUOI pas le tronc (colT, colTD) : le bois est inerte, sa couleur ne change pas avec l'humeur.
+  const gt   = _grayT(habParams);
+  const colF  = _lerpGray(FEUILLAGES[colorVariant % 8], gt);          // feuillage principal
+  const colFD = _lerpGray(FEUILLAGES[(colorVariant + 3) % 8], gt);    // feuillage sombre (ombre)
+  const colFC = _lerpGray(FEUILLAGES[(colorVariant + 1) % 8], gt);    // feuillage clair (reflets)
+  const colT  = '#4a3020';                              // tronc/tiges brun — non désaturé
+  const colTD = '#382818';                              // tronc ombre — non désaturé
 
   // Vieux : feuillage terne + légèrement penché
   const dx  = m > 0.85 ? PX : 0;
@@ -1676,7 +1822,7 @@ function drawJardinFond(p, theme, n) {
         drawPierre(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n, el.age ?? 0, el.maxAge ?? 999);
         break;
       case 'champignon':
-        drawChampignon(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 4, n, el.age ?? 0, el.maxAge ?? 5, meteoParams);
+        drawChampignon(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 4, n, el.age ?? 0, el.maxAge ?? 5, meteoParams, habParams);
         break;
       case 'arbuste':
         drawArbuste(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 8, n, el.age ?? 0, el.maxAge ?? 20, habParams);
@@ -1700,6 +1846,23 @@ window.drawJardinFond = drawJardinFond;
 function drawJardinPremierPlan(p, theme, n) {
   p.noStroke();
 
+  // ── Paramètres contextuels — même calcul que drawJardinFond ──────
+  // RÔLE : Dupliqué ici car drawJardinPremierPlan est appelée séparément depuis render.js
+  //        (après le Gotchi). Les deux passes doivent avoir les mêmes valeurs.
+  // RÈGLE PHASE 4 : lecture seule — aucun save(), aucune écriture dans D.
+  const wind        = window.meteoData?.windspeed ?? 0;
+  const flowerTilt  = Math.min(wind / 80, 1) * 3;
+  const rainVal     = window.meteoData?.rain ?? 0;
+  const isRaining   = rainVal > 0.5;
+  const habsDone    = (window.D?.log?.[today()] ?? []).length;
+  const habsTotal   = (window.D?.habits ?? []).length;
+  const habRatio    = habsTotal > 0 ? habsDone / habsTotal : 0.5;
+  const happiness   = window.D?.g?.happiness ?? 2.5;
+  const energy      = window.D?.g?.energy    ?? 2.5;
+  const vitalite    = (happiness + energy) / 10;
+  const meteoParams = { flowerTilt, isRaining, rainVal };
+  const habParams   = { habRatio, vitalite };
+
   // ── Éléments génératifs de premier plan ─────────────────────────
   // RÔLE : Itère sur window._gardenElements et dessine uniquement les éléments
   //        dont layer === 'premier_plan' (devant le Gotchi).
@@ -1715,21 +1878,59 @@ function drawJardinPremierPlan(p, theme, n) {
 
     switch (el.type) {
       case 'fleur':
-        drawFleur(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 3, theme, n, el.age ?? 0, el.maxAge ?? 7);
+        drawFleur(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 3, theme, n, el.age ?? 0, el.maxAge ?? 7, meteoParams, habParams);
         break;
       case 'herbe':
-        drawHerbe(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n, el.age ?? 0, el.maxAge ?? 14);
+        drawHerbe(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n, el.age ?? 0, el.maxAge ?? 14, meteoParams, habParams);
         break;
       case 'pierre':
         drawPierre(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n, el.age ?? 0, el.maxAge ?? 999);
         break;
       case 'champignon':
-        drawChampignon(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 4, n, el.age ?? 0, el.maxAge ?? 5);
+        drawChampignon(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 4, n, el.age ?? 0, el.maxAge ?? 5, meteoParams, habParams);
         break;
       case 'arbuste':
-        drawArbuste(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 8, n, el.age ?? 0, el.maxAge ?? 20);
+        drawArbuste(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 8, n, el.age ?? 0, el.maxAge ?? 20, habParams);
         break;
     }
   });
+
+  // ── Insectes animés ───────────────────────────────────────────────
+  // RÔLE : 1–2 pixels lumineux qui volètent devant le jardin quand il est en bonne santé.
+  // CONDITION : vitalite > 0.5 ET habRatio > 0.4 — le jardin doit être assez vivant.
+  // POURQUOI dans drawJardinPremierPlan et non drawJardinFond :
+  //          Les insectes passent DEVANT le Gotchi — ils sont dans la couche la plus haute.
+  // POURQUOI sin(frameCount) : trajectoire sinusoïdale douce, pas de saccades.
+  //          Chaque insecte a une phase (offset) différente → ils ne bougent pas ensemble.
+  // NOMBRE :
+  //   vitalite > 0.5 ET habRatio > 0.4 → 1 insecte
+  //   vitalite > 0.7 ET habRatio > 0.6 → 2 insectes (jardin épanoui)
+  if (vitalite > 0.5 && habRatio > 0.4) {
+    const nbInsectes = (vitalite > 0.7 && habRatio > 0.6) ? 2 : 1;
+
+    // Couleurs insectes : jaune-vert lumineux (luciole) ou blanc chaud (papillon)
+    const INSECTE_COLS = ['#e8f840', '#f8f0a0'];
+
+    for (let i = 0; i < nbInsectes; i++) {
+      // RÔLE : Position X de base — répartis dans la largeur du canvas (60–140px).
+      // POURQUOI 60–140 : évite les bords où les sprites de premier plan sont denses.
+      const baseX = 60 + i * 50; // insecte 0 → x≈60, insecte 1 → x≈110
+
+      // RÔLE : Oscillation X — va-et-vient horizontal lent.
+      // sin() × amplitude : l'insecte se déplace de ±amplitude pixels autour de baseX.
+      const amplitude = 18; // pixels réels — ≈ 3–4 PX de part et d'autre
+      const ix = baseX + Math.sin(p.frameCount * 0.04 + i * 2.1) * amplitude;
+
+      // RÔLE : Oscillation Y — monte et descend légèrement.
+      // Zone Y : 140–158 (entre le Gotchi et la lisière du premier plan).
+      const baseY  = 148 + i * 6;
+      const iy = baseY + Math.sin(p.frameCount * 0.07 + i * 1.3) * 6;
+
+      // RÔLE : Dessine l'insecte — 1 pixel, couleur lumineuse, pas de tc() nuit
+      //        (les lucioles brillent aussi la nuit — effet intentionnel).
+      p.fill(INSECTE_COLS[i % 2]);
+      px(p, Math.round(ix / PX) * PX, Math.round(iy / PX) * PX, PX, PX);
+    }
+  }
 }
 window.drawJardinPremierPlan = drawJardinPremierPlan;

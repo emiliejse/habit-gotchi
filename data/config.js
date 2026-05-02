@@ -196,9 +196,11 @@ const ENV_THEMES = [
     rug:'#d8c0f0', rugCenter:'#c8aee8',
     desk:'#b89870', deskTop:'#c8a880', deskShadow:'#a88860',
     lamp:'#f0e898', lampShade:'#f8d858',
-    // Atelier — palette de peinture (13 couleurs tirées des valeurs du thème)
+    // Atelier — palette de peinture (13 couleurs)
     // POURQUOI : 13 couleurs + 1 gomme = 14 boutons → 7 col × 2 rangées dans l'éditeur
-    paintPalette: ['#f0ece4','#e0d8c8','#c8a8d0','#a8c8d0','#a8d898','#e878a8','#c8a880','#d8c0f0','#78c488','#b09068','#c8baa8','#f0e898','#90c480'],
+    // Structure : blanc · noir · beige clair · lilas · bleu poudre · vert tendre · rose vif
+    //             · jaune doux · violet · bleu-vert · brun chaud · vert foncé · corail
+    paintPalette: ['#ffffff','#2a2a2a','#f0ece4','#c8a8d0','#a8c8d0','#a8d898','#e878a8','#f8e858','#7a50a8','#4a9890','#8b5e3c','#4a8840','#e85050'],
     // montagne
     mntGnd:'#88b870', mntGndDk:'#6a9858', mntPeak:'#a0c888', mntSnow:'#e8f0e0',
   },
@@ -217,8 +219,10 @@ const ENV_THEMES = [
     rug:'#7a3020', rugCenter:'#9a4830',
     desk:'#906040', deskTop:'#d8b880', deskShadow:'#a07040',
     lamp:'#f4e090', lampShade:'#e8c050',
-    // Atelier — palette de peinture (13 couleurs tirées des valeurs du thème)
-    paintPalette: ['#f0e8d8','#c0956a','#e08830','#d07020','#c86828','#7a3020','#b07840','#e8c050','#c04818','#e06028','#8b4513','#a07848','#9a4830'],
+    // Atelier — palette de peinture (13 couleurs)
+    // Structure : blanc · noir · crème · orange brûlé · rouille · brun foncé · ocre
+    //             · jaune doré · rouge brique · vert mousse · bleu ardoise · moutarde · bordeaux
+    paintPalette: ['#ffffff','#2a2a2a','#f0e8d8','#e08830','#c86828','#7a3020','#b07840','#e8c050','#c04818','#5a7040','#4a5870','#d4a010','#8a1a30'],
     mntGnd:'#b07840', mntGndDk:'#906028', mntPeak:'#c09050', mntSnow:'#e8c878',
   },
 
@@ -236,8 +240,10 @@ const ENV_THEMES = [
     rug:'#2c4870', rugCenter:'#3a5888',
     desk:'#8090a0', deskTop:'#a8b8c8', deskShadow:'#8898a8',
     lamp:'#fffde8', lampShade:'#f4e8a0',
-    // Atelier — palette de peinture (13 couleurs tirées des valeurs du thème)
-    paintPalette: ['#eef4ff','#c8d8e8','#a8c0d8','#3a5888','#e8f0f8','#8090a0','#c8d8f0','#fffde8','#8899aa','#b0bcc8','#806050','#2c4870','#d0dce8'],
+    // Atelier — palette de peinture (13 couleurs)
+    // Structure : blanc · noir · bleu très clair · bleu nuit · bleu acier · bleu-gris
+    //             · jaune crème · rouge braise · vert sapin · violet nuit · gris perle · orange givre · brun bois
+    paintPalette: ['#ffffff','#1a2030','#eef4ff','#2c4870','#8090a0','#a8c0d8','#fffde8','#c83030','#2a5040','#4a3870','#c8d0d8','#e87820','#806050'],
     mntGnd:'#c8d8e8', mntGndDk:'#a8b8c8', mntPeak:'#d8e0e8', mntSnow:'#f0f8ff',
   },
 
@@ -255,8 +261,10 @@ const ENV_THEMES = [
     rug:'#8a3820', rugCenter:'#a84830',
     desk:'#a07840', deskTop:'#c8a060', deskShadow:'#a88040',
     lamp:'#f8e060', lampShade:'#f0c820',
-    // Atelier — palette de peinture (13 couleurs tirées des valeurs du thème)
-    paintPalette: ['#fdf0d0','#d8b888','#e8a020','#f0c030','#e0c888','#8a3820','#c0a060','#f8e060','#b08c60','#c8a070','#a88848','#b88028','#f0d890'],
+    // Atelier — palette de peinture (13 couleurs)
+    // Structure : blanc · noir · sable clair · or chaud · orange soleil · brun sable
+    //             · rouge brique · vert oasis · bleu lapis · ocre foncé · rose cuivré · violet aride · jaune soleil
+    paintPalette: ['#ffffff','#2a1a08','#fdf0d0','#e8a020','#e85818','#8a5030','#8a3820','#508840','#2850a0','#b87820','#d07858','#6a3858','#f8e060'],
     mntGnd:'#d8a848', mntGndDk:'#b88028', mntPeak:'#e8c870', mntSnow:'#f0d890',
   },
 ];

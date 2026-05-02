@@ -369,66 +369,47 @@ function _atelierBindCanvas() {
 
 // ─────────────────────────────────────────────────────────────
 // RÔLE : Redessine la palette de couleurs du tableau courant.
-// POURQUOI : 8 boutons colorés + 1 gomme. Le bouton actif a un ring visuel.
+// STRUCTURE : grille 7 colonnes × 2 rangées = 14 cases exactement
+//   Rangée 1 : couleurs 0–5  + bouton 🌑 (foncer)   → 7 cases
+//   Rangée 2 : couleurs 6–10 + gomme 🧹 + bouton ☀️ → 7 cases
+// POURQUOI : 11 couleurs + 🌑 + 🧹(gomme) + ☀️ = 14 cases = 7×2, tout tient en 2 rangées.
+//            🌑/☀️ sont des modificateurs de palette : la palette affiche les couleurs
+//            dérivées (plus sombres ou plus claires) ; recliquer remet les couleurs normales.
+//            Choisir une couleur en mode modificateur peint avec la couleur dérivée.
 // ─────────────────────────────────────────────────────────────
 function _atelierRenderPalette() {
   const container = document.getElementById('atelier-palette');
   if (!container) return;
 
   const tb = window.D.atelier.tableaux.find(t => t.id === _atelierEditId);
-  const couleurs = tb ? tb.paletteSnapshot : [];
+  const couleurs = tb ? tb.paletteSnapshot : []; // 11 couleurs
 
-  // RÔLE : Calculer la taille des boutons pour que la palette occupe exactement
-  //        la même largeur que la galerie (#atelier-galerie).
-  // POURQUOI : 13 couleurs + 1 gomme = 14 boutons. On veut 7 colonnes × 2 rangées.
-  //            On prend la largeur réelle de la galerie comme référence, et on calcule
-  //            la taille de bouton qui remplit exactement cette largeur avec 7 colonnes
-  //            et un gap uniforme entre elles.
-  // POURQUOI : footer.clientWidth inclut les paddings (16px×2=32px) — on les soustrait
-  //            pour obtenir la largeur du contenu, identique à celle de la galerie.
-  //            Cascade si clientWidth vaut 0 au premier rendu.
+  // RÔLE : Largeur de référence = footer moins ses paddings (16px×2).
   const footer   = document.getElementById('atelier-footer');
   const overlayW = document.getElementById('atelier-overlay')?.clientWidth;
-  const rawW     = (footer?.clientWidth) || (overlayW ? overlayW : 0) || window.innerWidth || 332;
-  const totalW   = rawW - 32; // soustrait padding 16px gauche + 16px droite du footer
-  const N_COLS   = 7;   // 7 colonnes × 2 rangées = 14 cases (13 couleurs + 1 gomme)
-  const GAP      = 8;   // gap fixe entre boutons (px)
+  const rawW     = (footer?.clientWidth) || (overlayW || window.innerWidth || 332);
+  const totalW   = rawW - 32;
+  const N_COLS   = 7;
+  const GAP      = 8;
   const btnSize  = Math.max(28, Math.floor((totalW - GAP * (N_COLS - 1)) / N_COLS));
 
-  let html = ''; // RÔLE : accumulateur HTML de toute la palette (outils + couleurs + gomme)
-
-  // ── Barre d'outils : Peindre / Foncer / Éclaircir ──
-  // RÔLE : Trois boutons pleine largeur au-dessus de la palette.
-  // POURQUOI : Séparés des couleurs pour une lecture immédiate de l'outil actif.
-  //            Hauteur réduite (32px) pour ne pas grignoter la zone canvas.
-  const outils = [
-    { id: 'peindre',   label: '✏️ Peindre'   },
-    { id: 'foncer',    label: '🌑 Foncer'    },
-    { id: 'éclaircir', label: '☀️ Éclaircir' },
-  ];
-  // POURQUOI : on désactive les outils foncer/éclaircir si la gomme est active
-  //            (aucune couleur de référence) — visuellement on les grise.
-  const gommeActive = (_atelierColor === null);
-  html += `<div style="display:flex;gap:${GAP}px;width:${totalW}px;margin-bottom:${GAP}px">`;
-  outils.forEach(o => {
-    const actif = (!gommeActive && _atelierMode === o.id);
-    const desactive = (gommeActive && o.id !== 'peindre');
-    html += `<button onclick="window._atelierChoisirMode('${o.id}')"
-      style="flex:1;height:32px;border-radius:6px;border:none;cursor:${desactive ? 'default' : 'pointer'};
-             font-size:11px;font-weight:${actif ? '700' : '400'};
-             background:${actif ? 'var(--text)' : 'var(--border)'};
-             color:${actif ? '#fff' : desactive ? 'var(--border)' : 'var(--text2)'};
-             opacity:${desactive ? '0.35' : '1'};
-             transition:background .15s;">${o.label}</button>`;
+  // RÔLE : Calcule les couleurs affichées selon le mode modificateur actif.
+  // POURQUOI : _atelierMode 'foncer'/'éclaircir' modifie l'affichage de la palette —
+  //            les couleurs montrées sont les dérivées, pas les originales.
+  //            En mode 'peindre', les couleurs sont affichées telles quelles.
+  const DELTA = 20; // points de luminosité appliqués par le modificateur
+  const couleursAffichees = couleurs.map(hex => {
+    if (_atelierMode === 'foncer')    return _shiftLightness(hex, -DELTA);
+    if (_atelierMode === 'éclaircir') return _shiftLightness(hex, +DELTA);
+    return hex;
   });
-  html += `</div>`;
 
-  // ── Grille couleurs + gomme ──
-  html += `<div style="display:grid;grid-template-columns:repeat(${N_COLS},${btnSize}px);gap:${GAP}px;width:${totalW}px;">`;
+  let html = `<div style="display:grid;grid-template-columns:repeat(${N_COLS},${btnSize}px);gap:${GAP}px;width:${totalW}px;">`;
 
-  // ── 13 boutons colorés ──
-  couleurs.forEach((hex, i) => {
-    // POURQUOI : ring outline visible sur n'importe quelle couleur sans calcul de contraste.
+  // ── 11 boutons couleurs (couleurs dérivées affichées, couleur dérivée transmise au clic) ──
+  couleursAffichees.forEach((hex, i) => {
+    // POURQUOI : on compare à la couleur originale pour le ring — _atelierColor stocke
+    //            toujours la couleur dérivée active au moment du clic.
     const actif = (_atelierColor === hex);
     const ring  = actif
       ? 'outline:3px solid var(--text);outline-offset:3px;'
@@ -438,20 +419,43 @@ function _atelierRenderPalette() {
       aria-label="Couleur ${i + 1}"
       style="width:${btnSize}px;height:${btnSize}px;border-radius:50%;border:none;cursor:pointer;
              background:${hex};${ring}flex-shrink:0;"></button>`;
+
+    // POURQUOI : après la 6e couleur (index 5), on insère le bouton 🌑 en col 7 de la rangée 1,
+    //            puis on continue avec les couleurs 7–11 sur la rangée 2.
+    if (i === 5) {
+      const foncerActif = (_atelierMode === 'foncer');
+      html += `<button onclick="window._atelierToggleMode('foncer')"
+        title="Foncer la palette"
+        style="width:${btnSize}px;height:${btnSize}px;border-radius:6px;border:none;cursor:pointer;
+               font-size:${Math.round(btnSize * 0.45)}px;
+               background:${foncerActif ? '#2a2a2a' : 'var(--border)'};
+               color:${foncerActif ? '#fff' : 'var(--text2)'};
+               display:flex;align-items:center;justify-content:center;flex-shrink:0;">🌑</button>`;
+    }
   });
 
-  // ── Bouton gomme (14e élément → col 7, rangée 2 automatique) ──
+  // ── Gomme 🧹 (13e case → col 6, rangée 2) ──
   const gommeActif = (_atelierColor === null);
   const gommeRing  = gommeActif
     ? 'outline:3px solid var(--text);outline-offset:3px;'
     : 'outline:1px solid rgba(0,0,0,0.18);outline-offset:1px;';
   html += `<button
     onclick="window._atelierChoisirCouleur(null)"
-    aria-label="Gomme"
-    title="Gomme"
+    aria-label="Gomme" title="Gomme"
     style="width:${btnSize}px;height:${btnSize}px;border-radius:50%;border:none;cursor:pointer;
-           background:var(--bg);font-size:${Math.round(btnSize * 0.45)}px;font-weight:700;color:var(--text2);
-           ${gommeRing}flex-shrink:0;display:flex;align-items:center;justify-content:center;">✕</button>`;
+           background:var(--bg);font-size:${Math.round(btnSize * 0.45)}px;
+           color:var(--text2);${gommeRing}flex-shrink:0;
+           display:flex;align-items:center;justify-content:center;">🧹</button>`;
+
+  // ── Bouton ☀️ éclaircir (14e case → col 7, rangée 2) ──
+  const eclaircirActif = (_atelierMode === 'éclaircir');
+  html += `<button onclick="window._atelierToggleMode('éclaircir')"
+    title="Éclaircir la palette"
+    style="width:${btnSize}px;height:${btnSize}px;border-radius:6px;border:none;cursor:pointer;
+           font-size:${Math.round(btnSize * 0.45)}px;
+           background:${eclaircirActif ? '#e8d840' : 'var(--border)'};
+           color:${eclaircirActif ? '#2a2a2a' : 'var(--text2)'};
+           display:flex;align-items:center;justify-content:center;flex-shrink:0;">☀️</button>`;
 
   html += `</div>`;
   container.innerHTML = html;
@@ -588,9 +592,11 @@ function _atelierVignette(tb, W, H) {
 // ─────────────────────────────────────────────────────────────
 window._atelierChoisirCouleur = function(hex) {
   _atelierColor = hex; // null = gomme
-  // POURQUOI : choisir une couleur repasse automatiquement en mode 'peindre'
-  //            si on était en foncer/éclaircir — comportement naturel.
-  if (hex !== null) _atelierMode = 'peindre';
+  // POURQUOI : on ne réinitialise PAS _atelierMode ici — si 🌑/☀️ est actif,
+  //            l'utilisatrice choisit la couleur dérivée affichée, le modificateur reste.
+  //            Exception : si hex est null (gomme), le mode passe à 'peindre' car
+  //            foncer/éclaircir sur une cellule vide revient à peindre quoi qu'il arrive.
+  if (hex === null) _atelierMode = 'peindre';
   _atelierRenderPalette(); // rafraîchit le ring visuel et les boutons d'outils
 };
 
@@ -602,6 +608,20 @@ window._atelierChoisirMode = function(mode) {
   if (_atelierColor === null) return; // gomme active → outils désactivés
   _atelierMode = mode;
   _atelierRenderPalette(); // rafraîchit les boutons d'outils
+};
+
+// ─────────────────────────────────────────────────────────────
+// RÔLE : Bascule le modificateur de palette (foncer / éclaircir) — toggle.
+// POURQUOI : Appuyer sur 🌑 quand 🌑 est déjà actif revient à le désactiver (retour 'peindre').
+//            Appuyer sur 🌑 quand ☀️ est actif (ou 'peindre') → active 🌑.
+//            Cela correspond au comportement d'un bouton toggle que l'utilisatrice attend.
+// ─────────────────────────────────────────────────────────────
+window._atelierToggleMode = function(mode) {
+  // Si la gomme est active, on ignore — pas de modificateur sur la gomme
+  if (_atelierColor === null) return;
+  // Toggle : si le mode demandé est déjà actif → retour à 'peindre', sinon → active le mode
+  _atelierMode = (_atelierMode === mode) ? 'peindre' : mode;
+  _atelierRenderPalette(); // rafraîchit la palette avec les couleurs dérivées (ou normales)
 };
 
 // ─────────────────────────────────────────────────────────────

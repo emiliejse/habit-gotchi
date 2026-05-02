@@ -367,7 +367,8 @@ function drawAtelierFrame(p, theme, n) {
   // Dimensions de la grille de l'éditeur (constantes définies dans ui-atelier.js,
   // recopiées ici en dur pour éviter toute dépendance inter-fichier —
   // envs.js est chargé AVANT ui-atelier.js selon l'ordre de index.html)
-  const _AC = 16; // colonnes
+  // POURQUOI : 12×12 = grille carrée, alignée sur le cadre 30×30 px de la scène.
+  const _AC = 12; // colonnes
   const _AR = 12; // lignes
 
   // RÔLE : Vérifier qu'un tableau est bien sélectionné, sinon replier sur le motif par défaut

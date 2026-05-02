@@ -1,7 +1,7 @@
 /* ============================================================
    ui-atelier.js — Éditeur pixel art "Atelier"
    RÔLE : Permet à l'utilisatrice de peindre des tableaux pixel art
-          (16×12 cellules) qui s'affichent dans la chambre du gotchi.
+          (12×12 cellules, grille carrée) qui s'affichent dans la chambre du gotchi.
    SYSTÈME : S5 (UI & Design)
    Dépend de : app.js (window.D, save), ui-core.js (lockScroll, unlockScroll, toast)
    Chargé après ui-agenda.js, avant ui-nav.js.
@@ -22,8 +22,10 @@
    ============================================================ */
 
 // RÔLE : Dimensions de la grille de dessin.
-// POURQUOI : 16×12 donne un ratio 4:3 proche du cadre de tableau dans la chambre.
-const ATELIER_COLS = 16; // nombre de colonnes
+// POURQUOI : 12×12 = grille carrée → les cellules de l'éditeur ont le même ratio
+//            que la zone du cadre mural dans la scène (30×30 px scène), ce qui
+//            évite toute déformation à l'affichage dans la chambre.
+const ATELIER_COLS = 12; // nombre de colonnes
 const ATELIER_ROWS = 12; // nombre de lignes
 // RÔLE : Taille d'une cellule en pixels CSS dans l'éditeur (canvas affiché 256×192px).
 // POURQUOI : 16px par cellule = lisible sur mobile sans occuper tout l'écran.
@@ -360,7 +362,7 @@ function _atelierRenderGalerie() {
   // clientWidth est disponible car le container est dans un parent flex déjà rendu
   const containerW = container.clientWidth || 300; // fallback si pas encore layouté
   const vigW = Math.floor((containerW - gapTotal) / nSlots);
-  // POURQUOI : ratio 4:3 des tableaux (16 cols × 12 rows) → hauteur = largeur × (12/16)
+  // POURQUOI : grille carrée (12×12) → ratio 1:1, hauteur = largeur
   const vigH = Math.floor(vigW * ATELIER_ROWS / ATELIER_COLS);
 
   let html = `<div style="display:flex;gap:10px;align-items:flex-end;width:100%">`;

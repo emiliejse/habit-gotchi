@@ -454,20 +454,22 @@ function openCanvasFullscreen() {
   // RÔLE : Cache le bloc si toujours vide (données jardin absentes — premier lancement)
   if (!infoHTML) infoEl.style.display = 'none';
 
-  // ── Injection de l'overlay (fond uniquement) ────────────────────
-  document.body.appendChild(overlay);
+  // ── Injection de l'overlay AVANT #console-top dans le DOM ─────────
+  // POURQUOI : document.body.appendChild() place l'overlay EN DERNIER dans le body,
+  //            après #console-top. Même avec pointer-events:none, un élément z:800
+  //            inséré après #console-top (z:850) dans le DOM peut créer un contexte
+  //            de stacking qui intercepte les événements sur .hdr-garden.
+  //            En insérant l'overlay AVANT #console-top, il est derrière dans le DOM
+  //            et ne peut pas bloquer les clics sur les éléments de #console-top.
+  const consoleTop = document.getElementById('console-top');
+  document.body.insertBefore(overlay, consoleTop);
 
   // RÔLE : Active la classe sur body — masque l'UI et reconfigure #console-top (z:850)
   document.body.classList.add('garden-fullscreen');
   // RÔLE : Rend le header jardin accessible (aria-hidden retiré à l'ouverture)
   document.getElementById('hdr-garden')?.removeAttribute('aria-hidden');
 
-  // RÔLE : Injecte infoEl dans #console-top (z:850) et non dans l'overlay (z:800).
-  // POURQUOI : #console-top avec bottom:0 couvre tout le viewport et masque tout ce qui
-  //            est derrière lui (z < 850), y compris les éléments en position:fixed z:802.
-  //            En injectant infoEl directement dans #console-top, il partage son contexte
-  //            de stacking et s'affiche au-dessus du fond de l'overlay, sous le canvas.
-  const consoleTop = document.getElementById('console-top');
+  // RÔLE : Injecte infoEl dans #console-top — partage son contexte de stacking (z:850)
   if (consoleTop) consoleTop.appendChild(infoEl);
 
   // RÔLE : Double RAF — laisse le reflow CSS s'appliquer avant de déclencher la transition

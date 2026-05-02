@@ -1780,18 +1780,16 @@ input[type="time"] {
     color-mix(in srgb, var(--lilac) 12%, var(--bg)) 100%
   );
   display: none;
-  flex-direction: column;
-  align-items: center;
-  /* POURQUOI justify-content flex-start : le canvas (dans #console-top z:850) s'ancre en haut,
-     les infos jardin dans l'overlay se positionnent juste en dessous via padding-top calculé. */
-  justify-content: flex-start;
-  /* POURQUOI transform : animation de slide-up à l'ouverture */
+  /* POURQUOI pointer-events:none : l'overlay est purement décoratif (fond coloré).
+     La fermeture se fait uniquement via le bouton ✕ dans .hdr-garden.
+     Sans ça, l'overlay z:800 intercepte tous les taps et bloque le bouton. */
+  pointer-events: none;
   transform: translateY(100%);
   transition: transform 0.35s cubic-bezier(0.25, 1.15, 0.5, 1);
 }
 /* RÔLE : État ouvert — slide up depuis le bas */
 .canvas-fullscreen-overlay.open {
-  display: flex;
+  display: block;
   transform: translateY(0);
 }
 

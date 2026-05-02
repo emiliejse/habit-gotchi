@@ -22,13 +22,13 @@
 //            partagées entre _demarrerCristaux et les helpers de boutons.
 
 const _CX_DUREE_MS        = 120_000; // 2 minutes en millisecondes
-const _CX_TAILLE_VAGUE    = 5;       // cristaux par vague
-const _CX_VITESSE_INIT    = 1.5;     // px/frame au départ
-const _CX_VITESSE_MAX     = 6;       // plafond vitesse
-const _CX_FACTEUR_VIT     = 1.15;    // multiplicateur de vitesse par vague
-const _CX_SPAWN_INIT_MS   = 2000;    // intervalle spawn vague 1 (ms)
-const _CX_SPAWN_MIN_MS    = 800;     // plancher intervalle spawn (ms)
-const _CX_FACTEUR_SPAWN   = 0.90;    // réduction de l'intervalle par vague
+const _CX_TAILLE_VAGUE    = 7;       // cristaux par vague (était 5 — plus dense)
+const _CX_VITESSE_INIT    = 2.2;     // px/frame au départ (était 1.5 — démarre plus vif)
+const _CX_VITESSE_MAX     = 8;       // plafond vitesse (était 6 — vagues tardives plus intenses)
+const _CX_FACTEUR_VIT     = 1.15;    // multiplicateur de vitesse par vague (inchangé)
+const _CX_SPAWN_INIT_MS   = 1400;    // intervalle spawn vague 1 (était 2000ms — plus rapide dès le départ)
+const _CX_SPAWN_MIN_MS    = 600;     // plancher intervalle spawn (était 800ms — vagues finales très denses)
+const _CX_FACTEUR_SPAWN   = 0.88;    // réduction de l'intervalle par vague (était 0.90 — accélération plus marquée)
 const _CX_HAUTEUR_ZONES   = 60;      // px — hauteur des zones de tri en bas du canvas
 const _CX_HITBOX          = 40;      // px — rayon de la hitbox tactile (Manhattan)
 const _CX_FLASH_ZONE      = 8;       // frames du flash de validation d'une zone

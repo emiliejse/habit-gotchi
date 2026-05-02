@@ -141,7 +141,13 @@ function _resetGameZone() {
   const backBtn   = document.getElementById('game-back-btn');
 
   if (hub)     hub.style.display     = '';
-  if (canvas)  canvas.style.display  = 'none';
+  if (canvas) {
+    canvas.style.display = 'none';
+    // RÔLE : Retirer le mode plein-écran canvas au retour hub
+    // POURQUOI : lancerCristaux() pose la classe, on la retire ici pour remettre
+    //            le container dans le flux normal (position:relative, hauteur auto)
+    canvas.classList.remove('game-canvas--fullscreen');
+  }
   if (backBtn) backBtn.style.display = 'none';
 }
 
@@ -159,7 +165,15 @@ function lancerCristaux() {
   const backBtn = document.getElementById('game-back-btn');
 
   if (hub)     hub.style.display     = 'none';
-  if (canvas)  canvas.style.display  = '';
+  if (canvas) {
+    canvas.style.display = '';
+    // RÔLE : Passer le canvas en plein-écran sous le header
+    // POURQUOI : le canvas p5 mesure clientWidth/clientHeight du container au moment
+    //            de setup() — si on n'ajoute la classe qu'après new p5(), le canvas
+    //            est créé avec la hauteur du flux (petite). On pose la classe AVANT
+    //            d'appeler _demarrerCristaux() pour que les mesures soient correctes.
+    canvas.classList.add('game-canvas--fullscreen');
+  }
   if (backBtn) backBtn.style.display = '';
 
   // RÔLE : Déléguer le lancement à ui-cristaux.js qui contient toute la logique du jeu

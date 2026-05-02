@@ -1853,6 +1853,12 @@ if (atelierOverlay && atelierOverlay.style.display !== 'none') return true;
 const jardinOverlay = document.getElementById('canvas-fs-overlay');
 if (jardinOverlay) return true;
 
+// 🔒 GARDE 2d : hub jeux ouvert — même pattern que l'atelier.
+// POURQUOI : #game-overlay est .app-overlay (pointer-events:auto, inset:0) mais
+//            p5 écoute sur document entier → les taps traversent quand même.
+const gameOverlay = document.getElementById('game-overlay');
+if (gameOverlay && gameOverlay.style.display !== 'none') return true;
+
     // 🔒 GARDE 3 : l'utilisateur est focus sur un champ de saisie
     const active = document.activeElement;
     if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {

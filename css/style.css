@@ -2229,13 +2229,23 @@ body.garden-fullscreen .tama-screen {
   filter: grayscale(0.5);
 }
 
-/* RÔLE : Zone canvas du jeu actif — prend toute la hauteur disponible */
+/* RÔLE : Zone canvas du jeu actif — normalement caché, dans le flux */
 #game-canvas-container {
+  position: relative; /* POURQUOI : les boutons HTML fin de partie (position:absolute) se calent dessus */
   width: 100%;
   min-height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+}
+
+/* RÔLE : Mode plein-écran jeu — canvas couvre tout #game-main (zone sous le header)
+   POURQUOI inset:0 dans #game-main et non dans #game-overlay :
+     #game-main est déjà flex:1 et prend exactement l'espace sous le header.
+     En ancrant le canvas à position:absolute inset:0 dans ce parent, le jeu occupe
+     toute la surface disponible sans déborder sur le header ni sur la safe area. */
+#game-canvas-container.game-canvas--fullscreen {
+  position: absolute;
+  inset: 0;          /* top/right/bottom/left: 0 — couvre tout #game-main */
+  padding: 0;        /* POURQUOI : annule le padding hérité éventuel du parent */
+  z-index: 2;        /* POURQUOI : au-dessus du contenu normal du #game-main */
 }
 
 /* RÔLE : Placeholder visuel sprint 1 — centré, ton discret */
@@ -2256,7 +2266,10 @@ body.garden-fullscreen .tama-screen {
 
 /* RÔLE : Zone scrollable du hub — max-width centré sur grands écrans */
 /* POURQUOI max-width 480px : l'app est pensée mobile — au-delà les cartes s'étirent trop */
+/* POURQUOI position:relative : sert d'ancre pour #game-canvas-container.game-canvas--fullscreen
+   (position:absolute inset:0) — sans ça le canvas s'ancrerait sur l'overlay ou la page */
 #game-main {
+  position: relative;
   max-width: 480px;
   margin: 0 auto;
   width: 100%;

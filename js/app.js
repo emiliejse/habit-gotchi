@@ -1561,12 +1561,13 @@ function updMeteoIcons() {
 /* ============================================================
    BULLE DE DIALOGUE
    ============================================================ */
-function flashBubble(msg, duree = 2500) {
-  const el = document.getElementById('bubble');
-  if (el) el.textContent = msg;
-  clearTimeout(window._bubbleTimer);
-  window._bubbleTimer = setTimeout(() => updBubbleNow(), duree);
-
+// RÔLE : Détecte les verbes d'action dans un message de bulle et déclenche l'animation correspondante.
+// POURQUOI : Cette logique était enfouie dans flashBubble() — les bulles passives (updBubbleNow)
+//            ne passant pas par flashBubble, les gestes comme *saute partout* restaient sans animation.
+//            En extrayant ici, flashBubble ET updBubbleNow peuvent toutes deux déclencher les gestes.
+// @param {string} msg   — texte de la bulle
+// @param {number} duree — durée d'affichage en ms (utilisée pour arrêter la boucle d'anim au bon moment)
+function _triggerBubbleAnim(msg, duree) {
   // RÔLE : Annule toute boucle d'animation précédente avant d'en lancer une nouvelle.
   // POURQUOI : Si deux bulles se succèdent rapidement, on ne veut pas que la boucle
   //            de la bulle précédente continue à déclencher des animations.
@@ -1574,12 +1575,6 @@ function flashBubble(msg, duree = 2500) {
     clearInterval(window._bubbleAnimLoop);
     window._bubbleAnimLoop = null;
   }
-
-  // RÔLE : Détecte les verbes d'action dans la bulle et boucle l'animation correspondante.
-  // POURQUOI : Quand le texte décrit un geste (*saute*, *tremble*…), le Gotchi doit
-  //            reproduire ce geste visuellement pendant toute la durée de la bulle.
-  //            On repète le trigger à intervalles réguliers (légèrement plus longs que
-  //            la durée de l'animation) pour que chaque cycle soit visible sans se chevaucher.
 
   // Tableau de correspondances : [liste de mots-clés à détecter] → { animId, intervalMs }
   // intervalMs = durée d'une répétition en ms (légèrement > durée de l'anim en frames × ~83ms)
@@ -1638,6 +1633,16 @@ function flashBubble(msg, duree = 2500) {
   if (msg.includes("*s'étire*")) {
     setTimeout(() => window.triggerEtirementMatin?.(true), 300);
   }
+}
+
+function flashBubble(msg, duree = 2500) {
+  const el = document.getElementById('bubble');
+  if (el) el.textContent = msg;
+  clearTimeout(window._bubbleTimer);
+  window._bubbleTimer = setTimeout(() => updBubbleNow(), duree);
+
+  // RÔLE : Délègue la détection des gestes à _triggerBubbleAnim (partagée avec updBubbleNow).
+  _triggerBubbleAnim(msg, duree);
 }
 
 function updBubbleNow() {
@@ -1882,6 +1887,12 @@ if (dernierJournal?.date?.startsWith(today())) {
     window._bullesRecentes.push(bulle);
     if (window._bullesRecentes.length > 3) window._bullesRecentes.shift();
     window._derniereBulle = bulle; // compatibilité rétroactive (utilisé ailleurs ?)
+
+    // RÔLE : Déclenche l'animation du Gotchi si la bulle contient un verbe d'action (*saute*, *tremble*…).
+    // POURQUOI : updBubbleNow() n'appelle pas flashBubble() — sans cet appel, les gestes
+    //            des bulles passives (idle, fierté, max…) restaient sans animation visuelle.
+    //            24000ms = légèrement sous le cycle de rotation 25s pour éviter tout chevauchement.
+    _triggerBubbleAnim(bulle, 24000);
   }
 }
 

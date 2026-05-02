@@ -138,7 +138,7 @@ window._teenPose = {
 //            Cooldown de départ décalé (~300f) par rapport aux poses de bras (~240f)
 //            pour éviter que bras et bouche changent en même temps.
 window._mouthSched = {
-  cooldown: 300 // frames avant le premier déclenchement (~25 sec à 12fps)
+  cooldown: 60 // frames avant le premier déclenchement (~5 sec à 12fps)
 };
 // ─── Animation : variables d'expressivité ───
 window._expr = {
@@ -1665,18 +1665,20 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
         const haR = g.happiness;
         const roll = Math.random(); // 0 → 1
         let mood = null;
-        let dur  = 6 + Math.floor(Math.random() * 5); // 6–10 frames ≈ 0.5–0.8 sec
+        // RÔLE : Durée plus longue pour être clairement visible — 14–22 frames ≈ 1–2 sec.
+        // POURQUOI : 6–10f était trop discret pour remarquer le changement.
+        let dur = 14 + Math.floor(Math.random() * 9); // 14–22 frames ≈ 1.2–1.8 sec
 
         if (haR >= 5) {
           // ha = 5 : très souvent sourire, parfois joie
-          if      (roll < 0.70) mood = 'sourire-auto'; // sourire spontané (bouche +)
-          else if (roll < 0.90) mood = 'joie';         // expression joie complète
-          else                  mood = 'surprise';      // petite surprise
+          if      (roll < 0.70) mood = 'sourire-auto';
+          else if (roll < 0.90) mood = 'joie';
+          else                  mood = 'surprise';
         } else if (haR >= 4) {
           // ha = 4 : souvent sourire
           if      (roll < 0.50) mood = 'sourire-auto';
           else if (roll < 0.75) mood = 'surprise';
-          // else → 25% rien (neutre — on ne déclenche pas)
+          // else → 25% rien
         } else {
           // ha ≤ 3 : mix équilibré
           if      (roll < 0.33) mood = 'sourire-auto';
@@ -1687,11 +1689,10 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
         // RÔLE : Déclencher l'expression si une a été tirée.
         if (mood) window.triggerExpr(mood, dur);
 
-        // RÔLE : Remettre un cooldown aléatoire décalé pour le prochain déclenchement.
-        // POURQUOI : 180–360f ≈ 15–30 sec — même fourchette que les poses bras adulte
-        //            (dont le cooldown est tiré aléatoirement par le scheduler _adultPose).
-        //            L'aléatoire évite tout motif régulier visible.
-        window._mouthSched.cooldown = 180 + Math.floor(Math.random() * 180);
+        // RÔLE : Remettre un cooldown plus court pour des changements plus fréquents.
+        // POURQUOI : 60–150f ≈ 5–12 sec — assez fréquent pour être perceptible,
+        //            assez espacé pour rester naturel et non mécanique.
+        window._mouthSched.cooldown = 60 + Math.floor(Math.random() * 90);
       }
     } else if (isSleeping) {
       // RÔLE : Reset au réveil pour ne pas partir avec un cooldown trop court.

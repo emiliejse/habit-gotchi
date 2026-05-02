@@ -600,8 +600,9 @@ Ton bilan de la semaine apparaîtra ici...
   style="display:none;z-index:500;background:#fff;flex-direction:column;overflow:hidden">
 
   <!-- ── En-tête : pattern identique à la Boutique (h2 gauche + .modal-close droite) ── -->
+  <!-- padding-top absorbe l'encoche / Dynamic Island -->
   <div style="display:flex;align-items:center;justify-content:space-between;
-              padding:12px 16px 8px;flex-shrink:0;border-bottom:1px solid var(--border)">
+              padding:calc(12px + env(safe-area-inset-top, 0px)) 16px 8px;flex-shrink:0;border-bottom:1px solid var(--border)">
     <h2 style="margin:0;font-family:var(--font-title);color:var(--text)">🎨 Atelier</h2>
     <!-- RÔLE : bouton ✕ standardisé, même style que .modal-close de la boutique -->
     <button class="modal-close" onclick="fermerAtelier()" aria-label="Fermer l'atelier">✕</button>
@@ -621,8 +622,11 @@ Ton bilan de la semaine apparaîtra ici...
 
   <!-- ── Footer : palette + galerie + bouton activer, compressés en bas ── -->
   <!-- POURQUOI flex-shrink:0 : cette zone ne se réduit pas, c'est le canvas qui cède -->
+  <!-- padding-bottom absorbe le home indicator iOS via env() directement
+       POURQUOI : --sab est en dur à 0px dans style.css (dette connue) — on contourne
+       en lisant env(safe-area-inset-bottom) directement ici. -->
   <div id="atelier-footer"
-    style="flex-shrink:0;padding:10px 16px 14px;border-top:1px solid var(--border);
+    style="flex-shrink:0;padding:10px 16px calc(14px + env(safe-area-inset-bottom, 0px));border-top:1px solid var(--border);
            background:#fff;display:flex;flex-direction:column;gap:6px">
 
     <!-- Palette de couleurs + gomme — rendue par ui-atelier.js -->

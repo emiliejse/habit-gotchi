@@ -303,11 +303,14 @@ function _atelierRenderPalette() {
   //            On prend la largeur réelle de la galerie comme référence, et on calcule
   //            la taille de bouton qui remplit exactement cette largeur avec 7 colonnes
   //            et un gap uniforme entre elles.
-  const galerie    = document.getElementById('atelier-galerie');
-  const totalW     = galerie ? galerie.clientWidth : (container.clientWidth || 300);
-  const N_COLS     = 7;   // 7 colonnes × 2 rangées = 14 cases (13 couleurs + 1 gomme)
-  const GAP        = 8;   // gap fixe entre boutons (px)
-  const btnSize    = Math.floor((totalW - GAP * (N_COLS - 1)) / N_COLS);
+  // POURQUOI : même cascade que _atelierRenderGalerie — clientWidth peut être 0
+  //            au premier rendu. On remonte au footer puis à window.innerWidth.
+  const footer   = document.getElementById('atelier-footer');
+  const overlayW = document.getElementById('atelier-overlay')?.clientWidth;
+  const totalW   = (footer?.clientWidth) || (overlayW ? overlayW - 32 : 0) || (window.innerWidth - 32) || 300;
+  const N_COLS   = 7;   // 7 colonnes × 2 rangées = 14 cases (13 couleurs + 1 gomme)
+  const GAP      = 8;   // gap fixe entre boutons (px)
+  const btnSize  = Math.max(28, Math.floor((totalW - GAP * (N_COLS - 1)) / N_COLS));
 
   let html = `<div style="display:grid;grid-template-columns:repeat(${N_COLS},${btnSize}px);gap:${GAP}px;">`;
 
@@ -358,41 +361,46 @@ function _atelierRenderGalerie() {
   const tableaux = window.D.atelier.tableaux;
   const activeId = window.D.atelier.activeId;
 
-  // POURQUOI : On calcule la taille des vignettes pour qu'elles remplissent
-  //            exactement toute la largeur du footer sur une seule ligne.
-  //            Nombre de slots = tableaux existants + 1 bouton "+" si < ATELIER_MAX.
-  //            Gap fixe à 10px entre chaque slot.
-  const nSlots  = tableaux.length + (tableaux.length < ATELIER_MAX ? 1 : 0);
-  const gapTotal = (nSlots - 1) * 10; // gap entre les N slots
-  // clientWidth est disponible car le container est dans un parent flex déjà rendu
-  const containerW = container.clientWidth || 300; // fallback si pas encore layouté
-  const vigW = Math.floor((containerW - gapTotal) / nSlots);
-  // POURQUOI : grille carrée (12×12) → ratio 1:1, hauteur = largeur
-  const vigH = Math.floor(vigW * ATELIER_ROWS / ATELIER_COLS);
+  // RÔLE : Calculer la largeur de référence pour les vignettes.
+  // POURQUOI : container.clientWidth peut valoir 0 si le layout n'est pas encore stabilisé
+  //            (premier rendu, overlay qui vient d'apparaître). On remonte au footer,
+  //            puis au parent overlay, puis à window.innerWidth comme dernier recours.
+  //            On soustrait les paddings latéraux du footer (16px × 2 = 32px).
+  const footer    = document.getElementById('atelier-footer');
+  const overlayW  = document.getElementById('atelier-overlay')?.clientWidth;
+  const refW      = (footer?.clientWidth) || (overlayW ? overlayW - 32 : 0) || (window.innerWidth - 32) || 300;
 
-  let html = `<div style="display:flex;gap:10px;align-items:flex-end;width:100%">`;
+  const nSlots   = tableaux.length + (tableaux.length < ATELIER_MAX ? 1 : 0);
+  const GAP_VIG  = 10; // gap entre les vignettes (px)
+  const gapTotal = (nSlots - 1) * GAP_VIG;
+  const vigW     = Math.max(40, Math.floor((refW - gapTotal) / nSlots));
+  // POURQUOI : grille carrée (12×12) → ratio 1:1, hauteur = largeur
+  const vigH     = vigW;
+
+  // POURQUOI : flex:1 sur chaque slot + width:100% sur l'img → les vignettes s'étirent
+  //            pour occuper exactement toute la largeur, même si vigW est approximatif.
+  let html = `<div style="display:flex;gap:${GAP_VIG}px;align-items:stretch;width:100%">`;
 
   tableaux.forEach(tb => {
     const imgSrc     = _atelierVignette(tb, vigW, vigH);
     const estActif   = (tb.id === _atelierEditId);
     const estChambre = (tb.id === activeId);
 
-    // Bordure épaisse sur le tableau en cours d'édition, fine sur les autres
     const bordure = estActif
       ? `border:3px solid var(--text);`
       : `border:2px solid var(--border);`;
 
-    html += `<div style="position:relative;cursor:pointer;flex:1" onclick="_atelierSelectTableau('${tb.id}')">
+    html += `<div style="position:relative;cursor:pointer;flex:1;min-width:0" onclick="_atelierSelectTableau('${tb.id}')">
       <img src="${imgSrc}" width="${vigW}" height="${vigH}"
-        style="display:block;width:100%;height:auto;border-radius:6px;image-rendering:pixelated;${bordure}" />
+        style="display:block;width:100%;height:auto;aspect-ratio:1/1;border-radius:6px;image-rendering:pixelated;${bordure}" />
       ${estChambre ? `<span style="position:absolute;top:-10px;right:-4px;font-size:20px;line-height:1">⭐️</span>` : ''}
     </div>`;
   });
 
-  // ── Bouton "+ Nouveau" — même largeur que les vignettes ──
+  // ── Bouton "+ Nouveau" — flex:1 identique aux vignettes ──
   if (tableaux.length < ATELIER_MAX) {
     html += `<button onclick="_atelierNouveauTableau()"
-      style="flex:1;height:${vigH}px;border-radius:6px;border:2px dashed var(--border);
+      style="flex:1;min-width:0;aspect-ratio:1/1;border-radius:6px;border:2px dashed var(--border);
              background:none;cursor:pointer;color:var(--text2);font-size:22px;">+</button>`;
   }
 

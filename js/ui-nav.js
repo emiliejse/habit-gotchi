@@ -557,14 +557,15 @@ function openCanvasFullscreen() {
     overlay.classList.add('open');
 
     lockScroll();
-    // RÔLE : Rend interactif UNIQUEMENT .hdr-garden (le header avec le bouton ✕),
-    //        sans retirer inert de tout #console-top.
-    // POURQUOI : lockScroll() pose inert sur #console-top entier, ce qui bloquerait
-    //            le bouton ✕ jardin. Mais retirer inert sur tout #console-top rouvrirait
-    //            les interactions avec le canvas p5 et les zones de tap du gotchi derrière.
-    //            On cible uniquement l'élément .hdr-garden pour être chirurgical.
-    const hdrGarden = document.getElementById('hdr-garden');
-    if (hdrGarden) hdrGarden.inert = false;
+    // RÔLE : Retire inert de #console-top — lockScroll() vient de le poser, mais
+    //        #console-top est la zone active en mode jardin (bouton ✕ + étiquette scrollable).
+    // POURQUOI on ne cible pas uniquement .hdr-garden : inert désactive tout le sous-arbre,
+    //        ce qui bloquerait aussi le scroll de .canvas-fs-info et le bouton ✕.
+    // POURQUOI c'est safe malgré tout : la GARDE 2c dans render.js (touchStarted) bloque
+    //        toute interaction p5 dès que #canvas-fs-overlay existe — le canvas p5 dans
+    //        #console-top ne répond plus aux taps pendant le mode jardin.
+    const ct = document.getElementById('console-top');
+    if (ct) ct.inert = false;
   }
 
   // RÔLE : Bascule immédiatement en mode jardin dès le tap — masque l'UI ET fait passer

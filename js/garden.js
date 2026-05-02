@@ -1914,56 +1914,96 @@ function drawJardinPremierPlan(p, theme, n) {
   //   → saccadé. On utilise p.rect() directement pour les segments (pas px()).
   //   Seul Y est snappé sur la grille (fixe à 162 = multiple de PX).
 
+  // ── Chenilles animées ─────────────────────────────────────────────
+  // RÔLE : 1–2 chenilles qui rampent au sol devant le jardin avec un mouvement organique.
+  // CONDITION : vitalite > 0.5 ET habRatio > 0.4.
+  // NOMBRE : 1 par défaut, 2 si vitalite > 0.7 ET habRatio > 0.6.
+  //
+  // MOUVEMENT X : sinus lent (ralentit aux extrémités) + irrégularités via _gardenRng.
+  //   Le sinus donne une allure naturelle — la chenille hésite, repart doucement.
+  //   Les irrégularités (petits à-coups) évitent le côté trop mécanique.
+  //
+  // MOUVEMENT Y : oscillation sinusoïdale indépendante + ligne de base différente par chenille.
+  //   Chaque chenille ondule légèrement en montant/descendant pendant qu'elle avance.
+  //
+  // SEGMENTS : 3 blocs de 4×4px, espacés de 5px.
+  //   Tête (seg=0) plus claire → sens de déplacement lisible.
+  //   Dessinés avec p.rect() (pas px()) pour rester hors grille PX → mouvement fluide au pixel.
+
   if (vitalite > 0.5 && habRatio > 0.4) {
     const nbChenilles = (vitalite > 0.7 && habRatio > 0.6) ? 2 : 1;
 
-    // Couleurs : vert vif pour le corps, tête légèrement plus claire
-    const CORPS_COL = ['#78c030', '#90d848']; // corps sombre, corps clair (tête)
-    // Chenille 2 : ton différent pour les distinguer
-    const CORPS_COL2 = ['#c07828', '#d89040'];
+    // Couleurs par chenille : [corps sombre, tête claire]
+    const CHENILLE_COLS = [
+      ['#78c030', '#b0e060'], // chenille 0 : verte
+      ['#c07828', '#e0a850'], // chenille 1 : orangée
+    ];
 
-    // Y de la chenille — fixe, snappé sur la grille (162 = multiple de PX=5... arrondi à 160)
-    const CHENIL_Y = 160;
-    // Largeur de la zone de déplacement (pixels réels)
-    const XMIN = 10;
-    const XMAX = 182;
-    const XRANGE = XMAX - XMIN; // 172px de course
+    // Zone X de déplacement (pixels réels)
+    const XMIN   = 12;
+    const XMAX   = 180;
+    const XRANGE = XMAX - XMIN; // 168px de course
+
+    // Lignes Y de base — différentes pour chaque chenille, dans la lisière sol
+    // Chenille 0 : ras du sol (162), chenille 1 : légèrement au-dessus (155)
+    const BASE_Y = [162, 155];
+
+    const SEG_W   = 4;  // largeur segment px réels
+    const SEG_H   = 4;  // hauteur segment px réels
+    const SEG_GAP = 5;  // écart centre à centre entre segments
 
     for (let i = 0; i < nbChenilles; i++) {
-      // RÔLE : Triangle wave — position linéaire qui rebondit entre 0 et XRANGE.
-      // POURQUOI triangle wave et non sin() : vitesse constante, demi-tour net.
-      // Vitesse : chenille 0 = 0.5px/frame, chenille 1 = 0.35px/frame (plus lente).
-      const vitesse = i === 0 ? 0.5 : 0.35;
-      // Phase décalée pour éviter que les deux chenilles partent du même endroit.
-      const phase   = i === 0 ? 0 : XRANGE * 0.55;
-      // Triangle wave : (frameCount * vitesse + phase) modulo (2 × XRANGE), plié sur XRANGE
-      const t       = (p.frameCount * vitesse + phase) % (XRANGE * 2);
-      const posX    = t < XRANGE ? t : XRANGE * 2 - t; // 0→XRANGE→0→...
-      const cx      = Math.round(XMIN + posX); // position X tête en pixels réels
+      const fc = p.frameCount;
 
-      // RÔLE : Détermine le sens (droite ou gauche) pour orienter tête/queue.
-      // t < XRANGE → va vers la droite → tête à droite (cx), queue à gauche (cx - offset)
-      // t >= XRANGE → va vers la gauche → tête à gauche, queue à droite
-      const versLaDroite = t < XRANGE;
+      // ── Position X ──────────────────────────────────────────────
+      // RÔLE : Sinus lent — la chenille va et vient en ralentissant aux extrémités.
+      // POURQUOI sin() ici (et non triangle wave) : les extrémités lentes imitent
+      //   l'hésitation naturelle d'un insecte qui fait demi-tour.
+      // Période : ~400 frames (≈13s à 30fps) pour chenille 0, ~550 pour chenille 1.
+      const periode  = i === 0 ? 400 : 550;
+      const phaseX   = i === 0 ? 0 : Math.PI * 0.7; // décalage de phase entre les deux
+      const sinX     = Math.sin((fc / periode) * Math.PI * 2 + phaseX); // -1 → 1
+      const baseX    = XMIN + (sinX * 0.5 + 0.5) * XRANGE; // remappé → XMIN…XMAX
 
-      const cols = i === 0 ? CORPS_COL : CORPS_COL2;
+      // RÔLE : Irrégularités — petit à-coup toutes les ~8 frames via _gardenRng.
+      // POURQUOI _gardenRng et non Math.random() : déterministe → pas de scintillement
+      //   aléatoire d'une frame à l'autre. L'irrégularité est reproductible.
+      // On échantillonne une valeur toutes les 8 frames (floor de fc/8) → stable 8 frames.
+      const irregIdx  = Math.floor(fc / 8) + i * 1000; // index différent par chenille
+      const irreg     = (_gardenRng(window.D?.g?.gardenSeed ?? 42, irregIdx) - 0.5) * 6;
+      // irreg ∈ [-3, +3] px — petit décalage momentané
 
-      // RÔLE : Dessine les 3 segments — 4px × 4px chacun (légèrement sous PX=5 pour l'aspect chenille)
-      // Espacement : 5px entre chaque segment (gap de 1px réel entre eux)
-      // Ordre de dessin : toujours tête en premier (visuellement au-dessus en cas de superposition)
-      const SEG_W  = 4;  // largeur d'un segment en px réels
-      const SEG_H  = 4;  // hauteur d'un segment
-      const SEG_GAP = 5; // distance centre à centre entre segments
+      const cx = Math.round(baseX + irreg);
+
+      // ── Sens de déplacement ──────────────────────────────────────
+      // RÔLE : Détecte si la chenille va vers la droite (dérivée du sinus > 0).
+      // POURQUOI cos() : dérivée de sin() → positif quand sin monte (va à droite).
+      const versLaDroite = Math.cos((fc / periode) * Math.PI * 2 + phaseX) > 0;
+
+      // ── Position Y ──────────────────────────────────────────────
+      // RÔLE : Oscillation Y indépendante — la chenille ondule en rampant.
+      // Amplitude : ±4px réels autour de sa ligne de base.
+      // Période Y plus courte (≈120 frames) → ondulation visible pendant le trajet.
+      // Phase Y décalée par chenille pour que leurs ondulations ne soient pas synchrones.
+      const periodeY = i === 0 ? 120 : 90;
+      const phaseY   = i === 0 ? 0 : Math.PI * 1.2;
+      const cy = BASE_Y[i] + Math.sin((fc / periodeY) * Math.PI * 2 + phaseY) * 4;
+
+      // ── Dessin des 3 segments ────────────────────────────────────
+      const cols = CHENILLE_COLS[i];
 
       for (let seg = 0; seg < 3; seg++) {
-        // RÔLE : Calcule la position X de ce segment selon le sens de marche.
-        // seg=0 = tête, seg=2 = queue.
+        // RÔLE : seg=0 = tête (devant selon le sens), seg=2 = queue (derrière).
         const offset = versLaDroite ? -seg * SEG_GAP : seg * SEG_GAP;
         const sx     = cx + offset;
 
-        // RÔLE : Tête (seg=0) plus claire, corps plus sombre.
+        // RÔLE : Chaque segment ondule légèrement en Y avec un micro-décalage de phase
+        //        → le corps de la chenille se tord un peu, pas rigide comme un train.
+        // POURQUOI seg * 0.4 : décalage de phase progressif du seg 0 au seg 2.
+        const segY = cy + Math.sin((fc / periodeY) * Math.PI * 2 + phaseY + seg * 0.4) * 2;
+
         p.fill(tc(n, seg === 0 ? cols[1] : cols[0]));
-        p.rect(sx, CHENIL_Y, SEG_W, SEG_H); // p.rect() hors grille PX — mouvement fluide
+        p.rect(sx, Math.round(segY), SEG_W, SEG_H); // p.rect() hors grille PX — fluide
       }
     }
   }

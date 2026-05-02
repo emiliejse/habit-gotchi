@@ -293,12 +293,21 @@ function _atelierRenderPalette() {
   const tb = window.D.atelier.tableaux.find(t => t.id === _atelierEditId);
   const couleurs = tb ? tb.paletteSnapshot : [];
 
-  // POURQUOI : 2 rangées de 4 couleurs + gomme à la fin de la 2e rangée = 9 boutons au total.
-  //            display:grid avec 5 colonnes → rangée 1 = couleurs 0-3, rangée 2 = couleurs 4-7 + gomme.
-  //            Boutons 40px avec gap 10px = plus lisibles et plus faciles à taper sur mobile.
-  let html = `<div style="display:grid;grid-template-columns:repeat(5,40px);gap:10px;justify-content:center">`;
+  // RÔLE : Calculer la taille des boutons pour que la palette occupe exactement
+  //        la même largeur que la galerie (#atelier-galerie).
+  // POURQUOI : 13 couleurs + 1 gomme = 14 boutons. On veut 7 colonnes × 2 rangées.
+  //            On prend la largeur réelle de la galerie comme référence, et on calcule
+  //            la taille de bouton qui remplit exactement cette largeur avec 7 colonnes
+  //            et un gap uniforme entre elles.
+  const galerie    = document.getElementById('atelier-galerie');
+  const totalW     = galerie ? galerie.clientWidth : (container.clientWidth || 300);
+  const N_COLS     = 7;   // 7 colonnes × 2 rangées = 14 cases (13 couleurs + 1 gomme)
+  const GAP        = 8;   // gap fixe entre boutons (px)
+  const btnSize    = Math.floor((totalW - GAP * (N_COLS - 1)) / N_COLS);
 
-  // ── 8 boutons colorés ──
+  let html = `<div style="display:grid;grid-template-columns:repeat(${N_COLS},${btnSize}px);gap:${GAP}px;">`;
+
+  // ── 13 boutons colorés ──
   couleurs.forEach((hex, i) => {
     // POURQUOI : ring outline visible sur n'importe quelle couleur sans calcul de contraste.
     const actif = (_atelierColor === hex);
@@ -308,19 +317,11 @@ function _atelierRenderPalette() {
     html += `<button
       onclick="window._atelierChoisirCouleur('${hex}')"
       aria-label="Couleur ${i + 1}"
-      style="width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;
+      style="width:${btnSize}px;height:${btnSize}px;border-radius:50%;border:none;cursor:pointer;
              background:${hex};${ring}flex-shrink:0;"></button>`;
-
-    // POURQUOI : Après la 4e couleur (index 3), on insère un séparateur invisible
-    //            pour forcer le passage à la 2e rangée dans la grille 5 colonnes.
-    //            La grille a 5 colonnes : col 1–4 pour les couleurs, col 5 pour la gomme
-    //            mais en rangée 2. On utilise grid-column-start pour placer la gomme
-    //            en fin de rangée 2 via un span vide ici — solution : la gomme est simplement
-    //            le 9e élément, le navigateur la place en col 5 rangée 2 automatiquement.
   });
 
-  // ── Bouton gomme (9e élément → col 5, rangée 2 automatique) ──
-  // POURQUOI : ✕ plutôt que 🧹 — icône plus claire, lisible à petite taille, sans dépendance emoji.
+  // ── Bouton gomme (14e élément → col 7, rangée 2 automatique) ──
   const gommeActif = (_atelierColor === null);
   const gommeRing  = gommeActif
     ? 'outline:3px solid var(--text);outline-offset:3px;'
@@ -329,8 +330,8 @@ function _atelierRenderPalette() {
     onclick="window._atelierChoisirCouleur(null)"
     aria-label="Gomme"
     title="Gomme"
-    style="width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;
-           background:var(--bg);font-size:18px;font-weight:700;color:var(--text2);
+    style="width:${btnSize}px;height:${btnSize}px;border-radius:50%;border:none;cursor:pointer;
+           background:var(--bg);font-size:${Math.round(btnSize * 0.45)}px;font-weight:700;color:var(--text2);
            ${gommeRing}flex-shrink:0;display:flex;align-items:center;justify-content:center;">✕</button>`;
 
   html += `</div>`;
@@ -380,7 +381,7 @@ function _atelierRenderGalerie() {
     html += `<div style="position:relative;cursor:pointer;flex:1" onclick="_atelierSelectTableau('${tb.id}')">
       <img src="${imgSrc}" width="${vigW}" height="${vigH}"
         style="display:block;width:100%;height:auto;border-radius:6px;image-rendering:pixelated;${bordure}" />
-      ${estChambre ? `<span style="position:absolute;top:-7px;right:-3px;font-size:14px;line-height:1">★</span>` : ''}
+      ${estChambre ? `<span style="position:absolute;top:-10px;right:-4px;font-size:20px;line-height:1">⭐️</span>` : ''}
     </div>`;
   });
 
@@ -487,13 +488,16 @@ window.ouvrirAtelier = function() {
     const cible = tableaux.find(t => t.id === activeId) ?? tableaux[0];
     _atelierEditId = cible.id;
 
-    // RÔLE : Met à jour la palette du tableau courant depuis le thème actif.
+    // RÔLE : Met à jour la palette de TOUS les tableaux depuis le thème actif.
     // POURQUOI : Si l'utilisatrice a changé de thème depuis la dernière ouverture,
-    //            paletteSnapshot serait obsolète. On la rafraîchit à l'ouverture
-    //            pour que les couleurs proposées correspondent toujours à l'ambiance
-    //            visuelle courante. Les pixels déjà peints ne sont pas affectés.
+    //            toutes les paletteSnapshot seraient obsolètes — pas seulement celle
+    //            du tableau courant. On rafraîchit tous les tableaux en une passe
+    //            pour que la palette soit cohérente quelle que soit la vignette ouverte.
+    //            Les pixels déjà peints ne sont pas affectés.
     const thèmeActuel = getEnvTheme(window.D.g.envTheme ?? 'pastel');
-    cible.paletteSnapshot = [...thèmeActuel.paintPalette];
+    tableaux.forEach(tb => {
+      tb.paletteSnapshot = [...thèmeActuel.paintPalette];
+    });
 
     // Si la couleur active n'est plus dans la nouvelle palette, on prend la première
     if (!cible.paletteSnapshot.includes(_atelierColor)) {

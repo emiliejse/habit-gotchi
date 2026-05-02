@@ -593,15 +593,26 @@ function drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n, age, maxAg
 }
 
 /**
- * drawHerbe(p, x, y, variant, colorVariant, scalePX, n)
- * RÔLE : Dessine un brin ou une touffe d'herbe — 4 formes × 8 tons × complexité croissante.
+ * drawHerbe(p, x, y, variant, colorVariant, scalePX, n, age, maxAge)
  *
- * CONVENTION : y = base du sprite (ligne de sol). Tout monte VERS LE HAUT.
- *   → rangée h (0=base, 1=au-dessus…) = px(p, x, y - PX*(h+1), largeur, PX)
- *   → colonne de hauteur H = px(p, x, y - PX*H, largeur, PX*H)
+ * RÔLE : Herbe pixel art — complexité pilotée par l'âge, taille par scalePX.
+ *
+ * CONVENTION ABSOLUE : y = base du sprite (ligne de sol). Tout monte vers le HAUT.
+ *   Colonne de hauteur H = px(p, x, y - PX*H, largeur, PX*H)
+ *   ⚠️ Aucun pixel isolé — chaque rectangle touche au moins un autre par une face.
+ *
+ * MATURITÉ : m = age / maxAge
+ *   m < 0.2  → pousse : minuscule, forme à peine visible
+ *   0.2–0.85 → épanoui : forme complète selon variant + enrichissement avec s
+ *   m > 0.85 → fané : même forme, tige penchée (dx=PX), ton plus sombre
+ *
+ * variant 0 = graminée | 1 = jonc | 2 = touffe | 3 = fougère
  */
-function drawHerbe(p, x, y, variant, colorVariant, scalePX, n) {
-  const s = scalePX;
+function drawHerbe(p, x, y, variant, colorVariant, scalePX, n, age, maxAge) {
+  const s  = scalePX;
+  const ag = age    ?? 0;
+  const ma = maxAge ?? 14;
+  const m  = ag / ma;
 
   const VERTS = [
     '#90d060', '#70b858', '#509040', '#a8d870',
@@ -611,296 +622,373 @@ function drawHerbe(p, x, y, variant, colorVariant, scalePX, n) {
   const colD = VERTS[(colorVariant + 3) % 8]; // ton sombre
   const colC = VERTS[(colorVariant + 1) % 8]; // ton clair
 
-  if (variant === 0) {
-    // ── BRIN DROIT
-    p.fill(tc(n, colV));
+  // Tige penchée si vieille (m > 0.85)
+  const dx   = m > 0.85 ? PX : 0;
+  // Teinte fanée : légèrement assombrie
+  const nH   = m > 0.85 ? Math.min(1, n + 0.3) : n;
+
+  if (m < 0.2) {
+    // ── POUSSE : 1–2 pixels, forme minimale mais identifiable ────────
+    // Toutes les variantes partagent la même pousse : 1 ou 2 rangées collées.
+    p.fill(tc(nH, colV));
+    px(p, x, y - PX, PX, PX); // rangée base — posée sur le sol
+    if (s >= 3) px(p, x, y - PX*2, PX, PX); // rangée 2 — collée à la base
+
+  } else if (variant === 0) {
+    // ── GRAMINÉE : tige droite qui s'épaissit avec l'âge ────────────
+    // s=1–2 : brin fin, 1 rangée de base large
+    // s=3–4 : tige + étalement bas
+    // s=5–6 : tige + 2 feuilles latérales collées à la tige
+    // s=7+  : tige épaisse + feuilles + épis au sommet
+    p.fill(tc(nH, colV));
     if (s <= 2) {
-      px(p, x, y - PX,   PX,   PX);   // 1 rangée
-      if (s === 2) px(p, x, y - PX*2, PX, PX);
+      // Tige fine, 1 colonne + rangée base
+      px(p, x + dx, y - PX*s, PX, PX*s);
+      px(p, x + dx - PX, y - PX, PX*3, PX); // pied étalé — touche la tige
     } else if (s <= 4) {
-      px(p, x,      y - PX*s, PX,   PX*s);  // tige fine (sommet→base)
-      px(p, x - PX, y - PX,   PX,   PX);    // petit épaulement gauche base
+      px(p, x + dx,     y - PX*s, PX, PX*s); // tige
+      px(p, x + dx - PX, y - PX,  PX*3, PX); // pied étalé
     } else if (s <= 6) {
-      px(p, x,      y - PX*s,          PX,   PX*s);  // tige
-      px(p, x - PX*2, y - PX*Math.floor(s*0.5), PX*2, PX); // feuille gauche
-      px(p, x + PX,   y - PX*Math.floor(s*0.6), PX*2, PX); // feuille droite
+      px(p, x + dx,       y - PX*s, PX, PX*s); // tige
+      // Feuille gauche : collée à la tige (partage bord gauche de la tige)
+      px(p, x + dx - PX*2, y - PX*Math.round(s*0.45), PX*2, PX);
+      // Feuille droite : collée à la tige (partage bord droit)
+      px(p, x + dx + PX,   y - PX*Math.round(s*0.65), PX*2, PX);
+      px(p, x + dx - PX,   y - PX, PX*3, PX); // pied
     } else {
-      px(p, x, y - PX*s, PX*2, PX*3);  // base épaisse (3 rangées basses)
-      px(p, x, y - PX*s, PX,   PX*s);  // tige fine complète par-dessus
-      px(p, x - PX*2, y - PX*3,       PX*2, PX);
-      px(p, x + PX,   y - PX*4,       PX*2, PX);
-      px(p, x - PX,   y - PX*(s-1),   PX*2, PX);
-      p.fill(tc(n, colD));
-      px(p, x - PX, y - PX*s,     PX, PX); // épi gauche
-      px(p, x + PX, y - PX*(s-1), PX, PX); // épi droit
+      // Grande graminée : tige épaisse + feuilles + épis
+      px(p, x + dx,       y - PX*s, PX*2, PX*s); // tige épaisse (2 col)
+      px(p, x + dx - PX*2, y - PX*Math.round(s*0.3), PX*2, PX); // feuille basse gauche
+      px(p, x + dx + PX*2, y - PX*Math.round(s*0.5), PX*2, PX); // feuille haute droite
+      px(p, x + dx - PX,   y - PX, PX*4, PX); // pied large
+      // Épis au sommet (collés à la tige)
+      p.fill(tc(nH, colD));
+      px(p, x + dx - PX, y - PX*s,     PX, PX*2); // épi gauche — touche la tige
+      px(p, x + dx + PX*2, y - PX*(s-1), PX, PX*2); // épi droit
     }
-    p.fill(tc(n, colD));
-    px(p, x - PX, y - PX, PX*3, PX); // ombre au sol
 
   } else if (variant === 1) {
-    // ── BRIN PENCHÉ (courbe vers la droite)
-    p.fill(tc(n, colV));
+    // ── JONC : tige qui s'arc-boute vers la droite ───────────────────
+    // Principe : moitié basse droite, moitié haute décalée d'1 PX à droite.
+    // Les deux morceaux se touchent au point de courbure → aucun pixel isolé.
+    // s=1–2 : 2 pixels en escalier
+    // s=3–4 : bas + haut collés au pli
+    // s=5–6 : large + fin collés + feuille au genou
+    // s=7+  : lame large avec nervure
+    p.fill(tc(nH, colV));
     if (s <= 2) {
-      px(p, x,      y - PX,   PX, PX);
-      px(p, x + PX, y - PX*2, PX, PX);
+      // Deux pixels en escalier — se touchent par le coin (1 face commune)
+      px(p, x + dx,      y - PX,   PX, PX); // base
+      px(p, x + dx + PX, y - PX*2, PX, PX); // sommet — touche la base par la face
     } else if (s <= 4) {
-      const mi = Math.floor(s / 2);
-      // bas : centré sur x
-      px(p, x, y - PX*mi, PX, PX*mi);
-      // haut : décalé d'un PX à droite
-      px(p, x + PX, y - PX*s, PX, PX*(s - mi));
-      p.fill(tc(n, colD));
-      px(p, x, y - PX*mi, PX, PX); // ombre au pli
+      const mi = Math.floor(s * 0.5);
+      px(p, x + dx,      y - PX*mi, PX, PX*mi);       // bas : centré sur x
+      px(p, x + dx + PX, y - PX*s,  PX, PX*(s - mi)); // haut : décalé +1 — touche le bas
+      p.fill(tc(nH, colD));
+      px(p, x + dx,      y - PX*mi, PX, PX);           // ombre au pli
     } else if (s <= 6) {
       const mi = Math.floor(s * 0.45);
-      px(p, x,      y - PX*mi, PX*2, PX*mi);          // partie basse large
-      px(p, x + PX*2, y - PX*s, PX, PX*(s - mi));     // partie haute fine décalée
-      p.fill(tc(n, colD));
-      px(p, x + PX, y - PX*mi, PX, PX);               // nervure au pli
-      p.fill(tc(n, colC));
-      px(p, x - PX, y - PX*(mi-1), PX*2, PX);         // feuille au genou
+      px(p, x + dx,       y - PX*mi, PX*2, PX*mi);         // partie basse large
+      px(p, x + dx + PX*2, y - PX*s, PX,   PX*(s - mi));   // partie haute fine — touche la basse
+      // Feuille au genou : collée à la jonction (y - PX*mi)
+      p.fill(tc(nH, colC));
+      px(p, x + dx - PX,   y - PX*(mi+1), PX*2, PX); // feuille gauche — touche la tige
+      p.fill(tc(nH, colD));
+      px(p, x + dx + PX,   y - PX*mi,     PX, PX);   // ombre au pli
     } else {
-      // Lame large qui s'arc-boute
-      px(p, x,        y - PX*3,     PX*2, PX*3);   // base
-      px(p, x + PX,   y - PX*(s-2), PX*2, PX*(s-3));
-      px(p, x + PX*3, y - PX*s,     PX,   PX*2);
-      p.fill(tc(n, colD));
-      px(p, x + PX,   y - PX*3,     PX,   PX);     // nervure basse
-      px(p, x + PX*2, y - PX*(s-2), PX,   PX);     // nervure haute
-      p.fill(tc(n, colV));
-      px(p, x - PX*2, y - PX*2, PX*2, PX);         // feuille sortante
-      px(p, x - PX,   y - PX*4, PX*2, PX);
+      // Lame de roseau : 3 segments collés
+      px(p, x + dx,        y - PX*3,       PX*2, PX*3);        // base large (3 rangées)
+      px(p, x + dx + PX,   y - PX*(s - 1), PX*2, PX*(s - 3)); // milieu — touche la base
+      px(p, x + dx + PX*3, y - PX*s,       PX,   PX*2);        // pointe — touche le milieu
+      p.fill(tc(nH, colD));
+      px(p, x + dx + PX,   y - PX*3,       PX,   PX);   // nervure basse — dans la base
+      px(p, x + dx + PX*2, y - PX*(s - 1), PX,   PX);   // nervure haute — dans le milieu
+      p.fill(tc(nH, colC));
+      px(p, x + dx - PX,   y - PX*2,       PX*2, PX);   // feuille sortante gauche
     }
-    p.fill(tc(n, colD));
-    px(p, x - PX, y - PX, PX*3, PX);
 
   } else if (variant === 2) {
-    // ── TOUFFE (3 brins de hauteurs variées)
-    p.fill(tc(n, colV));
+    // ── TOUFFE : brins serrés de hauteurs variées ────────────────────
+    // Les brins partagent leur base (y - PX) → connectés au sol.
+    // s=1–2 : 3 pixels côte à côte
+    // s=3–4 : 3 brins de largeur 1
+    // s=5–6 : 3 brins de largeur 2 + ombres entre eux
+    // s=7+  : 5 brins alternés vert/clair + nervure
+    p.fill(tc(nH, colV));
     if (s <= 2) {
-      px(p, x - PX, y - PX,   PX, PX);
-      px(p, x,      y - PX*s, PX, PX*s);
-      px(p, x + PX, y - PX,   PX, PX);
+      // 3 pixels en V : gauche bas, centre haut, droit bas — tous collés à la base
+      px(p, x + dx - PX, y - PX,   PX, PX);   // brin gauche
+      px(p, x + dx,      y - PX*s, PX, PX*s); // brin central — touche les deux côtés
+      px(p, x + dx + PX, y - PX,   PX, PX);   // brin droit
     } else if (s <= 4) {
-      px(p, x - PX, y - PX*(s-1), PX, PX*(s-1)); // brin gauche
-      px(p, x,      y - PX*s,     PX, PX*s);      // brin central
-      px(p, x + PX, y - PX*(s-2), PX, PX*(s-2)); // brin droit
+      // 3 brins fins — se touchent à la base (même y de départ)
+      px(p, x + dx - PX, y - PX*(s - 1), PX, PX*(s - 1)); // gauche — court
+      px(p, x + dx,      y - PX*s,       PX, PX*s);        // central — haut
+      px(p, x + dx + PX, y - PX*(s - 2), PX, PX*(s - 2)); // droit — très court
     } else if (s <= 6) {
-      px(p, x - PX*2, y - PX*(s-1), PX*2, PX*(s-1));
-      px(p, x,        y - PX*s,     PX*2, PX*s);
-      px(p, x + PX*2, y - PX*(s-2), PX*2, PX*(s-2));
-      p.fill(tc(n, colD));
-      px(p, x - PX,   y - PX*2, PX, PX*2); // ombre entre brins
-      px(p, x + PX,   y - PX*2, PX, PX*2);
+      // 3 brins larges (2 col chacun) — se touchent à la base
+      px(p, x + dx - PX*2, y - PX*(s - 1), PX*2, PX*(s - 1));
+      px(p, x + dx,        y - PX*s,       PX*2, PX*s);
+      px(p, x + dx + PX*2, y - PX*(s - 2), PX*2, PX*(s - 2));
+      // Ombres entre brins — dans l'espace partagé à la base
+      p.fill(tc(nH, colD));
+      px(p, x + dx - PX, y - PX*2, PX, PX*2);
+      px(p, x + dx + PX, y - PX*2, PX, PX*2);
     } else {
-      // 5 brins — alternance vert/clair
-      const hts = [s-2, s-1, s, s-1, s-3];
-      const dx  = [-4, -2, 0, 2, 4];
+      // 5 brins — alternance vert/clair, tous reliés par la base commune
+      const hts = [s - 2, s - 1, s, s - 1, s - 3];
+      const dxs = [-4, -2, 0, 2, 4];
       hts.forEach((ht, i) => {
-        p.fill(tc(n, i % 2 === 0 ? colV : colC));
-        px(p, x + PX*dx[i], y - PX*ht, PX*2, PX*ht);
+        p.fill(tc(nH, i % 2 === 0 ? colV : colC));
+        px(p, x + dx + PX * dxs[i], y - PX * ht, PX * 2, PX * ht);
       });
-      p.fill(tc(n, colD));
-      px(p, x + PX, y - PX*(s-2), PX, PX*(s-2)); // nervure centrale
+      p.fill(tc(nH, colD));
+      px(p, x + dx + PX, y - PX * (s - 2), PX, PX * (s - 2)); // nervure centrale
     }
-    p.fill(tc(n, colD));
-    px(p, x - PX*2, y - PX, PX*6, PX); // ombre base
 
   } else {
-    // ── FOUGÈRE (palmes latérales)
-    p.fill(tc(n, colV));
+    // ── FOUGÈRE : tige centrale + palmes latérales ───────────────────
+    // Les palmes sont toujours collées à la tige (partagent 1 colonne avec elle).
+    // s=1–2 : tige + 1 palme centrale
+    // s=3–4 : tige + 1 paire de palmes
+    // s=5–6 : tige + 2 paires de palmes
+    // s=7+  : tige + 3 paires étagées, palmes longues
+    p.fill(tc(nH, colV));
     if (s <= 2) {
-      px(p, x - PX, y - PX,   PX, PX);
-      px(p, x,      y - PX*2, PX, PX);
-      px(p, x + PX, y - PX,   PX, PX);
+      // Tige 1 col + palme unique collée à mi-hauteur
+      px(p, x + dx,      y - PX*s, PX,   PX*s); // tige
+      px(p, x + dx - PX, y - PX*Math.round(s * 0.6), PX*2, PX); // palme gauche — touche la tige
     } else if (s <= 4) {
-      px(p, x, y - PX*s, PX, PX*s); // tige
-      const mi = Math.floor(s * 0.55);
-      px(p, x - PX*2, y - PX*mi, PX*2, PX); // palme gauche
-      px(p, x + PX,   y - PX*mi, PX*2, PX); // palme droite
+      px(p, x + dx,      y - PX*s, PX, PX*s); // tige
+      const mi = Math.round(s * 0.55);
+      px(p, x + dx - PX*2, y - PX*mi, PX*2, PX); // palme gauche — touche la tige
+      px(p, x + dx + PX,   y - PX*mi, PX*2, PX); // palme droite — touche la tige
     } else if (s <= 6) {
-      px(p, x, y - PX*s, PX, PX*s); // tige
-      // 3 paires de palmes, espacées régulièrement
-      for (let k = 1; k <= 3; k++) {
-        const yP = Math.floor(s * k / 4);
-        const lg = Math.max(1, 4 - k);
-        px(p, x - PX*(lg+1), y - PX*yP, PX*lg, PX);
-        px(p, x + PX,        y - PX*yP, PX*lg, PX);
-      }
+      px(p, x + dx, y - PX*s, PX, PX*s); // tige
+      // 2 paires de palmes — chacune collée à la tige (partage 1 col)
+      const y1 = Math.round(s * 0.35);
+      const y2 = Math.round(s * 0.65);
+      px(p, x + dx - PX*3, y - PX*y1, PX*3, PX); // paire basse gauche
+      px(p, x + dx + PX,   y - PX*y1, PX*3, PX); // paire basse droite
+      px(p, x + dx - PX*2, y - PX*y2, PX*2, PX); // paire haute gauche
+      px(p, x + dx + PX,   y - PX*y2, PX*2, PX); // paire haute droite
     } else {
-      // Grande fougère — 4 niveaux de palmes
-      px(p, x, y - PX*s, PX*2, PX*s); // tige épaisse
-      const niveaux = [
-        { f: 0.25, lg: 5 }, { f: 0.45, lg: 6 },
-        { f: 0.65, lg: 5 }, { f: 0.82, lg: 3 },
+      // Grande fougère : tige épaisse + 3 paires étagées
+      px(p, x + dx, y - PX*s, PX*2, PX*s); // tige épaisse
+      const paires = [
+        { f: 0.25, lg: 3 },
+        { f: 0.50, lg: 4 },
+        { f: 0.75, lg: 3 },
       ];
-      niveaux.forEach(({ f, lg }) => {
-        const yP = Math.floor(s * f);
-        p.fill(tc(n, colV));
-        px(p, x - PX*(lg+1), y - PX*yP, PX*lg, PX); // palme gauche
-        px(p, x + PX*2,      y - PX*yP, PX*lg, PX); // palme droite
-        // Bout de palme courbé vers le bas
-        px(p, x - PX*(lg+1), y - PX*yP + PX, PX*2, PX);
-        px(p, x + PX*(lg+1), y - PX*yP + PX, PX*2, PX);
-        // Nervure
-        p.fill(tc(n, '#306828'));
-        px(p, x - PX*lg, y - PX*yP, PX, PX);
-        px(p, x + PX*3,  y - PX*yP, PX, PX);
+      paires.forEach(({ f, lg }) => {
+        const yP = Math.round(s * f);
+        p.fill(tc(nH, colV));
+        // Palme gauche — touche la tige (bord gauche tige = x+dx)
+        px(p, x + dx - PX*lg, y - PX*yP, PX*lg, PX);
+        // Palme droite — touche la tige (bord droit tige = x+dx+PX*2)
+        px(p, x + dx + PX*2,  y - PX*yP, PX*lg, PX);
+        // Bout recourbé : 1 pixel sous la palme, collé à son extrémité
+        p.fill(tc(nH, colD));
+        px(p, x + dx - PX*lg, y - PX*(yP - 1), PX, PX); // bout gauche
+        px(p, x + dx + PX*(lg + 1), y - PX*(yP - 1), PX, PX); // bout droit
       });
     }
-    p.fill(tc(n, colD));
-    px(p, x - PX, y - PX, PX*3, PX);
   }
 }
 
 /**
- * drawPierre(p, x, y, variant, colorVariant, scalePX, n)
- * RÔLE : Dessine une pierre — 4 formes × 8 teintes × complexité croissante.
+ * drawPierre(p, x, y, variant, colorVariant, scalePX, n, age, maxAge)
  *
- * CONVENTION : y = base. Tout monte vers le HAUT.
- *   Corps de hauteur H = px(p, x, y - PX*H, largeur, PX*H)
- *   Dessus à y - PX*H = px(p, x, y - PX*H, largeur, PX)
+ * RÔLE : Pierre pixel art — 4 formes, complexité pilotée par l'âge.
+ *
+ * CONVENTION ABSOLUE : y = base du sprite. Tout monte vers le HAUT.
+ *   ⚠️ Aucun pixel isolé — chaque rectangle touche au moins un autre par une face.
+ *
+ * MATURITÉ : m = age / maxAge  (les pierres ont maxAge très long → vieillissent lentement)
+ *   m < 0.2  → brute : anguleuse, pas de détails
+ *   0.2–0.85 → arrondie : facette éclairée, fissures apparaissent avec s
+ *   m > 0.85 → recouverte : lichen dense, légèrement enfoncée (y + PX)
+ *
+ * variant 0 = galet | 1 = bloc | 2 = dalle | 3 = rocher pointu
  */
-function drawPierre(p, x, y, variant, colorVariant, scalePX, n) {
-  const s = scalePX;
+function drawPierre(p, x, y, variant, colorVariant, scalePX, n, age, maxAge) {
+  const s  = scalePX;
+  const ag = age    ?? 0;
+  const ma = maxAge ?? 999;
+  const m  = ag / ma;
 
   const PIERRES = [
     '#b0b0b0', '#909090', '#c8b898', '#a89880',
     '#787878', '#c0c8d0', '#686058', '#d0c8b8',
   ];
-  const colC  = PIERRES[colorVariant % 8];          // corps
-  const colD  = PIERRES[(colorVariant + 2) % 8];    // dessus éclairé
-  const colO  = PIERRES[(colorVariant + 4) % 8];    // ombre côté
-  const colF  = PIERRES[(colorVariant + 5) % 8];    // fissure sombre
-  const colR  = '#e8e8e8';                           // reflet blanc
-  const colL  = '#7a9050';                           // lichen
+  const colC = PIERRES[colorVariant % 8];
+  const colD = PIERRES[(colorVariant + 2) % 8]; // dessus éclairé
+  const colO = PIERRES[(colorVariant + 4) % 8]; // ombre côté
+  const colF = PIERRES[(colorVariant + 5) % 8]; // fissure
+  const colR = '#e8e8e8';                        // reflet
+  const colL = '#7a9050';                        // lichen vert
+  const colM = '#5a7838';                        // lichen foncé
+
+  // Enfoncée dans le sol si très vieille (m > 0.85)
+  // POURQUOI + PX : décale la base vers le bas → la pierre semble enterrée
+  const yBase = m > 0.85 ? y + PX : y;
 
   if (variant === 0) {
-    // ── GALET : large et bas, corps = hauteur s, largeur s+2
+    // ── GALET : large et bas (largeur s+2, hauteur s)
     p.fill(tc(n, colC));
-    px(p, x,      y - PX*s,    PX*(s+2), PX*s);  // corps
-    if (s >= 3) {
+    px(p, x, yBase - PX*s, PX*(s + 2), PX*s); // corps principal
+
+    if (m >= 0.2) {
+      // Arrondi : facette éclairée + reflet sur le dessus
       p.fill(tc(n, colD));
-      px(p, x + PX, y - PX*s,  PX*s,     PX);    // dessus éclairé
-      p.fill(tc(n, colR));
-      px(p, x + PX, y - PX*s,  PX,       PX);    // reflet coin
+      px(p, x + PX, yBase - PX*s, PX*s, PX);   // dessus éclairé — touche le corps
+      if (s >= 3) {
+        p.fill(tc(n, colR));
+        px(p, x + PX, yBase - PX*s, PX, PX);   // reflet coin — dans le dessus
+      }
+      if (s >= 5) {
+        p.fill(tc(n, colO));
+        px(p, x + PX*(s+1), yBase - PX*(s-1), PX, PX*(s-1)); // ombre droite — touche le corps
+        p.fill(tc(n, colF));
+        // Fissures dans le corps — connectées entre elles (cascade de pixels adjacents)
+        px(p, x + PX*Math.round(s*0.5), yBase - PX*2, PX, PX);
+        px(p, x + PX*Math.round(s*0.5) + PX, yBase - PX*3, PX, PX); // touche la fissure basse
+      }
     }
-    if (s >= 5) {
-      p.fill(tc(n, colO));
-      px(p, x + PX*(s+1), y - PX*(s-1), PX, PX*(s-1)); // face ombre droite
-      p.fill(tc(n, colF));
-      px(p, x + PX*3, y - PX*2, PX, PX);  // fissure 1
-      px(p, x + PX*4, y - PX*3, PX, PX);  // fissure 2
-    }
-    if (s >= 7) {
+    if (m > 0.85) {
+      // Lichen : taches sur le dessus et le corps
       p.fill(tc(n, colL));
-      px(p, x + PX*2, y - PX*s, PX*2, PX); // lichen sur dessus
+      px(p, x + PX*2, yBase - PX*s,     PX*2, PX);  // touche le dessus
+      px(p, x + PX,   yBase - PX*(s-1), PX,   PX);  // flanc gauche
+      if (s >= 4) {
+        p.fill(tc(n, colM));
+        px(p, x + PX*3, yBase - PX*s,     PX, PX);  // lichen foncé — touche le lichen clair
+        px(p, x + PX*2, yBase - PX*(s-1), PX, PX);
+      }
     }
 
   } else if (variant === 1) {
-    // ── BLOC CARRÉ : cube, corps = carré s×s
+    // ── BLOC : cube s×s, angles droits
     p.fill(tc(n, colC));
-    px(p, x, y - PX*s, PX*s, PX*s);         // face avant
-    if (s >= 2) {
+    px(p, x, yBase - PX*s, PX*s, PX*s); // face avant
+
+    if (m >= 0.2) {
       p.fill(tc(n, colD));
-      px(p, x, y - PX*s, PX*s, PX);         // dessus
-      p.fill(tc(n, colR));
-      px(p, x, y - PX*s, PX,   PX);         // reflet coin
+      px(p, x, yBase - PX*s, PX*s, PX);   // dessus — touche le corps
+      if (s >= 2) {
+        p.fill(tc(n, colR));
+        px(p, x, yBase - PX*s, PX, PX);   // reflet coin — dans le dessus
+      }
+      if (s >= 4) {
+        p.fill(tc(n, colO));
+        px(p, x + PX*(s-1), yBase - PX*(s-1), PX, PX*(s-1)); // face ombre droite
+      }
+      if (s >= 5) {
+        p.fill(tc(n, colF));
+        // Fissure verticale dans le corps
+        px(p, x + PX*2, yBase - PX*(s-1), PX, PX*(s-2)); // touche le dessus en haut
+      }
     }
-    if (s >= 4) {
-      p.fill(tc(n, colO));
-      px(p, x + PX*(s-1), y - PX*(s-1), PX, PX*(s-1)); // face ombre
-    }
-    if (s >= 5) {
-      p.fill(tc(n, colF));
-      px(p, x + PX*2, y - PX*(s-1), PX, PX*(s-2)); // fissure verticale
-    }
-    if (s >= 7) {
+    if (m > 0.85) {
       p.fill(tc(n, colL));
-      px(p, x + PX,   y - PX*s, PX*2, PX);
-      px(p, x + PX*4, y - PX*s, PX,   PX);
+      px(p, x + PX,   yBase - PX*s, PX*2, PX); // lichen sur dessus
+      px(p, x,        yBase - PX*2, PX,   PX*2); // lichen bas gauche — touche le dessus
+      if (s >= 4) {
+        p.fill(tc(n, colM));
+        px(p, x + PX*2, yBase - PX*s, PX, PX);   // lichen foncé — adjacent au clair
+      }
     }
 
   } else if (variant === 2) {
-    // ── DALLE PLATE : très large (s×2), seulement 1–2 rangées de hauteur
-    const h = Math.min(s, 3); // hauteur plafonnée à 3 PX-units
+    // ── DALLE PLATE : très large (s×2), hauteur plafonnée à 3
+    const h = Math.min(s, 3);
     p.fill(tc(n, colC));
-    px(p, x, y - PX*h, PX*(s*2+1), PX*h);   // dalle
-    if (s >= 2) {
+    px(p, x, yBase - PX*h, PX*(s*2+1), PX*h); // dalle principale
+
+    if (m >= 0.2) {
       p.fill(tc(n, colD));
-      px(p, x, y - PX*h, PX*(s+1), PX);     // moitié gauche éclairée
-      p.fill(tc(n, colR));
-      px(p, x, y - PX*h, PX,       PX);     // reflet
+      px(p, x, yBase - PX*h, PX*(s+1), PX);   // moitié gauche éclairée — touche la dalle
+      if (s >= 2) {
+        p.fill(tc(n, colR));
+        px(p, x, yBase - PX*h, PX, PX);        // reflet
+      }
+      if (s >= 4) {
+        p.fill(tc(n, colF));
+        px(p, x + PX*s, yBase - PX*h, PX, PX*h); // fissure verticale — dans la dalle
+      }
     }
-    if (s >= 5) {
-      p.fill(tc(n, colF));
-      px(p, x + PX*s, y - PX*h, PX, PX*h); // fissure verticale
-    }
-    if (s >= 7) {
-      // Joints
-      p.fill(tc(n, colF));
-      px(p, x + PX*(s+2), y - PX*h, PX, PX*h);
+    if (m > 0.85) {
+      // Lichen sur tout le bord de la dalle
       p.fill(tc(n, colL));
-      px(p, x, y - PX*h, PX*2, PX);
+      px(p, x,            yBase - PX*h, PX*2, PX); // lichen bord gauche
+      px(p, x + PX*(s+2), yBase - PX*h, PX*2, PX); // lichen bord droit — touche la dalle
+      p.fill(tc(n, colM));
+      px(p, x + PX,       yBase - PX*h, PX,   PX); // lichen foncé — entre les clairs
     }
 
   } else {
-    // ── ROCHER POINTU : plus haut que large, silhouette pyramidale
+    // ── ROCHER POINTU : silhouette pyramidale, plus haut que large
     p.fill(tc(n, colC));
     if (s <= 2) {
-      px(p, x, y - PX*2, PX*2, PX);  // base
-      px(p, x, y - PX*3, PX,   PX);  // pointe
+      // Forme minimale : base + pointe adjacente
+      px(p, x, yBase - PX,   PX*2, PX); // base
+      px(p, x, yBase - PX*2, PX,   PX); // pointe — collée à la base
     } else if (s <= 4) {
-      px(p, x,      y - PX*s,     PX*(s+1),  PX*(s-1)); // base large
-      px(p, x + PX, y - PX*(s*2-1), PX*(s-1), PX*(s-1)); // milieu
-      px(p, x + PX, y - PX*(s*2),   PX,       PX);       // pointe
-      p.fill(tc(n, colD));
-      px(p, x + PX, y - PX*(s*2-1), PX*(s-1), PX);
-    } else if (s <= 6) {
-      // Un seul pic clair
-      px(p, x,      y - PX*s,     PX*(s+1), PX*(s-1));
-      px(p, x + PX, y - PX*(s+s-1), PX*(s-1), PX*(s-1));
-      px(p, x + PX, y - PX*(s*2),   PX, PX);
-      p.fill(tc(n, colO));
-      px(p, x + PX*s, y - PX*(s-1), PX, PX*(s-1)); // ombre droite
-      p.fill(tc(n, colD));
-      px(p, x + PX,   y - PX*(s+s-1), PX*(s-1), PX);
-      p.fill(tc(n, colF));
-      px(p, x + PX*2, y - PX*2, PX, PX); // fissure basse
-      px(p, x + PX*3, y - PX*3, PX, PX);
+      // Base évasée + corps + pointe
+      px(p, x,      yBase - PX*(s - 1), PX*(s + 1), PX*(s - 1)); // base
+      px(p, x + PX, yBase - PX*s,       PX*(s - 1), PX);         // pointe — collée à la base
     } else {
-      // Double pic dramatique
-      // Pic gauche (principal, plus haut)
-      px(p, x,      y - PX*s,     PX*4, PX*(s-2));
-      px(p, x + PX, y - PX*(s*2-2), PX*3, PX*(s-2));
-      px(p, x + PX, y - PX*(s*2), PX,   PX);
-      // Pic droit (plus petit)
-      px(p, x + PX*5, y - PX*(s-2), PX*3, PX*(s-4));
-      px(p, x + PX*5, y - PX*(s*2-4), PX*2, PX*(s-4));
-      p.fill(tc(n, colO));
-      px(p, x + PX*3, y - PX*(s-2), PX, PX*(s-2)); // ombre entre les pics
-      p.fill(tc(n, colD));
-      px(p, x + PX,   y - PX*(s*2-2), PX*3, PX); // dessus pic gauche
-      px(p, x + PX*5, y - PX*(s*2-4), PX*2, PX); // dessus pic droit
-      p.fill(tc(n, colF));
-      px(p, x + PX*2, y - PX*3, PX, PX*2); // fissure pic gauche
-      p.fill(tc(n, colL));
-      px(p, x + PX*2, y - PX*(s-1), PX*2, PX); // lichen
+      // Rocher avec volume : base + corps effilé + pointe
+      const w = s + 1; // largeur de la base
+      px(p, x,      yBase - PX*(s - 2), PX*w, PX*(s - 2));   // base large
+      px(p, x + PX, yBase - PX*s,       PX*(w - 2), PX*2);   // corps effilé — touche la base
+      px(p, x + PX, yBase - PX*s,       PX, PX);              // pointe (déjà incluse dans le bloc ci-dessus)
+      if (m >= 0.2) {
+        p.fill(tc(n, colD));
+        px(p, x + PX, yBase - PX*s, PX*(w - 2), PX);          // facette dessus effilé
+        p.fill(tc(n, colO));
+        px(p, x + PX*(w - 1), yBase - PX*(s - 3), PX, PX*(s - 3)); // ombre droite
+        if (s >= 5) {
+          p.fill(tc(n, colF));
+          // Fissures diagonales dans la base (pixels adjacents en escalier)
+          px(p, x + PX*2, yBase - PX*2, PX, PX);
+          px(p, x + PX*3, yBase - PX*3, PX, PX); // touche la fissure basse
+        }
+      }
+      if (m > 0.85) {
+        p.fill(tc(n, colL));
+        // Lichen dans les recoins de la base
+        px(p, x,            yBase - PX*(s - 2), PX,   PX*2); // flanc gauche
+        px(p, x + PX*(w-1), yBase - PX*2,       PX,   PX);   // flanc droit bas
+        p.fill(tc(n, colM));
+        px(p, x + PX,       yBase - PX*(s - 2), PX,   PX);   // lichen foncé haut gauche
+      }
     }
   }
 }
 
 /**
- * drawChampignon(p, x, y, variant, colorVariant, scalePX, n)
- * RÔLE : Dessine un champignon — 4 formes × 8 couleurs × complexité croissante.
+ * drawChampignon(p, x, y, variant, colorVariant, scalePX, n, age, maxAge)
  *
- * CONVENTION : y = base. Pied monte de y vers le haut.
- *   Pied de hauteur Hp = px(p, x, y - PX*Hp, largeur, PX*Hp)
- *   Chapeau posé sur le pied : yChap = y - PX*Hp
- *   Chapeau de hauteur Hc au-dessus de yChap = px(p, x, yChap - PX*Hc, largeur, PX*Hc)
+ * RÔLE : Champignon pixel art — complexité pilotée par l'âge, taille par scalePX.
+ *
+ * CONVENTION ABSOLUE : y = base du sprite. Tout monte vers le HAUT.
+ *   Pied : px(p, x, y - PX*hp, largeur, PX*hp)   → base du chapeau = y - PX*hp
+ *   Chapeau : px(p, x, yPied - PX*hc, largeur, PX*hc)
+ *   ⚠️ Aucun pixel isolé — pied et chapeau toujours adjacents.
+ *
+ * MATURITÉ : m = age / maxAge
+ *   m < 0.2  → primordium : bouton minuscule, chapeau collé au pied (pas encore ouvert)
+ *   0.2–0.85 → épanoui : pied + chapeau ouvert, détails selon s
+ *   m > 0.85 → vieux : chapeau déformé (dx=PX, penche), ton terne
+ *
+ * variant 0 = amanite | 1 = bolet | 2 = marasme | 3 = pleurote
  */
-function drawChampignon(p, x, y, variant, colorVariant, scalePX, n) {
-  const s = scalePX;
+function drawChampignon(p, x, y, variant, colorVariant, scalePX, n, age, maxAge) {
+  const s  = scalePX;
+  const ag = age    ?? 0;
+  const ma = maxAge ?? 5;
+  const m  = ag / ma;
 
   const CHAPEAUX = [
     '#d04040', '#e06820', '#806040', '#8040a0',
@@ -912,146 +1000,163 @@ function drawChampignon(p, x, y, variant, colorVariant, scalePX, n) {
   const colLa = CHAPEAUX[(colorVariant + 4) % 8]; // lamelles
   const colOm = CHAPEAUX[(colorVariant + 5) % 8]; // ombre chapeau
 
-  // Hauteur du pied = moitié de s (arrondi), au moins 1
-  const hp = Math.max(1, Math.floor(s * 0.45));
-  // Hauteur du chapeau = reste
-  const hc = Math.max(1, s - hp);
+  // Chapeau penché si vieux
+  const dx  = m > 0.85 ? PX : 0;
+  const nCh = m > 0.85 ? Math.min(1, n + 0.3) : n;
 
-  const yPied   = y - PX*hp;      // sommet du pied = base du chapeau
-  const yChap   = yPied - PX*hc;  // sommet du chapeau
+  // Hauteur du pied (≥1), chapeau = reste
+  const hp   = Math.max(1, Math.floor(s * 0.45));
+  const hc   = Math.max(1, s - hp);
+  const yPied = y - PX * hp;       // base du chapeau (= sommet du pied)
+  const yChap = yPied - PX * hc;   // sommet du chapeau
 
-  if (variant === 0) {
-    // ── AMANITE : chapeau large, points blancs
+  if (m < 0.2) {
+    // ── PRIMORDIUM : bouton fermé — petit bloc compact ────────────────
+    // Le pied et le chapeau forment un seul bloc 1×s ou 2×s.
+    // Toutes les variantes partagent la même forme de primordium.
+    p.fill(tc(nCh, colPi));
+    px(p, x, y - PX * s, PX, PX * s); // colonne pleine = pied + ébauche chapeau
+    if (s >= 2) {
+      p.fill(tc(nCh, colCh));
+      px(p, x - PX, y - PX * s, PX * 3, PX); // coiffe collée au sommet de la colonne
+    }
+
+  } else if (variant === 0) {
+    // ── AMANITE : chapeau large + points blancs ───────────────────────
     // Pied
-    p.fill(tc(n, colPi));
+    p.fill(tc(nCh, colPi));
     const wPied = s <= 2 ? 1 : 2;
-    px(p, x, yPied, PX*wPied, PX*hp);
-
+    px(p, x, yPied, PX * wPied, PX * hp);
+    // Anneau sur le pied (s >= 5)
     if (s >= 5) {
-      // Anneau sur le pied
-      p.fill(tc(n, colPt));
-      px(p, x - PX, yPied + PX*Math.floor(hp*0.5), PX*(wPied+2), PX);
-    }
-    if (s >= 7) {
-      // Volve (base renflée)
-      p.fill(tc(n, colOm));
-      px(p, x - PX*2, y - PX, PX*(wPied+4), PX);
+      p.fill(tc(nCh, colPt));
+      // Anneau : 1 rangée plus large que le pied, à mi-hauteur — touche le pied
+      px(p, x - PX, y - PX * Math.round(hp * 0.55), PX * (wPied + 2), PX);
     }
 
-    // Chapeau — s'élargit avec la taille
-    const wCh = s <= 2 ? 3 : s <= 4 ? s*2+1 : s*2+3;
-    p.fill(tc(n, colCh));
-    px(p, x - PX*Math.floor(wCh/2), yChap, PX*wCh, PX*hc);
-    // Dôme sur le dessus
+    // Chapeau — largeur croissante avec s, centré sur x + dx
+    const wCh = s <= 2 ? 3 : s <= 4 ? s * 2 + 1 : s * 2 + 3;
+    const cx  = x + dx;
+    p.fill(tc(nCh, colCh));
+    px(p, cx - PX * Math.floor(wCh / 2), yChap,      PX * wCh, PX * hc); // corps chapeau
+    // Dôme arrondi au-dessus : largeur wCh-2, collé au corps
     if (hc >= 2) {
-      const wDome = Math.max(1, wCh - 2);
-      px(p, x - PX*Math.floor(wDome/2), yChap - PX, PX*wDome, PX);
+      const wD = Math.max(1, wCh - 2);
+      px(p, cx - PX * Math.floor(wD / 2), yChap - PX, PX * wD, PX);
     }
-    // Ombre bord inférieur
+    // Ombre bord inférieur — dans le corps (dernière rangée)
     if (s >= 3) {
-      p.fill(tc(n, colOm));
-      px(p, x - PX*Math.floor(wCh/2), yChap + PX*(hc-1), PX*wCh, PX);
+      p.fill(tc(nCh, colOm));
+      px(p, cx - PX * Math.floor(wCh / 2), yChap + PX * (hc - 1), PX * wCh, PX);
     }
-    // Points blancs
-    p.fill(tc(n, colPt));
-    px(p, x, yChap + PX, PX, PX);
-    if (s >= 3) px(p, x - PX*Math.floor(wCh/2) + PX, yChap + PX, PX, PX);
-    if (s >= 3) px(p, x + PX*Math.floor(wCh/2) - PX, yChap + PX, PX, PX);
+    // Points blancs : pixel central + latéraux — tous dans le corps
+    p.fill(tc(nCh, colPt));
+    px(p, cx, yChap + PX, PX, PX); // point central
+    if (s >= 3) {
+      px(p, cx - PX * Math.floor(wCh / 2) + PX, yChap + PX, PX, PX); // point gauche
+      px(p, cx + PX * Math.floor(wCh / 2) - PX, yChap + PX, PX, PX); // point droit
+    }
     if (s >= 5) {
-      px(p, x - PX*Math.floor(wCh/2) + PX, yChap + PX*2, PX, PX);
-      px(p, x + PX*Math.floor(wCh/2) - PX, yChap + PX*2, PX, PX);
+      // 2e rangée de points — collés au-dessus des premiers
+      px(p, cx - PX * Math.floor(wCh / 2) + PX, yChap + PX * 2, PX, PX);
+      px(p, cx + PX * Math.floor(wCh / 2) - PX, yChap + PX * 2, PX, PX);
     }
 
   } else if (variant === 1) {
-    // ── BOLET : pied trapu large, chapeau bombé sans points
-    p.fill(tc(n, colPi));
+    // ── BOLET : pied trapu, chapeau bombé, hyménium (pores) visible ──
+    p.fill(tc(nCh, colPi));
     const wPied = Math.max(2, Math.floor(s * 0.6));
-    px(p, x - PX, yPied, PX*(wPied+1), PX*hp);
+    px(p, x, yPied, PX * wPied, PX * hp); // pied large
 
-    const wCh = s <= 2 ? 4 : s*2+1;
-    // Hyménium (pores) sous le bord
+    const wCh = s <= 2 ? 4 : s * 2 + 1;
+    const cx  = x + dx - PX; // décalage naturel du bolet (pied décentré)
+    // Hyménium : rangée de pores sous le bord du chapeau — collée au corps
     if (s >= 4) {
-      p.fill(tc(n, colLa));
-      px(p, x - PX*Math.floor(wCh/2), yChap + PX*(hc-1), PX*wCh, PX);
+      p.fill(tc(nCh, colLa));
+      px(p, cx - PX * Math.floor(wCh / 2), yChap + PX * (hc - 1), PX * wCh, PX);
     }
-    p.fill(tc(n, colCh));
-    px(p, x - PX*Math.floor(wCh/2), yChap, PX*wCh, PX*hc);
+    p.fill(tc(nCh, colCh));
+    px(p, cx - PX * Math.floor(wCh / 2), yChap, PX * wCh, PX * hc);
     if (hc >= 2) {
       const wD = Math.max(1, wCh - 2);
-      px(p, x - PX*Math.floor(wD/2), yChap - PX, PX*wD, PX);
+      px(p, cx - PX * Math.floor(wD / 2), yChap - PX, PX * wD, PX); // dôme
     }
-    // Reflet
-    p.fill(tc(n, '#ffffff'));
-    px(p, x, yChap, PX, PX);
-    // Craquelures sur grand bolet
-    if (s >= 6) {
-      p.fill(tc(n, colOm));
-      px(p, x - PX, yChap + PX, PX, PX);
-      px(p, x + PX*2, yChap, PX, PX);
+    // Reflet — pixel unique dans le corps
+    p.fill(tc(nCh, '#ffffff'));
+    px(p, cx + PX, yChap, PX, PX);
+    // Craquelures (vieux bolet) — dans le corps
+    if (s >= 5 && m > 0.5) {
+      p.fill(tc(nCh, colOm));
+      px(p, cx,        yChap + PX, PX, PX);
+      px(p, cx + PX*2, yChap,      PX, PX); // touche le reflet par la face
     }
 
   } else if (variant === 2) {
-    // ── MARASME : pied très fin, chapeau minuscule
-    p.fill(tc(n, colPi));
-    px(p, x, yPied, PX, PX*hp); // pied fin = 1 unité large
+    // ── MARASME : pied fin, petit chapeau, peut pousser en famille ───
+    p.fill(tc(nCh, colPi));
+    px(p, x, yPied, PX, PX * hp); // pied fin = 1 col
 
-    // Chapeau
     const wCh = Math.min(5, s + 1);
-    p.fill(tc(n, colCh));
-    px(p, x - PX*Math.floor(wCh/2), yChap, PX*wCh, PX*hc);
-    if (hc >= 2) px(p, x - PX, yChap - PX, PX*3, PX); // pointe
-    // Lamelles
+    const cx  = x + dx;
+    p.fill(tc(nCh, colCh));
+    px(p, cx - PX * Math.floor(wCh / 2), yChap, PX * wCh, PX * hc);
+    if (hc >= 2) {
+      // Pointe : bloc 3 large, collé au-dessus du corps
+      px(p, cx - PX, yChap - PX, PX * 3, PX);
+    }
+    // Lamelles : pixels sous le bord, espacés — tous dans le corps
     if (s >= 4) {
-      p.fill(tc(n, colLa));
-      for (let k = -Math.floor(wCh/2); k < Math.floor(wCh/2); k += 2) {
-        px(p, x + PX*k, yChap + PX*(hc-1), PX, PX);
+      p.fill(tc(nCh, colLa));
+      for (let k = -Math.floor(wCh / 2); k < Math.floor(wCh / 2); k += 2) {
+        px(p, cx + PX * k, yChap + PX * (hc - 1), PX, PX);
       }
     }
-    // Sur s >= 7 : famille de 3 (un grand + deux petits)
-    if (s >= 7) {
-      const off = [{ dx: -PX*3, sc: s-3 }, { dx: PX*3, sc: s-4 }];
-      off.forEach(({ dx, sc }) => {
+    // Famille de petits (s >= 6, épanoui) — marasmes collés au principal
+    if (s >= 6 && m >= 0.2) {
+      const famille = [{ offX: -PX * 3, sc: s - 3 }, { offX: PX * 3, sc: s - 4 }];
+      famille.forEach(({ offX, sc }) => {
         if (sc < 1) return;
         const hp2 = Math.max(1, Math.floor(sc * 0.45));
         const hc2 = Math.max(1, sc - hp2);
-        const yP2 = y - PX*hp2;
-        const yC2 = yP2 - PX*hc2;
-        p.fill(tc(n, colPi));
-        px(p, x + dx, yP2, PX, PX*hp2);
-        p.fill(tc(n, colCh));
-        px(p, x + dx - PX, yC2, PX*(Math.min(4, sc+1)), PX*hc2);
+        const yP2 = y - PX * hp2;
+        const yC2 = yP2 - PX * hc2;
+        p.fill(tc(nCh, colPi));
+        px(p, cx + offX, yP2, PX, PX * hp2);
+        p.fill(tc(nCh, colCh));
+        px(p, cx + offX - PX, yC2, PX * Math.min(4, sc + 1), PX * hc2);
       });
     }
 
   } else {
-    // ── PLEUROTE : asymétrique, chapeau en éventail vers la gauche
-    p.fill(tc(n, colPi));
-    px(p, x, yPied, PX, PX*hp); // pied court et fin
+    // ── PLEUROTE : chapeau en éventail asymétrique vers la gauche ────
+    p.fill(tc(nCh, colPi));
+    px(p, x, yPied, PX, PX * hp); // pied fin
 
-    // Chapeau en éventail — s'étale vers la gauche
-    const wCh = s <= 2 ? 3 : s <= 4 ? s+2 : s*2;
-    p.fill(tc(n, colCh));
-    px(p, x - PX*wCh, yChap, PX*(wCh+1), PX*hc);
+    const wCh = s <= 2 ? 3 : s <= 4 ? s + 2 : s * 2;
+    const cx  = x + dx;
+    p.fill(tc(nCh, colCh));
+    px(p, cx - PX * wCh, yChap, PX * (wCh + 1), PX * hc); // éventail vers la gauche
     if (hc >= 2) {
-      px(p, x - PX*(wCh-1), yChap - PX, PX*(wCh-1), PX); // bord arrondi dessus
+      // Bord arrondi supérieur — collé au corps
+      px(p, cx - PX * (wCh - 1), yChap - PX, PX * (wCh - 1), PX);
     }
-    // Lamelles sous le bord — vers la gauche uniquement
+    // Lamelles : pixels dans la dernière rangée du corps
     if (s >= 4) {
-      p.fill(tc(n, colLa));
+      p.fill(tc(nCh, colLa));
       const nb = Math.floor(wCh / 2);
       for (let k = 0; k < nb; k++) {
-        px(p, x - PX*(wCh - k*2), yChap + PX*(hc-1), PX, PX);
+        px(p, cx - PX * (wCh - k * 2), yChap + PX * (hc - 1), PX, PX);
       }
     }
-    // Ombre bord gauche
+    // Ombre bord gauche — colonne dans le corps
     if (s >= 4) {
-      p.fill(tc(n, colOm));
-      px(p, x - PX*wCh, yChap, PX, PX*hc);
+      p.fill(tc(nCh, colOm));
+      px(p, cx - PX * wCh, yChap, PX, PX * hc);
     }
-    // Reflet dessus droit
+    // Reflet — pixel unique dans le corps
     if (s >= 4) {
-      p.fill(tc(n, '#ffffff'));
-      px(p, x - PX*2, yChap, PX, PX);
+      p.fill(tc(nCh, '#ffffff'));
+      px(p, cx - PX * 2, yChap, PX, PX);
     }
   }
 }
@@ -1111,19 +1216,16 @@ function drawJardinFond(p, theme, n) {
     //          colorVariant → fallback sur variant pour éviter un undefined silencieux.
     switch (el.type) {
       case 'fleur':
-        // RÔLE : Passe age et maxAge pour que drawFleur pilote la complexité par maturité.
-        // el.age ?? 0 : fallback si gardenState ancien ne contient pas encore age
-        // el.maxAge ?? 7 : fallback sur valeur par défaut des fleurs
         drawFleur(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 3, theme, n, el.age ?? 0, el.maxAge ?? 7);
         break;
       case 'herbe':
-        drawHerbe(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n);
+        drawHerbe(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n, el.age ?? 0, el.maxAge ?? 14);
         break;
       case 'pierre':
-        drawPierre(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n);
+        drawPierre(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n, el.age ?? 0, el.maxAge ?? 999);
         break;
       case 'champignon':
-        drawChampignon(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 4, n);
+        drawChampignon(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 4, n, el.age ?? 0, el.maxAge ?? 5);
         break;
       // default : type inconnu → ignoré silencieusement (forward-compat Phase 3)
     }
@@ -1159,17 +1261,16 @@ function drawJardinPremierPlan(p, theme, n) {
 
     switch (el.type) {
       case 'fleur':
-        // RÔLE : Même chose que le fond — age/maxAge transmis pour la maturité.
         drawFleur(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 3, theme, n, el.age ?? 0, el.maxAge ?? 7);
         break;
       case 'herbe':
-        drawHerbe(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n);
+        drawHerbe(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n, el.age ?? 0, el.maxAge ?? 14);
         break;
       case 'pierre':
-        drawPierre(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n);
+        drawPierre(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n, el.age ?? 0, el.maxAge ?? 999);
         break;
       case 'champignon':
-        drawChampignon(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 4, n);
+        drawChampignon(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 4, n, el.age ?? 0, el.maxAge ?? 5);
         break;
     }
   });

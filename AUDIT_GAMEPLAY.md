@@ -1,7 +1,7 @@
 # AUDIT GAMEPLAY — HabitGotchi
 > Généré par Claude Opus — 2026-05-01
-> Version auditée : **v4.81** (`js/app.js:60`)
-> Mise à jour mécaniques faible effort — 2026-05-01
+> **Version auditée : v5.41** (`js/app.js:61`)
+> Dernière mise à jour : **2 mai 2026** — sections diagnostic resync (XP_MAX, limite IA, fenêtres repas)
 
 ---
 
@@ -44,17 +44,18 @@ Trois priorités d'action :
 
 ### 1a. Diagnostic
 
-**Constantes (`data/config.js:204-212`)**
+**Constantes (`data/config.js:359-362`)**
 ```
 XP_HABITUDE     = 15
 XP_NOTE         = 15
-XP_MAX          = 1200
+XP_MAX          = 4000   ✅ aligné sur le dernier seuil adulte (Déesse) depuis 2026-05-01
 PETALES_SNACK   = 2
 ```
+Toutes ces constantes sont également exposées via `window.HG_CONFIG.GAMEPLAY` (cf. `data/config.js:448-465`).
 
-**Stades de vie (`js/app.js:142-151`)**
+**Stades de vie (`js/app.js`)**
 8 paliers : `egg(0) → baby(90) → teen(240) → adult(500, 900, 1500, 2500, 4000)`.
-La fonction `addXp(n)` (`js/app.js:437-456`) gère la transition de stade ; `getSt(xp)` retourne le stade courant.
+La fonction `addXp(n)` ([app.js:598](js/app.js#L598)) gère la transition de stade ; `getSt(xp)` ([app.js:584](js/app.js#L584)) retourne le stade courant. `getMicroPalier(xp)` ([app.js:591](js/app.js#L591)) ajoute des micro-paliers tous les 200 XP en stade adulte (suffixe romain dans le label).
 
 **Sources de pétales**
 | Source | Gain | Référence |
@@ -73,13 +74,13 @@ La fonction `addXp(n)` (`js/app.js:437-456`) gère la transition de stade ; `get
 | Objet boutique | 0 ou 6 | `data/props_shop.json` |
 | Génération d'objet IA | 10 | `js/ui-ai.js:301-304` |
 
-**XP** : +15 par habitude validée, +15 par note de journal. Cap à 1200 — **incohérent avec les seuils adulte qui montent à 4000** (`js/app.js:142-151`). Le cap empêche la transition naturelle vers les stades adultes supérieurs si appliqué strictement.
+**XP** : +15 par habitude validée, +15 par note de journal. Cap aligné à 4000 ✅ (mise à jour 2026-05-01). L'accumulation reste illimitée dans `addXp()` ; `XP_MAX` ne sert qu'à afficher "MAX ✿" au dernier stade.
 
 ### 1b. Évaluation TDAH
 
 - ❌ **Rétroaction trop faible** : +2 pétales par habitude n'est pas un événement émotionnel.
 - ❌ **Aucun streak / combo** : la régularité n'est pas valorisée alors que c'est exactement ce qui manque structurellement aux profils TDAH.
-- ❌ **Sauts de stade rares** : entre teen (240 XP) et adult-2 (900 XP) il faut ~44 habitudes — au-delà du seuil "j'oublie pourquoi je le fais".
+- ❌ **Sauts de stade rares** : entre teen (240 XP) et adult-2 (900 XP) il faut ~44 habitudes — au-delà du seuil "j'oublie pourquoi je le fais". Atténué par `getMicroPalier()` (suffixe romain II/III/IV…) depuis 2026-05-01.
 - ✅ La logique de gain est **immédiate** (synchrone, sans cooldown).
 
 ### 1c. Propositions
@@ -169,9 +170,12 @@ HA_SAD=1, HA_MED=2, HA_MED_ADULT=3, HA_HIGH=4   → bouches, nuages, sourires
 
 ### 4a. Diagnostic
 
-**Fenêtres horaires** (`data/config.js:164-168`)
+**Fenêtres horaires** (`data/config.js:318` — `MEAL_WINDOWS`)
 ```
-Matin : 7-11    Midi : 11-15    Soir : 18-22
+Matin  : 7-11
+Midi   : 11-15
+Goûter : 15-17   ✅ ajoutée 2026-05-01 (bonus:true, +1 pétale, branche dédiée dans giveSnack)
+Soir   : 18-22
 ```
 
 **Logique `ouvrirSnack()`** (`js/ui-settings.js:43-122`) — 4 états UI :
@@ -184,7 +188,7 @@ Matin : 7-11    Midi : 11-15    Soir : 18-22
 
 **Bonus pétales** (`js/app.js:624-633`) : `gain = isFav ? 4 : 2`, créditation atomique.
 
-**Fenêtre 15h-18h non couverte** : le goûter n'existe pas → trou conscient ou dette ?
+**Fenêtre 17h-18h non couverte** : trou volontaire entre goûter (15-17h) et soir (18-22h). Acceptable.
 
 ### 4b. Évaluation TDAH
 
@@ -248,10 +252,10 @@ Matin : 7-11    Midi : 11-15    Soir : 18-22
 
 | Interaction | Limite | Coût | Référence |
 |---|---|---|---|
-| Pensée quotidienne (`askClaude`) | 3/jour | 0 | l. 164-295 |
-| Soutien (`genSoutien`) | 3/jour, 6 messages/session | 0 | l. 568-605, 690 |
-| Bilan semaine (`genBilanSemaine`) | implicite ven/sam/dim | 0 | l. 858-952 |
-| Création d'objet (`acheterPropClaude`) | 1 sur fond pétales | 10 pétales | l. 300-399 |
+| Pensée quotidienne (`askClaude`) | **5/jour** ✅ (augmenté 2026-05-02) | 0 | [ui-ai.js:249-454](js/ui-ai.js#L249) — guard `thoughtCount >= 5` à L283 |
+| Soutien (`genSoutien`) | 3 sessions/jour, 6 messages/session | 0 | [ui-ai.js:737-988](js/ui-ai.js#L737) — guards `soutienCount >= 3` à L766, `_soutienCount > 6` à L861 |
+| Bilan semaine (`genBilanSemaine`) | **3/semaine** via `D.g.bilanCount` (pas de filtre weekend) | 0 | [ui-ai.js:1042-1146](js/ui-ai.js#L1042) — guard à L1054 |
+| Création d'objet (`acheterPropClaude`) | aucune limite — freiné par les pétales | 10 pétales | [ui-ai.js:456-575](js/ui-ai.js#L456) |
 
 **Reset quotidien** : `handleDailyReset()` (`js/app.js:1145-1160`) compare `lastThoughtDate` / `lastSoutienDate` à `today()` et réinitialise les compteurs.
 
@@ -265,7 +269,7 @@ Matin : 7-11    Midi : 11-15    Soir : 18-22
 
 - ✅ Limites quotidiennes protègent du surmenage et du shoot compulsif.
 - ✅ Loader animé, pas de freeze visuel.
-- ✅ **5 pensées/jour** depuis 2026-05-02 (augmenté de 3 → 5). Mieux aligné avec les 6 catégories d'habitudes.
+- ✅ **5 pensées/jour** depuis 2026-05-02 (augmenté de 3 → 5). Mieux aligné avec les 6 catégories d'habitudes. Ratio 1 pensée par 1.2 catégorie, plus naturel.
 - ✅ Fleurs ✿ soutien affichées sur le post-it menu (`#soutien-flowers`) — compteur visible calqué sur `#thought-count` (2026-05-01).
 - ✅ Infos RDV du jour + phase cycle ajoutées sur le post-it agenda (`#agenda-postit-info`, `updAgendaPostit()`) — compensation visuelle des limites IA (2026-05-01).
 

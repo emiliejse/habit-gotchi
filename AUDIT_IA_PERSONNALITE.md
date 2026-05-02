@@ -1,17 +1,26 @@
 # AUDIT IA & PERSONNALITÉ — HabitGotchi
 
 > Généré par Claude Opus — 2026-05-01
-> Version auditée : **v4.81** (`js/app.js:60`)
+> **Version auditée : v5.41** (`js/app.js:61`)
+> Dernière mise à jour : **2 mai 2026** — résumé exécutif resync (toutes les priorités initiales sont désormais résolues).
 
 ---
 
 ## Résumé exécutif
 
-Le système de voix de HabitGotchi repose désormais entièrement sur `data/user_config.json` (le fichier `data/personality.json` historique a été supprimé et n'existe plus dans le repo — le code de chargement le confirme : `js/app.js:76` met un `Promise.resolve(null)` à sa place et `js/app.js:109-117` reconstitue `window.PERSONALITY` à partir de `USER_CONFIG.personality`). C'est une bonne unification, mais elle laisse des angles morts : les **traits** et le **style** définis pour Émilie / Alexia ne sont pas forcément cohérents entre eux ni avec ce que les prompts attendent (`getRegistre()` dans `js/ui-ai.js:105-141` injecte des registres écrits "en dur" qui peuvent contredire le `style` user_config).
+Le système de voix de HabitGotchi repose désormais entièrement sur `data/user_config.json` (le fichier `data/personality.json` historique a été supprimé et n'existe plus dans le repo — le code de chargement le confirme : `js/app.js:86` met un `Promise.resolve(null)` à sa place et `js/app.js:131-134` reconstitue `window.PERSONALITY` à partir de `USER_CONFIG.personality`). Cette unification est aujourd'hui solide.
 
-Côté API, 4 templates actifs (`askClaude.base + withGift|withoutGift`, `buyProp`, `genSoutien`, `genBilanSemaine`) sont bien construits mais sous-exploitent le contexte disponible (météo et phases solaires existent dans `window.D` mais ne sont injectées dans **aucun** prompt API), et la variable `{{registre}}` n'est utilisée que par `askClaude.base`. Côté bulles statiques, 17 catégories sont bien couvertes (entre 5 et 10 variantes chacune), avec un anti-répétition basique présent (`js/app.js:1119-1123`).
+**Côté API**, 4 templates actifs (`askClaude.base + withGift|withoutGift`, `buyProp`, `genSoutien`, `genBilanSemaine`) sont **bien instrumentés** depuis les sessions du 2026-05-01 :
+- ✅ Météo, cycle et RDV injectés dans `askClaude` via `{{contextSensoriel}}`
+- ✅ `toneProfile` sérialisé via `buildToneBlock()` injecté dans `askClaude.base`
+- ✅ Anti-répétition via `{{fragmentsEvites}}` (6 derniers fragments)
+- ✅ `getRegistre()` étendu : blacklist du dernier registre, filtres conditionnels par traits, exclusion `non-sequitur poétique` si `pince-sans-rire`
+- ✅ `ai.systemPromptOverride` et `ai.contexteOverride` activés dans `sendSoutienMsg()`
+- ✅ Pensée du jour : limite augmentée à **5/jour** (depuis 2026-05-02)
 
-**Trois priorités** : (1) brancher la météo et le RDV/cycle dans `askClaude` (déjà disponibles côté JS) ; (2) introduire un objet `tone profile` dans `user_config.personality` pour qu'Alexia obtienne un ton vraiment différent au-delà du `style` libre ; (3) ajouter des catégories de bulles manquantes (`hygiene`, `repas`, `meteo_pluie`, `retour`) qui correspondent à des moments forts du gameplay aujourd'hui muets.
+**Côté bulles statiques**, 22 catégories sont désormais couvertes (vs 17 initialement) — les 5 catégories ajoutées (`repas`, `retour`, `pluie`, `bain`, `cycle_regles`) et les bulles `journal` / `cadeau` qui étaient mortes ont toutes été câblées dans `updBubbleNow()` ou ailleurs. Anti-répétition runtime conservé (`js/app.js`).
+
+**Toutes les priorités initiales identifiées dans cet audit sont désormais résolues**. Le travail restant est dans la nuance : ajout de modulations supplémentaires, paramétrage du `lieu` dans `user_config.personality` (cf. §6c — la bulle Alexia "Bourg-en-Bresse" reste hardcodée), et plafond de longueur explicite pour `genBilanSemaine`.
 
 ---
 

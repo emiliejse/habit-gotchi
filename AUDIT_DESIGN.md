@@ -1,4 +1,7 @@
-# AUDIT_DESIGN.md — HabitGotchi v4.5
+# AUDIT_DESIGN.md — HabitGotchi v5.41
+
+> Dernière mise à jour : **2 mai 2026** — version d'app auditée : **v5.41** (`js/app.js:61`).
+> L'audit couvre désormais **9 modules `ui-*.js`** (split initial 8 modules + ajout d'`ui-atelier.js`, `ui-game.js` et `js/games/ui-cristaux.js`).
 
 > **Micro-modif emoji Atelier 2026-05-02**
 > - Emoji de l'Atelier changé de 🎨 à 🖼️ dans `index.html` (2 occurrences : sticker menu `.menu-sticker`, titre h2 de l'overlay `#atelier-overlay`).
@@ -27,7 +30,7 @@ Audit design / CSS / HTML / assets — mise à jour **2026-05-01** (modif. joues
 Périmètre : `css/style.css`, `index.html`, `js/ui-*.js` (HTML & styles inline).
 Hors périmètre : `js/render.js`, `js/envs.js`, `js/render-sprites.js`, logique JS pure (`app.js`).
 
-> **Note de version.** L'audit précédent (2026-04-30) ciblait un fichier `js/ui.js` monolithique. Depuis, le code a été refactorisé en 8 modules `ui-*.js` chargés dans l'ordre déclaré dans `index.html:541-561`. Toutes les références ont été mises à jour. Les sections valides de l'ancien audit sont conservées.
+> **Note de version.** L'audit précédent (2026-04-30) ciblait un fichier `js/ui.js` monolithique. Depuis, le code a été refactorisé en 9 modules `ui-*.js` (le 9e étant `ui-atelier.js`, ajouté avec la feature Atelier 2026-05-02) + un module mini-jeux (`ui-game.js` + `js/games/ui-cristaux.js`), chargés dans l'ordre déclaré dans `index.html:767-797`. Toutes les références ont été mises à jour.
 
 ---
 
@@ -102,6 +105,10 @@ Hors périmètre : `js/render.js`, `js/envs.js`, `js/render-sprites.js`, logique
 | Menu cahier | tap ☰ | `ui-core.js:379` `toggleMenu()` overlay `#menu-overlay` | ❌ pas de ✕ — clic à côté | acceptable |
 | Snack repas | tap canvas | `ui-settings.js:43` via `openModal()` | ✅ auto | OUI |
 | Formulaire RDV | bouton "Ajouter rdv" | `ui-agenda.js:284` overlay séparé `#rdv-overlay` | ❌ — boutons "Annuler/Enregistrer" | acceptable (BS) |
+| Atelier pixel art | sticker 🖼️ menu | `ui-atelier.js:645` `ouvrirAtelier()` overlay `#atelier-overlay` (z-index:500) | ✅ ✕ via `.hdr-garden-close` → `fermerAtelier()` | OUI |
+| Hub jeux cosy | sticker 🎮 menu | `ui-game.js` `ouvrirGameHub()` overlay `#game-overlay` (z-index:500) | ✅ ✕ via `.hdr-garden-close` → `fermerGameHub()` | OUI |
+| Jardin plein écran | sticker 🌱 menu | `ui-nav.js:483` `openCanvasFullscreen()` — `.hdr-garden` apparaît, le canvas occupe l'écran | ✅ ✕ via `.hdr-garden-close` → `closeCanvasFullscreen()` | OUI |
+| Update banner PWA | apparu auto si nouveau SW | `index.html:729-731` `#update-banner` cliquable | — non-modal | ✅ |
 
 **Conclusion :** la centralisation par `_modalCloseBtn()` (`ui-core.js:249`, exposé sur `window` ligne 254) a résolu la duplication de l'audit précédent. Reste : la confirmation soutien pourrait recevoir un ✕ pour cohérence ; les overlays bottom-sheet (RDV, états, tablette) sont volontairement sans ✕ (poignée + tap fond).
 

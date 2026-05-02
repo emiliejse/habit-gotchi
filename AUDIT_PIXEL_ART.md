@@ -1,7 +1,33 @@
 # Audit pixel art HabitGotchi — rapport en lecture seule
 
-> Ce fichier est en lecture seule. Ne pas modifier manuellement.
-> Généré lors d'une session de diagnostic approfondie du rendu pixel art.
+> Document mis à jour le **2 mai 2026** — version d'app auditée : **v5.41**.
+> Généré lors d'une session de diagnostic approfondie du rendu pixel art, mis à jour au fil des sessions de fix.
+
+---
+
+## 0. Périmètre & nouveautés depuis l'audit initial
+
+### Modules concernés par le rendu pixel art
+
+| Fichier | Lignes | Rôle |
+|---|---|---|
+| `js/render.js` | 2254 | Boucle p5 principale, animator, gotchi, ciel, particules, HUD, touch |
+| `js/render-sprites.js` | 2070 | Sprites pixel art DSL (egg/baby/teen/adult), accessoires, dithering, saleté |
+| `js/envs.js` | 554 | Biomes parc/chambre/montagne, météo (vent/pluie/arc-en-ciel/soleil), helpers `px()`/`tc()`/`shadeN()` |
+| `js/garden.js` | 2025 | 🆕 **Biome Jardin procédural** — 5 types d'éléments génératifs (fleurs, herbes, pierres, champignons, arbustes) avec PRNG déterministe et système d'âge |
+
+### Garden.js — système non couvert par l'audit initial
+
+`garden.js` (chargé entre `envs.js` et `render-sprites.js`) ajoute un quatrième biome **génératif** au gotchi. Particularités pixel art :
+
+- **PRNG déterministe** `_gardenRng(seed, index)` (LCG) — garantit que le même seed produit toujours le même jardin (zéro `Math.random()` dans les fonctions `draw()`)
+- **Deux passes de rendu** : `drawJardinFond()` avant le Gotchi, `drawJardinPremierPlan()` après → profondeur visuelle
+- **Système d'âge** : chaque élément a un `age` et un `maxAge` ; `_ageGarden()` fait évoluer le jardin dans le temps
+- **Modulation par habitudes** : signature `habParams` passée à chaque `drawXxx()` → les habitudes validées influencent l'aspect visuel (couleurs, taille)
+- **Modulation par météo** : signature `meteoParams` → idem
+- **Couleurs dynamiques** : `_lerpGray(hex, t)` et `_grayT(habParams)` désaturent les éléments selon l'engagement utilisateur
+
+**État actuel** : pas de bug pixel art identifié dans `garden.js` (toutes les coordonnées sont snappées via `px()`). Mais le module entier mérite un audit propre dans une session dédiée si des artefacts de rendu apparaissent.
 
 ---
 

@@ -1,4 +1,6 @@
-# AUDIT HabitGotchi v4.5 — 2026-04-30 (modif. 2026-05-02)
+# AUDIT HabitGotchi v5.41 — 2026-04-30 (dernière sync : 2026-05-02)
+
+> **Note sync 2026-05-02** : version d'app remontée à **v5.41** (`js/app.js:61`). Les sections détaillées (1 à 8) et "Section spéciale modale non-bloquante" restent valides — toutes les corrections marquées ✅ sont confirmées sur le code actuel. Les **compteurs de lignes du Tableau santé ci-dessous ont été resync** sur les vraies tailles 2026-05-02. Trois modules nouvellement chargés ne sont pas encore détaillés ici : `js/garden.js` (2025 l), `js/ui-atelier.js` (772 l), `js/ui-game.js` + `js/games/ui-cristaux.js`. Cf. les notes de sprint en tête de ce fichier pour leur contexte ; documentation détaillée à venir lors d'une prochaine session.
 
 > **Sprint Jeux — Finitions & Robustesse Mobile Tri de Cristaux 2026-05-02** : `js/games/ui-cristaux.js` + `js/ui-game.js` + `index.html`. Sprint de finitions — aucune logique de jeu modifiée, aucun changement structurel de `D`, pas de migration, pas d'incrémentation de version.
 >
@@ -154,16 +156,23 @@
 
 ### Tableau santé
 
-| Fichier | Score | Justification (1 phrase) |
-|---|---|---|
-| `data/config.js` | **A** | Constantes pures, namespace `window.HG_CONFIG` propre, palettes documentées. `HG_CONFIG.GAMEPLAY` expose désormais toutes les constantes gameplay (XP, EN, HA, POOP, cycle). |
-| `js/app.js` | **B+** | Bien commenté, migrations versionnées, mais bootstrap éparpillé, `addEvent` mixe deux signatures, et plusieurs `setInterval` non clearables. |
-| `js/render.js` | **B** | `p.draw()` découpé en 4 sous-fonctions extraites (2026-04-30) — orchestrateur ~85 lignes. Reste : helpers de hitbox dupliqués entre `touchStarted` et `touchMoved`, `walkX`/`walkPause` implicitement partagés avec `render-sprites.js`. |
-| `js/render-sprites.js` | **A** | Sprites bien isolés, `drawSaleteDither` utilise désormais un masque off-screen (auto-synchronisé avec les sprites), code lisible et autonome. |
-| `js/envs.js` | **A** | `drawActiveEnv` découpé en 3 fonctions + dispatcher (2026-04-30). `tc()` robuste, magic numbers nommés, couleur nuit unifiée via `shadeN`. |
-| `js/ui-*.js` (8 modules) | **B+** | `ui.js` splitté en 8 modules (2026-04-30). `ouvrirSnack()` et `ouvrirAgenda()` migrés vers `openModal()`/`openModalRaw()` — lockScroll unifié. `_getEffectiveEnv()` extrait dans `ui-nav.js` — source de vérité unique pour `activeEnv` (2026-04-30). `modalLocked` : guard bootstrap ajouté (2026-04-30). Reste : overlays séparés intentionnels documentés. |
-| `index.html` | **A-** | Debug panel extrait dans `js/debug.js` (2026-04-30). SRI sha384 ajouté sur p5.js CDN (2026-04-30). Masquage agenda déplacé dans `initUI()` (2026-04-30). `class="modal"` retiré — `#modal` CSS unifié. Reste : pas de CSP (Phase 3). |
-| `sw.js` | **B** | ✅ `render-sprites.js` ajouté dans `ASSETS` (2026-04-30). ✅ Guard `response.ok` ajouté (2026-04-30). ✅ Bandeau mise à jour + `controllerchange` côté client (2026-04-30). ✅ Logging erreurs `cache.put` (2026-04-30). Reste : pas de stratégie network-first pour les JSON dynamiques. |
+| Fichier | Lignes | Score | Justification (1 phrase) |
+|---|---:|---|---|
+| `data/config.js` | 475 | **A** | Constantes pures, namespace `window.HG_CONFIG` propre, palettes documentées. `HG_CONFIG.GAMEPLAY` expose désormais toutes les constantes gameplay (XP, EN, HA, POOP, cycle). |
+| `js/app.js` | 2385 | **B+** | Bien commenté, migrations versionnées (`SCHEMA_VERSION = 20`), `addEvent` unifié, `setInterval` clearables (`_meteoIntervalId`, `_poopIntervalId`, `_bubbleIntervalId`). Reste : couplage fort avec les modules `ui-*.js`. |
+| `js/render.js` | 2254 | **B** | `p.draw()` découpé en 4 sous-fonctions (2026-04-30). Moteur `animator` déclaratif intégré. Reste : couplage implicite avec `render-sprites.js` via globals `window._walk`, `window._animOverrides`. |
+| `js/render-sprites.js` | 2070 | **A** | Sprites isolés via DSL `renderSprite()` (2026-04-30). `drawSaleteDither` utilise un masque off-screen auto-synchronisé. Code lisible et autonome. |
+| `js/envs.js` | 554 | **A** | `drawActiveEnv` découpé en 3 fonctions + dispatcher (2026-04-30). `tc()` robuste, magic numbers nommés, couleur nuit unifiée via `shadeN`. |
+| `js/garden.js` | 2025 | **A−** | Biome jardin procédural (PRNG LCG déterministe, 5 types d'éléments, système d'âge persisté, modulation par habitudes/météo, germination quotidienne). Documentation exemplaire. Audité 2026-05-02 — voir §9. Reste : `initGarden()` 297 l à découper, duplication des paramètres contextuels entre les deux passes. |
+| `js/debug.js` | 92 | **A** | Module simple : panneau debug PWA injecté + 4 fonctions (toggle, copy, fallback, clear). Extrait depuis `index.html` 2026-04-30, ajouté au cache SW. |
+| `js/ui-*.js` (9 modules core) | ~7.5k cumul | **B+** | Split de `ui.js` en 8 modules (2026-04-30). `ouvrirSnack()` et `ouvrirAgenda()` migrés vers `openModal()`/`openModalRaw()`. `_getEffectiveEnv()` extrait dans `ui-nav.js`. `modalLocked` guard bootstrap. |
+| `js/ui-atelier.js` | 772 | **A−** | Éditeur pixel art 12×12 avec outils peindre/foncer/éclaircir/gomme. Documentation propre, sizing adaptatif, save debouncé local. Audité 2026-05-02 — voir §10. |
+| `js/ui-game.js` | 305 | **A−** | Hub mini-jeux (overlay) + sélecteur de durée + délégation aux modules `js/games/*`. Robustesse iOS lockScroll documentée. Audité 2026-05-02 — voir §11. |
+| `js/games/ui-cristaux.js` | (~1.6k) | **non audité** | Tri de Cristaux. Hors périmètre — voir notes de sprint en tête de fichier. |
+| `index.html` | 876 | **A-** | Debug panel extrait dans `js/debug.js` (2026-04-30). SRI sha384 sur p5.js CDN. Masquage agenda dans `initUI()`. Système update-banner PWA ajouté (`#update-banner`, `_swApplyUpdate`, `_watchReg`). Reste : pas de CSP (Phase 3). |
+| `sw.js` | 98 | **B-** | ✅ Guard `response.ok` (2026-04-30), bandeau mise à jour, listener `SKIP_WAITING` (2026-04-30), logging erreurs `cache.put`. ⚠️ **Reste : `garden.js`, `ui-atelier.js`, `ui-game.js`, `js/games/ui-cristaux.js` absents de `ASSETS`** — offline cassé pour ces modules (cf. dette critique). |
+
+> **⚠️ Note 2026-05-02 sur les ancres de lignes.** Les références `[Lxxx]` citées dans les sections détaillées 1 à 8 ci-dessous **datent de l'audit initial (2026-04-30)** et sont fiables uniquement pour les fonctions qui n'ont pas subi de refactor majeur depuis. `app.js`, `render.js` et `render-sprites.js` ont quasi doublé en taille — pour ces trois fichiers, les ancres internes peuvent être décalées de 200 à 1000+ lignes. Les **Vue d'ensemble (§X.1)** et le **Glossaire des fonctions clés** en bas de ce document ont été resync 2026-05-02. En cas de doute sur une ancre, croiser avec `grep -n` sur le fichier concerné. Une session de resync exhaustive des 200+ ancres reste un chantier Phase 3.
 
 ### Top 3 problèmes critiques
 
@@ -233,7 +242,9 @@
 ## 2. `js/app.js`
 
 ### 2.1 Vue d'ensemble
-1241 lignes. Cerveau de l'application : utilitaires temps, structure `D`, save/load + migrations, logique métier (XP, stades, poops, salete, repas, snack préféré, météo, phases solaires, bulles, journal d'événements), bootstrap PWA. Complexité moyenne, le fichier touche 6 systèmes sur 7.
+**2385 lignes** (resync 2026-05-02 — quasi le double depuis l'audit initial à 1241 l). Cerveau de l'application : utilitaires temps, structure `D`, save/load + migrations (`SCHEMA_VERSION = 20`), logique métier (XP, stades, poops, salete, hunger, repas + goûter, snack préféré, météo, phases solaires, bulles, journal d'événements, streaks habitudes + présence, vedette du jour, bonus journée complète, prop milestone), bootstrap PWA + USER_CONFIG. Complexité moyenne-haute, le fichier touche 6 systèmes sur 7.
+
+**Ancres clés post-resync** : `loadDataFiles` [L71](js/app.js#L71), `defs` [L202](js/app.js#L202), `migrate` [L488](js/app.js#L488), `addXp` [L598](js/app.js#L598), `toggleHab` [L1229](js/app.js#L1229), `bootstrap` [L2101](js/app.js#L2101), `loadUserConfig` [L2091](js/app.js#L2091).
 
 ### 2.2 Points forts
 - Header de navigation très clair ([L6-L24]).
@@ -308,7 +319,9 @@
 ## 3. `js/render.js`
 
 ### 3.1 Vue d'ensemble
-1173 lignes. Moteur p5.js. Globals visuels, sprites cycliques (œuf/bébé/ado/adulte → délégués à `render-sprites.js`), particules, écosystème (sky, clouds, zzz), props ambiants/décor, locomotion gotchi, HUD, badges, sélecteur d'env in-canvas, gestion touch (`touchStarted`, `touchMoved`, `touchEnded`).
+**2254 lignes** (resync 2026-05-02 — +1081 depuis l'audit initial à 1173 l). Moteur p5.js. Globals visuels, moteur **`animator` déclaratif** (ANIM_DEFS catalogue, `trigger`/`tick`/`resolve`), sprites cycliques (œuf/bébé/ado/adulte → délégués à `render-sprites.js`), particules, écosystème (sky, clouds, zzz, étoiles filantes), props ambiants/décor, locomotion gotchi, HUD, badges, sélecteur d'env in-canvas, gestion touch (`touchStarted`, `touchMoved`, `touchEnded`), animations spéciales (étirement matinal, frisson, hochement, bâillement). Easing transitions énergie/bonheur (`_dispEnergy`/`_dispHappy` lerp 0.12/frame).
+
+**Ancres clés post-resync** : `triggerExpr` [L171](js/render.js#L171), `triggerEtirementMatin` [L487](js/render.js#L487), `getStageBaseY` [L601](js/render.js#L601), `drawSky` [L703](js/render.js#L703), `drawPropsLayer` [L889](js/render.js#L889), `drawHUD` [L984](js/render.js#L984), `drawBadges` [L1062](js/render.js#L1062), `drawEnvSelector` [L1126](js/render.js#L1126).
 
 ### 3.2 Points forts
 - Constantes graphiques `C` ([L27-L40]) bien isolées en haut.
@@ -388,7 +401,9 @@
 ## 4. `js/render-sprites.js`
 
 ### 4.1 Vue d'ensemble
-1409 lignes. Sprites pixel art : `drawDither` (épuisement), `drawSaleteDither` (boue), `drawAccessoires` (pixel-perfect), `drawEgg`, `drawBaby`, `drawTeen`, `drawAdult` (avec poses idle alternées). Moteur DSL `renderSprite()` ajouté (session 2026-04-30) — tous les sprites migrent vers des définitions déclaratives `LAYERS_*`.
+**2070 lignes** (resync 2026-05-02 — +661 depuis l'audit initial à 1409 l). Sprites pixel art : moteur DSL `renderSprite(p, layers, cx, cy, params, palette)` + `_resolveFill` (palette dynamique), `drawDither` (épuisement), `drawSaleteDither` (boue, masque off-screen `_drawSilhouetteOffscreen` + `_getSaleteMask`), `drawAccessoires` (pixel-perfect avec snap PX), `drawEgg`, `drawBaby`, `drawTeen`, `drawAdult` (avec poses idle alternées via `animator`). Tous les sprites migrés vers DSL `LAYERS_*`.
+
+**Ancres clés post-resync** : `renderSprite` [L74](js/render-sprites.js#L74), `drawDither` [L151](js/render-sprites.js#L151), `_drawSilhouetteOffscreen` [L192](js/render-sprites.js#L192), `drawAccessoires` [L438](js/render-sprites.js#L438), `drawEgg` [L601](js/render-sprites.js#L601), `drawBaby` [L766](js/render-sprites.js#L766), `drawTeen` [L1303](js/render-sprites.js#L1303), `drawAdult` [L1930](js/render-sprites.js#L1930).
 
 ### 4.2 Points forts
 - Documentation très soignée des paramètres.
@@ -481,7 +496,9 @@
 ## 5. `js/envs.js`
 
 ### 5.1 Vue d'ensemble
-438 lignes. Décors d'arrière-plan : moteur pixel (`px`, `pxFree`), météo (`drawWind`, `drawRain`, `drawRainbow`, `drawSun`, `drawFog`), biomes (parc/chambre/montagne+désert), helpers (`drawTreeTheme`, `drawCactus`, `drawFl`), conversion de couleur jour→nuit (`shadeN`).
+**554 lignes** (resync 2026-05-02 — +116 depuis l'audit initial à 438 l). Décors d'arrière-plan : moteur pixel (`px`, `pxFree`), météo (`drawWind`, `drawRain`, `drawRainbow`, `drawSun`, `drawFog`), biomes (parc/chambre/montagne, le jardin est dans `garden.js` — voir §9), helpers (`drawTreeTheme`, `drawCactus`, `drawFl`), cadres et accents par thème (`drawFrameMotif`, `drawAtelierFrame`, `drawThemeAccents`), conversion de couleur jour→nuit (`shadeN`).
+
+**Ancres clés post-resync** : `px` [L27](js/envs.js#L27), `tc` [L45](js/envs.js#L45), `drawParc` [L178](js/envs.js#L178), `drawChambre` [L198](js/envs.js#L198), `drawMontagne` [L281](js/envs.js#L281), `drawActiveEnv` [L332](js/envs.js#L332), `drawAtelierFrame` [L366](js/envs.js#L366), `shadeN` [L507](js/envs.js#L507).
 
 ### 5.2 Points forts
 - `px()` ([L27-L29]) brique élémentaire bien isolée et bien documentée.
@@ -515,12 +532,21 @@
 
 ---
 
-## 6. `js/ui-*.js` (8 modules — ex-`ui.js`)
+## 6. `js/ui-*.js` (9 modules core)
 
-> ⚠️ `ui.js` (5192 l) a été découpé en 8 modules lors de la session 2026-04-30. Cette section documente l'état post-split. `ui.js` est conservé dans le repo pour compatibilité mais n'est plus chargé par `index.html`.
+> ⚠️ `ui.js` (5192 l) a été découpé en 8 modules lors de la session 2026-04-30, puis un 9e module (`ui-atelier.js`) a été ajouté avec la feature Atelier 2026-05-02. `ui.js` n'existe plus dans le repo (supprimé). Voir aussi §10 (`ui-atelier.js`) et §11 (`ui-game.js`) pour les sections dédiées aux nouveaux modules.
 
 ### 6.1 Vue d'ensemble
-8 modules : `ui-core.js` (helpers, modales, scroll, callClaude), `ui-habs.js` (habitudes), `ui-shop.js` (boutique, inventaire, env switcher), `ui-ai.js` (soutien IA, bilan, cadeau), `ui-journal.js` (journal, PIN, mood, export), `ui-agenda.js` (agenda jour/mois/cycle), `ui-settings.js` (réglages, perso, progression, tablette, snack, initUI), `ui-nav.js` (go(), syncConsoleHeight, updDate — chargé en dernier).
+**9 modules core** (resync 2026-05-02, tailles réelles entre parenthèses) :
+- `ui-core.js` (413 l) — helpers, modales, scroll, callClaude, `showTDAH`/`showCycle`/`showRDV`
+- `ui-habs.js` (196 l) — habitudes
+- `ui-shop.js` (1166 l) — boutique, inventaire, env switcher, packs, props IA
+- `ui-ai.js` (1158 l) — askClaude, soutien, bilan, achat IA, registre/exemples/toneBlock
+- `ui-journal.js` (357 l) — journal, PIN, mood picker, export
+- `ui-agenda.js` (1209 l) — agenda jour/mois/cycle, RDV récurrents
+- `ui-settings.js` (1776 l) — réglages, perso, progression, tablette, snack, anniversaire, initUI
+- `ui-nav.js` (673 l) — `go()`, `syncConsoleHeight`, `updDate`, `_getEffectiveEnv`, garden fullscreen — chargé en dernier
+- (+ `ui-atelier.js` 772 l et `ui-game.js` 305 l, audités séparément en §10 et §11)
 
 ### 6.2 Points forts
 - Header de navigation maintenu dans chaque module (`§` numérotés).
@@ -605,7 +631,9 @@
 ## 7. `index.html`
 
 ### 7.1 Vue d'ensemble
-~560 lignes. Squelette PWA : meta tags, `<script src="js/debug.js">` (1 ligne), structure DOM (#console-top, #dynamic-zone, panneaux), menu-overlay, modal, toast, tablet-overlay, scripts. Inclut `data/config.js` puis 8 modules `js/ui-*.js`, puis enregistrement SW.
+**876 lignes** (resync 2026-05-02 — +316 depuis l'audit initial à ~560 l). Squelette PWA : meta tags + SRI sha384 sur p5.js, `<script src="js/debug.js">` (1 ligne en `<head>`), structure DOM (#console-top, #dynamic-zone, panneaux p-gotchi/journal/progress/props/perso/settings), menu-overlay, modal, toast, **#update-banner** (système de mise à jour PWA), tablet-overlay, **#atelier-overlay**, **#game-overlay**, scripts. Inclut `data/config.js` puis `app.js`, render, envs, garden, render-sprites, 9 modules `ui-*.js` + `ui-game.js` + `js/games/ui-cristaux.js`, puis bloc d'enregistrement SW + `_swApplyUpdate`/`_watchReg`.
+
+**Ancres clés post-resync** : SRI p5 [L53-55](index.html#L53), scripts [L767-797](index.html#L767), update-banner [L729-731](index.html#L729), bloc enregistrement SW [L803-873](index.html#L803).
 
 ### 7.2 Points forts
 - Meta PWA complets ([L7-L114]) : viewport, theme-color, apple-touch-icon, splash, manifest.
@@ -653,7 +681,9 @@
 ## 8. `sw.js`
 
 ### 8.1 Vue d'ensemble
-69 lignes. Service Worker simple : install (cache-first des assets), activate (clean old caches), fetch (cache-first puis fallback réseau, mise en cache des nouvelles ressources locales).
+**98 lignes** (resync 2026-05-02 — +29 depuis l'audit initial à 69 l). Service Worker simple : install (cache-first des assets — cf. `ASSETS` [L9-42](sw.js#L9)), activate (clean old caches), **listener `message` SKIP_WAITING** (déclenché par le bandeau update via `_swApplyUpdate` côté UI, [L71-75](sw.js#L71)), fetch (cache-first puis fallback réseau, mise en cache des nouvelles ressources locales avec guard `response.ok`).
+
+⚠️ **Dette critique non résolue** : `garden.js`, `ui-atelier.js`, `ui-game.js`, `js/games/ui-cristaux.js` **absents de `ASSETS`** (cf. tableau santé) → ces modules échouent en offline.
 
 ### 8.2 Points forts
 - Convention `CACHE_VERSION` claire ([L7]) avec sync app.js documentée.
@@ -691,6 +721,264 @@
 
 ### 8.5 Dette technique
 - Pas de stratégie différenciée (network-first pour les JSON dynamiques par exemple).
+
+---
+
+## 9. `js/garden.js`
+
+> 🆕 Section ajoutée 2026-05-02 — module non audité jusqu'ici.
+
+### 9.1 Vue d'ensemble
+
+2025 lignes. Biome **Jardin procédural** chargé entre `envs.js` et `render-sprites.js`. Système autonome : génère un jardin déterministe à partir d'une seed (`D.g.gardenSeed`), avec **5 types d'éléments** (fleurs, herbes, pierres, champignons, arbustes), un **système d'âge** persisté entre sessions, une **germination quotidienne** via `_ageGarden()`, et une **modulation visuelle** par météo + état du Gotchi (habitudes + vitalité).
+
+**Structure du fichier :**
+
+| Section | Lignes | Rôle |
+|---|---|---|
+| §0 — PRNG déterministe | 22-69 | `_gardenRng(seed, index)` — LCG (Numerical Recipes) |
+| §0a bis — Helper couleur | 71-139 | `_lerpGray(hex, t)` (luminance BT.601) + `_grayT(habParams)` (0→0.45) |
+| §0b — Init jardin | 141-475 | `initGarden()` — slots, génération avec zone d'exclusion, persistance `gardenState` |
+| §0c — Cycle de vie | 477-664 | `_ageGarden()` — vieillissement + germination quotidienne (météo-dépendante) |
+| §0d — Sprites pixel art | 666-1742 | `drawFleur`, `drawHerbe`, `drawPierre`, `drawChampignon`, `drawArbuste` |
+| §1 — Fond | 1743-1845 | `drawJardin`, `drawJardinFond` (sol + éléments layer:fond) |
+| §2 — Premier plan | 1847-2024 | `drawJardinPremierPlan` (éléments layer:premier_plan + chenilles animées) |
+
+**Données persistées dans `D.g`** (3 nouvelles clés) :
+- `gardenSeed` : entier 1-999999, tiré au premier lancement (seul `Math.random()` autorisé du module)
+- `gardenBorn` : ISO 8601, date de naissance du jardin
+- `gardenDay` : `today()` du dernier `_ageGarden()`
+- `gardenState` : `[{ age, maxAge }]` — seules valeurs persistées, tout le reste est recalculé depuis la seed
+
+**Globales exposées sur `window`** :
+- `_gardenElements` : tableau d'objets {type, layer, x, y, variant, colorVariant, scalePX, hauteurPX, age, maxAge}
+- `_gardenRng`, `initGarden`, `_ageGarden`, `drawJardin`, `drawJardinFond` (testables console)
+
+### 9.2 Points forts
+
+- **Documentation exemplaire** : chaque fonction a son `RÔLE`/`POURQUOI`, parfois sur 30+ lignes. Tutorial-grade.
+- **PRNG déterministe rigoureux** : zéro `Math.random()` dans les fonctions `draw()`. Une seule seed pour tout le jardin, recalculable à l'identique entre sessions.
+- **Architecture en deux passes** : `drawJardinFond()` avant le Gotchi, `drawJardinPremierPlan()` après → profondeur visuelle propre.
+- **Persistance minimale** : seuls `age` et `maxAge` sont persistés. Toute modification des sprites (forme, couleur, taille) est immédiatement visible sans toucher à `gardenState`.
+- **Zone d'exclusion adaptative** : marge proportionnelle à la taille du candidat ET à celle des voisins (`max(scalePX_A, scalePX_B) × PX × 0.4`). Petits éléments serrés, grands éléments espacés.
+- **Distribution pondérée rng² pour les tailles** : beaucoup de petits éléments, quelques moyens, rares grands → naturel.
+- **Modulation contextuelle** : `habParams` (habRatio, vitalite) et `meteoParams` (flowerTilt, isRaining, rainVal) passés à chaque sprite → le jardin reflète l'engagement et le climat.
+- **Germination météo-aware** : pluie en cours → champignons doublés dans le pool de germes ([garden.js:583](js/garden.js#L583)).
+- **Fallbacks silencieux et `console.log` bien placés** pour debugging sans crash.
+
+### 9.3 Problèmes
+
+#### 🟠 Duplication des paramètres contextuels (drawJardinFond ↔ drawJardinPremierPlan)
+- Lignes : [1768-1804](js/garden.js#L1768) (fond) vs [1860-1875](js/garden.js#L1860) (premier plan)
+- Description : Les 8 lignes de calcul de `wind`, `flowerTilt`, `rainVal`, `isRaining`, `habsDone`, `habsTotal`, `habRatio`, `happiness`, `energy`, `vitalite`, `meteoParams`, `habParams` sont **dupliquées à l'identique**. Si une formule change (ex : nouveau plafond de vent, nouvelle source de happiness), il faut penser aux deux endroits.
+- Suggestion : Extraire un `_buildJardinParams()` interne, appelé une fois par frame depuis chaque passe.
+
+#### 🟠 `initGarden()` orchestrateur de 297 lignes
+- Lignes : [175-475](js/garden.js#L175)
+- Description : Une seule fonction gère seed, gardenDay, slots, génération avec retentatives, tri, persistance. Lecture difficile.
+- Suggestion : Découper en `_initGardenSeed()`, `_buildGardenSlots()`, `_generateElements(slots, seed)`, `_persistGardenState(elements)`.
+
+#### 🟡 Système de chenilles inline (115 lignes en fin de `drawJardinPremierPlan`)
+- Lignes : [1909-2023](js/garden.js#L1909)
+- Description : Logique très autonome (mouvements sin, 2 chenilles différenciées, irrégularités via `_gardenRng`) noyée dans la passe premier plan.
+- Suggestion : Extraire en `drawChenilles(p, n, vitalite, habRatio)` — facilite les futurs ajouts (papillons, abeilles…).
+
+#### 🟡 Sprites avec 6-8 paramètres positionnels
+- Exemples : `drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n, age, maxAge, meteoParams, habParams)` — 12 paramètres
+- Description : Lisibilité de l'appelant médiocre (`drawJardinFond` lignes 1827, 1830, etc.).
+- Suggestion : Passer un objet `el` directement : `drawFleur(p, el, theme, n, params)`. Refacto à grouper avec la duplication 9.3 ci-dessus.
+
+#### 🟡 `today()` et `save()` utilisés sans guard `typeof`
+- Lignes : [203](js/garden.js#L203), [205](js/garden.js#L205), [658](js/garden.js#L658), [1789](js/garden.js#L1789)
+- Description : `today()` et `save()` sont définis dans `app.js` chargé avant — pas de risque en prod. En isolation (test du module seul), ces appels échoueraient.
+- Suggestion : RAS pour la prod. Guards optionnels si tests unitaires futurs.
+
+#### 🟡 Garde `_gardenElements undefined` dupliquée
+- Lignes : [1812](js/garden.js#L1812) et [1884](js/garden.js#L1884) — `if (!window._gardenElements) return;`
+- Suggestion : Acceptable (chaque passe est appelée séparément depuis `render.js`). À regrouper si extraction d'un helper commun (cf. 9.3 duplication).
+
+### 9.4 Code mort / redondances
+
+- Aucune fonction morte détectée.
+- `hauteurPX` est calculée puis assignée comme `hauteurPXEffective = scaleFinal` ([garden.js:362](js/garden.js#L362)) — redondance volontaire pour préparer Phase 3 où `hauteurPX` pourrait diverger de `scalePX`.
+- Commentaires "Phase 3" et "Phase 4" indiquent une roadmap consciente — pas du code mort, mais des hooks d'extension documentés.
+
+### 9.5 Dette technique
+
+- **Couplage fort à `app.js`** : `today()`, `save()`, `window.D` lus partout. Acceptable dans la convention du projet (globals partagés), à documenter si refacto en modules ES.
+- **Couplage à `envs.js`** : `px()`, `tc()`, `PX`, `CS` utilisés massivement. Idem.
+- **Système de cycle de vie peu testable** : `_ageGarden()` mute `D.g.gardenState` directement. Pas de fonction pure équivalente. Ajouter des tests nécessiterait un mock de `D.g` complet.
+- **Pas d'audit visuel automatisé** : la qualité du rendu pixel art repose sur l'œil. Aucune capture de référence.
+- **Performance non mesurée** : 20 éléments × leurs sprites × 60fps n'est pas négligeable. À profiler si lag perçu.
+
+### 9.6 Évolutions souhaitées (déjà ébauchées dans le code)
+
+- **Phase 3 — Cycle de vie complet** : `_ageGarden()` est en place, mais pas encore de variations visuelles pilotées par `age` dans tous les sprites (à confirmer fonction par fonction).
+- **Nouveaux types** : `arbre`, `buisson`, `fougère` mentionnés en commentaires — l'architecture les supporte (juste ajouter un `case` au switch + une fonction `drawXxx`).
+- **Saisons** : modulation des couleurs par saison (cf. `_lerpGray` qui pourrait être étendu à `_lerpSaison`).
+- **Sons d'ambiance** : si WebAudio est ajouté plus tard, le jardin (vent dans les feuilles, oiseaux selon saison) serait une bonne cible.
+
+---
+
+## 10. `js/ui-atelier.js`
+
+> 🆕 Section ajoutée 2026-05-02 — module non audité jusqu'ici. Cf. également les notes Atelier 2026-05-02 en tête de `AUDIT_DESIGN.md` pour le contexte UI.
+
+### 10.1 Vue d'ensemble
+
+772 lignes. Éditeur **pixel art "Atelier"** chargé après `ui-agenda.js`, avant `ui-nav.js`. Permet de peindre des tableaux 12×12 cellules qui s'affichent ensuite dans le cadre mural de la chambre du Gotchi (via `D.atelier.activeId` + `drawAtelierFrame()` dans `envs.js`).
+
+**Structure du fichier :**
+
+| Section | Lignes | Rôle |
+|---|---|---|
+| §1 — Constantes | ~25-35 | `ATELIER_COLS=12`, `ATELIER_ROWS=12`, `ATELIER_CELL=16` (px CSS), `ATELIER_MAX=3` (galerie) |
+| §2 — État interne | ~37-62 | `_atelierEditId`, `_atelierColor`, `_atelierMode` (peindre/foncer/éclaircir), `_atelierPainting`, `_atelierSaveTimer` |
+| §3 — Helpers internes | ~64-178 | `_shiftLightness(hex, delta)` (HSL), `getEnvTheme(id)`, `_atelierCréerTableau()`, `_atelierSelectTableau(id)` |
+| §4 — Logique canvas | ~178-373 | `_atelierFitCanvas()` (sizing adaptatif), `_atelierRenderCanvas()`, `_atelierCellFromEvent(e)`, `_atelierPeindreCell(e)`, `_atelierBindCanvas()` |
+| §5 — Rendu palette | ~375-466 | `_atelierRenderPalette()` (8 boutons + gomme + outils foncer/éclaircir) |
+| §6 — Rendu galerie | ~468-588 | `_atelierRenderGalerie()`, `_atelierVignette(tb, W, H)` |
+| §7 — API publique | ~590-772 | Fonctions exposées sur `window.*` |
+
+**API publique exposée sur `window`** :
+| Fonction | Rôle |
+|---|---|
+| `ouvrirAtelier()` | Affiche `#atelier-overlay` (display:flex), lockScroll, fit canvas, render |
+| `fermerAtelier()` | Cache l'overlay, unlockScroll |
+| `renderAtelier()` | Refresh palette + galerie + canvas |
+| `_atelierSetActif()` | Active le tableau courant comme tableau affiché dans la chambre (`D.atelier.activeId`) |
+| `_atelierChoisirCouleur(hex)` | Set la couleur active du pinceau |
+| `_atelierChoisirMode(mode)` / `_atelierToggleMode(mode)` | Switch d'outil (peindre/foncer/éclaircir/gomme) |
+| `_atelierNouveauTableau()` | Crée un tableau vierge (cap à `ATELIER_MAX=3`) |
+| `_atelierViderTableau()` | Vide les pixels du tableau courant |
+| `_atelierMotifDefaut()` | Pose un motif de démarrage |
+
+**Données persistées dans `D.atelier`** (nouvelle structure racine) :
+```js
+D.atelier = {
+  activeId: 'tb_xxx' | null,    // tableau affiché dans la chambre
+  tableaux: [                    // jusqu'à 3 tableaux sauvegardés
+    {
+      id:              'tb_<timestamp>',
+      createdAt:       <ms>,
+      updatedAt:       <ms>,
+      themeId:         'pastel' | 'automne' | ...,
+      paletteSnapshot: [...8 hex],   // copie de la palette du thème actif au moment de la création
+      pixels:          number[12][12]  // null = transparent, sinon hex
+    }
+  ]
+}
+```
+
+### 10.2 Points forts
+
+- **Documentation complète** : header de fichier, sommaire `§`, RÔLE/POURQUOI sur chaque fonction et chaque hack subtil.
+- **Algorithme `_shiftLightness()`** : conversion RGB → HSL → manipulation L → RGB → hex propre, pour permettre les outils foncer/éclaircir sans dériver la teinte.
+- **Snapshot de palette par tableau** (`paletteSnapshot`) : un tableau créé en thème "pastel" reste cohérent même si l'utilisatrice change de thème par la suite.
+- **Sizing adaptatif** : `_atelierFitCanvas()` recalcule `_atelierCellPx = min(floor(zoneW/16), floor(zoneH/12))` à chaque ouverture → s'adapte à toutes les tailles d'écran sans CSS rigide.
+- **Pattern `pointermove` + `_atelierPainting`** : permet le drag (peindre en glissant le doigt) sans peindre au survol souris.
+- **Save debouncé local (`_atelierSaveTimer`)** : 800ms après le dernier coup de pinceau → save + refresh vignette galerie. N'utilise PAS `saveDebounced()` global d'`app.js` car celui-ci ne prend pas de callback.
+- **Init défensif Array.from + fill(null)** : évite le piège classique "tous les rows partagent la même référence" du `Array(R).fill(Array(C).fill(null))`.
+
+### 10.3 Problèmes
+
+#### 🟡 `_shiftLightness()` — algorithme HSL inline de 40 lignes
+- Lignes : [73-115](js/ui-atelier.js#L73)
+- Description : Une conversion RGB↔HSL complète vit dans ce module. Si une autre feature a besoin d'un shift de luminosité (ex : dégradés palette), elle dupliquera. Pas un bug, juste de l'utilitaire mal placé.
+- Suggestion : À terme, déplacer dans `ui-core.js` ou un futur `js/utils/color.js`.
+
+#### 🟡 ENV_THEMES utilisé sans guard `typeof`
+- Ligne : [123](js/ui-atelier.js#L123)
+- Description : `getEnvTheme()` accède à `ENV_THEMES` directement (défini dans `data/config.js`). Pas de risque en prod (config chargée avant ui-*), mais la fonction crash en isolation.
+- Suggestion : RAS pour la prod, à noter pour les futurs tests.
+
+#### 🟡 Couplage à `D.g.envTheme` non documenté côté `app.js`
+- Ligne : [131](js/ui-atelier.js#L131)
+- Description : `D.atelier.tableaux[i].themeId` est tiré de `D.g.envTheme` à la création. La structure `D.atelier` elle-même n'apparaît pas dans la cartographie de `app.js` (à confirmer dans `defs()` ou `migrate()`).
+- Suggestion : Vérifier que `D.atelier` est initialisé dans `defs()` ou via une migration. Sinon, `D.atelier.tableaux.find()` à [ui-atelier.js:155](js/ui-atelier.js#L155) crashera au premier appel.
+
+#### 🟡 Pas de garde anti-création au-delà de `ATELIER_MAX=3`
+- À vérifier dans `_atelierNouveauTableau()` ([628](js/ui-atelier.js#L628)) — la constante existe mais le respect du cap n'a pas été audité ligne par ligne. Si pas de garde, une utilisatrice peut créer N tableaux et alourdir `D`.
+
+### 10.4 Code mort / redondances
+
+- Aucun appel à `_atelierMotifDefaut()` dans le HTML cartographié — soit elle est branchée par un bouton dynamique de la palette, soit elle est dormante. À vérifier.
+
+### 10.5 Dette technique
+
+- **Couplage à `ui-core.js`** : `lockScroll`, `unlockScroll`, `toast` (fallback `console.warn`) — convention standard du projet, OK.
+- **Couplage à `app.js`** : `window.D`, `save()` — convention standard.
+- **Tableaux sauvegardés sans miniature persistée** : `_atelierVignette()` redessine la vignette à chaque rendu de galerie. Pour 3 tableaux 12×12 c'est trivial, mais si `ATELIER_MAX` augmente un jour, prévoir un cache.
+
+---
+
+## 11. `js/ui-game.js`
+
+> 🆕 Section ajoutée 2026-05-02. Module qui orchestre l'overlay du **hub des mini-jeux cosy**. Ne contient aucune logique de jeu (déléguée à `js/games/*` — hors périmètre de cet audit, voir notes de sprint en tête de fichier).
+
+### 11.1 Vue d'ensemble
+
+305 lignes. Hub mini-jeux : ouvre/ferme l'overlay `#game-overlay`, orchestre la navigation **hub ↔ sélecteur de durée ↔ canvas du jeu actif**, gère la persistance des scores et la durée préférée. Un seul jeu actuellement implémenté (Tri de Cristaux, dans `js/games/ui-cristaux.js`).
+
+**Structure du fichier :**
+
+| Section | Lignes | Rôle |
+|---|---|---|
+| §1 — Ouvrir | 24-62 | `ouvrirGameHub()` |
+| §2 — Fermer | 64-94 | `fermerGameHub()` (détruit `_cristalSketch` + unlockScroll) |
+| §3 — Render hub | 96-153 | `renderGameHub()`, `_resetGameZone()` (privée) |
+| §4 — Sélecteur de durée | 155-280 | `lancerCristaux()` (UI HTML pure), `_cx_demarrerAvecDuree(secondes)` (swap canvas + `_demarrerCristaux`) |
+| §5 — Retour hub | 282-305 | `retourGameHub()` |
+
+**API publique exposée sur `window`** :
+| Fonction | Rôle |
+|---|---|
+| `ouvrirGameHub()` | Display flex + render + lockScroll + fermeMenu |
+| `fermerGameHub()` | Détruit jeu actif + unlockScroll |
+| `renderGameHub()` | Met à jour score et indicateur ✨ doré |
+| `lancerCristaux()` | Affiche le sélecteur de durée (1/2/3 min) en HTML pur |
+| `_cx_demarrerAvecDuree(secondes)` | Active le canvas plein écran et délègue à `window._demarrerCristaux()` |
+| `retourGameHub()` | Détruit l'instance p5 et retourne au hub |
+
+**Persistance** : hors structure `D` / clé `hg4`. Deux clés `localStorage` dédiées :
+- `hg_game_crystals_best` — meilleur score (entier stringifié)
+- `hg_game_crystals_duree` — dernière durée choisie (60/120/180)
+
+### 11.2 Points forts
+
+- **Architecture overlay propre** : même pattern que `ui-atelier.js` (display:flex + lockScroll + ✕ via `.hdr-garden-close`).
+- **Navigation 3 états** : hub / sélecteur de durée / canvas — chaque transition est explicite, pas de magie.
+- **Robustesse iOS lockScroll** documentée en commentaire ([ui-game.js:44-55](js/ui-game.js#L44)) : le listener `touchmove preventDefault` posé par `lockScroll()` reste actif pendant tout le jeu, le sketch p5 retourne `false` dans `touchStarted/Moved/Ended` (idempotent), seul `fermerGameHub()` appelle `unlockScroll()`.
+- **Persistance hors `D`** : choix volontaire — les scores de jeu ne polluent pas la save Gotchi, ne déclenchent pas de migration.
+- **Guard `typeof window._demarrerCristaux === 'function'`** + fallback HTML d'erreur — le module ne crashe pas si le fichier de jeu est absent.
+- **Helper privé `_resetGameZone()`** — factorise le reset entre `renderGameHub()` et `fermerGameHub()`, évite duplication.
+- **Indicateur ✨ doré** : `renderGameHub()` interroge `window._cx_estDoréDisponible()` (exposée par `ui-cristaux.js`) avec guard `typeof` — bon pattern de couplage faible.
+
+### 11.3 Problèmes
+
+#### 🟡 Dette iOS documentée — `render.js` peut casser le jeu si futur listener global
+- Lignes : commentaire à [54-55](js/ui-game.js#L54)
+- Description : Si `render.js` ajoute un jour un listener `touchstart` global sur `document` sans filtre, il interfèrera avec les `touchStarted` du sketch p5 du jeu.
+- Suggestion : Documenter dans le header de `render.js` qu'il ne doit pas écouter sur `document` sans guard `event.target.closest('#game-overlay')`. Test conditionnel à faire si une telle modification est tentée.
+
+#### 🟡 Couplage nominatif `_cristalSketch` / `_cx_*`
+- Lignes : [75](js/ui-game.js#L75), [124](js/ui-game.js#L124), [291](js/ui-game.js#L291)
+- Description : Le module connaît le nom de la variable globale du jeu (`_cristalSketch`) et de ses helpers (`_cx_estDoréDisponible`, `_demarrerCristaux`). Quand un 2e jeu sera ajouté, il faudra dupliquer cette logique ou abstraire (registre de jeux).
+- Suggestion : Quand le 2e jeu arrivera, créer un registre `window._jeux = { cristaux: { sketch, demarrer, estDispo } }` pour homogénéiser.
+
+#### 🟡 `lancerCristaux()` injecte du HTML en `innerHTML` avec template string
+- Lignes : [192-218](js/ui-game.js#L192)
+- Description : Pas de XSS (le contenu est statique), mais la maintenance du HTML inline est moins agréable que des classes CSS dédiées. Option de durée hardcodée dans le tableau `options[]`.
+- Suggestion : RAS court terme. Quand `ATELIER_MAX_OPTIONS` augmente, externaliser en classes CSS (`.cx-duree-screen`, `.cx-duree-btn`).
+
+### 11.4 Code mort / redondances
+
+- Aucun.
+
+### 11.5 Dette technique
+
+- **Hardcoded `1/2/3 min`** : si on veut ajouter une 4e durée (ex : 30s, 5min), modifier le tableau `options[]` à [184-188](js/ui-game.js#L184).
+- **Tests** : aucun. Le module se teste à la main.
 
 ---
 
@@ -864,40 +1152,55 @@ Trois facteurs cumulés causaient le bug :
 | Fonction | Rôle | Appelée par | Appelle |
 |---|---|---|---|
 | `today()` / `todayFr()` / `hr()` | utilitaires temps | partout | — |
-| `loadDataFiles()` | charge JSON props/contexts/system | `bootstrap()` | `fetch`, `save`, `renderProps`, `updBadgeBoutique` |
-| `defs()` | structure D par défaut | `load()`, `migrate()` | — |
-| `getCyclePhase()` | calcule phase menstruelle | UI agenda | — |
-| `migrate(d)` | applique MIGRATIONS | `load()` | les `mN()` |
-| `load()` / `save()` | LocalStorage | bootstrap, partout | `migrate`, `JSON` |
-| `addXp(n)` | +/- XP, animation stade | `toggleHab`, cheats | `getSt`, `triggerEvoAnim`, `addEvent`, `flashBubble`, `save`, `updUI` |
+| `loadUserConfig()` | fetch `data/user_config.json` | `bootstrap()` | `fetch` |
+| `loadDataFiles()` | charge 3 JSON props + contexts + system + extraPropsFile | `bootstrap()` | `fetch`, `save`, `renderProps`, `updBadgeBoutique` |
+| `defs()` | structure D par défaut (lit USER_CONFIG.identity) | `load()`, `migrate()` | — |
+| `getCyclePhase()` | calcule phase menstruelle | UI agenda, askClaude, soutien | — |
+| `migrate(d)` | applique MIGRATIONS (jusqu'à v20) | `load()` | les `mN()` |
+| `load()` / `save()` | LocalStorage clé `hg4` | bootstrap, partout | `migrate`, `JSON` |
+| `addXp(n)` | +/- XP, animation stade, milestone props | `toggleHab`, cheats | `getSt`, `triggerEvoAnim`, `addEvent`, `flashBubble`, `offrirPropMilestone`, `save`, `updUI` |
+| `getMicroPalier(xp)` | suffixe romain (II/III/...) tous les 200 XP en stade adulte | `updUI` | — |
+| `offrirPropMilestone(stade)` | offre un objet par stade atteint | `addXp` | `addEvent`, `save` |
 | `spawnPoop` / `maybeSpawnPoop` / `cleanPoops` / `catchUpPoops` | gestion crottes | `bootstrap`, intervals, render touch | `save`, `updUI`, `toast`, `flashBubble`, `addEvent` |
-| `giveSnack(emoji)` | nourriture +XP | UI snack | `triggerExpr`, `save`, `addEvent`, `flashBubble`, `updUI` |
-| `toggleHab(catId)` | check/uncheck habitude | UI | `addXp`, `addEvent`, `floatXP`, `flashBubble`, `triggerExpr`, `save`, `updUI`, `renderHabs` |
-| `addEvent(...)` | log événement | métier | `updTabletBadge` |
-| `flashBubble` / `updBubbleNow` | dialogue gotchi | partout | — |
-| `fetchMeteo` / `fetchSolarPhases` / `getSolarPhase` | API météo | bootstrap, intervals | `fetch`, `save`, `updMeteoIcons`, `animEl` |
-| `bootstrap()` | point d'entrée | `load`/`pageshow` | tout |
+| `checkSalete()` / `checkHunger()` | seuils visuels saleté/faim | bootstrap, intervals | `flashBubble`, `save` |
+| `giveSnack(emoji)` | nourriture +XP, reset hunger | UI snack | `triggerExpr`, `save`, `addEvent`, `flashBubble`, `updUI` |
+| `pickThreeSnacks` / `ensureSnackPref` | rotation snack préféré hebdo | UI snack | — |
+| `toggleHab(catId)` | check/uncheck habitude, bonus journée | UI | `addXp`, `addEvent`, `floatXP`, `flashBubble`, `triggerExpr`, `save`, `updUI`, `renderHabs` |
+| `computeStreaks()` | streaks par habitude, bonus pétales cap 7 | bootstrap, toggleHab | — |
+| `updatePresenceStreak()` | streak de présence (jours consécutifs ouverture) | bootstrap | `save` |
+| `refreshCatVedette()` | tirage déterministe catégorie vedette du jour | bootstrap, daily reset | — |
+| `addEvent(ev)` | log événement (forme objet uniquement) | métier | `updTabletBadge` |
+| `flashBubble` / `updBubbleNow` | dialogue gotchi (5 catégories ajoutées 2026-05-01) | partout | — |
+| `fetchMeteo` / `fetchSolarPhases` / `getSolarPhase` | API météo + phases solaires (USER_CONFIG.meteo) | bootstrap, intervals | `fetch`, `save`, `updMeteoIcons`, `animEl` |
+| `handleDailyReset()` | reset quotidien IA + `_ageGarden()` | bootstrap | `_ageGarden`, `initGarden`, `save` |
+| `bootstrap()` | point d'entrée async (loadUserConfig → loadDataFiles → load → checkSalete → catchUpPoops → checkMissedHabits → initGarden → initApp) | `load`/`pageshow`/`visibilitychange` | tout |
 
 ### `js/render.js`
 | Fonction | Rôle | Appelée par | Appelle |
 |---|---|---|---|
-| `getBreath` / `getCheekPulse` | helpers anim | sprites | — |
-| `triggerExpr(mood,d)` | déclenche expression | app.js, render touch | — |
-| `getGotchiC` / `getEnvC` | résout couleurs depuis HG_CONFIG | `p.draw` | — |
+| `getBreath` / `getCheekPulse` | helpers anim sub-pixel | sprites | — |
+| `animator.trigger(id, opts?)` / `tick()` / `resolve(stage)` | moteur d'animation déclaratif (ANIM_DEFS) | partout | — |
+| `triggerGotchiBounce` / `triggerGotchiShake` / `triggerEvoAnim` / `triggerExpr` / `triggerEtirementMatin` | déclencheurs anim publics | app.js, render touch, evo | `animator.trigger` |
+| `getStageBaseY` / `getGotchiC` / `getEnvC` | helpers position + couleurs | `p.draw`, touch | — |
 | `drawProp(p, prop, x, y)` | rendu pixel art prop | `p.draw`, `drawAccessoires` | `pxFree` |
-| `spawnP(x,y,c)` | particule | toggleHab, render | — |
-| `drawSky` / `drawCl` / `drawZzz` / `updateParts` | écosystème | `p.draw` | `getSolarPhase`, `px` |
-| `triggerTouchReaction(sleep)` | réaction tactile | touch | `flashBubble` |
-| `p.setup` / `p.draw` | boucle p5 | p5 lib | tout le rendu |
+| `spawnP(x,y,c)` / `updateParts` | particules | toggleHab, render | — |
+| `drawSky` / `drawCl` / `drawZzz` | écosystème | `p.draw` | `getSolarPhase`, `px` |
+| `triggerTouchReaction(sleep, soirTardif)` | réaction tactile | touch | `flashBubble` |
+| `drawPropsLayer(p,g,env,mode)` / `drawHUD(p,g,h)` / `drawBadges(p,g)` / `drawEnvSelector(p,g,n)` | sous-fonctions extraites de p.draw | `p.draw` | render-sprites, envs |
+| `isOverlayActive()` | test si un overlay UI bloque le canvas | touch | DOM |
+| `p.setup` / `p.draw` | boucle p5 (~85 l orchestrateur) | p5 lib | tout le rendu |
 | `p.touchStarted` / `p.touchMoved` / `p.touchEnded` | gestion tactile canvas | p5 | `cleanPoops`, `ouvrirSnack`, `ouvrirModalEtats`, `triggerExpr`, `changeEnv`, `triggerTouchReaction`, `spawnP`, `addEvent`, `save` |
 
 ### `js/render-sprites.js`
 | Fonction | Rôle | Appelée par | Appelle |
 |---|---|---|---|
+| `renderSprite(p, layers, cx, cy, params, palette)` | moteur DSL — itère les calques `LAYERS_*` avec `when`/`hidden`/`visible` | drawEgg/Baby/Teen/Adult | `_resolveFill`, `px` |
+| `_resolveFill(p, fillKey, palette)` | résout `'C.body'` → couleur palette | renderSprite | — |
 | `drawDither(p,x,y,w,h,c)` | damier épuisement | sprites | `px` |
-| `drawSaleteDither(p,stage,cx,cy,salete,sl)` | boue par silhouette | sprites | (interne) |
-| `drawAccessoires(p,cx,anchors,stage,sl)` | accessoires anchor | sprites | `getPropDef`, `drawProp` |
-| `drawEgg/Baby/Teen/Adult` | sprites par stade | `p.draw` | helpers ci-dessus |
+| `_drawSilhouetteOffscreen(g,stage,breathX)` / `_getSaleteMask(p,stage,breathX)` / `drawSaleteDither(p,stage,cx,cy,salete,sl)` | boue par silhouette off-screen (auto-sync) | sprites | (interne) |
+| `isMood(name)` | helper expression (`expr.lastMood === name`) | calques `when` | — |
+| `drawAccessoires(p,cx,anchors,stage,sl)` | accessoires anchor avec snap PX | sprites | `getPropDef`, `drawProp` |
+| `drawEgg/Baby/Teen/Adult` | sprites par stade (DSL `LAYERS_*`) | `p.draw` | `renderSprite`, helpers ci-dessus |
 
 ### `js/envs.js`
 | Fonction | Rôle | Appelée par | Appelle |
@@ -908,25 +1211,53 @@ Trois facteurs cumulés causaient le bug :
 | `drawActiveEnv(p,env,n,h)` | dispatcher biomes | `p.draw` | `tc`, `drawTreeTheme`, `drawCactus`, `drawFrameMotif`, `drawThemeAccents` |
 | `drawTreeTheme/Cactus/Fl` | helpers décor | drawActiveEnv | `px` |
 
-### `js/ui-*.js` (8 modules — ex-`ui.js`)
+### `js/garden.js`
+| Fonction | Rôle | Appelée par | Appelle |
+|---|---|---|---|
+| `_gardenRng(seed, index)` | PRNG LCG déterministe | partout dans garden.js | — |
+| `_lerpGray(hex, t)` / `_grayT(habParams)` | désaturation par luminance BT.601 | sprites garden | — |
+| `initGarden()` | génère `_gardenElements` depuis seed (zone d'exclusion + persistance gardenState) | `bootstrap()` (app.js) | `_gardenRng`, `save`, `today` |
+| `_ageGarden()` | vieillissement quotidien + germination météo-aware | `handleDailyReset()` (app.js) | `_gardenRng`, `save`, `today` |
+| `drawFleur` / `drawHerbe` / `drawPierre` / `drawChampignon` / `drawArbuste` | sprites pixel art (fonction de l'âge + variant + scale) | passes fond/premier plan | `px`, `tc`, `_lerpGray` |
+| `drawJardin(p, theme, n)` / `drawJardinFond(p, theme, n)` | passe arrière-plan (sol + éléments layer:fond) | `p.draw` (render.js) | sprites garden |
+| `drawJardinPremierPlan(p, theme, n)` | passe premier plan + chenilles animées | `p.draw` (après gotchi) | sprites garden |
+
+### `js/debug.js`
+| Fonction | Rôle | Appelée par | Appelle |
+|---|---|---|---|
+| `toggleDebugPanel()` | injecte/affiche le panneau debug PWA | bouton réglages | DOM |
+| `copyDebugLogs()` / `fallbackCopyDebug(txt)` | copie logs presse-papiers | bouton panneau | Clipboard API |
+| `clearDebugLogs()` | vide le buffer logs | bouton panneau | — |
+
+### `js/ui-*.js` (9 modules core + atelier + game)
 | Fonction | Rôle | Module | Appelée par | Appelle |
 |---|---|---|---|---|
-| `callClaude({...})` | wrapper API Anthropic | `ui-core.js` | askClaude, soutien, bilan, cadeau | `fetch` |
+| `callClaude({...})` | wrapper API Anthropic | `ui-core.js` | askClaude, soutien, bilan, cadeau, testApiKey | `fetch` |
 | `escape(s)` | XSS-sanitize | `ui-core.js` | partout | — |
-| `lockScroll`/`unlockScroll` | scroll body | `ui-core.js` | openModal, toggleMenu | — |
-| `openModal(html)` / `clModal(e)` / `toastModal(m)` | modales | `ui-core.js` | UI | `_modalCloseBtn`, `_fermerMenuSiOuvert`, `unlockScroll` |
+| `showTDAH()` / `showCycle()` / `showRDV()` | lecteurs USER_CONFIG.ui | `ui-core.js` | partout | — |
+| `lockScroll`/`unlockScroll` | scroll body + inert + listener iOS | `ui-core.js` | openModal, toggleMenu, ouvrirAtelier, ouvrirGameHub | — |
+| `openModal(html)` / `clModal(e)` / `toastModal(m)` / `openModalRaw(html)` | modales | `ui-core.js` | UI | `_modalCloseBtn`, `_fermerMenuSiOuvert`, `unlockScroll` |
 | `go(t)` / `goMenu(t)` / `toggleMenu` | navigation | `ui-nav.js` | UI | `renderHabs`, `renderProg`, `renderProps`, `renderPerso`, `renderJ`, `syncDuringTransition` |
-| `updUI()` | refresh HUD | `ui-settings.js` | métier | `getSt`, `nxtTh`, `calcStr`, `updThoughtFlowers`, `updJournalFlowers`, `updBadgeBoutique` |
-| `ouvrirSnack` | popup snack | render touch, HUD | `getCurrentMealWindow`, `ensureMealsToday`, `pickThreeSnacks`, `giveSnack` |
-| `ouvrirEditionHabitudes` / `sauvegarderToutesHabitudes` | renommer/réordonner | UI | `openModal`, `save`, `renderHabs` |
-| `ouvrirBoutique` / `acheterProp` / `toggleProp` / `openSlotPicker*` | boutique | UI | `addEvent`, `save`, `renderProps`, `updBadgeBoutique` |
-| `askClaude` / `genSoutien` / `sendSoutienMsg` / `genBilanSemaine` | IA | UI | `callClaude`, `flashBubble`, `addEvent` |
-| `openTablet` / `closeTablet` / `updTabletBadge` | tablette rétro | UI | — |
-| `checkWelcome` / `showWelcomeModal` | wizard 1er lancement | bootstrap | `openModal`, `save` |
-| `ouvrirAgenda` / `switchAgenda` / `renderAgendaJour/Mois/Cycle` | agenda | UI | `getCyclePhase`, `save` |
-| `ouvrirModalEtats` / `fermerModalEtats` | bottom sheet | render touch | `setEnergy`, `setHappy` |
-| `confirmReset` | reset total | UI | `openModal`, `localStorage.removeItem` |
-| `initUI()` | init complète UI | `bootstrap()` (app.js) | `updUI`, `syncConsoleHeight`, `renderHabs`, `renderProps`, `restorePerso`, `initMoodPicker`, `checkWelcome`, `updBubbleNow` |
+| `_getEffectiveEnv(tab, h)` / `openCanvasFullscreen` / `closeCanvasFullscreen` | env effectif + jardin plein écran | `ui-nav.js` | go, sticker 🌱 | — |
+| `updUI()` | refresh HUD complet | `ui-settings.js` | métier | `getSt`, `nxtTh`, `calcStr`, `updThoughtFlowers`, `updJournalFlowers`, `updBadgeBoutique`, `updAgendaPostit` |
+| `ouvrirSnack` | popup snack 4 branches via `openModal` | `ui-settings.js` | render touch, HUD | `getCurrentMealWindow`, `ensureMealsToday`, `pickThreeSnacks`, `giveSnack` |
+| `applyCheatCode()` | codes triche (incl. `USER_CONFIG.birthday.cheatCode`) | `ui-settings.js` | UI réglages | `addXp`, `save`, `toast` |
+| `renderPropThemes` / `addPropTheme` / `removePropTheme` / `resetPropThemes` | tags d'inspiration objets IA | `ui-settings.js` | UI réglages | `save`, `renderPropThemes` |
+| `ouvrirEditionHabitudes` / `sauvegarderToutesHabitudes` / `deplacerHab` | renommer/réordonner | `ui-habs.js` | UI | `openModal`, `save`, `renderHabs` |
+| `ouvrirBoutique` / `acheterProp` / `acheterPack` / `toggleProp` / `openSlotPicker*` / `rangerProp` / `rangerTout` | boutique + slots + packs | `ui-shop.js` | UI | `addEvent`, `save`, `renderProps`, `updBadgeBoutique` |
+| `supprimerObjetIA` / `exportObjetIA` / `voirBulles` | gestion objets IA | `ui-shop.js` | inventaire | `openModal`, `save` |
+| `askClaude` / `genSoutien` / `sendSoutienMsg` / `genBilanSemaine` / `acheterPropClaude` | IA | `ui-ai.js` | UI | `callClaude`, `flashBubble`, `addEvent`, `getRegistre`, `getExemples`, `buildToneBlock` |
+| `getRegistre(en, ha, traits)` / `getExemples(journal, P)` / `buildToneBlock(P, state)` | construction prompts | `ui-ai.js` | askClaude, soutien | — |
+| `openTablet` / `closeTablet` / `updTabletBadge` | tablette rétro | `ui-settings.js` | UI | — |
+| `checkWelcome` / `showWelcomeModal` | wizard 1er lancement + anniversaire | `ui-settings.js` | bootstrap | `openModal`, `save` |
+| `ouvrirAgenda` / `switchAgenda` / `renderAgendaJour/Mois/Cycle` / `sauvegarderRdv` / `declarerRegles` / `editerRdv` | agenda + cycle + RDV | `ui-agenda.js` | UI | `getCyclePhase`, `save` |
+| `ouvrirModalEtats` / `fermerModalEtats` | bottom sheet | `ui-settings.js` | render touch | `setEnergy`, `setHappy` |
+| `confirmReset` / `doReset` | reset total (utilise `window.SK`) | `ui-settings.js` | UI | `openModal`, `localStorage.removeItem` |
+| `exportD` / `importD` / `forceUpdate` / `resetGarden` | gestion sauvegarde | `ui-settings.js` | UI | `save`, Blob, FileReader |
+| `renderJ` / `saveJ` / `unlockJ` / `pinSubmit` / `exportJournal` | journal | `ui-journal.js` | UI | `save`, `flashBubble` |
+| `ouvrirAtelier` / `fermerAtelier` / `_atelierSetActif` / etc. | éditeur pixel art | `ui-atelier.js` | sticker 🖼️ | `lockScroll`, `save` (cf. §10) |
+| `ouvrirGameHub` / `fermerGameHub` / `lancerCristaux` / `retourGameHub` | hub jeux | `ui-game.js` | sticker 🎮 | `lockScroll`, `_demarrerCristaux` (cf. §11) |
+| `initUI()` | init complète UI (incl. masquage agenda selon `showCycle`/`showRDV`) | `ui-settings.js` | `bootstrap()` | `updUI`, `syncConsoleHeight`, `renderHabs`, `renderProps`, `restorePerso`, `initMoodPicker`, `checkWelcome`, `updBubbleNow` |
 
 ---
 

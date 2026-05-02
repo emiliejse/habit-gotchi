@@ -253,8 +253,11 @@ async function askClaude() {
   const g = D.g, td = today();
   const msgEl = document.getElementById('claude-msg');
 
-  /* ── Mode nuit ── */
-  if (hr() >= 22 || hr() < 7) {
+  /* ── Mode nuit (à partir de 23h30) ── */
+  // RÔLE : Bloque la bulle de pensée quand le Gotchi dort (23h30–7h).
+  const _hAsk = hr(), _mAsk = new Date().getMinutes();
+  const _sleepingAsk = (_hAsk === 23 && _mAsk >= 30) || (_hAsk >= 0 && _hAsk < 7);
+  if (_sleepingAsk) {
     const msgs = [
       "Zzz... je dors 🌙",
       "Chut ! Il est tard... 😴",

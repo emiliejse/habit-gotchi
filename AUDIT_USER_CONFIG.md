@@ -108,7 +108,8 @@ Tous les fichiers de code sont maintenant identiques et peuvent être copiés li
 - `source` → toujours `"config"` désormais (`personality.json` supprimé)
 - `traits` → liste d'adjectifs injectés dans les prompts IA
 - `style` → phrase décrivant le ton d'écriture du gotchi
-- `bulles` → objet avec 16 états de bulles (matin, aprem, soir, nuit, triste, fatigue, fierte, max, idle, vent, chaud, froid, peu, cadeau, journal, custom)
+- `bulles` → objet avec 17 états de bulles (matin, aprem, soir, **soirTardif**, nuit, triste, fatigue, fierte, max, idle, vent, chaud, froid, peu, cadeau, journal, custom)
+  - `soirTardif` → bulles affichées entre 22h30 et 23h30 (Gotchi dans sa chambre, pas encore endormi — veut de la tranquillité). Fallback intégré dans le code si absent.
 
 **`ui`**
 - `showTDAHMention` → si `false`, masque toute mention TDAH (infrastructure posée, rien à masquer aujourd'hui)

@@ -820,24 +820,34 @@ function updateParts(p) {
 // drawDither, drawAccessoires, drawEgg, drawBaby, drawTeen, drawAdult
 // sont définis dans render-sprites.js (chargé après render.js dans index.html)
 
-function triggerTouchReaction(sleeping) {
-  const awakeTypes = ['heart', 'heart', 'sparkle', 'jump', 'spin', 'star', 'note', 'flower'];
-  const sleepTypes = ['zzz', 'moon', 'angry'];
-  const types = sleeping ? sleepTypes : awakeTypes;
+// RÔLE : Déclenche la réaction visuelle + bulle au tap du Gotchi selon son état.
+// POURQUOI : Trois états possibles depuis la refonte des horaires :
+//   - sleeping (23h30–7h) : Zzz, grogne
+//   - soirTardif (22h30–23h29) : veut la paix, réaction douce mais claire
+//   - éveillé : joie, particules festives
+// @param {boolean} sleeping   — le Gotchi dort vraiment (23h30–7h)
+// @param {boolean} soirTardif — le Gotchi est dans sa chambre mais pas encore endormi (22h30–23h29)
+function triggerTouchReaction(sleeping, soirTardif = false) {
+  const awakeTypes    = ['heart', 'heart', 'sparkle', 'jump', 'spin', 'star', 'note', 'flower'];
+  const soirTypes     = ['moon', 'zzz'];   // particules douces — pas de angry, pas de cœurs festifs
+  const sleepTypes    = ['zzz', 'moon', 'angry'];
+  const types = sleeping ? sleepTypes : soirTardif ? soirTypes : awakeTypes;
   const type = types[Math.floor(Math.random() * types.length)];
-  
+
   window.touchReactions.push({
-    timer: 35, 
-    type,      
+    timer: 35,
+    type,
     cx: (window._lastTapX || 100) + (Math.random() - 0.5) * 40,
   });
 
   if (window.touchReactions.length > 8) window.touchReactions.shift();
-  animator.trigger('shake'); // remplace window.shakeTimer = 8
+  animator.trigger('shake');
 
   const touchMsgs = sleeping
     ? ['*grogne* 😤', 'Laisse-moi dormir ! 🌙', '...zzz... 💤']
-    : ['*hehe* ✿', 'Coucou ! 💜', '*giggle* 🌸', 'Encore ! ✿'];
+    : soirTardif
+      ? ['Chut… 🌙', '*soupir* pas maintenant ✿', 'J'ai besoin de calme… 💤', '*bâille* 🌸']
+      : ['*hehe* ✿', 'Coucou ! 💜', '*giggle* 🌸', 'Encore ! ✿'];
   
   flashBubble(touchMsgs[Math.floor(Math.random() * touchMsgs.length)], 2000);
 }
@@ -1904,15 +1914,21 @@ if (!window._gotchiActif) return true;
 
     if (hit) {
   window._lastTapX = walkX + (Math.random() - 0.5) * 20;
-  triggerTouchReaction(h >= 22 || h < 7);
-  
+  // RÔLE : Calcule les trois états horaires pour le tap.
+  // sleeping = dort vraiment (23h30–7h) | soirTardif = chambre mais éveillé (22h30–23h29)
+  const _tapMins     = new Date().getMinutes();
+  const _tapSleeping = (h === 23 && _tapMins >= 30) || (h >= 0 && h < 7);
+  const _tapSoir     = !_tapSleeping && ((h === 22 && _tapMins >= 30) || h === 23);
+  triggerTouchReaction(_tapSleeping, _tapSoir);
+
   // ✨ Expression faciale selon contexte
   if (typeof window.triggerExpr === 'function') {
-    const isNight = h >= 22 || h < 7;
-    
-    if (isNight) {
-      // La nuit, on le réveille : surprise ensommeillée
+    if (_tapSleeping) {
+      // Dort vraiment : surprise ensommeillée
       window.triggerExpr('surprise', 50);
+    } else if (_tapSoir) {
+      // Soir tardif : expression neutre/lasse — pas de joie, pas de choc
+      window.triggerExpr('fatigue', 40);
     } else {
       // Le jour : compteur de caresses rapprochées
       window._petCount = (window._petCount || 0) + 1;

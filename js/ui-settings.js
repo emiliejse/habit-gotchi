@@ -46,8 +46,12 @@ function ouvrirSnack() {
   //            sont garantis sans avoir à les gérer manuellement dans chaque branche.
   const h = hr();
 
-  // Cas 1 : Nuit (avant 7h ou après 22h)
-  if (h >= 22 || h < 7) {
+  // Cas 1 : Nuit — le Gotchi dort à partir de 23h30
+  // RÔLE : Affiche le popup "dort" uniquement quand le Gotchi est vraiment endormi.
+  // POURQUOI : Aligné sur le seuil sleeping de render.js (23h30, pas 22h).
+  const _mSnack = new Date().getMinutes();
+  const _sleepingSnack = (h === 23 && _mSnack >= 30) || (h >= 0 && h < 7);
+  if (_sleepingSnack) {
     openModal(`
       <div style="text-align:center;padding:10px">
         <div style="font-size:48px;margin-bottom:var(--sp-sm)">🌙</div>
@@ -68,7 +72,7 @@ function ouvrirSnack() {
         <p style="font-size:var(--fs-sm);margin-bottom:var(--sp-md)">
           Ce n'est pas encore l'heure du repas...<br>
           <span style="color:var(--text2);font-size:var(--fs-xs)">
-            Matin 7h-11h • Midi 11h-15h<br>Goûter 15h-17h 🍪 • Soir 18h-22h
+            Matin 7h-11h • Midi 11h-15h<br>Goûter 15h-17h 🍪 • Soir 18h-23h30
           </span>
         </p>
         <button class="btn btn-p" onclick="clModal()" style="width:100%">OK</button>
@@ -1160,7 +1164,13 @@ function checkWelcome() {
       titre = `Ça fait ${joursAbsence} jours... 💜`;
       corps = `${D.g.name} t'a attendue. Tu as perdu <strong>${xpPerdu} XP</strong> pendant ton absence.`;
     }
-  } else if (h >= 22 || h < 7) {
+  } else if ((h === 22 && new Date().getMinutes() >= 30) || h === 23) {
+    // RÔLE : Soir tardif (22h30–23h29) — le Gotchi est dans sa chambre mais pas encore endormi.
+    // POURQUOI : Cohérent avec le pool soirTardif des bulles et le flash chambre à 22h30.
+    titre = `*bâille* 🌙`;
+    corps = getEveningMsg(); // on réutilise les messages de soirée — ton déjà calme
+  } else if ((h === 23 && new Date().getMinutes() >= 30) || (h >= 0 && h < 7)) {
+    // RÔLE : Nuit vraie (23h30–7h) — le Gotchi dort.
     titre = `*chuchote* 🌙`;
     corps = getNightMsg();
   } else if (h < 12) {

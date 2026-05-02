@@ -1689,7 +1689,10 @@ function updBubbleNow() {
   // POURQUOI : hunger est un état passif (fenêtres repas manquées) qui mérite
   //            une expression dédiée, sans écraser les bulles de nuit.
   //            On ne modifie pas energy ni happiness (auto-report utilisatrice uniquement).
-  if (h >= 7 && h < 22 && (window.D.g.hunger ?? 0) >= 2) {
+  //            Plage active : 7h → 23h30 (aligned avec le nouveau seuil de sommeil).
+  const _minsBubble = new Date().getMinutes();
+  const _isSleepingBubble = (h === 23 && _minsBubble >= 30) || (h >= 0 && h < 7);
+  if (h >= 7 && !_isSleepingBubble && (window.D.g.hunger ?? 0) >= 2) {
     const pool = [
       "J'ai le ventre qui gargouille… 🍽️",
       "*regardes de ton côté* Tu as oublié mon repas ? 🥺",
@@ -1713,8 +1716,9 @@ function updBubbleNow() {
   //            ensureMealsToday() est la source de vérité pour les repas du jour.
   //            Le pool est lu depuis user_config (src.repas) pour respecter
   //            la personnalité — fallback sur des phrases contextuelles si absent.
-  if (h >= 7 && h < 22) {
-    const mins = new Date().getMinutes();
+  // RÔLE : Bulles repas actives de 7h à 23h30 (le Gotchi n'est pas encore couché).
+  if (h >= 7 && !_isSleepingBubble) {
+    const mins = _minsBubble; // déjà calculé plus haut — pas de redéclaration
     const hFloat = h + mins / 60;
     const meals   = typeof ensureMealsToday === 'function' ? ensureMealsToday() : {};
     const WINDOWS = window.HG_CONFIG?.MEAL_WINDOWS ?? {};
@@ -1750,9 +1754,31 @@ function updBubbleNow() {
     }
   }
 
-  // ── Priorité 3 : Nuit ──────────────────────────────────────────
-  // RÔLE : Bulles "nuit" à partir de 23h30 (sommeil effectif du Gotchi).
-  const minsNuit = new Date().getMinutes();
+  // ── Priorité 3a : Soir tardif (22h30–23h30) ─────────────────────
+  // RÔLE : Entre la chambre forcée (22h30) et le vrai sommeil (23h30),
+  //        le Gotchi est dans sa chambre mais pas encore endormi — il veut juste la paix.
+  // POURQUOI : Évite les bulles normales de soirée trop enjouées, sans tomber dans le Zzz.
+  const _isSoirTardif = (h === 22 && _minsBubble >= 30) || (h === 23 && _minsBubble < 30);
+  if (_isSoirTardif) {
+    const poolSoirTardif = src.soirTardif?.length ? src.soirTardif : [
+      "*bâille* J'ai envie d'être tranquille… 🌙",
+      "C'est l'heure de décompresser. Chut. ✿",
+      "*s'étire* Je me prépare à dormir… 💤",
+      "Laisse-moi souffler un peu 🌸",
+      "*regarde par la fenêtre* La nuit est là… 🌃",
+    ];
+    const el = document.getElementById('bubble');
+    if (el) {
+      let bulle = poolSoirTardif[Math.floor(Math.random() * poolSoirTardif.length)];
+      bulle = bulle.replace('{{diminutif}}', D.g.userNickname || D.g.userName || 'toi');
+      el.textContent = bulle;
+    }
+    return;
+  }
+
+  // ── Priorité 3b : Nuit (23h30–7h) ────────────────────────────────
+  // RÔLE : Bulles "nuit" une fois le Gotchi endormi.
+  const minsNuit = _minsBubble; // déjà calculé — pas de redéclaration
   if ((h === 23 && minsNuit >= 30) || (h >= 0 && h < 7)) {
     const pool = src.nuit || MSG.nuit;  // fallback → pool défensif centralisé (cf. MSG l.179)
     const el = document.getElementById('bubble');

@@ -607,10 +607,15 @@ Ton bilan de la semaine apparaîtra ici...
        absorbent les encoches en mode paysage. -->
 
   <!-- ── En-tête ── -->
+  <!-- POURQUOI position:relative : évite que .modal-close (position:absolute) s'échappe
+       vers l'overlay parent et ignore le padding safe-area. Le bouton reste dans le flux
+       du header grâce à position:static via la classe .hdr-garden-close. -->
   <div style="display:flex;align-items:center;justify-content:space-between;
               padding:12px 16px 8px;flex-shrink:0;border-bottom:1px solid var(--border)">
     <h2 style="margin:0;font-family:var(--font-title);color:var(--text)">🎨 Atelier</h2>
-    <button class="modal-close" onclick="fermerAtelier()" aria-label="Fermer l'atelier">✕</button>
+    <!-- hdr-garden-close : même style que modal-close mais position:static
+         → reste dans le flux flex, respecte le padding-right de l'overlay -->
+    <button class="hdr-garden-close" onclick="fermerAtelier()" aria-label="Fermer l'atelier">✕</button>
   </div>
 
   <!-- ── Zone canvas : prend tout l'espace disponible entre header et footer ── -->

@@ -472,7 +472,9 @@ async function acheterPropClaude() {
   ...(D.g.props || []).map(p => `${p.nom} (${p.type})`),
   ...(window.PROPS_LIB || []).map(p => `${p.nom} (${p.type})`)
 ])].join(', ') || 'aucun';
-  const themes = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
+  // RÔLE : Utilise la liste perso si définie dans D.g.propThemes, sinon la liste par défaut.
+  // POURQUOI : Permet à l'utilisatrice de personnaliser les thèmes depuis les Réglages.
+  const themes = (D.g.propThemes && D.g.propThemes.length) ? D.g.propThemes : ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
   const theme  = themes[Math.floor(Math.random() * themes.length)];
   const ctx    = window.AI_CONTEXTS;
 

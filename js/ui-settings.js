@@ -583,6 +583,76 @@ et.innerHTML = window.HG_CONFIG.ENV_THEMES.map(t => `
   }
 } // ← ferme renderPerso()
 
+/* ─── THÈMES IA ──────────────────────────────────────────────────────────── */
+// RÔLE : Liste de mots d'inspiration par défaut pour la génération de props IA.
+// POURQUOI : Centralisée ici pour être partagée entre renderPropThemes() et resetPropThemes().
+const PROP_THEMES_DEFAULT = ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
+
+/**
+ * RÔLE : Affiche les tags de thèmes IA dans la section Réglages.
+ * POURQUOI : Appelée à l'init et après chaque ajout/suppression pour refléter D.g.propThemes.
+ */
+function renderPropThemes() {
+  const el = document.getElementById('prop-themes-tags');
+  if (!el) return;
+  const themes = window.D.g.propThemes || PROP_THEMES_DEFAULT;
+  el.innerHTML = themes.map((t, i) => `
+    <span onclick="removePropTheme(${i})" style="
+      display:inline-flex;align-items:center;gap:4px;
+      background:var(--lilac);color:#fff;
+      font-size:var(--fs-xs);font-weight:bold;
+      padding:4px 8px;border-radius:20px;cursor:pointer;
+      transition:.15s;user-select:none;" title="Supprimer">
+      ${escape(t)} <span style="opacity:.7;font-size:10px">✕</span>
+    </span>`).join('');
+}
+
+/**
+ * RÔLE : Ajoute un mot à la liste de thèmes IA.
+ * POURQUOI : Lit l'input, valide (non vide, non dupliqué), sauvegarde, re-render.
+ */
+function addPropTheme() {
+  const inp = document.getElementById('prop-theme-inp');
+  if (!inp) return;
+  const val = inp.value.trim().toLowerCase();
+  if (!val) return;
+  // Initialise depuis la liste par défaut si jamais modifiée
+  if (!window.D.g.propThemes) window.D.g.propThemes = [...PROP_THEMES_DEFAULT];
+  if (window.D.g.propThemes.includes(val)) { toast(`"${escape(val)}" est déjà dans la liste`); return; }
+  window.D.g.propThemes.push(val);
+  save();
+  inp.value = '';
+  renderPropThemes();
+}
+
+/**
+ * RÔLE : Supprime un thème par son index dans la liste.
+ * POURQUOI : Le clic sur un tag passe son index — on splice et on re-render.
+ */
+function removePropTheme(i) {
+  if (!window.D.g.propThemes) window.D.g.propThemes = [...PROP_THEMES_DEFAULT];
+  if (window.D.g.propThemes.length <= 1) { toast('Il faut au moins un thème !'); return; }
+  window.D.g.propThemes.splice(i, 1);
+  save();
+  renderPropThemes();
+}
+
+/**
+ * RÔLE : Restaure la liste de thèmes par défaut.
+ * POURQUOI : Permet de repartir de zéro si la liste personnalisée ne convient plus.
+ */
+function resetPropThemes() {
+  window.D.g.propThemes = [...PROP_THEMES_DEFAULT];
+  save();
+  renderPropThemes();
+  toast('Thèmes restaurés 🎨');
+}
+
+// Exposer sur window pour les onclick HTML
+window.addPropTheme    = addPropTheme;
+window.removePropTheme = removePropTheme;
+window.resetPropThemes = resetPropThemes;
+
 function applyUIPalette(id, silent = false) {
   const p = window.HG_CONFIG.UI_PALETTES.find(x => x.id === id); if (!p) return;
   document.documentElement.style.setProperty('--bg',        p.bg);
@@ -1609,6 +1679,7 @@ window.initUI = function() {
   renderHabs();
   renderProps();
   restorePerso();
+  renderPropThemes(); // RÔLE : Initialise les tags de thèmes IA dans les Réglages
   initMoodPicker();
   checkWelcome();
   updBubbleNow();

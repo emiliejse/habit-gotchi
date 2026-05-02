@@ -176,7 +176,7 @@ const MOUTH_COLORS = [
  * le moteur de rendu ne plante pas ("Cannot read properties of undefined").
  */
 const ENV_THEMES = [
-  { id:'pastel', label:'Pastel', icon:'🌸',
+  { id:'pastel', label:'Printemps', icon:'🌸',
     // parc
     sky1:'#b8d4f0', sky2:'#d8e8f8',
     gnd:'#a8d898',  gndDk:'#90c480',

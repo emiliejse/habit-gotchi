@@ -155,6 +155,78 @@
         [1,2,1],
         [0,1,0]
       ]
-    }
+    },
+    {
+  "id": "obj_1777708275481",
+  "nom": "Barrette Libellule",
+  "type": "accessoire",
+  "emoji": "🦋",
+  "categorie": "tete",
+  "cout": 0,
+  "ancrage": "tete",
+  "pxSize": 3,
+  "palette": [
+    "transparent",
+    "#2d5a3f",
+    "#4a9d6f",
+    "#7ec9a3",
+    "#a8e6cf"
+  ],
+  "pixels": [
+    [0,0,3,0,3,0,0],
+    [0,3,4,0,4,3,0],
+    [3,4,2,1,2,4,3],
+    [0,1,1,1,1,1,0],
+    [0,0,1,2,1,0,0]
+  ]
+},
+{
+  "id": "obj_1777708234524",
+  "nom": "Broche Abeille",
+  "type": "accessoire",
+  "emoji": "🐝",
+  "categorie": "tete",
+  "cout": 0,
+  "ancrage": "tete",
+  "pxSize": 3,
+  "palette": [
+    "transparent",
+    "#2d2d2d",
+    "#ffd700",
+    "#ffeb3b",
+    "#ffffff"
+  ],
+  "pixels": [
+    [0,0,1,1,0,0],
+    [0,1,2,2,1,0],
+    [1,2,3,3,2,1],
+    [1,2,2,2,2,1],
+    [0,4,1,1,4,0]
+  ]
+},
+{
+  "id": "obj_1777708209824",
+  "nom": "Broche Papillon",
+  "type": "accessoire",
+  "emoji": "🦋",
+  "categorie": "tete",
+  "cout": 0,
+  "ancrage": "tete",
+  "pxSize": 3,
+  "palette": [
+    "transparent",
+    "#8B4789",
+    "#D4A5D4",
+    "#F0E68C",
+    "#FFD700"
+  ],
+  "pixels": [
+    [0,0,2,3,0,3,2,0,0],
+    [0,2,1,2,0,2,1,2,0],
+    [2,1,1,2,0,2,1,1,2],
+    [2,1,2,4,4,4,2,1,2],
+    [0,2,1,2,4,2,1,2,0]
+  ]
+}
   ]
 }

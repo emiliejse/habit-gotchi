@@ -1053,15 +1053,30 @@ const LAYERS_TEEN = [
 
   // ── Yeux ouverts normaux (amande 2 rangées) ─────────────────────
   // POURQUOI : masqués pendant le bâillement (yeux-fermes prend le dessus).
+  //            Masqués aussi pendant joie et sourire-auto (yeux-arc prend le dessus).
   {
     id: 'yeux-ouverts',
     fill: 'C.eye',
-    when: (pm) => !pm.sl && !pm.blink && !isMood('surprise') && !isMood('baillement'),
+    when: (pm) => !pm.sl && !pm.blink && !isMood('surprise') && !isMood('baillement') && !isMood('joie') && !isMood('sourire-auto'),
     rects: [
       { x: -3, y: 2, w: 2, h: 1 },   // œil gauche haut large
       { x: -2, y: 3, w: 1, h: 1 },   // œil gauche bas étroit
       { x:  1, y: 2, w: 2, h: 1 },   // œil droit haut large
       { x:  1, y: 3, w: 1, h: 1 },   // œil droit bas étroit
+    ]
+  },
+
+  // ── Yeux arc ^^ (joie ou sourire spontané) ──────────────────────
+  // RÔLE : Yeux en croissant — rangée haute uniquement, rangée basse absente.
+  // POURQUOI : Supprimer la rangée basse crée un œil "plat en bas" qui lit
+  //            comme un arc ^^ en pixel art minimaliste.
+  {
+    id: 'yeux-arc',
+    fill: 'C.eye',
+    when: (pm) => !pm.sl && !pm.blink && !isMood('baillement') && (isMood('joie') || isMood('sourire-auto')),
+    rects: [
+      { x: -3, y: 2, w: 2, h: 1 },   // arc gauche (rangée haute seulement)
+      { x:  1, y: 2, w: 2, h: 1 },   // arc droit  (rangée haute seulement)
     ]
   },
 
@@ -1587,15 +1602,30 @@ const LAYERS_ADULT = [
 
   // ── Yeux ouverts normaux (amande 2 rangées) ─────────────────────
   // POURQUOI : masqués pendant le bâillement (yeux-fermes prend le dessus).
+  //            Masqués aussi pendant joie et sourire-auto (yeux-arc prend le dessus).
   {
     id: 'yeux-ouverts',
     fill: 'C.eye',
-    when: (pm) => !pm.sl && !pm.blink && !isMood('surprise') && !isMood('baillement'),
+    when: (pm) => !pm.sl && !pm.blink && !isMood('surprise') && !isMood('baillement') && !isMood('joie') && !isMood('sourire-auto'),
     rects: [
       { x: -3, y: 3, w: 3, h: 1 },   // œil gauche haut large
       { x: -2, y: 4, w: 2, h: 1 },   // œil gauche bas étroit
       { x:  1, y: 3, w: 3, h: 1 },   // œil droit haut large
       { x:  1, y: 4, w: 2, h: 1 },   // œil droit bas étroit
+    ]
+  },
+
+  // ── Yeux arc ^^ (joie ou sourire spontané) ──────────────────────
+  // RÔLE : Yeux en croissant — rangée haute uniquement, rangée basse absente.
+  // POURQUOI : Supprimer la rangée basse crée un œil "plat en bas" qui lit
+  //            comme un arc ^^ en pixel art minimaliste.
+  {
+    id: 'yeux-arc',
+    fill: 'C.eye',
+    when: (pm) => !pm.sl && !pm.blink && !isMood('baillement') && (isMood('joie') || isMood('sourire-auto')),
+    rects: [
+      { x: -3, y: 3, w: 3, h: 1 },   // arc gauche (rangée haute seulement)
+      { x:  1, y: 3, w: 3, h: 1 },   // arc droit  (rangée haute seulement)
     ]
   },
 

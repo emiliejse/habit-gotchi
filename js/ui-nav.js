@@ -532,10 +532,10 @@ function openCanvasFullscreen() {
     //          ce qui annule la transition CSS — le panneau apparaît sans glisser.
     void overlay.offsetHeight; // force reflow
 
-    // POURQUOI garden-fullscreen posé ICI (après injection overlay + infos dans le DOM) :
-    // Le canvas passe en z:850 seulement quand l'overlay est déjà prêt à transitionner —
-    // tama et fond apparaissent ensemble en une seule animation, sans séquençage visible.
-    document.body.classList.add('garden-fullscreen');
+    // POURQUOI garden-fullscreen n'est PAS posé ici :
+    // Il est posé immédiatement au tap (voir ci-dessous) pour que p5 bascule en mode
+    // contemplatif instantanément — le canvas ne doit pas afficher le HUD pendant la
+    // transition compact. L'overlay s'ouvre une fois le layout stabilisé.
     overlay.classList.add('open');
 
     lockScroll();
@@ -545,31 +545,33 @@ function openCanvasFullscreen() {
     if (ct) ct.inert = false;
   }
 
-  // RÔLE : Masque l'UI normale dès le tap via garden-preparing — sans toucher #tama-bubble-wrap.
-  // POURQUOI : L'ancien code posait garden-fullscreen immédiatement, ce qui appliquait
-  //            `margin-top: 0 !important` sur #tama-bubble-wrap et annulait instantanément
-  //            la transition compact en cours — transitionend ne se déclenchait alors jamais.
-  //            garden-preparing masque .hdr / .bubble / #dynamic-zone / .menu-languette
-  //            (même effet visuel) sans perturber la transition CSS du wrapper tama.
-  document.body.classList.add('garden-preparing');
+  // RÔLE : Bascule immédiatement en mode jardin dès le tap — masque l'UI ET fait passer
+  //        p5 en mode contemplatif (HUD + sélecteur d'env masqués) sans délai.
+  // POURQUOI garden-fullscreen est posé ICI et non dans _doOpen() :
+  //   - En mode compact, il y a ~400ms de transition CSS à attendre avant d'injecter
+  //     l'overlay (sinon le canvas se positionne depuis le coin supérieur gauche).
+  //   - Pendant ces 400ms, le canvas p5 était visible avec son ancien env (HUD, sélecteur…).
+  //   - Poser garden-fullscreen maintenant fait passer p5 en mode contemplatif immédiatement :
+  //     isGardenFullscreen est lu à chaque frame p5 → le jardin apparaît dès le prochain draw().
+  // POURQUOI ça ne casse plus la transition CSS :
+  //   - L'ancien bug venait du `margin-top: 0 !important` sur #tama-bubble-wrap (maintenant retiré).
+  //   - Sans ce !important, garden-fullscreen n'interfère plus avec la transition compact.
+  document.body.classList.add('garden-preparing', 'garden-fullscreen');
   document.getElementById('hdr-garden')?.removeAttribute('aria-hidden');
 
   // RÔLE : Attend que margin-top de #tama-bubble-wrap atteigne 0 via polling RAF,
-  //        puis pose garden-fullscreen et ouvre l'overlay.
-  // POURQUOI polling RAF plutôt que transitionend : si compact n'était pas actif (ou si la
-  //          transition est déjà terminée au moment du tap), margin-top vaut déjà 0 et on
-  //          passe immédiatement. Robuste dans tous les cas.
+  //        puis injecte l'overlay (canvas bien positionné).
+  // POURQUOI polling RAF plutôt que transitionend : robuste si la transition est déjà
+  //          terminée au moment du tap (margin-top vaut déjà 0 → passage immédiat).
   if (window._canvasFs_wasCompact) {
     const wrap = document.getElementById('tama-bubble-wrap');
     // RÔLE : Boucle RAF — vérifie à chaque frame si margin-top a atteint 0.
-    // POURQUOI seuil de 1px : getComputedStyle renvoie une valeur réelle en px avec décimales ;
+    // POURQUOI seuil de 1px : getComputedStyle renvoie des px avec décimales ;
     //          on accepte < 1px d'écart pour absorber les arrondis de rendu.
     function _waitForLayout() {
       const mt = wrap ? parseFloat(getComputedStyle(wrap).marginTop) : 0;
       if (Math.abs(mt) < 1) {
-        // RÔLE : Transition compact terminée — retire garden-preparing puis ouvre.
-        // POURQUOI garden-fullscreen retiré d'ici : _doOpen() le pose après avoir
-        //          injecté overlay + infos dans le DOM, pour que tout apparaisse ensemble.
+        // Layout stabilisé — retire la classe de préparation et ouvre l'overlay
         document.body.classList.remove('garden-preparing');
         _doOpen();
       } else {
@@ -578,8 +580,7 @@ function openCanvasFullscreen() {
     }
     requestAnimationFrame(_waitForLayout);
   } else {
-    // Pas de transition à attendre — on bascule directement.
-    // POURQUOI garden-fullscreen retiré d'ici : _doOpen() le pose lui-même.
+    // Pas de transition compact — passage direct
     document.body.classList.remove('garden-preparing');
     _doOpen();
   }

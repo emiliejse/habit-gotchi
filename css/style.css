@@ -699,6 +699,16 @@ body {
 }
 .menu-postit--lilac:active { transform: rotate(0.8deg) scale(.95); }
 
+/* RÔLE : Post-it vert menthe pour le bouton Atelier */
+/* POURQUOI : Suit exactement le pattern --rose et --lilac — fond soutenu, rotation légère,
+              couleur de texte foncée assortie. Menthe = créativité / dessin. */
+.menu-postit--mint {
+  background: #b8ecd8; /* vert menthe soutenu, cohérent avec le thème pastel */
+  color: #1a5038;
+  transform: rotate(-0.5deg);
+}
+.menu-postit--mint:active { transform: rotate(-0.5deg) scale(.95); }
+
 @keyframes bookSlideUp {
   0%   { transform: translateY(60px) scale(.95); opacity: 0; }
   70%  { transform: translateY(-6px) scale(1.01); }
@@ -1936,8 +1946,16 @@ body.garden-fullscreen .tama-screen {
   flex: 1;
   display: flex;
   align-items: stretch;
-  overflow: hidden; /* POURQUOI : empêche le texte de déborder de la carte */
-  min-height: 0;    /* POURQUOI : flexbox shrink correct dans un parent flex column */
+  /* RÔLE : Scroll vertical si le contenu dépasse la hauteur disponible */
+  /* POURQUOI overflow-y:auto et non hidden : sur mobile le contenu de l'étiquette
+     peut dépasser l'espace restant sous le tama — il faut pouvoir faire défiler
+     la carte sans bouger le canvas. Le lockScroll() reconnaît automatiquement
+     cet élément comme scrollable (overflowY=auto + scrollHeight>clientHeight)
+     et laisse passer les touchmove qui le ciblent. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* momentum scroll iOS */
+  min-height: 0; /* POURQUOI : flexbox shrink correct dans un parent flex column */
 }
 
 /* ── Carte étiquette jardin ──────────────────────────────────────── */
@@ -1948,7 +1966,11 @@ body.garden-fullscreen .tama-screen {
   background: var(--card);
   border: 1.5px solid var(--border);
   border-radius: var(--r-lg);
-  overflow: hidden;
+  /* RÔLE : Laisse le contenu déborder vers le scroll du parent .canvas-fs-info */
+  /* POURQUOI visible et non hidden : .canvas-fs-info gère désormais le clip et le scroll —
+     si .garden-label reste à overflow:hidden, il tronque son propre contenu avant
+     que le parent ait pu créer la scrollbar. */
+  overflow: visible;
   min-height: 0;
 }
 

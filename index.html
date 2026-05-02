@@ -533,7 +533,10 @@ Ton bilan de la semaine apparaîtra ici...
          POURQUOI onclick + stopPropagation : évite que le clic ne ferme le menu-overlay en même temps -->
     <div class="menu-sticker" title="Voir le jardin en grand"
          onclick="event.stopPropagation(); toggleMenu(); openCanvasFullscreen()">🌱</div>
-    <div class="menu-sticker menu-sticker--disabled" title="Atelier (bientôt)">🎨</div>
+    <!-- RÔLE : Raccourci rapide vers l'Atelier pixel art — branché sur ouvrirAtelier()
+         POURQUOI : stopPropagation évite de fermer le menu-overlay en même temps que l'atelier s'ouvre -->
+    <div class="menu-sticker" title="Atelier pixel art"
+         onclick="event.stopPropagation(); toggleMenu(); ouvrirAtelier()">🎨</div>
     <div class="menu-sticker menu-sticker--disabled" title="Jeux (bientôt)">🎮</div>
   </div>
 
@@ -583,9 +586,53 @@ Ton bilan de la semaine apparaîtra ici...
       <span style="font-family:var(--font-title);font-size:22px;font-weight:700">💜 Besoin de soutien</span>
       <span id="soutien-flowers" class="thought-flowers"></span>
     </button>
+    <!-- RÔLE : Post-it d'accès rapide à l'Atelier pixel art -->
+    <!-- POURQUOI : Même pattern que les deux post-its existants — stopPropagation évite
+                   de fermer involontairement le menu-overlay en cliquant sur le bouton -->
+    <button class="menu-postit menu-postit--mint"
+      onclick="event.stopPropagation();toggleMenu();ouvrirAtelier()"
+      style="display:flex;flex-direction:column;align-items:center;gap:4px">
+      <span style="font-family:var(--font-title);font-size:22px;font-weight:700">🎨 Atelier</span>
+    </button>
   </div>
 </div>
 </div> <!-- ferme #menu-overlay -->
+
+<!-- Overlay Atelier — éditeur pixel art pour peindre le tableau de la chambre -->
+<!-- SYSTÈME : S5 (UI & Design) -->
+<!-- POURQUOI .app-overlay : position:fixed;inset:0;pointer-events:auto (même pattern que tablet-overlay) -->
+<!-- z-index : 500 — entre tablet-overlay:400 et etats-overlay:1000 -->
+<div class="app-overlay" id="atelier-overlay" style="display:none;z-index:500;overflow-y:auto;align-items:flex-start;justify-content:center">
+  <!-- onclick="event.stopPropagation()" : les clics dans le panel ne remontent pas à l'overlay -->
+  <!-- POURQUOI : Pas de fermeture au clic sur le fond (l'utilisatrice peut cliquer à côté du canvas sans perdre son travail) -->
+  <div id="atelier-panel" onclick="event.stopPropagation()"
+    style="background:var(--card);border-radius:16px;margin:16px auto;max-width:360px;padding:16px;position:relative;width:calc(100% - 32px)">
+
+    <!-- Bouton fermer -->
+    <button onclick="fermerAtelier()" aria-label="Fermer l'atelier"
+      style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text)">✕</button>
+
+    <h2 style="margin:0 0 12px;font-family:var(--font-title)">🎨 Atelier</h2>
+
+    <!-- Canvas pixel art — dimensionné par ui-atelier.js (256×192px) -->
+    <!-- image-rendering:pixelated : conserve les bords nets sans antialiasing -->
+    <!-- touch-action:none : confie la gestion du touch aux pointer events JS -->
+    <div style="display:flex;justify-content:center;margin-bottom:12px">
+      <canvas id="atelier-canvas"
+        style="border:2px solid var(--border);border-radius:4px;image-rendering:pixelated;touch-action:none"></canvas>
+    </div>
+
+    <!-- Palette de couleurs + gomme — rendue par ui-atelier.js -->
+    <div id="atelier-palette" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:12px"></div>
+
+    <!-- Galerie des tableaux sauvegardés — rendue par ui-atelier.js -->
+    <div id="atelier-galerie" style="margin-bottom:12px"></div>
+
+    <!-- Bouton "Afficher dans la chambre" — met à jour D.atelier.activeId -->
+    <button id="btn-atelier-activer" onclick="_atelierSetActif()"
+      class="btn btn-p" style="width:100%">Afficher dans la chambre</button>
+  </div>
+</div>
 
 <!-- Modal générique (SYSTEM 5: UI/Design) -->
 <div id="modal" style="display:none" onclick="clModal(event)">
@@ -634,6 +681,7 @@ Ton bilan de la semaine apparaîtra ici...
   - ui-journal.js     : Journal, PIN, mood picker, export (S6)
   - ui-settings.js    : initUI, renderPerso, renderProg, ouvrirSnack (S5)
   - ui-agenda.js      : Agenda jour/mois/cycle, RDV, règles (S6)
+  - ui-atelier.js     : Éditeur pixel art Atelier, galerie, palette (S5)
   - ui-nav.js         : go(), syncConsoleHeight(), updDate() — DOIT RESTER EN DERNIER (S7)
   ============================================================
 -->
@@ -658,6 +706,8 @@ Ton bilan de la semaine apparaîtra ici...
 <script src="js/ui-settings.js"></script>
 <!-- ui-agenda.js : agenda jour/mois/cycle -->
 <script src="js/ui-agenda.js"></script>
+<!-- ui-atelier.js : éditeur pixel art Atelier (S5) — après ui-agenda.js, avant ui-nav.js -->
+<script src="js/ui-atelier.js"></script>
 <!-- ui-nav.js EN DERNIER : go() appelle toutes les render* des modules ci-dessus -->
 <script src="js/ui-nav.js"></script>
 

@@ -1,5 +1,16 @@
 # AUDIT_DESIGN.md — HabitGotchi v4.5
 
+Audit design / CSS / HTML / assets — mise à jour **2026-05-02** (modif. Atelier Partie 2).
+
+> **Feature Atelier — Partie 2 : design UI 2026-05-02**
+> - **Post-it `.menu-postit--mint`** : fond `#b8ecd8` (vert menthe), texte `#1a5038`, rotation `-0.5deg`. Pattern identique à --rose (rotation -1deg) et --lilac (rotation +0.8deg). Troisième post-it dans `.menu-postits`, sous "Besoin de soutien".
+> - **Overlay `#atelier-overlay`** : z-index:500 (entre tablet-overlay:400 et etats-overlay:1000). `.app-overlay` + `overflow-y:auto` pour scroll interne si le panel dépasse la hauteur écran. Panel max-width:360px centré, `border-radius:16px`, padding:16px. Bouton ✕ positionné `absolute top:12px right:12px`.
+> - **Canvas `#atelier-canvas`** : 256×192px (rendu par JS), `image-rendering:pixelated` (bords nets), `touch-action:none` (pointer events gérés en JS). Bordure `var(--border)`.
+> - **Palette** `#atelier-palette` : boutons ronds 32×32px, gap:6px, flex-wrap. Ring visuel sur couleur active (`outline:3px solid var(--text);outline-offset:2px`). Gomme : fond `var(--bg)`, emoji 🧹.
+> - **Galerie** `#atelier-galerie` : vignettes 48×36px canvas off-screen, `image-rendering:pixelated`. Badge ★ absolu top:-6px right:-4px sur l'activeId. Bouton "+ Nouveau" 48×36px, `border:2px dashed var(--border)`.
+> - **Bouton `#btn-atelier-activer`** : classe `btn btn-p`, pleine largeur. Texte et opacité mis à jour selon si le tableau est déjà actif (opacity:0.6) ou non (opacity:1).
+> - **Sticker 🎨 dans `.menu-stickers`** : `menu-sticker--disabled` retiré, `onclick="event.stopPropagation(); toggleMenu(); ouvrirAtelier()"` ajouté. Le sticker et le post-it --mint sont maintenant deux points d'entrée vers le même écran Atelier.
+
 Audit design / CSS / HTML / assets — mise à jour **2026-05-01** (modif. joues 2026-05-01).
 Périmètre : `css/style.css`, `index.html`, `js/ui-*.js` (HTML & styles inline).
 Hors périmètre : `js/render.js`, `js/envs.js`, `js/render-sprites.js`, logique JS pure (`app.js`).

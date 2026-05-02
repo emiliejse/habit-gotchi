@@ -222,109 +222,124 @@ function go(t) {
 /**
  * RÔLE : Génère un nom poétique unique pour le jardin à partir de sa seed.
  * POURQUOI déterministe : même seed → même nom à chaque lancement.
- *          On utilise _gardenRng() si disponible, sinon un modulo simple.
- *
- * Format : "Jardin [adjectif] de [nom]"
- * Exemples : "Jardin Doré de Lunette", "Jardin Brumeux de Pépin"
+ * Format : "[adjectif] de [nom]" — ex : "Doré de Lunette", "Brumeux de Fétu"
  */
 function _gardenName(seed) {
-  const adjs  = ['Doré','Brumeux','Fleuri','Sauvage','Endormi','Étrange','Moussu','Serein','Murmureux','Secret'];
-  const noms  = ['Lunette','Pépin','Noisette','Brindille','Caillou','Grigri','Paquerette','Lilas','Fétu','Corolle'];
-  // POURQUOI deux modulos différents : évite que adj et nom soient corrélés (même index)
-  const adj = adjs[seed % adjs.length];
-  const nom = noms[Math.floor(seed / adjs.length) % noms.length];
-  return `${adj} de ${nom}`;
+  const adjs = ['Doré','Brumeux','Fleuri','Sauvage','Endormi','Moussu','Serein','Murmureux','Secret','Vif'];
+  const noms  = ['Lunette','Pépin','Noisette','Brindille','Caillou','Pâquerette','Lilas','Fétu','Corolle','Grigri'];
+  return adjs[seed % adjs.length] + ' de ' + noms[Math.floor(seed / adjs.length) % noms.length];
 }
 
+/**
+ * RÔLE : Construit le HTML de l'étiquette de jardinage plein écran.
+ * Retourne une chaîne HTML à injecter dans .canvas-fs-info (enfant de #console-top).
+ *
+ * Structure HTML :
+ *   .garden-label           — carte rectangulaire principale
+ *   .garden-label-title     — nom + date de naissance du jardin
+ *   .garden-label-divider   — trait horizontal décoratif
+ *   .garden-label-grid      — liste de lignes icône + valeur
+ *   .gli                    — icône de chaque ligne
+ *   .garden-label-footer    — barre de vitalité + état textuel
+ */
 function _buildGardenInfo() {
   const g = window.D && window.D.g;
-  if (!g) return '';
+  if (!g || g.activeEnv !== 'jardin') return '';
 
-  // RÔLE : Bloc vide si l'env actif n'est pas jardin
-  if (g.activeEnv !== 'jardin') return '';
-
-  // ── Ligne 1 : Éléments vivants + états ────────────────────────────
-  // RÔLE : Lit window._gardenElements (généré par initGarden()) pour qualifier le jardin.
-  //        mature = age ≥ 70% maxAge · fane = age ≥ maxAge - 1
   const elements = window._gardenElements || [];
-  const total    = elements.length;
+  const seed     = g.gardenSeed;
 
-  let ligneElements;
-  if (total > 0) {
-    const enFleur = elements.filter(e => e.age >= Math.floor((e.maxAge || 10) * 0.7)).length;
-    const fanent  = elements.filter(e => e.age >= (e.maxAge || 10) - 1).length;
-    ligneElements = `🌿 ${total} élément${total > 1 ? 's' : ''}`;
-    if (enFleur > 0) ligneElements += ` · ${enFleur} en fleur 🌸`;
-    if (fanent  > 0) ligneElements += ` · ${fanent} fane${fanent > 1 ? 'nt' : ''} 🍂`;
-  } else {
-    ligneElements = '🌱 Le jardin sommeille encore…';
+  // ── Identité ────────────────────────────────────────────────────
+  const nom  = seed != null ? _gardenName(seed) : 'Inconnu';
+  const born = g.gardenBorn
+    ? new Date(g.gardenBorn).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : null;
+
+  // ── Composition par type ─────────────────────────────────────────
+  // RÔLE : Compte chaque type d'élément et formate la liste
+  const counts = {};
+  elements.forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
+  const ICONS_TYPE = { fleur: '🌸', herbe: '🌿', pierre: '🪨', champignon: '🍄', arbuste: '🌳' };
+  const comp = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([type, n]) => `${ICONS_TYPE[type] || '·'}&thinsp;${n} ${type}${n > 1 ? 's' : ''}`)
+    .join(' &middot; ') || 'Aucun élément';
+
+  // ── États de maturité ────────────────────────────────────────────
+  const total   = elements.length;
+  const matures = elements.filter(e => e.age >= Math.floor((e.maxAge || 10) * 0.7)).length;
+  const fanent  = elements.filter(e => e.age >= (e.maxAge || 10) - 1).length;
+  const jeunes  = elements.filter(e => e.age <= 1).length;
+  const ageMoyen = total > 0
+    ? Math.round(elements.reduce((s, e) => s + (e.age || 0), 0) / total)
+    : 0;
+
+  let etatParts = [];
+  if (matures > 0) etatParts.push(`${matures} mature${matures > 1 ? 's' : ''}`);
+  if (fanent  > 0) etatParts.push(`${fanent} fane${fanent > 1 ? 'nt' : ''}`);
+  if (jeunes  > 0) etatParts.push(`${jeunes} nouveau${jeunes > 1 ? 'x' : ''}`);
+  const etatStr = etatParts.length ? etatParts.join(' &middot; ') + ` &middot; &oslash;&thinsp;${ageMoyen}j` : `&oslash;&thinsp;${ageMoyen}j`;
+
+  // ── Vitalité (même calcul que garden.js) ─────────────────────────
+  const habCatIds = (window.D.habits || []).map(h => h.catId);
+  const todayKey  = typeof today === 'function' ? today() : null;
+  const logToday  = (todayKey && window.D.log?.[todayKey]) || [];
+  const habsDone  = logToday.filter(id => habCatIds.includes(id)).length;
+  const habsTotal = habCatIds.length;
+  const habRatio  = habsTotal > 0 ? habsDone / habsTotal : 0.5;
+  const vitalite  = ((g.happiness ?? 2.5) + (g.energy ?? 2.5)) / 10;
+  const score     = Math.min(habRatio, vitalite);
+  const etatJardin = score >= 0.7 ? 'Épanoui ✨'
+                   : score >= 0.5 ? 'En bonne santé'
+                   : score >= 0.3 ? 'Fatigué'
+                   : 'Besoin d\'attention';
+  const nbBarres = Math.round(score * 5);
+  const barres   = '▓'.repeat(nbBarres) + '░'.repeat(5 - nbBarres);
+
+  // ── Habitudes ────────────────────────────────────────────────────
+  let habsTxt = '';
+  if (habsTotal > 0) {
+    if (habsDone >= habsTotal) habsTxt = `${habsDone}/${habsTotal} &mdash; jardin rayonnant`;
+    else                       habsTxt = `${habsDone}/${habsTotal} cochées aujourd'hui`;
   }
 
-  // ── Ligne 2 : Influence météo ──────────────────────────────────────
-  // RÔLE : Message météo contextuel si meteoData est disponible
-  let ligneMeteo = '';
+  // ── Météo ────────────────────────────────────────────────────────
+  let meteoTxt = '';
   const meteo = g.meteoData;
   if (meteo && meteo.desc) {
     const desc = (meteo.desc || '').toLowerCase();
     let icon = '🌤';
-    if (desc.includes('pluie') || desc.includes('rain'))             icon = '🌧';
-    if (desc.includes('neige') || desc.includes('snow'))             icon = '❄️';
-    if (desc.includes('orage') || desc.includes('storm'))            icon = '⛈';
-    if (desc.includes('nuage') || desc.includes('cloud'))            icon = '☁️';
+    if (desc.includes('pluie') || desc.includes('rain'))                           icon = '🌧';
+    if (desc.includes('neige') || desc.includes('snow'))                           icon = '❄️';
+    if (desc.includes('orage') || desc.includes('storm'))                          icon = '⛈';
+    if (desc.includes('nuage') || desc.includes('cloud'))                          icon = '☁️';
     if (desc.includes('soleil') || desc.includes('sun') || desc.includes('clear')) icon = '☀️';
-    if (desc.includes('brouil') || desc.includes('fog'))             icon = '🌫';
-    ligneMeteo = meteo.rain > 0
-      ? `${icon} Pluie récente — les champignons poussent`
-      : `${icon} ${escape(meteo.desc)}`;
+    if (desc.includes('brouil') || desc.includes('fog'))                           icon = '🌫';
+    meteoTxt = meteo.rain > 0
+      ? `${icon}&thinsp;Pluie récente &mdash; champignons favorisés`
+      : `${icon}&thinsp;${escape(meteo.desc)}`;
   }
 
-  // ── Ligne 3 : Influence habitudes ─────────────────────────────────
-  // RÔLE : Compte les catégories cochées aujourd'hui dans D.log[today()]
-  // POURQUOI D.log[td] est un tableau de catIds (strings) — .length = nb de coches du jour
-  // POURQUOI on soustrait les catégories "hors-habitudes" : D.log peut contenir des entrées
-  //          autres (meals, etc.) selon l'usage — on filtre sur D.habits pour être précis.
-  let ligneHabs = '';
-  const todayKey  = typeof today === 'function' ? today() : null;
-  const logToday  = (todayKey && window.D.log && window.D.log[todayKey]) ? window.D.log[todayKey] : [];
-  // RÔLE : Ne compte que les IDs présents dans D.habits (catId réels de l'utilisatrice)
-  const habCatIds = (window.D.habits || []).map(h => h.catId);
-  const habsDone  = logToday.filter(id => habCatIds.includes(id)).length;
-  const habsTotal = habCatIds.length;
-
-  if (habsDone >= habsTotal && habsTotal > 0) {
-    ligneHabs = `✨ Toutes les intentions cochées — le jardin rayonne`;
-  } else if (habsDone >= 4) {
-    ligneHabs = `✿ ${habsDone} intentions cochées aujourd'hui`;
-  } else if (habsDone > 0) {
-    ligneHabs = `✿ ${habsDone} intention${habsDone > 1 ? 's' : ''} cochée${habsDone > 1 ? 's' : ''} aujourd'hui`;
-  }
-  // POURQUOI silence si 0 : pas de culpabilisation
-
-  // ── Ligne 4 : Identité du jardin ──────────────────────────────────
-  // RÔLE : Nom poétique généré depuis la seed + date de naissance propre au jardin.
-  // POURQUOI gardenBorn (D.g) et pas firstLaunch : chaque regénération (resetGarden)
-  //          pose une nouvelle gardenBorn dans initGarden() — la date reflète
-  //          la vraie naissance de CE jardin, pas de la save globale.
-  let ligneIdentite = '';
-  const seed = g.gardenSeed;
-  if (seed != null) {
-    const nom  = _gardenName(seed);
-    const born = g.gardenBorn
-      ? new Date(g.gardenBorn).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-      : null;
-    ligneIdentite = born ? `🪴 Jardin ${nom} · né le ${born}` : `🪴 Jardin ${nom}`;
-  }
-
-  // ── Assemblage HTML en étiquettes séparées ────────────────────────
-  // RÔLE : Chaque ligne devient un <span class="garden-info-tag"> pour le style étiquette
-  // POURQUOI escape() : les strings peuvent contenir des données utilisateur (desc météo)
-  const tags = [ligneElements, ligneMeteo, ligneHabs, ligneIdentite]
-    .filter(Boolean)
-    .map(l => `<span class="garden-info-tag">${escape(l)}</span>`)
-    .join('');
-
-  return tags;
-}
+  // ── HTML final ───────────────────────────────────────────────────
+  // RÔLE : Carte unique style étiquette de jardinerie — titre, données, barre vitalité
+  return `<div class="garden-label">
+  <div class="garden-label-title">
+    🪴 Jardin ${escape(nom)}
+    ${born ? `<span class="garden-label-born">né le ${escape(born)}</span>` : ''}
+  </div>
+  <div class="garden-label-divider"></div>
+  <div class="garden-label-grid">
+    <div class="garden-label-row"><span class="gli">🌿</span><span>${total} élément${total > 1 ? 's' : ''} &middot; ${comp}</span></div>
+    <div class="garden-label-row"><span class="gli">🕰</span><span>${etatStr}</span></div>
+    ${habsTxt  ? `<div class="garden-label-row"><span class="gli">✿</span><span>${habsTxt}</span></div>`  : ''}
+    ${meteoTxt ? `<div class="garden-label-row"><span class="gli">☁️</span><span>${meteoTxt}</span></div>` : ''}
+  </div>
+  <div class="garden-label-divider"></div>
+  <div class="garden-label-footer">
+    <span class="garden-label-state">${escape(etatJardin)}</span>
+    <span class="garden-label-bars">${barres}</span>
+  </div>
+</div>`;
 
 /**
  * RÔLE : Ouvre un overlay plein écran PAR-DESSUS le canvas sans le déplacer.
@@ -345,17 +360,12 @@ function openCanvasFullscreen() {
   // RÔLE : Évite d'ouvrir deux overlays si déjà ouvert
   if (document.getElementById('canvas-fs-overlay')) return;
 
-  // ── Création de l'overlay ────────────────────────────────────────
+  // ── Création de l'overlay (fond coloré uniquement — plus de bouton ✕ ici) ───
+  // RÔLE : L'overlay apporte le fond dégradé palette app. Le bouton ✕ et le titre
+  //        sont dans .hdr-garden (index.html), visible via body.garden-fullscreen CSS.
   const overlay     = document.createElement('div');
   overlay.id        = 'canvas-fs-overlay';
   overlay.className = 'canvas-fullscreen-overlay';
-
-  // RÔLE : Bouton ✕ en position fixed (z:851) — toujours cliquable au-dessus du canvas
-  const closeBtn = document.createElement('button');
-  closeBtn.className   = 'canvas-fs-close';
-  closeBtn.textContent = '✕';
-  closeBtn.setAttribute('aria-label', 'Fermer le plein écran');
-  closeBtn.onclick     = closeCanvasFullscreen;
 
   // RÔLE : Mémorise l'env actif + l'état compact avant de modifier quoi que ce soit.
   // POURQUOI : closeCanvasFullscreen() restaure les deux pour ne rien laisser cassé.
@@ -385,14 +395,13 @@ function openCanvasFullscreen() {
   // RÔLE : Cache le bloc si toujours vide (données jardin absentes — premier lancement)
   if (!infoHTML) infoEl.style.display = 'none';
 
-  // ── Assemblage et injection ──────────────────────────────────────
-  // POURQUOI closeBtn dans l'overlay : le bouton ✕ est en position:fixed, pas affecté
-  //          par le contexte de stacking de l'overlay.
-  overlay.appendChild(closeBtn);
+  // ── Injection de l'overlay (fond uniquement) ────────────────────
   document.body.appendChild(overlay);
 
   // RÔLE : Active la classe sur body — masque l'UI et reconfigure #console-top (z:850)
   document.body.classList.add('garden-fullscreen');
+  // RÔLE : Rend le header jardin accessible (aria-hidden retiré à l'ouverture)
+  document.getElementById('hdr-garden')?.removeAttribute('aria-hidden');
 
   // RÔLE : Injecte infoEl dans #console-top (z:850) et non dans l'overlay (z:800).
   // POURQUOI : #console-top avec bottom:0 couvre tout le viewport et masque tout ce qui
@@ -429,6 +438,8 @@ function closeCanvasFullscreen() {
   if (infoEl) infoEl.remove();
   // RÔLE : Retire la classe garden-fullscreen — l'UI normale reprend son layout
   document.body.classList.remove('garden-fullscreen');
+  // RÔLE : Remet aria-hidden sur le header jardin — masqué hors mode plein écran
+  document.getElementById('hdr-garden')?.setAttribute('aria-hidden', 'true');
   // RÔLE : Restaure compact si le tama était réduit avant l'ouverture
   const consoleEl = document.getElementById('console-top');
   if (consoleEl && window._canvasFs_wasCompact) consoleEl.classList.add('compact');

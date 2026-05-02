@@ -88,6 +88,14 @@
     </button>
   </div>
 
+  <!-- HEADER JARDIN : visible uniquement en mode garden-fullscreen — remplace .hdr -->
+  <!-- RÔLE : Titre "Mon jardin" + croix de fermeture, alignés comme le .hdr standard -->
+  <!-- POURQUOI dans le DOM et pas injecté en JS : plus simple à styler et à cibler -->
+  <div class="hdr-garden" id="hdr-garden" aria-hidden="true">
+    <span class="hdr-garden-title">🌱 Mon jardin</span>
+    <button class="hdr-garden-close menu-btn" onclick="closeCanvasFullscreen()" aria-label="Fermer le jardin">✕</button>
+  </div>
+
   <!-- WRAPPER tama + bulle : animé ensemble en mode compact (glissement vers le haut) -->
   <div id="tama-bubble-wrap">
     <!-- RÔLE : Label vertical de l'onglet courant — visible uniquement en mode compact -->

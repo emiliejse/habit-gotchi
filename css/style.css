@@ -1800,29 +1800,57 @@ input[type="time"] {
   display: none;
 }
 
+/* RÔLE : Header jardin — masqué par défaut, visible uniquement en mode garden-fullscreen */
+.hdr-garden {
+  display: none;
+}
+body.garden-fullscreen .hdr-garden {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 0;
+  /* RÔLE : aria-hidden retiré en JS à l'ouverture — ici on le force visible */
+}
+
+/* RÔLE : Titre "Mon jardin" — style cohérent avec .hdr h1 */
+.hdr-garden-title {
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--lilac);
+  letter-spacing: 0.5px;
+}
+
+/* RÔLE : Bouton ✕ — même style que .menu-btn du .hdr standard */
+.hdr-garden-close {
+  /* hérite de .menu-btn défini plus haut */
+}
+
 /*
   RÔLE : Quand le plein écran jardin est actif, #console-top passe au-dessus de l'overlay
-  et est reconfiguré pour n'afficher que le canvas (sans fond ni bordure).
+  et est reconfiguré pour afficher le tama à la même position qu'en accueil normal.
   POURQUOI z-index 850 : dépasse l'overlay (800) mais reste sous #etats-overlay (1000).
-  POURQUOI bottom:0 : la console occupe tout le viewport en hauteur — le canvas s'ancre en haut,
-  le reste de l'espace est laissé à l'overlay pour les infos jardin.
+  POURQUOI bottom:0 : étend la console sur tout le viewport pour que l'étiquette jardin
+  remplisse l'espace sous le canvas.
+  POURQUOI même padding que l'accueil : le tama reste exactement à sa place habituelle.
 */
 body.garden-fullscreen #console-top {
   z-index: 850;
-  background: var(--bg); /* cohérent avec l'overlay en dessous */
+  background: var(--bg);
   border-bottom: none;
   box-shadow: none;
-  bottom: 0; /* occupe tout le viewport — le canvas reste ancré en haut */
+  bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: calc(var(--sat) + 10px);
+  /* RÔLE : Même padding que l'accueil normal — le tama ne bouge pas */
+  padding-top: calc(var(--sat) + 6px);
   padding-left: var(--app-gutter);
   padding-right: var(--app-gutter);
-  padding-bottom: 10px;
+  padding-bottom: 0;
 }
 
-/* RÔLE : Masque tout le contenu UI dans #console-top sauf le canvas */
+/* RÔLE : Masque le header normal et la bulle — remplacés par .hdr-garden */
 body.garden-fullscreen .hdr,
 body.garden-fullscreen .bubble,
 body.garden-fullscreen #compact-tab-label {
@@ -1839,60 +1867,140 @@ body.garden-fullscreen .menu-languette {
 body.garden-fullscreen #tama-bubble-wrap {
   margin-top: 0 !important;
   width: 100%;
-  max-width: 420px; /* confortable sur grand et petit écran */
+  max-width: 420px;
 }
 
-/* RÔLE : Le shell occupe toute la largeur disponible en plein écran */
+/* RÔLE : Le shell occupe toute la largeur disponible */
 body.garden-fullscreen .tama-shell {
   max-width: 100%;
   padding: 0;
   margin: 0;
 }
 
-/* RÔLE : Légère mise en valeur du canvas en plein écran — bord plus fin, coins plus arrondis */
+/* RÔLE : Coins légèrement plus arrondis en plein écran */
 body.garden-fullscreen .tama-screen {
   border-radius: 14px;
   border-width: 2px;
 }
 
 /*
-  RÔLE : Conteneur des étiquettes d'info jardin — injecté dans #console-top (flex column, z:850).
-  S'affiche naturellement sous .tama-screen dans le flux flex.
+  RÔLE : Conteneur de l'étiquette de jardinage — injecté dans #console-top (flex column, z:850).
+  Prend toute la largeur disponible sous .tama-screen dans le flux flex.
 */
 .canvas-fs-info {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   margin: 10px auto 0;
-  padding: 0 16px;
+  padding: 0 14px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  flex: 1; /* RÔLE : occupe toute la hauteur restante sous le canvas */
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: center;
-  overflow: hidden;
+  align-items: stretch;
 }
 
 /*
-  RÔLE : Étiquette individuelle — style "tag" pixel-art sobre.
-  POURQUOI Nunito (--font-body) et pas Caveat : les infos sont factuelles, lisibles,
-  pas décoratives — Nunito est plus clair à petite taille.
-  POURQUOI fond semi-transparent sur --card : cohérence avec les cards de l'app,
-  lisible sur le fond dégradé de l'overlay.
+  RÔLE : Carte principale "étiquette de jardinerie" — rectangle qui remplit l'espace.
+  Style : fond --card semi-transparent, bordure --border, coins arrondis.
+  Inspiration : étiquette cartonnée avec titre, séparateur, grille de données, footer vitalité.
 */
-.garden-info-tag {
-  display: inline-block;
+.garden-label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   background: var(--card);
   border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  padding: 4px 10px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  padding: 10px 14px;
+  gap: 0;
+}
+
+/* RÔLE : Titre du jardin — nom poétique + date de naissance */
+.garden-label-title {
+  font-family: var(--font-title); /* Caveat — seul usage décoratif */
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-bottom: 7px;
+}
+
+/* RÔLE : Date de naissance — plus petit, discret */
+.garden-label-born {
+  font-size: var(--fs-xs);
+  color: var(--text2);
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+/* RÔLE : Séparateur horizontal pixel-art — pointillé cohérent avec le style */
+.garden-label-divider {
+  height: 1px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--border) 0px,
+    var(--border) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  margin: 0 0 7px;
+}
+
+/* RÔLE : Liste des données — chaque ligne = icône + texte */
+.garden-label-grid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-bottom: 7px;
+}
+
+/* RÔLE : Ligne individuelle — icône à gauche, texte à droite */
+.garden-label-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   font-family: var(--font-body);
   font-size: var(--fs-sm);
   color: var(--text);
   line-height: 1.4;
+}
+
+/* RÔLE : Icône de chaque ligne — taille fixe pour aligner le texte */
+.gli {
+  flex-shrink: 0;
+  width: 18px;
   text-align: center;
-  max-width: 100%;
+  font-size: 13px;
+  margin-top: 1px;
+}
+
+/* RÔLE : Footer vitalité — barre de blocs + état textuel */
+.garden-label-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+/* RÔLE : Label d'état textuel (Épanoui, Fatigué…) */
+.garden-label-state {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  color: var(--text2);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+/* RÔLE : Barre de blocs vitalité — police monospace pour alignement ▓░ */
+.garden-label-bars {
+  font-family: var(--font-terminal);
+  font-size: 13px;
+  color: var(--lilac);
+  letter-spacing: 1px;
+  white-space: nowrap;
 }
 
 /* RÔLE : Séparateur décoratif pixel-art entre les lignes d'infos — discret */

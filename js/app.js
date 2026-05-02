@@ -315,7 +315,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 18; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 20; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)

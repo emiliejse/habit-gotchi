@@ -1856,17 +1856,24 @@ body.garden-fullscreen .tama-screen {
 }
 
 /*
-  RÔLE : Bloc d'infos jardin — positionné dans l'overlay, sous le canvas.
-  POURQUOI pas de padding-top ici : calculé en JS dans openCanvasFullscreen() après
-  mesure de la hauteur réelle de #console-top (getBoundingClientRect).
+  RÔLE : Bloc d'infos jardin — position fixed dans le viewport, sous le canvas.
+  POURQUOI position:fixed (et non dans le flux de l'overlay) : #console-top est z:850
+  et couvre le haut du viewport. L'overlay (z:800) est derrière lui — tout élément
+  dans le flux de l'overlay qui se retrouve "sous" #console-top est invisible.
+  En position:fixed avec top calculé en JS (bas de #console-top + 12px), les infos
+  s'affichent dans la zone visible de l'overlay, sous le canvas.
+  POURQUOI z-index 802 : au-dessus de l'overlay (800) mais sous #console-top (850).
   POURQUOI Caveat (--font-title) : style pixel-art-ish, chaleureux, cohérent avec le gotchi.
   POURQUOI max 4 lignes via max-height + overflow hidden : contrainte brief.
+  top : injecté en JS par openCanvasFullscreen() via infoEl.style.top.
 */
 .canvas-fs-info {
-  /* padding-top positionné par JS — voir openCanvasFullscreen() dans ui-nav.js */
-  padding-top: 0;
-  padding-left: 20px;
-  padding-right: 20px;
+  position: fixed;
+  /* top injecté par JS — voir openCanvasFullscreen() dans ui-nav.js */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 802;
+  padding: 0 20px;
   color: var(--text);
   font-size: 16px;
   line-height: 1.65;

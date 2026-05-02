@@ -334,16 +334,27 @@ function openCanvasFullscreen() {
   closeBtn.setAttribute('aria-label', 'Fermer le plein écran');
   closeBtn.onclick     = closeCanvasFullscreen;
 
+  // RÔLE : Mémorise l'env actif avant de forcer jardin — pour le restaurer à la fermeture.
+  // POURQUOI : closeCanvasFullscreen() remet l'env d'origine, l'utilisatrice ne reste
+  //            pas coincée en jardin après avoir fermé le plein écran.
+  window._canvasFs_prevEnv = (window.D && window.D.g) ? window.D.g.activeEnv : null;
+
+  // RÔLE : Force l'env jardin — le sticker 🌱 amène toujours au jardin, peu importe l'env actif.
+  // POURQUOI on mute D.g.activeEnv avant _buildGardenInfo() : cette fonction lit activeEnv
+  //          pour décider si elle retourne du contenu ou une chaîne vide.
+  // POURQUOI save() : persiste le changement d'env pour que p5 render.js le lise au prochain frame.
+  if (window.D && window.D.g) {
+    window.D.g.activeEnv = 'jardin';
+    save();
+  }
+
   // ── Bloc infos jardin ────────────────────────────────────────────
-  // RÔLE : Infos contextuelles sous le canvas — uniquement pour l'env jardin
-  // POURQUOI positionné dans l'overlay (pas dans #console-top) : l'overlay est z:800,
-  //          en dessous du canvas (z:850). Les infos s'affichent donc sous le tama,
-  //          dans la zone libre du fond coloré. Le padding-top CSS les décale.
+  // RÔLE : Infos contextuelles sous le canvas — env jardin garanti par la ligne ci-dessus.
   const infoHTML = _buildGardenInfo();
   const infoEl   = document.createElement('div');
   infoEl.className = 'canvas-fs-info';
   infoEl.innerHTML = infoHTML;
-  // RÔLE : Cache le bloc si vide (env non-jardin)
+  // RÔLE : Cache le bloc si toujours vide (données jardin absentes — premier lancement)
   if (!infoHTML) infoEl.style.display = 'none';
 
   // ── Assemblage et injection ──────────────────────────────────────
@@ -361,11 +372,13 @@ function openCanvasFullscreen() {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       // RÔLE : Mesure la hauteur réelle de #console-top après reflow CSS garden-fullscreen.
-      // POURQUOI getBoundingClientRect().bottom : donne la position absolue du bas du bloc
-      //          dans le viewport — exactement là où les infos jardin doivent commencer.
+      // POURQUOI getBoundingClientRect().bottom : position absolue du bas du bloc dans le viewport.
+      //          .canvas-fs-info est en position:fixed — son top=consoleBottom+12px
+      //          le place exactement sous le canvas, dans la zone visible de l'overlay.
+      // POURQUOI pas paddingTop : infoEl est en position:fixed, donc dans le viewport,
+      //          pas dans le flux de l'overlay. C'est top qui contrôle sa position verticale.
       const consoleBottom = document.getElementById('console-top')?.getBoundingClientRect().bottom ?? 0;
-      // RÔLE : Ajoute 12px de marge entre le bas du canvas et les infos jardin
-      infoEl.style.paddingTop = (consoleBottom + 12) + 'px';
+      infoEl.style.top = (consoleBottom + 12) + 'px';
 
       requestAnimationFrame(() => overlay.classList.add('open'));
     });
@@ -390,6 +403,14 @@ function closeCanvasFullscreen() {
   if (overlay) overlay.remove();
   // RÔLE : Retire la classe garden-fullscreen — l'UI normale reprend son layout
   document.body.classList.remove('garden-fullscreen');
+  // RÔLE : Restaure l'env qui était actif avant l'ouverture du plein écran.
+  // POURQUOI : openCanvasFullscreen() force jardin — sans cette restauration,
+  //            l'utilisatrice se retrouverait en jardin même après fermeture.
+  if (window.D && window.D.g && window._canvasFs_prevEnv) {
+    window.D.g.activeEnv = window._canvasFs_prevEnv;
+    save();
+  }
+  window._canvasFs_prevEnv = null;
   unlockScroll();
 }
 

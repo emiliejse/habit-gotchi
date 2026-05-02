@@ -1823,12 +1823,28 @@ body.garden-fullscreen .hdr-garden {
   margin: 0;
 }
 
-/* RÔLE : Bouton ✕ — reprend exactement .modal-close mais en position static
-   POURQUOI pas position:absolute : on est dans un flex, pas dans une .modal-box */
+/* RÔLE : Bouton ✕ — visuellement identique à .modal-close, mais sans hériter
+   de son position:absolute ni de son onclick clModal().
+   POURQUOI classe séparée : .modal-close est intercepté par clModal() qui vérifie
+   e.target.id==='modal' — hors contexte #modal ça ne fonctionne pas. */
 .hdr-garden-close {
-  position: static !important; /* neutralise position:absolute de .modal-close */
+  position: static;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: none;
+  font-size: 18px;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background .15s;
   flex-shrink: 0;
 }
+.hdr-garden-close:hover  { background: var(--border); }
+.hdr-garden-close:active { background: var(--border); transform: scale(.9); }
 
 /*
   RÔLE : Quand le plein écran jardin est actif, #console-top passe au-dessus de l'overlay

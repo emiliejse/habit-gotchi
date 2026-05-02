@@ -254,6 +254,16 @@ function defs() {
     catVedetteDate:   null,  // date AAAA-MM-JJ où la catégorie vedette a été tirée
     catVedette:       null,  // catId de l'habitude vedette du jour (+4 pétales au lieu de +2)
     milestoneProps:   [],    // ids des objets milestone déjà offerts (évite les doublons)
+
+      // ── Jardin génératif (Phase 2) ──────────────────────────────
+      // RÔLE : Données persistées du biome Jardin — seed + état des éléments.
+      // POURQUOI : La seed est tirée une seule fois (jamais régénérée) pour que
+      //            le jardin garde sa "personnalité" entre les sessions.
+      //            gardenDay suit la date courante pour déclencher les cycles de vie.
+      //            gardenState mémorise chaque élément (âge, variant…) entre les sessions.
+      gardenSeed:       null,  // number | null — tiré au hasard une seule fois dans initGarden()
+      gardenDay:        '',    // 'AAAA-MM-JJ' — date de la dernière mise à jour du jardin
+      gardenState:      [],    // tableau d'éléments { type, x, age, maxAge, variant }
   };
 }
 
@@ -295,7 +305,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 15; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 16; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -429,6 +439,16 @@ const MIGRATIONS = [
   //            pour les saves existantes. Les nouveaux styles sont un ajout, pas un remplacement.
   function m13(d) {
     d.g.headStyle = d.g.headStyle ?? 'lapin';
+    return d;
+  },
+  // Migration 13→14 : ajout des champs du Jardin Génératif (Phase 2)
+  // RÔLE : Initialise gardenSeed, gardenDay et gardenState pour les saves existantes.
+  // POURQUOI : gardenSeed=null → initGarden() tirera une seed au prochain lancement.
+  //            gardenDay='' et gardenState=[] → tableau vide, peuplé par initGarden().
+  function m14(d) {
+    d.g.gardenSeed  = d.g.gardenSeed  ?? null;
+    d.g.gardenDay   = d.g.gardenDay   ?? '';
+    d.g.gardenState = d.g.gardenState ?? [];
     return d;
   }
 ];

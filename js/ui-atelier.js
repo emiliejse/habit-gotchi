@@ -583,12 +583,12 @@ function _atelierVignette(tb, W, H) {
 // ─────────────────────────────────────────────────────────────
 window._atelierChoisirCouleur = function(hex) {
   _atelierColor = hex; // null = gomme, sinon la couleur dérivée déjà calculée par la palette
-  // POURQUOI : le modificateur 🌑/☀️ est un "sélecteur de teinte dérivée" — une fois la couleur
-  //            choisie (hex = couleur dérivée), le modificateur a rempli son rôle. On repasse
-  //            en 'peindre' pour que le pinceau pose directement cette couleur sans nouveau décalage.
-  //            Si hex est null (gomme), on revient aussi à 'peindre' (cohérence).
-  _atelierMode = 'peindre';
-  _atelierRenderPalette(); // rafraîchit le ring visuel (sur la couleur dérivée active)
+  // POURQUOI : on ne réinitialise PAS _atelierMode ici — si 🌑/☀️ est actif, le modificateur
+  //            reste actif après le clic. L'utilisatrice peut ainsi peindre plusieurs pixels
+  //            avec des teintes foncées/claires sans avoir à recliquer le bouton modificateur.
+  //            Exception : gomme (null) → retour à 'peindre' (pas de modificateur sur la gomme).
+  if (hex === null) _atelierMode = 'peindre';
+  _atelierRenderPalette(); // rafraîchit le ring visuel sur la couleur dérivée sélectionnée
 };
 
 // ─────────────────────────────────────────────────────────────

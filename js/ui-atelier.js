@@ -45,6 +45,12 @@ let _atelierEditId   = null;
 // RÔLE : Couleur active pour le pinceau (hex string) ou null si l'outil actif est la gomme.
 let _atelierColor    = null;
 
+// RÔLE : Outil actif — détermine l'effet d'un tap/drag sur le canvas.
+// POURQUOI : 'peindre' = pose la couleur active ; 'foncer' / 'éclaircir' = modifie
+//            la luminosité de la cellule existante sans changer la teinte.
+//            null/_atelierColor=null reste la gomme (outil à part).
+let _atelierMode     = 'peindre'; // 'peindre' | 'foncer' | 'éclaircir'
+
 // RÔLE : Indique si le doigt / la souris est actuellement posé sur le canvas.
 // POURQUOI : Permet à pointermove de dessiner uniquement pendant un drag, pas au survol.
 let _atelierPainting = false;
@@ -58,6 +64,55 @@ let _atelierSaveTimer = null;
 /* ============================================================
    §3  HELPERS INTERNES
    ============================================================ */
+
+// ─────────────────────────────────────────────────────────────
+// RÔLE : Ajuste la luminosité d'une couleur hex de `delta` points (−100 à +100).
+// POURQUOI : Permet de foncer ou éclaircir un pixel existant sans changer sa teinte.
+//            On passe par HSL car c'est le seul espace où lightness est isolée.
+// ─────────────────────────────────────────────────────────────
+function _shiftLightness(hex, delta) {
+  // Convertit hex → r,g,b (0-255)
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+
+  // r,g,b → h,s,l  (h: 0-360, s: 0-1, l: 0-1)
+  const rn = r / 255, gn = g / 255, bn = b / 255;
+  const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if      (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+    else if (max === gn) h = ((bn - rn) / d + 2) / 6;
+    else                 h = ((rn - gn) / d + 4) / 6;
+  }
+
+  // Applique le décalage et clamp entre 0 et 1
+  const lNew = Math.max(0, Math.min(1, l + delta / 100));
+
+  // h,s,lNew → r,g,b → hex
+  function hue2rgb(p, q, t) {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  }
+  let rOut, gOut, bOut;
+  if (s === 0) {
+    rOut = gOut = bOut = lNew; // gris
+  } else {
+    const q = lNew < 0.5 ? lNew * (1 + s) : lNew + s - lNew * s;
+    const p = 2 * lNew - q;
+    rOut = hue2rgb(p, q, h + 1/3);
+    gOut = hue2rgb(p, q, h);
+    bOut = hue2rgb(p, q, h - 1/3);
+  }
+  const toHex = v => Math.round(v * 255).toString(16).padStart(2, '0');
+  return `#${toHex(rOut)}${toHex(gOut)}${toHex(bOut)}`;
+}
 
 // ─────────────────────────────────────────────────────────────
 // RÔLE : Retourne l'entrée ENV_THEMES correspondant à un id de thème.
@@ -225,8 +280,26 @@ function _atelierPeindreCell(e) {
   const tb = window.D.atelier.tableaux.find(t => t.id === _atelierEditId);
   if (!tb) return;
   const { col, row } = _atelierCellFromEvent(e);
-  // POURQUOI : _atelierColor = null signifie "gomme" → on remet la cellule à null (transparente).
-  tb.pixels[row][col] = _atelierColor;
+
+  const couleurActuelle = tb.pixels[row][col]; // null = cellule vide
+
+  if (_atelierColor === null) {
+    // Gomme : efface la cellule
+    tb.pixels[row][col] = null;
+  } else if (_atelierMode === 'foncer') {
+    // RÔLE : Assombrit la cellule de 15 points de luminosité.
+    // POURQUOI : Si la cellule est vide, on pose d'abord la couleur active avant de foncer
+    //            (sinon foncer sur le vide ne ferait rien — peu intuitif).
+    const base = couleurActuelle ?? _atelierColor;
+    tb.pixels[row][col] = _shiftLightness(base, -15);
+  } else if (_atelierMode === 'éclaircir') {
+    // RÔLE : Éclaircit la cellule de 15 points de luminosité.
+    const base = couleurActuelle ?? _atelierColor;
+    tb.pixels[row][col] = _shiftLightness(base, +15);
+  } else {
+    // Mode 'peindre' par défaut : pose la couleur active
+    tb.pixels[row][col] = _atelierColor;
+  }
   tb.updatedAt = Date.now();
   // POURQUOI : On ne redessine que le canvas (pas toute l'UI) pour ne pas
   //            scintiller la palette et la galerie à chaque pixel.
@@ -322,9 +395,34 @@ function _atelierRenderPalette() {
   const GAP      = 8;   // gap fixe entre boutons (px)
   const btnSize  = Math.max(28, Math.floor((totalW - GAP * (N_COLS - 1)) / N_COLS));
 
-  // POURQUOI : width explicite sur le div pour contraindre la grille à ne pas dépasser
-  //            la largeur du footer — évite le débordement à droite sur petits écrans.
-  let html = `<div style="display:grid;grid-template-columns:repeat(${N_COLS},${btnSize}px);gap:${GAP}px;width:${totalW}px;">`;
+  // ── Barre d'outils : Peindre / Foncer / Éclaircir ──
+  // RÔLE : Trois boutons pleine largeur au-dessus de la palette.
+  // POURQUOI : Séparés des couleurs pour une lecture immédiate de l'outil actif.
+  //            Hauteur réduite (32px) pour ne pas grignoter la zone canvas.
+  const outils = [
+    { id: 'peindre',   label: '✏️ Peindre'   },
+    { id: 'foncer',    label: '🌑 Foncer'    },
+    { id: 'éclaircir', label: '☀️ Éclaircir' },
+  ];
+  // POURQUOI : on désactive les outils foncer/éclaircir si la gomme est active
+  //            (aucune couleur de référence) — visuellement on les grise.
+  const gommeActive = (_atelierColor === null);
+  html += `<div style="display:flex;gap:${GAP}px;width:${totalW}px;margin-bottom:${GAP}px">`;
+  outils.forEach(o => {
+    const actif = (!gommeActive && _atelierMode === o.id);
+    const desactive = (gommeActive && o.id !== 'peindre');
+    html += `<button onclick="window._atelierChoisirMode('${o.id}')"
+      style="flex:1;height:32px;border-radius:6px;border:none;cursor:${desactive ? 'default' : 'pointer'};
+             font-size:11px;font-weight:${actif ? '700' : '400'};
+             background:${actif ? 'var(--text)' : 'var(--border)'};
+             color:${actif ? '#fff' : desactive ? 'var(--border)' : 'var(--text2)'};
+             opacity:${desactive ? '0.35' : '1'};
+             transition:background .15s;">${o.label}</button>`;
+  });
+  html += `</div>`;
+
+  // ── Grille couleurs + gomme ──
+  html += `<div style="display:grid;grid-template-columns:repeat(${N_COLS},${btnSize}px);gap:${GAP}px;width:${totalW}px;">`;
 
   // ── 13 boutons colorés ──
   couleurs.forEach((hex, i) => {
@@ -488,7 +586,20 @@ function _atelierVignette(tb, W, H) {
 // ─────────────────────────────────────────────────────────────
 window._atelierChoisirCouleur = function(hex) {
   _atelierColor = hex; // null = gomme
-  _atelierRenderPalette(); // rafraîchit le ring visuel
+  // POURQUOI : choisir une couleur repasse automatiquement en mode 'peindre'
+  //            si on était en foncer/éclaircir — comportement naturel.
+  if (hex !== null) _atelierMode = 'peindre';
+  _atelierRenderPalette(); // rafraîchit le ring visuel et les boutons d'outils
+};
+
+// ─────────────────────────────────────────────────────────────
+// RÔLE : Sélectionne l'outil actif (peindre / foncer / éclaircir).
+// POURQUOI : Exposée sur window pour être appelée depuis les boutons outils en HTML inline.
+// ─────────────────────────────────────────────────────────────
+window._atelierChoisirMode = function(mode) {
+  if (_atelierColor === null) return; // gomme active → outils désactivés
+  _atelierMode = mode;
+  _atelierRenderPalette(); // rafraîchit les boutons d'outils
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -527,6 +638,7 @@ window.ouvrirAtelier = function() {
     window.D.atelier.tableaux.push(nouveau);
     _atelierEditId = nouveau.id;
     _atelierColor  = nouveau.paletteSnapshot[0] ?? null;
+    _atelierMode   = 'peindre'; // repart toujours en mode peindre à l'ouverture
     save(); // RÔLE : persiste immédiatement le nouveau tableau créé
             // POURQUOI : si l'app est quittée sans fermer l'atelier proprement
             //            (iOS, mise en veille), le tableau ne serait pas enregistré.
@@ -550,6 +662,7 @@ window.ouvrirAtelier = function() {
     if (!cible.paletteSnapshot.includes(_atelierColor)) {
       _atelierColor = cible.paletteSnapshot[0] ?? null;
     }
+    _atelierMode = 'peindre'; // repart toujours en mode peindre à l'ouverture
   }
 
   renderAtelier();

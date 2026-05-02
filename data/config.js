@@ -275,7 +275,7 @@ const ENV_BIOMES = [
   // RÔLE : Le jardin est un espace procédural sans boutique — pas d'objets placés.
   // POURQUOI : hasInventory:false → exclu du switcher d'inventaire (ui-shop.js)
   //            sans avoir à gérer de cas spécial dans la logique métier.
-  { id:'jardin',   label:'Jardin',   icon:'🌿', hasInventory: false },
+  { id:'jardin',   label:'Jardin',   icon:'�', hasInventory: false },
 ];
 
 /* ─── SYSTÈME 1 : MÉTABOLISME (Repas) ────────────────────────────── */

@@ -541,36 +541,38 @@ body {
 }
 
 /* RÔLE : Rangée de stickers emoji collés dans le menu cahier */
-/* POURQUOI : Accès visuel rapide, effet stickers scotchés sur la page du cahier */
+/* POURQUOI : emojis grands, bien espacés, occupent toute la largeur utile du cahier */
 .menu-stickers {
   display: flex;
-  gap: 14px;
-  justify-content: center;
+  justify-content: space-around; /* POURQUOI space-around : répartit sur toute la largeur sans calc() */
   align-items: center;
   margin-bottom: 14px;
   position: relative;
-  z-index: 1; /* POURQUOI : passe au-dessus des lignes de fond du cahier */
+  z-index: 1;
 }
 
-/* RÔLE : Un sticker emoji individuel — carré façon autocollant avec bord blanc */
-/* POURQUOI : outline blanc épais + border légère = effet sticker imprimé sur fond blanc */
+/* RÔLE : Un sticker emoji individuel — grand, nu, avec contour blanc épousant sa forme */
+/* POURQUOI drop-shadow multicouche : empile des ombres blanches dans toutes les directions
+   pour simuler un stroke qui suit le contour exact de l'emoji (impossible avec border/outline) */
 .menu-sticker {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: #fff;
-  /* POURQUOI box-shadow : simule le bord blanc épais d'un sticker autocollant */
-  box-shadow: 0 0 0 3px #fff, 0 0 0 4.5px rgba(180,160,140,0.35);
+  font-size: 52px;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
-  line-height: 1;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  /* POURQUOI transition : légère fluidité sur le retour du scale actif */
   transition: transform 0.1s ease;
+  filter:
+    drop-shadow(0px  3px 0 #fff)
+    drop-shadow(0px -3px 0 #fff)
+    drop-shadow( 3px 0px 0 #fff)
+    drop-shadow(-3px 0px 0 #fff)
+    drop-shadow( 2px  2px 0 #fff)
+    drop-shadow(-2px  2px 0 #fff)
+    drop-shadow( 2px -2px 0 #fff)
+    drop-shadow(-2px -2px 0 #fff);
 }
 
 /* RÔLE : Inclinaisons alternées — effet stickers collés de travers */
@@ -578,7 +580,7 @@ body {
 .menu-sticker:nth-child(2) { transform: rotate(3deg); }
 .menu-sticker:nth-child(3) { transform: rotate(-4deg); }
 
-/* RÔLE : Feedback tactile au tap — écrase légèrement le sticker */
+/* RÔLE : Feedback tactile au tap */
 .menu-sticker:active { transform: scale(0.88) !important; }
 
 /* RÔLE : État désactivé — estompé, non interactif */

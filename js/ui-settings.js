@@ -1501,7 +1501,7 @@ function applyCheatCode() {
     'petales200': () => { D.g.petales = (D.g.petales || 0) + 200; toast('🌸 +200 pétales !'); },
     'egg':        () => { D.g.totalXp = 0;   D.g.stage = 'egg';   toast('🥚 Stade → Œuf'); },
     'baby':       () => { D.g.totalXp = 90;  D.g.stage = 'baby';  toast('🌱 Stade → Baby'); },
-    'teen':       () => { D.g.totalXp = 240; D.g.stage = 'teen';  toast('🌿 Stade → Teen'); },
+    'teen':       () => { D.g.totalXp = 240; D.g.stage = 'teen';  toast('🌱 Stade → Teen'); },
     'adult':      () => { D.g.totalXp = 500; D.g.stage = 'adult'; toast('🌸 Stade → Adulte'); },
     'vent':       () => { window.meteoData = { ...(window.meteoData || {}), windspeed: 50 }; toast('🌬️ Vent activé !'); },
     'calme':      () => { window.meteoData = { ...(window.meteoData || {}), windspeed: 5 };  toast('☀️ Vent désactivé'); },

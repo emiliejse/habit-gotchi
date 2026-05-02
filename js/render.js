@@ -1917,7 +1917,7 @@ if (!window._gotchiActif) return true;
           'Rien à ramasser, c\'est nickel ici ! 🧹',
           'Pas de crotte en vue ! Tout est propre ✨',
           'L\'environnement est impeccable !',
-          'Rien à faire, profite ! 🌿',
+          'Rien à faire, profite ! 🌱',
         ];
         flashBubble(msgsNoCrotte[Math.floor(Math.random() * msgsNoCrotte.length)], 2500);
       }

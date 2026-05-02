@@ -326,7 +326,7 @@ function exportJournal(mode) {
   }
 
   if (!entries.length) {
-    alert('Aucune entrée à exporter 🌿');
+    alert('Aucune entrée à exporter 🌱');
     return;
   }
 

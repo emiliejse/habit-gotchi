@@ -316,14 +316,16 @@ function drawMontagne(p, theme, n) {
 /**
  * drawActiveEnv() : dispatcher — choisit le biome à dessiner
  * @param {Object} p   - Instance p5
- * @param {string} env - 'parc' | 'chambre' | 'montagne' | 'jardin' (vient de D.g.activeEnv)
+ * @param {string} env - 'parc' | 'chambre' | 'montagne' | 'jardin' (D.g.activeEnv)
  * @param {number} n   - Ratio nuit 0 (jour) → 1 (nuit pleine)
  * @param {number} h   - heure (0–23), réservé aux futurs effets horaires
  *
- * POUR AJOUTER UN ENVIRONNEMENT :
- * 1. Ajoute un objet { id:'monenv', ... } dans ENV_THEMES (config.js)
- * 2. Crée une fonction drawMonEnv(p, theme, n) dans ce fichier (ou dans garden.js pour le jardin)
- * 3. Ajoute un case 'monenv' dans le switch ci-dessous
+ * POUR AJOUTER UN BIOME :
+ * 1. Ajoute une entrée { id, label, icon, hasInventory } dans ENV_BIOMES (config.js)
+ *    ⚠️ ENV_BIOMES ≠ ENV_THEMES — les biomes sont les lieux, les thèmes sont les palettes.
+ * 2. Crée une fonction drawMonBiome(p, theme, n) dans ce fichier (ou un fichier dédié)
+ *    Le paramètre `theme` vient de getEnvC() — palette de couleurs active, pas le biome.
+ * 3. Ajoute un case 'monbiome' dans le switch ci-dessous
  */
 function drawActiveEnv(p, env, n, h) {
   const theme = getEnvC();

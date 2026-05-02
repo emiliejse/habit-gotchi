@@ -18,7 +18,7 @@
  * RÔLE : Délègue au fond du jardin — la passe premier plan est gérée
  *        séparément dans p.draw() (render.js) après le dessin du Gotchi.
  * @param {Object} p     - Instance p5.js
- * @param {Object} theme - Thème actif (depuis getEnvC() dans envs.js)
+ * @param {Object} theme - Palette active (depuis getEnvC() — ENV_THEMES, pas ENV_BIOMES)
  * @param {number} n     - Ratio nuit 0 (jour) → 1 (nuit pleine)
  */
 function drawJardin(p, theme, n) {
@@ -35,7 +35,7 @@ window.drawJardin = drawJardin;
  *        Phase 1 : sol herbeux basique uniquement.
  *        Phase 2+ : herbes hautes, buissons de fond, chemins, etc.
  * @param {Object} p     - Instance p5.js
- * @param {Object} theme - Thème actif (couleurs depuis config.js → ENV_THEMES 'jardin')
+ * @param {Object} theme - Palette active (couleurs depuis config.js → ENV_THEMES, ex: 'pastel')
  * @param {number} n     - Ratio nuit 0 (jour) → 1 (nuit pleine)
  */
 function drawJardinFond(p, theme, n) {

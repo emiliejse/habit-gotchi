@@ -1131,13 +1131,13 @@ function drawEnvSelector(p, g, nightRatio) {
   const envCY = CS - 6 - envR;     // centre Y : bas aligné sur le bas des badges (CS - 6)
   const envGap = envR * 2 + 5;     // espacement entre cercles empilés (diamètre + 5px)
 
-  // ── Mapping emoji par env — construit dynamiquement depuis ENV_THEMES ──
-  // RÔLE : Évite de hardcoder la liste des envs ici — tout ajout dans config.js est
-  //        automatiquement pris en compte sans toucher à render.js.
-  // POURQUOI : Avant, c'était { parc:'🌳', chambre:'🛏️', montagne:'⛰️' } en dur.
-  //            On construit maintenant l'objet depuis ENV_THEMES une seule fois par frame.
+  // ── Mapping emoji par biome — construit dynamiquement depuis ENV_BIOMES ──
+  // RÔLE : Associe chaque biome (parc, chambre, montagne, jardin) à son emoji.
+  // POURQUOI : ENV_BIOMES = lieux de vie du Gotchi (D.g.activeEnv).
+  //            ENV_THEMES = palettes de couleurs (D.g.envTheme) — distincts.
+  //            Avant : { parc:'🌳', chambre:'🛏️', montagne:'⛰️' } hardcodé.
   const ENV_EMOJI = Object.fromEntries(
-    (window.HG_CONFIG?.ENV_THEMES || ENV_THEMES).map(t => [t.id, t.icon])
+    (window.HG_CONFIG?.ENV_BIOMES || []).map(t => [t.id, t.icon])
   );
   const activeEnv = g.activeEnv || 'parc';
 
@@ -1194,11 +1194,10 @@ function drawEnvSelector(p, g, nightRatio) {
 
   // ── Cercles flottants (seulement si ouvert et env non verrouillé) ──
   if (window._envSelectorOpen && !envLocked) {
-    // RÔLE : Affiche les environnements alternatifs au-dessus du cercle principal.
-    // POURQUOI : Liste construite dynamiquement depuis ENV_THEMES — s'adapte automatiquement
-    //            à tout ajout de biome dans config.js (ex : jardin).
+    // RÔLE : Affiche les biomes alternatifs au-dessus du cercle principal.
+    // POURQUOI : Liste lue depuis ENV_BIOMES (lieux de vie) — distinct de ENV_THEMES (palettes).
     //            Avant : ['parc', 'chambre', 'montagne'] hardcodé.
-    const otherEnvs = (window.HG_CONFIG?.ENV_THEMES || ENV_THEMES)
+    const otherEnvs = (window.HG_CONFIG?.ENV_BIOMES || [])
       .map(t => t.id)
       .filter(e => e !== activeEnv);
 

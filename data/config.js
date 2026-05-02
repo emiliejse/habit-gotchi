@@ -170,8 +170,12 @@ const MOUTH_COLORS = [
 /* ─── SYSTÈME 2 : ÉCOSYSTÈME (Décors & Biomes) ───────────────────── */
 
 /**
- * ENV_THEMES : Dictionnaire massif des environnements.
- * Utilisé par `envs.js` pour dessiner les décors (Parc, Chambre, Montagne).
+ * ENV_THEMES : Palettes de couleurs appliquées aux biomes (thèmes visuels).
+ * RÔLE : Colorie tous les environnements existants — chaque thème change la
+ *        teinte du ciel, du sol, des arbres, des murs, etc.
+ * DISTINCT de ENV_BIOMES : un thème ≠ un biome.
+ *   • Thème  → palette de couleurs (pastel/automne/hiver/desert) — D.g.envTheme
+ *   • Biome  → lieu de vie du Gotchi (parc/chambre/montagne/jardin) — D.g.activeEnv
  * Chaque thème doit impérativement posséder TOUTES ces clés pour que
  * le moteur de rendu ne plante pas ("Cannot read properties of undefined").
  */
@@ -246,34 +250,32 @@ const ENV_THEMES = [
     lamp:'#f8e060', lampShade:'#f0c820',
     mntGnd:'#d8a848', mntGndDk:'#b88028', mntPeak:'#e8c870', mntSnow:'#f0d890',
   },
+];
 
-  // RÔLE : Jardin procédural — 4e environnement, espace sans boutique.
-  // POURQUOI : Les clés chambre (wall, curtain…) et montagne (mntGnd…) sont présentes
-  //            mais inutilisées par drawJardin — elles évitent un crash si le moteur
-  //            tente d'accéder à une clé manquante via getEnvC().
-  //            Les valeurs chambre/mnt sont copiées du thème 'pastel' (safe & neutres).
-  { id:'jardin', label:'Jardin', icon:'🌿',
-    // Ciel — vert doux / bleu végétal (ambiance sous-bois clair)
-    sky1:'#c8e0b8', sky2:'#dff0d0',
-    // Sol herbeux — deux tons de vert pour l'épaisseur
-    gnd:'#90c878',  gndDk:'#70a858',
-    // Végétation — feuillages denses, troncs chauds
-    leaf1:'#58a848', leaf2:'#70c050', trunk:'#8a6840',
-    // Accent — fleur sauvage (touche magenta douce)
-    accent:'#d878a8',
-    // ── Clés chambre (non utilisées par drawJardin — présentes pour éviter crash) ──
-    wall:'#e0d8c8',
-    windowFrame:'#c8baa8', windowSill:'#d8c8b8',
-    curtain:'#c8a8d8', curtainDk:'#a888c0', curtainRod:'#b8a090',
-    baseboard:'#d0c0b0',
-    frameOuter:'#c8a880', frameBg:'#f0ece4', frameAccent1:'#c8a8d0', frameAccent2:'#a8c8d0',
-    floor:'#c8b8a8', floorLine:'#b8a898',
-    rug:'#d8c0f0', rugCenter:'#c8aee8',
-    desk:'#b89870', deskTop:'#c8a880', deskShadow:'#a88860',
-    lamp:'#f0e898', lampShade:'#f8d858',
-    // ── Clés montagne (non utilisées par drawJardin — présentes pour éviter crash) ──
-    mntGnd:'#88b870', mntGndDk:'#6a9858', mntPeak:'#a0c888', mntSnow:'#e8f0e0',
-  },
+/**
+ * ENV_BIOMES : Liste des biomes (lieux de vie du Gotchi).
+ * RÔLE : Définit les environnements disponibles dans le sélecteur de l'écran.
+ * DISTINCT de ENV_THEMES : un biome ≠ une palette de couleurs.
+ *   • Biome  → lieu de vie du Gotchi — D.g.activeEnv — sélecteur canvas
+ *   • Thème  → palette appliquée à tous les biomes — D.g.envTheme — panneau Perso
+ *
+ * Chaque biome a :
+ *   • id     → valeur stockée dans D.g.activeEnv et passée à drawActiveEnv()
+ *   • label  → nom affiché
+ *   • icon   → emoji affiché dans le sélecteur canvas
+ *   • hasInventory → true si le biome supporte les objets de l'inventaire (Props)
+ *
+ * POUR AJOUTER UN BIOME : ajouter une entrée ici + créer drawMonBiome() dans envs.js
+ * ou dans un fichier dédié, + ajouter le case dans drawActiveEnv().
+ */
+const ENV_BIOMES = [
+  { id:'parc',     label:'Parc',     icon:'🌳', hasInventory: true  },
+  { id:'chambre',  label:'Chambre',  icon:'🛏️', hasInventory: true  },
+  { id:'montagne', label:'Montagne', icon:'⛰️', hasInventory: true  },
+  // RÔLE : Le jardin est un espace procédural sans boutique — pas d'objets placés.
+  // POURQUOI : hasInventory:false → exclu du switcher d'inventaire (ui-shop.js)
+  //            sans avoir à gérer de cas spécial dans la logique métier.
+  { id:'jardin',   label:'Jardin',   icon:'🌿', hasInventory: false },
 ];
 
 /* ─── SYSTÈME 1 : MÉTABOLISME (Repas) ────────────────────────────── */
@@ -401,7 +403,8 @@ window.HG_CONFIG = {
   CHEEK_COLORS,
   MOUTH_COLORS,
   HEAD_STYLES,
-  ENV_THEMES,
+  ENV_THEMES,   // palettes de couleurs (pastel/automne/hiver/desert) → D.g.envTheme
+  ENV_BIOMES,   // lieux de vie du Gotchi (parc/chambre/montagne/jardin) → D.g.activeEnv
   MEAL_WINDOWS,
   SNACKS_POOL,
   SHOP_PACKS,

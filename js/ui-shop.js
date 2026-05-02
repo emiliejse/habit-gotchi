@@ -987,19 +987,23 @@ window.invSetEnv = invSetEnv;
 
 // RÔLE : Met à jour l'apparence visuelle des boutons du switcher d'env dans l'inventaire.
 // POURQUOI : Surligne l'environnement actuellement actif.
-//            Liste construite dynamiquement depuis ENV_THEMES — s'adapte automatiquement
-//            à tout ajout de biome dans config.js (ex : jardin).
+//            Seuls les biomes avec hasInventory:true ont un bouton dans le DOM —
+//            le jardin est exclu (espace procédural sans objets placés).
 //            Avant : ['parc', 'chambre', 'montagne'] hardcodé.
 function _updInvEnvSwitcher() {
   const activeEnv = window.D.g.activeEnv || 'parc';
-  const envIds = (window.HG_CONFIG?.ENV_THEMES || []).map(t => t.id);
+  // RÔLE : On filtre sur hasInventory:true — le jardin n'a pas de bouton dans le HTML.
+  // POURQUOI : Évite de chercher un #inv-env-jardin qui n'existe pas dans le DOM.
+  const envIds = (window.HG_CONFIG?.ENV_BIOMES || [])
+    .filter(t => t.hasInventory)
+    .map(t => t.id);
   envIds.forEach(env => {
     const btn = document.getElementById(`inv-env-${env}`);
-    if (!btn) return; // bouton absent du DOM → ignoré silencieusement
+    if (!btn) return; // sécurité — bouton absent du DOM → ignoré silencieusement
     const isActive = activeEnv === env;
-    btn.style.background    = isActive ? '#fff' : 'transparent';
-    btn.style.color          = isActive ? 'var(--lilac)' : 'var(--text2)';
-    btn.style.boxShadow      = isActive ? '0 1px 4px rgba(0,0,0,.1)' : 'none';
+    btn.style.background = isActive ? '#fff' : 'transparent';
+    btn.style.color       = isActive ? 'var(--lilac)' : 'var(--text2)';
+    btn.style.boxShadow   = isActive ? '0 1px 4px rgba(0,0,0,.1)' : 'none';
   });
 }
 window._updInvEnvSwitcher = _updInvEnvSwitcher;

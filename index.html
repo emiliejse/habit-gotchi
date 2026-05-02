@@ -380,73 +380,6 @@ Ton bilan de la semaine apparaîtra ici...
   </div><!-- fin p-perso -->
 
   <!--
-    SYSTÈME JEUX — PANNEAU GAME (Hub mini-jeux)
-    RÔLE : Panneau principal du hub de jeux cosy.
-    POURQUOI : Séparé de p-gotchi pour garder chaque panneau dans un rôle unique.
-               Contient la liste des jeux disponibles et la zone canvas active.
-  -->
-  <div id="p-game" class="pnl">
-
-    <!-- Hub : liste des jeux disponibles -->
-    <!-- RÔLE : Affiché par défaut — liste toutes les cartes de jeux -->
-    <!-- POURQUOI : Caché quand un jeu est lancé (renderGameHub/lancerCristaux alternent) -->
-    <div id="game-hub">
-
-      <h2 style="font-family:var(--font-title);font-size:var(--fs-xl);margin-bottom:14px;text-align:center;">
-        🎮 Jeux cosy
-      </h2>
-
-      <!-- Carte jeu : Tri de Cristaux -->
-      <!-- RÔLE : Point d'entrée du premier mini-jeu — affiche le meilleur score et le bouton Jouer -->
-      <!-- POURQUOI onclick lancerCristaux : cache le hub et affiche le canvas vide (sprint 2 = logique) -->
-      <div class="game-card">
-        <div class="game-card-icon">💎</div>
-        <div class="game-card-body">
-          <div class="game-card-title">Tri de Cristaux</div>
-          <div class="game-card-score" id="cristaux-best-score">Meilleur : —</div>
-        </div>
-        <button class="btn btn-p game-card-btn" onclick="lancerCristaux()">Jouer</button>
-      </div>
-
-      <!-- Placeholder jeu futur : Jardin -->
-      <!-- RÔLE : Réservé pour un futur jeu jardin — grisé, non interactif -->
-      <div class="game-card game-card--disabled">
-        <div class="game-card-icon">🌱</div>
-        <div class="game-card-body">
-          <div class="game-card-title">Jardin secret</div>
-          <div class="game-card-score">Bientôt…</div>
-        </div>
-        <button class="btn btn-s game-card-btn" disabled>Bientôt</button>
-      </div>
-
-      <!-- Placeholder jeu futur : Atelier -->
-      <!-- RÔLE : Réservé pour un futur jeu atelier — grisé, non interactif -->
-      <div class="game-card game-card--disabled">
-        <div class="game-card-icon">🎨</div>
-        <div class="game-card-body">
-          <div class="game-card-title">Atelier pixel</div>
-          <div class="game-card-score">Bientôt…</div>
-        </div>
-        <button class="btn btn-s game-card-btn" disabled>Bientôt</button>
-      </div>
-
-    </div><!-- fin #game-hub -->
-
-    <!-- Zone canvas active (cachée par défaut, affichée quand un jeu est lancé) -->
-    <!-- RÔLE : Contiendra le canvas p5 du mini-jeu au sprint 2 -->
-    <!-- POURQUOI display:none : invisible jusqu'à lancerCristaux() -->
-    <div id="game-canvas-container" style="display:none"></div>
-
-    <!-- Bouton retour hub (caché par défaut) -->
-    <!-- RÔLE : Permet de revenir au hub sans quitter l'onglet jeux -->
-    <!-- POURQUOI display:none : visible uniquement pendant un jeu actif -->
-    <div id="game-back-btn" style="display:none;text-align:center;padding:10px 0;">
-      <button class="btn btn-s" onclick="retourGameHub()">← Retour</button>
-    </div>
-
-  </div><!-- fin p-game -->
-
-  <!--
     SYSTEM 7: Ingénierie/Layout — PANNEAU SETTINGS (Réglages, sauvegarde, debug)
     - Nom du Gotchi, clé API, code PIN
     - Gestion des habitudes
@@ -604,10 +537,10 @@ Ton bilan de la semaine apparaîtra ici...
          POURQUOI : stopPropagation évite de fermer le menu-overlay en même temps que l'atelier s'ouvre -->
     <div class="menu-sticker" title="Atelier pixel art"
          onclick="event.stopPropagation(); toggleMenu(); ouvrirAtelier()">🎨</div>
-    <!-- RÔLE : Raccourci rapide vers l'onglet Jeux cosy — branché sur goMenu('game')
+    <!-- RÔLE : Raccourci rapide vers le hub de jeux — ouvre l'overlay plein écran
          POURQUOI stopPropagation : évite que le clic ne ferme le menu-overlay en même temps -->
     <div class="menu-sticker" title="Jeux cosy"
-         onclick="event.stopPropagation(); toggleMenu(); goMenu('game')">🎮</div>
+         onclick="event.stopPropagation(); toggleMenu(); ouvrirGameHub()">🎮</div>
   </div>
 
   <!-- Navigation : lignes de cahier -->
@@ -716,6 +649,85 @@ Ton bilan de la semaine apparaîtra ici...
   </div>
 </div>
 
+<!-- Overlay Hub Jeux — plein écran, même pattern que #atelier-overlay -->
+<!-- SYSTÈME : S5 (UI & Design) -->
+<!-- POURQUOI .app-overlay : position:fixed;inset:0;pointer-events:auto -->
+<!-- POURQUOI flex column : header fixe en haut, zone hub scrollable au milieu,
+     footer éventuel en bas — extensible si on ajoute des contrôles globaux -->
+<!-- z-index : 500 — même niveau que l'atelier (les deux ne s'ouvrent jamais en même temps) -->
+<div class="app-overlay" id="game-overlay"
+  style="display:none;z-index:500;flex-direction:column;overflow:hidden;
+         background:var(--bg);
+         padding-top:env(safe-area-inset-top,0px);
+         padding-left:env(safe-area-inset-left,0px);
+         padding-right:env(safe-area-inset-right,0px)">
+  <!-- POURQUOI padding sur l'overlay lui-même : même raison que l'atelier —
+       la safe area décale toute la colonne flex d'un coup, le bouton ✕ reste accessible -->
+
+  <!-- ── En-tête ── -->
+  <div style="display:flex;align-items:center;justify-content:space-between;
+              padding:12px 16px 8px;flex-shrink:0;border-bottom:1px solid var(--border)">
+    <h2 style="margin:0;font-family:var(--font-title);color:var(--text)">🎮 Jeux cosy</h2>
+    <!-- hdr-garden-close : position:static — reste dans le flux flex, respecte la safe area -->
+    <button class="hdr-garden-close" onclick="fermerGameHub()" aria-label="Fermer les jeux">✕</button>
+  </div>
+
+  <!-- ── Zone hub : liste des jeux (scrollable) ── -->
+  <!-- RÔLE : Contient soit le hub (liste cartes), soit le canvas actif d'un jeu -->
+  <!-- POURQUOI overflow-y:auto : le hub peut dépasser l'écran si beaucoup de jeux -->
+  <div id="game-main"
+    style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+           min-height:0;padding:var(--sp-md) var(--sp-md) calc(var(--sp-md) + env(safe-area-inset-bottom,0px))">
+
+    <!-- Hub : liste des cartes de jeux — rendu par renderGameHub() dans ui-game.js -->
+    <div id="game-hub">
+      <!-- Carte jeu : Tri de Cristaux -->
+      <!-- RÔLE : Point d'entrée du premier mini-jeu -->
+      <!-- POURQUOI onclick lancerCristaux : délègue à ui-game.js qui orchestre le swap hub↔canvas -->
+      <div class="game-card">
+        <div class="game-card-icon">💎</div>
+        <div class="game-card-body">
+          <div class="game-card-title">Tri de Cristaux</div>
+          <div class="game-card-score" id="cristaux-best-score">Meilleur : —</div>
+        </div>
+        <button class="btn btn-p game-card-btn" onclick="lancerCristaux()">Jouer</button>
+      </div>
+
+      <!-- Placeholder jeu futur : Jardin secret -->
+      <div class="game-card game-card--disabled">
+        <div class="game-card-icon">🌱</div>
+        <div class="game-card-body">
+          <div class="game-card-title">Jardin secret</div>
+          <div class="game-card-score">Bientôt…</div>
+        </div>
+        <button class="btn btn-s game-card-btn" disabled>Bientôt</button>
+      </div>
+
+      <!-- Placeholder jeu futur : Atelier pixel -->
+      <div class="game-card game-card--disabled">
+        <div class="game-card-icon">🎨</div>
+        <div class="game-card-body">
+          <div class="game-card-title">Atelier pixel</div>
+          <div class="game-card-score">Bientôt…</div>
+        </div>
+        <button class="btn btn-s game-card-btn" disabled>Bientôt</button>
+      </div>
+    </div><!-- fin #game-hub -->
+
+    <!-- Zone canvas active (cachée par défaut, affichée quand un jeu est lancé) -->
+    <!-- RÔLE : Contiendra le canvas p5 du mini-jeu au sprint 2 -->
+    <!-- POURQUOI display:none : invisible jusqu'à lancerCristaux() -->
+    <div id="game-canvas-container" style="display:none"></div>
+
+    <!-- Bouton retour hub (caché par défaut) -->
+    <!-- RÔLE : Permet de revenir au hub sans fermer l'overlay -->
+    <div id="game-back-btn" style="display:none;text-align:center;padding:10px 0;">
+      <button class="btn btn-s" onclick="retourGameHub()">← Retour aux jeux</button>
+    </div>
+
+  </div><!-- fin #game-main -->
+</div><!-- fin #game-overlay -->
+
 <!-- Modal générique (SYSTEM 5: UI/Design) -->
 <div id="modal" style="display:none" onclick="clModal(event)">
   <div class="modal-box" id="mbox" onclick="event.stopPropagation()"></div>
@@ -790,9 +802,12 @@ Ton bilan de la semaine apparaîtra ici...
 <script src="js/ui-agenda.js"></script>
 <!-- ui-atelier.js : éditeur pixel art Atelier (S5) — après ui-agenda.js, avant ui-nav.js -->
 <script src="js/ui-atelier.js"></script>
-<!-- ui-game.js : hub mini-jeux (S5) — après ui-atelier.js, avant ui-nav.js -->
-<!-- RÔLE : expose renderGameHub(), lancerCristaux(), retourGameHub() appelés par ui-nav.js -->
+<!-- ui-game.js : hub mini-jeux — overlay, navigation hub↔canvas, scores (S5) -->
+<!-- RÔLE : expose ouvrirGameHub(), fermerGameHub(), renderGameHub(), retourGameHub() -->
 <script src="js/ui-game.js"></script>
+<!-- games/ : un fichier par mini-jeu — chargés après ui-game.js, avant ui-nav.js -->
+<!-- RÔLE : chaque jeu expose sa fonction lancer* sur window.* et window._jeux -->
+<script src="js/games/ui-cristaux.js"></script>
 <!-- ui-nav.js EN DERNIER : go() appelle toutes les render* des modules ci-dessus -->
 <script src="js/ui-nav.js"></script>
 

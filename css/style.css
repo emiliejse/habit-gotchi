@@ -2247,3 +2247,18 @@ body.garden-fullscreen .tama-screen {
   border-radius: var(--r-lg);
   text-align: center;
 }
+
+/* RÔLE : Fond de l'overlay jeux — léger dégradé de la palette app, pas du blanc pur
+   POURQUOI var(--bg) : cohérent avec le reste de l'app, change avec le thème de couleurs */
+#game-overlay {
+  background: var(--bg);
+}
+
+/* RÔLE : Zone scrollable du hub — max-width centré sur grands écrans */
+/* POURQUOI max-width 480px : l'app est pensée mobile — au-delà les cartes s'étirent trop */
+#game-main {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}

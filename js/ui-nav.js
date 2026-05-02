@@ -119,10 +119,6 @@ function _getEffectiveEnv(tab, h) {
   if (tab === 'progress') return 'montagne';  // progression → vue en hauteur
   if (tab === 'settings') return 'chambre';   // réglages → espace intime
 
-  // RÔLE : Onglet jeux — même env que le parc (extérieur, lumière, espace de jeu)
-  // POURQUOI 'parc' : ambiance légère et ouverte, cohérente avec l'idée de jouer dehors
-  if (tab === 'game')    return 'parc';
-
   // RÔLE : Onglet inconnu — on ne touche pas à l'env (sécurité si nouvel onglet ajouté sans mise à jour)
   return null;
 }
@@ -163,8 +159,6 @@ function go(t) {
     props:    '✿ Inventaire',
     perso:    '✿ Personnalisation',
     settings: '✿ Réglages',
-    // RÔLE : Label compact affiché en haut quand l'onglet jeux est actif
-    game:     '✿ Jeux cosy',
   };
   const labelEl = document.getElementById('compact-tab-label');
   if (labelEl) labelEl.textContent = TAB_LABELS[t] || '';
@@ -180,10 +174,6 @@ function go(t) {
   const envCible = _getEffectiveEnv(t, hr());
   if (envCible !== null) window.D.g.activeEnv = envCible;
   save();
-
-  // RÔLE : Onglet jeux — affiche le hub (liste des jeux disponibles)
-  // POURQUOI renderGameHub() et non un render inline : la logique d'affichage est dans ui-game.js
-  if (t === 'game') renderGameHub();
 
   if (t === 'gotchi' || t === 'settings') renderHabs();
   if (t === 'progress') renderProg();

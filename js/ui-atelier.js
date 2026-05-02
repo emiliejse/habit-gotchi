@@ -281,23 +281,14 @@ function _atelierPeindreCell(e) {
   if (!tb) return;
   const { col, row } = _atelierCellFromEvent(e);
 
-  const couleurActuelle = tb.pixels[row][col]; // null = cellule vide
-
   if (_atelierColor === null) {
     // Gomme : efface la cellule
     tb.pixels[row][col] = null;
-  } else if (_atelierMode === 'foncer') {
-    // RÔLE : Assombrit la cellule de 15 points de luminosité.
-    // POURQUOI : Si la cellule est vide, on pose d'abord la couleur active avant de foncer
-    //            (sinon foncer sur le vide ne ferait rien — peu intuitif).
-    const base = couleurActuelle ?? _atelierColor;
-    tb.pixels[row][col] = _shiftLightness(base, -15);
-  } else if (_atelierMode === 'éclaircir') {
-    // RÔLE : Éclaircit la cellule de 15 points de luminosité.
-    const base = couleurActuelle ?? _atelierColor;
-    tb.pixels[row][col] = _shiftLightness(base, +15);
   } else {
-    // Mode 'peindre' par défaut : pose la couleur active
+    // Mode peindre (et foncer/éclaircir) : pose toujours _atelierColor directement.
+    // POURQUOI : quand 🌑/☀️ est actif, _atelierChoisirCouleur() a déjà stocké la couleur
+    //            dérivée dans _atelierColor. Appliquer shiftLightness ici en plus provoquerait
+    //            un double décalage — la couleur rendue serait bien plus foncée/claire que prévu.
     tb.pixels[row][col] = _atelierColor;
   }
   tb.updatedAt = Date.now();
@@ -591,13 +582,13 @@ function _atelierVignette(tb, W, H) {
 // POURQUOI : Exposée sur window pour être appelée depuis les boutons palette en HTML inline.
 // ─────────────────────────────────────────────────────────────
 window._atelierChoisirCouleur = function(hex) {
-  _atelierColor = hex; // null = gomme
-  // POURQUOI : on ne réinitialise PAS _atelierMode ici — si 🌑/☀️ est actif,
-  //            l'utilisatrice choisit la couleur dérivée affichée, le modificateur reste.
-  //            Exception : si hex est null (gomme), le mode passe à 'peindre' car
-  //            foncer/éclaircir sur une cellule vide revient à peindre quoi qu'il arrive.
-  if (hex === null) _atelierMode = 'peindre';
-  _atelierRenderPalette(); // rafraîchit le ring visuel et les boutons d'outils
+  _atelierColor = hex; // null = gomme, sinon la couleur dérivée déjà calculée par la palette
+  // POURQUOI : le modificateur 🌑/☀️ est un "sélecteur de teinte dérivée" — une fois la couleur
+  //            choisie (hex = couleur dérivée), le modificateur a rempli son rôle. On repasse
+  //            en 'peindre' pour que le pinceau pose directement cette couleur sans nouveau décalage.
+  //            Si hex est null (gomme), on revient aussi à 'peindre' (cohérence).
+  _atelierMode = 'peindre';
+  _atelierRenderPalette(); // rafraîchit le ring visuel (sur la couleur dérivée active)
 };
 
 // ─────────────────────────────────────────────────────────────

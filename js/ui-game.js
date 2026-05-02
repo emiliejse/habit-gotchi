@@ -124,8 +124,8 @@ function _resetGameZone() {
 /**
  * RÔLE : Swap hub → canvas et démarre le jeu Tri de Cristaux.
  * POURQUOI séparé de renderGameHub : chaque jeu a son propre point d'entrée.
- *   Au sprint 1 : affiche un placeholder visuel.
- *   Au sprint 2 : ui-cristaux.js prend le relais et injecte l'instance p5.
+ *   La logique du jeu est entièrement dans js/games/ui-cristaux.js,
+ *   qui expose window._demarrerCristaux(container).
  */
 function lancerCristaux() {
   const hub     = document.getElementById('game-hub');
@@ -136,25 +136,24 @@ function lancerCristaux() {
   if (canvas)  canvas.style.display  = '';
   if (backBtn) backBtn.style.display = '';
 
-  // RÔLE : Si ui-cristaux.js est chargé et expose _demarrerCristaux(), lui déléguer le lancement
-  // POURQUOI guard typeof : ui-cristaux.js est un squelette au sprint 1 — pas de crash si absent
+  // RÔLE : Déléguer le lancement à ui-cristaux.js qui contient toute la logique du jeu
+  // POURQUOI guard typeof : sécurité défensive si le fichier n'est pas chargé
   if (typeof window._demarrerCristaux === 'function') {
     window._demarrerCristaux(canvas);
     return;
   }
 
-  // RÔLE : Placeholder sprint 1 — affiché tant que le jeu n'est pas implémenté
+  // RÔLE : Fallback si ui-cristaux.js n'est pas chargé (ne devrait pas arriver en prod)
   if (canvas && !canvas.querySelector('.game-placeholder')) {
     const ph = document.createElement('div');
     ph.className = 'game-placeholder';
     ph.innerHTML = `
       <div style="text-align:center;padding:40px 20px;">
-        <div style="font-size:48px;margin-bottom:12px;">💎</div>
         <div style="font-family:var(--font-title);font-size:var(--fs-xl);color:var(--text);">
-          Tri de Cristaux
+          Erreur de chargement
         </div>
         <div style="font-family:var(--font-body);font-size:var(--fs-sm);color:var(--text2);margin-top:8px;">
-          Le jeu arrive au sprint 2 ✿
+          ui-cristaux.js introuvable
         </div>
       </div>`;
     canvas.appendChild(ph);

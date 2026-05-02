@@ -1811,6 +1811,12 @@ input[type="time"] {
 }
 body.garden-fullscreen .hdr-garden {
   display: block;
+  /* POURQUOI position:relative + z-index:2 : p5.js attache ses listeners au document entier,
+     ce qui intercepte les taps avant les éléments DOM normaux. En créant un nouveau contexte
+     de stacking au-dessus du canvas (.tama-shell z:1), le bouton ✕ reçoit les événements. */
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
 }
 
 /* RÔLE : Titre h2 — même style que les h2 de .modal-box (boutique, agenda) */
@@ -1842,6 +1848,8 @@ body.garden-fullscreen .hdr-garden {
   border-radius: 50%;
   transition: background .15s;
   flex-shrink: 0;
+  pointer-events: auto; /* POURQUOI : garantit la réception des taps même si un parent a pointer-events:none */
+  touch-action: manipulation; /* POURQUOI : évite le délai 300ms iOS sur les boutons */
 }
 .hdr-garden-close:hover  { background: var(--border); }
 .hdr-garden-close:active { background: var(--border); transform: scale(.9); }

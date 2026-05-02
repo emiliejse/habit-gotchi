@@ -1806,6 +1806,12 @@ function isOverlayActive() {
     //        On vérifie que le tap est bien dans les bounds du canvas avant d'aller plus loin.
     // POURQUOI : Résout le bug "tap sur le titre n'ouvre pas l'agenda".
     {
+      // 🔒 GARDE 0a : mode plein écran jardin → toujours rendre la main au DOM
+      // POURQUOI : En garden-fullscreen, l'interactivité p5 est désactivée (contemplatif).
+      //            Surtout : le bouton ✕ dans .hdr-garden doit pouvoir recevoir les taps
+      //            sans être intercepté, même si la recomposition clientX/clientY est approximative.
+      if (document.body.classList.contains('garden-fullscreen')) return true;
+
       const canvasEl = document.querySelector('#cbox canvas');
       if (canvasEl) {
         const rect = canvasEl.getBoundingClientRect();

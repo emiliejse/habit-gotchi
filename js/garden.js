@@ -157,35 +157,41 @@ function initGarden() {
   //   (* types Phase 3, pas encore de fonction draw — la structure les supporte déjà)
 
   // scaleMin / scaleMax : plage de taille en unités PX.
-  // POURQUOI des plages larges et asymétriques :
-  //   La plupart des éléments seront petits (scaleMin bas) mais quelques-uns
-  //   pourront être dramatiquement grands (scaleMax élevé) — jardins sauvages.
-  //   Ex: fleur scaleMin=1 (bouton minuscule) → scaleMax=8 (grande fleur imposante).
-  //   hauteurPX reste la valeur "base" pour la zone d'exclusion initiale —
-  //   scalePX réel la remplace ensuite.
+  //
+  // DISTRIBUTION PONDÉRÉE (courbe en cloche asymétrique) :
+  //   On ne tire PAS uniformément entre scaleMin et scaleMax.
+  //   Formule : scalePX = scaleMin + floor(rng² × (scaleMax - scaleMin + 1))
+  //   rng² écrase les grandes valeurs → beaucoup de petits éléments,
+  //   quelques moyens, rares grands. Résultat visuel : jardin naturel, pas uniforme.
+  //
+  // RÈGLES PAR LAYER :
+  //   fond         → grandes tailles autorisées (scaleMax jusqu'à 8) — derrière le Gotchi
+  //   premier_plan → scaleMax plafonné à 3 — jamais plus haut que le Gotchi (y=130–155)
+  //
+  // RÈGLE SPRITES : la complexité visuelle augmente avec scalePX, pas la taille des blocs.
+  //   s=1–2 : forme minimaliste (bouton, caillou, graine)
+  //   s=3–4 : forme standard avec détails (pétales fins 1PX, points)
+  //   s=5–6 : forme enrichie (double rangée, feuilles latérales)
+  //   s=7–8 : forme complexe (étamines, nervures, volume)
   const SLOTS = [
-    // Fleurs — fond : 5 fleurs réparties sur la largeur, base au sol
-    // scaleMin=1 (bouton fermé) → scaleMax=8 (grande fleur estivale)
+    // Fleurs fond — grandes tailles pour les éléments derrière le Gotchi
     { type: 'fleur',      layer: 'fond',          count: 5,
       xMin: 10, xMax: 185, y: 118, maxAge: 7,   hauteurPX: 4,  scaleMin: 1, scaleMax: 8  },
-    // Fleurs — premier plan : 3 fleurs en lisière basse
+    // Fleurs premier plan — petites, ne doivent pas cacher le Gotchi
     { type: 'fleur',      layer: 'premier_plan',  count: 3,
-      xMin: 10, xMax: 185, y: 162, maxAge: 7,   hauteurPX: 4,  scaleMin: 1, scaleMax: 8  },
-    // Herbes — fond : 3 brins discrets dans la pelouse
-    // scaleMin=1 (ras du sol) → scaleMax=6 (herbe haute qui dépasse)
+      xMin: 10, xMax: 185, y: 162, maxAge: 7,   hauteurPX: 2,  scaleMin: 1, scaleMax: 3  },
+    // Herbes fond — peuvent être hautes derrière le Gotchi
     { type: 'herbe',      layer: 'fond',          count: 3,
-      xMin: 10, xMax: 185, y: 118, maxAge: 14,  hauteurPX: 3,  scaleMin: 1, scaleMax: 6  },
-    // Herbes — premier plan : 2 brins en lisière basse
+      xMin: 10, xMax: 185, y: 118, maxAge: 14,  hauteurPX: 3,  scaleMin: 1, scaleMax: 7  },
+    // Herbes premier plan — lisière basse, ras du sol
     { type: 'herbe',      layer: 'premier_plan',  count: 2,
-      xMin: 10, xMax: 185, y: 162, maxAge: 14,  hauteurPX: 3,  scaleMin: 1, scaleMax: 6  },
-    // Pierres — fond uniquement : 4 pierres dispersées, permanentes
-    // scaleMin=1 (caillou) → scaleMax=5 (rocher notable)
+      xMin: 10, xMax: 185, y: 162, maxAge: 14,  hauteurPX: 2,  scaleMin: 1, scaleMax: 3  },
+    // Pierres fond — du caillou au rocher
     { type: 'pierre',     layer: 'fond',          count: 4,
       xMin: 10, xMax: 185, y: 118, maxAge: 999, hauteurPX: 2,  scaleMin: 1, scaleMax: 5  },
-    // Champignons — fond uniquement : 3 champignons éphémères
-    // scaleMin=1 (microscopique) → scaleMax=9 (champignon géant improbable)
+    // Champignons fond — petits à moyens, éphémères
     { type: 'champignon', layer: 'fond',          count: 3,
-      xMin: 10, xMax: 185, y: 118, maxAge: 5,   hauteurPX: 5,  scaleMin: 1, scaleMax: 9  },
+      xMin: 10, xMax: 185, y: 118, maxAge: 5,   hauteurPX: 3,  scaleMin: 1, scaleMax: 6  },
   ];
 
   // ── 4. Génération de la liste d'éléments avec zone d'exclusion ──
@@ -262,18 +268,19 @@ function initGarden() {
       // → 4 formes × 8 couleurs = 32 combinaisons par type, sans compter la taille.
       const colorVariant = Math.floor(_gardenRng(seed, idxTotal++) * 8);
 
-      // scalePX : taille réelle du sprite en unités PX — tirée dans une plage large.
-      // POURQUOI une plage aussi large : on veut des jardins vraiment variés,
-      //   avec des éléments minuscules (1PX) côtoyant des éléments imposants (max du slot).
-      //   La plage [scaleMin, scaleMax] est définie dans le slot.
-      //   scaleMin peut être 1 (un seul pixel — un bouton, une graine).
-      //   scaleMax peut aller jusqu'à 3× la hauteurPX de base pour les grands éléments.
-      const scaleRaw = slot.scaleMin + _gardenRng(seed, idxTotal++) * (slot.scaleMax - slot.scaleMin);
-      const scalePX  = Math.max(1, Math.round(scaleRaw)); // entier, minimum 1
+      // scalePX : taille réelle du sprite — distribution pondérée vers les petites valeurs.
+      // FORMULE : rng² écrase les grandes valeurs.
+      //   Exemple scaleMax=8 : rng=0.9 → 0.81 → scalePX≈7 (rare)
+      //                        rng=0.5 → 0.25 → scalePX≈2 (fréquent)
+      //                        rng=0.3 → 0.09 → scalePX≈1 (très fréquent)
+      // POURQUOI pas uniforme : on veut beaucoup de petits éléments discrets,
+      //   quelques moyens, et des grands comme événements visuels rares.
+      const rngScale  = _gardenRng(seed, idxTotal++);
+      const scalePX   = slot.scaleMin + Math.floor(rngScale * rngScale * (slot.scaleMax - slot.scaleMin + 1));
+      const scaleFinal = Math.max(slot.scaleMin, Math.min(slot.scaleMax, scalePX)); // clamp défensif
 
-      // hauteurPX effective : la zone d'exclusion a déjà utilisé slot.hauteurPX (base),
-      // mais on met à jour avec scalePX réel pour que gardenState soit exact en Phase 3.
-      const hauteurPXEffective = scalePX;
+      // hauteurPX effective = scalePX réel (pour la zone d'exclusion et gardenState)
+      const hauteurPXEffective = scaleFinal;
 
       // RÔLE : Si aucune position libre après MAX_ATTEMPTS → skip silencieux.
       // POURQUOI : Mieux avoir 18 éléments bien placés que 20 avec chevauchements.
@@ -286,12 +293,12 @@ function initGarden() {
         type:         slot.type,
         layer:        slot.layer,
         x,
-        y:            slot.y,          // base fixe — le sprite grandit vers le haut depuis ce point
-        variant,                        // forme (0–3)
-        colorVariant,                   // couleur (0–7), indépendante de la forme
-        scalePX,                        // taille réelle en unités PX
+        y:            slot.y,     // base fixe — le sprite grandit vers le haut depuis ce point
+        variant,                   // forme (0–3) — recalculé depuis seed à chaque lancement
+        colorVariant,              // couleur (0–7) — recalculé depuis seed
+        scalePX:      scaleFinal,  // taille — recalculé depuis seed
         hauteurPX:    hauteurPXEffective,
-        age:          0,                // incrémenté par le système de cycles (Phase 3)
+        age:          0,           // SEULE valeur persistée — évolue avec les jours (Phase 3)
         maxAge:       slot.maxAge,
       });
     }
@@ -312,31 +319,34 @@ function initGarden() {
   //        réapplique à la liste recalculée depuis la seed.
   // POURQUOI : La seed garantit que x/y/variant/hauteurPX sont identiques entre sessions.
   //            Seul l'âge évolue — c'est la seule chose qu'on persiste vraiment.
+  // PHILOSOPHIE DE PERSISTANCE :
+  //   On ne persiste que ce qui NE PEUT PAS être recalculé depuis la seed :
+  //   → age uniquement (évolue avec les jours, Phase 3).
+  //   variant, colorVariant, scalePX, x, y, hauteurPX sont tous déterministes
+  //   depuis la seed → recalculés à chaque lancement → toute modif des sprites
+  //   est immédiatement visible sans toucher à gardenState.
   if (!window.D.g.gardenState || window.D.g.gardenState.length === 0) {
-    // Premier lancement : gardenState vide → on persiste les éléments générés
-    window.D.g.gardenState = elements.map(el => ({
-      age:          el.age,
-      maxAge:       el.maxAge,
-      hauteurPX:    el.hauteurPX,    // taille effective — pour les cycles de vie Phase 3
-      scalePX:      el.scalePX,      // persisté pour éviter une variation au rechargement
-      colorVariant: el.colorVariant, // persisté — la couleur d'un élément ne change pas entre sessions
-    }));
+    // Premier lancement : on initialise gardenState avec age=0 pour chaque élément
+    window.D.g.gardenState = elements.map(() => ({ age: 0 }));
     save();
   } else {
-    // Sessions suivantes : réapplique les données sauvegardées sur la liste recalculée.
-    // POURQUOI : x/y/variant sont recalculés depuis la seed (identiques).
-    //            scalePX et colorVariant aussi — mais on relit gardenState par précaution
-    //            au cas où une Phase 3 les aurait fait évoluer (ex: plante qui grandit).
+    // Sessions suivantes : on relit uniquement l'âge.
+    // POURQUOI index i : la seed garantit que l'élément i est toujours le même
+    //   élément entre sessions (même type, x, y, variant) — l'index est stable.
     elements.forEach((el, i) => {
       const saved = window.D.g.gardenState[i];
-      if (saved) {
-        el.age          = saved.age          ?? 0;
-        el.maxAge       = saved.maxAge       ?? el.maxAge;
-        el.hauteurPX    = saved.hauteurPX    ?? el.hauteurPX;
-        el.scalePX      = saved.scalePX      ?? el.scalePX;
-        el.colorVariant = saved.colorVariant ?? el.colorVariant;
-      }
+      if (saved) el.age = saved.age ?? 0;
     });
+    // RÔLE : Resynchronise gardenState si le nombre d'éléments a changé
+    //   (ex: modification des SLOTS en Phase 3 — nouveaux types, counts différents).
+    // POURQUOI : Sans ça, gardenState aurait un nombre d'entrées différent de elements
+    //   après une mise à jour → indices décalés → âges appliqués aux mauvais éléments.
+    if (window.D.g.gardenState.length !== elements.length) {
+      window.D.g.gardenState = elements.map((el, i) => ({
+        age: window.D.g.gardenState[i]?.age ?? 0
+      }));
+      save();
+    }
   }
 
   // ── 6. Exposition sur window ─────────────────────────────────────
@@ -376,82 +386,203 @@ window.initGarden = initGarden;
 
 /**
  * drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n)
- * RÔLE : Dessine une fleur pixel art — 4 formes × 8 couleurs × taille variable.
- *        variant=0 : bouton fermé / variant=1 : 3 pétales en croix /
- *        variant=2 : marguerite ronde (4 pétales) / variant=3 : tulipe allongée.
+ * RÔLE : Fleur pixel art — complexité croissante avec scalePX.
+ *        s=1–2 : forme minimaliste (bouton ou brin)
+ *        s=3–4 : fleur simple, pétales fins 1PX
+ *        s=5–6 : fleur enrichie, double rangée ou feuilles
+ *        s=7–8 : grande fleur complexe, étamines, nervures, volume
+ *        variant (0–3) : famille de forme (classique / marguerite / tulipe / sauvage)
+ *        colorVariant (0–7) : couleur des pétales, indépendante de la forme
  */
 function drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n) {
-  const s = scalePX; // alias court — utilisé partout ci-dessous
+  const s = scalePX;
 
-  // 8 couleurs de pétales — palette jardin sauvage, de douce à vive
+  // 8 couleurs de pétales — du doux au vif
   const PETALES = [
-    '#e87878', // rose pâle
-    '#e84848', // rouge vif
-    '#e8c878', // jaune doux
-    '#f0e020', // jaune citron
-    '#c878e8', // mauve
-    '#8840d0', // violet profond
-    '#78c8e8', // bleu ciel
-    '#ffffff', // blanc pur
+    '#f0a0b0', // rose poudré
+    '#e84868', // rose-rouge vif
+    '#f0d870', // jaune doux
+    '#e8b020', // jaune doré
+    '#c888e8', // mauve tendre
+    '#7830c0', // violet profond
+    '#80c8e8', // bleu ciel
+    '#f8f8f8', // blanc cassé
   ];
-  const colPetale = PETALES[colorVariant % 8];
-  const colTige   = s <= 2 ? '#58a058' : '#3a8038'; // tige plus foncée sur les grandes fleurs
-  const colCoeur  = colorVariant % 2 === 0 ? '#f0d878' : '#f09030'; // cœur jaune ou orangé
+  const colP  = PETALES[colorVariant % 8];                    // couleur pétales
+  const colT  = s <= 3 ? '#58a058' : '#3a7030';              // tige : vert clair → vert sombre
+  const colC  = (colorVariant % 2 === 0) ? '#f0d060' : '#e09020'; // cœur jaune ou doré
+  const colFe = '#4a9840';                                    // feuilles latérales
+
+  // ── ÉTAPE 1 : Tige (commune à toutes les formes) ─────────────────
+  p.fill(tc(n, colT));
+  px(p, x, y, PX, PX * s); // tige verticale de hauteur s
+
+  // Feuilles latérales sur la tige — apparaissent à partir de s=4
+  // POURQUOI s >= 4 : en dessous, la tige est trop courte pour les accueillir
+  if (s >= 4) {
+    p.fill(tc(n, colFe));
+    px(p, x - PX*2, y - PX * Math.floor(s * 0.4), PX*2, PX); // feuille gauche (40% de la tige)
+    px(p, x + PX,   y - PX * Math.floor(s * 0.6), PX*2, PX); // feuille droite (60% de la tige, décalée)
+  }
+  // Nervure centrale sur la tige — à partir de s=6
+  if (s >= 6) {
+    p.fill(tc(n, '#306828'));
+    px(p, x, y - PX * Math.floor(s * 0.4), PX, PX * Math.floor(s * 0.4)); // nervure sombre
+  }
+
+  // ── ÉTAPE 2 : Tête de fleur — dispatch par variant ───────────────
+  // Base de la tête : y - s×PX = sommet de la tige
+  const yTop = y - PX * s; // coordonnée Y du sommet de la tige = base de la tête
 
   if (variant === 0) {
-    // ── Bouton fermé : tige + petite boule (minimaliste, s=1 → 1 pixel)
-    p.fill(tc(n, colTige));
-    px(p, x, y, PX, PX * s);                         // tige de hauteur s
-    p.fill(tc(n, colPetale));
-    px(p, x - PX, y - PX*s,       PX*3, PX*2);       // bouton ovale
-    p.fill(tc(n, colCoeur));
-    px(p, x,      y - PX*s - PX,  PX,   PX);         // pointe du bouton
+    // ── CLASSIQUE : 3 pétales en croix (gauche / droite / haut)
+    // s=1–2 : pétales 1PX, forme minuscule
+    // s=3–4 : pétales 1PX + cœur 1PX
+    // s=5–6 : pétales 2PX, cœur 2PX
+    // s=7–8 : pétales 2PX + pétale bas + étamines
+    const ep = s >= 5 ? 2 : 1; // épaisseur des pétales en PX
+    p.fill(tc(n, colP));
+    px(p, x - PX*(ep+1), yTop,      PX*ep, PX*ep); // pétale gauche
+    px(p, x + PX,        yTop,      PX*ep, PX*ep); // pétale droit
+    px(p, x - PX*(ep-1), yTop-PX*ep, PX*ep, PX*ep);// pétale haut
+    if (s >= 7) px(p, x - PX*(ep-1), yTop+PX, PX*ep, PX); // pétale bas (grande fleur)
+    p.fill(tc(n, colC));
+    px(p, x - PX*(ep-1), yTop, PX*ep, PX*ep); // cœur central
+    // Étamines : petits points autour du cœur, s=7–8 uniquement
+    if (s >= 7) {
+      p.fill(tc(n, '#f8e040'));
+      px(p, x - PX*2, yTop - PX, PX, PX);
+      px(p, x + PX,   yTop - PX, PX, PX);
+    }
 
   } else if (variant === 1) {
-    // ── 3 pétales en croix : forme classique, tige proportionnelle
-    p.fill(tc(n, colTige));
-    px(p, x, y, PX, PX * s);                         // tige
-    p.fill(tc(n, colPetale));
-    px(p, x - PX*s, y - PX*s,     PX*s, PX*s);      // pétale gauche
-    px(p, x + PX*s, y - PX*s,     PX*s, PX*s);      // pétale droit
-    px(p, x,        y - PX*s*2,   PX*s, PX*s);      // pétale haut
-    p.fill(tc(n, colCoeur));
-    px(p, x,        y - PX*s,     PX*s, PX*s);      // cœur central
+    // ── MARGUERITE : nombreux pétales fins rayonnants
+    // s=1–2 : 2 pétales seulement (minuscule)
+    // s=3–4 : 4 pétales fins 1PX
+    // s=5–6 : 6 pétales fins + cœur proéminent
+    // s=7–8 : 8 pétales fins + double cœur + étamines
+    const nbPetales = s <= 2 ? 2 : s <= 4 ? 4 : s <= 6 ? 6 : 8;
+    p.fill(tc(n, colP));
+    // Disposition des pétales en étoile autour du centre
+    // Positions hardcodées en PX pour rester sur la grille pixel art
+    const OFFSETS = [
+      [-2,  0], [2,  0],  // gauche, droit
+      [ 0, -2], [0,  2],  // haut, bas
+      [-2, -2], [2, -2],  // diagonales haut
+      [-2,  2], [2,  2],  // diagonales bas
+    ];
+    for (let k = 0; k < nbPetales; k++) {
+      const [ox, oy] = OFFSETS[k];
+      px(p, x + PX*ox, yTop + PX*oy, PX, PX);
+    }
+    // Cœur — grossit avec la taille
+    const coeurW = s >= 5 ? 2 : 1;
+    p.fill(tc(n, colC));
+    px(p, x - PX*(coeurW-1), yTop, PX*coeurW, PX*coeurW);
+    if (s >= 7) { // étamines sur grande marguerite
+      p.fill(tc(n, '#f8f040'));
+      px(p, x - PX, yTop - PX, PX, PX);
+      px(p, x + PX, yTop + PX, PX, PX);
+    }
 
   } else if (variant === 2) {
-    // ── Marguerite : 4 pétales en diagonale + cœur large
-    p.fill(tc(n, colTige));
-    px(p, x, y, PX, PX * s);                          // tige
-    p.fill(tc(n, colPetale));
-    // 4 pétales disposés en X (diagonales)
-    px(p, x - PX*s,     y - PX*s,     PX*s, PX*s);   // bas-gauche
-    px(p, x + PX,       y - PX*s,     PX*s, PX*s);   // bas-droit
-    px(p, x - PX*s,     y - PX*s*2,   PX*s, PX*s);   // haut-gauche
-    px(p, x + PX,       y - PX*s*2,   PX*s, PX*s);   // haut-droit
-    p.fill(tc(n, colCoeur));
-    px(p, x,            y - PX*s,     PX*s, PX*s);   // cœur large au centre
+    // ── TULIPE : chapeau ovale fermé, silhouette reconnaissable
+    // s=1–2 : simple rectangle 2×1
+    // s=3–4 : ovale 3×2 avec pointe
+    // s=5–6 : ovale large + stries internes
+    // s=7–8 : tulipe ouverte, pétales extérieurs visibles
+    if (s <= 2) {
+      p.fill(tc(n, colP));
+      px(p, x - PX, yTop, PX*3, PX); // chapeau plat minuscule
+    } else if (s <= 4) {
+      p.fill(tc(n, colP));
+      px(p, x - PX, yTop,      PX*3, PX*2); // corps ovale
+      px(p, x,      yTop-PX,   PX,   PX);   // pointe centrale
+      p.fill(tc(n, colC));
+      px(p, x,      yTop+PX,   PX,   PX);   // base intérieure
+    } else if (s <= 6) {
+      p.fill(tc(n, colP));
+      px(p, x - PX*2, yTop,      PX*5, PX*2); // ovale large
+      px(p, x - PX,   yTop-PX,   PX*3, PX);   // dôme
+      px(p, x,        yTop-PX*2, PX,   PX);   // pointe
+      // Stries internes — 2 lignes plus sombres
+      p.fill(tc(n, colC));
+      px(p, x - PX, yTop, PX, PX*2);  // strie gauche
+      px(p, x + PX, yTop, PX, PX*2);  // strie droite
+    } else {
+      // Tulipe ouverte — pétales extérieurs retombent
+      p.fill(tc(n, colP));
+      px(p, x - PX*3, yTop+PX,   PX*2, PX*2); // pétale gauche retombant
+      px(p, x + PX*2, yTop+PX,   PX*2, PX*2); // pétale droit retombant
+      px(p, x - PX*2, yTop,      PX*5, PX*2); // corps central
+      px(p, x - PX,   yTop-PX,   PX*3, PX);   // dôme
+      p.fill(tc(n, colC));
+      px(p, x - PX,   yTop,      PX*3, PX);   // intérieur doré
+      p.fill(tc(n, '#306828'));
+      px(p, x,        yTop,      PX,   PX*2);  // strie centrale sombre
+    }
 
   } else {
-    // ── Tulipe allongée : tige haute + chapeau arrondi caractéristique
-    p.fill(tc(n, colTige));
-    px(p, x, y, PX, PX * s);                          // tige longue
-    // Feuilles latérales sur le bas de la tige (si assez grande)
-    if (s >= 3) {
-      px(p, x - PX*2, y - PX,     PX*2, PX);         // feuille gauche
-      px(p, x + PX,   y - PX*2,   PX*2, PX);         // feuille droite (décalée)
+    // ── SAUVAGE : fleur irrégulière, asymétrique — la plus naturelle
+    // s=1–2 : 1 pétale + 1 point (bouton sauvage)
+    // s=3–4 : 3 pétales asymétriques
+    // s=5–6 : 5 pétales asymétriques + feuillette calice
+    // s=7–8 : grande fleur sauvage, cœur proéminent + étamines multiples
+    if (s <= 2) {
+      p.fill(tc(n, colP));
+      px(p, x - PX, yTop, PX*2, PX); // pétale unique
+      p.fill(tc(n, colC));
+      px(p, x, yTop, PX, PX);        // cœur visible
+    } else if (s <= 4) {
+      p.fill(tc(n, colP));
+      px(p, x - PX*2, yTop,      PX, PX); // pétale gauche bas
+      px(p, x + PX,   yTop,      PX, PX); // pétale droit bas
+      px(p, x - PX,   yTop-PX,   PX, PX); // pétale haut (décalé = asymétrie)
+      p.fill(tc(n, colC));
+      px(p, x,        yTop,      PX, PX); // cœur
+    } else if (s <= 6) {
+      p.fill(tc(n, colP));
+      px(p, x - PX*3, yTop,      PX, PX*2); // pétale gauche long
+      px(p, x + PX*2, yTop+PX,   PX, PX);   // pétale droit court (asymétrie)
+      px(p, x - PX,   yTop-PX*2, PX, PX);   // pétale haut gauche
+      px(p, x + PX,   yTop-PX,   PX, PX);   // pétale haut droit
+      px(p, x - PX,   yTop+PX,   PX, PX);   // pétale bas
+      p.fill(tc(n, colFe));
+      px(p, x - PX*2, yTop+PX,   PX*2, PX); // calice (feuillette base)
+      p.fill(tc(n, colC));
+      px(p, x,        yTop,      PX*2, PX*2); // cœur proéminent
+    } else {
+      p.fill(tc(n, colP));
+      px(p, x - PX*3, yTop,      PX,   PX*3); // pétale gauche très long
+      px(p, x + PX*2, yTop+PX,   PX,   PX*2); // pétale droit moyen
+      px(p, x - PX,   yTop-PX*3, PX*2, PX);   // pétale haut gauche
+      px(p, x + PX,   yTop-PX*2, PX,   PX);   // pétale haut droit
+      px(p, x - PX*2, yTop+PX*2, PX,   PX);   // pétale bas gauche
+      px(p, x + PX,   yTop+PX,   PX,   PX);   // pétale bas droit
+      p.fill(tc(n, colFe));
+      px(p, x - PX*2, yTop+PX*2, PX*4, PX);   // calice large
+      p.fill(tc(n, colC));
+      px(p, x - PX,   yTop,      PX*3, PX*2); // gros cœur
+      // Étamines multiples
+      p.fill(tc(n, '#f8f040'));
+      px(p, x - PX,   yTop-PX,   PX, PX);
+      px(p, x + PX,   yTop-PX,   PX, PX);
+      px(p, x,        yTop-PX*2, PX, PX);
     }
-    p.fill(tc(n, colPetale));
-    px(p, x - PX,    y - PX*s,    PX*3, PX*2);       // chapeau tulipe (ovale)
-    p.fill(tc(n, colCoeur));
-    px(p, x,         y - PX*s - PX, PX, PX);         // pointe du pétale intérieur
   }
 }
 
 /**
  * drawHerbe(p, x, y, variant, colorVariant, scalePX, n)
- * RÔLE : Dessine un brin ou une touffe d'herbe — 4 formes × 8 tons de vert × taille variable.
- *        variant=0 : brin unique droit / variant=1 : brin penché /
- *        variant=2 : touffe (3 brins) / variant=3 : rosette basse.
+ * RÔLE : Dessine un brin ou une touffe d'herbe — 4 formes × 8 tons de vert × complexité croissante.
+ *        variant=0 : brin unique droit / variant=1 : brin penché + courbure /
+ *        variant=2 : touffe (3 brins) / variant=3 : fougère basse (rosette à palmes).
+ *
+ *        Complexité croissante avec scalePX :
+ *        s=1–2 : minimaliste (1–2 pixels, simple silhouette)
+ *        s=3–4 : forme reconnaissable, détails discrets
+ *        s=5–6 : nervures, ombre portée, feuilles secondaires
+ *        s=7+  : tige structurée, frondaison, reflets
  */
 function drawHerbe(p, x, y, variant, colorVariant, scalePX, n) {
   const s = scalePX;
@@ -467,54 +598,195 @@ function drawHerbe(p, x, y, variant, colorVariant, scalePX, n) {
     '#78c848', // vert pomme
     '#b0d890', // vert pâle (herbe sèche)
   ];
-  const colVert  = VERTS[colorVariant % 8];
-  const colFonce = VERTS[(colorVariant + 3) % 8]; // ton plus sombre pour l'ombre de base
+  const colVert   = VERTS[colorVariant % 8];
+  const colFonce  = VERTS[(colorVariant + 3) % 8]; // ombre / base
+  const colClair  = VERTS[(colorVariant + 1) % 8]; // reflet clair pour grandes formes
+  const colNervure = '#306828';                     // nervure sombre (grande fougère)
 
   if (variant === 0) {
-    // ── Brin unique droit — s'élance vers le haut, pointe fine
+    // ── BRIN DROIT : s'élance verticalement, pointe fine
+    // s=1–2 : tige 1px, pas de détail
+    // s=3–4 : tige 2px base, amincie en haut + légère ombre
+    // s=5–6 : deux petites feuilles latérales à mi-hauteur
+    // s=7+  : grande graminée avec épis en tête
     p.fill(tc(n, colVert));
-    for (let h = 0; h < s; h++) {
-      // Largeur décroissante vers la pointe : large à la base, 1px au sommet
-      const w = h < s / 2 ? 2 : 1;
-      px(p, x, y - PX*h, PX*w, PX);
+    if (s <= 2) {
+      px(p, x, y - PX, PX, PX); // 1 seul pixel haut
+    } else if (s <= 4) {
+      px(p, x, y,       PX*2, PX);    // base large
+      px(p, x, y - PX,  PX,   PX*s); // tige fine vers le haut
+    } else if (s <= 6) {
+      px(p, x, y,       PX*2, PX);         // base
+      px(p, x, y - PX,  PX,   PX*(s-1));   // tige
+      // Feuilles latérales à mi-hauteur
+      const mi = Math.floor(s * 0.5);
+      px(p, x - PX*2, y - PX*mi, PX*2, PX);   // feuille gauche
+      px(p, x + PX,   y - PX*mi, PX*2, PX);   // feuille droite
+    } else {
+      // Grande graminée — tige structurée + épis
+      px(p, x, y,       PX*2, PX*2);           // base épaisse
+      px(p, x, y - PX*2, PX,  PX*(s-2));       // tige fine
+      // Feuilles à deux niveaux
+      px(p, x - PX*2, y - PX*2,       PX*2, PX);
+      px(p, x + PX,   y - PX*3,       PX*2, PX);
+      px(p, x - PX,   y - PX*(s-1),   PX*2, PX);
+      // Épis en tête (petits points)
+      p.fill(tc(n, colFonce));
+      px(p, x - PX, y - PX*s,     PX, PX);
+      px(p, x + PX, y - PX*(s-1), PX, PX);
     }
+    // Ombre de base
+    p.fill(tc(n, colFonce));
+    px(p, x, y, PX*2, PX);
 
   } else if (variant === 1) {
-    // ── Brin penché — courbe vers la droite à mi-hauteur
+    // ── BRIN PENCHÉ : courbe vers la droite à mi-hauteur
+    // s=1–2 : 2 pixels décalés
+    // s=3–4 : courbure nette + ombre côté concave
+    // s=5–6 : feuille au genou + nervure sombre
+    // s=7+  : grande lame de roseau, se cintre en arc
     p.fill(tc(n, colVert));
-    const mi = Math.floor(s / 2);
-    for (let h = 0; h < s; h++) {
-      const dx = h >= mi ? PX : 0; // décalage droit sur la moitié haute
-      px(p, x + dx, y - PX*h, PX, PX);
+    if (s <= 2) {
+      px(p, x,      y - PX,  PX, PX);
+      px(p, x + PX, y - PX*2, PX, PX); // simple diagonale
+    } else if (s <= 4) {
+      const mi = Math.floor(s / 2);
+      for (let h = 0; h < mi; h++)  px(p, x,      y - PX*h, PX, PX); // partie basse
+      for (let h = mi; h < s; h++)  px(p, x + PX,  y - PX*h, PX, PX); // partie haute décalée
+      p.fill(tc(n, colFonce));
+      px(p, x, y - PX*mi, PX, PX); // ombre au pli
+    } else if (s <= 6) {
+      const mi = Math.floor(s * 0.4);
+      for (let h = 0; h < mi; h++)  px(p, x,      y - PX*h, PX*2, PX);
+      for (let h = mi; h < s; h++)  px(p, x + PX*2, y - PX*h, PX, PX);
+      // Nervure intérieure
+      p.fill(tc(n, colFonce));
+      for (let h = 1; h < mi; h++) px(p, x + PX, y - PX*h, PX, PX);
+      // Feuille au genou
+      p.fill(tc(n, colClair));
+      px(p, x - PX, y - PX*(mi-1), PX*2, PX);
+    } else {
+      // Grande lame en arc
+      for (let h = 0; h < 3; h++)        px(p, x,       y - PX*h, PX*2, PX);
+      for (let h = 3; h < s - 2; h++)    px(p, x + PX,  y - PX*h, PX*2, PX);
+      for (let h = s - 2; h < s; h++)    px(p, x + PX*3, y - PX*h, PX,  PX);
+      // Nervure centrale
+      p.fill(tc(n, colNervure));
+      for (let h = 1; h < 3; h++)        px(p, x + PX,  y - PX*h, PX, PX);
+      for (let h = 3; h < s - 2; h++)    px(p, x + PX*2, y - PX*h, PX, PX);
+      // Feuilles secondaires
+      p.fill(tc(n, colVert));
+      px(p, x - PX*2, y - PX*2, PX*2, PX);
+      px(p, x - PX,   y - PX*4, PX*2, PX);
     }
+    p.fill(tc(n, colFonce));
+    px(p, x, y, PX*2, PX); // ombre base
 
   } else if (variant === 2) {
-    // ── Touffe : 3 brins de hauteurs légèrement différentes
+    // ── TOUFFE : 3 brins de hauteurs différentes — s'enrichit avec la taille
+    // s=1–2 : 3 petits pixels côte à côte
+    // s=3–4 : 3 brins bien séparés avec hauteurs variées
+    // s=5–6 : brins larges + ombre entre eux
+    // s=7+  : touffe dense avec feuilles qui se chevauchent
     p.fill(tc(n, colVert));
-    // Brin gauche (s-1), central (s), droit (s-2) — asymétrie naturelle
-    for (let h = 0; h < s - 1; h++) px(p, x - PX, y - PX*h, PX, PX); // gauche
-    for (let h = 0; h < s;     h++) px(p, x,       y - PX*h, PX, PX); // central
-    for (let h = 0; h < s - 2; h++) px(p, x + PX,  y - PX*h, PX, PX); // droit
+    if (s <= 2) {
+      px(p, x - PX, y - PX, PX, PX);
+      px(p, x,      y - PX*s, PX, PX);
+      px(p, x + PX, y - PX, PX, PX);
+    } else if (s <= 4) {
+      for (let h = 0; h < s-1; h++) px(p, x - PX, y - PX*h, PX, PX); // gauche s-1
+      for (let h = 0; h < s;   h++) px(p, x,       y - PX*h, PX, PX); // centre s
+      for (let h = 0; h < s-2; h++) px(p, x + PX,  y - PX*h, PX, PX); // droite s-2
+    } else if (s <= 6) {
+      // Brins larges avec ombre
+      for (let h = 0; h < s-1; h++) px(p, x - PX*2, y - PX*h, PX*2, PX);
+      for (let h = 0; h < s;   h++) px(p, x,         y - PX*h, PX*2, PX);
+      for (let h = 0; h < s-2; h++) px(p, x + PX*2,  y - PX*h, PX*2, PX);
+      p.fill(tc(n, colFonce));
+      // Ombres entre les brins
+      for (let h = 1; h < 3; h++) px(p, x - PX, y - PX*h, PX, PX);
+      for (let h = 1; h < 3; h++) px(p, x + PX, y - PX*h, PX, PX);
+    } else {
+      // Touffe très dense : 5 brins + feuilles qui se croisent
+      const hts = [s-2, s-1, s, s-1, s-3]; // hauteurs variées
+      const xs  = [-4, -2, 0, 2, 4];
+      hts.forEach((ht, i) => {
+        p.fill(tc(n, i % 2 === 0 ? colVert : colClair));
+        for (let h = 0; h < ht; h++) px(p, x + PX*xs[i], y - PX*h, PX*2, PX);
+      });
+      // Nervures sur les brins centraux
+      p.fill(tc(n, colNervure));
+      for (let h = 1; h < s - 2; h++) px(p, x + PX, y - PX*h, PX, PX);
+    }
+    p.fill(tc(n, colFonce));
+    px(p, x - PX*2, y, PX*5, PX); // ombre base large
 
   } else {
-    // ── Rosette basse : s'étale horizontalement plutôt que verticalement
-    // Utile pour les petites herbes ras du sol (s=1–2)
+    // ── FOUGÈRE / ROSETTE : palmes latérales qui s'étalent
+    // s=1–2 : 3 points horizontaux (rosette microscopique)
+    // s=3–4 : tige centrale + 2 palmes
+    // s=5–6 : tige + 3 paires de palmes décalées
+    // s=7+  : grande fougère, palmes courbées avec nervures
     p.fill(tc(n, colVert));
-    const demi = Math.max(1, Math.floor(s / 2));
-    px(p, x - PX*demi, y,       PX*(demi*2+1), PX);   // étalement horizontal
-    if (s >= 2) px(p, x - PX, y - PX, PX*3, PX);      // deuxième rang si assez grande
+    if (s <= 2) {
+      px(p, x - PX, y, PX, PX);
+      px(p, x,      y - PX, PX, PX);
+      px(p, x + PX, y, PX, PX);
+    } else if (s <= 4) {
+      px(p, x, y, PX, PX*s); // tige
+      // Paire de palmes à mi-hauteur
+      const mi = Math.floor(s * 0.5);
+      px(p, x - PX*2, y - PX*mi, PX*2, PX);
+      px(p, x + PX,   y - PX*mi, PX*2, PX);
+    } else if (s <= 6) {
+      px(p, x, y, PX, PX*s); // tige centrale
+      // 3 paires de palmes décalées — crée l'effet fougère
+      for (let k = 1; k <= 3; k++) {
+        const yP = Math.floor(s * k / 4); // position régulièrement espacée sur la tige
+        const lg = Math.max(1, 4 - k);    // palmes plus courtes vers le haut
+        px(p, x - PX*(lg+1), y - PX*yP, PX*lg, PX);
+        px(p, x + PX,        y - PX*yP, PX*lg, PX);
+      }
+    } else {
+      // Grande fougère structurée
+      px(p, x, y, PX*2, PX*s); // tige épaisse
+      // 4 paires de palmes courbées
+      const niveaux = [
+        { k: 0.25, lg: 5 },
+        { k: 0.45, lg: 6 },
+        { k: 0.65, lg: 5 },
+        { k: 0.82, lg: 3 },
+      ];
+      niveaux.forEach(({ k, lg }) => {
+        const yP = Math.floor(s * k);
+        p.fill(tc(n, colVert));
+        px(p, x - PX*(lg+1), y - PX*yP,       PX*lg, PX); // palme gauche
+        px(p, x + PX*2,      y - PX*yP,       PX*lg, PX); // palme droite
+        // Courbure vers le bas en bout de palme
+        px(p, x - PX*(lg+1), y - PX*yP + PX, PX*2,  PX);
+        px(p, x + PX*(lg),   y - PX*yP + PX, PX*2,  PX);
+        // Nervure centrale des palmes
+        p.fill(tc(n, colNervure));
+        px(p, x - PX*(lg),   y - PX*yP, PX, PX);
+        px(p, x + PX*3,      y - PX*yP, PX, PX);
+      });
+    }
+    p.fill(tc(n, colFonce));
+    px(p, x - PX, y, PX*3, PX); // ombre base
   }
-
-  // Ombre commune à toutes les formes — ancre le brin au sol
-  p.fill(tc(n, colFonce));
-  px(p, x, y, PX*Math.min(2, s), PX);
 }
 
 /**
  * drawPierre(p, x, y, variant, colorVariant, scalePX, n)
- * RÔLE : Dessine une pierre ou un rocher — 4 formes × 8 teintes × taille variable.
- *        variant=0 : galet arrondi / variant=1 : bloc carré /
- *        variant=2 : dalle plate / variant=3 : rocher pointu.
+ * RÔLE : Dessine une pierre ou un rocher — 4 formes × 8 teintes × complexité croissante.
+ *        variant=0 : galet arrondi / variant=1 : bloc carré avec volume /
+ *        variant=2 : dalle plate affleurante / variant=3 : rocher pointu.
+ *
+ *        Complexité croissante avec scalePX :
+ *        s=1–2 : caillou simple (1–2 blocs)
+ *        s=3–4 : pierre avec ombre et reflet distinct
+ *        s=5–6 : rocher avec plusieurs faces, fissures ou mousse
+ *        s=7+  : gros rocher, fissures multiples, lichen, volume tridimensionnel
  */
 function drawPierre(p, x, y, variant, colorVariant, scalePX, n) {
   const s = scalePX;
@@ -530,59 +802,241 @@ function drawPierre(p, x, y, variant, colorVariant, scalePX, n) {
     '#686058', // brun rocheux
     '#d0c8b8', // calcaire chaud
   ];
-  const colCorps  = PIERRES[colorVariant % 8];
-  const colDessus = PIERRES[(colorVariant + 2) % 8]; // ton plus clair pour le dessus éclairé
-  const colReflet = '#e8e8e8';                        // reflet blanc fixe
+  const colCorps   = PIERRES[colorVariant % 8];
+  const colDessus  = PIERRES[(colorVariant + 2) % 8]; // face supérieure éclairée
+  const colOmbre   = PIERRES[(colorVariant + 4) % 8]; // face d'ombre (côté sombre)
+  const colReflet  = '#e8e8e8';                        // reflet blanc (coin éclairé)
+  const colLichen  = '#7a9050';                        // lichen vert (rochers ≥ s=6)
+  const colFissure = PIERRES[(colorVariant + 5) % 8]; // fissure (ton encore plus sombre)
 
   if (variant === 0) {
-    // ── Galet arrondi : forme trapézoïdale (plus large que haute)
-    p.fill(tc(n, colCorps));
-    px(p, x,      y,         PX*(s+1), PX*s);         // corps principal
-    px(p, x + PX, y - PX*s, PX*(s-1), PX);            // dessus rétréci (arrondi simulé)
-    p.fill(tc(n, colDessus));
-    px(p, x + PX, y - PX*s, PX*s,     PX);            // dessus éclairé
-    p.fill(tc(n, colReflet));
-    px(p, x + PX, y - PX*s, PX,       PX);            // reflet coin
+    // ── GALET ARRONDI : trapèze, plus large que haut
+    // s=1–2 : un simple rectangle
+    // s=3–4 : trapèze avec dessus éclairé + reflet
+    // s=5–6 : 3 faces + reflet + ombre portée
+    // s=7+  : gros galet, fissure centrale + lichen
+    if (s <= 2) {
+      p.fill(tc(n, colCorps));
+      px(p, x, y - PX, PX*(s+1), PX); // rectangle simple
+    } else if (s <= 4) {
+      p.fill(tc(n, colCorps));
+      px(p, x,      y - PX,      PX*(s+2), PX*(s-1)); // corps
+      px(p, x + PX, y - PX*s,   PX*s,     PX);        // dessus rétréci
+      p.fill(tc(n, colDessus));
+      px(p, x + PX, y - PX*s,   PX*s, PX);            // dessus éclairé
+      p.fill(tc(n, colReflet));
+      px(p, x + PX, y - PX*s,   PX,   PX);            // reflet coin
+    } else if (s <= 6) {
+      p.fill(tc(n, colCorps));
+      px(p, x,        y - PX,    PX*(s+2), PX*(s-1)); // corps
+      px(p, x + PX,   y - PX*s, PX*s,     PX);        // dessus
+      p.fill(tc(n, colOmbre));
+      px(p, x + PX*s, y - PX,   PX,       PX*(s-1)); // face d'ombre droite
+      p.fill(tc(n, colDessus));
+      px(p, x + PX,   y - PX*s, PX*s, PX);
+      p.fill(tc(n, colReflet));
+      px(p, x + PX,   y - PX*s, PX,   PX);
+      // Ombre portée au sol
+      p.fill(tc(n, colFissure));
+      px(p, x + PX*2, y, PX*s, PX);
+    } else {
+      // Gros galet — 3 faces + fissure + lichen
+      p.fill(tc(n, colCorps));
+      px(p, x,        y - PX,    PX*(s+3), PX*(s-1));
+      px(p, x + PX*2, y - PX*s, PX*(s),   PX);
+      p.fill(tc(n, colOmbre));
+      px(p, x + PX*(s+2), y - PX, PX*2, PX*(s-1)); // face ombre
+      p.fill(tc(n, colDessus));
+      px(p, x + PX*2, y - PX*s,  PX*(s),   PX);
+      p.fill(tc(n, colReflet));
+      px(p, x + PX*2, y - PX*s,  PX*2,     PX);
+      // Fissure diagonale
+      p.fill(tc(n, colFissure));
+      px(p, x + PX*3, y - PX*2,  PX, PX);
+      px(p, x + PX*4, y - PX*3,  PX, PX);
+      // Lichen
+      p.fill(tc(n, colLichen));
+      px(p, x + PX*2, y - PX*(s-1), PX*2, PX);
+    }
 
   } else if (variant === 1) {
-    // ── Bloc carré : forme cubique simple
-    p.fill(tc(n, colCorps));
-    px(p, x,      y,         PX*s, PX*s);             // corps carré
-    p.fill(tc(n, colDessus));
-    px(p, x,      y - PX*(s-1), PX*s, PX);           // tranche du dessus
-    p.fill(tc(n, colReflet));
-    px(p, x,      y - PX*(s-1), PX,   PX);           // reflet coin gauche
+    // ── BLOC CARRÉ : forme cubique, volume simulé
+    // s=1–2 : carré plat
+    // s=3–4 : cube 3 faces (dessus + face avant + ombre droite)
+    // s=5–6 : cube grand + fissure + reflet
+    // s=7+  : bloc massif + lichen + ombre profonde + gravure
+    if (s <= 2) {
+      p.fill(tc(n, colCorps));
+      px(p, x, y - PX*(s-1), PX*s, PX*s);
+    } else if (s <= 4) {
+      p.fill(tc(n, colCorps));
+      px(p, x,      y - PX*(s-1), PX*s, PX*s);          // face avant
+      p.fill(tc(n, colDessus));
+      px(p, x,      y - PX*(s-1) - PX, PX*s, PX);       // dessus
+      p.fill(tc(n, colReflet));
+      px(p, x,      y - PX*(s-1) - PX, PX,   PX);       // reflet
+      p.fill(tc(n, colOmbre));
+      px(p, x + PX*(s-1), y - PX*(s-1), PX, PX*(s-1)); // ombre côté droit
+    } else if (s <= 6) {
+      p.fill(tc(n, colCorps));
+      px(p, x,      y - PX*(s-1), PX*s, PX*s);
+      p.fill(tc(n, colDessus));
+      px(p, x,      y - PX*s, PX*s, PX);
+      p.fill(tc(n, colOmbre));
+      px(p, x + PX*(s-1), y - PX*(s-1), PX, PX*s);
+      p.fill(tc(n, colReflet));
+      px(p, x, y - PX*s, PX, PX);
+      // Fissure verticale sur la face avant
+      p.fill(tc(n, colFissure));
+      px(p, x + PX*2, y - PX*(s-1), PX, PX*(s-2));
+    } else {
+      // Gros bloc — lichen sur le dessus + ombre profonde
+      p.fill(tc(n, colCorps));
+      px(p, x, y - PX*(s-1), PX*(s+1), PX*s);
+      p.fill(tc(n, colDessus));
+      px(p, x, y - PX*s, PX*(s+1), PX);
+      p.fill(tc(n, colOmbre));
+      px(p, x + PX*s, y - PX*(s-1), PX, PX*s);
+      p.fill(tc(n, colReflet));
+      px(p, x, y - PX*s, PX, PX);
+      // Fissures sur les deux faces
+      p.fill(tc(n, colFissure));
+      px(p, x + PX*2, y - PX*(s-1),  PX, PX*(s-1));
+      px(p, x + PX*5, y - PX*(s-2),  PX, PX*(s-3));
+      // Lichen sur le dessus
+      p.fill(tc(n, colLichen));
+      px(p, x + PX,   y - PX*s,      PX*2, PX);
+      px(p, x + PX*4, y - PX*s,      PX,   PX);
+    }
 
   } else if (variant === 2) {
-    // ── Dalle plate : très large, 1 seul PX de haut quelle que soit la taille
-    // POURQUOI s'étale en X : simule une pierre plate au sol, comme un chemin
-    p.fill(tc(n, colCorps));
-    px(p, x,      y,         PX*(s*2), PX);           // très large et plate
-    p.fill(tc(n, colDessus));
-    px(p, x,      y,         PX*s,     PX);           // moitié gauche éclairée
-    p.fill(tc(n, colReflet));
-    px(p, x,      y,         PX,       PX);           // reflet extrême gauche
+    // ── DALLE PLATE : très large, affleurante au sol
+    // s=1–2 : dalle fine 1px
+    // s=3–4 : dalle avec bord relevé + ombre
+    // s=5–6 : dalle large avec fissure + lichen
+    // s=7+  : pavé avec joints apparents
+    if (s <= 2) {
+      p.fill(tc(n, colCorps));
+      px(p, x, y, PX*(s*2+1), PX);
+    } else if (s <= 4) {
+      p.fill(tc(n, colCorps));
+      px(p, x,      y,         PX*(s*2), PX);      // plateau
+      px(p, x,      y - PX,   PX*(s*2), PX);      // bord relevé
+      p.fill(tc(n, colDessus));
+      px(p, x,      y - PX,   PX*s,     PX);      // côté éclairé
+      p.fill(tc(n, colReflet));
+      px(p, x,      y - PX,   PX,       PX);
+    } else if (s <= 6) {
+      p.fill(tc(n, colCorps));
+      px(p, x,      y,         PX*(s*2+2), PX*2);  // dalle épaisse
+      p.fill(tc(n, colDessus));
+      px(p, x,      y - PX,   PX*(s*2+2), PX);    // dessus éclairé
+      p.fill(tc(n, colReflet));
+      px(p, x,      y - PX,   PX*2,       PX);
+      // Fissure transversale
+      p.fill(tc(n, colFissure));
+      px(p, x + PX*s, y - PX, PX, PX*2);
+      // Lichen en coin
+      p.fill(tc(n, colLichen));
+      px(p, x + PX*(s+2), y - PX, PX*2, PX);
+    } else {
+      // Grand pavé avec joints
+      p.fill(tc(n, colCorps));
+      px(p, x, y, PX*(s*2+4), PX*3);
+      p.fill(tc(n, colDessus));
+      px(p, x, y - PX*2, PX*(s*2+4), PX);
+      p.fill(tc(n, colReflet));
+      px(p, x, y - PX*2, PX*3, PX);
+      // Joints (ligne médiane + verticale)
+      p.fill(tc(n, colFissure));
+      px(p, x, y - PX, PX*(s*2+4), PX);           // joint horizontal
+      px(p, x + PX*(s+1), y - PX*2, PX, PX*3);   // joint vertical gauche
+      px(p, x + PX*(s+3), y - PX*2, PX, PX*3);   // joint vertical droit
+      // Lichen sur bords
+      p.fill(tc(n, colLichen));
+      px(p, x, y - PX*2, PX*2, PX);
+      px(p, x + PX*(s*2+2), y - PX*2, PX*2, PX);
+    }
 
   } else {
-    // ── Rocher pointu : plus haut que large, forme triangulaire
-    p.fill(tc(n, colCorps));
-    px(p, x,        y,         PX*s,         PX*s);   // base large
-    px(p, x + PX,   y - PX*s, PX*(s-1),     PX*s);   // milieu rétréci
-    if (s >= 2) px(p, x + PX, y - PX*s*2,   PX,  PX); // pointe (si assez grand)
-    p.fill(tc(n, colDessus));
-    px(p, x + PX,   y - PX*s, PX*(s-1),     PX);     // face éclairée du milieu
-    p.fill(tc(n, colReflet));
-    px(p, x + PX,   y - PX*s, PX,           PX);     // reflet pointe
+    // ── ROCHER POINTU : plus haut que large, silhouette triangulaire
+    // s=1–2 : triangle 2 blocs
+    // s=3–4 : rocher avec face ombre et reflet
+    // s=5–6 : pic rocheux avec fissure + ombre au sol
+    // s=7+  : formation rocheuse, plusieurs pics, lichen
+    if (s <= 2) {
+      p.fill(tc(n, colCorps));
+      px(p, x, y - PX, PX*2, PX);   // base
+      px(p, x, y - PX*2, PX, PX);   // pointe
+    } else if (s <= 4) {
+      p.fill(tc(n, colCorps));
+      px(p, x,      y - PX,      PX*s,     PX*(s-1)); // base
+      px(p, x + PX, y - PX*s,   PX*(s-1), PX*(s-1)); // milieu
+      px(p, x + PX, y - PX*(s*2-1), PX,   PX);        // pointe
+      p.fill(tc(n, colDessus));
+      px(p, x + PX, y - PX*s, PX*(s-1), PX);          // face supérieure
+      p.fill(tc(n, colReflet));
+      px(p, x + PX, y - PX*s, PX, PX);
+    } else if (s <= 6) {
+      p.fill(tc(n, colCorps));
+      px(p, x,        y - PX,       PX*(s+1), PX*(s-1));
+      px(p, x + PX,   y - PX*s,     PX*(s-1), PX*(s-1));
+      px(p, x + PX*2, y - PX*(s*2-1), PX,     PX);
+      p.fill(tc(n, colOmbre));
+      px(p, x + PX*s, y - PX,       PX,       PX*(s-1)); // face ombre
+      p.fill(tc(n, colDessus));
+      px(p, x + PX,   y - PX*s,     PX*(s-1), PX);
+      p.fill(tc(n, colReflet));
+      px(p, x + PX,   y - PX*s,     PX,       PX);
+      // Fissure diagonale
+      p.fill(tc(n, colFissure));
+      px(p, x + PX*2, y - PX*2,    PX, PX);
+      px(p, x + PX*3, y - PX*3,    PX, PX);
+      // Ombre portée
+      p.fill(tc(n, colFissure));
+      px(p, x + PX*2, y,           PX*s, PX);
+    } else {
+      // Formation de deux pics — paysage rocheux dramatique
+      // Pic principal (gauche)
+      p.fill(tc(n, colCorps));
+      px(p, x,        y - PX,        PX*4,    PX*(s-2));
+      px(p, x + PX,   y - PX*(s-1),  PX*3,    PX*(s-3));
+      px(p, x + PX*2, y - PX*(s*2-3),PX,      PX);
+      // Pic secondaire (droite, plus petit)
+      px(p, x + PX*4, y - PX,        PX*3,    PX*(s-4));
+      px(p, x + PX*5, y - PX*(s-3),  PX*2,    PX*(s-5));
+      px(p, x + PX*5, y - PX*(s*2-7),PX,      PX);
+      p.fill(tc(n, colOmbre));
+      px(p, x + PX*3, y - PX,        PX,      PX*(s-2));
+      px(p, x + PX*6, y - PX,        PX,      PX*(s-4));
+      p.fill(tc(n, colDessus));
+      px(p, x + PX,   y - PX*(s-1),  PX*3, PX);
+      px(p, x + PX*5, y - PX*(s-3),  PX*2, PX);
+      p.fill(tc(n, colReflet));
+      px(p, x + PX,   y - PX*(s-1),  PX, PX);
+      // Fissures sur le pic principal
+      p.fill(tc(n, colFissure));
+      px(p, x + PX,   y - PX*3,      PX, PX*2);
+      // Lichen en hauteur
+      p.fill(tc(n, colLichen));
+      px(p, x + PX*2, y - PX*(s-2),  PX*2, PX);
+    }
   }
 }
 
 /**
  * drawChampignon(p, x, y, variant, colorVariant, scalePX, n)
- * RÔLE : Dessine un champignon — 4 formes × 8 couleurs × taille variable.
- *        variant=0 : amanite (chapeau large arrondi) /
- *        variant=1 : bolet (chapeau bombé, pied épais) /
- *        variant=2 : marasme (tout petit, pied fin) /
+ * RÔLE : Dessine un champignon — 4 formes × 8 couleurs × complexité croissante.
+ *        variant=0 : amanite (chapeau large, points blancs) /
+ *        variant=1 : bolet (chapeau bombé, pied trapu, reflets) /
+ *        variant=2 : marasme (pied élancé, chapeau minuscule) /
  *        variant=3 : pleurote (asymétrique, chapeau en éventail).
+ *
+ *        Complexité croissante avec scalePX :
+ *        s=1–2 : silhouette minuscule (bouton + tige)
+ *        s=3–4 : forme reconnaissable + reflet + points
+ *        s=5–6 : volume 3D simulé, lamelles ou pores, anneau
+ *        s=7+  : spécimen impressionnant, ouverture du chapeau, sporée, volve
  */
 function drawChampignon(p, x, y, variant, colorVariant, scalePX, n) {
   const s = scalePX;
@@ -601,53 +1055,241 @@ function drawChampignon(p, x, y, variant, colorVariant, scalePX, n) {
   const colChapeau = CHAPEAUX[colorVariant % 8];
   const colPied    = colorVariant % 3 === 0 ? '#e8e0d0' : '#c8b898'; // pied blanc ou beige
   const colPoints  = colorVariant % 2 === 0 ? '#ffffff' : '#fff8d0';  // points blancs ou ivoire
+  const colLamelle = CHAPEAUX[(colorVariant + 4) % 8];                // lamelles (teinte contraste)
+  const colOmbre   = CHAPEAUX[(colorVariant + 5) % 8];                // ombre du chapeau
 
   if (variant === 0) {
-    // ── Amanite : chapeau large et arrondi, points caractéristiques
-    p.fill(tc(n, colPied));
-    px(p, x, y,           PX*s,     PX*s);              // pied haut
-    p.fill(tc(n, colChapeau));
-    px(p, x - PX*s, y - PX*s,  PX*(s*2+1), PX*(s+1));  // chapeau très large
-    px(p, x - PX,   y - PX*s*2, PX*(s+1),  PX);        // dôme supérieur
-    // Points blancs — nombre proportionnel à la taille
-    p.fill(tc(n, colPoints));
-    px(p, x,        y - PX*s,    PX, PX);               // point central
-    if (s >= 2) px(p, x - PX*s + PX, y - PX*s, PX, PX); // point gauche
-    if (s >= 3) px(p, x + PX*s - PX, y - PX*s, PX, PX); // point droit
+    // ── AMANITE : chapeau large et arrondi, points caractéristiques
+    // s=1–2 : chapeau 3px + pied 1px
+    // s=3–4 : chapeau large + dôme + points
+    // s=5–6 : chapeau large + anneau sur le pied + points nombreux
+    // s=7+  : grande amanite, chapeau bombé, volve à la base, sporée
+    if (s <= 2) {
+      p.fill(tc(n, colPied));
+      px(p, x, y - PX, PX, PX);            // pied minuscule
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX, y - PX*2, PX*3, PX);  // chapeau plat
+    } else if (s <= 4) {
+      p.fill(tc(n, colPied));
+      px(p, x, y,          PX,       PX*s);              // pied fin
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX*s, y - PX*s,  PX*(s*2+1), PX*(s+1)); // chapeau
+      px(p, x - PX,   y - PX*(s+1), PX*(s+1), PX);      // dôme
+      p.fill(tc(n, colPoints));
+      px(p, x,        y - PX*s,    PX, PX);
+      if (s >= 3) { px(p, x - PX*s + PX, y - PX*s, PX, PX); px(p, x + PX*s - PX, y - PX*s, PX, PX); }
+    } else if (s <= 6) {
+      p.fill(tc(n, colPied));
+      px(p, x, y, PX*2, PX*s);              // pied épaissi
+      // Anneau sur le pied à mi-hauteur
+      p.fill(tc(n, colPoints));
+      px(p, x - PX, y - PX*Math.floor(s*0.5), PX*4, PX);
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX*s,   y - PX*s,    PX*(s*2+2), PX*(s));
+      px(p, x - PX*(s-1), y - PX*(s+1), PX*(s*2),  PX);
+      // Ombre sous le bord du chapeau
+      p.fill(tc(n, colOmbre));
+      px(p, x - PX*s,   y - PX*s,    PX*(s*2+2), PX);
+      p.fill(tc(n, colPoints));
+      // Points — jusqu'à 5 selon la taille
+      px(p, x,        y - PX*(s-1),  PX, PX);
+      px(p, x - PX*(s-2), y - PX*(s-1), PX, PX);
+      px(p, x + PX*(s-2), y - PX*(s-1), PX, PX);
+      px(p, x - PX*(s-1), y - PX*(s-2), PX, PX);
+      px(p, x + PX*(s-1), y - PX*(s-2), PX, PX);
+    } else {
+      // Grande amanite imposante — volve, anneau, sporée
+      p.fill(tc(n, colPied));
+      px(p, x, y, PX*2, PX*s);
+      // Volve à la base
+      p.fill(tc(n, colOmbre));
+      px(p, x - PX*2, y, PX*6, PX);
+      px(p, x - PX,   y - PX, PX*4, PX);
+      // Anneau
+      p.fill(tc(n, colPoints));
+      px(p, x - PX*2, y - PX*Math.floor(s*0.45), PX*6, PX);
+      // Chapeau bombé
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX*(s+1), y - PX*s,    PX*(s*2+4), PX*(s));
+      px(p, x - PX*(s-1), y - PX*(s+1), PX*(s*2),   PX);
+      px(p, x - PX*(s-3), y - PX*(s+2), PX*(s*2-2), PX);
+      // Ombre portée sous bord
+      p.fill(tc(n, colOmbre));
+      px(p, x - PX*(s+1), y - PX*s, PX*(s*2+4), PX*2);
+      // Points — 7 répartis
+      p.fill(tc(n, colPoints));
+      for (let k = -s+2; k <= s-2; k += 2) {
+        px(p, x + PX*k, y - PX*(s-1), PX, PX);
+      }
+      // Sporée (fine ligne sous la jupe)
+      p.fill(tc(n, colPoints));
+      px(p, x - PX, y - PX*s, PX*4, PX);
+    }
 
   } else if (variant === 1) {
-    // ── Bolet : chapeau bombé, pied trapu et épais
-    p.fill(tc(n, colPied));
-    px(p, x - PX, y,      PX*(s+1), PX*s);              // pied trapu (large)
-    p.fill(tc(n, colChapeau));
-    px(p, x - PX*s, y - PX*s, PX*(s*2+1), PX*s);        // chapeau bombé
-    px(p, x,        y - PX*s*2, PX*s,     PX);          // dôme central
-    // Pas de points — les bolets n'en ont pas
-    // Reflet sur le chapeau pour le volume
-    p.fill(tc(n, '#ffffff'));
-    px(p, x,        y - PX*s,   PX,       PX);          // reflet léger
+    // ── BOLET : chapeau bombé, pied trapu, pas de points — réseau de pores
+    // s=1–2 : forme arrondie simple
+    // s=3–4 : pied trapu + chapeau bombé + reflet
+    // s=5–6 : réseau de pores sous le chapeau + volume
+    // s=7+  : bolet massif, hyménium visible, craquelures sur le chapeau
+    if (s <= 2) {
+      p.fill(tc(n, colPied));
+      px(p, x, y - PX, PX*2, PX);           // pied court
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX, y - PX*2, PX*4, PX*2); // chapeau demi-sphère
+    } else if (s <= 4) {
+      p.fill(tc(n, colPied));
+      px(p, x - PX, y,      PX*(s+1), PX*s);
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX*s, y - PX*s, PX*(s*2+1), PX*s);
+      px(p, x,        y - PX*(s+1), PX*s,   PX);    // dôme central
+      p.fill(tc(n, '#ffffff'));
+      px(p, x,        y - PX*s,     PX,     PX);    // reflet
+    } else if (s <= 6) {
+      p.fill(tc(n, colPied));
+      px(p, x - PX, y, PX*(s+2), PX*s);
+      // Réseau de pores (hyménium) — rangée de petits carrés sous le bord
+      p.fill(tc(n, colLamelle));
+      px(p, x - PX*s, y - PX*s, PX*(s*2+2), PX);    // hyménium
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX*s, y - PX*(s+1), PX*(s*2+2), PX*s);
+      px(p, x - PX*(s-2), y - PX*(s+2), PX*(s*2-2), PX);
+      p.fill(tc(n, colOmbre));
+      px(p, x - PX*s, y - PX*(s+1), PX*(s*2+2), PX*2); // ombre bord
+      p.fill(tc(n, '#ffffff'));
+      px(p, x - PX*(s-2), y - PX*(s+1), PX*2, PX);  // reflet
+    } else {
+      // Bolet massif — craquelures + hyménium large
+      p.fill(tc(n, colPied));
+      px(p, x - PX*2, y, PX*(s+3), PX*s);
+      // Hyménium (pores)
+      p.fill(tc(n, colLamelle));
+      px(p, x - PX*(s+1), y - PX*s, PX*(s*2+4), PX*2);
+      // Chapeau large
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX*(s+1), y - PX*(s+2), PX*(s*2+4), PX*(s));
+      px(p, x - PX*(s-1), y - PX*(s+3), PX*(s*2),   PX);
+      // Craquelures sur le dessus
+      p.fill(tc(n, colOmbre));
+      px(p, x - PX*2, y - PX*(s+3), PX, PX*2);
+      px(p, x + PX*2, y - PX*(s+2), PX, PX*2);
+      px(p, x + PX*5, y - PX*(s+3), PX, PX);
+      // Reflets en arc
+      p.fill(tc(n, '#ffffff'));
+      px(p, x - PX*(s-2), y - PX*(s+2), PX*3, PX);
+    }
 
   } else if (variant === 2) {
-    // ── Marasme : très petit, pied fin et haut, chapeau minuscule
-    // Intéressant sur s=1–2, devient très élancé sur s=4+
-    p.fill(tc(n, colPied));
-    px(p, x, y,           PX,       PX*s);              // pied fin (1px de large)
-    p.fill(tc(n, colChapeau));
-    px(p, x - PX, y - PX*s,  PX*3, PX);                // chapeau plat minuscule
-    if (s >= 3) px(p, x,     y - PX*s - PX, PX, PX);  // pointe si assez grand
-    p.fill(tc(n, colPoints));
-    px(p, x,      y - PX*s,  PX,    PX);               // point unique au centre
+    // ── MARASME : pied très fin et haut, chapeau minuscule — élancé
+    // s=1–2 : 1 pixel pied + 1 chapeau micro
+    // s=3–4 : pied fin + chapeau plat + point
+    // s=5–6 : pied coloré + chapeau en cloche + lamelles visibles
+    // s=7+  : famille de marasmes (plusieurs pieds)
+    if (s <= 2) {
+      p.fill(tc(n, colPied));
+      px(p, x, y - PX, PX, PX);            // tige
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX, y - PX*2, PX*3, PX);  // chapeau 3px
+    } else if (s <= 4) {
+      p.fill(tc(n, colPied));
+      px(p, x, y, PX, PX*s);               // pied fin
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX, y - PX*s, PX*3, PX);  // chapeau
+      if (s >= 3) px(p, x, y - PX*(s+1), PX, PX); // pointe
+      p.fill(tc(n, colPoints));
+      px(p, x, y - PX*s, PX, PX);          // point centre
+    } else if (s <= 6) {
+      p.fill(tc(n, colPied));
+      px(p, x, y, PX, PX*s);
+      // Chapeau en cloche
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX*2, y - PX*s,    PX*5, PX*2);
+      px(p, x - PX,   y - PX*(s+2), PX*3, PX);
+      px(p, x,        y - PX*(s+3), PX,   PX);
+      // Lamelles sous le chapeau
+      p.fill(tc(n, colLamelle));
+      px(p, x - PX*2, y - PX*s, PX, PX);
+      px(p, x + PX*2, y - PX*s, PX, PX);
+      px(p, x - PX,   y - PX*s, PX, PX);
+      px(p, x + PX,   y - PX*s, PX, PX);
+    } else {
+      // Famille de 3 marasmes — petits, moyens, grands côte à côte
+      const pieds = [
+        { dx: -PX*3, ht: s - 2 },
+        { dx: 0,     ht: s     },
+        { dx: PX*3,  ht: s - 4 },
+      ];
+      pieds.forEach(({ dx, ht }) => {
+        p.fill(tc(n, colPied));
+        px(p, x + dx, y, PX, PX*ht);
+        p.fill(tc(n, colChapeau));
+        px(p, x + dx - PX*2, y - PX*ht, PX*5, PX*2);
+        px(p, x + dx - PX,   y - PX*(ht+2), PX*3, PX);
+        // Lamelles
+        p.fill(tc(n, colLamelle));
+        px(p, x + dx - PX*2, y - PX*ht, PX, PX);
+        px(p, x + dx,         y - PX*ht, PX, PX);
+        px(p, x + dx + PX*2,  y - PX*ht, PX, PX);
+      });
+    }
 
   } else {
-    // ── Pleurote : asymétrique, chapeau en éventail partant d'un côté
-    p.fill(tc(n, colPied));
-    px(p, x, y,           PX,       PX*s);              // pied court et latéral
-    p.fill(tc(n, colChapeau));
-    // Chapeau qui s'étale vers la gauche uniquement (asymétrique)
-    px(p, x - PX*s*2, y - PX*s, PX*(s*2+1), PX*(s+1)); // éventail
-    px(p, x - PX*s,   y - PX*s*2, PX*s,     PX);       // bord du dessus arrondi
-    p.fill(tc(n, colPoints));
-    if (s >= 2) px(p, x - PX*s, y - PX*s, PX, PX);    // point asymétrique
+    // ── PLEUROTE : chapeau en éventail asymétrique, pas de pied central
+    // s=1–2 : éventail 3px posé au sol
+    // s=3–4 : éventail + point + pied latéral
+    // s=5–6 : éventail large + lamelles + volume
+    // s=7+  : grande pleurote, lamelles saillantes, ombres profondes
+    if (s <= 2) {
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX*2, y - PX, PX*4, PX); // éventail minimal
+    } else if (s <= 4) {
+      p.fill(tc(n, colPied));
+      px(p, x, y, PX, PX*s);              // pied latéral
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX*s*2, y - PX*s, PX*(s*2+1), PX*(s+1));
+      px(p, x - PX*s,   y - PX*(s+1), PX*s, PX);
+      p.fill(tc(n, colPoints));
+      if (s >= 3) px(p, x - PX*s, y - PX*s, PX, PX);
+    } else if (s <= 6) {
+      p.fill(tc(n, colPied));
+      px(p, x, y, PX*2, PX*s);
+      // Chapeau étalé
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX*(s*2+1), y - PX*s,    PX*(s*2+3), PX*(s+1));
+      px(p, x - PX*(s*2),   y - PX*(s+1), PX*(s*2),  PX);
+      // Lamelles visibles sous le bord
+      p.fill(tc(n, colLamelle));
+      for (let k = -s*2; k <= -2; k += 2) {
+        px(p, x + PX*k, y - PX*s, PX, PX*Math.floor(s*0.5));
+      }
+      // Volume sur le dessus
+      p.fill(tc(n, colOmbre));
+      px(p, x - PX*(s*2+1), y - PX*s, PX, PX*(s+1)); // bord gauche ombre
+    } else {
+      // Grande pleurote — lamelles saillantes et chapeau ondulé
+      p.fill(tc(n, colPied));
+      px(p, x, y, PX*2, PX*s);
+      // Chapeau ondulé (plusieurs étages)
+      p.fill(tc(n, colChapeau));
+      px(p, x - PX*(s*2+2), y - PX*s,    PX*(s*2+4), PX*(s+1));
+      px(p, x - PX*(s*2),   y - PX*(s+1), PX*(s*2),   PX);
+      px(p, x - PX*(s*2-2), y - PX*(s+2), PX*(s*2-2), PX);
+      // Ondulation du bord (valeurs différentes)
+      px(p, x - PX*(s*2+2), y - PX*(s-1), PX, PX*3); // bosse gauche
+      px(p, x - PX*(s+2),   y - PX*(s-1), PX, PX*2); // bosse milieu
+      // Lamelles saillantes
+      p.fill(tc(n, colLamelle));
+      for (let k = -s*2; k <= -1; k += 2) {
+        const lg = k < -s ? s : Math.floor(s * 0.5);
+        px(p, x + PX*k, y - PX*s, PX, PX*lg);
+      }
+      // Ombre profonde sur le bord gauche
+      p.fill(tc(n, colOmbre));
+      px(p, x - PX*(s*2+2), y - PX*s, PX*2, PX*(s+1));
+      // Reflet sur le dessus
+      p.fill(tc(n, '#ffffff'));
+      px(p, x - PX*(s-2), y - PX*(s+2), PX*3, PX);
+    }
   }
 }
 

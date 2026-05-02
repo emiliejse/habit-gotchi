@@ -1672,6 +1672,40 @@ window.fermerModalEtats  = fermerModalEtats;
 
 
 
+/* ─── resetGarden() ────────────────────────────────────────── */
+
+/**
+ * resetGarden()
+ * RÔLE : Régénère un jardin entièrement nouveau en effaçant la seed et gardenState.
+ *        La prochaine exécution d'initGarden() tirera une nouvelle seed → jardin différent.
+ *
+ * POURQUOI ce comportement :
+ *   - gardenSeed = null → initGarden() tirera une nouvelle seed aléatoire
+ *   - gardenState = []  → tous les âges seront remis à 0
+ *   - save() → persiste immédiatement avant d'appeler initGarden()
+ *   - initGarden() recalcule window._gardenElements depuis la nouvelle seed
+ *
+ * APPELÉE PAR : le bouton "🌱 Régénérer le jardin" dans les réglages (index.html).
+ */
+function resetGarden() {
+  if (!window.D || !window.D.g) return; // garde-fou
+
+  // RÔLE : Confirme l'action — le jardin actuel sera perdu (âges remis à 0).
+  // POURQUOI confirm() : action irréversible sur la save — même convention que confirmReset().
+  if (!confirm('Régénérer le jardin ? Le jardin actuel sera perdu (nouveau dessin, âges remis à zéro).')) return;
+
+  // RÔLE : Efface seed et état — initGarden() recalculera tout depuis zéro.
+  window.D.g.gardenSeed  = null;
+  window.D.g.gardenState = [];
+  save(); // RÔLE : Persiste l'effacement avant initGarden() pour éviter de perdre la mise à zéro si l'app crashe.
+
+  // RÔLE : Recalcule immédiatement le jardin avec une nouvelle seed.
+  if (typeof window.initGarden === 'function') window.initGarden();
+
+  toast('🌱 Nouveau jardin généré !');
+}
+window.resetGarden = resetGarden;
+
 /* ============================================================
    INIT UI — Appelée par bootstrap() dans app.js
    (plus de DOMContentLoaded : incompatible PWA iOS standalone)

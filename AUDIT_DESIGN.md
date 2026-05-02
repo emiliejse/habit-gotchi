@@ -346,7 +346,7 @@ config.js → app.js → render.js → envs.js → render-sprites.js
 - `.card-*` : `card`, `card-primary`, `card-primary-header`, `card-gotchi` — ✅ stable
 - `.hab-*` : `hab`, `hab-mini`, `hab-mini-bar`, `hab--next`, `hab-count` — ✅ stable, BEM léger sur `--next`
 - `.j-*` (journal) : `j90`, `j-entry`, `j-text-content`, `j-date`, `j-actions`, `j-day-sep`, `j-day-toggle`, `j-week-title`, `j-week-count` — ✅
-- `.menu-*` : `menu-languette`, `menu-overlay`, `menu-book`, `menu-doodle`, `menu-line`, `menu-line--indent`, `menu-postit`, `menu-postit--rose/lilac` — ✅ BEM partiel
+- `.menu-*` : `menu-languette`, `menu-overlay`, `menu-book`, `menu-doodle`, `menu-line`, `menu-line--indent`, `menu-postit`, `menu-postit--rose/lilac`, `menu-stickers`, `menu-sticker`, `menu-sticker--disabled` — ✅ BEM partiel
 - `.tama-*` : `tama-shell`, `tama-screen`, `tama-wind` — ✅
 - `.tablet-*` : `tablet-line`, `tl-time`, `tl-icon` — ⚠️ incohérence (`tl-` au lieu de `tablet-`)
 - `.pin-*`, `.mood-*`, `.cal-*`, `.nav-*` — ✅ courts et explicites

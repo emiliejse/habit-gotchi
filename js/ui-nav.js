@@ -504,6 +504,10 @@ function closeCanvasFullscreen() {
   if (infoEl) infoEl.remove();
   // RÔLE : Retire la classe garden-fullscreen — l'UI normale reprend son layout
   document.body.classList.remove('garden-fullscreen');
+  // RÔLE : Retire le focus du bouton ✕ avant de remettre aria-hidden sur son parent.
+  // POURQUOI : Si le bouton garde le focus au moment où aria-hidden est posé sur .hdr-garden,
+  //            le navigateur lève un warning "Blocked aria-hidden on focused element".
+  document.querySelector('.hdr-garden-close')?.blur();
   // RÔLE : Remet aria-hidden sur le header jardin — masqué hors mode plein écran
   document.getElementById('hdr-garden')?.setAttribute('aria-hidden', 'true');
   // RÔLE : Restaure compact si le tama était réduit avant l'ouverture

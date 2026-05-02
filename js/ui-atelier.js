@@ -395,6 +395,8 @@ function _atelierRenderPalette() {
   const GAP      = 8;   // gap fixe entre boutons (px)
   const btnSize  = Math.max(28, Math.floor((totalW - GAP * (N_COLS - 1)) / N_COLS));
 
+  let html = ''; // RÔLE : accumulateur HTML de toute la palette (outils + couleurs + gomme)
+
   // ── Barre d'outils : Peindre / Foncer / Éclaircir ──
   // RÔLE : Trois boutons pleine largeur au-dessus de la palette.
   // POURQUOI : Séparés des couleurs pour une lecture immédiate de l'outil actif.

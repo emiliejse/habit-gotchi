@@ -597,41 +597,40 @@ Ton bilan de la semaine apparaîtra ici...
      la palette et la galerie sont compressées en bas — pattern analogue à une app de dessin mobile -->
 <!-- z-index : 500 — entre tablet-overlay:400 et etats-overlay:1000 -->
 <div class="app-overlay" id="atelier-overlay"
-  style="display:none;z-index:500;background:#fff;flex-direction:column;overflow:hidden">
+  style="display:none;z-index:500;background:#fff;flex-direction:column;overflow:hidden;
+         padding-top:env(safe-area-inset-top,0px);
+         padding-left:env(safe-area-inset-left,0px);
+         padding-right:env(safe-area-inset-right,0px)">
+  <!-- POURQUOI padding sur l'overlay lui-même et non sur le header :
+       la safe area doit décaler toute la colonne flex d'un coup — sinon le bouton ✕
+       reste dans la zone de l'encoche et est inaccessible. Les paddings latéraux
+       absorbent les encoches en mode paysage. -->
 
-  <!-- ── En-tête : pattern identique à la Boutique (h2 gauche + .modal-close droite) ── -->
-  <!-- padding-top absorbe l'encoche / Dynamic Island -->
+  <!-- ── En-tête ── -->
   <div style="display:flex;align-items:center;justify-content:space-between;
-              padding:calc(12px + env(safe-area-inset-top, 0px)) 16px 8px;flex-shrink:0;border-bottom:1px solid var(--border)">
+              padding:12px 16px 8px;flex-shrink:0;border-bottom:1px solid var(--border)">
     <h2 style="margin:0;font-family:var(--font-title);color:var(--text)">🎨 Atelier</h2>
-    <!-- RÔLE : bouton ✕ standardisé, même style que .modal-close de la boutique -->
     <button class="modal-close" onclick="fermerAtelier()" aria-label="Fermer l'atelier">✕</button>
   </div>
 
   <!-- ── Zone canvas : prend tout l'espace disponible entre header et footer ── -->
-  <!-- POURQUOI flex:1 + overflow:hidden : le canvas s'étend jusqu'aux bords de la zone,
-       sans créer de scroll. ui-atelier.js calcule la taille réelle via _atelierFitCanvas(). -->
+  <!-- padding latéral de 16px pour aligner le canvas avec la palette et la galerie -->
   <div id="atelier-canvas-zone"
     style="flex:1;display:flex;align-items:center;justify-content:center;
-           overflow:hidden;background:#fff;min-height:0">
-    <!-- touch-action:none : pointer events JS prennent le contrôle total -->
-    <!-- image-rendering:pixelated : bords nets, pas d'antialiasing -->
+           overflow:hidden;background:#fff;min-height:0;padding:8px 16px">
     <canvas id="atelier-canvas"
       style="image-rendering:pixelated;touch-action:none;display:block"></canvas>
   </div>
 
-  <!-- ── Footer : palette + galerie + bouton activer, compressés en bas ── -->
-  <!-- POURQUOI flex-shrink:0 : cette zone ne se réduit pas, c'est le canvas qui cède -->
+  <!-- ── Footer : palette + galerie + bouton activer ── -->
   <!-- padding-bottom absorbe le home indicator iOS via env() directement
-       POURQUOI : --sab est en dur à 0px dans style.css (dette connue) — on contourne
-       en lisant env(safe-area-inset-bottom) directement ici. -->
+       POURQUOI : --sab est en dur à 0px dans style.css (dette connue) -->
   <div id="atelier-footer"
-    style="flex-shrink:0;padding:10px 16px calc(14px + env(safe-area-inset-bottom, 0px));border-top:1px solid var(--border);
-           background:#fff;display:flex;flex-direction:column;gap:6px">
+    style="flex-shrink:0;padding:10px 16px calc(14px + env(safe-area-inset-bottom,0px));
+           border-top:1px solid var(--border);background:#fff;display:flex;flex-direction:column;gap:6px">
 
     <!-- Palette de couleurs + gomme — rendue par ui-atelier.js -->
-    <div id="atelier-palette"
-      style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:6px"></div>
+    <div id="atelier-palette" style="margin-bottom:6px"></div>
 
     <!-- Galerie des tableaux sauvegardés — rendue par ui-atelier.js -->
     <div id="atelier-galerie"></div>

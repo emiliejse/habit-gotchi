@@ -119,12 +119,11 @@ function _atelierFitCanvas() {
   const zone = document.getElementById('atelier-canvas-zone');
   if (!zone) { _atelierCellPx = ATELIER_CELL; return; }
 
-  const zoneW = zone.clientWidth;
-  const zoneH = zone.clientHeight;
+  // POURQUOI : on soustrait les paddings latéraux (16px × 2) et verticaux (8px × 2)
+  //            ajoutés sur #atelier-canvas-zone pour aligner le canvas avec le footer.
+  const zoneW = zone.clientWidth  - 32;
+  const zoneH = zone.clientHeight - 16;
 
-  // POURQUOI : On utilise toute la zone — le flex center dans #atelier-canvas-zone
-  //            absorbe le pixel résiduel sans débordement. On arrondit à l'entier
-  //            inférieur pour des cellules entières (pas d'artefact sous-pixel).
   const cellParLargeur = Math.floor(zoneW / ATELIER_COLS);
   const cellParHauteur  = Math.floor(zoneH / ATELIER_ROWS);
 

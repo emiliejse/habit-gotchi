@@ -200,7 +200,9 @@ const ENV_THEMES = [
     // POURQUOI : 13 couleurs + 1 gomme = 14 boutons → 7 col × 2 rangées dans l'éditeur
     // Structure : blanc · noir · beige clair · lilas · bleu poudre · vert tendre · rose vif
     //             · jaune doux · violet · bleu-vert · brun chaud · vert foncé · corail
-    paintPalette: ['#ffffff','#2a2a2a','#f0ece4','#c8a8d0','#a8c8d0','#a8d898','#e878a8','#f8e858','#7a50a8','#4a9890','#8b5e3c','#4a8840','#e85050'],
+    // blanc retiré — la gomme joue ce rôle (fond frameBg visible sous les cellules null)
+    // remplacé par un rose saumon pour plus de variété chaude
+    paintPalette: ['#f0ece4','#2a2a2a','#c8a8d0','#a8c8d0','#a8d898','#e878a8','#f8e858','#7a50a8','#4a9890','#8b5e3c','#4a8840','#e85050','#f0a878'],
     // montagne
     mntGnd:'#88b870', mntGndDk:'#6a9858', mntPeak:'#a0c888', mntSnow:'#e8f0e0',
   },
@@ -222,7 +224,8 @@ const ENV_THEMES = [
     // Atelier — palette de peinture (13 couleurs)
     // Structure : blanc · noir · crème · orange brûlé · rouille · brun foncé · ocre
     //             · jaune doré · rouge brique · vert mousse · bleu ardoise · moutarde · bordeaux
-    paintPalette: ['#ffffff','#2a2a2a','#f0e8d8','#e08830','#c86828','#7a3020','#b07840','#e8c050','#c04818','#5a7040','#4a5870','#d4a010','#8a1a30'],
+    // blanc retiré — remplacé par un vert forêt automnal
+    paintPalette: ['#f0e8d8','#2a2a2a','#e08830','#c86828','#7a3020','#b07840','#e8c050','#c04818','#5a7040','#4a5870','#d4a010','#8a1a30','#3a6830'],
     mntGnd:'#b07840', mntGndDk:'#906028', mntPeak:'#c09050', mntSnow:'#e8c878',
   },
 
@@ -243,7 +246,8 @@ const ENV_THEMES = [
     // Atelier — palette de peinture (13 couleurs)
     // Structure : blanc · noir · bleu très clair · bleu nuit · bleu acier · bleu-gris
     //             · jaune crème · rouge braise · vert sapin · violet nuit · gris perle · orange givre · brun bois
-    paintPalette: ['#ffffff','#1a2030','#eef4ff','#2c4870','#8090a0','#a8c0d8','#fffde8','#c83030','#2a5040','#4a3870','#c8d0d8','#e87820','#806050'],
+    // blanc retiré — remplacé par un rose givré pour contraste chaud sur fond froid
+    paintPalette: ['#eef4ff','#1a2030','#2c4870','#8090a0','#a8c0d8','#fffde8','#c83030','#2a5040','#4a3870','#c8d0d8','#e87820','#806050','#e8a0b0'],
     mntGnd:'#c8d8e8', mntGndDk:'#a8b8c8', mntPeak:'#d8e0e8', mntSnow:'#f0f8ff',
   },
 
@@ -264,7 +268,8 @@ const ENV_THEMES = [
     // Atelier — palette de peinture (13 couleurs)
     // Structure : blanc · noir · sable clair · or chaud · orange soleil · brun sable
     //             · rouge brique · vert oasis · bleu lapis · ocre foncé · rose cuivré · violet aride · jaune soleil
-    paintPalette: ['#ffffff','#2a1a08','#fdf0d0','#e8a020','#e85818','#8a5030','#8a3820','#508840','#2850a0','#b87820','#d07858','#6a3858','#f8e060'],
+    // blanc retiré — remplacé par un bleu nuit pour contraste fort sur fond chaud
+    paintPalette: ['#fdf0d0','#2a1a08','#e8a020','#e85818','#8a5030','#8a3820','#508840','#2850a0','#b87820','#d07858','#6a3858','#f8e060','#1a3060'],
     mntGnd:'#d8a848', mntGndDk:'#b88028', mntPeak:'#e8c870', mntSnow:'#f0d890',
   },
 ];

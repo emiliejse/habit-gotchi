@@ -1876,6 +1876,22 @@ body.garden-fullscreen #console-top {
   padding-bottom: 0;
 }
 
+/* RÔLE : Phase de préparation — masque l'UI dès le tap, AVANT que garden-fullscreen soit posé.
+   POURQUOI : garden-fullscreen était posé immédiatement au tap pour éviter le flash UI, mais
+              sa règle `margin-top: 0 !important` sur #tama-bubble-wrap annulait instantanément
+              la transition compact (margin-top:-48px → 0), empêchant transitionend de se déclencher.
+              garden-preparing masque l'UI sans toucher à #tama-bubble-wrap : la transition CSS
+              se déroule normalement, et garden-fullscreen n'est posé qu'une fois margin-top=0. */
+body.garden-preparing .hdr,
+body.garden-preparing .bubble,
+body.garden-preparing #compact-tab-label {
+  display: none !important;
+}
+body.garden-preparing #dynamic-zone,
+body.garden-preparing .menu-languette {
+  display: none !important;
+}
+
 /* RÔLE : Masque le header normal et la bulle — remplacés par .hdr-garden */
 body.garden-fullscreen .hdr,
 body.garden-fullscreen .bubble,
@@ -1889,9 +1905,11 @@ body.garden-fullscreen .menu-languette {
   display: none !important;
 }
 
-/* RÔLE : Libère le wrapper tama de ses décalages compact — retour position neutre */
+/* RÔLE : Libère le wrapper tama de ses décalages compact — retour position neutre.
+   POURQUOI pas de margin-top:0 !important ici : quand garden-fullscreen est posé,
+   la transition est déjà terminée (margin-top vaut déjà 0). Le !important n'est plus
+   nécessaire et son absence évite d'interférer avec de futures transitions. */
 body.garden-fullscreen #tama-bubble-wrap {
-  margin-top: 0 !important;
   width: 100%;
   max-width: 420px;
 }
@@ -2040,8 +2058,11 @@ body.garden-fullscreen .tama-screen {
 }
 
 /* ── Section footer : vitalité + texte contemplatif ────────────── */
+/* RÔLE : Section footer — espacement vitalité/phrase et air en bas de carte */
+/* POURQUOI : gap 5px était trop serré ; padding-bottom donne de la respiration */
 .garden-label-section--footer {
-  gap: 5px;
+  gap: 7px;              /* plus d'espace entre barres de vitalité et phrase contemplative */
+  padding-bottom: 12px;  /* air en bas de la carte */
 }
 .garden-label-vitality {
   display: flex;

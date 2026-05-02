@@ -288,9 +288,20 @@ function _buildGardenInfo() {
     }).join('');
 
   const total    = elements.length;
+  // RÔLE : Âge brut moyen en jours — conservé pour la phrase contemplative (aproposTxt)
   const ageMoyen = total > 0
     ? Math.round(elements.reduce((s, e) => s + (e.age || 0), 0) / total)
     : 0;
+  // RÔLE : Ratio age/maxAge moyen — interprète la maturité relative du jardin (0 = tout jeune, 1 = tout fané)
+  // POURQUOI : un chiffre brut en jours ne dit rien — une phrase interprétée est plus vivante
+  const ageMoyenRatio = total > 0
+    ? elements.reduce((s, e) => s + (e.age / (e.maxAge || 10)), 0) / total
+    : 0;
+  const ageMoyenTxt = total === 0    ? ''
+    : ageMoyenRatio < 0.25           ? 'tous viennent de germer'
+    : ageMoyenRatio < 0.55           ? 'jardin en pleine croissance'
+    : ageMoyenRatio < 0.80           ? 'plusieurs arrivent à maturité'
+    :                                  'beaucoup vont bientôt faner';
 
   // ── Vitalité (même calcul que garden.js _grayT()) ────────────────
   const habCatIds = (window.D.habits || []).map(h => h.catId);
@@ -304,22 +315,34 @@ function _buildGardenInfo() {
   const nbBarres  = Math.round(score * 5);
   const barres    = '▓'.repeat(nbBarres) + '░'.repeat(5 - nbBarres);
 
-  const etatJardin = score >= 0.7 ? 'Épanoui &mdash; les plantes poussent vite ✨'
-                   : score >= 0.5 ? 'En forme &mdash; croissance régulière'
-                   : score >= 0.3 ? 'Fatigué &mdash; pousse ralentie'
-                   : 'En veille &mdash; il attend qu\'on prenne soin de soi';
+  // RÔLE : État du jardin avec diagnostic de la cause dominante
+  // POURQUOI : identifier si c'est le Gotchi ou les habitudes qui tirent le score vers le bas
+  const gotchiBas  = vitalite < 0.4;
+  const gotchiHaut = vitalite > 0.7;
+  const habsBas    = habRatio < 0.3;
+  const habsHaut   = habRatio >= 0.7;
+  const etatJardin =
+    score >= 0.75 ? `Épanoui &mdash; ${gotchiHaut ? 'le Gotchi rayonne' : 'énergie ok'} et ${habsHaut ? 'toutes tes routines sont là' : 'tes habitudes portent leurs fruits'}`
+  : score >= 0.55 ? `En forme &mdash; ${habsHaut ? 'bonnes habitudes' : `${habsDone} routine${habsDone > 1 ? 's' : ''} honorée${habsDone > 1 ? 's' : ''}`}, croissance régulière`
+  : score >= 0.35 ? `Fatigué &mdash; ${gotchiBas ? 'le Gotchi manque d\'énergie' : habsBas ? 'peu de routines aujourd\'hui' : 'rythme de pousse ralenti'}`
+  : `En veille &mdash; ${gotchiBas && habsBas ? 'Gotchi à plat et peu d\'habitudes faites' : gotchiBas ? 'le Gotchi est épuisé' : 'les routines manquent aujourd\'hui'}`;
 
   // ── Habitudes ────────────────────────────────────────────────────
+  // RÔLE : Phrase habitudes — spécifique selon le ratio réalisé/total
+  // POURQUOI : messages génériques remplacés par des textes qui reflètent vraiment l'état du jour
   let habsTxt = '';
-  if (habsTotal > 0) {
-    if (habsDone >= habsTotal)
-      habsTxt = `${habsDone}/${habsTotal} cochées &mdash; le jardin rayonne`;
-    else if (habsDone > 0)
-      habsTxt = `${habsDone}/${habsTotal} cochées &mdash; chaque habitude nourrit la pousse`;
-    else
-      habsTxt = `0/${habsTotal} cochées &mdash; tes routines influencent la vitalité`;
-  } else {
+  if (habsTotal === 0) {
     habsTxt = 'Ajoute des habitudes pour voir le jardin réagir à ta journée';
+  } else if (habsDone === 0) {
+    habsTxt = `Aucune habitude faite aujourd'hui &mdash; le jardin est en pause, comme toi peut-être`;
+  } else if (habsDone === habsTotal) {
+    habsTxt = `${habsDone}/${habsTotal} &mdash; toutes tes routines honorées, le jardin rayonne et les fleurs s'ouvrent`;
+  } else if (habRatio >= 0.6) {
+    habsTxt = `${habsDone}/${habsTotal} faites &mdash; bonne journée, le jardin est en pleine croissance`;
+  } else if (habRatio >= 0.3) {
+    habsTxt = `${habsDone}/${habsTotal} faites &mdash; le jardin pousse doucement, il attend tes autres routines`;
+  } else {
+    habsTxt = `${habsDone}/${habsTotal} faites &mdash; peu de routines aujourd'hui, la croissance est lente`;
   }
 
   // ── Météo ─────────────────────────────────────────────────────────
@@ -351,15 +374,51 @@ function _buildGardenInfo() {
     const icon  = WC_ICONS[wc]   || '🌤';
     const label = WC_LABELS[wc]  || `Code ${wc}`;
     const temp  = meteo.temperature != null ? `${Math.round(meteo.temperature)}&thinsp;°C` : '';
-    const isPluie = [51,53,55,61,63,65,80,81,82,95,96,99].includes(wc);
-    const effet = isPluie ? 'champignons favorisés' : 'influence la composition du jardin';
+    // RÔLE : Catégoriser le code météo pour choisir l'effet narratif adapté
+    // POURQUOI : l'ancienne version ne distinguait que pluie/pas-pluie — trop binaire
+    const isClair    = [0, 1].includes(wc);
+    const isPeuNuag  = [2].includes(wc);
+    const isCouvert  = [3].includes(wc);
+    const isBrouill  = [45, 48].includes(wc);
+    const isBruine   = [51, 53, 55].includes(wc);
+    const isPluieFaib= [61, 80].includes(wc);
+    const isPluieMod = [63, 81].includes(wc);
+    const isPluieFort= [65, 82].includes(wc);
+    const isNeige    = [71, 73, 75].includes(wc);
+    const isOrage    = [95, 96, 99].includes(wc);
+
+    const effet =
+      isClair     ? 'les fleurs s\'ouvrent grand, les couleurs sont vives'
+    : isPeuNuag   ? 'lumière douce, les herbes poussent tranquillement'
+    : isCouvert   ? 'les fleurs restent mi-closes, les herbes poussent bien'
+    : isBrouill   ? 'le jardin est enveloppé de brume, tout pousse lentement'
+    : isBruine    ? 'bruine légère — les champignons commencent à apparaître'
+    : isPluieFaib ? 'pluie fine — les champignons prolifèrent, les pierres brillent'
+    : isPluieMod  ? 'bonne pluie — les champignons envahissent doucement le jardin'
+    : isPluieFort ? 'pluie forte — les tiges se courbent, les insectes se cachent'
+    : isNeige     ? 'le jardin se fige sous la neige, tout est en veille'
+    : isOrage     ? 'orage — les tiges ploient, les fleurs ferment leurs pétales'
+    : 'influence la composition du jardin'; // fallback codes météo inconnus
+
     meteoTxt = `${icon}&thinsp;${label}${temp ? ` · ${temp}` : ''} &mdash; ${effet}`;
   } else {
     meteoTxt = '🌤&thinsp;Chargement en cours&hellip;';
   }
 
   // ── Ligne contemplative ───────────────────────────────────────────
-  const aproposTxt = 'Ce jardin pousse seul, entre hasard et mémoire de tes jours. Tu n\'as qu\'à observer.';
+  // RÔLE : Phrase choisie parmi 8 selon (seed + âge moyen) — varie subtilement d'un jardin à l'autre
+  // POURQUOI : une phrase fixe ne reflète pas l'unicité du jardin
+  const APROPOS = [
+    'Ce jardin pousse entre hasard et mémoire. Tu n\'as qu\'à observer.',
+    'Chaque plante ici a germé un jour où tu étais là.',
+    'Le jardin ne juge pas. Il pousse à son rythme, comme toi.',
+    'Certaines plantes fanent pour faire place aux suivantes. C\'est normal.',
+    'Ce jardin est unique — aucun autre ne ressemblera au tien.',
+    'Le désordre du vivant. Rien n\'est prévu, tout pousse quand même.',
+    'Un jardin qui se souvient. Pas de toi — de la seed qui le définit.',
+    'Même sans toi, il continue. Doucement.',
+  ];
+  const aproposTxt = APROPOS[((seed ?? 0) + ageMoyen) % APROPOS.length];
 
   // ── HTML ──────────────────────────────────────────────────────────
   return `<div class="garden-label">
@@ -374,8 +433,8 @@ function _buildGardenInfo() {
   <div class="garden-label-section">
     <div class="garden-label-section-title">Composition</div>
     ${total > 0
-      ? compLines + `<div class="garden-label-row garden-label-row--total"><span class="gli">∑</span><span>${total} élément${total > 1 ? 's' : ''} &mdash; âge moyen ${ageMoyen}&thinsp;j</span></div>`
-      : `<div class="garden-label-row"><span class="gli">·</span><span>Jardin vide &mdash; il naît à chaque nouvelle journée</span></div>`
+      ? compLines + `<div class="garden-label-row garden-label-row--total"><span class="gli">∑</span><span>${total} élément${total > 1 ? 's' : ''}${ageMoyenTxt ? ` &mdash; ${ageMoyenTxt}` : ''}</span></div>`
+      : `<div class="garden-label-row"><span class="gli">·</span><span>Jardin vide &mdash; les premières plantes germent demain</span></div>`
     }
   </div>
 
@@ -482,32 +541,41 @@ function openCanvasFullscreen() {
     if (ct) ct.inert = false;
   }
 
-  // RÔLE : Active garden-fullscreen IMMÉDIATEMENT pour masquer l'UI normale dès le tap.
-  // POURQUOI : Sans ça, le menu se ferme et on voit l'onglet d'accueil pendant 400ms
-  //            (durée de la transition compact) avant que la vue jardin apparaisse.
-  document.body.classList.add('garden-fullscreen');
+  // RÔLE : Masque l'UI normale dès le tap via garden-preparing — sans toucher #tama-bubble-wrap.
+  // POURQUOI : L'ancien code posait garden-fullscreen immédiatement, ce qui appliquait
+  //            `margin-top: 0 !important` sur #tama-bubble-wrap et annulait instantanément
+  //            la transition compact en cours — transitionend ne se déclenchait alors jamais.
+  //            garden-preparing masque .hdr / .bubble / #dynamic-zone / .menu-languette
+  //            (même effet visuel) sans perturber la transition CSS du wrapper tama.
+  document.body.classList.add('garden-preparing');
   document.getElementById('hdr-garden')?.removeAttribute('aria-hidden');
 
-  // RÔLE : Si compact était actif, attendre la fin de sa transition (margin-top:-48px → 0)
-  // avant d'injecter l'overlay et les infos — sinon le canvas se positionne depuis le coin
-  // supérieur gauche. Le masquage de l'UI est déjà fait ci-dessus.
+  // RÔLE : Attend que margin-top de #tama-bubble-wrap atteigne 0 via polling RAF,
+  //        puis pose garden-fullscreen et ouvre l'overlay.
+  // POURQUOI polling RAF plutôt que transitionend : si compact n'était pas actif (ou si la
+  //          transition est déjà terminée au moment du tap), margin-top vaut déjà 0 et on
+  //          passe immédiatement. Robuste dans tous les cas.
   if (window._canvasFs_wasCompact) {
     const wrap = document.getElementById('tama-bubble-wrap');
-    const doOpenAfterTransition = () => {
-      if (!document.getElementById('canvas-fs-overlay')) _doOpen();
-    };
-    if (wrap) {
-      wrap.addEventListener('transitionend', function handler(e) {
-        if (e.propertyName !== 'margin-top') return;
-        wrap.removeEventListener('transitionend', handler);
-        doOpenAfterTransition();
-      }, { once: false });
-      // Fallback si la transition ne se déclenche pas
-      setTimeout(doOpenAfterTransition, 450);
-    } else {
-      _doOpen();
+    // RÔLE : Boucle RAF — vérifie à chaque frame si margin-top a atteint 0.
+    // POURQUOI seuil de 1px : getComputedStyle renvoie une valeur réelle en px avec décimales ;
+    //          on accepte < 1px d'écart pour absorber les arrondis de rendu.
+    function _waitForLayout() {
+      const mt = wrap ? parseFloat(getComputedStyle(wrap).marginTop) : 0;
+      if (Math.abs(mt) < 1) {
+        // Transition terminée — bascule en mode fullscreen et ouvre l'overlay
+        document.body.classList.remove('garden-preparing');
+        document.body.classList.add('garden-fullscreen');
+        _doOpen();
+      } else {
+        requestAnimationFrame(_waitForLayout);
+      }
     }
+    requestAnimationFrame(_waitForLayout);
   } else {
+    // Pas de transition à attendre — on bascule directement
+    document.body.classList.remove('garden-preparing');
+    document.body.classList.add('garden-fullscreen');
     _doOpen();
   }
 

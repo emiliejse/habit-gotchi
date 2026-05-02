@@ -49,6 +49,12 @@ let _atelierColor    = null;
 // POURQUOI : Permet à pointermove de dessiner uniquement pendant un drag, pas au survol.
 let _atelierPainting = false;
 
+// RÔLE : Handle du timer de sauvegarde différée propre à l'atelier.
+// POURQUOI : saveDebounced() (app.js) ne prend pas de callback — on ne peut pas y
+//            accrocher _atelierRenderGalerie(). Ce timer local fait save() + rafraîchit
+//            la vignette 800ms après le dernier coup de pinceau.
+let _atelierSaveTimer = null;
+
 /* ============================================================
    §3  HELPERS INTERNES
    ============================================================ */
@@ -225,12 +231,15 @@ function _atelierPeindreCell(e) {
   // POURQUOI : On ne redessine que le canvas (pas toute l'UI) pour ne pas
   //            scintiller la palette et la galerie à chaque pixel.
   _atelierRenderCanvas();
-  // RÔLE : Sauvegarde différée après chaque coup de pinceau.
-  // POURQUOI : save() direct serait trop fréquent pendant un tracé (plusieurs appels/seconde).
-  //            saveDebounced() attend ~2s d'inactivité avant d'écrire — bon compromis entre
-  //            sécurité des données et performance. Évite la perte de pixels si l'app est
-  //            quittée sans fermer l'atelier proprement (iOS, mise en veille).
-  saveDebounced();
+  // RÔLE : Sauvegarde différée + rafraîchissement de la vignette après le tracé.
+  // POURQUOI : On ne peut pas accrocher un callback sur saveDebounced() (défini dans app.js).
+  //            Ce timer local attend 800ms d'inactivité, puis sauvegarde ET met à jour
+  //            la galerie — la vignette reflète le dessin en cours sans scintiller pendant le tracé.
+  clearTimeout(_atelierSaveTimer);
+  _atelierSaveTimer = setTimeout(() => {
+    save();
+    _atelierRenderGalerie();
+  }, 800);
 }
 
 // ─────────────────────────────────────────────────────────────

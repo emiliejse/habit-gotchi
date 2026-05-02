@@ -985,13 +985,17 @@ function invSetEnv(env) {
 }
 window.invSetEnv = invSetEnv;
 
-// RÔLE : Met à jour l'apparence visuelle des 3 boutons du switcher.
+// RÔLE : Met à jour l'apparence visuelle des boutons du switcher d'env dans l'inventaire.
 // POURQUOI : Surligne l'environnement actuellement actif.
+//            Liste construite dynamiquement depuis ENV_THEMES — s'adapte automatiquement
+//            à tout ajout de biome dans config.js (ex : jardin).
+//            Avant : ['parc', 'chambre', 'montagne'] hardcodé.
 function _updInvEnvSwitcher() {
   const activeEnv = window.D.g.activeEnv || 'parc';
-  ['parc', 'chambre', 'montagne'].forEach(env => {
+  const envIds = (window.HG_CONFIG?.ENV_THEMES || []).map(t => t.id);
+  envIds.forEach(env => {
     const btn = document.getElementById(`inv-env-${env}`);
-    if (!btn) return;
+    if (!btn) return; // bouton absent du DOM → ignoré silencieusement
     const isActive = activeEnv === env;
     btn.style.background    = isActive ? '#fff' : 'transparent';
     btn.style.color          = isActive ? 'var(--lilac)' : 'var(--text2)';

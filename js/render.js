@@ -1131,8 +1131,14 @@ function drawEnvSelector(p, g, nightRatio) {
   const envCY = CS - 6 - envR;     // centre Y : bas aligné sur le bas des badges (CS - 6)
   const envGap = envR * 2 + 5;     // espacement entre cercles empilés (diamètre + 5px)
 
-  // ── Mapping emoji par env ──
-  const ENV_EMOJI = { parc: '🌳', chambre: '🛏️', montagne: '⛰️' };
+  // ── Mapping emoji par env — construit dynamiquement depuis ENV_THEMES ──
+  // RÔLE : Évite de hardcoder la liste des envs ici — tout ajout dans config.js est
+  //        automatiquement pris en compte sans toucher à render.js.
+  // POURQUOI : Avant, c'était { parc:'🌳', chambre:'🛏️', montagne:'⛰️' } en dur.
+  //            On construit maintenant l'objet depuis ENV_THEMES une seule fois par frame.
+  const ENV_EMOJI = Object.fromEntries(
+    (window.HG_CONFIG?.ENV_THEMES || ENV_THEMES).map(t => [t.id, t.icon])
+  );
   const activeEnv = g.activeEnv || 'parc';
 
   // ── Détermination du mode nuit pour le sélecteur ──
@@ -1188,9 +1194,13 @@ function drawEnvSelector(p, g, nightRatio) {
 
   // ── Cercles flottants (seulement si ouvert et env non verrouillé) ──
   if (window._envSelectorOpen && !envLocked) {
-    // RÔLE : Affiche les 2 environnements alternatifs au-dessus du cercle principal.
-    // POURQUOI : Empilés verticalement, même style, tap = changement d'env + fermeture.
-    const otherEnvs = ['parc', 'chambre', 'montagne'].filter(e => e !== activeEnv);
+    // RÔLE : Affiche les environnements alternatifs au-dessus du cercle principal.
+    // POURQUOI : Liste construite dynamiquement depuis ENV_THEMES — s'adapte automatiquement
+    //            à tout ajout de biome dans config.js (ex : jardin).
+    //            Avant : ['parc', 'chambre', 'montagne'] hardcodé.
+    const otherEnvs = (window.HG_CONFIG?.ENV_THEMES || ENV_THEMES)
+      .map(t => t.id)
+      .filter(e => e !== activeEnv);
 
     otherEnvs.forEach((env, i) => {
       // i=0 → juste au-dessus du principal | i=1 → encore plus haut
@@ -1526,6 +1536,17 @@ window._animOverrides = animator.resolve(g.stage);
     }
 
     p.pop();
+
+    // ── Premier plan Jardin — APRÈS le Gotchi ──
+    // RÔLE : Dessine les éléments du jardin qui doivent passer DEVANT le Gotchi.
+    // POURQUOI : La passe de fond (drawJardinFond) est déjà appelée via drawActiveEnv →
+    //            drawJardin. Ce second appel est uniquement pour le premier plan (profondeur).
+    //            En Phase 1 : drawJardinPremierPlan() est vide — aucun effet visible.
+    //            En Phase 2+ : herbes courtes, fleurs de bord, insectes au premier plan.
+    if (envActif === 'jardin') {
+      const _jardinTheme = getEnvC(); // thème courant — identique à celui utilisé par drawJardinFond
+      drawJardinPremierPlan(p, _jardinTheme, n);
+    }
 
     const wc = window.meteoData?.weathercode;
     if (wc === 45 || wc === 48) drawFog(p);

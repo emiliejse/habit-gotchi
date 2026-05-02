@@ -246,6 +246,34 @@ const ENV_THEMES = [
     lamp:'#f8e060', lampShade:'#f0c820',
     mntGnd:'#d8a848', mntGndDk:'#b88028', mntPeak:'#e8c870', mntSnow:'#f0d890',
   },
+
+  // RÔLE : Jardin procédural — 4e environnement, espace sans boutique.
+  // POURQUOI : Les clés chambre (wall, curtain…) et montagne (mntGnd…) sont présentes
+  //            mais inutilisées par drawJardin — elles évitent un crash si le moteur
+  //            tente d'accéder à une clé manquante via getEnvC().
+  //            Les valeurs chambre/mnt sont copiées du thème 'pastel' (safe & neutres).
+  { id:'jardin', label:'Jardin', icon:'🌿',
+    // Ciel — vert doux / bleu végétal (ambiance sous-bois clair)
+    sky1:'#c8e0b8', sky2:'#dff0d0',
+    // Sol herbeux — deux tons de vert pour l'épaisseur
+    gnd:'#90c878',  gndDk:'#70a858',
+    // Végétation — feuillages denses, troncs chauds
+    leaf1:'#58a848', leaf2:'#70c050', trunk:'#8a6840',
+    // Accent — fleur sauvage (touche magenta douce)
+    accent:'#d878a8',
+    // ── Clés chambre (non utilisées par drawJardin — présentes pour éviter crash) ──
+    wall:'#e0d8c8',
+    windowFrame:'#c8baa8', windowSill:'#d8c8b8',
+    curtain:'#c8a8d8', curtainDk:'#a888c0', curtainRod:'#b8a090',
+    baseboard:'#d0c0b0',
+    frameOuter:'#c8a880', frameBg:'#f0ece4', frameAccent1:'#c8a8d0', frameAccent2:'#a8c8d0',
+    floor:'#c8b8a8', floorLine:'#b8a898',
+    rug:'#d8c0f0', rugCenter:'#c8aee8',
+    desk:'#b89870', deskTop:'#c8a880', deskShadow:'#a88860',
+    lamp:'#f0e898', lampShade:'#f8d858',
+    // ── Clés montagne (non utilisées par drawJardin — présentes pour éviter crash) ──
+    mntGnd:'#88b870', mntGndDk:'#6a9858', mntPeak:'#a0c888', mntSnow:'#e8f0e0',
+  },
 ];
 
 /* ─── SYSTÈME 1 : MÉTABOLISME (Repas) ────────────────────────────── */

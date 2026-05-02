@@ -316,13 +316,13 @@ function drawMontagne(p, theme, n) {
 /**
  * drawActiveEnv() : dispatcher — choisit le biome à dessiner
  * @param {Object} p   - Instance p5
- * @param {string} env - 'parc' | 'chambre' | 'montagne' (vient de D.g.activeEnv)
+ * @param {string} env - 'parc' | 'chambre' | 'montagne' | 'jardin' (vient de D.g.activeEnv)
  * @param {number} n   - Ratio nuit 0 (jour) → 1 (nuit pleine)
  * @param {number} h   - heure (0–23), réservé aux futurs effets horaires
  *
  * POUR AJOUTER UN ENVIRONNEMENT :
  * 1. Ajoute un objet { id:'monenv', ... } dans ENV_THEMES (config.js)
- * 2. Crée une fonction drawMonEnv(p, theme, n) dans ce fichier
+ * 2. Crée une fonction drawMonEnv(p, theme, n) dans ce fichier (ou dans garden.js pour le jardin)
  * 3. Ajoute un case 'monenv' dans le switch ci-dessous
  */
 function drawActiveEnv(p, env, n, h) {
@@ -333,6 +333,10 @@ function drawActiveEnv(p, env, n, h) {
     case 'parc':     drawParc(p, theme, n);     break;
     case 'chambre':  drawChambre(p, theme, n);  break;
     case 'montagne': drawMontagne(p, theme, n); break;
+    // RÔLE : Le jardin délègue uniquement la passe de fond ici.
+    // POURQUOI : drawJardinPremierPlan() est appelée APRÈS le Gotchi dans p.draw()
+    //            pour assurer la profondeur visuelle — elle ne passe pas par drawActiveEnv().
+    case 'jardin':   drawJardin(p, theme, n);   break;
     // default : fond vide — pas de biome connu, on ne dessine rien
   }
 }

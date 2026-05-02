@@ -902,17 +902,33 @@ function drawPropsLayer(p, g, envActif, mode) {
         const gapY = 130 / instances;
 
         for (let i = 0; i < instances; i++) {
+          // RÔLE : Vitesse légèrement différente par instance pour casser l'effet mécanique.
+          // POURQUOI : Sans ça, toutes les particules avancent au même rythme et ça fait
+          //            "train" — avec un facteur par instance, chacune a sa propre cadence.
+          const speed = 1.5 + (i % 3) * 0.4; // vitesses : 1.5 / 1.9 / 2.3 en alternance
+
           let ax, ay;
           if (motion === 'drift') {
-            ax = CS - ((p.frameCount * 2 + i * gapX) % (CS + 20));
+            // RÔLE : Glisse de gauche à droite (sens positif).
+            // POURQUOI : L'ancien sens (droite→gauche) était contre-intuitif pour une brise.
+            ax = ((p.frameCount * speed + i * gapX) % (CS + 20)) - 10;
             ay = 20 + i * gapY + Math.sin(p.frameCount * .05 + i) * 8;
+
           } else if (motion === 'fall') {
-            ax = (gapX * 0.5) + i * gapX + Math.sin(p.frameCount * .04 + i) * 5; // centré dans chaque zone
-            ay = (p.frameCount * 2 + i * gapY) % 130;
+            // RÔLE : Tombe du haut vers le bas avec balancement latéral sinusoïdal.
+            // POURQUOI : L'ancien fall descendait en ligne droite — le sin plus ample
+            //            donne un effet feuille/pétale qui se balance dans sa chute.
+            ax = (gapX * 0.5) + i * gapX + Math.sin(p.frameCount * .06 + i * 1.2) * 12;
+            ay = (p.frameCount * speed + i * gapY) % 130;
+
           } else if (motion === 'float') {
+            // RÔLE : Monte de bas en haut avec dérive latérale douce.
             ax = (gapX * 0.3) + i * gapX + Math.sin(p.frameCount * .06 + i) * 6;
-            ay = 110 - ((p.frameCount + i * gapY) % 120);
+            ay = 110 - ((p.frameCount * speed + i * gapY) % 120);
+
           } else if (motion === 'sparkle') {
+            // RÔLE : Clignote à des positions fixes — apparaît/disparaît par salves.
+            // POURQUOI : Le décalage par instance (i*13) évite que tout clignote ensemble.
             if ((p.frameCount + i * 13) % 20 < 10) continue;
             ax = (gapX * 0.2) + i * gapX + Math.sin(p.frameCount * .1 + i) * 10;
             ay = 15 + i * gapY + Math.cos(p.frameCount * .08 + i) * 8;

@@ -143,6 +143,7 @@
     {
       "id": "etoiles01",
       "nom": "Pluie d'Étoiles",
+      "motion": "fall",
       "type": "ambiance",
       "emoji": "✨",
       "categorie": "ambiance",

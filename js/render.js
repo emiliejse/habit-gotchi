@@ -846,7 +846,7 @@ function triggerTouchReaction(sleeping, soirTardif = false) {
   const touchMsgs = sleeping
     ? ['*grogne* 😤', 'Laisse-moi dormir ! 🌙', '...zzz... 💤']
     : soirTardif
-      ? ['Chut… 🌙', '*soupir* pas maintenant ✿', 'J'ai besoin de calme… 💤', '*bâille* 🌸']
+      ? ['Chut… 🌙', '*soupir* pas maintenant ✿', "J'ai besoin de calme… 💤", '*bâille* 🌸']
       : ['*hehe* ✿', 'Coucou ! 💜', '*giggle* 🌸', 'Encore ! ✿'];
   
   flashBubble(touchMsgs[Math.floor(Math.random() * touchMsgs.length)], 2000);

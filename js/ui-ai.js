@@ -867,7 +867,7 @@ async function sendSoutienMsg(systemPrompt, isInit = false) {
     const countEl  = document.getElementById('soutien-count');
     if (countEl) {
       countEl.innerHTML = restants <= 0
-        ? `Dernier message<br>conversation non sauvegardée`
+        ? `Conversation terminée<br>non sauvegardée`
         : `${restants} message${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''}<br>conversation non sauvegardée`;
     }
   }

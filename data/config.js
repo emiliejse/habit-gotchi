@@ -196,6 +196,8 @@ const ENV_THEMES = [
     rug:'#d8c0f0', rugCenter:'#c8aee8',
     desk:'#b89870', deskTop:'#c8a880', deskShadow:'#a88860',
     lamp:'#f0e898', lampShade:'#f8d858',
+    // Atelier — palette de peinture (8 couleurs tirées des valeurs du thème)
+    paintPalette: ['#f0ece4','#e0d8c8','#c8a8d0','#a8c8d0','#a8d898','#e878a8','#c8a880','#d8c0f0'],
     // montagne
     mntGnd:'#88b870', mntGndDk:'#6a9858', mntPeak:'#a0c888', mntSnow:'#e8f0e0',
   },
@@ -214,6 +216,8 @@ const ENV_THEMES = [
     rug:'#7a3020', rugCenter:'#9a4830',
     desk:'#906040', deskTop:'#d8b880', deskShadow:'#a07040',
     lamp:'#f4e090', lampShade:'#e8c050',
+    // Atelier — palette de peinture (8 couleurs tirées des valeurs du thème)
+    paintPalette: ['#f0e8d8','#c0956a','#e08830','#d07020','#c86828','#7a3020','#b07840','#e8c050'],
     mntGnd:'#b07840', mntGndDk:'#906028', mntPeak:'#c09050', mntSnow:'#e8c878',
   },
 
@@ -231,6 +235,8 @@ const ENV_THEMES = [
     rug:'#2c4870', rugCenter:'#3a5888',
     desk:'#8090a0', deskTop:'#a8b8c8', deskShadow:'#8898a8',
     lamp:'#fffde8', lampShade:'#f4e8a0',
+    // Atelier — palette de peinture (8 couleurs tirées des valeurs du thème)
+    paintPalette: ['#eef4ff','#c8d8e8','#a8c0d8','#3a5888','#e8f0f8','#8090a0','#c8d8f0','#fffde8'],
     mntGnd:'#c8d8e8', mntGndDk:'#a8b8c8', mntPeak:'#d8e0e8', mntSnow:'#f0f8ff',
   },
 
@@ -248,6 +254,8 @@ const ENV_THEMES = [
     rug:'#8a3820', rugCenter:'#a84830',
     desk:'#a07840', deskTop:'#c8a060', deskShadow:'#a88040',
     lamp:'#f8e060', lampShade:'#f0c820',
+    // Atelier — palette de peinture (8 couleurs tirées des valeurs du thème)
+    paintPalette: ['#fdf0d0','#d8b888','#e8a020','#f0c030','#e0c888','#8a3820','#c0a060','#f8e060'],
     mntGnd:'#d8a848', mntGndDk:'#b88028', mntPeak:'#e8c870', mntSnow:'#f0d890',
   },
 ];

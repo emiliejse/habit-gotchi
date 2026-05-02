@@ -58,7 +58,7 @@ let _poopIntervalId   = null;
 let _bubbleIntervalId = null; // RÔLE : Rotation automatique des bulles passives (updBubbleNow toutes les 45s)
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v5.11'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v5.20'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -255,6 +255,16 @@ function defs() {
     catVedette:       null,  // catId de l'habitude vedette du jour (+4 pétales au lieu de +2)
     milestoneProps:   [],    // ids des objets milestone déjà offerts (évite les doublons)
 
+    // ── Atelier (Phase 1) ──────────────────────────────────────────
+    // RÔLE : Données persistées de la feature Atelier — peintures créées par l'utilisatrice.
+    // POURQUOI : Séparé de D.g pour ne pas alourdir le bloc principal (D.g) avec une galerie
+    //            potentiellement volumineuse. activeId=null → pas de peinture active.
+    //            tableaux=[] → galerie vide au premier lancement.
+    atelier: {
+      activeId: null, // string|null — id de la peinture appliquée comme motif actif
+      tableaux: [],   // tableau de peintures enregistrées
+    },
+
       // ── Jardin génératif (Phase 2) ──────────────────────────────
       // RÔLE : Données persistées du biome Jardin — seed + état des éléments.
       // POURQUOI : La seed est tirée une seule fois (jamais régénérée) pour que
@@ -305,7 +315,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 17; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 18; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -463,7 +473,15 @@ const MIGRATIONS = [
       d.g.gardenBorn = d.firstLaunch ?? null;
     }
     return d;
-  }
+  },
+  // Migration 16→17 : ajout de D.atelier (galerie de peintures de l'Atelier)
+  // RÔLE : Initialise la structure atelier pour les saves existantes.
+  // POURQUOI : activeId=null → aucune peinture active, le motif par défaut s'affiche.
+  //            tableaux=[] → galerie vide, aucune peinture enregistrée.
+  function m16(d) {
+    d.atelier = d.atelier ?? { activeId: null, tableaux: [] };
+    return d;
+  },
 ];
 
 // RÔLE : Applique toutes les migrations manquantes sur D chargé depuis LocalStorage.

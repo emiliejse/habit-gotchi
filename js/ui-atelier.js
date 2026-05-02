@@ -302,16 +302,20 @@ function _atelierRenderPalette() {
   //            On prend la largeur réelle de la galerie comme référence, et on calcule
   //            la taille de bouton qui remplit exactement cette largeur avec 7 colonnes
   //            et un gap uniforme entre elles.
-  // POURQUOI : même cascade que _atelierRenderGalerie — clientWidth peut être 0
-  //            au premier rendu. On remonte au footer puis à window.innerWidth.
+  // POURQUOI : footer.clientWidth inclut les paddings (16px×2=32px) — on les soustrait
+  //            pour obtenir la largeur du contenu, identique à celle de la galerie.
+  //            Cascade si clientWidth vaut 0 au premier rendu.
   const footer   = document.getElementById('atelier-footer');
   const overlayW = document.getElementById('atelier-overlay')?.clientWidth;
-  const totalW   = (footer?.clientWidth) || (overlayW ? overlayW - 32 : 0) || (window.innerWidth - 32) || 300;
+  const rawW     = (footer?.clientWidth) || (overlayW ? overlayW : 0) || window.innerWidth || 332;
+  const totalW   = rawW - 32; // soustrait padding 16px gauche + 16px droite du footer
   const N_COLS   = 7;   // 7 colonnes × 2 rangées = 14 cases (13 couleurs + 1 gomme)
   const GAP      = 8;   // gap fixe entre boutons (px)
   const btnSize  = Math.max(28, Math.floor((totalW - GAP * (N_COLS - 1)) / N_COLS));
 
-  let html = `<div style="display:grid;grid-template-columns:repeat(${N_COLS},${btnSize}px);gap:${GAP}px;">`;
+  // POURQUOI : width explicite sur le div pour contraindre la grille à ne pas dépasser
+  //            la largeur du footer — évite le débordement à droite sur petits écrans.
+  let html = `<div style="display:grid;grid-template-columns:repeat(${N_COLS},${btnSize}px);gap:${GAP}px;width:${totalW}px;">`;
 
   // ── 13 boutons colorés ──
   couleurs.forEach((hex, i) => {
@@ -404,6 +408,25 @@ function _atelierRenderGalerie() {
   }
 
   html += `</div>`;
+
+  // ── Ligne d'actions secondaires sous la galerie ──
+  // RÔLE : Vider le tableau courant + réafficher le motif par défaut dans la chambre
+  // POURQUOI : deux actions destructives/réversibles peu fréquentes → petits boutons discrets
+  //            séparés du bouton principal "Afficher dans la chambre"
+  const motifActif = (activeId === null);
+  html += `<div style="display:flex;gap:8px;margin-top:2px">
+    <button onclick="_atelierViderTableau()"
+      style="flex:1;padding:6px 0;border-radius:6px;border:1px solid var(--border);
+             background:none;cursor:pointer;color:var(--text2);font-size:12px;">
+      🗑 Vider le tableau</button>
+    <button onclick="_atelierMotifDefaut()"
+      style="flex:1;padding:6px 0;border-radius:6px;border:1px solid var(--border);
+             background:none;cursor:pointer;font-size:12px;
+             color:${motifActif ? 'var(--text)' : 'var(--text2)'};
+             font-weight:${motifActif ? '700' : '400'};">
+      ${motifActif ? '★ ' : ''}Motif par défaut</button>
+  </div>`;
+
   container.innerHTML = html;
 }
 
@@ -564,6 +587,33 @@ window._atelierSetActif = function() {
   _atelierMajBoutonActiver();
   _atelierRenderGalerie(); // rafraîchit le badge ★
   toast('Tableau affiché dans la chambre ✓');
+};
+
+// ─────────────────────────────────────────────────────────────
+// RÔLE : Efface tous les pixels du tableau en cours d'édition.
+// POURQUOI : Permet de repartir d'une toile vierge sans recréer un nouveau tableau.
+// ─────────────────────────────────────────────────────────────
+window._atelierViderTableau = function() {
+  const tb = window.D.atelier.tableaux.find(t => t.id === _atelierEditId);
+  if (!tb) return;
+  // Remet toutes les cellules à null (transparent = fond frameBg visible)
+  tb.pixels = Array.from({ length: ATELIER_ROWS }, () => Array(ATELIER_COLS).fill(null));
+  tb.updatedAt = Date.now();
+  save();
+  _atelierRenderCanvas();
+  _atelierRenderGalerie(); // met à jour la vignette
+};
+
+// ─────────────────────────────────────────────────────────────
+// RÔLE : Désactive le tableau actif → le motif abstrait par défaut réapparaît dans la chambre.
+// POURQUOI : activeId=null → drawAtelierFrame() replie sur drawFrameMotif().
+// ─────────────────────────────────────────────────────────────
+window._atelierMotifDefaut = function() {
+  window.D.atelier.activeId = null;
+  save();
+  _atelierMajBoutonActiver();
+  _atelierRenderGalerie(); // retire le badge ⭐️ de toutes les vignettes
+  toast('Motif par défaut restauré dans la chambre');
 };
 
 // ─────────────────────────────────────────────────────────────

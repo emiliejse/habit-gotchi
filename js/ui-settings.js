@@ -595,6 +595,9 @@ const PROP_THEMES_DEFAULT = ['nature','cosmos','magie','cuisine','musique','voya
 function renderPropThemes() {
   const el = document.getElementById('prop-themes-tags');
   if (!el) return;
+  // RÔLE : Met à jour le nom du Gotchi dans le titre du <summary>.
+  const nameEl = document.getElementById('inspiration-gotchi-name');
+  if (nameEl) nameEl.textContent = window.D.g.name || 'ton Gotchi';
   const themes = window.D.g.propThemes || PROP_THEMES_DEFAULT;
   el.innerHTML = themes.map((t, i) => `
     <span onclick="removePropTheme(${i})" style="
@@ -608,17 +611,26 @@ function renderPropThemes() {
 }
 
 /**
- * RÔLE : Ajoute un mot à la liste de thèmes IA.
- * POURQUOI : Lit l'input, valide (non vide, non dupliqué), sauvegarde, re-render.
+ * RÔLE : Ajoute un mot à la liste d'inspiration du Gotchi.
+ * POURQUOI : Valide qu'il s'agit d'un seul mot sans caractères spéciaux,
+ *            non dupliqué, et que la liste ne dépasse pas 20 entrées.
  */
 function addPropTheme() {
   const inp = document.getElementById('prop-theme-inp');
   if (!inp) return;
   const val = inp.value.trim().toLowerCase();
   if (!val) return;
-  // Initialise depuis la liste par défaut si jamais modifiée
+
+  // RÔLE : Un seul mot (pas d'espace), lettres/chiffres/accents uniquement.
+  if (/\s/.test(val)) { toast('Un seul mot à la fois 🌸'); inp.value = ''; return; }
+  if (!/^[\p{L}\p{N}]+$/u.test(val)) { toast('Lettres et chiffres uniquement 🌸'); inp.value = ''; return; }
+
   if (!window.D.g.propThemes) window.D.g.propThemes = [...PROP_THEMES_DEFAULT];
-  if (window.D.g.propThemes.includes(val)) { toast(`"${escape(val)}" est déjà dans la liste`); return; }
+
+  // RÔLE : Maximum 20 tags pour garder la liste lisible.
+  if (window.D.g.propThemes.length >= 20) { toast('20 mots maximum 🌸'); return; }
+  if (window.D.g.propThemes.includes(val)) { toast(`"${escape(val)}" est déjà là 🌸`); return; }
+
   window.D.g.propThemes.push(val);
   save();
   inp.value = '';

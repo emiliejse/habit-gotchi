@@ -426,18 +426,18 @@ Ton bilan de la semaine apparaîtra ici...
       </div>
     </details>
 
-    <!-- ── Section 1b : Thèmes IA (fermée par défaut) ── -->
+    <!-- ── Section 1b : Mots d'inspiration du Gotchi (fermée par défaut) ── -->
     <details class="settings-section">
-      <summary>🎨 Thèmes IA</summary>
+      <summary>✨ Inspiration de <span id="inspiration-gotchi-name">ton Gotchi</span></summary>
       <div class="settings-body">
-        <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:8px">Mots d'inspiration tirés au hasard quand ton Gotchi crée un objet. Clique sur un tag pour le supprimer.</p>
+        <p style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:8px">Quand ton Gotchi crée un objet, il pioche un mot ici pour s'inspirer. Un seul mot par tag, 20 tags max. Clique sur un tag pour le supprimer.</p>
         <div id="prop-themes-tags" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
-        <div style="display:flex;gap:5px">
-          <input type="text" id="prop-theme-inp" class="inp" placeholder="ajouter un mot…" autocomplete="off" maxlength="30"
+        <div style="display:flex;gap:8px">
+          <input type="text" id="prop-theme-inp" class="inp" placeholder="un mot…" autocomplete="off" maxlength="20"
             onkeydown="if(event.key==='Enter'){addPropTheme();event.preventDefault()}">
           <button class="btn btn-p" onclick="addPropTheme()">+</button>
         </div>
-        <button class="btn btn-s" onclick="resetPropThemes()" style="width:100%;font-size:var(--fs-sm);margin-top:8px">↩ Restaurer les thèmes par défaut</button>
+        <button class="btn btn-s" onclick="resetPropThemes()" style="width:100%;font-size:var(--fs-sm);margin-top:8px">↩ Restaurer les mots par défaut</button>
       </div>
     </details>
 

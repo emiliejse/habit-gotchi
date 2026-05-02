@@ -419,10 +419,24 @@ function renderBoutiqueOnglet(onglet) {
     }).join('');
 
   } else {
-// Onglet IA
+// Onglet création IA
     const peutGenerer = (D.g.petales || 0) >= 10;
     const derniersProps = Object.values(window.D.propsPixels || {});
-    const dernierObj = derniersProps.length ? derniersProps[derniersProps.length - 1] : null; 
+    const dernierObj = derniersProps.length ? derniersProps[derniersProps.length - 1] : null;
+
+    // RÔLE : Construit l'affichage des mots d'inspiration — met en valeur le dernier tiré.
+    const themes = (D.g.propThemes && D.g.propThemes.length) ? D.g.propThemes : ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
+    const lastTheme = window._lastPropTheme || null;
+    const themesHtml = themes.map(t => {
+      const isLast = t === lastTheme;
+      return `<span style="
+        display:inline-block;padding:3px 9px;border-radius:20px;
+        font-size:var(--fs-xs);font-weight:${isLast ? 'bold' : 'normal'};
+        background:${isLast ? 'var(--lilac)' : 'var(--card)'};
+        color:${isLast ? '#fff' : 'var(--text2)'};
+        border:1.5px solid ${isLast ? 'var(--lilac)' : 'var(--border)'};
+        transition:.2s">${escape(t)}</span>`;
+    }).join('');
 
     el.innerHTML = `
       <p style="font-size:var(--fs-sm);color:var(--text2);text-align:center;margin-bottom:16px;line-height:1.6">
@@ -438,6 +452,12 @@ function renderBoutiqueOnglet(onglet) {
           letter-spacing:.5px">
           ${peutGenerer ? `✨ Demander à ${escape(window.D.g.name)} — 🌸 10` : '🌸 Il te faut 10 pétales'}
         </button>
+      </div>
+      <div style="margin-top:16px;padding:10px 12px;border-radius:var(--r-md);background:var(--card);border:1px solid var(--border);text-align:center">
+        <div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">
+          ${lastTheme ? `✨ dernier mot pioché : <strong style="color:var(--lilac)">${escape(lastTheme)}</strong>` : 'mots d\'inspiration'}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center">${themesHtml}</div>
       </div>
       ${dernierObj ? `
   <div style="margin-top:20px;text-align:center;border-top:1px solid var(--border);padding-top:16px">

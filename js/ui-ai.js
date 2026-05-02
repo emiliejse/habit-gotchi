@@ -476,6 +476,8 @@ async function acheterPropClaude() {
   // POURQUOI : Permet à l'utilisatrice de personnaliser les thèmes depuis les Réglages.
   const themes = (D.g.propThemes && D.g.propThemes.length) ? D.g.propThemes : ['nature','cosmos','magie','cuisine','musique','voyage','océan','forêt','météo','jardin','minéral','rêve'];
   const theme  = themes[Math.floor(Math.random() * themes.length)];
+  // RÔLE : Mémorise le thème tiré pour l'afficher dans l'onglet création de la boutique.
+  window._lastPropTheme = theme;
   const ctx    = window.AI_CONTEXTS;
 
   /* ── Calcul du type le moins représenté, pondéré par capacité d'utilisation ── */

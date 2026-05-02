@@ -173,25 +173,28 @@ function initGarden() {
   //   s=3–4 : forme standard avec détails (pétales fins 1PX, points)
   //   s=5–6 : forme enrichie (double rangée, feuilles latérales)
   //   s=7–8 : forme complexe (étamines, nervures, volume)
+  // IMPORTANT : toutes les valeurs Y doivent être des multiples de PX=5.
+  // px() arrondit les coordonnées sur la grille PX — si y n'est pas multiple de 5,
+  // le snap crée un décalage entre y calculé et y réel → espaces entre les pixels des sprites.
   const SLOTS = [
     // Fleurs fond — grandes tailles pour les éléments derrière le Gotchi
     { type: 'fleur',      layer: 'fond',          count: 5,
-      xMin: 10, xMax: 185, y: 118, maxAge: 7,   hauteurPX: 4,  scaleMin: 1, scaleMax: 8  },
+      xMin: 10, xMax: 185, y: 120, maxAge: 7,   hauteurPX: 4,  scaleMin: 1, scaleMax: 8  },
     // Fleurs premier plan — petites, ne doivent pas cacher le Gotchi
     { type: 'fleur',      layer: 'premier_plan',  count: 3,
-      xMin: 10, xMax: 185, y: 162, maxAge: 7,   hauteurPX: 2,  scaleMin: 1, scaleMax: 3  },
+      xMin: 10, xMax: 185, y: 160, maxAge: 7,   hauteurPX: 2,  scaleMin: 1, scaleMax: 3  },
     // Herbes fond — peuvent être hautes derrière le Gotchi
     { type: 'herbe',      layer: 'fond',          count: 3,
-      xMin: 10, xMax: 185, y: 118, maxAge: 14,  hauteurPX: 3,  scaleMin: 1, scaleMax: 7  },
+      xMin: 10, xMax: 185, y: 120, maxAge: 14,  hauteurPX: 3,  scaleMin: 1, scaleMax: 7  },
     // Herbes premier plan — lisière basse, ras du sol
     { type: 'herbe',      layer: 'premier_plan',  count: 2,
-      xMin: 10, xMax: 185, y: 162, maxAge: 14,  hauteurPX: 2,  scaleMin: 1, scaleMax: 3  },
+      xMin: 10, xMax: 185, y: 160, maxAge: 14,  hauteurPX: 2,  scaleMin: 1, scaleMax: 3  },
     // Pierres fond — du caillou au rocher
     { type: 'pierre',     layer: 'fond',          count: 4,
-      xMin: 10, xMax: 185, y: 118, maxAge: 999, hauteurPX: 2,  scaleMin: 1, scaleMax: 5  },
+      xMin: 10, xMax: 185, y: 120, maxAge: 999, hauteurPX: 2,  scaleMin: 1, scaleMax: 5  },
     // Champignons fond — petits à moyens, éphémères
     { type: 'champignon', layer: 'fond',          count: 3,
-      xMin: 10, xMax: 185, y: 118, maxAge: 5,   hauteurPX: 3,  scaleMin: 1, scaleMax: 6  },
+      xMin: 10, xMax: 185, y: 120, maxAge: 5,   hauteurPX: 3,  scaleMin: 1, scaleMax: 6  },
   ];
 
   // ── 4. Génération de la liste d'éléments avec zone d'exclusion ──
@@ -288,6 +291,19 @@ function initGarden() {
         continue;
       }
 
+      // maxAge individuel : tiré depuis la seed dans la plage [slot.maxAge * 0.5, slot.maxAge * 1.5]
+      // POURQUOI varier : si tous les éléments d'un même type avaient le même maxAge,
+      // ils vieilliraient et mourraient tous en même temps → transitions brutales.
+      // Variation ±50% autour du maxAge du slot → mort progressive et naturelle.
+      // Pour les pierres (maxAge=999), on garde 999 (immuables).
+      let elMaxAge = slot.maxAge;
+      if (slot.maxAge < 500) {
+        const rngAge = _gardenRng(seed, idxTotal++);
+        const ageMin = Math.max(3, Math.round(slot.maxAge * 0.6));
+        const ageMax = Math.round(slot.maxAge * 1.4);
+        elMaxAge = ageMin + Math.floor(rngAge * (ageMax - ageMin + 1));
+      }
+
       elements.push({
         type:         slot.type,
         layer:        slot.layer,
@@ -297,8 +313,8 @@ function initGarden() {
         colorVariant,              // couleur (0–7) — recalculé depuis seed
         scalePX:      scaleFinal,  // taille — recalculé depuis seed
         hauteurPX:    hauteurPXEffective,
-        age:          0,           // SEULE valeur persistée — évolue avec les jours (Phase 3)
-        maxAge:       slot.maxAge,
+        age:          0,           // évolue avec les jours (Phase 3) — persisté dans gardenState
+        maxAge:       elMaxAge,    // durée de vie individuelle — persistée dans gardenState
       });
     }
   });
@@ -325,24 +341,33 @@ function initGarden() {
   //   depuis la seed → recalculés à chaque lancement → toute modif des sprites
   //   est immédiatement visible sans toucher à gardenState.
   if (!window.D.g.gardenState || window.D.g.gardenState.length === 0) {
-    // Premier lancement : on initialise gardenState avec age=0 pour chaque élément
-    window.D.g.gardenState = elements.map(() => ({ age: 0 }));
+    // Premier lancement : on initialise gardenState avec age=0 et maxAge tiré de l'élément
+    // POURQUOI persister maxAge : il est tiré via _gardenRng dans la boucle idxTotal —
+    //   si on le recalcule à chaque session, idxTotal doit rester identique, ce qui est
+    //   garanti. Mais le persister évite tout risque de désynchronisation si les SLOTS
+    //   changent de count entre versions — l'élément conserve son maxAge d'origine.
+    window.D.g.gardenState = elements.map(el => ({ age: 0, maxAge: el.maxAge }));
     save();
   } else {
-    // Sessions suivantes : on relit uniquement l'âge.
+    // Sessions suivantes : on relit age ET maxAge sauvegardés.
     // POURQUOI index i : la seed garantit que l'élément i est toujours le même
     //   élément entre sessions (même type, x, y, variant) — l'index est stable.
     elements.forEach((el, i) => {
       const saved = window.D.g.gardenState[i];
-      if (saved) el.age = saved.age ?? 0;
+      if (saved) {
+        el.age    = saved.age    ?? 0;
+        // RÔLE : Si maxAge était déjà persisté, on le restaure (Phase 3+).
+        //        Si l'ancien gardenState ne contient pas encore maxAge
+        //        (upgrade depuis une version antérieure), on garde le maxAge calculé.
+        if (saved.maxAge !== undefined) el.maxAge = saved.maxAge;
+      }
     });
     // RÔLE : Resynchronise gardenState si le nombre d'éléments a changé
-    //   (ex: modification des SLOTS en Phase 3 — nouveaux types, counts différents).
-    // POURQUOI : Sans ça, gardenState aurait un nombre d'entrées différent de elements
-    //   après une mise à jour → indices décalés → âges appliqués aux mauvais éléments.
+    //   (ex: modification des SLOTS — nouveaux types, counts différents).
     if (window.D.g.gardenState.length !== elements.length) {
       window.D.g.gardenState = elements.map((el, i) => ({
-        age: window.D.g.gardenState[i]?.age ?? 0
+        age:    window.D.g.gardenState[i]?.age    ?? 0,
+        maxAge: window.D.g.gardenState[i]?.maxAge ?? el.maxAge,
       }));
       save();
     }
@@ -393,182 +418,176 @@ window.initGarden = initGarden;
  *        variant (0–3) : famille de forme (classique / marguerite / tulipe / sauvage)
  *        colorVariant (0–7) : couleur des pétales, indépendante de la forme
  */
-function drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n) {
-  const s = scalePX;
+/**
+ * drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n, age, maxAge)
+ *
+ * RÔLE : Fleur pixel art — complexité pilotée par l'âge, taille par scalePX.
+ *
+ * CONVENTION ABSOLUE : y = base du sprite (ligne de sol).
+ *   Tout dessin monte vers le HAUT depuis y.
+ *   Rangée 0 (base)   → px(p, x, y - PX,     w, PX)
+ *   Rangée 1           → px(p, x, y - PX*2,   w, PX)
+ *   Colonne h rangées  → px(p, x, y - PX*h,   w, PX*h)
+ *   ⚠️ Jamais de px() dont le coin Y est en-dessous de y (pas de y + PX*k).
+ *   ⚠️ Chaque rectangle doit toucher au moins un autre rectangle du sprite.
+ *
+ * MATURITÉ :
+ *   m = age / maxAge  (0.0 = vient de germer, 1.0 = va mourir)
+ *   jeune  : m < 0.2  → bouton fermé sur tige courte
+ *   épanoui: 0.2–0.85 → forme complète selon variant + taille
+ *   vieux  : m > 0.85 → même forme mais opacité réduite + tige penchée
+ *
+ * variant 0 = classique | 1 = marguerite | 2 = tulipe | 3 = sauvage
+ */
+function drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n, age, maxAge) {
+  const s  = scalePX;
+  const ag = age    ?? 0;
+  const ma = maxAge ?? 7;
+  const m  = ag / ma; // ratio maturité 0→1
 
-  // 8 couleurs de pétales — du doux au vif
   const PETALES = [
-    '#f0a0b0', // rose poudré
-    '#e84868', // rose-rouge vif
-    '#f0d870', // jaune doux
-    '#e8b020', // jaune doré
-    '#c888e8', // mauve tendre
-    '#7830c0', // violet profond
-    '#80c8e8', // bleu ciel
-    '#f8f8f8', // blanc cassé
+    '#f0a0b0', '#e84868', '#f0d870', '#e8b020',
+    '#c888e8', '#7830c0', '#80c8e8', '#f8f8f8',
   ];
-  const colP  = PETALES[colorVariant % 8];                    // couleur pétales
-  const colT  = s <= 3 ? '#58a058' : '#3a7030';              // tige : vert clair → vert sombre
-  const colC  = (colorVariant % 2 === 0) ? '#f0d060' : '#e09020'; // cœur jaune ou doré
-  const colFe = '#4a9840';                                    // feuilles latérales
+  const colP = PETALES[colorVariant % 8];
+  const colT = '#4a8840';  // tige verte
+  const colC = (colorVariant % 2 === 0) ? '#f0d060' : '#e09020'; // cœur
+  const colF = '#3a7030';  // feuilles
 
-  // ── ÉTAPE 1 : Tige (commune à toutes les formes) ─────────────────
-  // CONVENTION : y = base du sprite (ligne de sol). La tige monte vers le HAUT.
-  // px() dessine depuis le coin supérieur gauche → yHaut = y - PX*s, hauteur PX*s.
+  // ── Tige ─────────────────────────────────────────────────────────
+  // Hauteur de tige : s rangées. Vieux → tige décalée d'1 PX à droite.
+  const dx = m > 0.85 ? PX : 0; // tige penchée si vieux
   p.fill(tc(n, colT));
-  px(p, x, y - PX*s, PX, PX * s); // tige : part du sommet (y - s×PX) et descend jusqu'à y
+  px(p, x + dx, y - PX*s, PX, PX*s); // colonne pleine de s rangées
 
-  // Feuilles latérales sur la tige — apparaissent à partir de s=4
-  if (s >= 4) {
-    p.fill(tc(n, colFe));
-    px(p, x - PX*2, y - PX * Math.floor(s * 0.4), PX*2, PX); // feuille gauche à 40% de la hauteur
-    px(p, x + PX,   y - PX * Math.floor(s * 0.6), PX*2, PX); // feuille droite à 60% (décalée)
-  }
-  // Nervure centrale sur la tige — à partir de s=6
-  if (s >= 6) {
-    p.fill(tc(n, '#306828'));
-    // Nervure du milieu de la tige vers le haut : de y-s×PX jusqu'à y-0.4×s×PX
-    px(p, x, y - PX*s, PX, PX * Math.floor(s * 0.6)); // portion haute de la tige plus sombre
+  // Feuilles sur la tige — apparaissent à l'âge épanoui (m >= 0.2), taille >= 3
+  if (m >= 0.2 && s >= 3) {
+    p.fill(tc(n, colF));
+    // Feuille gauche : rangée à 40% de la hauteur, collée à la tige
+    px(p, x + dx - PX, y - PX*Math.max(1, Math.round(s * 0.4)), PX*2, PX);
+    // Feuille droite : rangée à 65% de la hauteur, collée à la tige (côté droit)
+    if (s >= 4) {
+      px(p, x + dx,     y - PX*Math.max(1, Math.round(s * 0.65)), PX*2, PX);
+    }
   }
 
-  // ── ÉTAPE 2 : Tête de fleur — dispatch par variant ───────────────
-  // Base de la tête : y - s×PX = sommet de la tige
-  const yTop = y - PX * s; // coordonnée Y du sommet de la tige = base de la tête
+  // ── Tête de fleur ────────────────────────────────────────────────
+  // yT = coordonnée du bas de la tête (= sommet de la tige)
+  const yT = y - PX*s;
 
-  if (variant === 0) {
-    // ── CLASSIQUE : 3 pétales en croix (gauche / droite / haut)
-    // s=1–2 : pétales 1PX, forme minuscule
-    // s=3–4 : pétales 1PX + cœur 1PX
-    // s=5–6 : pétales 2PX, cœur 2PX
-    // s=7–8 : pétales 2PX + pétale bas + étamines
-    const ep = s >= 5 ? 2 : 1; // épaisseur des pétales en PX
+  if (m < 0.2) {
+    // ── JEUNE : bouton fermé — cube compact posé sur la tige ─────
+    // Toutes les formes : bouton 2×2 (ou 1×1 si s=1), couleur pétale
     p.fill(tc(n, colP));
-    px(p, x - PX*(ep+1), yTop,      PX*ep, PX*ep); // pétale gauche
-    px(p, x + PX,        yTop,      PX*ep, PX*ep); // pétale droit
-    px(p, x - PX*(ep-1), yTop-PX*ep, PX*ep, PX*ep);// pétale haut
-    if (s >= 7) px(p, x - PX*(ep-1), yTop+PX, PX*ep, PX); // pétale bas (grande fleur)
-    p.fill(tc(n, colC));
-    px(p, x - PX*(ep-1), yTop, PX*ep, PX*ep); // cœur central
-    // Étamines : petits points autour du cœur, s=7–8 uniquement
-    if (s >= 7) {
-      p.fill(tc(n, '#f8e040'));
-      px(p, x - PX*2, yTop - PX, PX, PX);
-      px(p, x + PX,   yTop - PX, PX, PX);
-    }
-
-  } else if (variant === 1) {
-    // ── MARGUERITE : nombreux pétales fins rayonnants
-    // s=1–2 : 2 pétales seulement (minuscule)
-    // s=3–4 : 4 pétales fins 1PX
-    // s=5–6 : 6 pétales fins + cœur proéminent
-    // s=7–8 : 8 pétales fins + double cœur + étamines
-    const nbPetales = s <= 2 ? 2 : s <= 4 ? 4 : s <= 6 ? 6 : 8;
-    p.fill(tc(n, colP));
-    // Disposition des pétales en étoile autour du centre
-    // Positions hardcodées en PX pour rester sur la grille pixel art
-    const OFFSETS = [
-      [-2,  0], [2,  0],  // gauche, droit
-      [ 0, -2], [0,  2],  // haut, bas
-      [-2, -2], [2, -2],  // diagonales haut
-      [-2,  2], [2,  2],  // diagonales bas
-    ];
-    for (let k = 0; k < nbPetales; k++) {
-      const [ox, oy] = OFFSETS[k];
-      px(p, x + PX*ox, yTop + PX*oy, PX, PX);
-    }
-    // Cœur — grossit avec la taille
-    const coeurW = s >= 5 ? 2 : 1;
-    p.fill(tc(n, colC));
-    px(p, x - PX*(coeurW-1), yTop, PX*coeurW, PX*coeurW);
-    if (s >= 7) { // étamines sur grande marguerite
-      p.fill(tc(n, '#f8f040'));
-      px(p, x - PX, yTop - PX, PX, PX);
-      px(p, x + PX, yTop + PX, PX, PX);
-    }
-
-  } else if (variant === 2) {
-    // ── TULIPE : chapeau ovale fermé, silhouette reconnaissable
-    // s=1–2 : simple rectangle 2×1
-    // s=3–4 : ovale 3×2 avec pointe
-    // s=5–6 : ovale large + stries internes
-    // s=7–8 : tulipe ouverte, pétales extérieurs visibles
-    if (s <= 2) {
-      p.fill(tc(n, colP));
-      px(p, x - PX, yTop, PX*3, PX); // chapeau plat minuscule
-    } else if (s <= 4) {
-      p.fill(tc(n, colP));
-      px(p, x - PX, yTop,      PX*3, PX*2); // corps ovale
-      px(p, x,      yTop-PX,   PX,   PX);   // pointe centrale
-      p.fill(tc(n, colC));
-      px(p, x,      yTop+PX,   PX,   PX);   // base intérieure
-    } else if (s <= 6) {
-      p.fill(tc(n, colP));
-      px(p, x - PX*2, yTop,      PX*5, PX*2); // ovale large
-      px(p, x - PX,   yTop-PX,   PX*3, PX);   // dôme
-      px(p, x,        yTop-PX*2, PX,   PX);   // pointe
-      // Stries internes — 2 lignes plus sombres
-      p.fill(tc(n, colC));
-      px(p, x - PX, yTop, PX, PX*2);  // strie gauche
-      px(p, x + PX, yTop, PX, PX*2);  // strie droite
-    } else {
-      // Tulipe ouverte — pétales extérieurs retombent
-      p.fill(tc(n, colP));
-      px(p, x - PX*3, yTop+PX,   PX*2, PX*2); // pétale gauche retombant
-      px(p, x + PX*2, yTop+PX,   PX*2, PX*2); // pétale droit retombant
-      px(p, x - PX*2, yTop,      PX*5, PX*2); // corps central
-      px(p, x - PX,   yTop-PX,   PX*3, PX);   // dôme
-      p.fill(tc(n, colC));
-      px(p, x - PX,   yTop,      PX*3, PX);   // intérieur doré
-      p.fill(tc(n, '#306828'));
-      px(p, x,        yTop,      PX,   PX*2);  // strie centrale sombre
-    }
+    const bw = s >= 2 ? 2 : 1;
+    // bouton centré sur x, posé directement sur le sommet de la tige
+    // rangée 0 du bouton = rangée 0 au-dessus de la tige → yT - PX*bw .. yT
+    px(p, x + dx - PX*(bw-1), yT - PX*bw, PX*(bw*2-1), PX*bw);
 
   } else {
-    // ── SAUVAGE : fleur irrégulière, asymétrique — la plus naturelle
-    // s=1–2 : 1 pétale + 1 point (bouton sauvage)
-    // s=3–4 : 3 pétales asymétriques
-    // s=5–6 : 5 pétales asymétriques + feuillette calice
-    // s=7–8 : grande fleur sauvage, cœur proéminent + étamines multiples
-    if (s <= 2) {
-      p.fill(tc(n, colP));
-      px(p, x - PX, yTop, PX*2, PX); // pétale unique
-      p.fill(tc(n, colC));
-      px(p, x, yTop, PX, PX);        // cœur visible
-    } else if (s <= 4) {
-      p.fill(tc(n, colP));
-      px(p, x - PX*2, yTop,      PX, PX); // pétale gauche bas
-      px(p, x + PX,   yTop,      PX, PX); // pétale droit bas
-      px(p, x - PX,   yTop-PX,   PX, PX); // pétale haut (décalé = asymétrie)
-      p.fill(tc(n, colC));
-      px(p, x,        yTop,      PX, PX); // cœur
-    } else if (s <= 6) {
-      p.fill(tc(n, colP));
-      px(p, x - PX*3, yTop,      PX, PX*2); // pétale gauche long
-      px(p, x + PX*2, yTop+PX,   PX, PX);   // pétale droit court (asymétrie)
-      px(p, x - PX,   yTop-PX*2, PX, PX);   // pétale haut gauche
-      px(p, x + PX,   yTop-PX,   PX, PX);   // pétale haut droit
-      px(p, x - PX,   yTop+PX,   PX, PX);   // pétale bas
-      p.fill(tc(n, colFe));
-      px(p, x - PX*2, yTop+PX,   PX*2, PX); // calice (feuillette base)
-      p.fill(tc(n, colC));
-      px(p, x,        yTop,      PX*2, PX*2); // cœur proéminent
+    // ── ÉPANOUI / VIEUX : forme complète selon variant ──────────
+    // Opacité réduite si vieux — on ne peut pas faire d'alpha avec p5 fill directement,
+    // on utilise une teinte plus sombre/terne via tc() avec n légèrement forcé.
+    const nFleur = m > 0.85 ? Math.min(1, n + 0.35) : n;
+
+    if (variant === 0) {
+      // ── CLASSIQUE : croix de 3 pétales + cœur central
+      // Forme de base : 3 blocs en croix autour du cœur
+      //   [P]      rangée +1 (pétale haut)
+      // [P][C][P]  rangée 0  (pétales gauche/droit + cœur)
+      // Tous connectés au cœur → aucun pixel isolé.
+      p.fill(tc(nFleur, colP));
+      px(p, x + dx - PX, yT - PX,   PX, PX); // pétale gauche — touche le cœur à droite
+      px(p, x + dx + PX, yT - PX,   PX, PX); // pétale droit  — touche le cœur à gauche
+      px(p, x + dx,      yT - PX*2, PX, PX); // pétale haut   — touche le cœur en dessous
+      p.fill(tc(nFleur, colC));
+      px(p, x + dx,      yT - PX,   PX, PX); // cœur central  — touche les 3 pétales
+      // Pétale bas + étamines : apparaissent à taille >= 4 et âge épanoui
+      if (s >= 4) {
+        p.fill(tc(nFleur, colP));
+        px(p, x + dx, yT, PX, PX); // pétale bas — posé sur la tige (yT), touche le cœur au-dessus
+        if (s >= 6) {
+          // 2e rangée de pétales : pétales gauche/droit sur la rangée du pétale haut
+          px(p, x + dx - PX*2, yT - PX*2, PX, PX); // touche le pétale gauche à droite
+          px(p, x + dx + PX*2, yT - PX*2, PX, PX); // touche le pétale droit à gauche
+        }
+      }
+
+    } else if (variant === 1) {
+      // ── MARGUERITE : disque central + pétales rayonnants
+      // Disque 3×3 (ou 1×1 jeune) avec pétales sur le pourtour.
+      // Tous les pétales touchent le disque → connectés.
+      const r = s >= 4 ? 2 : 1; // rayon du disque central en PX-units
+      // Disque central
+      p.fill(tc(nFleur, colC));
+      px(p, x + dx - PX*(r-1), yT - PX*(r*2-1), PX*(r*2-1), PX*(r*2-1));
+      // Pétales : haut / bas / gauche / droit — chacun adjacent au disque
+      p.fill(tc(nFleur, colP));
+      // gauche : rangée du milieu du disque, à gauche
+      px(p, x + dx - PX*(r+1), yT - PX*r,        PX, PX*(r*2-1));
+      // droit
+      px(p, x + dx + PX*r,     yT - PX*r,        PX, PX*(r*2-1));
+      // haut
+      px(p, x + dx - PX*(r-1), yT - PX*(r*2),    PX*(r*2-1), PX);
+      // bas — touche le bas du disque (= yT) et la tige en-dessous
+      px(p, x + dx - PX*(r-1), yT,                PX*(r*2-1), PX);
+      // Pétales diagonaux — uniquement si épanoui et grande taille
+      if (s >= 5) {
+        px(p, x + dx - PX*r,     yT - PX*(r*2),  PX, PX); // diag haut-gauche — touche pétale haut
+        px(p, x + dx + PX*(r-1), yT - PX*(r*2),  PX, PX); // diag haut-droit
+        px(p, x + dx - PX*r,     yT,              PX, PX); // diag bas-gauche — touche pétale bas
+        px(p, x + dx + PX*(r-1), yT,              PX, PX); // diag bas-droit
+      }
+
+    } else if (variant === 2) {
+      // ── TULIPE : silhouette fermée arrondie
+      // Forme :  [P]     ← pointe (rangée top)
+      //         [PPP]    ← dôme
+      //         [PPP]    ← corps
+      // Toutes les rangées se touchent → bloc solide.
+      p.fill(tc(nFleur, colP));
+      px(p, x + dx - PX,  yT - PX*3, PX*3, PX); // corps bas   (3 large, 1 haut)
+      px(p, x + dx - PX,  yT - PX*4, PX*3, PX); // corps haut  (idem — adjacent)
+      px(p, x + dx,       yT - PX*5, PX,   PX); // pointe      (1 large, adjacent au corps haut)
+      // Stries internes (couleur cœur) — uniquement si épanoui, taille >= 3
+      if (s >= 3) {
+        p.fill(tc(nFleur, colC));
+        // 2 stries verticales dans le corps — touchent les rangées corps
+        px(p, x + dx,     yT - PX*3, PX, PX*2); // strie centrale (2 rangées = corps bas + haut)
+      }
+      // Tulipe ouverte — pétales qui s'écartent, taille >= 5
+      if (s >= 5) {
+        p.fill(tc(nFleur, colP));
+        // Pétale gauche écarté — adjacent au corps bas gauche
+        px(p, x + dx - PX*2, yT - PX*2, PX, PX*2);
+        // Pétale droit écarté — adjacent au corps bas droit
+        px(p, x + dx + PX*2, yT - PX*2, PX, PX*2);
+      }
+
     } else {
-      p.fill(tc(n, colP));
-      px(p, x - PX*3, yTop,      PX,   PX*3); // pétale gauche très long
-      px(p, x + PX*2, yTop+PX,   PX,   PX*2); // pétale droit moyen
-      px(p, x - PX,   yTop-PX*3, PX*2, PX);   // pétale haut gauche
-      px(p, x + PX,   yTop-PX*2, PX,   PX);   // pétale haut droit
-      px(p, x - PX*2, yTop+PX*2, PX,   PX);   // pétale bas gauche
-      px(p, x + PX,   yTop+PX,   PX,   PX);   // pétale bas droit
-      p.fill(tc(n, colFe));
-      px(p, x - PX*2, yTop+PX*2, PX*4, PX);   // calice large
-      p.fill(tc(n, colC));
-      px(p, x - PX,   yTop,      PX*3, PX*2); // gros cœur
-      // Étamines multiples
-      p.fill(tc(n, '#f8f040'));
-      px(p, x - PX,   yTop-PX,   PX, PX);
-      px(p, x + PX,   yTop-PX,   PX, PX);
-      px(p, x,        yTop-PX*2, PX, PX);
+      // ── SAUVAGE : fleur asymétrique, pétales irréguliers
+      // Forme de base : bloc central + extensions asymétriques.
+      // Chaque extension touche le bloc central → aucun isolé.
+      p.fill(tc(nFleur, colP));
+      // Bloc central 2×2
+      px(p, x + dx,      yT - PX*2, PX*2, PX*2);
+      // Pétale gauche — touche le bloc central (bord gauche du bloc = x+dx)
+      px(p, x + dx - PX, yT - PX*2, PX,   PX*2);
+      // Pétale haut droit — touche le bloc (bord supérieur)
+      px(p, x + dx + PX, yT - PX*3, PX,   PX);
+      // Pétale bas gauche — touche le bloc (bord inférieur gauche)
+      px(p, x + dx - PX, yT - PX,   PX,   PX);
+      // Cœur par-dessus
+      p.fill(tc(nFleur, colC));
+      px(p, x + dx,      yT - PX*2, PX,   PX);
+      // 2e rang de pétales — épanoui + taille >= 4
+      if (s >= 4) {
+        p.fill(tc(nFleur, colP));
+        // Pétale gauche long — touche le pétale gauche existant
+        px(p, x + dx - PX*2, yT - PX*2, PX, PX);
+        // Pétale haut — touche le pétale haut droit
+        px(p, x + dx,        yT - PX*4, PX, PX*2); // bande verticale, touche le bloc haut
+      }
     }
   }
 }
@@ -1092,7 +1111,10 @@ function drawJardinFond(p, theme, n) {
     //          colorVariant → fallback sur variant pour éviter un undefined silencieux.
     switch (el.type) {
       case 'fleur':
-        drawFleur(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 3, theme, n);
+        // RÔLE : Passe age et maxAge pour que drawFleur pilote la complexité par maturité.
+        // el.age ?? 0 : fallback si gardenState ancien ne contient pas encore age
+        // el.maxAge ?? 7 : fallback sur valeur par défaut des fleurs
+        drawFleur(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 3, theme, n, el.age ?? 0, el.maxAge ?? 7);
         break;
       case 'herbe':
         drawHerbe(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n);
@@ -1137,7 +1159,8 @@ function drawJardinPremierPlan(p, theme, n) {
 
     switch (el.type) {
       case 'fleur':
-        drawFleur(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 3, theme, n);
+        // RÔLE : Même chose que le fond — age/maxAge transmis pour la maturité.
+        drawFleur(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 3, theme, n, el.age ?? 0, el.maxAge ?? 7);
         break;
       case 'herbe':
         drawHerbe(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 2, n);

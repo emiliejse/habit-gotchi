@@ -522,17 +522,21 @@ function openCanvasFullscreen() {
     const consoleTop = document.getElementById('console-top');
     document.body.insertBefore(overlay, consoleTop);
 
-    // POURQUOI pas de classList.add('garden-fullscreen') ici :
-    // déjà fait immédiatement au moment du tap (avant cette fonction),
-    // pour masquer l'UI dès que possible et éviter le flash.
-
     // Injecte les infos dans #console-top
     if (consoleTop) consoleTop.appendChild(infoEl);
 
-    // Déclenche la transition d'ouverture de l'overlay
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => overlay.classList.add('open'));
-    });
+    // RÔLE : Force un reflow pour que le navigateur connaisse l'état initial
+    //        (display:none + translateY(100%)) avant de déclencher la transition.
+    // POURQUOI void offsetHeight : sans ce reflow forcé, le navigateur peut batcher
+    //          display:none → display:block + translateY(0) en un seul paint,
+    //          ce qui annule la transition CSS — le panneau apparaît sans glisser.
+    void overlay.offsetHeight; // force reflow
+
+    // POURQUOI garden-fullscreen posé ICI (après injection overlay + infos dans le DOM) :
+    // Le canvas passe en z:850 seulement quand l'overlay est déjà prêt à transitionner —
+    // tama et fond apparaissent ensemble en une seule animation, sans séquençage visible.
+    document.body.classList.add('garden-fullscreen');
+    overlay.classList.add('open');
 
     lockScroll();
     // Retire inert de #console-top — lockScroll() vient de le poser, mais
@@ -563,9 +567,10 @@ function openCanvasFullscreen() {
     function _waitForLayout() {
       const mt = wrap ? parseFloat(getComputedStyle(wrap).marginTop) : 0;
       if (Math.abs(mt) < 1) {
-        // Transition terminée — bascule en mode fullscreen et ouvre l'overlay
+        // RÔLE : Transition compact terminée — retire garden-preparing puis ouvre.
+        // POURQUOI garden-fullscreen retiré d'ici : _doOpen() le pose après avoir
+        //          injecté overlay + infos dans le DOM, pour que tout apparaisse ensemble.
         document.body.classList.remove('garden-preparing');
-        document.body.classList.add('garden-fullscreen');
         _doOpen();
       } else {
         requestAnimationFrame(_waitForLayout);
@@ -573,9 +578,9 @@ function openCanvasFullscreen() {
     }
     requestAnimationFrame(_waitForLayout);
   } else {
-    // Pas de transition à attendre — on bascule directement
+    // Pas de transition à attendre — on bascule directement.
+    // POURQUOI garden-fullscreen retiré d'ici : _doOpen() le pose lui-même.
     document.body.classList.remove('garden-preparing');
-    document.body.classList.add('garden-fullscreen');
     _doOpen();
   }
 

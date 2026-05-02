@@ -1942,7 +1942,14 @@ body.garden-fullscreen .tama-screen {
   gap: 2px;
 }
 /* La section composition peut grandir si beaucoup de types */
-.garden-label-section:nth-child(3) { flex: 1; min-height: 0; overflow: hidden; }
+/* RÔLE : Section Composition — fond légèrement teinté pour la distinguer visuellement */
+/* POURQUOI : donner une hiérarchie subtile sans border supplémentaire */
+.garden-label-section:nth-child(3) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: rgba(0,0,0,0.025);
+}
 
 /* ── Titre de section — petit label majuscule discret ──────────── */
 .garden-label-section-title {
@@ -2003,18 +2010,24 @@ body.garden-fullscreen .tama-screen {
   overflow-wrap: anywhere;
 }
 /* Lignes par type — légèrement indentées, texte un poil plus petit */
+/* RÔLE : Différencier visuellement les lignes de sous-détail de la ligne principale */
+/* POURQUOI : var(--text) était identique aux lignes normales — pas de hiérarchie lisible */
 .garden-label-row--sub {
   padding-left: 2px;
-  font-size: var(--fs-xs);
-  color: var(--text);
+  font-size: 10px;       /* plus petit que var(--fs-xs) = 11px — vraiment discret */
+  color: var(--text2);   /* texte secondaire au lieu de texte principal */
 }
-/* Ligne total — séparée visuellement */
+/* Ligne total — badge récapitulatif */
+/* RÔLE : Mettre en valeur le total ∑ comme un badge visuel distinct */
+/* POURQUOI : le border-top créait une séparation froide — le fond arrondi est plus doux */
 .garden-label-row--total {
-  margin-top: 3px;
-  padding-top: 3px;
-  border-top: 1px solid var(--border);
   font-size: var(--fs-xs);
   color: var(--text2);
+  background: rgba(0,0,0,0.04); /* fond badge léger */
+  border-radius: 6px;
+  padding: 3px 6px;
+  border-top: none;              /* remplace l'ancien border-top */
+  margin-top: 4px;
 }
 
 /* ── Icône de chaque ligne ──────────────────────────────────────── */
@@ -2057,6 +2070,8 @@ body.garden-fullscreen .tama-screen {
   font-size: var(--fs-xs);
   line-height: 1.45;
   word-break: break-word; /* POURQUOI : empêche le débordement à droite */
+  margin-top: 8px;        /* RÔLE : espace entre la ligne vitalité et la phrase contemplative */
+  opacity: 0.6;           /* POURQUOI : la phrase est décorative — elle ne doit pas dominer */
 }
 
 /*

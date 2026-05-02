@@ -438,10 +438,10 @@ function openCanvasFullscreen() {
   //            canvas est encore en position compacte (coin supérieur gauche) au moment du rendu.
   if (consoleEl) consoleEl.classList.remove('compact');
 
-  // RÔLE : Force l'env jardin avant de construire les infos
+  // RÔLE : Force l'env jardin (sans save() ici — différé dans _doOpen pour éviter
+  // un re-render prématuré qui flasherait l'onglet d'accueil pendant la transition)
   if (window.D && window.D.g) {
     window.D.g.activeEnv = 'jardin';
-    save();
   }
 
   // ── Fonction qui fait l'ouverture effective ─────────────────────
@@ -449,6 +449,9 @@ function openCanvasFullscreen() {
   // de sa transition CSS (margin-top:-48px → 0, durée 400ms) avant d'injecter
   // l'overlay — sinon le canvas se positionne encore depuis le coin supérieur gauche.
   function _doOpen() {
+    // RÔLE : Persiste l'env jardin maintenant que l'UI est masquée
+    if (typeof save === 'function') save();
+
     // Bloc infos jardin
     const infoHTML = _buildGardenInfo();
     const infoEl   = document.createElement('div');
@@ -460,9 +463,9 @@ function openCanvasFullscreen() {
     const consoleTop = document.getElementById('console-top');
     document.body.insertBefore(overlay, consoleTop);
 
-    // Active garden-fullscreen + header
-    document.body.classList.add('garden-fullscreen');
-    document.getElementById('hdr-garden')?.removeAttribute('aria-hidden');
+    // POURQUOI pas de classList.add('garden-fullscreen') ici :
+    // déjà fait immédiatement au moment du tap (avant cette fonction),
+    // pour masquer l'UI dès que possible et éviter le flash.
 
     // Injecte les infos dans #console-top
     if (consoleTop) consoleTop.appendChild(infoEl);
@@ -479,23 +482,28 @@ function openCanvasFullscreen() {
     if (ct) ct.inert = false;
   }
 
-  // RÔLE : Si compact était actif, attendre la fin de sa transition avant d'ouvrir.
-  // POURQUOI transitionend sur #tama-bubble-wrap : c'est lui qui porte margin-top:-48px.
-  //   La transition dure 400ms — écouter transitionend est plus fiable qu'un setTimeout fixe.
-  //   On écoute 'margin-top' spécifiquement pour ne pas réagir à d'autres transitions.
-  //   { once:true } évite tout risque de double déclenchement.
+  // RÔLE : Active garden-fullscreen IMMÉDIATEMENT pour masquer l'UI normale dès le tap.
+  // POURQUOI : Sans ça, le menu se ferme et on voit l'onglet d'accueil pendant 400ms
+  //            (durée de la transition compact) avant que la vue jardin apparaisse.
+  document.body.classList.add('garden-fullscreen');
+  document.getElementById('hdr-garden')?.removeAttribute('aria-hidden');
+
+  // RÔLE : Si compact était actif, attendre la fin de sa transition (margin-top:-48px → 0)
+  // avant d'injecter l'overlay et les infos — sinon le canvas se positionne depuis le coin
+  // supérieur gauche. Le masquage de l'UI est déjà fait ci-dessus.
   if (window._canvasFs_wasCompact) {
     const wrap = document.getElementById('tama-bubble-wrap');
+    const doOpenAfterTransition = () => {
+      if (!document.getElementById('canvas-fs-overlay')) _doOpen();
+    };
     if (wrap) {
       wrap.addEventListener('transitionend', function handler(e) {
         if (e.propertyName !== 'margin-top') return;
         wrap.removeEventListener('transitionend', handler);
-        _doOpen();
-      }, { once: false }); // once:false car on filtre sur propertyName
-      // Fallback : si la transition ne se déclenche pas (ex: déjà à 0), ouvrir après 450ms
-      setTimeout(() => {
-        if (!document.body.classList.contains('garden-fullscreen')) _doOpen();
-      }, 450);
+        doOpenAfterTransition();
+      }, { once: false });
+      // Fallback si la transition ne se déclenche pas
+      setTimeout(doOpenAfterTransition, 450);
     } else {
       _doOpen();
     }

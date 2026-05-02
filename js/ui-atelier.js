@@ -423,13 +423,13 @@ function _atelierRenderGalerie() {
   // POURQUOI : deux actions destructives/réversibles peu fréquentes → petits boutons discrets
   //            séparés du bouton principal "Afficher dans la chambre"
   const motifActif = (activeId === null);
-  html += `<div style="display:flex;gap:8px;margin-top:2px">
+  html += `<div style="display:flex;gap:8px;margin-top:6px">
     <button onclick="_atelierViderTableau()"
-      style="flex:1;padding:6px 0;border-radius:6px;border:1px solid var(--border);
+      style="flex:1;padding:8px 0;border-radius:6px;border:1px solid var(--border);
              background:none;cursor:pointer;color:var(--text2);font-size:12px;">
       🗑 Vider le tableau</button>
     <button onclick="_atelierMotifDefaut()"
-      style="flex:1;padding:6px 0;border-radius:6px;border:1px solid var(--border);
+      style="flex:1;padding:8px 0;border-radius:6px;border:1px solid var(--border);
              background:none;cursor:pointer;font-size:12px;
              color:${motifActif ? 'var(--text)' : 'var(--text2)'};
              font-weight:${motifActif ? '700' : '400'};">
@@ -605,6 +605,8 @@ window._atelierSetActif = function() {
 window._atelierViderTableau = function() {
   const tb = window.D.atelier.tableaux.find(t => t.id === _atelierEditId);
   if (!tb) return;
+  // POURQUOI : action irréversible — on demande confirmation avant d'effacer.
+  if (!confirm('Vider le tableau ? Cette action est irréversible.')) return;
   // Remet toutes les cellules à null (transparent = fond frameBg visible)
   tb.pixels = Array.from({ length: ATELIER_ROWS }, () => Array(ATELIER_COLS).fill(null));
   tb.updatedAt = Date.now();

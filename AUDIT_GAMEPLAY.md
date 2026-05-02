@@ -265,14 +265,14 @@ Matin : 7-11    Midi : 11-15    Soir : 18-22
 
 - ✅ Limites quotidiennes protègent du surmenage et du shoot compulsif.
 - ✅ Loader animé, pas de freeze visuel.
-- ⚠️ **3 pensées/jour** est asymétrique avec 6 catégories d'habitudes — sentiment de rareté.
+- ✅ **5 pensées/jour** depuis 2026-05-02 (augmenté de 3 → 5). Mieux aligné avec les 6 catégories d'habitudes.
 - ✅ Fleurs ✿ soutien affichées sur le post-it menu (`#soutien-flowers`) — compteur visible calqué sur `#thought-count` (2026-05-01).
 - ✅ Infos RDV du jour + phase cycle ajoutées sur le post-it agenda (`#agenda-postit-info`, `updAgendaPostit()`) — compensation visuelle des limites IA (2026-05-01).
 
 ### 6c. Propositions
 
 1. ✅ **Compteur visible** soutien sur le post-it menu (fleurs ✿). Pensées toujours affichées via `#thought-count`. (2026-05-01)
-2. **Pensée matinale automatique** offerte au premier ouvrage du jour (consomme 1 sur 3, mais n'est pas "demandée").
+2. **Pensée matinale automatique** offerte au premier ouvrage du jour (consomme 1 sur 5, mais n'est pas "demandée").
 3. **Réduire le coût objet IA à 8 pétales** + introduire une **prime "premier objet de la semaine" gratuit**.
 4. **Variabilité du prompt création d'objet** : injecter un mood-tag (cosy, mystique, fun, naturel) pour éviter la répétition stylistique.
 

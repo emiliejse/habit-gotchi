@@ -275,12 +275,12 @@ async function askClaude() {
     return;
   }
 
-  /* ── Limite 3 pensées par jour ── */
+  /* ── Limite 5 pensées par jour ── */
   if (window.D.lastThoughtDate !== td) {
     window.D.lastThoughtDate = td;
     window.D.thoughtCount    = 0;
   }
-  if (window.D.thoughtCount >= 3) {
+  if (window.D.thoughtCount >= 5) {
     toast("Le Gotchi a besoin de calme… Reviens demain 🌙");
     return;
   }

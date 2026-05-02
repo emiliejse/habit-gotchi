@@ -141,7 +141,7 @@ function updThoughtFlowers() {
   const tc = document.getElementById('thought-count');
   if (!tc) return;
   const used = window.D.thoughtCount || 0;
-  const total = 3;
+  const total = 5; // RÔLE : quota journalier de pensées (modifié 2026-05-02 : 3 → 5)
   tc.innerHTML = Array.from({ length: total }, (_, i) =>
     `<span class="${i < (total - used) ? 'flower-on' : 'flower-off'}">✿</span>`
   ).join('');
@@ -1434,7 +1434,7 @@ function applyCheatCode() {
     'resetpin': () => { D.pin = null; toast('🔓 Code PIN supprimé'); },
     'resetbilan':   () => { D.g.bilanCount = 0; D.g.bilanWeek = ''; toast('📊 Quota bilan → 0/3'); },
     'resetsoutien': () => { D.soutienCount = 0; D.lastSoutienDate = null; toast('💜 Quota soutien → 0/3'); },
-    'resetmsg3':    () => { D.thoughtCount = 0; D.lastThoughtDate = null; toast('💬 Quota pensées → 0/3'); },
+    'resetmsg3':    () => { D.thoughtCount = 0; D.lastThoughtDate = null; toast('💬 Quota pensées → 0/5'); },
     // RÔLE : Vide l'inventaire et remet uniquement les objets de départ (props_base).
     // POURQUOI : Permet de tester l'état "nouveau joueur·se" sans réinitialiser toute la save.
     //            On utilise window.PROPS_BASE (exposé dans app.js au chargement) qui contient

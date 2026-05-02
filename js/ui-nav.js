@@ -352,13 +352,24 @@ function openCanvasFullscreen() {
   document.body.appendChild(overlay);
 
   // RÔLE : Active la classe sur body — masque l'UI et reconfigure #console-top
-  // POURQUOI avant le double RAF : les styles doivent être en place avant la transition
+  // POURQUOI avant le double RAF : les styles CSS doivent être appliqués avant qu'on mesure
   document.body.classList.add('garden-fullscreen');
 
-  // RÔLE : Double RAF — le premier frame active display:flex, le second déclenche
-  //        la transition CSS translateY (sans ça la transition est ignorée car
-  //        l'élément n'était pas encore dans le flux au moment de l'ajout de .open)
-  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('open')));
+  // RÔLE : Double RAF — 1er frame applique les styles CSS, 2e mesure la hauteur réelle
+  //        de #console-top (après reflow) pour positionner .canvas-fs-info juste en dessous.
+  //        Le 3e RAF déclenche la transition de l'overlay (.open).
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      // RÔLE : Mesure la hauteur réelle de #console-top après reflow CSS garden-fullscreen.
+      // POURQUOI getBoundingClientRect().bottom : donne la position absolue du bas du bloc
+      //          dans le viewport — exactement là où les infos jardin doivent commencer.
+      const consoleBottom = document.getElementById('console-top')?.getBoundingClientRect().bottom ?? 0;
+      // RÔLE : Ajoute 12px de marge entre le bas du canvas et les infos jardin
+      infoEl.style.paddingTop = (consoleBottom + 12) + 'px';
+
+      requestAnimationFrame(() => overlay.classList.add('open'));
+    });
+  });
 
   // RÔLE : Tap sur le fond de l'overlay (hors bouton et infos) ferme le plein écran
   overlay.addEventListener('click', (e) => {

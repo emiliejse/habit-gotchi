@@ -1771,15 +1771,21 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     // POURQUOI : En mode compact, le canvas est réduit à ~110px de large — le HUD et les
     //            badges n'ont plus assez de place et visuellement ils ne servent à rien
     //            puisque l'utilisatrice n'est pas sur l'onglet Gotchi.
-    const isCompact = document.getElementById('console-top')?.classList.contains('compact');
-    if (!isCompact) {
+    const isCompact       = document.getElementById('console-top')?.classList.contains('compact');
+    // RÔLE : Masque aussi le HUD en mode jardin plein écran — on veut le canvas nu.
+    // POURQUOI : body.garden-fullscreen est posé par openCanvasFullscreen() dans ui-nav.js.
+    //            On vérifie document.body plutôt que #canvas-fs-overlay pour rester
+    //            synchrone avec la frame p5 courante (l'overlay peut ne pas être encore injecté
+    //            lors du premier draw post-ouverture).
+    const isGardenFullscreen = document.body.classList.contains('garden-fullscreen');
+    if (!isCompact && !isGardenFullscreen) {
       drawHUD(p, g, h);              // 12. Bandeau pétales / actions / météo
       drawBadges(p, g);              // 13. Capsules ⚡/✿ + zone de hit badges
       drawEnvSelector(p, g, n);     // 14. Cercle env actif + cercles flottants
     } else {
-      // Mode compact : désactiver la zone de tap des badges
+      // Mode compact ou jardin plein écran : désactiver la zone de tap des badges
       window._badgeHitZone = null;
-    } // ← fin if (!isCompact)
+    } // ← fin if (!isCompact && !isGardenFullscreen)
 
   }; // ← fin p.draw()
 

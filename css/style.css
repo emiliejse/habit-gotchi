@@ -1857,15 +1857,16 @@ body.garden-fullscreen .tama-screen {
 
 /*
   RÔLE : Bloc d'infos jardin — positionné dans l'overlay, sous le canvas.
-  POURQUOI padding-top calculé : le canvas occupe la place haute via #console-top (z:850),
-  l'overlay ne peut pas "voir" sa hauteur réelle → le padding-top pousse les infos
-  en dessous du canvas de façon approximative. La valeur est réglée pour couvrir
-  la hauteur typique du canvas sur mobile (portrait ~55vw + padding console).
+  POURQUOI pas de padding-top ici : calculé en JS dans openCanvasFullscreen() après
+  mesure de la hauteur réelle de #console-top (getBoundingClientRect).
   POURQUOI Caveat (--font-title) : style pixel-art-ish, chaleureux, cohérent avec le gotchi.
   POURQUOI max 4 lignes via max-height + overflow hidden : contrainte brief.
 */
 .canvas-fs-info {
-  padding-top: calc(var(--sat) + 10px + min(55vw, 420px) + 20px);
+  /* padding-top positionné par JS — voir openCanvasFullscreen() dans ui-nav.js */
+  padding-top: 0;
+  padding-left: 20px;
+  padding-right: 20px;
   color: var(--text);
   font-size: 16px;
   line-height: 1.65;

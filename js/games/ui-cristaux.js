@@ -21,7 +21,10 @@
 // POURQUOI : définies au niveau module (pas dans la fonction) — immuables,
 //            partagées entre _demarrerCristaux et les helpers de boutons.
 
-const _CX_DUREE_MS        = 120_000; // 2 minutes en millisecondes
+// RÔLE : Durée par défaut — utilisée uniquement si _demarrerCristaux() est appelé
+//         sans argument (cas défensif). La durée réelle est passée depuis ui-game.js
+//         via _cx_demarrerAvecDuree() → _demarrerCristaux(container, dureeMs).
+const _CX_DUREE_MS_DEFAUT = 120_000; // 2 minutes (fallback)
 const _CX_TAILLE_VAGUE    = 7;       // cristaux par vague (était 5 — plus dense)
 const _CX_VITESSE_INIT    = 2.2;     // px/frame au départ (était 1.5 — démarre plus vif)
 const _CX_VITESSE_MAX     = 8;       // plafond vitesse (était 6 — vagues tardives plus intenses)
@@ -53,6 +56,13 @@ const _CX_TYPES_BASE = [
 ];
 const _CX_TYPE_DORE = { id: 'dore', couleur: '#f0d060', cssVar: '--cx-dore', label: 'doré' };
 
+// RÔLE : Durée de la session courante — fixée par _demarrerCristaux(container, dureeMs)
+//         avant chaque lancement. Lue par le sketch p5 dans draw() et _cx_terminerPartie().
+// POURQUOI variable module et non paramètre du sketch : p5 mode instance ne permet pas
+//           de passer des arguments directement à la fonction sketch — on passe par
+//           une variable module accessible en closure.
+let _cxDureeSession = _CX_DUREE_MS_DEFAUT;
+
 /* ─── POINT D'ENTRÉE ─────────────────────────────────────────── */
 
 /**
@@ -63,10 +73,14 @@ const _CX_TYPE_DORE = { id: 'dore', couleur: '#f0d060', cssVar: '--cx-dore', lab
  *
  * @param {HTMLElement} container — le div #game-canvas-container dans lequel injecter le canvas
  */
-function _demarrerCristaux(container) {
+/**
+ * @param {HTMLElement} container — div #game-canvas-container dans lequel injecter le canvas
+ * @param {number} [dureeMs]     — durée de la session en ms (défaut : _CX_DUREE_MS_DEFAUT)
+ */
+function _demarrerCristaux(container, dureeMs) {
   // ── Guard "double instance" ──────────────────────────────────────────────
   // RÔLE : Nettoyer toute instance précédente avant d'en créer une nouvelle
-  // POURQUOI : "Rejouer" appelle lancerCristaux() qui rappelle _demarrerCristaux() —
+  // POURQUOI : "Rejouer" appelle _cx_demarrerAvecDuree() qui rappelle _demarrerCristaux() —
   //            sans nettoyage on empilerait des instances p5 et des boutons en doublon.
   //
   // CONFIRMATION NETTOYAGE (sprint 3) :
@@ -81,6 +95,12 @@ function _demarrerCristaux(container) {
   }
   if (container) container.innerHTML = '';
   _cx_nettoyerBoutons();
+
+  // RÔLE : Stocker la durée de session choisie pour que le sketch puisse y accéder
+  // POURQUOI variable module (pas constante) : la durée change à chaque session selon le choix
+  _cxDureeSession = (typeof dureeMs === 'number' && dureeMs > 0)
+    ? dureeMs
+    : _CX_DUREE_MS_DEFAUT;
 
   // RÔLE : Créer l'instance p5 en mode instance et l'attacher au container
   // POURQUOI new p5(sketch, container) : mode instance obligatoire (règle skill)
@@ -229,7 +249,7 @@ function _cx_sketch(p) {
     const tempsEcoule  = maintenant - debutSession;
 
     // ── Fin de session : timer 2 minutes ─────────────
-    if (tempsEcoule >= _CX_DUREE_MS) {
+    if (tempsEcoule >= _cxDureeSession) {
       _cx_terminerPartie();
       return;
     }
@@ -444,7 +464,7 @@ function _cx_sketch(p) {
   /* ── HUD ─────────────────────────────────────────── */
   // RÔLE : Afficher timer, score et numéro de vague dans une barre en haut du canvas
   function _cx_dessinerHUD(tempsEcoule) {
-    const restant  = Math.ceil((_CX_DUREE_MS - tempsEcoule) / 1000);
+    const restant  = Math.ceil((_cxDureeSession - tempsEcoule) / 1000);
     const minutes  = Math.floor(restant / 60);
     const secondes = String(restant % 60).padStart(2, '0');
 
@@ -685,7 +705,13 @@ function _cx_afficherBoutons(scoreFinal) {
   btnRejouer.textContent = 'Rejouer';
   btnRejouer.style.cssText = _cx_styleBouton('#b090d0', '#fff');
   btnRejouer.addEventListener('click', function() {
-    if (typeof lancerCristaux === 'function') lancerCristaux();
+    // RÔLE : Rejouer avec la même durée — pas besoin de repasser par le sélecteur
+    // POURQUOI _cx_demarrerAvecDuree et non lancerCristaux :
+    //   lancerCristaux() affiche le sélecteur de durée. Ici on veut relancer
+    //   directement avec _cxDureeSession (durée de la session qui vient de se terminer).
+    if (typeof window._cx_demarrerAvecDuree === 'function') {
+      window._cx_demarrerAvecDuree(_cxDureeSession / 1000);
+    }
   });
 
   // ── Bouton Retour ─────────────────────────────────

@@ -13,11 +13,12 @@
    ============================================================
 
    CONTENU :
-   §1  ouvrirGameHub()   — ouvre l'overlay et affiche le hub
-   §2  fermerGameHub()   — ferme l'overlay, détruit le jeu actif si besoin
-   §3  renderGameHub()   — met à jour les scores dans les cartes du hub
-   §4  lancerCristaux()  — swap hub → canvas (délègue à ui-cristaux.js au sprint 2)
-   §5  retourGameHub()   — swap canvas → hub, détruit l'instance p5 si présente
+   §1  ouvrirGameHub()        — ouvre l'overlay et affiche le hub
+   §2  fermerGameHub()        — ferme l'overlay, détruit le jeu actif si besoin
+   §3  renderGameHub()        — met à jour les scores dans les cartes du hub
+   §4  lancerCristaux()       — affiche le sélecteur de durée (1/2/3 min)
+   §4b _cx_demarrerAvecDuree()— swap hub → canvas, démarre le jeu avec la durée choisie
+   §5  retourGameHub()        — swap canvas → hub, détruit l'instance p5 si présente
    ============================================================ */
 
 /* ─── §1 : OUVRIR ─────────────────────────────────────────── */
@@ -151,35 +152,111 @@ function _resetGameZone() {
   if (backBtn) backBtn.style.display = 'none';
 }
 
-/* ─── §4 : LANCER CRISTAUX ────────────────────────────────── */
+/* ─── §4 : SÉLECTEUR DE DURÉE ─────────────────────────────── */
 
 /**
- * RÔLE : Swap hub → canvas et démarre le jeu Tri de Cristaux.
- * POURQUOI séparé de renderGameHub : chaque jeu a son propre point d'entrée.
- *   La logique du jeu est entièrement dans js/games/ui-cristaux.js,
- *   qui expose window._demarrerCristaux(container).
+ * RÔLE : Affiche l'écran de sélection de durée avant de lancer le jeu.
+ * POURQUOI étape intermédiaire : l'utilisatrice choisit 1, 2 ou 3 minutes
+ *   selon son envie et le temps disponible. Le hub reste caché, le canvas
+ *   container accueille le sélecteur en HTML pur (pas de p5 à ce stade).
+ *   Appelé par le bouton "Jouer" de la carte Tri de Cristaux dans le hub.
  */
 function lancerCristaux() {
   const hub     = document.getElementById('game-hub');
   const canvas  = document.getElementById('game-canvas-container');
   const backBtn = document.getElementById('game-back-btn');
 
-  if (hub)     hub.style.display     = 'none';
+  if (hub)     hub.style.display = 'none';
+  if (backBtn) backBtn.style.display = '';
+
+  if (!canvas) return;
+
+  // RÔLE : Afficher le container sans le mettre en fullscreen canvas —
+  //        le sélecteur de durée est du HTML centré, pas un canvas p5.
+  //        Le fullscreen sera posé dans _cx_demarrerAvecDuree() quand le sketch démarre.
+  canvas.style.display  = '';
+  canvas.innerHTML      = ''; // POURQUOI : nettoyage défensif
+
+  // RÔLE : Lire la dernière durée choisie pour la pré-sélectionner (UX — mémoire du choix)
+  const dernieresDuree = parseInt(localStorage.getItem('hg_game_crystals_duree') || '120', 10);
+
+  // RÔLE : Les trois options de durée — label affiché + valeur en secondes
+  const options = [
+    { label: '1 min',  secondes: 60  },
+    { label: '2 min',  secondes: 120 },
+    { label: '3 min',  secondes: 180 },
+  ];
+
+  // RÔLE : Injecter l'écran de sélection en HTML dans le container
+  // POURQUOI HTML inline et non element.createElement : plus lisible pour un bloc structuré
+  canvas.innerHTML = `
+    <div id="cx-duree-picker" style="
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      height:100%;min-height:260px;gap:24px;padding:32px 20px;box-sizing:border-box;
+      font-family:var(--font-body);
+    ">
+      <div style="font-family:var(--font-title);font-size:var(--fs-xl);color:var(--text);text-align:center;">
+        💎 Tri de Cristaux
+      </div>
+      <div style="font-size:var(--fs-sm);color:var(--text2);text-align:center;">
+        Choisis la durée de ta session
+      </div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        ${options.map(opt => `
+          <button
+            class="btn ${opt.secondes === dernieresDuree ? 'btn-p' : 'btn-s'} cx-duree-btn"
+            data-secondes="${opt.secondes}"
+            style="min-width:76px;padding:14px 12px;font-size:var(--fs-md);touch-action:manipulation;"
+            aria-label="Jouer ${opt.label}"
+            aria-pressed="${opt.secondes === dernieresDuree}"
+          >${opt.label}</button>
+        `).join('')}
+      </div>
+      <div style="font-size:var(--fs-xs);color:var(--text2);opacity:0.6;text-align:center;max-width:220px;">
+        Le meilleur score est calculé toutes durées confondues
+      </div>
+    </div>`;
+
+  // RÔLE : Brancher les boutons sur _cx_demarrerAvecDuree() avec la durée choisie
+  canvas.querySelectorAll('.cx-duree-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const sec = parseInt(this.dataset.secondes, 10);
+      _cx_demarrerAvecDuree(sec);
+    });
+  });
+}
+
+window.lancerCristaux = lancerCristaux;
+
+/**
+ * RÔLE : Swap hub → canvas plein écran et démarre le jeu avec la durée choisie.
+ * POURQUOI séparé de lancerCristaux : lancerCristaux() gère le sélecteur de durée,
+ *   cette fonction est le vrai point de départ du sketch p5.
+ *   Aussi appelée par le bouton "Rejouer" dans ui-cristaux.js pour relancer
+ *   avec la même durée sans repasser par le sélecteur.
+ *
+ * @param {number} secondes — durée de la session en secondes (60, 120 ou 180)
+ */
+function _cx_demarrerAvecDuree(secondes) {
+  const canvas  = document.getElementById('game-canvas-container');
+  const backBtn = document.getElementById('game-back-btn');
+
+  // RÔLE : Mémoriser la durée choisie pour la pré-sélectionner à la prochaine ouverture
+  localStorage.setItem('hg_game_crystals_duree', String(secondes));
+
+  // RÔLE : Vider le sélecteur de durée et passer le canvas en plein écran
+  // POURQUOI classe posée AVANT new p5() : setup() lit clientWidth/clientHeight —
+  //           si le canvas n'est pas encore en fullscreen, les dimensions sont fausses
   if (canvas) {
-    canvas.style.display = '';
-    // RÔLE : Passer le canvas en plein-écran sous le header
-    // POURQUOI : le canvas p5 mesure clientWidth/clientHeight du container au moment
-    //            de setup() — si on n'ajoute la classe qu'après new p5(), le canvas
-    //            est créé avec la hauteur du flux (petite). On pose la classe AVANT
-    //            d'appeler _demarrerCristaux() pour que les mesures soient correctes.
+    canvas.innerHTML = '';
     canvas.classList.add('game-canvas--fullscreen');
   }
   if (backBtn) backBtn.style.display = '';
 
-  // RÔLE : Déléguer le lancement à ui-cristaux.js qui contient toute la logique du jeu
+  // RÔLE : Déléguer le lancement à ui-cristaux.js avec la durée en ms
   // POURQUOI guard typeof : sécurité défensive si le fichier n'est pas chargé
   if (typeof window._demarrerCristaux === 'function') {
-    window._demarrerCristaux(canvas);
+    window._demarrerCristaux(canvas, secondes * 1000);
     return;
   }
 
@@ -200,7 +277,7 @@ function lancerCristaux() {
   }
 }
 
-window.lancerCristaux = lancerCristaux;
+window._cx_demarrerAvecDuree = _cx_demarrerAvecDuree;
 
 /* ─── §5 : RETOUR HUB ─────────────────────────────────────── */
 

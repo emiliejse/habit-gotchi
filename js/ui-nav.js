@@ -371,14 +371,14 @@ function openCanvasFullscreen() {
   //        Le 3e RAF déclenche la transition de l'overlay (.open).
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      // RÔLE : Mesure la hauteur réelle de #console-top après reflow CSS garden-fullscreen.
-      // POURQUOI getBoundingClientRect().bottom : position absolue du bas du bloc dans le viewport.
-      //          .canvas-fs-info est en position:fixed — son top=consoleBottom+12px
-      //          le place exactement sous le canvas, dans la zone visible de l'overlay.
-      // POURQUOI pas paddingTop : infoEl est en position:fixed, donc dans le viewport,
-      //          pas dans le flux de l'overlay. C'est top qui contrôle sa position verticale.
-      const consoleBottom = document.getElementById('console-top')?.getBoundingClientRect().bottom ?? 0;
-      infoEl.style.top = (consoleBottom + 12) + 'px';
+      // RÔLE : Mesure le bas du canvas (tama-screen) après reflow CSS garden-fullscreen.
+      // POURQUOI .tama-screen et pas #console-top : en mode garden-fullscreen, #console-top
+      //          s'étend sur tout le viewport (bottom:0) donc son .getBoundingClientRect().bottom
+      //          retourne la hauteur totale du viewport (~953px) — bien trop bas.
+      //          .tama-screen est le canvas lui-même — son .bottom donne la vraie limite visuelle.
+      const screen = document.querySelector('.tama-screen');
+      const canvasBottom = screen ? screen.getBoundingClientRect().bottom : 200;
+      infoEl.style.top = (canvasBottom + 12) + 'px';
 
       requestAnimationFrame(() => overlay.classList.add('open'));
     });

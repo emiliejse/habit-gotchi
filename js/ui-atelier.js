@@ -226,8 +226,12 @@ function _atelierPeindreCell(e) {
   // POURQUOI : On ne redessine que le canvas (pas toute l'UI) pour ne pas
   //            scintiller la palette et la galerie à chaque pixel.
   _atelierRenderCanvas();
-  // POURQUOI : save() est volontairement absent ici — il n'est appelé que dans
-  //            fermerAtelier() et _atelierSetActif() pour ne pas spammer localStorage.
+  // RÔLE : Sauvegarde différée après chaque coup de pinceau.
+  // POURQUOI : save() direct serait trop fréquent pendant un tracé (plusieurs appels/seconde).
+  //            saveDebounced() attend ~2s d'inactivité avant d'écrire — bon compromis entre
+  //            sécurité des données et performance. Évite la perte de pixels si l'app est
+  //            quittée sans fermer l'atelier proprement (iOS, mise en veille).
+  saveDebounced();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -460,7 +464,8 @@ window._atelierNouveauTableau = function() {
   }
   const nouveau = _atelierCréerTableau();
   window.D.atelier.tableaux.push(nouveau);
-  // POURQUOI : On ne sauvegarde pas ici — save() sera appelé à la fermeture.
+  save(); // RÔLE : persiste immédiatement la création du tableau
+          // POURQUOI : évite la perte si l'app est quittée sans fermer l'atelier.
   _atelierSelectTableau(nouveau.id);
 };
 
@@ -483,6 +488,9 @@ window.ouvrirAtelier = function() {
     window.D.atelier.tableaux.push(nouveau);
     _atelierEditId = nouveau.id;
     _atelierColor  = nouveau.paletteSnapshot[0] ?? null;
+    save(); // RÔLE : persiste immédiatement le nouveau tableau créé
+            // POURQUOI : si l'app est quittée sans fermer l'atelier proprement
+            //            (iOS, mise en veille), le tableau ne serait pas enregistré.
   } else {
     // Sélectionne le tableau actif s'il existe, sinon le premier
     const cible = tableaux.find(t => t.id === activeId) ?? tableaux[0];

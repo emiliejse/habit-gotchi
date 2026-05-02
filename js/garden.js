@@ -134,95 +134,168 @@ function initGarden() {
   // ── 3. Définition des slots d'éléments ──────────────────────────
   // RÔLE : Détermine combien d'éléments de chaque type peupleront le jardin.
   // POURQUOI : 20 éléments max pour rester léger mobile.
-  //            Répartition : 8 fleurs + 5 herbes + 4 pierres + 3 champignons = 20.
-  //            Les types ont des zones Y différentes pour ne pas se superposer.
+  //            Répartition : 5 fleurs fond + 3 fleurs pp + 3 herbes fond + 2 herbes pp
+  //                        + 4 pierres + 3 champignons = 20.
   //
-  // Convention Y :
-  //   fond         → y entre 122 et 135  (juste derrière le Gotchi, dans la pelouse)
-  //   premier_plan → y entre 158 et 170  (devant le Gotchi, lisière basse du canvas)
+  // Convention Y (base de l'élément — les sprites grandissent vers le HAUT) :
+  //   fond         → y ≈ 118  (lisière sol, base des sprites de fond)
+  //   premier_plan → y ≈ 162  (lisière basse du canvas, base des sprites devant)
   //
-  // POURQUOI ces zones : le Gotchi se dessine vers y=130–155.
-  //   fond = derrière lui (y proche de la lisière sol=120).
-  //   premier_plan = devant lui (y plus bas = plus proche caméra).
+  // POURQUOI une seule valeur Y par slot :
+  //   Tous les éléments d'un même slot partagent la même ligne de sol — c'est
+  //   le principe de la perspective 2D. La hauteur (hauteurPX) pousse vers le
+  //   haut depuis cette base. Un arbuste de 16PX planté à y=118 monte jusqu'à
+  //   y = 118 - 16×5 = 38, juste sous la barre HUD (y=26). ✓
+  //
+  // hauteurPX : hauteur du sprite en unités PX (1 PX = 5px réels).
+  //   Utilisé par la zone d'exclusion pour éviter que les grands éléments
+  //   cachent les petits. Propagé sur chaque élément pour la Phase 3.
+  //   Valeurs de référence :
+  //     herbe      →  3 PX  (15px)    champignon →  5 PX  (25px)
+  //     fleur      →  4 PX  (20px)    fougère*   → 10 PX  (50px)
+  //     pierre     →  2 PX  (10px)    arbuste*   → 16 PX  (80px)
+  //   (* types Phase 3, pas encore de fonction draw — la structure les supporte déjà)
 
   const SLOTS = [
-    // Fleurs — fond (derrière le Gotchi) : 5 fleurs réparties sur la largeur
-    { type: 'fleur',      layer: 'fond',         count: 5,
-      xMin: 10,  xMax: 185, yMin: 122, yMax: 130, maxAge: 7  },
-    // Fleurs — premier plan (devant) : 3 fleurs en lisière basse
+    // Fleurs — fond : 5 fleurs réparties sur la largeur, base au sol
+    { type: 'fleur',      layer: 'fond',          count: 5,
+      xMin: 10, xMax: 185, y: 118, maxAge: 7,   hauteurPX: 4  },
+    // Fleurs — premier plan : 3 fleurs en lisière basse
     { type: 'fleur',      layer: 'premier_plan',  count: 3,
-      xMin: 10,  xMax: 185, yMin: 158, yMax: 165, maxAge: 7  },
-    // Herbes — fond : 3 brins dans la pelouse de fond
-    { type: 'herbe',      layer: 'fond',         count: 3,
-      xMin: 10,  xMax: 185, yMin: 124, yMax: 132, maxAge: 14 },
+      xMin: 10, xMax: 185, y: 162, maxAge: 7,   hauteurPX: 4  },
+    // Herbes — fond : 3 brins discrets dans la pelouse
+    { type: 'herbe',      layer: 'fond',          count: 3,
+      xMin: 10, xMax: 185, y: 118, maxAge: 14,  hauteurPX: 3  },
     // Herbes — premier plan : 2 brins en lisière basse
     { type: 'herbe',      layer: 'premier_plan',  count: 2,
-      xMin: 10,  xMax: 185, yMin: 160, yMax: 168, maxAge: 14 },
-    // Pierres — fond uniquement : 4 pierres dispersées
-    { type: 'pierre',     layer: 'fond',         count: 4,
-      xMin: 10,  xMax: 185, yMin: 125, yMax: 133, maxAge: 999 },
-    // Champignons — fond uniquement : 3 champignons discrets
-    { type: 'champignon', layer: 'fond',         count: 3,
-      xMin: 10,  xMax: 185, yMin: 123, yMax: 131, maxAge: 5  },
+      xMin: 10, xMax: 185, y: 162, maxAge: 14,  hauteurPX: 3  },
+    // Pierres — fond uniquement : 4 pierres dispersées, permanentes
+    { type: 'pierre',     layer: 'fond',          count: 4,
+      xMin: 10, xMax: 185, y: 118, maxAge: 999, hauteurPX: 2  },
+    // Champignons — fond uniquement : 3 champignons éphémères
+    { type: 'champignon', layer: 'fond',          count: 3,
+      xMin: 10, xMax: 185, y: 118, maxAge: 5,   hauteurPX: 5  },
   ];
 
-  // ── 4. Génération de la liste d'éléments ────────────────────────
-  // RÔLE : Parcourt les slots et génère chaque élément avec _gardenRng.
-  // POURQUOI : L'index global (idxTotal) est incrémenté à chaque appel _gardenRng
-  //            pour garantir que chaque tirage utilise un index unique → pas de
-  //            collision entre deux éléments différents du même type.
+  // ── 4. Génération de la liste d'éléments avec zone d'exclusion ──
+  //
+  // RÈGLE ABSOLUE : aucun Math.random() ici — uniquement _gardenRng(seed, idxTotal).
+  // idxTotal est monotone croissant sur TOUS les tirages du jardin, pour garantir
+  // qu'aucun deux tirages n'utilisent le même index → pas de collision de valeurs.
+  //
+  // ZONE D'EXCLUSION :
+  //   Chaque élément placé "protège" une zone proportionnelle à sa hauteur.
+  //   Un nouvel élément ne peut pas être placé dans la zone protégée d'un existant.
+  //   Formule de la zone protégée de l'élément déjà placé (el) :
+  //     xMin protégé = el.x - el.hauteurPX × PX × 1.2
+  //     xMax protégé = el.x + el.hauteurPX × PX × 1.2
+  //     yMin protégé = el.y - el.hauteurPX × PX        (sommet du sprite)
+  //     yMax protégé = el.y + PX                       (légèrement sous la base)
+  //   POURQUOI 1.2 en horizontal : un grand sprite déborde légèrement de son x de base.
+  //   Un petit élément (herbe, 3PX) a une empreinte très étroite → ne bloque presque rien.
+  //   Un grand élément (arbuste, 16PX) protège 80px × 96px → empêche tout chevauchement.
+  //
+  // RETENTATIVES :
+  //   Si une position est dans une zone protégée, on retente jusqu'à MAX_ATTEMPTS fois
+  //   en décalant idxTotal (tirage différent à chaque essai, toujours déterministe).
+  //   Au-delà → skip silencieux (le jardin aura moins de 20 éléments, c'est OK).
+
+  const MAX_ATTEMPTS = 8; // max retentatives avant de skipper un élément
+
+  // RÔLE : Vérifie si (x, y, hauteurPX) empiète sur un élément déjà placé dans `placed`.
+  // POURQUOI fonction inline : utilisée uniquement ici, pas besoin de l'exposer globalement.
+  function _estBloque(x, y, hauteurPX, placed) {
+    for (const el of placed) {
+      const margeH = el.hauteurPX * PX * 1.2; // empreinte horizontale de l'élément existant
+      const xOk = x < el.x - margeH || x > el.x + margeH;
+      if (xOk) continue; // hors empreinte horizontale → pas de conflit possible
+      // Dans l'empreinte horizontale → on vérifie la verticale
+      const yTopEl = el.y - el.hauteurPX * PX; // sommet du sprite existant
+      const yOk    = y > el.y + PX || y < yTopEl - hauteurPX * PX;
+      if (!yOk) return true; // chevauchement confirmé
+    }
+    return false;
+  }
+
   const elements = [];
   let idxTotal = 0; // index global — monotone croissant sur tous les tirages
 
   SLOTS.forEach(slot => {
     for (let i = 0; i < slot.count; i++) {
 
-      // Position X : répartition sur xMin–xMax, arrondie à la grille PX (5px)
-      // POURQUOI Math.floor(…/PX)*PX : aligne sur la grille pixel art, même logique que px()
-      const xRaw  = slot.xMin + _gardenRng(seed, idxTotal++) * (slot.xMax - slot.xMin);
-      const x     = Math.floor(xRaw / PX) * PX;
+      let x, placed = false;
 
-      // Position Y : tirage dans la bande verticale du slot
-      const yRaw  = slot.yMin + _gardenRng(seed, idxTotal++) * (slot.yMax - slot.yMin);
-      const y     = Math.floor(yRaw / PX) * PX;
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        // Position X : tirage dans la plage du slot, aligné sur la grille PX
+        // POURQUOI on retente uniquement sur X : Y est fixe par slot (ligne de sol unique).
+        // Un nouvel index à chaque tentative → valeur différente mais toujours déterministe.
+        const xRaw = slot.xMin + _gardenRng(seed, idxTotal++) * (slot.xMax - slot.xMin);
+        x = Math.floor(xRaw / PX) * PX;
 
-      // Variant : entier 0–3 pour le style de dessin (chaque fonction draw* l'interprète)
+        // RÔLE : Vérifie si cette position X/Y empiète sur un élément déjà placé.
+        if (!_estBloque(x, slot.y, slot.hauteurPX, elements)) {
+          placed = true;
+          break; // position libre trouvée → on sort de la boucle de tentatives
+        }
+        // Position bloquée → on continue avec un nouvel idxTotal (prochain _gardenRng)
+      }
+
+      // RÔLE : Tirage du variant — toujours après les tentatives pour ne pas perturber idxTotal.
       const variant = Math.floor(_gardenRng(seed, idxTotal++) * 4);
 
+      // RÔLE : Si aucune position libre après MAX_ATTEMPTS → skip silencieux.
+      // POURQUOI : Mieux avoir 18 éléments bien placés que 20 avec chevauchements.
+      if (!placed) {
+        console.log(`[Garden] skip ${slot.type} #${i} — aucune position libre après ${MAX_ATTEMPTS} tentatives`);
+        continue;
+      }
+
       elements.push({
-        type:    slot.type,
-        layer:   slot.layer,
+        type:      slot.type,
+        layer:     slot.layer,
         x,
-        y,
+        y:         slot.y,     // base fixe — le sprite grandit vers le haut depuis ce point
         variant,
-        age:     0,      // sera incrémenté par le système de cycles (Phase 3)
-        maxAge:  slot.maxAge,
+        hauteurPX: slot.hauteurPX,
+        age:       0,           // incrémenté par le système de cycles (Phase 3)
+        maxAge:    slot.maxAge,
       });
     }
   });
+
+  // ── 4b. Tri par Y croissant ──────────────────────────────────────
+  // RÔLE : Trie les éléments du plus lointain (y petit = haut de scène) au plus proche
+  //        (y grand = bas de scène). Les fonctions draw* itèrent dans cet ordre →
+  //        les éléments proches sont dessinés EN DERNIER et passent visuellement devant.
+  // POURQUOI indispensable avec des grands éléments : un arbuste planté à y=118 monte
+  //   jusqu'à y=38. Sans tri, une herbe dessinée après pourrait passer devant l'arbuste
+  //   alors qu'elle est censée être "derrière" (même y de base, mais taille différente).
+  elements.sort((a, b) => a.y - b.y);
 
   // ── 5. Persistance dans gardenState ─────────────────────────────
   // RÔLE : Si gardenState est vide, on le remplit avec les éléments générés.
   //        Si gardenState existe déjà, on relit les âges sauvegardés et on les
   //        réapplique à la liste recalculée depuis la seed.
-  // POURQUOI : La seed garantit que x/y/variant sont identiques entre sessions.
+  // POURQUOI : La seed garantit que x/y/variant/hauteurPX sont identiques entre sessions.
   //            Seul l'âge évolue — c'est la seule chose qu'on persiste vraiment.
   if (!window.D.g.gardenState || window.D.g.gardenState.length === 0) {
-    // Premier lancement : gardenState vide → on persiste les éléments fraîchement générés
+    // Premier lancement : gardenState vide → on persiste les éléments générés
     window.D.g.gardenState = elements.map(el => ({
-      age:    el.age,
-      maxAge: el.maxAge,
+      age:       el.age,
+      maxAge:    el.maxAge,
+      hauteurPX: el.hauteurPX, // persisté pour la Phase 3 (cycles de vie par taille)
     }));
     save();
   } else {
-    // Sessions suivantes : réapplique les âges sauvegardés sur la liste recalculée
-    // POURQUOI : On ne persiste que l'âge (index = position dans le tableau).
+    // Sessions suivantes : réapplique les données sauvegardées sur la liste recalculée
+    // POURQUOI : On ne persiste que l'âge et hauteurPX (index = position dans le tableau).
     //            x/y/variant sont toujours recalculés depuis la seed → pas de dérive.
     elements.forEach((el, i) => {
       const saved = window.D.g.gardenState[i];
       if (saved) {
-        el.age    = saved.age    ?? 0;
-        el.maxAge = saved.maxAge ?? el.maxAge;
+        el.age       = saved.age       ?? 0;
+        el.maxAge    = saved.maxAge    ?? el.maxAge;
+        el.hauteurPX = saved.hauteurPX ?? el.hauteurPX;
       }
     });
   }

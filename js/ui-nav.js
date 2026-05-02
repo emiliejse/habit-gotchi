@@ -434,7 +434,13 @@ function openCanvasFullscreen() {
 
   // RÔLE : Retire compact si présent — en plein écran jardin le tama doit être pleine taille.
   // POURQUOI : compact réduit .tama-shell à ~110px — incompatible avec le mode plein écran.
-  if (consoleEl) consoleEl.classList.remove('compact');
+  // POURQUOI void offsetHeight : force un reflow synchrone immédiatement après le retrait de compact,
+  //   avant toute injection dans le DOM. Sans ça, le layout se calcule encore avec margin-top:-48px
+  //   et le canvas s'affiche depuis le coin supérieur gauche.
+  if (consoleEl) {
+    consoleEl.classList.remove('compact');
+    void consoleEl.offsetHeight; // force reflow
+  }
 
   // RÔLE : Force l'env jardin — le sticker 🌱 amène toujours au jardin, peu importe l'env actif.
   // POURQUOI on mute D.g.activeEnv avant _buildGardenInfo() : cette fonction lit activeEnv

@@ -586,47 +586,51 @@ Ton bilan de la semaine apparaîtra ici...
       <span style="font-family:var(--font-title);font-size:22px;font-weight:700">💜 Besoin de soutien</span>
       <span id="soutien-flowers" class="thought-flowers"></span>
     </button>
-    <!-- RÔLE : Post-it d'accès rapide à l'Atelier pixel art -->
-    <!-- POURQUOI : Même pattern que les deux post-its existants — stopPropagation évite
-                   de fermer involontairement le menu-overlay en cliquant sur le bouton -->
-    <button class="menu-postit menu-postit--mint"
-      onclick="event.stopPropagation();toggleMenu();ouvrirAtelier()"
-      style="display:flex;flex-direction:column;align-items:center;gap:4px">
-      <span style="font-family:var(--font-title);font-size:22px;font-weight:700">🎨 Atelier</span>
-    </button>
   </div>
 </div>
 </div> <!-- ferme #menu-overlay -->
 
-<!-- Overlay Atelier — éditeur pixel art pour peindre le tableau de la chambre -->
+<!-- Overlay Atelier — éditeur pixel art plein écran pour peindre le tableau de la chambre -->
 <!-- SYSTÈME : S5 (UI & Design) -->
-<!-- POURQUOI .app-overlay : position:fixed;inset:0;pointer-events:auto (même pattern que tablet-overlay) -->
+<!-- POURQUOI .app-overlay : position:fixed;inset:0;pointer-events:auto -->
+<!-- POURQUOI fond blanc + flex column : le canvas doit couvrir le maximum de la surface disponible,
+     la palette et la galerie sont compressées en bas — pattern analogue à une app de dessin mobile -->
 <!-- z-index : 500 — entre tablet-overlay:400 et etats-overlay:1000 -->
-<div class="app-overlay" id="atelier-overlay" style="display:none;z-index:500;overflow-y:auto;align-items:flex-start;justify-content:center">
-  <!-- onclick="event.stopPropagation()" : les clics dans le panel ne remontent pas à l'overlay -->
-  <!-- POURQUOI : Pas de fermeture au clic sur le fond (l'utilisatrice peut cliquer à côté du canvas sans perdre son travail) -->
-  <div id="atelier-panel" onclick="event.stopPropagation()"
-    style="background:var(--card);border-radius:16px;margin:16px auto;max-width:360px;padding:16px;position:relative;width:calc(100% - 32px)">
+<div class="app-overlay" id="atelier-overlay"
+  style="display:none;z-index:500;background:#fff;flex-direction:column;overflow:hidden">
 
-    <!-- Bouton fermer -->
-    <button onclick="fermerAtelier()" aria-label="Fermer l'atelier"
-      style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text)">✕</button>
+  <!-- ── En-tête : pattern identique à la Boutique (h2 gauche + .modal-close droite) ── -->
+  <div style="display:flex;align-items:center;justify-content:space-between;
+              padding:12px 16px 8px;flex-shrink:0;border-bottom:1px solid var(--border)">
+    <h2 style="margin:0;font-family:var(--font-title);color:var(--text)">🎨 Atelier</h2>
+    <!-- RÔLE : bouton ✕ standardisé, même style que .modal-close de la boutique -->
+    <button class="modal-close" onclick="fermerAtelier()" aria-label="Fermer l'atelier">✕</button>
+  </div>
 
-    <h2 style="margin:0 0 12px;font-family:var(--font-title)">🎨 Atelier</h2>
+  <!-- ── Zone canvas : prend tout l'espace disponible entre header et footer ── -->
+  <!-- POURQUOI flex:1 + overflow:hidden : le canvas s'étend jusqu'aux bords de la zone,
+       sans créer de scroll. ui-atelier.js calcule la taille réelle via _atelierFitCanvas(). -->
+  <div id="atelier-canvas-zone"
+    style="flex:1;display:flex;align-items:center;justify-content:center;
+           overflow:hidden;background:#fff;min-height:0">
+    <!-- touch-action:none : pointer events JS prennent le contrôle total -->
+    <!-- image-rendering:pixelated : bords nets, pas d'antialiasing -->
+    <canvas id="atelier-canvas"
+      style="image-rendering:pixelated;touch-action:none;display:block"></canvas>
+  </div>
 
-    <!-- Canvas pixel art — dimensionné par ui-atelier.js (256×192px) -->
-    <!-- image-rendering:pixelated : conserve les bords nets sans antialiasing -->
-    <!-- touch-action:none : confie la gestion du touch aux pointer events JS -->
-    <div style="display:flex;justify-content:center;margin-bottom:12px">
-      <canvas id="atelier-canvas"
-        style="border:2px solid var(--border);border-radius:4px;image-rendering:pixelated;touch-action:none"></canvas>
-    </div>
+  <!-- ── Footer : palette + galerie + bouton activer, compressés en bas ── -->
+  <!-- POURQUOI flex-shrink:0 : cette zone ne se réduit pas, c'est le canvas qui cède -->
+  <div id="atelier-footer"
+    style="flex-shrink:0;padding:10px 16px 12px;border-top:1px solid var(--border);
+           background:#fff;display:flex;flex-direction:column;gap:8px">
 
     <!-- Palette de couleurs + gomme — rendue par ui-atelier.js -->
-    <div id="atelier-palette" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:12px"></div>
+    <div id="atelier-palette"
+      style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center"></div>
 
     <!-- Galerie des tableaux sauvegardés — rendue par ui-atelier.js -->
-    <div id="atelier-galerie" style="margin-bottom:12px"></div>
+    <div id="atelier-galerie"></div>
 
     <!-- Bouton "Afficher dans la chambre" — met à jour D.atelier.activeId -->
     <button id="btn-atelier-activer" onclick="_atelierSetActif()"

@@ -100,33 +100,58 @@ function _atelierSelectTableau(id) {
    §4  LOGIQUE CANVAS
    ============================================================ */
 
+// RÔLE : Taille de cellule courante en pixels CSS, calculée dynamiquement par _atelierFitCanvas().
+// POURQUOI : Le canvas occupe toute la zone disponible — la taille de cellule varie selon l'écran.
+//            On stocke la valeur ici pour la partager entre _atelierRenderCanvas() et _atelierCellFromEvent().
+let _atelierCellPx = ATELIER_CELL; // valeur par défaut (16px), écrasée à l'ouverture
+
 // ─────────────────────────────────────────────────────────────
-// RÔLE : Retourne le canvas et son contexte 2D — crée une erreur lisible si absent.
-// POURQUOI : Évite un crash silencieux si l'overlay n'est pas dans le DOM.
+// RÔLE : Calcule la taille de cellule optimale pour que le canvas remplisse
+//        au maximum la zone #atelier-canvas-zone sans déborder.
+// POURQUOI : L'overlay est plein écran — on veut que la toile soit aussi grande que possible.
+//            On prend le minimum entre (largeur zone / COLS) et (hauteur zone / ROWS),
+//            puis on arrondit à l'entier inférieur pour conserver des cellules entières
+//            (évite les artefacts de sous-pixel sur le rendu pixelated).
 // ─────────────────────────────────────────────────────────────
-function _atelierGetCtx() {
-  const canvas = document.getElementById('atelier-canvas');
-  if (!canvas) return null;
-  return canvas.getContext('2d');
+function _atelierFitCanvas() {
+  const zone = document.getElementById('atelier-canvas-zone');
+  if (!zone) { _atelierCellPx = ATELIER_CELL; return; }
+
+  const zoneW = zone.clientWidth;
+  const zoneH = zone.clientHeight;
+
+  // POURQUOI : On soustrait 4px de marge de sécurité pour éviter tout débordement
+  //            dû aux marges de centrage flex ou à un arrondi navigateur.
+  const cellParLargeur = Math.floor((zoneW - 4) / ATELIER_COLS);
+  const cellParHauteur  = Math.floor((zoneH - 4) / ATELIER_ROWS);
+
+  // Le facteur limitant est la dimension la plus contrainte
+  _atelierCellPx = Math.max(4, Math.min(cellParLargeur, cellParHauteur));
 }
 
 // ─────────────────────────────────────────────────────────────
 // RÔLE : Redessine entièrement le canvas à partir des données du tableau courant.
 // POURQUOI : Appelé après chaque coup de pinceau et à l'ouverture de l'atelier.
+//            Utilise _atelierCellPx (calculé par _atelierFitCanvas) pour la taille des cellules.
 // ─────────────────────────────────────────────────────────────
 function _atelierRenderCanvas() {
   const canvas = document.getElementById('atelier-canvas');
   if (!canvas) return;
 
-  // Dimensionner le canvas (en pixels physiques = pixels CSS ici, devicePixelRatio ignoré intentionnellement)
-  canvas.width  = ATELIER_COLS * ATELIER_CELL; // 256px
-  canvas.height = ATELIER_ROWS * ATELIER_CELL; // 192px
+  const cell = _atelierCellPx;
+
+  // Dimensionner le canvas en pixels CSS (1:1 avec les pixels écran — devicePixelRatio ignoré
+  // intentionnellement pour conserver le rendu pixelisé natif sans upscaling)
+  canvas.width  = ATELIER_COLS * cell;
+  canvas.height = ATELIER_ROWS * cell;
+  // Appliquer la même taille en CSS pour éviter que le navigateur ne re-stretche le canvas
+  canvas.style.width  = (ATELIER_COLS * cell) + 'px';
+  canvas.style.height = (ATELIER_ROWS * cell) + 'px';
 
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // ── Fond blanc ──
-  // POURQUOI : Donne un fond neutre avant de dessiner la grille et les pixels colorés.
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -137,42 +162,40 @@ function _atelierRenderCanvas() {
       for (let col = 0; col < ATELIER_COLS; col++) {
         const couleur = tb.pixels[row][col];
         if (couleur) {
-          // POURQUOI : On dessine d'abord les couleurs, PUIS la grille par-dessus,
-          //            pour que les lignes de grille restent toujours visibles.
+          // POURQUOI : Couleurs d'abord, grille par-dessus → les lignes restent toujours visibles
           ctx.fillStyle = couleur;
-          ctx.fillRect(col * ATELIER_CELL, row * ATELIER_CELL, ATELIER_CELL, ATELIER_CELL);
+          ctx.fillRect(col * cell, row * cell, cell, cell);
         }
       }
     }
   }
 
   // ── Grille ──
-  // POURQUOI : La grille aide l'utilisatrice à viser les cellules précisément.
   ctx.strokeStyle = '#cccccc';
   ctx.lineWidth   = 0.5;
   for (let col = 0; col <= ATELIER_COLS; col++) {
     ctx.beginPath();
-    ctx.moveTo(col * ATELIER_CELL, 0);
-    ctx.lineTo(col * ATELIER_CELL, canvas.height);
+    ctx.moveTo(col * cell, 0);
+    ctx.lineTo(col * cell, canvas.height);
     ctx.stroke();
   }
   for (let row = 0; row <= ATELIER_ROWS; row++) {
     ctx.beginPath();
-    ctx.moveTo(0, row * ATELIER_CELL);
-    ctx.lineTo(canvas.width, row * ATELIER_CELL);
+    ctx.moveTo(0, row * cell);
+    ctx.lineTo(canvas.width, row * cell);
     ctx.stroke();
   }
 }
 
 // ─────────────────────────────────────────────────────────────
 // RÔLE : Calcule la cellule (col, row) touchée à partir d'un événement pointer.
-// POURQUOI : `offsetX/offsetY` est relatif au canvas — on divise par ATELIER_CELL
-//            et on clamp pour éviter de sortir de la grille en cas de dépassement.
+// POURQUOI : On divise par _atelierCellPx (taille réelle) et on clamp pour ne pas
+//            sortir de la grille en cas de dépassement en bord de canvas.
 // ─────────────────────────────────────────────────────────────
 function _atelierCellFromEvent(e) {
   const canvas = document.getElementById('atelier-canvas');
-  // POURQUOI : Sur mobile, offsetX/offsetY n'est pas toujours fiable après un pointer
-  //            capture — on recalcule depuis getBoundingClientRect si nécessaire.
+  // POURQUOI : Sur mobile, offsetX/offsetY n'est pas toujours fiable après pointer capture
+  //            — on recalcule depuis getBoundingClientRect si nécessaire.
   let x = e.offsetX;
   let y = e.offsetY;
   if (x === undefined || isNaN(x)) {
@@ -180,8 +203,9 @@ function _atelierCellFromEvent(e) {
     x = e.clientX - rect.left;
     y = e.clientY - rect.top;
   }
-  const col = Math.max(0, Math.min(ATELIER_COLS - 1, Math.floor(x / ATELIER_CELL)));
-  const row = Math.max(0, Math.min(ATELIER_ROWS - 1, Math.floor(y / ATELIER_CELL)));
+  const cell = _atelierCellPx;
+  const col = Math.max(0, Math.min(ATELIER_COLS - 1, Math.floor(x / cell)));
+  const row = Math.max(0, Math.min(ATELIER_ROWS - 1, Math.floor(y / cell)));
   return { col, row };
 }
 
@@ -472,10 +496,13 @@ window.fermerAtelier = function() {
 // POURQUOI : Appelé à l'ouverture et après chaque changement de tableau actif.
 // ─────────────────────────────────────────────────────────────
 window.renderAtelier = function() {
+  // POURQUOI : _atelierFitCanvas() DOIT être appelé avant _atelierRenderCanvas()
+  //            pour que _atelierCellPx soit à jour avec la taille réelle de la zone.
+  //            Si l'overlay vient d'être rendu visible (display:flex), le layout
+  //            est déjà calculé par le navigateur à ce stade — clientWidth/Height sont fiables.
+  _atelierFitCanvas();
   _atelierRenderCanvas();
   // POURQUOI : _atelierBindCanvas() est idempotent grâce au flag data-atelier-bound.
-  //            On l'appelle ici pour s'assurer que les listeners sont attachés même
-  //            si le canvas a été recréé par une modification du DOM.
   _atelierBindCanvas();
   _atelierRenderPalette();
   _atelierRenderGalerie();

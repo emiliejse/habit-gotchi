@@ -428,22 +428,28 @@ function _buildGardenInfo() {
     <div class="garden-label-meta">#${seedNum}${born ? ` &mdash; né le ${escape(born)}` : ''}</div>
   </div>
 
-  <div class="garden-label-divider"></div>
+  <!-- RÔLE : Zone scrollable — Composition + Aujourd'hui défilent ensemble -->
+  <!-- POURQUOI wrapper séparé : le nom (haut) et la vitalité/phrase (bas) restent ancrés -->
+  <div class="garden-label-scroll">
 
-  <div class="garden-label-section">
-    <div class="garden-label-section-title">Composition</div>
-    ${total > 0
-      ? compLines + `<div class="garden-label-row garden-label-row--total"><span class="gli">∑</span><span>${total} élément${total > 1 ? 's' : ''}${ageMoyenTxt ? ` &mdash; ${ageMoyenTxt}` : ''}</span></div>`
-      : `<div class="garden-label-row"><span class="gli">·</span><span>Jardin vide &mdash; les premières plantes germent demain</span></div>`
-    }
-  </div>
+    <div class="garden-label-divider"></div>
 
-  <div class="garden-label-divider"></div>
+    <div class="garden-label-section">
+      <div class="garden-label-section-title">Composition</div>
+      ${total > 0
+        ? compLines + `<div class="garden-label-row garden-label-row--total"><span class="gli">∑</span><span>${total} élément${total > 1 ? 's' : ''}${ageMoyenTxt ? ` &mdash; ${ageMoyenTxt}` : ''}</span></div>`
+        : `<div class="garden-label-row"><span class="gli">·</span><span>Jardin vide &mdash; les premières plantes germent demain</span></div>`
+      }
+    </div>
 
-  <div class="garden-label-section">
-    <div class="garden-label-section-title">Aujourd'hui</div>
-    <div class="garden-label-row"><span class="gli">✿</span><span>${habsTxt}</span></div>
-    <div class="garden-label-row"><span class="gli">☁️</span><span>${meteoTxt}</span></div>
+    <div class="garden-label-divider"></div>
+
+    <div class="garden-label-section">
+      <div class="garden-label-section-title">Aujourd'hui</div>
+      <div class="garden-label-row"><span class="gli">✿</span><span>${habsTxt}</span></div>
+      <div class="garden-label-row"><span class="gli">☁️</span><span>${meteoTxt}</span></div>
+    </div>
+
   </div>
 
   <div class="garden-label-divider"></div>

@@ -1,15 +1,16 @@
 # AUDIT_DESIGN.md — HabitGotchi v4.5
 
-Audit design / CSS / HTML / assets — mise à jour **2026-05-02** (modif. Atelier Partie 2).
+Audit design / CSS / HTML / assets — mise à jour **2026-05-02** (modif. Atelier Partie 2 + retouche plein écran).
 
-> **Feature Atelier — Partie 2 : design UI 2026-05-02**
-> - **Post-it `.menu-postit--mint`** : fond `#b8ecd8` (vert menthe), texte `#1a5038`, rotation `-0.5deg`. Pattern identique à --rose (rotation -1deg) et --lilac (rotation +0.8deg). Troisième post-it dans `.menu-postits`, sous "Besoin de soutien".
-> - **Overlay `#atelier-overlay`** : z-index:500 (entre tablet-overlay:400 et etats-overlay:1000). `.app-overlay` + `overflow-y:auto` pour scroll interne si le panel dépasse la hauteur écran. Panel max-width:360px centré, `border-radius:16px`, padding:16px. Bouton ✕ positionné `absolute top:12px right:12px`.
-> - **Canvas `#atelier-canvas`** : 256×192px (rendu par JS), `image-rendering:pixelated` (bords nets), `touch-action:none` (pointer events gérés en JS). Bordure `var(--border)`.
-> - **Palette** `#atelier-palette` : boutons ronds 32×32px, gap:6px, flex-wrap. Ring visuel sur couleur active (`outline:3px solid var(--text);outline-offset:2px`). Gomme : fond `var(--bg)`, emoji 🧹.
-> - **Galerie** `#atelier-galerie` : vignettes 48×36px canvas off-screen, `image-rendering:pixelated`. Badge ★ absolu top:-6px right:-4px sur l'activeId. Bouton "+ Nouveau" 48×36px, `border:2px dashed var(--border)`.
-> - **Bouton `#btn-atelier-activer`** : classe `btn btn-p`, pleine largeur. Texte et opacité mis à jour selon si le tableau est déjà actif (opacity:0.6) ou non (opacity:1).
-> - **Sticker 🎨 dans `.menu-stickers`** : `menu-sticker--disabled` retiré, `onclick="event.stopPropagation(); toggleMenu(); ouvrirAtelier()"` ajouté. Le sticker et le post-it --mint sont maintenant deux points d'entrée vers le même écran Atelier.
+> **Feature Atelier — Partie 2 retouche UI plein écran 2026-05-02**
+> - **Post-it `--mint` supprimé** : l'Atelier s'ouvre uniquement via le sticker 🎨 (`.menu-stickers`). La classe `.menu-postit--mint` a aussi été retirée de `style.css`.
+> - **Overlay `#atelier-overlay` refondé** : fond blanc `#fff` plein écran, `flex-direction:column`. Structure en 3 zones : (1) header `flex-shrink:0` avec `border-bottom`, (2) zone canvas `flex:1;min-height:0` qui absorbe tout l'espace disponible, (3) footer `flex-shrink:0` avec `border-top` (palette + galerie + bouton). Z-index:500 conservé.
+> - **En-tête pattern boutique** : `display:flex;justify-content:space-between` — `h2` à gauche + bouton `.modal-close` à droite qui appelle `fermerAtelier()`. Identique au header Boutique dans `ui-shop.js`.
+> - **Canvas adaptatif** : `_atelierFitCanvas()` calcule `_atelierCellPx = min(floor(zoneW/16), floor(zoneH/12))` à l'ouverture. Le canvas n'a plus de taille fixe CSS — `canvas.style.width/height` sont posés par JS après chaque recalcul. `image-rendering:pixelated` + `touch-action:none` conservés.
+> - **Palette** `#atelier-palette` : inchangée (boutons 32×32, gap:6px, gomme 🧹, ring visuel).
+> - **Galerie** `#atelier-galerie` : inchangée (vignettes 48×36, badge ★, bouton + Nouveau).
+> - **Bouton `#btn-atelier-activer`** : inchangé (btn btn-p, pleine largeur, opacité selon état actif).
+> - **Sticker 🎨** : seul point d'entrée vers l'Atelier — `menu-sticker--disabled` retiré, `onclick` branché sur `ouvrirAtelier()`.
 
 Audit design / CSS / HTML / assets — mise à jour **2026-05-01** (modif. joues 2026-05-01).
 Périmètre : `css/style.css`, `index.html`, `js/ui-*.js` (HTML & styles inline).

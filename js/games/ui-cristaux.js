@@ -25,18 +25,18 @@
 //         sans argument (cas défensif). La durée réelle est passée depuis ui-game.js
 //         via _cx_demarrerAvecDuree() → _demarrerCristaux(container, dureeMs).
 const _CX_DUREE_MS_DEFAUT = 120_000; // 2 minutes (fallback)
-const _CX_TAILLE_VAGUE    = 7;       // cristaux par vague (était 5 — plus dense)
-const _CX_VITESSE_INIT    = 2.2;     // px/frame au départ (était 1.5 — démarre plus vif)
-const _CX_VITESSE_MAX     = 8;       // plafond vitesse (était 6 — vagues tardives plus intenses)
-const _CX_FACTEUR_VIT     = 1.15;    // multiplicateur de vitesse par vague (inchangé)
-const _CX_SPAWN_INIT_MS   = 1400;    // intervalle spawn vague 1 (était 2000ms — plus rapide dès le départ)
-const _CX_SPAWN_MIN_MS    = 600;     // plancher intervalle spawn (était 800ms — vagues finales très denses)
-const _CX_FACTEUR_SPAWN   = 0.88;    // réduction de l'intervalle par vague (était 0.90 — accélération plus marquée)
-const _CX_HAUTEUR_ZONES   = 60;      // px — hauteur des zones de tri en bas du canvas
+const _CX_TAILLE_VAGUE    = 9;       // cristaux par vague (était 7)
+const _CX_VITESSE_INIT    = 2.2;     // px/frame au départ
+const _CX_VITESSE_MAX     = 8;       // plafond vitesse
+const _CX_FACTEUR_VIT     = 1.15;    // multiplicateur de vitesse par vague
+const _CX_SPAWN_INIT_MS   = 1400;    // intervalle spawn vague 1 (ms)
+const _CX_SPAWN_MIN_MS    = 600;     // plancher intervalle spawn (ms)
+const _CX_FACTEUR_SPAWN   = 0.88;    // réduction de l'intervalle par vague
+const _CX_HAUTEUR_ZONES   = 70;      // px — hauteur des zones de tri (était 60 — plus visibles)
 const _CX_HITBOX          = 40;      // px — rayon de la hitbox tactile (Manhattan)
-const _CX_FLASH_ZONE      = 8;       // frames du flash de validation d'une zone
-const _CX_FLASH_PERDU     = 2;       // frames du flash blanc d'un cristal perdu
-const _CX_PAUSE_VAGUE_MS  = 1500;    // pause entre deux vagues (ms)
+const _CX_FLASH_ZONE      = 18;      // frames du flash de validation (était 8 — bien plus visible)
+const _CX_FLASH_PERDU     = 22;      // frames du flash rouge cristal perdu (était 2 — imperceptible)
+const _CX_PAUSE_VAGUE_MS  = 700;     // pause entre deux vagues (était 1500ms — beaucoup plus court)
 const _CX_SCALE_ACTIF     = 1.15;    // agrandissement du cristal glissé (feedback tactile)
 
 // ── Types de cristaux ────────────────────────────────────────
@@ -322,37 +322,49 @@ function _cx_sketch(p) {
     const zy    = CH - _CX_HAUTEUR_ZONES;
 
     _CX_TYPES_BASE.forEach((type, i) => {
-      const zx    = i * zoneW;
-      const flash = flashesZone[type.id] > 0;
+      const zx      = i * zoneW;
+      const flash   = flashesZone[type.id] > 0;
+      // RÔLE : ratio 0→1 pendant la durée du flash — pour animer l'intensité
+      const flashRatio = flash ? flashesZone[type.id] / _CX_FLASH_ZONE : 0;
 
-      // RÔLE : Remplissage de la zone — très léger (≈15%) ou vif lors du flash (≈70%)
+      // ── Fond de zone ─────────────────────────────────
+      // RÔLE : Au repos = 80/255 (≈30%, bien lisible). En flash = 220/255 (≈86%, très vif).
+      // POURQUOI : l'ancien 38/255 était trop discret — les zones devaient être immédiatement
+      //            identifiables même sans flash.
       const col = p.color(type.couleur);
-      col.setAlpha(flash ? 180 : 38);
+      col.setAlpha(flash ? p.lerp(160, 220, flashRatio) : 80);
       p.fill(col);
       p.noStroke();
       p.rect(zx, zy, zoneW, _CX_HAUTEUR_ZONES);
 
-      // RÔLE : Bordure supérieure pointillée (p5 n'a pas de strokeDash — on simule)
+      // ── Bordure supérieure de la zone ────────────────
+      // RÔLE : Trait plein épais au repos, encore plus épais en flash
       p.stroke(type.couleur);
-      p.strokeWeight(2);
-      const dash = 6, gap = 4;
-      for (let dx = zx; dx < zx + zoneW; dx += dash + gap) {
-        p.line(dx, zy, Math.min(dx + dash, zx + zoneW), zy);
-      }
-      // RÔLE : Séparateurs verticaux pointillés entre les zones (sauf bord gauche)
-      if (i > 0) {
-        for (let dy = zy; dy < CH; dy += dash + gap) {
-          p.line(zx, dy, zx, Math.min(dy + dash, CH));
-        }
-      }
+      p.strokeWeight(flash ? 4 : 2);
+      p.line(zx, zy, zx + zoneW, zy);
+
+      // RÔLE : Séparateurs verticaux entre les zones (sauf bord gauche)
+      p.strokeWeight(1);
+      if (i > 0) p.line(zx, zy, zx, CH);
       p.noStroke();
+
+      // ── Halo de flash (anneau lumineux sur toute la zone) ─
+      // RÔLE : Quand un cristal est bien rangé, la zone s'illumine d'un halo blanc
+      // POURQUOI : rend le feedback de validation immédiat et satisfaisant
+      if (flash) {
+        const halo = p.color(255, 255, 255);
+        halo.setAlpha(flashRatio * 60); // halo blanc léger qui s'estompe
+        p.fill(halo);
+        p.rect(zx, zy, zoneW, _CX_HAUTEUR_ZONES);
+      }
 
       // RÔLE : Décrémenter le flash de cette zone d'une frame
       if (flash) flashesZone[type.id]--;
 
-      // RÔLE : Étiquette de couleur centrée dans la zone
-      p.fill(type.couleur);
-      p.textSize(10);
+      // ── Étiquette de couleur ──────────────────────────
+      // RÔLE : Nom de la couleur centré dans la zone — plus grand et en gras lors du flash
+      p.fill(flash ? '#fff' : type.couleur);
+      p.textSize(flash ? 14 : 11); // POURQUOI : plus lisible au repos (était 10) et mise en valeur au flash
       p.textAlign(p.CENTER, p.CENTER);
       p.text(type.label, zx + zoneW / 2, zy + _CX_HAUTEUR_ZONES / 2);
     });
@@ -384,12 +396,20 @@ function _cx_sketch(p) {
 
     cristaux.forEach((c, idx) => {
 
-      // ── Cristal perdu — flash blanc puis suppression ──
-      // POURQUOI : 2 frames de flash blanc pour signaler la perte sans pénaliser
+      // ── Cristal perdu — animation rouge + chute rapide puis suppression ──
       if (c.perdu) {
         if (c.flashBlanc > 0) {
-          p.fill(255, 255, 255, 200);
-          _cx_losange(c.x, c.y, c.taille * 1.1);
+          // RÔLE : ratio d'avancement de l'animation (1.0 au début → 0.0 à la fin)
+          const t = c.flashBlanc / _CX_FLASH_PERDU;
+
+          // RÔLE : Le cristal continue de tomber rapidement pendant l'animation
+          // POURQUOI : renforce le sentiment de "raté" — le cristal s'échappe vers le bas
+          c.y += 4;
+
+          // RÔLE : Flash rouge vif qui s'estompe — bien plus lisible que le blanc
+          // POURQUOI rouge : couleur universelle d'erreur, contraste fort sur tous les fonds
+          p.fill(255, 60, 60, p.lerp(0, 220, t));
+          _cx_losange(c.x, c.y, c.taille * p.lerp(0.8, 1.3, t)); // léger agrandissement au début
           c.flashBlanc--;
         } else {
           aSupprimer.push(idx);
@@ -533,7 +553,11 @@ function _cx_sketch(p) {
   // RÔLE : Sélectionner le cristal le plus proche du toucher (hitbox Manhattan ~40px)
   // POURQUOI : un seul cristal actif à la fois — priorité au plus proche du doigt
   p.touchStarted = function() {
-    if (partieTerminee) return false;
+    // POURQUOI return true et non false : quand la partie est terminée, les boutons
+    // "Rejouer" et "Retour" sont des éléments DOM par-dessus le canvas. Retourner false
+    // appellerait preventDefault() et bloquerait leurs événements click. On rend la main
+    // au DOM pour que les boutons soient cliquables.
+    if (partieTerminee) return true;
     const tx = p.mouseX; // POURQUOI : p5 mappe le premier touch sur mouseX/mouseY
     const ty = p.mouseY;
 
@@ -562,7 +586,8 @@ function _cx_sketch(p) {
   /* ── touchMoved ──────────────────────────────────── */
   // RÔLE : Faire suivre le cristal actif au doigt
   p.touchMoved = function() {
-    if (partieTerminee || !cristalActif) return false;
+    // POURQUOI return true : même raison que touchStarted — ne pas bloquer le DOM en fin de partie.
+    if (partieTerminee || !cristalActif) return true;
     cristalActif.x = p.mouseX + touchOffsetX;
     cristalActif.y = p.mouseY + touchOffsetY;
     return false; // POURQUOI : empêche le scroll
@@ -571,7 +596,8 @@ function _cx_sketch(p) {
   /* ── touchEnded ──────────────────────────────────── */
   // RÔLE : Relâchement — vérifier la zone, ranger ou relâcher le cristal
   p.touchEnded = function() {
-    if (partieTerminee || !cristalActif) return false;
+    // POURQUOI return true : même raison que touchStarted — ne pas bloquer le DOM en fin de partie.
+    if (partieTerminee || !cristalActif) return true;
 
     const c  = cristalActif;
     c.actif  = false;

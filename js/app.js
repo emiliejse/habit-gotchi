@@ -58,7 +58,7 @@ let _poopIntervalId   = null;
 let _bubbleIntervalId = null; // RÔLE : Rotation automatique des bulles passives (updBubbleNow toutes les 45s)
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v5.07'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v5.08'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -295,7 +295,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 14; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 15; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)

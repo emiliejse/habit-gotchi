@@ -1812,19 +1812,35 @@ body.garden-fullscreen .hdr-garden {
   /* RÔLE : aria-hidden retiré en JS à l'ouverture — ici on le force visible */
 }
 
-/* RÔLE : Titre "Mon jardin" — style cohérent avec .hdr h1 */
+/* RÔLE : Titre "Mon jardin" — Caveat noir comme tous les titres de panneaux de l'app */
+/* POURQUOI noir (--text) : les titres de modales/panneaux (agenda, boutique…) utilisent
+   --text, pas --lilac. Le lilac est réservé aux accents et au titre principal Habit-Gotchi. */
 .hdr-garden-title {
   font-family: var(--font-title);
   font-size: 20px;
   font-weight: 700;
-  color: var(--lilac);
+  color: var(--text);
   letter-spacing: 0.5px;
 }
 
-/* RÔLE : Bouton ✕ — même style que .menu-btn du .hdr standard */
+/* RÔLE : Bouton ✕ — même style que .menu-btn du .hdr (boutique, agenda, etc.) mais
+   couleur lilac pour signaler une action de fermeture de vue principale */
 .hdr-garden-close {
-  /* hérite de .menu-btn défini plus haut */
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--solid);
+  color: var(--lilac);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: .15s;
+  flex-shrink: 0;
 }
+.hdr-garden-close:active { transform: scale(.9); background: var(--border); }
 
 /*
   RÔLE : Quand le plein écran jardin est actif, #console-top passe au-dessus de l'overlay
@@ -2001,6 +2017,13 @@ body.garden-fullscreen .tama-screen {
   color: var(--lilac);
   letter-spacing: 1px;
   white-space: nowrap;
+}
+
+/* RÔLE : Ligne "à propos" du jardin — italique discret, ton contemplatif */
+.garden-label-about {
+  font-style: italic;
+  color: var(--text2);
+  font-size: var(--fs-xs);
 }
 
 /* RÔLE : Séparateur décoratif pixel-art entre les lignes d'infos — discret */

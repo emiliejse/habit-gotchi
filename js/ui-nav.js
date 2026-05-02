@@ -244,7 +244,9 @@ function _gardenName(seed) {
  */
 function _buildGardenInfo() {
   const g = window.D && window.D.g;
-  if (!g || g.activeEnv !== 'jardin') return '';
+  // RÔLE : openCanvasFullscreen() force activeEnv='jardin' avant cet appel —
+  //        on garde la garde au cas où la fonction serait appelée hors contexte
+  if (!g) return '';
 
   const elements = window._gardenElements || [];
   const seed     = g.gardenSeed;
@@ -274,13 +276,17 @@ function _buildGardenInfo() {
     ? Math.round(elements.reduce((s, e) => s + (e.age || 0), 0) / total)
     : 0;
 
+  // Texte cycle de vie — toujours affiché même si tout est à 0
   let etatParts = [];
   if (matures > 0) etatParts.push(`${matures} mature${matures > 1 ? 's' : ''}`);
-  if (fanent  > 0) etatParts.push(`${fanent} fane${fanent > 1 ? 'nt' : ''}`);
+  if (fanent  > 0) etatParts.push(`${fanent} qui fane${fanent > 1 ? 'nt' : ''}`);
   if (jeunes  > 0) etatParts.push(`${jeunes} nouveau${jeunes > 1 ? 'x' : ''}`);
-  const etatStr = etatParts.length ? etatParts.join(' &middot; ') + ` &middot; &oslash;&thinsp;${ageMoyen}j` : `&oslash;&thinsp;${ageMoyen}j`;
+  const etatStr = etatParts.length
+    ? etatParts.join(', ') + (ageMoyen > 0 ? ` &mdash; &oslash;&thinsp;${ageMoyen}&thinsp;j` : '')
+    : total > 0 ? `En croissance &mdash; &oslash;&thinsp;${ageMoyen}&thinsp;j`
+    : 'Aucun élément pour l\'instant';
 
-  // ── Vitalité (même calcul que garden.js) ─────────────────────────
+  // ── Vitalité (même calcul que garden.js _grayT()) ────────────────
   const habCatIds = (window.D.habits || []).map(h => h.catId);
   const todayKey  = typeof today === 'function' ? today() : null;
   const logToday  = (todayKey && window.D.log?.[todayKey]) || [];
@@ -289,18 +295,27 @@ function _buildGardenInfo() {
   const habRatio  = habsTotal > 0 ? habsDone / habsTotal : 0.5;
   const vitalite  = ((g.happiness ?? 2.5) + (g.energy ?? 2.5)) / 10;
   const score     = Math.min(habRatio, vitalite);
-  const etatJardin = score >= 0.7 ? 'Épanoui ✨'
-                   : score >= 0.5 ? 'En bonne santé'
-                   : score >= 0.3 ? 'Fatigué'
-                   : 'Besoin d\'attention';
-  const nbBarres = Math.round(score * 5);
-  const barres   = '▓'.repeat(nbBarres) + '░'.repeat(5 - nbBarres);
+  const nbBarres  = Math.round(score * 5);
+  const barres    = '▓'.repeat(nbBarres) + '░'.repeat(5 - nbBarres);
+
+  // Texte d'état — explique ce que ça veut dire concrètement pour la pousse
+  const etatJardin = score >= 0.7 ? 'Jardin épanoui ✨ &mdash; les plantes poussent vite'
+                   : score >= 0.5 ? 'Jardin en forme &mdash; croissance régulière'
+                   : score >= 0.3 ? 'Jardin un peu fatigué &mdash; pousse ralentie'
+                   : 'Jardin en veille &mdash; il attend qu\'on prenne soin de soi';
 
   // ── Habitudes ────────────────────────────────────────────────────
+  // Toujours affiché — explique le lien habitudes ↔ jardin
   let habsTxt = '';
   if (habsTotal > 0) {
-    if (habsDone >= habsTotal) habsTxt = `${habsDone}/${habsTotal} &mdash; jardin rayonnant`;
-    else                       habsTxt = `${habsDone}/${habsTotal} cochées aujourd'hui`;
+    if (habsDone >= habsTotal)
+      habsTxt = `${habsDone}/${habsTotal} cochées aujourd'hui &mdash; le jardin rayonne`;
+    else if (habsDone > 0)
+      habsTxt = `${habsDone}/${habsTotal} cochées aujourd'hui &mdash; chaque habitude nourrit la pousse`;
+    else
+      habsTxt = `0/${habsTotal} cochées &mdash; tes routines influencent la vitalité du jardin`;
+  } else {
+    habsTxt = 'Ajoute des habitudes pour voir le jardin réagir à ta journée';
   }
 
   // ── Météo ────────────────────────────────────────────────────────
@@ -316,12 +331,17 @@ function _buildGardenInfo() {
     if (desc.includes('soleil') || desc.includes('sun') || desc.includes('clear')) icon = '☀️';
     if (desc.includes('brouil') || desc.includes('fog'))                           icon = '🌫';
     meteoTxt = meteo.rain > 0
-      ? `${icon}&thinsp;Pluie récente &mdash; champignons favorisés`
-      : `${icon}&thinsp;${escape(meteo.desc)}`;
+      ? `${icon}&thinsp;${escape(meteo.desc)} &mdash; champignons favorisés`
+      : `${icon}&thinsp;${escape(meteo.desc)} &mdash; influence la faune du jardin`;
+  } else {
+    meteoTxt = '🌤&thinsp;Météo non disponible &mdash; active la localisation pour l\'activer';
   }
 
+  // ── Ligne "à propos" — texte contemplatif ────────────────────────
+  // RÔLE : Expliquer à l'utilisatrice que le jardin pousse tout seul, de façon autonome
+  const aproposTxt = 'Ce jardin pousse à son rythme, entre hasard et mémoire de tes jours.';
+
   // ── HTML final ───────────────────────────────────────────────────
-  // RÔLE : Carte unique style étiquette de jardinerie — titre, données, barre vitalité
   return `<div class="garden-label">
   <div class="garden-label-title">
     🪴 Jardin ${escape(nom)}
@@ -329,17 +349,19 @@ function _buildGardenInfo() {
   </div>
   <div class="garden-label-divider"></div>
   <div class="garden-label-grid">
-    <div class="garden-label-row"><span class="gli">🌿</span><span>${total} élément${total > 1 ? 's' : ''} &middot; ${comp}</span></div>
+    <div class="garden-label-row"><span class="gli">🌿</span><span>${total > 0 ? `${total} élément${total > 1 ? 's' : ''} &mdash; ${comp}` : 'Jardin vide pour l\'instant &mdash; il naît à chaque nouvelle journée'}</span></div>
     <div class="garden-label-row"><span class="gli">🕰</span><span>${etatStr}</span></div>
-    ${habsTxt  ? `<div class="garden-label-row"><span class="gli">✿</span><span>${habsTxt}</span></div>`  : ''}
-    ${meteoTxt ? `<div class="garden-label-row"><span class="gli">☁️</span><span>${meteoTxt}</span></div>` : ''}
+    <div class="garden-label-row"><span class="gli">✿</span><span>${habsTxt}</span></div>
+    <div class="garden-label-row"><span class="gli">☁️</span><span>${meteoTxt}</span></div>
+    <div class="garden-label-row"><span class="gli">✦</span><span class="garden-label-about">${aproposTxt}</span></div>
   </div>
   <div class="garden-label-divider"></div>
   <div class="garden-label-footer">
-    <span class="garden-label-state">${escape(etatJardin)}</span>
+    <span class="garden-label-state">${etatJardin}</span>
     <span class="garden-label-bars">${barres}</span>
   </div>
 </div>`;
+}
 
 /**
  * RÔLE : Ouvre un overlay plein écran PAR-DESSUS le canvas sans le déplacer.
@@ -416,10 +438,8 @@ function openCanvasFullscreen() {
     requestAnimationFrame(() => overlay.classList.add('open'));
   });
 
-  // RÔLE : Tap sur le fond de l'overlay (hors bouton et infos) ferme le plein écran
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) closeCanvasFullscreen();
-  });
+  // RÔLE : Fermeture uniquement via le bouton ✕ dans .hdr-garden — pas de tap fond
+  // POURQUOI : Le jardin est une vue contemplatve — on évite les fermetures accidentelles
 
   lockScroll();
   if (typeof _fermerMenuSiOuvert === 'function') _fermerMenuSiOuvert();

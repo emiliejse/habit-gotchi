@@ -130,6 +130,16 @@ window._adultPose = {
 window._teenPose = {
   cooldown: 240 // frames avant la première pose célébration
 };
+
+// RÔLE : Scheduler de micro-expressions spontanées de la bouche (teen + adult).
+// POURQUOI : Sans ça, la bouche ne change que sur interaction utilisateur.
+//            Ce scheduler déclenche des expressions courtes à intervalle irrégulier
+//            pour donner l'impression que le Gotchi vit vraiment.
+//            Cooldown de départ décalé (~300f) par rapport aux poses de bras (~240f)
+//            pour éviter que bras et bouche changent en même temps.
+window._mouthSched = {
+  cooldown: 300 // frames avant le premier déclenchement (~25 sec à 12fps)
+};
 // ─── Animation : variables d'expressivité ───
 window._expr = {
   lastMood: null,      // 'faim', 'surprise', 'joie', 'baillement', null
@@ -1619,6 +1629,74 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
     }
   } else if (isSleeping) {
     window._idleFrames = 0; // reset au réveil
+  }
+}
+
+// RÔLE : Scheduler de micro-expressions spontanées de la bouche (teen + adult uniquement).
+// POURQUOI : Donne l'impression que le Gotchi vit entre les interactions.
+//            Même mécanique que le scheduler de poses bras (_adultPose/_teenPose),
+//            mais décalé (~300f de base) pour que bouche et bras ne changent pas en même temps.
+//
+//            Fréquence : cooldown 180–360f aléatoire (~15–30 sec à 12fps).
+//            Expressions possibles selon haReal :
+//              ha ≤ 3 : 1/3 sourire, 1/3 surprise, 1/3 neutre (rien)
+//              ha = 4 : 1/2 sourire, 1/4 surprise, 1/4 neutre
+//              ha = 5 : 7/10 sourire, 2/10 joie, 1/10 surprise
+//            Durée : 6–10 frames (≈ 0.5–0.8 sec) — flicker discret, pas intrusif.
+//            Guards : uniquement si le Gotchi est éveillé, non endormi, et qu'aucune
+//            expression n'est déjà active (on ne coupe pas un bâillement ou une joie déclenchée).
+{
+  const g = window.D?.g;
+  const stage = g?.stage;
+  // RÔLE : Ne s'applique qu'au teen et à l'adulte.
+  if (stage === 'teen' || stage === 'adult') {
+    const h = typeof hr === 'function' ? hr() : new Date().getHours();
+    const isSleeping = g && ((h === 23 && new Date().getMinutes() >= 30) || h < 7);
+    // RÔLE : On ne déclenche pas si une expression est déjà en cours (bâillement, joie, etc.)
+    const noExprActive = !window._expr || window._expr.moodTimer === 0;
+
+    if (!isSleeping && noExprActive) {
+      // Décrémenter le cooldown chaque frame
+      window._mouthSched.cooldown--;
+
+      if (window._mouthSched.cooldown <= 0) {
+        // RÔLE : Tirer une expression au sort selon le bonheur réel (haReal = entier).
+        // POURQUOI : haReal (pas ha le float lerp) — les seuils exacts 4 et 5 doivent être atteints.
+        const haR = g.happiness;
+        const roll = Math.random(); // 0 → 1
+        let mood = null;
+        let dur  = 6 + Math.floor(Math.random() * 5); // 6–10 frames ≈ 0.5–0.8 sec
+
+        if (haR >= 5) {
+          // ha = 5 : très souvent sourire, parfois joie
+          if      (roll < 0.70) mood = 'sourire-auto'; // sourire spontané (bouche +)
+          else if (roll < 0.90) mood = 'joie';         // expression joie complète
+          else                  mood = 'surprise';      // petite surprise
+        } else if (haR >= 4) {
+          // ha = 4 : souvent sourire
+          if      (roll < 0.50) mood = 'sourire-auto';
+          else if (roll < 0.75) mood = 'surprise';
+          // else → 25% rien (neutre — on ne déclenche pas)
+        } else {
+          // ha ≤ 3 : mix équilibré
+          if      (roll < 0.33) mood = 'sourire-auto';
+          else if (roll < 0.66) mood = 'surprise';
+          // else → 34% rien
+        }
+
+        // RÔLE : Déclencher l'expression si une a été tirée.
+        if (mood) window.triggerExpr(mood, dur);
+
+        // RÔLE : Remettre un cooldown aléatoire décalé pour le prochain déclenchement.
+        // POURQUOI : 180–360f ≈ 15–30 sec — même fourchette que les poses bras adulte
+        //            (dont le cooldown est tiré aléatoirement par le scheduler _adultPose).
+        //            L'aléatoire évite tout motif régulier visible.
+        window._mouthSched.cooldown = 180 + Math.floor(Math.random() * 180);
+      }
+    } else if (isSleeping) {
+      // RÔLE : Reset au réveil pour ne pas partir avec un cooldown trop court.
+      window._mouthSched.cooldown = 300;
+    }
   }
 }
 

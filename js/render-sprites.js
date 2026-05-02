@@ -1162,11 +1162,13 @@ const LAYERS_TEEN = [
     ]
   },
 
-  // ── Bouche sourire ha élevé ──────────────────────────────────────
+  // ── Bouche sourire ha élevé — ou sourire spontané scheduler ────────
+  // POURQUOI : isMood('sourire-auto') permet au scheduler _mouthSched de déclencher
+  //            ce sourire spontanément, même quand ha n'atteint pas le seuil ha > HA_HAPPY_TEEN.
   {
     id: 'bouche-sourire-ha',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha > HA_HAPPY_TEEN,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && (pm.ha > HA_HAPPY_TEEN || isMood('sourire-auto')),
     rects: [
       { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY },   // centre
       { x: -2, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY },   // coin gauche
@@ -1175,10 +1177,12 @@ const LAYERS_TEEN = [
   },
 
   // ── Bouche sourire neutre ────────────────────────────────────────
+  // POURQUOI : !isMood('sourire-auto') — quand le scheduler déclenche sourire-auto,
+  //            ce calque doit s'effacer (bouche-sourire-ha prend le dessus).
   {
     id: 'bouche-neutre',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha <= HA_HAPPY_TEEN && pm.ha > HA_MED,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && !isMood('sourire-auto') && pm.ha <= HA_HAPPY_TEEN && pm.ha > HA_MED,
     rects: [
       { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY },
     ]
@@ -1188,7 +1192,7 @@ const LAYERS_TEEN = [
   {
     id: 'bouche-triste',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha < HA_SAD,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && !isMood('sourire-auto') && pm.ha < HA_SAD,
     rects: [
       { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY, rawDy: 2 },
     ]
@@ -1198,7 +1202,7 @@ const LAYERS_TEEN = [
   {
     id: 'bouche-defaut',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha >= HA_SAD && pm.ha <= HA_MED,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && !isMood('sourire-auto') && pm.ha >= HA_SAD && pm.ha <= HA_MED,
     rects: [
       { x: -1, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY },
     ]
@@ -1689,11 +1693,13 @@ const LAYERS_ADULT = [
     ]
   },
 
-  // ── Bouche grand sourire ha (ha > HA_HIGH) ───────────────────────
+  // ── Bouche grand sourire ha (ha > HA_HIGH) — ou sourire spontané scheduler ───
+  // POURQUOI : isMood('sourire-auto') permet au scheduler _mouthSched de déclencher
+  //            ce grand sourire spontanément, quel que soit le niveau de ha.
   {
     id: 'bouche-sourire-ha',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha > HA_HIGH,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && (pm.ha > HA_HIGH || isMood('sourire-auto')),
     rects: [
       { x: -2, y: 0, w: 4, h: 1, yFn: (pm) => pm.mouthBaseY + PX },   // barre bas
       { x: -3, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY      },   // coin gauche
@@ -1702,10 +1708,12 @@ const LAYERS_ADULT = [
   },
 
   // ── Bouche sourire neutre (ha > HA_MED_ADULT) ───────────────────
+  // POURQUOI : !isMood('sourire-auto') — quand le scheduler déclenche sourire-auto,
+  //            ce calque neutre s'efface pour laisser bouche-sourire-ha s'afficher.
   {
     id: 'bouche-neutre',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha <= HA_HIGH && pm.ha > HA_MED_ADULT,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && !isMood('sourire-auto') && pm.ha <= HA_HIGH && pm.ha > HA_MED_ADULT,
     rects: [
       { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY },
     ]
@@ -1715,7 +1723,7 @@ const LAYERS_ADULT = [
   {
     id: 'bouche-triste',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha < HA_SAD,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && !isMood('sourire-auto') && pm.ha < HA_SAD,
     rects: [
       { x: -1, y: 0, w: 2, h: 1, yFn: (pm) => pm.mouthBaseY, rawDy: 2 },   // barre décalée
       { x: -2, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY             },   // coin
@@ -1726,7 +1734,7 @@ const LAYERS_ADULT = [
   {
     id: 'bouche-defaut',
     fill: 'C.mouth',
-    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && pm.ha >= HA_SAD && pm.ha <= HA_MED_ADULT,
+    when: (pm) => !pm.sl && !isMood('baillement') && !isMood('joie') && !isMood('faim') && !isMood('surprise') && !isMood('sourire-auto') && pm.ha >= HA_SAD && pm.ha <= HA_MED_ADULT,
     rects: [
       { x: -1, y: 0, w: 1, h: 1, yFn: (pm) => pm.mouthBaseY },
     ]

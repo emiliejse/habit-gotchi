@@ -115,6 +115,7 @@ const ENV_FLASH_COLOR = {
   chambre:  '#f0d8a8', // orangé chaud, lumière intérieure
   montagne: '#e8f0f8', // blanc neige, air pur
   plage:    '#a8e8f0', // bleu aqua, écume
+  jardin:   '#c8a870', // brun terre, sol de jardin
 };
 
 // Variations de bras de l'adulte (animations idle + célébration ha=5)
@@ -1325,39 +1326,6 @@ const p5s = (p) => {
 
     drawActiveEnv(p, envActif, n, h);
 
-    // ── Flash thématique de transition d'environnement (~24 frames ≈ 0,4s) ──
-    // RÔLE : Dessine un éclair de couleur par-dessus le décor quand l'utilisatrice change d'env.
-    //        Montée rapide (0 → pic à la frame 8), descente douce jusqu'à la frame 24.
-    // POURQUOI : Masque le cut brutal du décor et donne une sensation de "voyage"
-    //            vers un nouveau biome. Chaque couleur évoque la destination.
-    if (window._envFadeState) {
-      const fs = window._envFadeState;
-
-      // RÔLE : Cloche asymétrique — montée en 8f, descente en 16f.
-      // POURQUOI : La montée rapide "coupe" l'ancien décor franchement ;
-      //            la descente lente laisse le nouveau apparaître progressivement.
-      let flashAlpha;
-      if (fs.frames <= 8) {
-        flashAlpha = fs.frames / 8;          // 0 → 1 sur les 8 premières frames
-      } else {
-        flashAlpha = 1 - (fs.frames - 8) / 16; // 1 → 0 sur les 16 frames restantes
-      }
-
-      // RÔLE : Couleur de destination, blanc par défaut si env inconnu.
-      const flashCol = ENV_FLASH_COLOR[fs.to] || '#ffffff';
-
-      // RÔLE : Décompose le hex en r/g/b pour construire un rgba() avec opacité dynamique.
-      const fr = parseInt(flashCol.slice(1, 3), 16);
-      const fg = parseInt(flashCol.slice(3, 5), 16);
-      const fb = parseInt(flashCol.slice(5, 7), 16);
-
-      // RÔLE : Recouvre tout le canvas d'une teinte translucide.
-      // POURQUOI : noStroke() évite un contour parasite sur le bord du canvas.
-      p.noStroke();
-      p.fill(`rgba(${fr},${fg},${fb},${flashAlpha.toFixed(3)})`);
-      p.rect(0, 0, CS, CS);
-    }
-
     // 2. Props Ambiance — filtrées par environnement actif
     // RÔLE : N'afficher que les ambiances assignées à l'env en cours.
     // POURQUOI : Chaque univers peut avoir ses propres ambiances depuis la v3.49.
@@ -1752,6 +1720,41 @@ if (window._expr && window._expr.moodTimer > 0) window._expr.moodTimer--;
         spawnP(cx + (Math.random() - .5) * 40, by - 10, C.rainbow[Math.floor(Math.random() * C.rainbow.length)]);
       }
       bounceT = Math.PI * 1.5;
+    }
+
+    // ── Flash thématique de transition d'environnement (~24 frames ≈ 0,4s) ──
+    // RÔLE : Couvre env + props + Gotchi + premier plan — masque le cut brutal du décor.
+    //        Montée rapide (0 → pic à la frame 8), descente douce jusqu'à la frame 24.
+    // POURQUOI ici (après celebQueue, avant overlay nuit) : le flash doit être au-dessus
+    //        de TOUS les éléments de scène (décor, objets, Gotchi, particules) mais
+    //        sous l'overlay nuit et sous le HUD — qui s'affichent par-dessus.
+    //        Ancienne position : après drawActiveEnv seulement → les props passaient
+    //        par-dessus le flash. Corrigé ici.
+    if (window._envFadeState) {
+      const fs = window._envFadeState;
+
+      // RÔLE : Cloche asymétrique — montée en 8f, descente en 16f.
+      // POURQUOI : La montée rapide "coupe" l'ancien décor franchement ;
+      //            la descente lente laisse le nouveau apparaître progressivement.
+      let flashAlpha;
+      if (fs.frames <= 8) {
+        flashAlpha = fs.frames / 8;           // 0 → 1 sur les 8 premières frames
+      } else {
+        flashAlpha = 1 - (fs.frames - 8) / 16; // 1 → 0 sur les 16 frames restantes
+      }
+
+      // RÔLE : Couleur de destination, blanc par défaut si env inconnu.
+      const flashCol = ENV_FLASH_COLOR[fs.to] || '#ffffff';
+
+      // RÔLE : Décompose le hex en r/g/b pour construire un rgba() avec opacité dynamique.
+      const _fr = parseInt(flashCol.slice(1, 3), 16);
+      const _fg = parseInt(flashCol.slice(3, 5), 16);
+      const _fb = parseInt(flashCol.slice(5, 7), 16);
+
+      // RÔLE : Recouvre tout le canvas d'une teinte translucide.
+      p.noStroke();
+      p.fill(`rgba(${_fr},${_fg},${_fb},${flashAlpha.toFixed(3)})`);
+      p.rect(0, 0, CS, CS);
     }
 
     // Surcouche nuit — couvre env, props, Gotchi.

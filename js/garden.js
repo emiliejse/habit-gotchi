@@ -401,7 +401,185 @@ function initGarden() {
 // Exposée globalement pour être appelée depuis bootstrap() dans app.js
 window.initGarden = initGarden;
 
-/* ─── §0c : SPRITES PIXEL ART ────────────────────────────────────── */
+/* ─── §0c : CYCLE DE VIE DU JARDIN ──────────────────────────────────── */
+
+/**
+ * _ageGarden() — Vieillissement quotidien du jardin
+ *
+ * RÔLE : Incrémente l'âge de chaque élément de +1 jour, retire les éléments
+ *        morts (age >= maxAge), et fait germer 1–2 nouveaux éléments à des
+ *        positions libres pour maintenir la densité du jardin.
+ *
+ * APPELÉE PAR : handleDailyReset() dans app.js — une seule fois par jour.
+ *
+ * APRÈS APPEL : app.js appelle save() puis initGarden() pour que
+ *               window._gardenElements reflète le nouvel état.
+ *
+ * RÈGLE MAX 20 éléments : on ne germe jamais au-delà de 20 éléments au total.
+ * RÈGLE ESPACEMENT : les nouveaux germes respectent une distance min de 15px
+ *                   entre éléments du même layer.
+ */
+function _ageGarden() {
+  // ── Garde : D.g.gardenState doit exister ──────────────────────────
+  if (!window.D || !window.D.g || !window.D.g.gardenState) {
+    console.warn('[Garden] _ageGarden() appelée sans gardenState — ignorée');
+    return;
+  }
+  // ── Garde : _gardenElements doit être peuplé ───────────────────────
+  // POURQUOI : _gardenElements porte la position x et le layer de chaque élément.
+  //            Sans lui, on ne peut pas vérifier les collisions pour les germes.
+  if (!window._gardenElements || window._gardenElements.length === 0) {
+    console.warn('[Garden] _ageGarden() appelée sans _gardenElements — ignorée');
+    return;
+  }
+
+  const state    = window.D.g.gardenState;
+  const elements = window._gardenElements;
+  const seed     = window.D.g.gardenSeed;
+
+  // ── 1. Vieillissement : +1 à chaque élément vivant ────────────────
+  // RÔLE : Incrémente l'âge de chaque entrée de gardenState.
+  // POURQUOI : On mutate directement state[i].age — c'est la valeur persistée
+  //            dans LocalStorage. window._gardenElements.age sera mis à jour
+  //            au prochain appel de initGarden(), on ne le touche pas ici.
+  state.forEach(s => {
+    if (s.age < s.maxAge) s.age += 1;
+  });
+
+  // ── 2. Mort douce : repérer les éléments arrivés à maxAge ─────────
+  // RÔLE : Collecter les indices des éléments dont age >= maxAge.
+  // POURQUOI : On ne les retire pas dès age === maxAge - 1 : les fonctions
+  //            draw*() les rendent déjà "fanés" visuellement à cet âge.
+  //            Ils disparaissent ici au tick suivant (age === maxAge).
+  const indiceMorts = [];
+  state.forEach((s, i) => {
+    if (s.age >= s.maxAge) indiceMorts.push(i);
+  });
+
+  // ── 3. Suppression des morts ───────────────────────────────────────
+  // RÔLE : Retire les éléments morts de gardenState.
+  // POURQUOI décroissant : splice() décale les indices suivants — en partant
+  //   du plus grand index vers le plus petit, les indices déjà traités restent stables.
+  //   Ex : indices morts [2, 5] → splice(5) d'abord, puis splice(2). ✓
+  [...indiceMorts].sort((a, b) => b - a).forEach(i => {
+    state.splice(i, 1);
+  });
+
+  // ── 4. Liste des survivants (positions pour calcul espacement) ─────
+  // RÔLE : Construire une image des éléments encore vivants après suppression.
+  // POURQUOI utiliser _gardenElements pour les positions (pas state) :
+  //   gardenState ne stocke que age + maxAge. Les positions x/layer sont dans
+  //   _gardenElements, indexées de façon identique à gardenState.
+  //   On filtre les indices qui ne sont PAS dans indiceMorts.
+  const survivants = elements.filter((_, i) => !indiceMorts.includes(i));
+
+  // ── 5. Germination : 1–2 nouveaux éléments si sous le seuil ──────
+  // RÔLE : Compenser les morts par de nouveaux germes (age=0).
+  // RÈGLE : on germe au maximum autant que d'éléments morts, dans la limite de 20 total.
+  //         Si nbMorts === 0 → pas de germination (jardin plein et sain).
+  const MAX_ELEMENTS = 20;
+  const nbMorts      = indiceMorts.length;
+  const nbApresSuppr = survivants.length;
+  const nbGermer     = Math.min(nbMorts, MAX_ELEMENTS - nbApresSuppr, 2);
+
+  // RÔLE : Seed de germination dérivée de la seed principale XOR la date du jour.
+  // POURQUOI XOR avec la date : la seed principale produit toujours les mêmes positions.
+  //   En mélangeant avec le jour courant (transformé en entier), chaque journée de
+  //   germination produit des positions différentes → le jardin se renouvelle vraiment.
+  const daySeed = (seed ^ (today().replace(/-/g, '') | 0)) >>> 0;
+
+  // Catalogue de slots disponibles pour les germes
+  // POURQUOI exclure les pierres (maxAge=999) : elles ne meurent jamais → jamais remplacées.
+  // POURQUOI exclure les arbustes : leur maxAge long les rend rarissimes à mourir — le
+  //   catalogue SLOTS complet dans initGarden() gère leur présence initiale.
+  const GERME_SLOTS = [
+    { type: 'fleur',      layer: 'fond',         y: 120, xMin: 10, xMax: 185, maxAge: 7,  scaleMin: 1, scaleMax: 8 },
+    { type: 'herbe',      layer: 'fond',         y: 120, xMin: 10, xMax: 185, maxAge: 14, scaleMin: 1, scaleMax: 7 },
+    { type: 'champignon', layer: 'fond',         y: 120, xMin: 10, xMax: 185, maxAge: 5,  scaleMin: 1, scaleMax: 6 },
+    { type: 'fleur',      layer: 'premier_plan', y: 160, xMin: 10, xMax: 185, maxAge: 7,  scaleMin: 1, scaleMax: 3 },
+    { type: 'herbe',      layer: 'premier_plan', y: 160, xMin: 10, xMax: 185, maxAge: 14, scaleMin: 1, scaleMax: 3 },
+  ];
+
+  const MIN_ECART = 15; // distance minimale en px entre un germe et tout voisin du même layer
+
+  // RÔLE : Vérifie si une position x est trop proche d'un voisin du même layer.
+  function _tropProche(x, layer, vivants) {
+    return vivants.some(el => el.layer === layer && Math.abs(el.x - x) < MIN_ECART);
+  }
+
+  const germes = []; // éléments germés ce tick — sert à éviter les collisions entre germes
+
+  for (let g = 0; g < nbGermer; g++) {
+    // Choisir un type de slot au hasard (déterministe via daySeed)
+    const slotIdx = Math.floor(_gardenRng(daySeed, g * 10) * GERME_SLOTS.length);
+    const slot    = GERME_SLOTS[slotIdx];
+
+    // Tirer les propriétés du germe depuis la seed du jour
+    const variant      = Math.floor(_gardenRng(daySeed, g * 10 + 1) * 4);
+    const colorVariant = Math.floor(_gardenRng(daySeed, g * 10 + 2) * 8);
+    const rngScale     = _gardenRng(daySeed, g * 10 + 3);
+    const scalePX      = slot.scaleMin + Math.floor(rngScale * rngScale * (slot.scaleMax - slot.scaleMin + 1));
+    const scaleFinal   = Math.max(slot.scaleMin, Math.min(slot.scaleMax, scalePX));
+
+    // maxAge individuel ±40% autour du maxAge du slot
+    const rngAge   = _gardenRng(daySeed, g * 10 + 4);
+    const ageMin   = Math.max(3, Math.round(slot.maxAge * 0.6));
+    const ageMax   = Math.round(slot.maxAge * 1.4);
+    const elMaxAge = ageMin + Math.floor(rngAge * (ageMax - ageMin + 1));
+
+    // Chercher une position x libre (12 tentatives max)
+    let x      = null;
+    let placed = false;
+    const vivants = [...survivants, ...germes]; // tous les éléments vivants à ce tick
+
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const xRaw  = slot.xMin + _gardenRng(daySeed, g * 10 + 5 + attempt) * (slot.xMax - slot.xMin);
+      const xSnap = Math.floor(xRaw / PX) * PX;
+      if (!_tropProche(xSnap, slot.layer, vivants)) {
+        x = xSnap;
+        placed = true;
+        break;
+      }
+    }
+
+    if (!placed) {
+      console.log(`[Garden] germe ${slot.type} #${g} — aucune position libre après 12 tentatives, skip`);
+      continue;
+    }
+
+    // RÔLE : Enregistrer le germe dans gardenState (persisté) ET dans germes (anti-collision).
+    // POURQUOI state.push() maintenant : _ageGarden() mutate gardenState directement.
+    //   initGarden() sera appelé juste après (par app.js) et reconstruira
+    //   _gardenElements en intégrant ces nouveaux éléments.
+    const germe = {
+      type:        slot.type,
+      layer:       slot.layer,
+      x,
+      y:           slot.y,
+      variant,
+      colorVariant,
+      scalePX:     scaleFinal,
+      hauteurPX:   scaleFinal,
+      age:         0,        // vient de germer — jeune par définition
+      maxAge:      elMaxAge,
+    };
+    germes.push(germe);                       // pour _tropProche() dans les germes suivants
+    state.push({ age: 0, maxAge: elMaxAge }); // persisté dans D.g.gardenState
+  }
+
+  // ── 6. Mise à jour de gardenDay ───────────────────────────────────
+  // RÔLE : Enregistre la date de ce vieillissement dans D.g.gardenDay.
+  // POURQUOI : Permet à handleDailyReset() de vérifier si _ageGarden() a déjà
+  //            tourné aujourd'hui — protection contre un double-appel accidentel.
+  window.D.g.gardenDay = today();
+
+  console.log(`[Garden] _ageGarden() — ${nbMorts} mort(s), ${germes.length} germe(s), ${state.length} éléments au total`);
+}
+
+// Exposée globalement pour être appelée depuis handleDailyReset() dans app.js
+window._ageGarden = _ageGarden;
+
+/* ─── §0d : SPRITES PIXEL ART ────────────────────────────────────── */
 
 /*
    Convention commune à tous les sprites ci-dessous :

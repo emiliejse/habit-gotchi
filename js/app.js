@@ -1952,6 +1952,21 @@ function handleDailyReset() {
   // POURQUOI : Se renouvelle chaque jour automatiquement au premier lancement.
   refreshCatVedette();
 
+  // ── Vieillissement du jardin ────────────────────────────────────────
+  // RÔLE : Si le jour a changé depuis le dernier tick de vieillissement,
+  //        on fait vieillir les éléments du jardin (+1 âge, morts retirés, germes ajoutés).
+  // POURQUOI gardenDay !== td : protection contre un double-appel si handleDailyReset()
+  //   est appelée plusieurs fois dans la même journée (retour foreground, etc.).
+  // POURQUOI window._ageGarden && : garden.js peut ne pas être chargé si l'utilisatrice
+  //   n'a jamais sélectionné le biome Jardin — on vérifie l'existence de la fonction.
+  if (window._ageGarden && window.D.g && window.D.g.gardenDay !== td) {
+    window._ageGarden();
+    // RÔLE : Reconstruire _gardenElements depuis le gardenState mis à jour.
+    // POURQUOI après _ageGarden() : l'état (âges, morts, germes) vient d'être muté —
+    //   initGarden() doit relire gardenState pour produire la liste correcte.
+    if (window.initGarden) window.initGarden();
+  }
+
   window.D.lastActive = new Date().toISOString();
   save();
 }

@@ -2143,3 +2143,107 @@ body.garden-fullscreen .tama-screen {
   box-shadow: 0 1px 4px var(--shadow);
 }
 .canvas-fs-close:active { transform: scale(0.9); background: var(--border); }
+
+
+/* ─── SYSTÈME JEUX (Hub mini-jeux) ───────────────────────────────── */
+
+/* RÔLE : Conteneur du hub — liste verticale des cartes de jeux */
+/* POURQUOI padding cohérent avec .card : même sensation de respiration que les autres panneaux */
+#game-hub {
+  padding: var(--sp-sm) 0;
+}
+
+/* RÔLE : Carte d'un jeu dans le hub — layout horizontal icône + info + bouton */
+/* POURQUOI inspiré de l'atelier : fond card avec backdrop-blur, border, border-radius lg,
+   ombre douce — même famille visuelle que les cartes boutique/inventaire */
+.game-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  background: var(--card);
+  backdrop-filter: blur(6px);
+  border: 2px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-md);
+  margin-bottom: var(--sp-md);
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: box-shadow 0.15s, transform 0.12s;
+}
+
+/* RÔLE : Feedback tactile léger au tap sur la carte */
+.game-card:active {
+  transform: scale(0.985);
+  box-shadow: 0 1px 4px var(--shadow);
+}
+
+/* RÔLE : Icône pixel-art du jeu — grande, centrée, police titre pour les emojis */
+.game-card-icon {
+  font-size: 40px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 52px;
+  text-align: center;
+  /* POURQUOI filter drop-shadow : même traitement que les .menu-sticker —
+     contour blanc qui suit le contour de l'emoji */
+  filter:
+    drop-shadow(0px  2px 0 rgba(255,255,255,0.8))
+    drop-shadow(0px -2px 0 rgba(255,255,255,0.8))
+    drop-shadow( 2px 0px 0 rgba(255,255,255,0.8))
+    drop-shadow(-2px 0px 0 rgba(255,255,255,0.8));
+}
+
+/* RÔLE : Zone texte de la carte — titre + score, prend l'espace restant */
+.game-card-body {
+  flex: 1;
+  min-width: 0; /* POURQUOI : empêche le débordement du texte long */
+}
+
+/* RÔLE : Titre du jeu — Caveat pour la chaleur, taille lg */
+.game-card-title {
+  font-family: var(--font-title);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+/* RÔLE : Meilleur score — discret, sous le titre */
+.game-card-score {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+/* RÔLE : Bouton Jouer — aligné à droite, flex-shrink pour ne pas écraser le texte */
+.game-card-btn {
+  flex-shrink: 0;
+}
+
+/* RÔLE : Variante grisée pour les jeux "Bientôt" — visuellement présents mais non interactifs */
+/* POURQUOI : Montre la roadmap sans générer de frustration — l'utilisatrice sait ce qui arrive */
+.game-card--disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  /* POURQUOI filter grayscale : renforce le côté "indisponible" sans changer les couleurs manuellement */
+  filter: grayscale(0.5);
+}
+
+/* RÔLE : Zone canvas du jeu actif — prend toute la hauteur disponible */
+#game-canvas-container {
+  width: 100%;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* RÔLE : Placeholder visuel sprint 1 — centré, ton discret */
+.game-placeholder {
+  width: 100%;
+  padding: var(--sp-lg);
+  background: var(--card);
+  border: 2px dashed var(--border);
+  border-radius: var(--r-lg);
+  text-align: center;
+}

@@ -725,13 +725,11 @@ function drawFleur(p, x, y, variant, colorVariant, scalePX, theme, n, age, maxAg
 
   // ── Tige ─────────────────────────────────────────────────────────
   // Hauteur de tige : s rangées. Vieux → tige décalée d'1 PX à droite.
-  // RÔLE : dx = inclinaison totale (vieillesse + vent). Toute la plante penche ensemble.
-  // POURQUOI Math.round : flowerTilt est un flottant (0→3) — on l'arrondit en unités PX
-  //          entières pour rester sur la grille pixel et éviter les demi-pixels flous.
-  // POURQUOI + et non max : vieillesse et vent s'accumulent — une vieille fleur par vent
-  //          fort penche plus qu'une jeune par vent faible. Plafonné à 4PX pour rester lisible.
-  const windTilt = Math.round(meteoParams?.flowerTilt ?? 0); // 0→3 PX
-  const dx = Math.min(4, (m > 0.85 ? 1 : 0) + windTilt) * PX; // en px réels
+  // RÔLE : dx = inclinaison si la fleur est vieille (m > 0.85).
+  // NOTE vent : flowerTilt est calculé dans meteoParams mais non appliqué ici —
+  //             le snap sur grille PX=5 rendrait l'effet trop saccadé (invisible ou brutal).
+  //             Le vent reste disponible pour de futures animations hors-grille.
+  const dx = (m > 0.85 ? 1 : 0) * PX; // en px réels
   p.fill(tc(n, colT));
   px(p, x + dx, y - PX*s, PX, PX*s); // colonne pleine de s rangées
 
@@ -924,9 +922,8 @@ function drawHerbe(p, x, y, variant, colorVariant, scalePX, n, age, maxAge, mete
   const colC = _lerpGray(VERTS[(colorVariant + 1) % 8], gt); // ton clair
 
   // Tige penchée si vieille (m > 0.85)
-  // RÔLE : vent également intégré pour l'herbe (même logique que drawFleur)
-  const windTilt = Math.round(meteoParams?.flowerTilt ?? 0);
-  const dx   = Math.min(4, (m > 0.85 ? 1 : 0) + windTilt) * PX;
+  // NOTE vent : même décision que drawFleur — vent non appliqué sur dx (grille trop grossière).
+  const dx   = (m > 0.85 ? 1 : 0) * PX;
   // Teinte fanée : légèrement assombrie
   const nH   = m > 0.85 ? Math.min(1, n + 0.3) : n;
 
@@ -1895,41 +1892,79 @@ function drawJardinPremierPlan(p, theme, n) {
     }
   });
 
-  // ── Insectes animés ───────────────────────────────────────────────
-  // RÔLE : 1–2 pixels lumineux qui volètent devant le jardin quand il est en bonne santé.
-  // CONDITION : vitalite > 0.5 ET habRatio > 0.4 — le jardin doit être assez vivant.
-  // POURQUOI dans drawJardinPremierPlan et non drawJardinFond :
-  //          Les insectes passent DEVANT le Gotchi — ils sont dans la couche la plus haute.
-  // POURQUOI sin(frameCount) : trajectoire sinusoïdale douce, pas de saccades.
-  //          Chaque insecte a une phase (offset) différente → ils ne bougent pas ensemble.
+  // ── Chenilles animées ─────────────────────────────────────────────
+  // RÔLE : 1–2 petites chenilles qui rampent sur le sol devant le jardin.
+  // CONDITION : vitalite > 0.5 ET habRatio > 0.4 — jardin assez vivant.
   // NOMBRE :
-  //   vitalite > 0.5 ET habRatio > 0.4 → 1 insecte
-  //   vitalite > 0.7 ET habRatio > 0.6 → 2 insectes (jardin épanoui)
+  //   condition de base → 1 chenille
+  //   vitalite > 0.7 ET habRatio > 0.6 → 2 chenilles (jardin épanoui)
+  //
+  // CORPS : 3 segments de 1 PX chacun, espacés de 1 PX (gap pixel noir entre eux).
+  //         Le segment de tête est légèrement plus clair → sens de déplacement lisible.
+  //
+  // MOUVEMENT : allers-retours sur toute la largeur du canvas (10–185px réels).
+  //   Position calculée avec un triangle wave depuis frameCount — pas de sin() qui
+  //   ralentirait aux extrémités, on veut une vitesse constante et un demi-tour net.
+  //   Chaque chenille a une vitesse et une phase différentes → elles ne se superposent pas.
+  //
+  // Y : fixe à 162px (lisière sol premier plan) — elles rampent au sol, pas sur les plantes.
+  //
+  // POURQUOI hors grille PX pour X : la chenille doit bouger de 1px réel par frame
+  //   pour paraître vivante. Si on snappait sur PX=5, elle sauterait de 5px d'un coup
+  //   → saccadé. On utilise p.rect() directement pour les segments (pas px()).
+  //   Seul Y est snappé sur la grille (fixe à 162 = multiple de PX).
+
   if (vitalite > 0.5 && habRatio > 0.4) {
-    const nbInsectes = (vitalite > 0.7 && habRatio > 0.6) ? 2 : 1;
+    const nbChenilles = (vitalite > 0.7 && habRatio > 0.6) ? 2 : 1;
 
-    // Couleurs insectes : jaune-vert lumineux (luciole) ou blanc chaud (papillon)
-    const INSECTE_COLS = ['#e8f840', '#f8f0a0'];
+    // Couleurs : vert vif pour le corps, tête légèrement plus claire
+    const CORPS_COL = ['#78c030', '#90d848']; // corps sombre, corps clair (tête)
+    // Chenille 2 : ton différent pour les distinguer
+    const CORPS_COL2 = ['#c07828', '#d89040'];
 
-    for (let i = 0; i < nbInsectes; i++) {
-      // RÔLE : Position X de base — répartis dans la largeur du canvas (60–140px).
-      // POURQUOI 60–140 : évite les bords où les sprites de premier plan sont denses.
-      const baseX = 60 + i * 50; // insecte 0 → x≈60, insecte 1 → x≈110
+    // Y de la chenille — fixe, snappé sur la grille (162 = multiple de PX=5... arrondi à 160)
+    const CHENIL_Y = 160;
+    // Largeur de la zone de déplacement (pixels réels)
+    const XMIN = 10;
+    const XMAX = 182;
+    const XRANGE = XMAX - XMIN; // 172px de course
 
-      // RÔLE : Oscillation X — va-et-vient horizontal lent.
-      // sin() × amplitude : l'insecte se déplace de ±amplitude pixels autour de baseX.
-      const amplitude = 18; // pixels réels — ≈ 3–4 PX de part et d'autre
-      const ix = baseX + Math.sin(p.frameCount * 0.04 + i * 2.1) * amplitude;
+    for (let i = 0; i < nbChenilles; i++) {
+      // RÔLE : Triangle wave — position linéaire qui rebondit entre 0 et XRANGE.
+      // POURQUOI triangle wave et non sin() : vitesse constante, demi-tour net.
+      // Vitesse : chenille 0 = 0.5px/frame, chenille 1 = 0.35px/frame (plus lente).
+      const vitesse = i === 0 ? 0.5 : 0.35;
+      // Phase décalée pour éviter que les deux chenilles partent du même endroit.
+      const phase   = i === 0 ? 0 : XRANGE * 0.55;
+      // Triangle wave : (frameCount * vitesse + phase) modulo (2 × XRANGE), plié sur XRANGE
+      const t       = (p.frameCount * vitesse + phase) % (XRANGE * 2);
+      const posX    = t < XRANGE ? t : XRANGE * 2 - t; // 0→XRANGE→0→...
+      const cx      = Math.round(XMIN + posX); // position X tête en pixels réels
 
-      // RÔLE : Oscillation Y — monte et descend légèrement.
-      // Zone Y : 140–158 (entre le Gotchi et la lisière du premier plan).
-      const baseY  = 148 + i * 6;
-      const iy = baseY + Math.sin(p.frameCount * 0.07 + i * 1.3) * 6;
+      // RÔLE : Détermine le sens (droite ou gauche) pour orienter tête/queue.
+      // t < XRANGE → va vers la droite → tête à droite (cx), queue à gauche (cx - offset)
+      // t >= XRANGE → va vers la gauche → tête à gauche, queue à droite
+      const versLaDroite = t < XRANGE;
 
-      // RÔLE : Dessine l'insecte — 1 pixel, couleur lumineuse, pas de tc() nuit
-      //        (les lucioles brillent aussi la nuit — effet intentionnel).
-      p.fill(INSECTE_COLS[i % 2]);
-      px(p, Math.round(ix / PX) * PX, Math.round(iy / PX) * PX, PX, PX);
+      const cols = i === 0 ? CORPS_COL : CORPS_COL2;
+
+      // RÔLE : Dessine les 3 segments — 4px × 4px chacun (légèrement sous PX=5 pour l'aspect chenille)
+      // Espacement : 5px entre chaque segment (gap de 1px réel entre eux)
+      // Ordre de dessin : toujours tête en premier (visuellement au-dessus en cas de superposition)
+      const SEG_W  = 4;  // largeur d'un segment en px réels
+      const SEG_H  = 4;  // hauteur d'un segment
+      const SEG_GAP = 5; // distance centre à centre entre segments
+
+      for (let seg = 0; seg < 3; seg++) {
+        // RÔLE : Calcule la position X de ce segment selon le sens de marche.
+        // seg=0 = tête, seg=2 = queue.
+        const offset = versLaDroite ? -seg * SEG_GAP : seg * SEG_GAP;
+        const sx     = cx + offset;
+
+        // RÔLE : Tête (seg=0) plus claire, corps plus sombre.
+        p.fill(tc(n, seg === 0 ? cols[1] : cols[0]));
+        p.rect(sx, CHENIL_Y, SEG_W, SEG_H); // p.rect() hors grille PX — mouvement fluide
+      }
     }
   }
 }

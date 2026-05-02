@@ -1,15 +1,425 @@
 /* ============================================================
-   garden.js — Biome Jardin (Environnement procédural — Phase 1 : fondations)
+   garden.js — Biome Jardin (Environnement procédural — Phase 2 : génératif)
    RÔLE : Dessine l'environnement "Jardin" en deux passes distinctes :
           • drawJardinFond()        → arrière-plan (sol, éléments derrière le Gotchi)
           • drawJardinPremierPlan() → premier plan (éléments devant le Gotchi)
    POURQUOI deux passes : render.js appelle drawJardinFond() AVANT le Gotchi
           et drawJardinPremierPlan() APRÈS — ce séquencement donne la profondeur visuelle.
 
+   RÈGLE ABSOLUE (Phase 2) :
+          Aucun Math.random() ni calcul de position dans les fonctions draw().
+          Tout est calculé UNE SEULE FOIS dans initGarden(), stocké dans
+          window._gardenElements, et draw() ne fait que lire ce tableau.
+
    NAVIGATION RAPIDE :
-   §1  ~30   FOND             drawJardin() + drawJardinFond()
-   §2  ~60   PREMIER PLAN     drawJardinPremierPlan()
+   §0  ~20   PRNG             _gardenRng(seed, index)
+   §1  ~50   FOND             drawJardin() + drawJardinFond()
+   §2  ~80   PREMIER PLAN     drawJardinPremierPlan()
    ============================================================ */
+
+/* ─── §0 : PRNG DÉTERMINISTE ─────────────────────────────────────── */
+
+/**
+ * _gardenRng(seed, index) — Générateur de nombres pseudo-aléatoires déterministe
+ *
+ * RÔLE : Retourne un nombre flottant entre 0 (inclus) et 1 (exclus),
+ *        comme Math.random() — mais entièrement déterminé par seed + index.
+ *        Même seed + même index → toujours le même résultat.
+ *
+ * POURQUOI un LCG (Linear Congruential Generator) :
+ *        C'est l'algorithme le plus simple et le plus léger pour un PRNG.
+ *        Pas besoin de bibliothèque, pas de state global — une seule formule.
+ *        Suffisant pour distribuer ~20 éléments visuels sans biais visible.
+ *
+ * FORMULE LCG standard (paramètres de Numerical Recipes) :
+ *        state = (state × 1664525 + 1013904223) mod 2³²
+ *        Les constantes 1664525 et 1013904223 sont reconnues pour leur
+ *        bonne distribution sur toute la plage 32 bits.
+ *
+ * USAGE :
+ *        _gardenRng(42, 0)  → ~0.73   (position X du 1er élément)
+ *        _gardenRng(42, 1)  → ~0.12   (type du 2e élément)
+ *        _gardenRng(42, 0)  → ~0.73   (identique — déterministe)
+ *
+ * @param {number} seed  - Entier positif, tiré une fois pour la save (D.g.gardenSeed)
+ * @param {number} index - Entier positif, différent pour chaque usage dans initGarden()
+ * @returns {number} Flottant dans [0, 1[
+ */
+function _gardenRng(seed, index) {
+  // RÔLE : Combine seed et index pour créer un état initial unique à ce tirage.
+  // POURQUOI : Sans combiner les deux, _gardenRng(seed, 0) et _gardenRng(seed, 1)
+  //            partiraient du même état et donneraient des valeurs trop proches.
+  //            L'addition simple seed + index × 2654435761 (nombre premier proche de 2³²/φ)
+  //            garantit que chaque index part d'un état vraiment différent.
+  let state = (seed + index * 2654435761) >>> 0; // >>> 0 = forcer en entier non signé 32 bits
+
+  // RÔLE : Applique un cycle LCG pour "mélanger" l'état initial.
+  // POURQUOI : L'état initial (seed+index) est trop prévisible sans au moins un cycle.
+  //            Un seul cycle suffit ici — on ne fait pas de cryptographie.
+  state = Math.imul(state, 1664525) + 1013904223 | 0;
+  // Math.imul = multiplication entière 32 bits (évite les erreurs de précision flottante)
+  // | 0 = conversion forcée en entier signé 32 bits (tronque les bits au-delà de 32)
+
+  // RÔLE : Convertit l'entier 32 bits en flottant [0, 1[.
+  // POURQUOI : >>> 0 repasse en non signé (évite les valeurs négatives),
+  //            puis on divise par 2³² = 4294967296 pour obtenir un ratio.
+  return (state >>> 0) / 4294967296;
+}
+// Exposée globalement pour pouvoir être testée dans la console
+window._gardenRng = _gardenRng;
+
+/* ─── §0b : INIT JARDIN ──────────────────────────────────────────── */
+
+/**
+ * initGarden() — Initialise les éléments du jardin depuis la seed de la save
+ *
+ * RÔLE : Calcule UNE SEULE FOIS la liste de tous les éléments visuels du jardin
+ *        (fleurs, herbes, pierres, champignons) et la stocke dans window._gardenElements.
+ *        Les fonctions draw() ne font que lire ce tableau — elles n'appellent jamais
+ *        Math.random() ni ne calculent de positions.
+ *
+ * APPELÉE PAR : bootstrap() dans app.js, après loadDataFiles().
+ *
+ * SEED :
+ *        Si D.g.gardenSeed est null (premier lancement), on tire une seed via
+ *        Math.random() — c'est le SEUL endroit autorisé à utiliser Math.random()
+ *        dans tout le système jardin. On la sauvegarde immédiatement.
+ *        Aux lancements suivants, on relit la seed sauvegardée → jardin identique.
+ *
+ * GARDENSTATE :
+ *        D.g.gardenState mémorise l'âge et le variant de chaque élément entre sessions.
+ *        Si gardenState est vide (premier lancement ou reset), on le peuple ici.
+ *        Si gardenState existe déjà, on le respecte (âges conservés).
+ *
+ * STRUCTURE d'un élément dans window._gardenElements :
+ *        {
+ *          type:    string   — 'fleur' | 'herbe' | 'pierre' | 'champignon'
+ *          x:       number   — position X sur le canvas (0–195, multiple de PX)
+ *          y:       number   — position Y : fond (120–135) ou premier plan (155–170)
+ *          layer:   string   — 'fond' | 'premier_plan'
+ *          variant: number   — entier 0–3, détermine le style de dessin
+ *          age:     number   — jours de vie (0 = nouveau, maxAge = mature)
+ *          maxAge:  number   — durée de vie max en jours avant "remplacement"
+ *        }
+ */
+function initGarden() {
+  // ── Garde : window.D doit exister ───────────────────────────────
+  // POURQUOI : bootstrap() charge D avant d'appeler initGarden(),
+  //            mais on vérifie défensivement au cas où l'ordre changerait.
+  if (!window.D || !window.D.g) {
+    console.warn('[Garden] initGarden() appelée avant que D soit prêt — ignorée');
+    return;
+  }
+
+  // ── 1. Seed ──────────────────────────────────────────────────────
+  // RÔLE : Garantit qu'une seed existe. Si null → premier lancement → on tire
+  //        un entier entre 1 et 999999 via Math.random() (seul usage autorisé).
+  // POURQUOI : Math.floor évite les flottants, +1 évite la seed=0 (LCG dégénéré avec state=0).
+  if (window.D.g.gardenSeed === null || window.D.g.gardenSeed === undefined) {
+    window.D.g.gardenSeed = Math.floor(Math.random() * 999999) + 1;
+    save(); // RÔLE : Persiste la seed immédiatement — si l'app crashe avant la fin de bootstrap(),
+            //        on ne re-tire pas une nouvelle seed au prochain lancement.
+  }
+  const seed = window.D.g.gardenSeed;
+
+  // ── 2. Mise à jour du gardenDay ──────────────────────────────────
+  // RÔLE : Note la date du jour pour le système de cycles de vie.
+  // POURQUOI : Lors d'une future Phase 3, on pourra comparer gardenDay à today()
+  //            pour incrémenter les âges. Ici on l'initialise simplement.
+  if (!window.D.g.gardenDay) {
+    window.D.g.gardenDay = today();
+    save();
+  }
+
+  // ── 3. Définition des slots d'éléments ──────────────────────────
+  // RÔLE : Détermine combien d'éléments de chaque type peupleront le jardin.
+  // POURQUOI : 20 éléments max pour rester léger mobile.
+  //            Répartition : 8 fleurs + 5 herbes + 4 pierres + 3 champignons = 20.
+  //            Les types ont des zones Y différentes pour ne pas se superposer.
+  //
+  // Convention Y :
+  //   fond         → y entre 122 et 135  (juste derrière le Gotchi, dans la pelouse)
+  //   premier_plan → y entre 158 et 170  (devant le Gotchi, lisière basse du canvas)
+  //
+  // POURQUOI ces zones : le Gotchi se dessine vers y=130–155.
+  //   fond = derrière lui (y proche de la lisière sol=120).
+  //   premier_plan = devant lui (y plus bas = plus proche caméra).
+
+  const SLOTS = [
+    // Fleurs — fond (derrière le Gotchi) : 5 fleurs réparties sur la largeur
+    { type: 'fleur',      layer: 'fond',         count: 5,
+      xMin: 10,  xMax: 185, yMin: 122, yMax: 130, maxAge: 7  },
+    // Fleurs — premier plan (devant) : 3 fleurs en lisière basse
+    { type: 'fleur',      layer: 'premier_plan',  count: 3,
+      xMin: 10,  xMax: 185, yMin: 158, yMax: 165, maxAge: 7  },
+    // Herbes — fond : 3 brins dans la pelouse de fond
+    { type: 'herbe',      layer: 'fond',         count: 3,
+      xMin: 10,  xMax: 185, yMin: 124, yMax: 132, maxAge: 14 },
+    // Herbes — premier plan : 2 brins en lisière basse
+    { type: 'herbe',      layer: 'premier_plan',  count: 2,
+      xMin: 10,  xMax: 185, yMin: 160, yMax: 168, maxAge: 14 },
+    // Pierres — fond uniquement : 4 pierres dispersées
+    { type: 'pierre',     layer: 'fond',         count: 4,
+      xMin: 10,  xMax: 185, yMin: 125, yMax: 133, maxAge: 999 },
+    // Champignons — fond uniquement : 3 champignons discrets
+    { type: 'champignon', layer: 'fond',         count: 3,
+      xMin: 10,  xMax: 185, yMin: 123, yMax: 131, maxAge: 5  },
+  ];
+
+  // ── 4. Génération de la liste d'éléments ────────────────────────
+  // RÔLE : Parcourt les slots et génère chaque élément avec _gardenRng.
+  // POURQUOI : L'index global (idxTotal) est incrémenté à chaque appel _gardenRng
+  //            pour garantir que chaque tirage utilise un index unique → pas de
+  //            collision entre deux éléments différents du même type.
+  const elements = [];
+  let idxTotal = 0; // index global — monotone croissant sur tous les tirages
+
+  SLOTS.forEach(slot => {
+    for (let i = 0; i < slot.count; i++) {
+
+      // Position X : répartition sur xMin–xMax, arrondie à la grille PX (5px)
+      // POURQUOI Math.floor(…/PX)*PX : aligne sur la grille pixel art, même logique que px()
+      const xRaw  = slot.xMin + _gardenRng(seed, idxTotal++) * (slot.xMax - slot.xMin);
+      const x     = Math.floor(xRaw / PX) * PX;
+
+      // Position Y : tirage dans la bande verticale du slot
+      const yRaw  = slot.yMin + _gardenRng(seed, idxTotal++) * (slot.yMax - slot.yMin);
+      const y     = Math.floor(yRaw / PX) * PX;
+
+      // Variant : entier 0–3 pour le style de dessin (chaque fonction draw* l'interprète)
+      const variant = Math.floor(_gardenRng(seed, idxTotal++) * 4);
+
+      elements.push({
+        type:    slot.type,
+        layer:   slot.layer,
+        x,
+        y,
+        variant,
+        age:     0,      // sera incrémenté par le système de cycles (Phase 3)
+        maxAge:  slot.maxAge,
+      });
+    }
+  });
+
+  // ── 5. Persistance dans gardenState ─────────────────────────────
+  // RÔLE : Si gardenState est vide, on le remplit avec les éléments générés.
+  //        Si gardenState existe déjà, on relit les âges sauvegardés et on les
+  //        réapplique à la liste recalculée depuis la seed.
+  // POURQUOI : La seed garantit que x/y/variant sont identiques entre sessions.
+  //            Seul l'âge évolue — c'est la seule chose qu'on persiste vraiment.
+  if (!window.D.g.gardenState || window.D.g.gardenState.length === 0) {
+    // Premier lancement : gardenState vide → on persiste les éléments fraîchement générés
+    window.D.g.gardenState = elements.map(el => ({
+      age:    el.age,
+      maxAge: el.maxAge,
+    }));
+    save();
+  } else {
+    // Sessions suivantes : réapplique les âges sauvegardés sur la liste recalculée
+    // POURQUOI : On ne persiste que l'âge (index = position dans le tableau).
+    //            x/y/variant sont toujours recalculés depuis la seed → pas de dérive.
+    elements.forEach((el, i) => {
+      const saved = window.D.g.gardenState[i];
+      if (saved) {
+        el.age    = saved.age    ?? 0;
+        el.maxAge = saved.maxAge ?? el.maxAge;
+      }
+    });
+  }
+
+  // ── 6. Exposition sur window ─────────────────────────────────────
+  // RÔLE : Stocke la liste finale dans window._gardenElements.
+  // POURQUOI : Les fonctions draw* lisent directement window._gardenElements —
+  //            pas besoin de passer le tableau en paramètre à chaque frame.
+  window._gardenElements = elements;
+  console.log(`[Garden] initGarden() — seed=${seed}, ${elements.length} éléments générés`);
+}
+// Exposée globalement pour être appelée depuis bootstrap() dans app.js
+window.initGarden = initGarden;
+
+/* ─── §0c : SPRITES PIXEL ART ────────────────────────────────────── */
+
+/*
+   Convention commune à tous les sprites ci-dessous :
+   • p.fill() est toujours appelé AVANT px() — px() ne set pas la couleur.
+   • px(p, x, y, w, h) aligne sur la grille PX=5 (voir envs.js §1).
+   • tc(n, couleur) applique l'assombrissement nuit — à utiliser sur toutes
+     les couleurs de végétation/décor pour rester cohérent avec le reste de la scène.
+   • x, y = coin supérieur gauche du sprite (coordonnées canvas 0–200).
+   • variant = entier 0–3 tiré par initGarden() — détermine variante de forme ou couleur.
+   • n = ratio nuit 0 (jour) → 1 (nuit pleine), passé depuis draw*().
+*/
+
+/**
+ * drawFleur(p, x, y, variant, theme, n)
+ * RÔLE : Dessine une fleur pixel art en 4 variantes de couleur.
+ *        Reprend la structure de drawFl() (envs.js) — tige + pétales + cœur —
+ *        mais avec 4 palettes différentes selon variant.
+ * POURQUOI 4 variantes : donne de la diversité visuelle sans complexifier la forme.
+ *        La forme reste identique (3 pétales en croix) pour garder la cohérence avec drawFl().
+ *
+ * @param {Object} p       - Instance p5.js
+ * @param {number} x       - Position X (coin sup. gauche)
+ * @param {number} y       - Position Y (base de la tige)
+ * @param {number} variant - 0–3 : couleur des pétales
+ * @param {Object} theme   - Thème actif (pour le cœur en couleur thème)
+ * @param {number} n       - Ratio nuit 0–1
+ */
+function drawFleur(p, x, y, variant, theme, n) {
+  // Palette des pétales selon variant (4 teintes douces, jardin)
+  const PETALES = ['#e87878', '#e8c878', '#c878e8', '#78c8e8']; // rose, jaune, mauve, bleu ciel
+  const colPetale = PETALES[variant % 4];
+
+  // Tige — vert herbe, même couleur que drawFl()
+  p.fill(tc(n, '#58a058'));
+  px(p, x, y, PX, PX * 2); // tige : 1×2 PX
+
+  // Pétales en croix (gauche + droite + haut) — identique à drawFl()
+  p.fill(tc(n, colPetale));
+  px(p, x - PX, y - PX,  PX, PX); // pétale gauche
+  px(p, x + PX, y - PX,  PX, PX); // pétale droit
+  px(p, x,      y - PX*2, PX, PX); // pétale haut
+
+  // Cœur central — couleur jaune chaude, légèrement assombrie la nuit
+  p.fill(tc(n, '#f0d878'));
+  px(p, x, y - PX, PX, PX);
+}
+
+/**
+ * drawHerbe(p, x, y, variant, n)
+ * RÔLE : Dessine un brin d'herbe pixel art en 4 silhouettes.
+ *        Discret — max 3 PX de haut — pour ne pas concurrencer les fleurs.
+ * POURQUOI 4 variants de FORME (pas de couleur) :
+ *        L'herbe gagne en naturel avec des silhouettes légèrement différentes
+ *        (brin droit, brin penché gauche, brin penché droit, brin court).
+ *
+ * @param {Object} p       - Instance p5.js
+ * @param {number} x       - Position X
+ * @param {number} y       - Position Y (base du brin)
+ * @param {number} variant - 0–3 : silhouette du brin
+ * @param {number} n       - Ratio nuit 0–1
+ */
+function drawHerbe(p, x, y, variant, n) {
+  // Deux tons de vert pour donner un peu de volume
+  const VERT_CLAIR = '#70b858';
+  const VERT_FONCE = '#509040';
+
+  p.fill(tc(n, VERT_CLAIR));
+
+  if (variant === 0) {
+    // Brin droit : 1 pixel large, 3 PX de haut
+    px(p, x, y,        PX, PX); // base
+    px(p, x, y - PX,   PX, PX); // milieu
+    px(p, x, y - PX*2, PX, PX); // pointe
+  } else if (variant === 1) {
+    // Brin penché gauche : décale la pointe d'1 PX vers la gauche
+    px(p, x,      y,        PX, PX); // base
+    px(p, x,      y - PX,   PX, PX); // milieu
+    px(p, x - PX, y - PX*2, PX, PX); // pointe décalée gauche
+  } else if (variant === 2) {
+    // Brin penché droit : décale la pointe d'1 PX vers la droite
+    px(p, x,      y,        PX, PX); // base
+    px(p, x,      y - PX,   PX, PX); // milieu
+    px(p, x + PX, y - PX*2, PX, PX); // pointe décalée droite
+  } else {
+    // Brin court épais : 2 PX de large, 2 PX de haut (touffe basse)
+    px(p, x, y,      PX*2, PX); // base large
+    px(p, x, y - PX, PX,   PX); // pointe simple
+  }
+
+  // Ombre à la base — ton foncé pour ancrer le brin au sol
+  p.fill(tc(n, VERT_FONCE));
+  px(p, x, y, PX, PX); // repasse sur la base en plus sombre
+}
+
+/**
+ * drawPierre(p, x, y, variant, n)
+ * RÔLE : Dessine une pierre pixel art en 4 tailles/formes.
+ *        Les pierres sont des éléments permanents (maxAge:999) — elles structurent
+ *        visuellement le jardin comme des repères stables.
+ * POURQUOI 4 variants de TAILLE :
+ *        Petite, moyenne, large, plate — donne de la profondeur sans surcharger.
+ *
+ * @param {Object} p       - Instance p5.js
+ * @param {number} x       - Position X
+ * @param {number} y       - Position Y (base de la pierre)
+ * @param {number} variant - 0–3 : taille et forme
+ * @param {number} n       - Ratio nuit 0–1
+ */
+function drawPierre(p, x, y, variant, n) {
+  const GRIS_CLAIR  = '#b0b0b0';
+  const GRIS_FONCE  = '#808080';
+  const BLANC_REFLET = '#d8d8d8'; // reflet de lumière sur le dessus
+
+  if (variant === 0) {
+    // Petite pierre ronde : 2×2 PX, reflet sur le coin haut-gauche
+    p.fill(tc(n, GRIS_FONCE));
+    px(p, x,      y,      PX*2, PX*2); // corps
+    p.fill(tc(n, BLANC_REFLET));
+    px(p, x,      y,      PX,   PX);   // reflet haut-gauche
+
+  } else if (variant === 1) {
+    // Pierre moyenne arrondie : 3×2 PX
+    p.fill(tc(n, GRIS_FONCE));
+    px(p, x,      y,       PX*3, PX*2); // corps
+    p.fill(tc(n, GRIS_CLAIR));
+    px(p, x,      y,       PX*2, PX);   // dessus plus clair
+    p.fill(tc(n, BLANC_REFLET));
+    px(p, x,      y,       PX,   PX);   // reflet coin
+
+  } else if (variant === 2) {
+    // Pierre large plate : 4×1 PX — très plate, rase le sol
+    p.fill(tc(n, GRIS_FONCE));
+    px(p, x,      y,      PX*4, PX);   // corps plat
+    p.fill(tc(n, BLANC_REFLET));
+    px(p, x,      y,      PX*2, PX);   // dessus lumineux (moitié gauche)
+
+  } else {
+    // Pierre anguleuse : 2×3 PX — plus haute que large, forme de rocher
+    p.fill(tc(n, GRIS_FONCE));
+    px(p, x,      y,       PX*2, PX*3); // corps haut
+    p.fill(tc(n, GRIS_CLAIR));
+    px(p, x,      y,       PX*2, PX);   // dessus clair
+    p.fill(tc(n, BLANC_REFLET));
+    px(p, x,      y,       PX,   PX);   // reflet coin
+  }
+}
+
+/**
+ * drawChampignon(p, x, y, variant, n)
+ * RÔLE : Dessine un champignon pixel art en 4 variantes de couleur de chapeau.
+ *        Structure fixe : pied blanc + chapeau coloré avec points blancs.
+ *        Les champignons sont éphémères (maxAge:5) — ils apparaissent et disparaissent.
+ * POURQUOI des points blancs : signature visuelle immédiatement lisible
+ *        même à 5×5px logiques (amanite, référence universelle).
+ *
+ * @param {Object} p       - Instance p5.js
+ * @param {number} x       - Position X
+ * @param {number} y       - Position Y (base du pied)
+ * @param {number} variant - 0–3 : couleur du chapeau
+ * @param {number} n       - Ratio nuit 0–1
+ */
+function drawChampignon(p, x, y, variant, n) {
+  // Palette des chapeaux : rouge, orange, brun, violet
+  const CHAPEAUX = ['#d04040', '#d08030', '#806040', '#8040a0'];
+  const colChapeau = CHAPEAUX[variant % 4];
+
+  // Pied — blanc cassé, 1×2 PX
+  p.fill(tc(n, '#e8e0d0'));
+  px(p, x, y,      PX,   PX);    // base du pied
+  px(p, x, y - PX, PX,   PX);    // haut du pied
+
+  // Chapeau — 3×2 PX, déborde d'1 PX de chaque côté du pied
+  p.fill(tc(n, colChapeau));
+  px(p, x - PX, y - PX*2, PX*3, PX*2); // corps du chapeau (large)
+  px(p, x,      y - PX*3, PX,   PX);   // dôme central (1 PX plus haut)
+
+  // Points blancs — 1 sur le dôme, 1 sur le bord gauche du chapeau
+  p.fill(tc(n, '#ffffff'));
+  px(p, x,      y - PX*3, PX, PX); // point dôme (par-dessus le chapeau)
+  p.fill(tc(n, '#f0f0f0')); // légèrement grisé pour les points sur le bord
+  px(p, x - PX, y - PX*2, PX, PX); // point bord gauche
+}
 
 /* ─── §1 : FOND ──────────────────────────────────────────────────── */
 

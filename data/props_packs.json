@@ -79,6 +79,7 @@
       "cout": 0,
       "pack": "pack_printemps",
       "motion": "fall",
+      "instances": 5,
       "pxSize": 2,
       "palette": ["transparent","#ffb7c5","#ff85a1","#fff0f5"],
       "pixels": [

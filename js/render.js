@@ -879,28 +879,43 @@ function drawPropsLayer(p, g, envActif, mode) {
   if (!g.props) return; // aucune prop à dessiner — sortie rapide
 
   if (mode === 'ambiance') {
-    // RÔLE : Props flottantes (nuages, bulles, feuilles…) — animées et répétées 3×
+    // RÔLE : Props flottantes animées — nombre d'instances et espacement dynamiques.
+    // POURQUOI : L'ancien code répétait toujours 3× avec des offsets fixes (i*70px).
+    //            Avec un paramètre `instances` dans le prop, on adapte l'espacement
+    //            à la largeur du canvas pour que les particules soient toujours bien
+    //            réparties : peu d'instances → grandes zones de vide, beaucoup → dense.
     g.props
       .filter(pr => pr.actif && pr.type === 'ambiance' && (pr.env === envActif || !pr.env))
       .forEach(prop => {
         const def = getPropDef(prop.id);
         if (!def?.pixels) return;
-        const motion = def.motion || 'drift';
-        for (let i = 0; i < 3; i++) {
+        const motion    = def.motion    || 'drift';
+        const instances = def.instances || 3; // RÔLE : nombre de particules simultanées (défaut 3 pour compat)
+
+        // RÔLE : Espacement horizontal calculé depuis CS pour couvrir tout le canvas.
+        // POURQUOI : Avec des offsets fixes (i*70), 5 instances se chevauchaient.
+        //            En divisant CS par instances, chaque particule a sa propre zone.
+        const gapX = CS / instances;
+
+        // RÔLE : Espacement vertical calculé depuis la hauteur utile (130px environ).
+        // POURQUOI : Décaler les particules en Y évite qu'elles arrivent toutes en même temps.
+        const gapY = 130 / instances;
+
+        for (let i = 0; i < instances; i++) {
           let ax, ay;
           if (motion === 'drift') {
-            ax = CS - ((p.frameCount * 2 + i * 70) % (CS + 20));
-            ay = 20 + i * 35 + Math.sin(p.frameCount * .05 + i) * 8;
+            ax = CS - ((p.frameCount * 2 + i * gapX) % (CS + 20));
+            ay = 20 + i * gapY + Math.sin(p.frameCount * .05 + i) * 8;
           } else if (motion === 'fall') {
-            ax = 20 + i * 70 + Math.sin(p.frameCount * .04 + i) * 5;
-            ay = (p.frameCount * 2 + i * 40) % 130;
+            ax = (gapX * 0.5) + i * gapX + Math.sin(p.frameCount * .04 + i) * 5; // centré dans chaque zone
+            ay = (p.frameCount * 2 + i * gapY) % 130;
           } else if (motion === 'float') {
-            ax = 30 + i * 65 + Math.sin(p.frameCount * .06 + i) * 6;
-            ay = 110 - ((p.frameCount + i * 45) % 120);
+            ax = (gapX * 0.3) + i * gapX + Math.sin(p.frameCount * .06 + i) * 6;
+            ay = 110 - ((p.frameCount + i * gapY) % 120);
           } else if (motion === 'sparkle') {
             if ((p.frameCount + i * 13) % 20 < 10) continue;
-            ax = 15 + i * 75 + Math.sin(p.frameCount * .1 + i) * 10;
-            ay = 15 + i * 35 + Math.cos(p.frameCount * .08 + i) * 8;
+            ax = (gapX * 0.2) + i * gapX + Math.sin(p.frameCount * .1 + i) * 10;
+            ay = 15 + i * gapY + Math.cos(p.frameCount * .08 + i) * 8;
           }
           drawProp(p, def, ax, ay);
         }

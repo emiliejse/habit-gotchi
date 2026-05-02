@@ -596,8 +596,8 @@ function renderPropThemes() {
   const el = document.getElementById('prop-themes-tags');
   if (!el) return;
   // RÔLE : Met à jour le nom du Gotchi dans le titre du <summary>.
-  const nameEl = document.getElementById('inspiration-gotchi-name');
-  if (nameEl) nameEl.textContent = window.D.g.name || 'ton Gotchi';
+  const summaryEl = document.getElementById('inspiration-summary');
+  if (summaryEl) summaryEl.textContent = `✨ Inspiration de ${window.D.g.name || 'ton Gotchi'}`;
   const themes = window.D.g.propThemes || PROP_THEMES_DEFAULT;
   el.innerHTML = themes.map((t, i) => `
     <span onclick="removePropTheme(${i})" style="

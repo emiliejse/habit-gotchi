@@ -214,8 +214,12 @@ function _atelierRenderCanvas() {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // ── Fond blanc ──
-  ctx.fillStyle = '#ffffff';
+  // ── Fond coloré : frameBg du thème actif ──
+  // POURQUOI : Un fond blanc se confond avec les cellules vides — on utilise la couleur
+  //            frameBg du thème (couleur de fond du cadre mural dans la chambre) pour que
+  //            les zones non peintes soient visibles et cohérentes avec le rendu final.
+  const thèmeFond = getEnvTheme(window.D.g.envTheme ?? 'pastel');
+  ctx.fillStyle = thèmeFond.frameBg ?? '#f0ece4';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // ── Pixels colorés ──
@@ -551,7 +555,9 @@ function _atelierVignette(tb, W, H) {
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = '#ffffff';
+  // POURQUOI : même fond que le canvas éditeur — cohérence galerie/éditeur/chambre.
+  const thèmeFond = getEnvTheme(window.D.g.envTheme ?? 'pastel');
+  ctx.fillStyle = thèmeFond.frameBg ?? '#f0ece4';
   ctx.fillRect(0, 0, W, H);
 
   for (let row = 0; row < ATELIER_ROWS; row++) {

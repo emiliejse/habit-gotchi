@@ -58,7 +58,7 @@ let _poopIntervalId   = null;
 let _bubbleIntervalId = null; // RÔLE : Rotation automatique des bulles passives (updBubbleNow toutes les 45s)
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v5.41'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v5.42'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -1515,8 +1515,18 @@ function initBaseProps() {
    ============================================================ */
 async function fetchMeteo() {
   try {
-    const METEO_LAT = window.USER_CONFIG?.meteo?.lat ?? window.D?.g?.lat ?? 43.6047;
-    const METEO_LON = window.USER_CONFIG?.meteo?.lon ?? window.D?.g?.lng ?? 1.4442;
+    // RÔLE : Résolution lat/lon avec 3 niveaux de fallback : USER_CONFIG → D.g → DEFAULT.
+    // POURQUOI le warn : si on retombe sur DEFAULT_METEO_LAT/LON, c'est que la config est
+    //          incomplète (cas typique : Alexia qui n'a pas rempli son user_config.meteo).
+    //          Le warn rend ce silence visible au moins en console.
+    const cfgLat   = window.USER_CONFIG?.meteo?.lat;
+    const cfgLon   = window.USER_CONFIG?.meteo?.lon;
+    const fallback = (cfgLat == null || cfgLon == null);
+    const METEO_LAT = cfgLat ?? window.D?.g?.lat ?? window.HG_CONFIG?.GAMEPLAY?.DEFAULT_METEO_LAT ?? 43.6047;
+    const METEO_LON = cfgLon ?? window.D?.g?.lng ?? window.HG_CONFIG?.GAMEPLAY?.DEFAULT_METEO_LON ?? 1.4442;
+    if (fallback && !window.D?.g?.lat) {
+      console.warn(`[Meteo] USER_CONFIG.meteo absent — fallback sur Toulouse (${METEO_LAT}, ${METEO_LON}). Définir data/user_config.json → meteo.lat/lon pour personnaliser.`);
+    }
     const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${METEO_LAT}&longitude=${METEO_LON}&current_weather=true&timezone=Europe/Paris`);
     const d = await r.json();
     window.meteoData = d.current_weather;
@@ -1551,8 +1561,9 @@ async function fetchMeteo() {
 }
 
 async function fetchSolarPhases() {
-  const lat = window.USER_CONFIG?.meteo?.lat ?? window.D.g.lat;
-  const lng = window.USER_CONFIG?.meteo?.lon ?? window.D.g.lng;
+  // RÔLE : Mêmes fallbacks que fetchMeteo() — sans warn (déjà émis là-bas au même boot).
+  const lat = window.USER_CONFIG?.meteo?.lat ?? window.D.g.lat ?? window.HG_CONFIG?.GAMEPLAY?.DEFAULT_METEO_LAT;
+  const lng = window.USER_CONFIG?.meteo?.lon ?? window.D.g.lng ?? window.HG_CONFIG?.GAMEPLAY?.DEFAULT_METEO_LON;
   if (!lat || !lng) return;
   if (window.D.g.solarPhases?.fetchedDate === today()) return;
   try {
@@ -2108,15 +2119,24 @@ async function bootstrap() {
   await loadUserConfig(); // Charge la config perso avant tout le reste
   loadDataFiles().then(() => {
     initBaseProps();
-    // RÔLE : Force le surnom et le nom depuis user_config.json à chaque démarrage.
-    // POURQUOI : defs() ne s'applique qu'au premier lancement.
-    //            Sans ça, les utilisatrices existantes garderaient l'ancienne valeur vide.
+    // RÔLE : Initialise userNickname / userName / gotchiName depuis user_config.json
+    //        UNIQUEMENT si la valeur correspondante de D.g est encore vide.
+    // POURQUOI le guard "vide" : la modification depuis Réglages doit être respectée.
+    //          Sans ce guard, le rename via l'UI Réglages serait écrasé au prochain reload.
+    //          Conséquence assumée : pour changer un nom déjà personnalisé via user_config,
+    //          il faut soit éditer le nom dans Réglages, soit reset l'app (defs() repose tout).
     if (window.USER_CONFIG?.identity && window.D?.g) {
-      if (window.USER_CONFIG.identity.userNickname) window.D.g.userNickname = window.USER_CONFIG.identity.userNickname;
-      if (window.USER_CONFIG.identity.userName)     window.D.g.userName     = window.USER_CONFIG.identity.userName;
-      // RÔLE : N'applique gotchiName que si l'utilisatrice n'a pas encore personnalisé le nom
-      // POURQUOI : évite d'écraser le nom choisi dans le wizard à chaque mise à jour
-      if (window.USER_CONFIG.identity.gotchiName && window.D.g.name === 'Petit·e Gotchi') window.D.g.name = window.USER_CONFIG.identity.gotchiName;
+      if (window.USER_CONFIG.identity.userNickname && !window.D.g.userNickname) {
+        window.D.g.userNickname = window.USER_CONFIG.identity.userNickname;
+      }
+      if (window.USER_CONFIG.identity.userName && !window.D.g.userName) {
+        window.D.g.userName = window.USER_CONFIG.identity.userName;
+      }
+      // RÔLE : N'applique gotchiName que si l'utilisatrice n'a pas encore personnalisé le nom.
+      // POURQUOI : évite d'écraser le nom choisi dans le wizard à chaque mise à jour.
+      if (window.USER_CONFIG.identity.gotchiName && window.D.g.name === 'Petit·e Gotchi') {
+        window.D.g.name = window.USER_CONFIG.identity.gotchiName;
+      }
       save();
     }
     if (typeof updBadgeBoutique === 'function') updBadgeBoutique();

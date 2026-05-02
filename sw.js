@@ -4,7 +4,7 @@
    pour forcer le rechargement chez tous les utilisateurs.
    ============================================================ */
 
-const CACHE_VERSION = 'v5.41';  // ⚠️ SYNC → app.js ligne 1 : window.APP_VERSION
+const CACHE_VERSION = 'v5.42';  // ⚠️ SYNC → app.js ligne 1 : window.APP_VERSION
 
 const ASSETS = [
   './',
@@ -23,6 +23,7 @@ const ASSETS = [
   './js/app.js',
   './js/render.js',
   './js/envs.js',
+  './js/garden.js',
   './js/render-sprites.js',
   './js/ui-core.js',
   './js/ui-habs.js',
@@ -31,6 +32,9 @@ const ASSETS = [
   './js/ui-journal.js',
   './js/ui-settings.js',
   './js/ui-agenda.js',
+  './js/ui-atelier.js',
+  './js/ui-game.js',
+  './js/games/ui-cristaux.js',
   './js/ui-nav.js',
 
   // Data (JSON — les plus importants à versionner)

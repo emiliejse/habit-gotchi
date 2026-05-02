@@ -391,6 +391,13 @@ const HA_ARMS_UP    = 4; // bras levés adulte (joie intense)
 // ne permet de calculer une durée personnalisée.
 const CYCLE_DEFAULT_DURATION = 28;
 
+// RÔLE : Coordonnées GPS de fallback si USER_CONFIG.meteo est absent ou incomplet.
+// POURQUOI Toulouse : ville d'Émilie (config principale). Pour Alexia, USER_CONFIG.meteo
+//          DOIT être défini dans data/user_config.json — sinon elle verrait silencieusement
+//          la météo de Toulouse. fetchMeteo() warn dans la console si ce fallback est utilisé.
+const DEFAULT_METEO_LAT = 43.6047; // Toulouse
+const DEFAULT_METEO_LON = 1.4442;
+
 // RÔLE : Expose toutes les constantes sous un namespace global unique.
 // POURQUOI : Évite la pollution de window et les collisions de noms
 //            si un autre script déclare les mêmes identifiants.
@@ -452,6 +459,10 @@ window.HG_CONFIG = {
 
     // Cycle menstruel
     CYCLE_DEFAULT_DURATION,
+
+    // Météo (fallback si USER_CONFIG.meteo absent)
+    DEFAULT_METEO_LAT,
+    DEFAULT_METEO_LON,
 
     // Crottes
     POOP_MIN_DELAY_MS,

@@ -1763,48 +1763,65 @@ input[type="time"] {
 
 /* ─── SYSTÈME 5 : CANVAS PLEIN ÉCRAN ─────────────────────────────── */
 
-/* RÔLE : Fond semi-transparent derrière le canvas — ferme le plein écran au tap */
-/* POURQUOI z-index 799 : juste sous le canvas (800), au-dessus de #tablet-overlay (400) */
-.canvas-overlay {
+/* RÔLE : Overlay vertical couvrant tout l'écran — flex column, canvas en haut, infos en bas */
+/* POURQUOI z-index 800 : entre #tablet-overlay (400) et #etats-overlay (1000).
+   display:none par défaut — injecté et activé dynamiquement par openCanvasFullscreen() */
+.canvas-fullscreen-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.82);
-  z-index: 799;
-  display: none;          /* caché par défaut — activé par openCanvasFullscreen() */
+  z-index: 800;
+  background: #0a0a0a;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: env(safe-area-inset-top, 0px);
 }
-.canvas-overlay.open { display: block; }
-
-/* RÔLE : Positionne le canvas en plein écran via CSS transform:scale uniquement */
-/* POURQUOI : On ne resize pas p5 — le canvas reste à 200 unités logiques.
-              transform:scale agrandit le rendu CSS sans toucher au moteur p5.
-              image-rendering:pixelated conserve le style pixel art à grande taille. */
-.canvas-fullscreen {
-  position: fixed;
-  z-index: 800;           /* entre #tablet-overlay (400) et #etats-overlay (1000) */
-  /* Centrage : les 50%/50% + translate(-50%,-50%) centrent quelle que soit la taille native */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(1); /* scale calculé par JS au moment de l'ouverture */
-  transform-origin: center center;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  display: none;          /* état par défaut — non visible */
+/* RÔLE : Affiche l'overlay quand openCanvasFullscreen() l'active */
+.canvas-fullscreen-overlay.open {
+  display: flex;
 }
-/* RÔLE : Classe activée par openCanvasFullscreen() pour afficher le canvas en plein écran */
-.canvas-fullscreen.open { display: block; }
 
-/* RÔLE : Bouton ✕ flottant pour fermer le plein écran */
-/* POURQUOI z-index 801 : doit passer au-dessus du canvas (800) */
-.canvas-close-btn {
-  position: fixed;
-  top: max(16px, var(--sat));   /* respecte l'encoche iPhone */
-  right: 16px;
+/* RÔLE : Wrapper autour du canvas — flex 0 0 auto pour ne pas s'étirer sur la hauteur */
+/* POURQUOI : le canvas est centré horizontalement dans ce wrapper, sans débordement */
+.canvas-fs-wrap {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  /* POURQUOI padding-top 12px : espace visuel au-dessus du canvas, sous le bouton ✕ */
+  padding-top: 12px;
+}
+
+/* RÔLE : Zone d'infos contextuelles sous le canvas — visible uniquement pour l'env jardin */
+/* POURQUOI flex:1 : prend tout l'espace vertical restant sous le canvas */
+.canvas-fs-info {
+  flex: 1;
+  padding: 16px;
+  color: #e0d8f0;
+  font-size: 13px;
+  line-height: 1.7;
+  text-align: center;
+  max-width: 320px;
+  /* Caveat si disponible — dégradation gracieuse sur cursive si absente */
+  font-family: 'Caveat', cursive;
+  /* POURQUOI overflow hidden : pas de scroll — max 4 lignes par design */
+  overflow: hidden;
+}
+
+/* RÔLE : Bouton ✕ de fermeture — positionné en absolu dans l'overlay */
+/* POURQUOI z-index 801 : passe au-dessus du canvas dans l'overlay */
+.canvas-fs-close {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top, 12px));
+  right: 12px;
   z-index: 801;
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
   color: #fff;
   font-size: 18px;
   cursor: pointer;
@@ -1813,5 +1830,5 @@ input[type="time"] {
   justify-content: center;
   transition: background 0.15s;
 }
-.canvas-close-btn:hover  { background: rgba(0, 0, 0, 0.8); }
-.canvas-close-btn:active { transform: scale(0.9); }
+.canvas-fs-close:hover  { background: rgba(255, 255, 255, 0.3); }
+.canvas-fs-close:active { transform: scale(0.9); }

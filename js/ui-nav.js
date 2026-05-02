@@ -204,100 +204,222 @@ function go(t) {
 /* ─── PLEIN ÉCRAN CANVAS ──────────────────────────────────── */
 
 /**
- * RÔLE : Calcule le facteur scale pour que le canvas remplisse au mieux le viewport.
- * POURQUOI : Le canvas p5 a une taille CSS fixe (généralement = CS*PX pixels).
- *            On veut l'agrandir au maximum sans dépasser l'écran, en gardant le ratio carré.
- *            On prend le min de (largeur / tailleCanvas) et (hauteur / tailleCanvas).
+ * RÔLE : Construit le HTML du bloc d'infos contextuelles jardin pour l'overlay plein écran.
+ * POURQUOI : Centralisé ici plutôt qu'inline dans openCanvasFullscreen() pour rester lisible
+ *            et pouvoir évoluer indépendamment (nouvelles métriques, nouveaux envs…).
+ *
+ * Sources de données :
+ *   window._gardenElements — tableau des éléments visuels (type, age, maxAge)
+ *   window.D.g.gardenState — état persisté (age, maxAge) par index
+ *   window.D.g.gardenSeed  — seed unique du jardin
+ *   window.D.firstLaunch   — date du premier lancement (racine de D)
+ *   window.D.log           — historique habitudes (racine de D, tableau d'IDs par date)
+ *   window.D.g.meteoData   — données météo du jour
+ *
+ * @returns {string} HTML à injecter dans .canvas-fs-info,
+ *                   ou chaîne vide si l'env actif n'est pas 'jardin'.
  */
-function _calcCanvasScale(canvasEl) {
-  // Taille CSS réelle du canvas tel qu'il est rendu dans .tama-screen
-  const rect = canvasEl.getBoundingClientRect();
-  const size = Math.min(rect.width, rect.height); // carré → les deux sont identiques normalement
+function _buildGardenInfo() {
+  const g = window.D && window.D.g;
+  if (!g) return '';
 
-  // Viewport disponible (on laisse 16px de marge de chaque côté)
-  const vw = window.innerWidth  - 32;
-  const vh = window.innerHeight - 32;
+  // RÔLE : Bloc vide si l'env actif n'est pas jardin — la feature plein écran reste
+  //        fonctionnelle dans tous les envs, mais les infos ne sont affichées que pour jardin.
+  if (g.activeEnv !== 'jardin') return '';
 
-  // POURQUOI Math.min : on veut que le canvas tienne EN ENTIER dans les deux dimensions
-  return Math.min(vw / size, vh / size);
+  const lines = [];
+
+  // ── Ligne 1 : Éléments vivants + états ────────────────────────────
+  // RÔLE : Lit window._gardenElements (tableau généré par initGarden()) pour compter
+  //        et qualifier les éléments. L'état se dérive de age/maxAge car il n'y a pas
+  //        de champ .state — mature = age ≥ 70% de maxAge, jeune = age < 3 jours.
+  const elements = window._gardenElements || [];
+  const total    = elements.length;
+
+  if (total > 0) {
+    // RÔLE : Compte les éléments en fleur (matures) et ceux qui fanent (très vieux)
+    const enFleur = elements.filter(e => e.age >= Math.floor((e.maxAge || 10) * 0.7)).length;
+    const fanent  = elements.filter(e => e.age >= (e.maxAge || 10) - 1).length;
+
+    let ligne = `${total} élément${total > 1 ? 's' : ''} vivant${total > 1 ? 's' : ''}`;
+    if (enFleur > 0) ligne += ` · ${enFleur} en fleur`;
+    if (fanent  > 0) ligne += ` · ${fanent} fane${fanent > 1 ? 'nt' : ''}`;
+    lines.push(ligne);
+  } else {
+    lines.push('Le jardin sommeille encore…');
+  }
+
+  // ── Ligne 2 : Influence météo ──────────────────────────────────────
+  // RÔLE : Affiche un message météo si meteoData est disponible dans D.g
+  // POURQUOI : meteoData est renseigné par app.js via fetchMeteo() — peut être null
+  const meteo = g.meteoData;
+  if (meteo && meteo.desc) {
+    const desc = (meteo.desc || '').toLowerCase();
+    let icon = '🌤';
+    if (desc.includes('pluie') || desc.includes('rain'))    icon = '🌧';
+    if (desc.includes('neige') || desc.includes('snow'))    icon = '❄️';
+    if (desc.includes('orage') || desc.includes('storm'))   icon = '⛈';
+    if (desc.includes('nuage') || desc.includes('cloud'))   icon = '☁️';
+    if (desc.includes('soleil') || desc.includes('sun') || desc.includes('clear')) icon = '☀️';
+    if (desc.includes('brouil') || desc.includes('fog'))    icon = '🌫';
+
+    // RÔLE : Message d'influence — sobre, contextuel, pas de liste
+    // POURQUOI rain > 0 : meteoData.rain est le cumul de pluie mm sur 24h (API météo)
+    const msgMeteo = meteo.rain > 0
+      ? `${icon} Pluie récente · les champignons poussent`
+      : `${icon} ${escape(meteo.desc)}`;
+    lines.push(msgMeteo);
+  }
+
+  // ── Ligne 3 : Influence habitudes ─────────────────────────────────
+  // RÔLE : Compte les habitudes cochées aujourd'hui depuis D.log (racine de D, pas D.g)
+  // POURQUOI D.log[td] est un tableau d'IDs (strings) — .length donne le nombre de coches
+  const todayKey = typeof today === 'function' ? today() : null;
+  const habsDone = todayKey && window.D.log && window.D.log[todayKey]
+    ? window.D.log[todayKey].length
+    : 0;
+
+  if (habsDone >= 4) {
+    lines.push(`Tu as coché ${habsDone} intentions · le jardin est épanoui`);
+  } else if (habsDone > 0) {
+    lines.push(`${habsDone} intention${habsDone > 1 ? 's' : ''} cochée${habsDone > 1 ? 's' : ''} aujourd'hui`);
+  }
+  // POURQUOI silence si 0 : pas de culpabilisation
+
+  // ── Ligne 4 : Identité du jardin ──────────────────────────────────
+  // RÔLE : Seed + date de première session — donne une identité unique et permanente au jardin
+  // POURQUOI firstLaunch est à la racine de D (pas D.g) — vérifié dans app.js defs()
+  const seed = g.gardenSeed != null ? g.gardenSeed % 9999 : null;
+  const born = window.D.firstLaunch
+    ? new Date(window.D.firstLaunch).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : null;
+
+  if (seed != null && born) {
+    lines.push(`Jardin nº${seed} · né le ${born}`);
+  }
+
+  // RÔLE : Assemble les lignes en HTML séparées par <br> — pas de liste à puces
+  // POURQUOI escape() sur chaque ligne : les strings peuvent contenir des données utilisateur
+  return lines.map(l => escape(l)).join('<br>');
 }
 
 /**
- * RÔLE : Ouvre le canvas p5 en mode plein écran.
+ * RÔLE : Ouvre le canvas p5 en mode plein écran via un overlay vertical injecté dynamiquement.
  * POURQUOI : Permet de voir le gotchi agrandi sans recalculer la boucle p5.
- *            L'agrandissement est purement CSS (transform:scale) — le canvas reste à sa taille logique.
+ *            L'agrandissement est purement CSS (transform:scale) — le canvas reste à CS logiques.
  *
  * Séquence :
- * 1. Récupère le canvas p5 dans .tama-screen
- * 2. Calcule le scale optimal
- * 3. Applique .canvas-fullscreen sur le canvas + le scale en style inline
- * 4. Ouvre l'overlay de fond
- * 5. Injecte le bouton ✕ dans le DOM
- * 6. Bloque le scroll iOS (lockScroll)
+ * 1. Crée l'overlay .canvas-fullscreen-overlay et l'injecte dans <body>
+ * 2. Déplace le canvas p5 dans le wrapper .canvas-fs-wrap de l'overlay
+ *    (déplacement DOM — pas clone — pour que p5 continue de dessiner sur le même élément)
+ * 3. Calcule et applique le scale CSS optimal
+ * 4. Génère le bloc infos jardin via _buildGardenInfo() (vide si env != jardin)
+ * 5. Bloque le scroll iOS (lockScroll)
  */
 function openCanvasFullscreen() {
   const canvas = document.querySelector('.tama-screen canvas');
   if (!canvas) return; // sécurité si p5 n'a pas encore créé le canvas
 
-  const overlay = document.getElementById('canvas-overlay');
-  if (!overlay) return;
+  // RÔLE : Évite d'ouvrir deux overlays si déjà ouvert
+  if (document.getElementById('canvas-fs-overlay')) return;
 
-  // RÔLE : Calcule et applique le scale CSS
-  const scale = _calcCanvasScale(canvas);
-  canvas.classList.add('canvas-fullscreen', 'open');
-  canvas.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  // ── Création de l'overlay ────────────────────────────────────────
+  const overlay     = document.createElement('div');
+  overlay.id        = 'canvas-fs-overlay';
+  overlay.className = 'canvas-fullscreen-overlay';
 
-  // RÔLE : Affiche le fond noir
-  overlay.classList.add('open');
-
-  // RÔLE : Injecte le bouton ✕ (retiré à la fermeture — pas de doublon possible)
+  // RÔLE : Bouton ✕ positionné en absolu dans l'overlay
   const closeBtn = document.createElement('button');
-  closeBtn.className   = 'canvas-close-btn';
+  closeBtn.className   = 'canvas-fs-close';
   closeBtn.textContent = '✕';
   closeBtn.setAttribute('aria-label', 'Fermer le plein écran');
-  closeBtn.id          = 'canvas-close-btn';
   closeBtn.onclick     = closeCanvasFullscreen;
-  document.body.appendChild(closeBtn);
 
-  // RÔLE : Ferme aussi si on tape sur le fond noir
-  overlay.onclick = closeCanvasFullscreen;
+  // RÔLE : Wrapper qui accueille le canvas déplacé
+  const wrap     = document.createElement('div');
+  wrap.className = 'canvas-fs-wrap';
+
+  // ── Scale CSS ────────────────────────────────────────────────────
+  // RÔLE : Calcule le scale pour que le canvas remplisse au mieux le viewport
+  // POURQUOI getBoundingClientRect() AVANT de déplacer le canvas : une fois dans l'overlay,
+  //          il n'a plus de dimensions mesurables tant que l'overlay n'est pas affiché.
+  const rect  = canvas.getBoundingClientRect();
+  const size  = Math.min(rect.width, rect.height); // canvas carré → identiques normalement
+  const vw    = window.innerWidth  - 32; // 16px de marge de chaque côté
+  const vh    = window.innerHeight - 32;
+  const scale = Math.min(vw / size, vh / size);
+
+  canvas.style.transform       = `scale(${scale})`;
+  canvas.style.transformOrigin = 'top center';
+  // POURQUOI style inline (pas classe CSS) : valeur calculée dynamiquement
+  canvas.style.imageRendering  = 'pixelated';
+
+  // RÔLE : Déplace le canvas dans le wrapper de l'overlay
+  // POURQUOI déplacement DOM (pas clone) : p5 est lié au canvas original —
+  //          un clone perdrait le contexte WebGL/2D et casserait la boucle draw
+  wrap.appendChild(canvas);
+
+  // ── Bloc infos jardin ────────────────────────────────────────────
+  // RÔLE : Infos contextuelles sous le canvas — uniquement pour l'env jardin
+  const infoHTML = _buildGardenInfo();
+  const infoEl   = document.createElement('div');
+  infoEl.className = 'canvas-fs-info';
+  infoEl.innerHTML = infoHTML;
+  // RÔLE : Cache le bloc si vide (env non-jardin) — l'overlay reste propre
+  if (!infoHTML) infoEl.style.display = 'none';
+
+  // ── Assemblage et injection ──────────────────────────────────────
+  overlay.appendChild(closeBtn);
+  overlay.appendChild(wrap);
+  overlay.appendChild(infoEl);
+  document.body.appendChild(overlay);
+
+  // RÔLE : RAF pour que display:flex soit calculé avant d'ajouter .open (évite flash)
+  requestAnimationFrame(() => overlay.classList.add('open'));
+
+  // RÔLE : Tap sur le fond de l'overlay (hors canvas) ferme le plein écran
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeCanvasFullscreen();
+  });
 
   // RÔLE : Bloque le scroll iOS pendant le plein écran
   lockScroll();
 
   // RÔLE : Ferme le menu s'il était ouvert (évite deux overlays empilés)
   if (typeof _fermerMenuSiOuvert === 'function') _fermerMenuSiOuvert();
+
+  // RÔLE : Mémorise le conteneur original pour remettre le canvas à sa place à la fermeture
+  window._canvasFsOriginalParent = document.getElementById('cbox');
 }
 
 /**
  * RÔLE : Ferme le mode plein écran canvas et restaure l'état normal.
- * POURQUOI : Retire les classes CSS + le style inline + le bouton ✕ injecté.
- *            unlockScroll() restitue le scroll iOS.
+ * POURQUOI : Remet le canvas dans #cbox (son parent original), retire l'overlay injecté,
+ *            reset les styles inline du canvas, restitue le scroll iOS.
  */
 function closeCanvasFullscreen() {
-  const canvas = document.querySelector('.tama-screen canvas');
-  const overlay = document.getElementById('canvas-overlay');
-  const closeBtn = document.getElementById('canvas-close-btn');
+  const overlay  = document.getElementById('canvas-fs-overlay');
+  const original = window._canvasFsOriginalParent || document.getElementById('cbox');
 
-  if (canvas) {
-    canvas.classList.remove('canvas-fullscreen', 'open');
-    // POURQUOI : on retire le style inline — le canvas reprend son transform natif (.tama-screen canvas)
-    canvas.style.transform = '';
+  // RÔLE : Récupère le canvas depuis l'overlay (il a été déplacé à l'ouverture)
+  const canvas = overlay ? overlay.querySelector('canvas') : null;
+
+  if (canvas && original) {
+    // RÔLE : Remet le canvas dans son conteneur d'origine et nettoie les styles inline
+    canvas.style.transform       = '';
+    canvas.style.transformOrigin = '';
+    canvas.style.imageRendering  = '';
+    original.appendChild(canvas);
   }
 
-  if (overlay) {
-    overlay.classList.remove('open');
-    overlay.onclick = null; // nettoyage du listener
-  }
+  // RÔLE : Retire l'overlay injecté du DOM
+  if (overlay) overlay.remove();
 
-  // RÔLE : Retire le bouton ✕ injecté à l'ouverture
-  if (closeBtn) closeBtn.remove();
-
-  // RÔLE : Restitue le scroll iOS
+  window._canvasFsOriginalParent = null;
   unlockScroll();
 }
 
-// RÔLE : Exposer les deux fonctions globalement pour les appels depuis le menu HTML
+// RÔLE : Exposer les deux fonctions globalement pour les appels depuis le HTML
 window.openCanvasFullscreen  = openCanvasFullscreen;
 window.closeCanvasFullscreen = closeCanvasFullscreen;
 

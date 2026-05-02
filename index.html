@@ -519,7 +519,10 @@ Ton bilan de la semaine apparaîtra ici...
   <!-- POURQUOI : Accès rapide aux modes alternatifs, distinct visuellement de la nav principale -->
   <!-- NOTE : tous désactivés en attendant l'implémentation des vues correspondantes -->
   <div class="menu-stickers">
-    <div class="menu-sticker menu-sticker--disabled" title="Jardin (bientôt)">🌱</div>
+    <!-- RÔLE : Ouvre le canvas en plein écran — branché sur openCanvasFullscreen()
+         POURQUOI onclick + stopPropagation : évite que le clic ne ferme le menu-overlay en même temps -->
+    <div class="menu-sticker" title="Voir le jardin en grand"
+         onclick="event.stopPropagation(); toggleMenu(); openCanvasFullscreen()">🌱</div>
     <div class="menu-sticker menu-sticker--disabled" title="Atelier (bientôt)">🎨</div>
     <div class="menu-sticker menu-sticker--disabled" title="Jeux (bientôt)">🎮</div>
   </div>

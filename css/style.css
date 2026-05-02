@@ -1801,46 +1801,34 @@ input[type="time"] {
 }
 
 /* RÔLE : Header jardin — masqué par défaut, visible uniquement en mode garden-fullscreen */
+/* RÔLE : Header jardin — masqué par défaut, visible en mode plein écran seulement */
+/* POURQUOI dans #console-top (flex column) : il s'insère naturellement avant le tama */
 .hdr-garden {
   display: none;
+  width: 100%;
+  max-width: 420px;
+  padding-bottom: 4px;
 }
 body.garden-fullscreen .hdr-garden {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2px 0;
-  /* RÔLE : aria-hidden retiré en JS à l'ouverture — ici on le force visible */
+  display: block;
 }
 
-/* RÔLE : Titre "Mon jardin" — Caveat noir comme tous les titres de panneaux de l'app */
-/* POURQUOI noir (--text) : les titres de modales/panneaux (agenda, boutique…) utilisent
-   --text, pas --lilac. Le lilac est réservé aux accents et au titre principal Habit-Gotchi. */
+/* RÔLE : Titre h2 — même style que les h2 de .modal-box (boutique, agenda) */
 .hdr-garden-title {
   font-family: var(--font-title);
   font-size: 20px;
   font-weight: 700;
   color: var(--text);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  margin: 0;
 }
 
-/* RÔLE : Bouton ✕ — même style que .menu-btn du .hdr (boutique, agenda, etc.) mais
-   couleur lilac pour signaler une action de fermeture de vue principale */
+/* RÔLE : Bouton ✕ — reprend exactement .modal-close mais en position static
+   POURQUOI pas position:absolute : on est dans un flex, pas dans une .modal-box */
 .hdr-garden-close {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  border: 2px solid var(--border);
-  background: var(--solid);
-  color: var(--lilac);
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: .15s;
+  position: static !important; /* neutralise position:absolute de .modal-close */
   flex-shrink: 0;
 }
-.hdr-garden-close:active { transform: scale(.9); background: var(--border); }
 
 /*
   RÔLE : Quand le plein écran jardin est actif, #console-top passe au-dessus de l'overlay
@@ -1899,25 +1887,20 @@ body.garden-fullscreen .tama-screen {
   border-width: 2px;
 }
 
-/*
-  RÔLE : Conteneur de l'étiquette de jardinage — injecté dans #console-top (flex column, z:850).
-  Prend toute la largeur disponible sous .tama-screen dans le flux flex.
-*/
+/* ── Conteneur injecté dans #console-top (flex column) ──────────── */
 .canvas-fs-info {
   width: 100%;
   max-width: 420px;
-  margin: 10px auto 0;
-  padding: 0 14px calc(env(safe-area-inset-bottom, 0px) + 10px);
-  flex: 1; /* RÔLE : occupe toute la hauteur restante sous le canvas */
+  margin: 8px auto 0;
+  padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 10px);
+  flex: 1;
   display: flex;
   align-items: stretch;
+  overflow: hidden; /* POURQUOI : empêche le texte de déborder de la carte */
+  min-height: 0;    /* POURQUOI : flexbox shrink correct dans un parent flex column */
 }
 
-/*
-  RÔLE : Carte principale "étiquette de jardinerie" — rectangle qui remplit l'espace.
-  Style : fond --card semi-transparent, bordure --border, coins arrondis.
-  Inspiration : étiquette cartonnée avec titre, séparateur, grille de données, footer vitalité.
-*/
+/* ── Carte étiquette jardin ──────────────────────────────────────── */
 .garden-label {
   flex: 1;
   display: flex;
@@ -1926,34 +1909,51 @@ body.garden-fullscreen .tama-screen {
   border: 1.5px solid var(--border);
   border-radius: var(--r-lg);
   overflow: hidden;
-  padding: 10px 14px;
-  gap: 0;
+  min-height: 0;
 }
 
-/* RÔLE : Titre du jardin — nom poétique + date de naissance */
-.garden-label-title {
-  font-family: var(--font-title); /* Caveat — seul usage décoratif */
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--text);
+/* ── Section = bloc avec padding interne ───────────────────────── */
+.garden-label-section {
+  padding: 9px 14px;
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding-bottom: 7px;
+  flex-direction: column;
+  gap: 2px;
+}
+/* La section composition peut grandir si beaucoup de types */
+.garden-label-section:nth-child(3) { flex: 1; min-height: 0; overflow: hidden; }
+
+/* ── Titre de section — petit label majuscule discret ──────────── */
+.garden-label-section-title {
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 4px;
 }
 
-/* RÔLE : Date de naissance — plus petit, discret */
-.garden-label-born {
+/* ── Nom du jardin ──────────────────────────────────────────────── */
+.garden-label-name {
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+/* ── Seed + date de naissance ───────────────────────────────────── */
+.garden-label-meta {
+  font-family: var(--font-body);
   font-size: var(--fs-xs);
   color: var(--text2);
-  font-family: var(--font-body);
   font-weight: 400;
 }
 
-/* RÔLE : Séparateur horizontal pixel-art — pointillé cohérent avec le style */
+/* ── Séparateur pointillé pixel-art ────────────────────────────── */
 .garden-label-divider {
   height: 1px;
+  flex-shrink: 0;
   background: repeating-linear-gradient(
     to right,
     var(--border) 0px,
@@ -1961,19 +1961,9 @@ body.garden-fullscreen .tama-screen {
     transparent 4px,
     transparent 8px
   );
-  margin: 0 0 7px;
 }
 
-/* RÔLE : Liste des données — chaque ligne = icône + texte */
-.garden-label-grid {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding-bottom: 7px;
-}
-
-/* RÔLE : Ligne individuelle — icône à gauche, texte à droite */
+/* ── Ligne de données : icône + texte ──────────────────────────── */
 .garden-label-row {
   display: flex;
   align-items: flex-start;
@@ -1982,9 +1972,30 @@ body.garden-fullscreen .tama-screen {
   font-size: var(--fs-sm);
   color: var(--text);
   line-height: 1.4;
+  min-width: 0; /* POURQUOI : permet au texte de tronquer plutôt que de déborder */
+}
+.garden-label-row span:last-child {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+/* Lignes par type — légèrement indentées, texte un poil plus petit */
+.garden-label-row--sub {
+  padding-left: 2px;
+  font-size: var(--fs-xs);
+  color: var(--text);
+}
+/* Ligne total — séparée visuellement */
+.garden-label-row--total {
+  margin-top: 3px;
+  padding-top: 3px;
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  color: var(--text2);
 }
 
-/* RÔLE : Icône de chaque ligne — taille fixe pour aligner le texte */
+/* ── Icône de chaque ligne ──────────────────────────────────────── */
 .gli {
   flex-shrink: 0;
   width: 18px;
@@ -1993,42 +2004,37 @@ body.garden-fullscreen .tama-screen {
   margin-top: 1px;
 }
 
-/* RÔLE : Footer vitalité — barre de blocs + état textuel */
-.garden-label-footer {
+/* ── Section footer : vitalité + texte contemplatif ────────────── */
+.garden-label-section--footer {
+  gap: 5px;
+}
+.garden-label-vitality {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  padding-top: 2px;
 }
-
-/* RÔLE : Label d'état textuel (Épanoui, Fatigué…) */
-.garden-label-state {
-  font-family: var(--font-body);
-  font-size: var(--fs-xs);
-  color: var(--text2);
-  white-space: nowrap;
-}
-
-/* RÔLE : Barre de blocs vitalité — police monospace pour alignement ▓░ */
 .garden-label-bars {
   font-family: var(--font-terminal);
   font-size: 13px;
   color: var(--lilac);
   letter-spacing: 1px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
-
-/* RÔLE : Ligne "à propos" du jardin — italique discret, ton contemplatif */
+.garden-label-state {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  color: var(--text2);
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
 .garden-label-about {
   font-style: italic;
   color: var(--text2);
   font-size: var(--fs-xs);
-}
-
-/* RÔLE : Séparateur décoratif pixel-art entre les lignes d'infos — discret */
-.canvas-fs-info br + br {
-  display: none; /* évite les doubles sauts si _buildGardenInfo() génère des lignes vides */
+  line-height: 1.45;
+  word-break: break-word; /* POURQUOI : empêche le débordement à droite */
 }
 
 /*

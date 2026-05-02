@@ -244,47 +244,53 @@ function _gardenName(seed) {
  */
 function _buildGardenInfo() {
   const g = window.D && window.D.g;
-  // RÔLE : openCanvasFullscreen() force activeEnv='jardin' avant cet appel —
-  //        on garde la garde au cas où la fonction serait appelée hors contexte
   if (!g) return '';
 
   const elements = window._gardenElements || [];
   const seed     = g.gardenSeed;
 
-  // ── Identité ────────────────────────────────────────────────────
+  // ── Identité — nom + numéro de seed pour montrer que c'est unique et généré ───
   const nom  = seed != null ? _gardenName(seed) : 'Inconnu';
+  const seedNum = seed != null ? String(seed).padStart(6, '0') : '------';
   const born = g.gardenBorn
     ? new Date(g.gardenBorn).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
     : null;
 
-  // ── Composition par type ─────────────────────────────────────────
-  // RÔLE : Compte chaque type d'élément et formate la liste
-  const counts = {};
-  elements.forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
-  const ICONS_TYPE = { fleur: '🌸', herbe: '🌿', pierre: '🪨', champignon: '🍄', arbuste: '🌳' };
-  const comp = Object.entries(counts)
-    .sort((a, b) => b[1] - a[1])
-    .map(([type, n]) => `${ICONS_TYPE[type] || '·'}&thinsp;${n} ${type}${n > 1 ? 's' : ''}`)
-    .join(' &middot; ') || 'Aucun élément';
+  // ── Composition par type avec détail des variantes d'âge ────────
+  // RÔLE : Compte par type ET distingue jeune/adulte/fané dans chaque type
+  const ICONS_TYPE  = { fleur: '🌸', herbe: '🌿', pierre: '🪨', champignon: '🍄', arbuste: '🌳' };
+  const LABELS_TYPE = { fleur: 'fleur', herbe: 'herbe', pierre: 'pierre', champignon: 'champignon', arbuste: 'arbuste' };
+  const PLURAL_TYPE = { fleur: 'fleurs', herbe: 'herbes', pierre: 'pierres', champignon: 'champignons', arbuste: 'arbustes' };
 
-  // ── États de maturité ────────────────────────────────────────────
-  const total   = elements.length;
-  const matures = elements.filter(e => e.age >= Math.floor((e.maxAge || 10) * 0.7)).length;
-  const fanent  = elements.filter(e => e.age >= (e.maxAge || 10) - 1).length;
-  const jeunes  = elements.filter(e => e.age <= 1).length;
+  // Groupe par type avec sous-stats d'âge
+  const byType = {};
+  elements.forEach(e => {
+    if (!byType[e.type]) byType[e.type] = { total: 0, jeunes: 0, matures: 0, fanent: 0 };
+    byType[e.type].total++;
+    const ratio = (e.maxAge || 10) > 0 ? e.age / (e.maxAge || 10) : 0;
+    if (ratio >= 0.9)       byType[e.type].fanent++;
+    else if (ratio >= 0.6)  byType[e.type].matures++;
+    else                    byType[e.type].jeunes++;
+  });
+
+  // Ligne par type : "🌸 3 fleurs — 1 jeune, 2 adultes"
+  const compLines = Object.entries(byType)
+    .sort((a, b) => b[1].total - a[1].total)
+    .map(([type, s]) => {
+      const icon  = ICONS_TYPE[type] || '·';
+      const label = s.total > 1 ? (PLURAL_TYPE[type] || type + 's') : (LABELS_TYPE[type] || type);
+      const parts = [];
+      if (s.jeunes  > 0) parts.push(`${s.jeunes} jeune${s.jeunes  > 1 ? 's' : ''}`);
+      if (s.matures > 0) parts.push(`${s.matures} adulte${s.matures > 1 ? 's' : ''}`);
+      if (s.fanent  > 0) parts.push(`${s.fanent} fane${s.fanent  > 1 ? 'nt' : ''}`);
+      const detail = parts.length ? ` &mdash; ${parts.join(', ')}` : '';
+      return `<div class="garden-label-row garden-label-row--sub"><span class="gli">${icon}</span><span>${s.total}&thinsp;${label}${detail}</span></div>`;
+    }).join('');
+
+  const total    = elements.length;
   const ageMoyen = total > 0
     ? Math.round(elements.reduce((s, e) => s + (e.age || 0), 0) / total)
     : 0;
-
-  // Texte cycle de vie — toujours affiché même si tout est à 0
-  let etatParts = [];
-  if (matures > 0) etatParts.push(`${matures} mature${matures > 1 ? 's' : ''}`);
-  if (fanent  > 0) etatParts.push(`${fanent} qui fane${fanent > 1 ? 'nt' : ''}`);
-  if (jeunes  > 0) etatParts.push(`${jeunes} nouveau${jeunes > 1 ? 'x' : ''}`);
-  const etatStr = etatParts.length
-    ? etatParts.join(', ') + (ageMoyen > 0 ? ` &mdash; &oslash;&thinsp;${ageMoyen}&thinsp;j` : '')
-    : total > 0 ? `En croissance &mdash; &oslash;&thinsp;${ageMoyen}&thinsp;j`
-    : 'Aucun élément pour l\'instant';
 
   // ── Vitalité (même calcul que garden.js _grayT()) ────────────────
   const habCatIds = (window.D.habits || []).map(h => h.catId);
@@ -298,68 +304,99 @@ function _buildGardenInfo() {
   const nbBarres  = Math.round(score * 5);
   const barres    = '▓'.repeat(nbBarres) + '░'.repeat(5 - nbBarres);
 
-  // Texte d'état — explique ce que ça veut dire concrètement pour la pousse
-  const etatJardin = score >= 0.7 ? 'Jardin épanoui ✨ &mdash; les plantes poussent vite'
-                   : score >= 0.5 ? 'Jardin en forme &mdash; croissance régulière'
-                   : score >= 0.3 ? 'Jardin un peu fatigué &mdash; pousse ralentie'
-                   : 'Jardin en veille &mdash; il attend qu\'on prenne soin de soi';
+  const etatJardin = score >= 0.7 ? 'Épanoui &mdash; les plantes poussent vite ✨'
+                   : score >= 0.5 ? 'En forme &mdash; croissance régulière'
+                   : score >= 0.3 ? 'Fatigué &mdash; pousse ralentie'
+                   : 'En veille &mdash; il attend qu\'on prenne soin de soi';
 
   // ── Habitudes ────────────────────────────────────────────────────
-  // Toujours affiché — explique le lien habitudes ↔ jardin
   let habsTxt = '';
   if (habsTotal > 0) {
     if (habsDone >= habsTotal)
-      habsTxt = `${habsDone}/${habsTotal} cochées aujourd'hui &mdash; le jardin rayonne`;
+      habsTxt = `${habsDone}/${habsTotal} cochées &mdash; le jardin rayonne`;
     else if (habsDone > 0)
-      habsTxt = `${habsDone}/${habsTotal} cochées aujourd'hui &mdash; chaque habitude nourrit la pousse`;
+      habsTxt = `${habsDone}/${habsTotal} cochées &mdash; chaque habitude nourrit la pousse`;
     else
-      habsTxt = `0/${habsTotal} cochées &mdash; tes routines influencent la vitalité du jardin`;
+      habsTxt = `0/${habsTotal} cochées &mdash; tes routines influencent la vitalité`;
   } else {
     habsTxt = 'Ajoute des habitudes pour voir le jardin réagir à ta journée';
   }
 
-  // ── Météo ────────────────────────────────────────────────────────
+  // ── Météo ─────────────────────────────────────────────────────────
+  // POURQUOI window.meteoData et non g.meteoData :
+  //   fetchMeteo() stocke dans window.meteoData (current_weather open-meteo).
+  //   Le champ .desc n'existe pas — l'API renvoie weathercode + temperature + windspeed.
+  const WC_LABELS = {
+    0:'Ciel dégagé', 1:'Peu nuageux', 2:'Partiellement nuageux', 3:'Couvert',
+    45:'Brouillard', 48:'Brouillard givrant',
+    51:'Bruine légère', 53:'Bruine modérée', 55:'Bruine dense',
+    61:'Pluie légère', 63:'Pluie modérée', 65:'Pluie forte',
+    71:'Neige légère', 73:'Neige modérée', 75:'Neige forte',
+    80:'Averses légères', 81:'Averses', 82:'Averses violentes',
+    95:'Orage', 96:'Orage avec grêle', 99:'Orage violent',
+  };
+  const WC_ICONS = {
+    0:'☀️', 1:'🌤', 2:'⛅', 3:'☁️',
+    45:'🌫', 48:'🌫',
+    51:'🌦', 53:'🌦', 55:'🌧',
+    61:'🌧', 63:'🌧', 65:'🌧',
+    71:'❄️', 73:'❄️', 75:'❄️',
+    80:'🌦', 81:'🌧', 82:'⛈',
+    95:'⛈', 96:'⛈', 99:'⛈',
+  };
   let meteoTxt = '';
-  const meteo = g.meteoData;
-  if (meteo && meteo.desc) {
-    const desc = (meteo.desc || '').toLowerCase();
-    let icon = '🌤';
-    if (desc.includes('pluie') || desc.includes('rain'))                           icon = '🌧';
-    if (desc.includes('neige') || desc.includes('snow'))                           icon = '❄️';
-    if (desc.includes('orage') || desc.includes('storm'))                          icon = '⛈';
-    if (desc.includes('nuage') || desc.includes('cloud'))                          icon = '☁️';
-    if (desc.includes('soleil') || desc.includes('sun') || desc.includes('clear')) icon = '☀️';
-    if (desc.includes('brouil') || desc.includes('fog'))                           icon = '🌫';
-    meteoTxt = meteo.rain > 0
-      ? `${icon}&thinsp;${escape(meteo.desc)} &mdash; champignons favorisés`
-      : `${icon}&thinsp;${escape(meteo.desc)} &mdash; influence la faune du jardin`;
+  const meteo = window.meteoData || window.D?.meteo;
+  if (meteo && meteo.weathercode != null) {
+    const wc    = meteo.weathercode;
+    const icon  = WC_ICONS[wc]   || '🌤';
+    const label = WC_LABELS[wc]  || `Code ${wc}`;
+    const temp  = meteo.temperature != null ? `${Math.round(meteo.temperature)}&thinsp;°C` : '';
+    const isPluie = [51,53,55,61,63,65,80,81,82,95,96,99].includes(wc);
+    const effet = isPluie ? 'champignons favorisés' : 'influence la composition du jardin';
+    meteoTxt = `${icon}&thinsp;${label}${temp ? ` · ${temp}` : ''} &mdash; ${effet}`;
   } else {
-    meteoTxt = '🌤&thinsp;Météo non disponible &mdash; active la localisation pour l\'activer';
+    meteoTxt = '🌤&thinsp;Chargement en cours&hellip;';
   }
 
-  // ── Ligne "à propos" — texte contemplatif ────────────────────────
-  // RÔLE : Expliquer à l'utilisatrice que le jardin pousse tout seul, de façon autonome
-  const aproposTxt = 'Ce jardin pousse à son rythme, entre hasard et mémoire de tes jours.';
+  // ── Ligne contemplative ───────────────────────────────────────────
+  const aproposTxt = 'Ce jardin pousse seul, entre hasard et mémoire de tes jours. Tu n\'as qu\'à observer.';
 
-  // ── HTML final ───────────────────────────────────────────────────
+  // ── HTML ──────────────────────────────────────────────────────────
   return `<div class="garden-label">
-  <div class="garden-label-title">
-    🪴 Jardin ${escape(nom)}
-    ${born ? `<span class="garden-label-born">né le ${escape(born)}</span>` : ''}
+
+  <div class="garden-label-section">
+    <div class="garden-label-name">🪴 ${escape(nom)}</div>
+    <div class="garden-label-meta">#${seedNum}${born ? ` &mdash; né le ${escape(born)}` : ''}</div>
   </div>
+
   <div class="garden-label-divider"></div>
-  <div class="garden-label-grid">
-    <div class="garden-label-row"><span class="gli">🌿</span><span>${total > 0 ? `${total} élément${total > 1 ? 's' : ''} &mdash; ${comp}` : 'Jardin vide pour l\'instant &mdash; il naît à chaque nouvelle journée'}</span></div>
-    <div class="garden-label-row"><span class="gli">🕰</span><span>${etatStr}</span></div>
+
+  <div class="garden-label-section">
+    <div class="garden-label-section-title">Composition</div>
+    ${total > 0
+      ? compLines + `<div class="garden-label-row garden-label-row--total"><span class="gli">∑</span><span>${total} élément${total > 1 ? 's' : ''} &mdash; âge moyen ${ageMoyen}&thinsp;j</span></div>`
+      : `<div class="garden-label-row"><span class="gli">·</span><span>Jardin vide &mdash; il naît à chaque nouvelle journée</span></div>`
+    }
+  </div>
+
+  <div class="garden-label-divider"></div>
+
+  <div class="garden-label-section">
+    <div class="garden-label-section-title">Aujourd'hui</div>
     <div class="garden-label-row"><span class="gli">✿</span><span>${habsTxt}</span></div>
     <div class="garden-label-row"><span class="gli">☁️</span><span>${meteoTxt}</span></div>
-    <div class="garden-label-row"><span class="gli">✦</span><span class="garden-label-about">${aproposTxt}</span></div>
   </div>
+
   <div class="garden-label-divider"></div>
-  <div class="garden-label-footer">
-    <span class="garden-label-state">${etatJardin}</span>
-    <span class="garden-label-bars">${barres}</span>
+
+  <div class="garden-label-section garden-label-section--footer">
+    <div class="garden-label-vitality">
+      <span class="garden-label-bars">${barres}</span>
+      <span class="garden-label-state">${etatJardin}</span>
+    </div>
+    <div class="garden-label-about">${aproposTxt}</div>
   </div>
+
 </div>`;
 }
 

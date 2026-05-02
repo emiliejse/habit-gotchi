@@ -304,22 +304,21 @@ function _buildGardenInfo() {
 }
 
 /**
- * RÔLE : Ouvre le canvas p5 en mode plein écran via un overlay vertical injecté dynamiquement.
- * POURQUOI : Permet de voir le gotchi agrandi sans recalculer la boucle p5.
- *            L'agrandissement est purement CSS (transform:scale) — le canvas reste à CS logiques.
+ * RÔLE : Ouvre un overlay plein écran PAR-DESSUS le canvas sans le déplacer.
+ * POURQUOI : Le canvas a width/height:100% liés à .tama-screen — le déplacer
+ *            casse ses dimensions et masque le rendu p5 (HUD énergie, env…).
+ *            L'overlay est un fond noir transparent z-index 800 qui recouvre tout,
+ *            avec un trou "pointer-events:none" au niveau du canvas pour que p5
+ *            reste visible et interactif. Le bloc infos jardin est positionné
+ *            en bas en position fixe, sous le canvas.
  *
  * Séquence :
- * 1. Crée l'overlay .canvas-fullscreen-overlay et l'injecte dans <body>
- * 2. Déplace le canvas p5 dans le wrapper .canvas-fs-wrap de l'overlay
- *    (déplacement DOM — pas clone — pour que p5 continue de dessiner sur le même élément)
- * 3. Calcule et applique le scale CSS optimal
- * 4. Génère le bloc infos jardin via _buildGardenInfo() (vide si env != jardin)
- * 5. Bloque le scroll iOS (lockScroll)
+ * 1. Crée l'overlay .canvas-fullscreen-overlay (fond noir, inset:0)
+ * 2. Injecte bouton ✕ + bloc infos jardin dans l'overlay
+ * 3. Le canvas reste dans #cbox — rien ne bouge dans le DOM
+ * 4. Bloque le scroll iOS (lockScroll)
  */
 function openCanvasFullscreen() {
-  const canvas = document.querySelector('.tama-screen canvas');
-  if (!canvas) return; // sécurité si p5 n'a pas encore créé le canvas
-
   // RÔLE : Évite d'ouvrir deux overlays si déjà ouvert
   if (document.getElementById('canvas-fs-overlay')) return;
 
@@ -335,87 +334,40 @@ function openCanvasFullscreen() {
   closeBtn.setAttribute('aria-label', 'Fermer le plein écran');
   closeBtn.onclick     = closeCanvasFullscreen;
 
-  // RÔLE : Wrapper qui accueille le canvas déplacé
-  const wrap     = document.createElement('div');
-  wrap.className = 'canvas-fs-wrap';
-
-  // ── Scale CSS ────────────────────────────────────────────────────
-  // RÔLE : Calcule le scale pour que le canvas remplisse au mieux le viewport
-  // POURQUOI getBoundingClientRect() AVANT de déplacer le canvas : une fois dans l'overlay,
-  //          il n'a plus de dimensions mesurables tant que l'overlay n'est pas affiché.
-  const rect  = canvas.getBoundingClientRect();
-  const size  = Math.min(rect.width, rect.height); // canvas carré → identiques normalement
-  const vw    = window.innerWidth  - 32; // 16px de marge de chaque côté
-  const vh    = window.innerHeight - 32;
-  const scale = Math.min(vw / size, vh / size);
-
-  canvas.style.transform       = `scale(${scale})`;
-  canvas.style.transformOrigin = 'top center';
-  // POURQUOI style inline (pas classe CSS) : valeur calculée dynamiquement
-  canvas.style.imageRendering  = 'pixelated';
-
-  // RÔLE : Déplace le canvas dans le wrapper de l'overlay
-  // POURQUOI déplacement DOM (pas clone) : p5 est lié au canvas original —
-  //          un clone perdrait le contexte WebGL/2D et casserait la boucle draw
-  wrap.appendChild(canvas);
-
   // ── Bloc infos jardin ────────────────────────────────────────────
-  // RÔLE : Infos contextuelles sous le canvas — uniquement pour l'env jardin
+  // RÔLE : Infos contextuelles en bas de l'overlay — uniquement pour l'env jardin
   const infoHTML = _buildGardenInfo();
   const infoEl   = document.createElement('div');
   infoEl.className = 'canvas-fs-info';
   infoEl.innerHTML = infoHTML;
-  // RÔLE : Cache le bloc si vide (env non-jardin) — l'overlay reste propre
+  // RÔLE : Cache le bloc si vide (env non-jardin)
   if (!infoHTML) infoEl.style.display = 'none';
 
   // ── Assemblage et injection ──────────────────────────────────────
   overlay.appendChild(closeBtn);
-  overlay.appendChild(wrap);
   overlay.appendChild(infoEl);
   document.body.appendChild(overlay);
 
-  // RÔLE : RAF pour que display:flex soit calculé avant d'ajouter .open (évite flash)
+  // RÔLE : RAF pour que display:flex soit calculé avant .open (évite flash)
   requestAnimationFrame(() => overlay.classList.add('open'));
 
-  // RÔLE : Tap sur le fond de l'overlay (hors canvas) ferme le plein écran
+  // RÔLE : Tap sur l'overlay (hors bouton et infos) ferme le plein écran
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) closeCanvasFullscreen();
   });
 
-  // RÔLE : Bloque le scroll iOS pendant le plein écran
   lockScroll();
-
-  // RÔLE : Ferme le menu s'il était ouvert (évite deux overlays empilés)
   if (typeof _fermerMenuSiOuvert === 'function') _fermerMenuSiOuvert();
-
-  // RÔLE : Mémorise le conteneur original pour remettre le canvas à sa place à la fermeture
-  window._canvasFsOriginalParent = document.getElementById('cbox');
 }
 
 /**
- * RÔLE : Ferme le mode plein écran canvas et restaure l'état normal.
- * POURQUOI : Remet le canvas dans #cbox (son parent original), retire l'overlay injecté,
- *            reset les styles inline du canvas, restitue le scroll iOS.
+ * RÔLE : Ferme le mode plein écran — retire l'overlay injecté, restitue le scroll.
+ * POURQUOI : Le canvas n'a jamais bougé — il n'y a rien à restaurer côté DOM,
+ *            juste supprimer l'overlay et déverrouiller le scroll.
  */
 function closeCanvasFullscreen() {
-  const overlay  = document.getElementById('canvas-fs-overlay');
-  const original = window._canvasFsOriginalParent || document.getElementById('cbox');
-
-  // RÔLE : Récupère le canvas depuis l'overlay (il a été déplacé à l'ouverture)
-  const canvas = overlay ? overlay.querySelector('canvas') : null;
-
-  if (canvas && original) {
-    // RÔLE : Remet le canvas dans son conteneur d'origine et nettoie les styles inline
-    canvas.style.transform       = '';
-    canvas.style.transformOrigin = '';
-    canvas.style.imageRendering  = '';
-    original.appendChild(canvas);
-  }
-
-  // RÔLE : Retire l'overlay injecté du DOM
+  const overlay = document.getElementById('canvas-fs-overlay');
   if (overlay) overlay.remove();
-
-  window._canvasFsOriginalParent = null;
   unlockScroll();
 }
 

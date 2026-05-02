@@ -58,7 +58,7 @@ let _poopIntervalId   = null;
 let _bubbleIntervalId = null; // RÔLE : Rotation automatique des bulles passives (updBubbleNow toutes les 45s)
 
 // VERSION À CHANGER
-window.APP_VERSION = 'v5.10'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
+window.APP_VERSION = 'v5.11'; // // ⚠️ SYNC → sw.js ligne 1 : CACHE_VERSION
 
 // Limites journal (S6 — Introspection)
 window.JOURNAL_MAX_PER_DAY = 5;
@@ -305,7 +305,7 @@ window.getCyclePhase = getCyclePhase; // exposée globalement
 // USAGE : Ajouter une entrée dans MIGRATIONS pour chaque changement de structure.
 //         Ne jamais supprimer une migration existante.
 // ─────────────────────────────────────────────────────────────
-const SCHEMA_VERSION = 16; // ⚠️ incrémenter à chaque ajout de migration
+const SCHEMA_VERSION = 17; // ⚠️ incrémenter à chaque ajout de migration
 
 const MIGRATIONS = [
   // Migration 0→1 : nettoyage D.lat / D.lng (supprimés en session 5)
@@ -449,6 +449,19 @@ const MIGRATIONS = [
     d.g.gardenSeed  = d.g.gardenSeed  ?? null;
     d.g.gardenDay   = d.g.gardenDay   ?? '';
     d.g.gardenState = d.g.gardenState ?? [];
+    return d;
+  },
+  // Migration 15→16 : ajout de gardenBorn (date de naissance du jardin)
+  // RÔLE : Donne une date propre à chaque jardin, indépendante de firstLaunch.
+  //        Mise à jour à chaque resetGarden() via initGarden().
+  // POURQUOI null et pas firstLaunch ici : initGarden() posera la vraie date au prochain lancement
+  //          si gardenSeed est null, sinon gardenBorn restera null jusqu'à un reset.
+  //          Pour les saves avec une seed existante, on approche avec firstLaunch.
+  function m15(d) {
+    if (!d.g.gardenBorn) {
+      // RÔLE : Approximation pour les saves existantes — firstLaunch est la meilleure donnée disponible.
+      d.g.gardenBorn = d.firstLaunch ?? null;
+    }
     return d;
   }
 ];

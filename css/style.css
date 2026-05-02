@@ -1856,29 +1856,43 @@ body.garden-fullscreen .tama-screen {
 }
 
 /*
-  RÔLE : Bloc d'infos jardin — injecté dans #console-top (flex column, z:850)
-  par openCanvasFullscreen(), s'affiche naturellement sous .tama-screen dans le flux.
-  POURQUOI dans #console-top et pas dans l'overlay : #console-top couvre tout le viewport
-  (bottom:0, z:850) — tout ce qui est derrière lui (overlay z:800) est invisible même en
-  position:fixed. En étant enfant de #console-top, infoEl est dans le bon contexte de stacking.
-  POURQUOI Caveat (--font-title) : style pixel-art-ish, chaleureux, cohérent avec le gotchi.
-  POURQUOI max 4 lignes via max-height + overflow hidden : contrainte brief.
+  RÔLE : Conteneur des étiquettes d'info jardin — injecté dans #console-top (flex column, z:850).
+  S'affiche naturellement sous .tama-screen dans le flux flex.
 */
 .canvas-fs-info {
   width: 100%;
-  max-width: 360px;
-  margin: 12px auto 0;
-  padding: 0 20px;
-  color: var(--text);
-  font-size: 16px;
-  line-height: 1.65;
-  text-align: center;
-  font-family: var(--font-title); /* Caveat */
-  font-weight: 400;
-  /* RÔLE : Limite à 4 lignes max comme demandé dans le brief */
-  max-height: calc(16px * 1.65 * 4 + 20px);
+  max-width: 400px;
+  margin: 10px auto 0;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
   overflow: hidden;
-  opacity: 0.82; /* légère transparence pour ne pas concurrencer le canvas */
+}
+
+/*
+  RÔLE : Étiquette individuelle — style "tag" pixel-art sobre.
+  POURQUOI Nunito (--font-body) et pas Caveat : les infos sont factuelles, lisibles,
+  pas décoratives — Nunito est plus clair à petite taille.
+  POURQUOI fond semi-transparent sur --card : cohérence avec les cards de l'app,
+  lisible sur le fond dégradé de l'overlay.
+*/
+.garden-info-tag {
+  display: inline-block;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 4px 10px;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color: var(--text);
+  line-height: 1.4;
+  text-align: center;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* RÔLE : Séparateur décoratif pixel-art entre les lignes d'infos — discret */

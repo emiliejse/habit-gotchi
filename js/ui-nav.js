@@ -219,88 +219,111 @@ function go(t) {
  * @returns {string} HTML à injecter dans .canvas-fs-info,
  *                   ou chaîne vide si l'env actif n'est pas 'jardin'.
  */
+/**
+ * RÔLE : Génère un nom poétique unique pour le jardin à partir de sa seed.
+ * POURQUOI déterministe : même seed → même nom à chaque lancement.
+ *          On utilise _gardenRng() si disponible, sinon un modulo simple.
+ *
+ * Format : "Jardin [adjectif] de [nom]"
+ * Exemples : "Jardin Doré de Lunette", "Jardin Brumeux de Pépin"
+ */
+function _gardenName(seed) {
+  const adjs  = ['Doré','Brumeux','Fleuri','Sauvage','Endormi','Étrange','Moussu','Serein','Murmureux','Secret'];
+  const noms  = ['Lunette','Pépin','Noisette','Brindille','Caillou','Grigri','Paquerette','Lilas','Fétu','Corolle'];
+  // POURQUOI deux modulos différents : évite que adj et nom soient corrélés (même index)
+  const adj = adjs[seed % adjs.length];
+  const nom = noms[Math.floor(seed / adjs.length) % noms.length];
+  return `${adj} de ${nom}`;
+}
+
 function _buildGardenInfo() {
   const g = window.D && window.D.g;
   if (!g) return '';
 
-  // RÔLE : Bloc vide si l'env actif n'est pas jardin — la feature plein écran reste
-  //        fonctionnelle dans tous les envs, mais les infos ne sont affichées que pour jardin.
+  // RÔLE : Bloc vide si l'env actif n'est pas jardin
   if (g.activeEnv !== 'jardin') return '';
 
-  const lines = [];
-
   // ── Ligne 1 : Éléments vivants + états ────────────────────────────
-  // RÔLE : Lit window._gardenElements (tableau généré par initGarden()) pour compter
-  //        et qualifier les éléments. L'état se dérive de age/maxAge car il n'y a pas
-  //        de champ .state — mature = age ≥ 70% de maxAge, jeune = age < 3 jours.
+  // RÔLE : Lit window._gardenElements (généré par initGarden()) pour qualifier le jardin.
+  //        mature = age ≥ 70% maxAge · fane = age ≥ maxAge - 1
   const elements = window._gardenElements || [];
   const total    = elements.length;
 
+  let ligneElements;
   if (total > 0) {
-    // RÔLE : Compte les éléments en fleur (matures) et ceux qui fanent (très vieux)
     const enFleur = elements.filter(e => e.age >= Math.floor((e.maxAge || 10) * 0.7)).length;
     const fanent  = elements.filter(e => e.age >= (e.maxAge || 10) - 1).length;
-
-    let ligne = `${total} élément${total > 1 ? 's' : ''} vivant${total > 1 ? 's' : ''}`;
-    if (enFleur > 0) ligne += ` · ${enFleur} en fleur`;
-    if (fanent  > 0) ligne += ` · ${fanent} fane${fanent > 1 ? 'nt' : ''}`;
-    lines.push(ligne);
+    ligneElements = `🌿 ${total} élément${total > 1 ? 's' : ''}`;
+    if (enFleur > 0) ligneElements += ` · ${enFleur} en fleur 🌸`;
+    if (fanent  > 0) ligneElements += ` · ${fanent} fane${fanent > 1 ? 'nt' : ''} 🍂`;
   } else {
-    lines.push('Le jardin sommeille encore…');
+    ligneElements = '🌱 Le jardin sommeille encore…';
   }
 
   // ── Ligne 2 : Influence météo ──────────────────────────────────────
-  // RÔLE : Affiche un message météo si meteoData est disponible dans D.g
-  // POURQUOI : meteoData est renseigné par app.js via fetchMeteo() — peut être null
+  // RÔLE : Message météo contextuel si meteoData est disponible
+  let ligneMeteo = '';
   const meteo = g.meteoData;
   if (meteo && meteo.desc) {
     const desc = (meteo.desc || '').toLowerCase();
     let icon = '🌤';
-    if (desc.includes('pluie') || desc.includes('rain'))    icon = '🌧';
-    if (desc.includes('neige') || desc.includes('snow'))    icon = '❄️';
-    if (desc.includes('orage') || desc.includes('storm'))   icon = '⛈';
-    if (desc.includes('nuage') || desc.includes('cloud'))   icon = '☁️';
+    if (desc.includes('pluie') || desc.includes('rain'))             icon = '🌧';
+    if (desc.includes('neige') || desc.includes('snow'))             icon = '❄️';
+    if (desc.includes('orage') || desc.includes('storm'))            icon = '⛈';
+    if (desc.includes('nuage') || desc.includes('cloud'))            icon = '☁️';
     if (desc.includes('soleil') || desc.includes('sun') || desc.includes('clear')) icon = '☀️';
-    if (desc.includes('brouil') || desc.includes('fog'))    icon = '🌫';
-
-    // RÔLE : Message d'influence — sobre, contextuel, pas de liste
-    // POURQUOI rain > 0 : meteoData.rain est le cumul de pluie mm sur 24h (API météo)
-    const msgMeteo = meteo.rain > 0
-      ? `${icon} Pluie récente · les champignons poussent`
+    if (desc.includes('brouil') || desc.includes('fog'))             icon = '🌫';
+    ligneMeteo = meteo.rain > 0
+      ? `${icon} Pluie récente — les champignons poussent`
       : `${icon} ${escape(meteo.desc)}`;
-    lines.push(msgMeteo);
   }
 
   // ── Ligne 3 : Influence habitudes ─────────────────────────────────
-  // RÔLE : Compte les habitudes cochées aujourd'hui depuis D.log (racine de D, pas D.g)
-  // POURQUOI D.log[td] est un tableau d'IDs (strings) — .length donne le nombre de coches
-  const todayKey = typeof today === 'function' ? today() : null;
-  const habsDone = todayKey && window.D.log && window.D.log[todayKey]
-    ? window.D.log[todayKey].length
-    : 0;
+  // RÔLE : Compte les catégories cochées aujourd'hui dans D.log[today()]
+  // POURQUOI D.log[td] est un tableau de catIds (strings) — .length = nb de coches du jour
+  // POURQUOI on soustrait les catégories "hors-habitudes" : D.log peut contenir des entrées
+  //          autres (meals, etc.) selon l'usage — on filtre sur D.habits pour être précis.
+  let ligneHabs = '';
+  const todayKey  = typeof today === 'function' ? today() : null;
+  const logToday  = (todayKey && window.D.log && window.D.log[todayKey]) ? window.D.log[todayKey] : [];
+  // RÔLE : Ne compte que les IDs présents dans D.habits (catId réels de l'utilisatrice)
+  const habCatIds = (window.D.habits || []).map(h => h.catId);
+  const habsDone  = logToday.filter(id => habCatIds.includes(id)).length;
+  const habsTotal = habCatIds.length;
 
-  if (habsDone >= 4) {
-    lines.push(`Tu as coché ${habsDone} intentions · le jardin est épanoui`);
+  if (habsDone >= habsTotal && habsTotal > 0) {
+    ligneHabs = `✨ Toutes les intentions cochées — le jardin rayonne`;
+  } else if (habsDone >= 4) {
+    ligneHabs = `✿ ${habsDone} intentions cochées aujourd'hui`;
   } else if (habsDone > 0) {
-    lines.push(`${habsDone} intention${habsDone > 1 ? 's' : ''} cochée${habsDone > 1 ? 's' : ''} aujourd'hui`);
+    ligneHabs = `✿ ${habsDone} intention${habsDone > 1 ? 's' : ''} cochée${habsDone > 1 ? 's' : ''} aujourd'hui`;
   }
   // POURQUOI silence si 0 : pas de culpabilisation
 
   // ── Ligne 4 : Identité du jardin ──────────────────────────────────
-  // RÔLE : Seed + date de première session — donne une identité unique et permanente au jardin
-  // POURQUOI firstLaunch est à la racine de D (pas D.g) — vérifié dans app.js defs()
-  const seed = g.gardenSeed != null ? g.gardenSeed % 9999 : null;
-  const born = window.D.firstLaunch
-    ? new Date(window.D.firstLaunch).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-    : null;
-
-  if (seed != null && born) {
-    lines.push(`Jardin nº${seed} · né le ${born}`);
+  // RÔLE : Nom poétique généré depuis la seed + date de naissance propre au jardin.
+  // POURQUOI gardenBorn (D.g) et pas firstLaunch : chaque regénération (resetGarden)
+  //          pose une nouvelle gardenBorn dans initGarden() — la date reflète
+  //          la vraie naissance de CE jardin, pas de la save globale.
+  let ligneIdentite = '';
+  const seed = g.gardenSeed;
+  if (seed != null) {
+    const nom  = _gardenName(seed);
+    const born = g.gardenBorn
+      ? new Date(g.gardenBorn).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+      : null;
+    ligneIdentite = born ? `🪴 Jardin ${nom} · né le ${born}` : `🪴 Jardin ${nom}`;
   }
 
-  // RÔLE : Assemble les lignes en HTML séparées par <br> — pas de liste à puces
-  // POURQUOI escape() sur chaque ligne : les strings peuvent contenir des données utilisateur
-  return lines.map(l => escape(l)).join('<br>');
+  // ── Assemblage HTML en étiquettes séparées ────────────────────────
+  // RÔLE : Chaque ligne devient un <span class="garden-info-tag"> pour le style étiquette
+  // POURQUOI escape() : les strings peuvent contenir des données utilisateur (desc météo)
+  const tags = [ligneElements, ligneMeteo, ligneHabs, ligneIdentite]
+    .filter(Boolean)
+    .map(l => `<span class="garden-info-tag">${escape(l)}</span>`)
+    .join('');
+
+  return tags;
 }
 
 /**
@@ -334,10 +357,15 @@ function openCanvasFullscreen() {
   closeBtn.setAttribute('aria-label', 'Fermer le plein écran');
   closeBtn.onclick     = closeCanvasFullscreen;
 
-  // RÔLE : Mémorise l'env actif avant de forcer jardin — pour le restaurer à la fermeture.
-  // POURQUOI : closeCanvasFullscreen() remet l'env d'origine, l'utilisatrice ne reste
-  //            pas coincée en jardin après avoir fermé le plein écran.
-  window._canvasFs_prevEnv = (window.D && window.D.g) ? window.D.g.activeEnv : null;
+  // RÔLE : Mémorise l'env actif + l'état compact avant de modifier quoi que ce soit.
+  // POURQUOI : closeCanvasFullscreen() restaure les deux pour ne rien laisser cassé.
+  window._canvasFs_prevEnv    = (window.D && window.D.g) ? window.D.g.activeEnv : null;
+  const consoleEl = document.getElementById('console-top');
+  window._canvasFs_wasCompact = consoleEl ? consoleEl.classList.contains('compact') : false;
+
+  // RÔLE : Retire compact si présent — en plein écran jardin le tama doit être pleine taille.
+  // POURQUOI : compact réduit .tama-shell à ~110px — incompatible avec le mode plein écran.
+  if (consoleEl) consoleEl.classList.remove('compact');
 
   // RÔLE : Force l'env jardin — le sticker 🌱 amène toujours au jardin, peu importe l'env actif.
   // POURQUOI on mute D.g.activeEnv avant _buildGardenInfo() : cette fonction lit activeEnv
@@ -401,9 +429,11 @@ function closeCanvasFullscreen() {
   if (infoEl) infoEl.remove();
   // RÔLE : Retire la classe garden-fullscreen — l'UI normale reprend son layout
   document.body.classList.remove('garden-fullscreen');
+  // RÔLE : Restaure compact si le tama était réduit avant l'ouverture
+  const consoleEl = document.getElementById('console-top');
+  if (consoleEl && window._canvasFs_wasCompact) consoleEl.classList.add('compact');
+  window._canvasFs_wasCompact = false;
   // RÔLE : Restaure l'env qui était actif avant l'ouverture du plein écran.
-  // POURQUOI : openCanvasFullscreen() force jardin — sans cette restauration,
-  //            l'utilisatrice se retrouverait en jardin même après fermeture.
   if (window.D && window.D.g && window._canvasFs_prevEnv) {
     window.D.g.activeEnv = window._canvasFs_prevEnv;
     save();

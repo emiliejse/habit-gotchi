@@ -186,9 +186,12 @@ function initGarden() {
   //        un entier entre 1 et 999999 via Math.random() (seul usage autorisé).
   // POURQUOI : Math.floor évite les flottants, +1 évite la seed=0 (LCG dégénéré avec state=0).
   if (window.D.g.gardenSeed === null || window.D.g.gardenSeed === undefined) {
-    window.D.g.gardenSeed = Math.floor(Math.random() * 999999) + 1;
-    save(); // RÔLE : Persiste la seed immédiatement — si l'app crashe avant la fin de bootstrap(),
-            //        on ne re-tire pas une nouvelle seed au prochain lancement.
+    window.D.g.gardenSeed  = Math.floor(Math.random() * 999999) + 1;
+    // RÔLE : Date de naissance du jardin — initialisée au même moment que la seed.
+    // POURQUOI ISO 8601 (toISOString) : format universel, parseable par new Date() dans _buildGardenInfo().
+    // POURQUOI ici et pas ailleurs : c'est le seul endroit où la seed est tirée (premier lancement ou reset).
+    window.D.g.gardenBorn  = new Date().toISOString();
+    save(); // RÔLE : Persiste seed + born immédiatement.
   }
   const seed = window.D.g.gardenSeed;
 

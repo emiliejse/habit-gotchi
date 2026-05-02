@@ -195,6 +195,9 @@ function initGarden() {
     // Champignons fond — petits à moyens, éphémères
     { type: 'champignon', layer: 'fond',          count: 3,
       xMin: 10, xMax: 185, y: 120, maxAge: 5,   hauteurPX: 3,  scaleMin: 1, scaleMax: 6  },
+    // Arbustes fond — éléments dominants, toujours grands, toujours derrière tout
+    { type: 'arbuste',    layer: 'fond',          count: 2,
+      xMin: 15, xMax: 175, y: 120, maxAge: 20,  hauteurPX: 10, scaleMin: 5, scaleMax: 14 },
   ];
 
   // ── 4. Génération de la liste d'éléments avec zone d'exclusion ──
@@ -319,14 +322,28 @@ function initGarden() {
     }
   });
 
-  // ── 4b. Tri par Y croissant ──────────────────────────────────────
-  // RÔLE : Trie les éléments du plus lointain (y petit = haut de scène) au plus proche
-  //        (y grand = bas de scène). Les fonctions draw* itèrent dans cet ordre →
-  //        les éléments proches sont dessinés EN DERNIER et passent visuellement devant.
-  // POURQUOI indispensable avec des grands éléments : un arbuste planté à y=118 monte
-  //   jusqu'à y=38. Sans tri, une herbe dessinée après pourrait passer devant l'arbuste
-  //   alors qu'elle est censée être "derrière" (même y de base, mais taille différente).
-  elements.sort((a, b) => a.y - b.y);
+  // ── 4b. Tri par Y puis par scalePX décroissant ──────────────────
+  // RÔLE : Double tri pour garantir la profondeur visuelle correcte.
+  //
+  // Clé 1 — Y croissant : sépare les deux layers.
+  //   fond (y=120) est dessiné avant premier_plan (y=160) →
+  //   les éléments de premier plan passent toujours devant. ✓
+  //
+  // Clé 2 — scalePX décroissant (à Y égal) : dans un même layer,
+  //   les grands éléments sont dessinés EN PREMIER → visuellement
+  //   derrière les petits. Les petits, dessinés après, passent devant.
+  //
+  // POURQUOI ne pas trier par X : les positions X sont aléatoires —
+  //   trier par X ne produirait pas un effet de profondeur cohérent.
+  //   scalePX est la seule valeur qui reflète la "présence" d'un élément.
+  //
+  // EXEMPLE : fond avec une grande fougère (s=7) et un petit caillou (s=1).
+  //   Sans ce tri → ordre aléatoire → caillou peut passer devant la fougère.
+  //   Avec ce tri → fougère dessinée avant → caillou passe devant. ✓
+  elements.sort((a, b) => {
+    if (a.y !== b.y) return a.y - b.y;      // layer fond (120) avant premier_plan (160)
+    return b.scalePX - a.scalePX;           // grand d'abord → visuellement derrière
+  });
 
   // ── 5. Persistance dans gardenState ─────────────────────────────
   // RÔLE : Si gardenState est vide, on le remplit avec les éléments générés.
@@ -1161,6 +1178,222 @@ function drawChampignon(p, x, y, variant, colorVariant, scalePX, n, age, maxAge)
   }
 }
 
+/**
+ * drawArbuste(p, x, y, variant, colorVariant, scalePX, n, age, maxAge)
+ *
+ * RÔLE : Arbuste pixel art — élément dominant du jardin, toujours en fond.
+ *        scaleMin=5, scaleMax=14 → monte jusqu'à 70px (y=50 depuis y=120).
+ *
+ * CONVENTION ABSOLUE : y = base du sprite. Tout monte vers le HAUT.
+ *   ⚠️ Aucun pixel isolé — chaque rectangle touche au moins un autre par une face.
+ *
+ * MATURITÉ : m = age / maxAge
+ *   m < 0.2  → pousse compacte : petit bloc de feuilles collé à la tige
+ *   0.2–0.85 → épanoui : forme complète selon variant
+ *   m > 0.85 → vieux : feuillage clairsemé, branches apparentes, ton terne
+ *
+ * variant 0 = buisson rond | 1 = arbuste à tiges | 2 = conifère | 3 = arbuste fleuri
+ */
+function drawArbuste(p, x, y, variant, colorVariant, scalePX, n, age, maxAge) {
+  const s  = scalePX;
+  const ag = age    ?? 0;
+  const ma = maxAge ?? 10;
+  const m  = ag / ma;
+
+  // Palettes feuillage — 8 tons de vert/foncé
+  const FEUILLAGES = [
+    '#508040', '#406830', '#60a050', '#385828',
+    '#70a848', '#284820', '#88c060', '#4a7038',
+  ];
+  const colF  = FEUILLAGES[colorVariant % 8];          // feuillage principal
+  const colFD = FEUILLAGES[(colorVariant + 3) % 8];    // feuillage sombre (ombre)
+  const colFC = FEUILLAGES[(colorVariant + 1) % 8];    // feuillage clair (reflets)
+  const colT  = '#4a3020';                              // tronc/tiges brun
+  const colTD = '#382818';                              // tronc ombre
+
+  // Vieux : feuillage terne + légèrement penché
+  const dx  = m > 0.85 ? PX : 0;
+  const nA  = m > 0.85 ? Math.min(1, n + 0.25) : n;
+
+  // Dimensions de base calculées depuis s
+  const wTronc = Math.max(1, Math.round(s * 0.15)); // largeur tronc en PX-units (1–2)
+  const hTronc = Math.max(1, Math.round(s * 0.25)); // hauteur tronc (visible sous le feuillage)
+  const yTronc = y - PX * hTronc;                   // base du feuillage = sommet tronc
+
+  if (m < 0.2) {
+    // ── POUSSE : petit bloc compact, forme universelle ─────────────
+    // Tronc fin + boule de feuilles collée au sommet
+    p.fill(tc(nA, colT));
+    px(p, x, y - PX * Math.max(2, Math.round(s * 0.4)), PX, PX * Math.max(2, Math.round(s * 0.4)));
+    p.fill(tc(nA, colF));
+    // Boule de feuilles : bloc 3×2 collé au sommet du tronc
+    px(p, x - PX, y - PX * Math.max(2, Math.round(s * 0.4)) - PX * 2, PX * 3, PX * 2);
+
+  } else if (variant === 0) {
+    // ── BUISSON ROND : masse en dôme, feuillage dense ──────────────
+    // Structure : tronc + 3 rangées de feuillage en pyramide inversée (large en haut)
+    // Toutes les rangées se touchent verticalement → bloc solide.
+
+    // Tronc
+    p.fill(tc(nA, colT));
+    px(p, x + dx, y - PX * hTronc, PX * wTronc, PX * hTronc);
+
+    // Feuillage : 3 couches empilées, chaque couche plus large que la suivante vers le haut
+    // couche basse  : largeur s,   hauteur s/3
+    // couche milieu : largeur s+2, hauteur s/3, collée à la basse
+    // couche haute  : largeur s+4, hauteur s/3, collée au milieu (dôme)
+    const hCouche = Math.max(1, Math.round(s / 3));
+    const yBas    = yTronc - PX * hCouche;       // base couche basse = sommet tronc - hCouche
+    const yMid    = yBas   - PX * hCouche;
+    const yHaut   = yMid   - PX * hCouche;
+
+    p.fill(tc(nA, colFD));
+    px(p, x + dx - PX * Math.floor(s / 2),       yBas,  PX * s,       PX * hCouche); // basse
+    p.fill(tc(nA, colF));
+    px(p, x + dx - PX * Math.floor((s + 2) / 2), yMid,  PX * (s + 2), PX * hCouche); // milieu
+    p.fill(tc(nA, colFC));
+    px(p, x + dx - PX * Math.floor((s + 4) / 2), yHaut, PX * (s + 4), PX * hCouche); // haute (dôme)
+
+    // Vieux : troues dans le feuillage (branches qui ressortent)
+    if (m > 0.85 && s >= 7) {
+      p.fill(tc(nA, colT));
+      // Branche gauche — dans la couche basse, collée au tronc
+      px(p, x + dx - PX * Math.floor(s / 2), yBas + PX, PX * 2, PX);
+      // Branche droite
+      px(p, x + dx + PX * Math.floor(s / 2) - PX * 2, yBas + PX, PX * 2, PX);
+    }
+
+  } else if (variant === 1) {
+    // ── ARBUSTE À TIGES : 3 tiges depuis la base, feuillage aux extrémités ──
+    // Les tiges partagent leur base (même y de départ) → connectées au sol.
+    // Chaque touffe de feuilles est collée au sommet de sa tige.
+
+    const hTige  = Math.round(s * 0.6);                // hauteur des tiges
+    const hTouffe = Math.max(2, s - hTige);             // hauteur des touffes
+    const wTouffe = Math.max(3, Math.round(s * 0.5));   // largeur des touffes
+
+    // 3 tiges : gauche penchée, centrale droite, droite penchée
+    // Décalages X des tiges : -s/3, 0, +s/3
+    const offsets = [
+      { ox: -Math.round(s * 0.35), ht: hTige - 1 },
+      { ox: 0,                     ht: hTige     },
+      { ox:  Math.round(s * 0.35), ht: hTige - 2 },
+    ];
+
+    offsets.forEach(({ ox, ht }) => {
+      // Tige
+      p.fill(tc(nA, colT));
+      px(p, x + dx + PX * ox, y - PX * ht, PX, PX * ht);
+      // Touffe au sommet — collée à la tige (même X centre)
+      p.fill(tc(nA, colF));
+      px(p, x + dx + PX * ox - PX * Math.floor(wTouffe / 2),
+         y - PX * ht - PX * hTouffe,
+         PX * wTouffe, PX * hTouffe);
+      // Reflet sur la touffe
+      p.fill(tc(nA, colFC));
+      px(p, x + dx + PX * ox - PX * Math.floor(wTouffe / 2) + PX,
+         y - PX * ht - PX * hTouffe,
+         PX * Math.max(1, wTouffe - 2), PX);
+    });
+
+    // Tronc commun en base — relie toutes les tiges
+    p.fill(tc(nA, colTD));
+    px(p, x + dx - PX * Math.round(s * 0.35), y - PX * 2,
+       PX * (Math.round(s * 0.35) * 2 + 1), PX * 2);
+
+    // Vieux : touffes réduites (feuilles clairsemées)
+    if (m > 0.85) {
+      offsets.forEach(({ ox, ht }) => {
+        // Petite branche nue qui dépasse — collée au sommet de la tige
+        p.fill(tc(nA, colT));
+        px(p, x + dx + PX * ox, y - PX * (ht + hTouffe + 1), PX, PX);
+      });
+    }
+
+  } else if (variant === 2) {
+    // ── CONIFÈRE : silhouette triangulaire, étages de branches ────
+    // Principe : n étages horizontaux de largeur décroissante vers le haut.
+    // Chaque étage est collé à celui du dessous → triangle solide.
+    // Tronc fin qui dépasse légèrement sous les branches.
+
+    // Tronc
+    p.fill(tc(nA, colT));
+    px(p, x + dx, y - PX * hTronc, PX, PX * hTronc);
+
+    // Nombre d'étages proportionnel à s, minimum 3
+    const nEtages  = Math.max(3, Math.round(s * 0.55));
+    const hEtage   = Math.max(1, Math.round((s - hTronc) / nEtages));
+    // Largeur max (base) et réduction par étage
+    const wMax     = s + 2;
+
+    for (let e = 0; e < nEtages; e++) {
+      // e=0 = étage bas (le plus large), e=nEtages-1 = pointe
+      const wEtage  = Math.max(1, wMax - e * 2);
+      const yEtage  = yTronc - PX * hEtage * (e + 1);
+      // Alternance foncé/normal pour donner du volume
+      p.fill(tc(nA, e % 2 === 0 ? colF : colFD));
+      px(p, x + dx - PX * Math.floor(wEtage / 2), yEtage, PX * wEtage, PX * hEtage);
+      // Reflet sur le dessus de chaque étage (1 rangée plus claire)
+      if (hEtage >= 2) {
+        p.fill(tc(nA, colFC));
+        px(p, x + dx - PX * Math.floor(wEtage / 2), yEtage, PX * wEtage, PX);
+      }
+    }
+    // Pointe finale : 1 pixel au sommet, collé au dernier étage
+    const yPointe = yTronc - PX * hEtage * nEtages - PX;
+    p.fill(tc(nA, colFC));
+    px(p, x + dx, yPointe, PX, PX);
+
+    // Vieux : quelques "trous" sombres dans le feuillage (branches mortes)
+    if (m > 0.85 && s >= 7) {
+      p.fill(tc(nA, colTD));
+      px(p, x + dx - PX * Math.floor(wMax * 0.3), yTronc - PX * hEtage * 2, PX, PX);
+      px(p, x + dx + PX * Math.floor(wMax * 0.2), yTronc - PX * hEtage * 3, PX, PX);
+    }
+
+  } else {
+    // ── ARBUSTE FLEURI : masse feuillue + petits points de couleur ──
+    // Même structure que le buisson rond (3 couches) mais avec des fleurs
+    // parsemées dans le feuillage.
+
+    const FLEURS_COL = [
+      '#f0a0b0', '#f0d870', '#c888e8', '#80c8e8',
+      '#e84868', '#e8b020', '#f8f8f8', '#f87840',
+    ];
+    const colFleur = FLEURS_COL[colorVariant % 8];
+
+    // Tronc
+    p.fill(tc(nA, colT));
+    px(p, x + dx, y - PX * hTronc, PX * wTronc, PX * hTronc);
+
+    // Feuillage : 2 couches (buisson légèrement moins haut que v0)
+    const hCouche = Math.max(2, Math.round(s * 0.45));
+    const yBas    = yTronc - PX * hCouche;
+    const yHaut   = yBas   - PX * hCouche;
+
+    p.fill(tc(nA, colFD));
+    px(p, x + dx - PX * Math.floor(s / 2),       yBas,  PX * s,       PX * hCouche);
+    p.fill(tc(nA, colF));
+    px(p, x + dx - PX * Math.floor((s + 2) / 2), yHaut, PX * (s + 2), PX * hCouche);
+
+    // Fleurs : 4–6 points parsemés dans le feuillage, tous dans les couches
+    p.fill(tc(nA, colFleur));
+    // Fleurs basse — dans la couche basse, positions fixes relatives à x
+    px(p, x + dx - PX * Math.floor(s / 2) + PX,            yBas + PX,  PX, PX);
+    px(p, x + dx,                                           yBas,       PX, PX);
+    px(p, x + dx + PX * Math.floor(s / 2) - PX * 2,        yBas + PX,  PX, PX);
+    // Fleurs haute — dans la couche haute
+    px(p, x + dx - PX * Math.floor((s + 2) / 2) + PX,      yHaut + PX, PX, PX);
+    px(p, x + dx + PX,                                      yHaut,      PX, PX);
+    if (s >= 8) {
+      px(p, x + dx + PX * Math.floor((s + 2) / 2) - PX * 2, yHaut + PX, PX, PX);
+    }
+
+    // Vieux : fleurs disparaissent, feuillage terne (déjà géré par nA)
+    // Les fleurs sont dessinées avec nA → elles aussi s'assombrissent
+  }
+}
+
 /* ─── §1 : FOND ──────────────────────────────────────────────────── */
 
 /**
@@ -1227,6 +1460,9 @@ function drawJardinFond(p, theme, n) {
       case 'champignon':
         drawChampignon(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 4, n, el.age ?? 0, el.maxAge ?? 5);
         break;
+      case 'arbuste':
+        drawArbuste(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 8, n, el.age ?? 0, el.maxAge ?? 20);
+        break;
       // default : type inconnu → ignoré silencieusement (forward-compat Phase 3)
     }
   });
@@ -1271,6 +1507,9 @@ function drawJardinPremierPlan(p, theme, n) {
         break;
       case 'champignon':
         drawChampignon(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 4, n, el.age ?? 0, el.maxAge ?? 5);
+        break;
+      case 'arbuste':
+        drawArbuste(p, el.x, el.y, el.variant, el.colorVariant ?? el.variant, el.scalePX ?? 8, n, el.age ?? 0, el.maxAge ?? 20);
         break;
     }
   });

@@ -481,6 +481,13 @@ function openCanvasFullscreen() {
   // POURQUOI : Le jardin est une vue contemplatve — on évite les fermetures accidentelles
 
   lockScroll();
+  // RÔLE : Retire inert de #console-top après lockScroll().
+  // POURQUOI : lockScroll() appelle _setInert(true) qui met inert sur #console-top ET #dynamic-zone.
+  //            En mode jardin, #console-top est la zone ACTIVE (contient .hdr-garden et le bouton ✕)
+  //            — il ne doit pas être inerte. On le retire immédiatement après lockScroll().
+  const consoleElPost = document.getElementById('console-top');
+  if (consoleElPost) consoleElPost.inert = false;
+
   if (typeof _fermerMenuSiOuvert === 'function') _fermerMenuSiOuvert();
 }
 

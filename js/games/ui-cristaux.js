@@ -38,13 +38,20 @@ const _CX_SCALE_ACTIF     = 1.15;    // agrandissement du cristal glissé (feedb
 
 // ── Types de cristaux ────────────────────────────────────────
 // POURQUOI : tableau ordonné — l'index détermine la zone de tri (zone 0 = violet, etc.)
+//
+// PATTERN CSS VARIABLES → p5 :
+//   p5 ne lit pas les variables CSS nativement (pas d'accès au CSSOM dans le sketch).
+//   On lit les variables via getComputedStyle(document.documentElement) au moment
+//   de setup() et on surcharge les couleurs hardcodées si les variables existent.
+//   Les couleurs ci-dessous sont les valeurs de fallback utilisées si les variables
+//   CSS ne sont pas définies (environnement sans style.css chargé, tests, etc.).
 const _CX_TYPES_BASE = [
-  { id: 'violet', couleur: '#b090d0', label: 'violet' },
-  { id: 'rose',   couleur: '#f0a0c0', label: 'rose'   },
-  { id: 'bleu',   couleur: '#90c0f0', label: 'bleu'   },
-  { id: 'vert',   couleur: '#90d0b0', label: 'vert'   },
+  { id: 'violet', couleur: '#b090d0', cssVar: '--cx-violet', label: 'violet' },
+  { id: 'rose',   couleur: '#f0a0c0', cssVar: '--cx-rose',   label: 'rose'   },
+  { id: 'bleu',   couleur: '#90c0f0', cssVar: '--cx-bleu',   label: 'bleu'   },
+  { id: 'vert',   couleur: '#90d0b0', cssVar: '--cx-vert',   label: 'vert'   },
 ];
-const _CX_TYPE_DORE = { id: 'dore', couleur: '#f0d060', label: 'doré' };
+const _CX_TYPE_DORE = { id: 'dore', couleur: '#f0d060', cssVar: '--cx-dore', label: 'doré' };
 
 /* ─── POINT D'ENTRÉE ─────────────────────────────────────────── */
 
@@ -57,9 +64,17 @@ const _CX_TYPE_DORE = { id: 'dore', couleur: '#f0d060', label: 'doré' };
  * @param {HTMLElement} container — le div #game-canvas-container dans lequel injecter le canvas
  */
 function _demarrerCristaux(container) {
+  // ── Guard "double instance" ──────────────────────────────────────────────
   // RÔLE : Nettoyer toute instance précédente avant d'en créer une nouvelle
   // POURQUOI : "Rejouer" appelle lancerCristaux() qui rappelle _demarrerCristaux() —
-  //            sans nettoyage on empilerait des instances p5 et des boutons en doublon
+  //            sans nettoyage on empilerait des instances p5 et des boutons en doublon.
+  //
+  // CONFIRMATION NETTOYAGE (sprint 3) :
+  //   ✅ window._cristalSketch = null  garanti ici ET dans retourGameHub() ET fermerGameHub()
+  //      → toute fermeture de l'overlay (croix ou bouton retour) remet bien null.
+  //   ✅ Timer p5.millis() : géré dans la boucle draw() — il s'arrête AUTOMATIQUEMENT
+  //      à la destruction de l'instance via p5.remove(). Pas besoin de clearInterval.
+  //   ✅ Listener resize : retiré via p.remove() surchargé ci-dessous → pas de fuite mémoire.
   if (window._cristalSketch) {
     window._cristalSketch.remove();
     window._cristalSketch = null;
@@ -113,20 +128,43 @@ function _cx_sketch(p) {
   // ── Pool de types disponibles (avec ou sans doré) ──
   let typesDisponibles = [];
 
+  // RÔLE : Référence vers le container DOM — utilisée dans setup() et dans le listener resize
+  // POURQUOI : stockée ici (pas dans setup) pour être accessible au listener sans re-querySelector
+  let _cxContainer = null;
+
+  // RÔLE : Référence vers le listener resize pour pouvoir le retirer au remove()
+  // POURQUOI : évite une fuite mémoire si l'instance p5 est détruite (retourGameHub,
+  //            fermerGameHub) mais que le listener continue de s'exécuter sur window
+  let _cxResizeListener = null;
+
   /* ── setup() ────────────────────────────────────── */
   p.setup = function() {
     // RÔLE : Mesurer le container pour adapter le canvas à l'écran réel
     // POURQUOI : le container CSS occupe toute la hauteur disponible de l'overlay —
     //            on lit clientWidth/clientHeight plutôt que d'imposer des valeurs fixes
-    const cont = document.getElementById('game-canvas-container');
-    CW = (cont ? cont.clientWidth  : 0) || 400;
-    CH = (cont ? cont.clientHeight : 0) || 600;
+    _cxContainer = document.getElementById('game-canvas-container');
+    CW = (_cxContainer ? _cxContainer.clientWidth  : 0) || 400;
+    CH = (_cxContainer ? _cxContainer.clientHeight : 0) || 600;
 
     const cnv = p.createCanvas(CW, CH);
     cnv.elt.style.display = 'block'; // POURQUOI : évite le gap inline-block sous le canvas
 
     p.noStroke();
     p.textFont('monospace');
+
+    // ── Lecture des couleurs CSS (pattern CSS variables → p5) ────────────
+    // RÔLE : Surcharger les couleurs hardcodées par les variables CSS si elles existent.
+    // POURQUOI : p5 ne lit pas les var(--...) nativement. On lit getComputedStyle une
+    //            seule fois ici (setup) — pas dans draw() pour ne pas pénaliser les perfs.
+    //            Les variables --cx-* peuvent être définies dans style.css pour thématiser
+    //            les cristaux. Si elles ne sont pas définies, trim() renvoie '' → fallback.
+    const rootStyle = getComputedStyle(document.documentElement);
+    _CX_TYPES_BASE.forEach(type => {
+      const val = rootStyle.getPropertyValue(type.cssVar).trim();
+      if (val) type.couleur = val; // POURQUOI : on mute l'objet — c'est intentionnel (setup unique)
+    });
+    const valDore = rootStyle.getPropertyValue(_CX_TYPE_DORE.cssVar).trim();
+    if (valDore) _CX_TYPE_DORE.couleur = valDore;
 
     // RÔLE : Construire le pool de types selon les conditions du jeu
     // POURQUOI cristal doré : apparaît uniquement si soleil ET > 50% habitudes cochées
@@ -140,7 +178,47 @@ function _cx_sketch(p) {
 
     debutSession = p.millis();
     dernierSpawn = p.millis();
+
+    // ── Listener resize (orientation portrait ↔ paysage) ────────────────
+    // RÔLE : Redimensionner le canvas si l'orientation de l'écran change.
+    // POURQUOI : sur iOS, tourner le téléphone change innerWidth/innerHeight —
+    //            sans resize le canvas reste à ses dimensions initiales (letterbox).
+    _cxResizeListener = function() {
+      if (!_cxContainer) return;
+      const newW = _cxContainer.clientWidth  || 400;
+      const newH = _cxContainer.clientHeight || 600;
+
+      // RÔLE : Recalculer les positions des cristaux en vol proportionnellement
+      // POURQUOI : on normalise par l'ancien CW/CH puis on multiplie par le nouveau —
+      //            les cristaux restent aux mêmes positions relatives sur le canvas
+      if (CW > 0 && CH > 0) {
+        const ratioX = newW / CW;
+        const ratioY = newH / CH;
+        cristaux.forEach(c => {
+          c.x = c.x * ratioX;
+          c.y = c.y * ratioY;
+        });
+      }
+
+      CW = newW;
+      CH = newH;
+      p.resizeCanvas(CW, CH); // RÔLE : adapter le canvas p5 aux nouvelles dimensions
+    };
+    window.addEventListener('resize', _cxResizeListener);
   };
+
+  // RÔLE : Nettoyer le listener resize quand l'instance p5 est détruite
+  // POURQUOI : p5 appelle remove() → p.remove est déclenché → on retire le listener —
+  //            sans ça le listener continuerait à s'exécuter sur l'ancien CW/CH figé
+  p.remove = (function(originalRemove) {
+    return function() {
+      if (_cxResizeListener) {
+        window.removeEventListener('resize', _cxResizeListener);
+        _cxResizeListener = null;
+      }
+      if (originalRemove) originalRemove.call(p); // POURQUOI : chaîner le remove natif p5
+    };
+  })(p.remove);
 
   /* ── draw() ─────────────────────────────────────── */
   p.draw = function() {
@@ -586,6 +664,20 @@ function _cx_afficherBoutons(scoreFinal) {
     'pointer-events:auto',
   ].join(';');
 
+  // ── Région accessible (lecteurs d'écran) ──────────
+  // RÔLE : Annoncer le résultat de la partie aux technologies d'assistance.
+  // POURQUOI : les textes de fin sont dessinés sur le canvas p5, donc invisibles
+  //            pour les lecteurs d'écran. Ce div HTML en texte pur reste dans le DOM
+  //            et est annoncé automatiquement grâce à aria-live="polite".
+  const bestAfin = parseInt(localStorage.getItem('hg_game_crystals_best') || '0', 10);
+  const ariaZone = document.createElement('div');
+  ariaZone.setAttribute('aria-live', 'polite'); // POURQUOI polite : annonce après la fin de parole courante
+  ariaZone.setAttribute('role', 'status');
+  ariaZone.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap';
+  // POURQUOI visually-hidden et non display:none : les lecteurs d'écran ignorent display:none
+  ariaZone.textContent = `Fin de session. Score : ${scoreFinal} cristaux rangés. Meilleur score : ${bestAfin}.`;
+  wrapper.appendChild(ariaZone);
+
   // ── Bouton Rejouer ────────────────────────────────
   // POURQUOI : appelle lancerCristaux() (ui-game.js) qui refera le swap hub↔canvas
   //            et rappellera _demarrerCristaux() avec une instance p5 fraîche
@@ -663,6 +755,12 @@ function _cx_estDoréDisponible() {
 
   return inclusSoleil && moitieAtteinte;
 }
+
+// RÔLE : Exposer _cx_estDoréDisponible sur window pour que renderGameHub()
+//         dans ui-game.js puisse l'interroger sans importer ce fichier.
+// POURQUOI : ui-game.js est chargé AVANT ui-cristaux.js — il ne peut pas appeler
+//            _cx_estDoréDisponible directement. L'exposition window.* résout cela.
+window._cx_estDoréDisponible = _cx_estDoréDisponible;
 
 /* ─── HELPER : SAUVEGARDE SCORE ─────────────────────────────── */
 

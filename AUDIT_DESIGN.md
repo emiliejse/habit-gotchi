@@ -1,5 +1,10 @@
 # AUDIT_DESIGN.md — HabitGotchi v4.5
 
+> **Micro-modif emoji Atelier 2026-05-02**
+> - Emoji de l'Atelier changé de 🎨 à 🖼️ dans `index.html` (2 occurrences : sticker menu `.menu-sticker`, titre h2 de l'overlay `#atelier-overlay`).
+> - La ligne menu "Perso" (`goMenu('perso')`) conserve 🎨 — elle n'est pas liée à l'Atelier.
+> - Le toast `'Thèmes restaurés 🎨'` dans `ui-settings.js` (l.660) n'est pas concerné — emoji différent contexte.
+
 > **Feature Atelier — retouches UI palette/galerie 2026-05-02**
 > - **Canvas** : `_atelierFitCanvas()` utilise désormais `zoneW/zoneH` sans soustraction de marge — le canvas occupe tout l'espace disponible, le centrage flex absorbe l'arrondi résiduel.
 > - **Palette** : grille CSS `repeat(5, 40px)` gap `10px` — 2 rangées × 4 couleurs (8 boutons ronds 40×40px) + gomme `✕` en 9e position (col 5, rangée 2 automatique). Boutons plus grands et mieux espacés qu'avant (32px → 40px, gap 6px → 10px). Gomme : `✕` texte pur remplace 🧹.

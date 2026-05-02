@@ -536,7 +536,7 @@ Ton bilan de la semaine apparaîtra ici...
     <!-- RÔLE : Raccourci rapide vers l'Atelier pixel art — branché sur ouvrirAtelier()
          POURQUOI : stopPropagation évite de fermer le menu-overlay en même temps que l'atelier s'ouvre -->
     <div class="menu-sticker" title="Atelier pixel art"
-         onclick="event.stopPropagation(); toggleMenu(); ouvrirAtelier()">🎨</div>
+         onclick="event.stopPropagation(); toggleMenu(); ouvrirAtelier()">🖼️</div>
     <!-- RÔLE : Raccourci rapide vers le hub de jeux — ouvre l'overlay plein écran
          POURQUOI stopPropagation : évite que le clic ne ferme le menu-overlay en même temps -->
     <div class="menu-sticker" title="Jeux cosy"
@@ -615,7 +615,7 @@ Ton bilan de la semaine apparaîtra ici...
        du header grâce à position:static via la classe .hdr-garden-close. -->
   <div style="display:flex;align-items:center;justify-content:space-between;
               padding:12px 16px 8px;flex-shrink:0;border-bottom:1px solid var(--border)">
-    <h2 style="margin:0;font-family:var(--font-title);color:var(--text)">🎨 Atelier</h2>
+    <h2 style="margin:0;font-family:var(--font-title);color:var(--text)">🖼️ Atelier</h2>
     <!-- hdr-garden-close : même style que modal-close mais position:static
          → reste dans le flux flex, respecte le padding-right de l'overlay -->
     <button class="hdr-garden-close" onclick="fermerAtelier()" aria-label="Fermer l'atelier">✕</button>
@@ -687,10 +687,13 @@ Ton bilan de la semaine apparaîtra ici...
       <div class="game-card">
         <div class="game-card-icon">💎</div>
         <div class="game-card-body">
-          <div class="game-card-title">Tri de Cristaux</div>
+          <!-- RÔLE : Indicateur ✨ affiché uniquement si le cristal doré est disponible -->
+          <!-- POURQUOI caché par défaut : renderGameHub() le révèle via style.display si conditions remplies -->
+          <div class="game-card-title">Tri de Cristaux <span id="cristaux-dore-indicateur" style="display:none" aria-label="Cristal doré disponible">✨</span></div>
           <div class="game-card-score" id="cristaux-best-score">Meilleur : —</div>
         </div>
-        <button class="btn btn-p game-card-btn" onclick="lancerCristaux()">Jouer</button>
+        <!-- aria-label explicite : "Jouer" seul n'identifie pas le jeu pour un lecteur d'écran -->
+        <button class="btn btn-p game-card-btn" onclick="lancerCristaux()" aria-label="Jouer à Tri de Cristaux">Jouer</button>
       </div>
 
       <!-- Futurs jeux à ajouter ici au fil des sprints -->

@@ -38,7 +38,20 @@ function ouvrirGameHub() {
   renderGameHub();
 
   // RÔLE : Bloquer le scroll de la page derrière l'overlay (iOS fix)
-  // POURQUOI : Sans lockScroll, le fond scrolle derrière l'overlay sur Safari mobile
+  // POURQUOI : Sans lockScroll, le fond scrolle derrière l'overlay sur Safari mobile.
+  //
+  // ROBUSTESSE IOS (sprint 3) :
+  //   lockScroll() pose un listener touchmove+preventDefault (passive:false) sur document.
+  //   Il RESTE actif pendant tout le jeu — lancerCristaux() et retourGameHub() ne
+  //   l'annulent jamais (ils n'appellent pas unlockScroll). unlockScroll() n'est appelé
+  //   que dans fermerGameHub() quand l'overlay est vraiment fermé.
+  //
+  //   Le sketch p5 retourne false dans touchStarted/touchMoved/touchEnded, ce qui
+  //   appelle preventDefault() à l'intérieur du canvas p5 — ce double-appel est
+  //   inoffensif (idempotent). Aucun conflit avec render.js car render.js écoute sur
+  //   le canvas principal (#defaultCanvas0), pas sur le canvas du jeu (#game-canvas-container).
+  //   ⚠️ DETTE : si render.js écoute jamais sur document (touchstart global), vérifier
+  //   que le guard "if target is inside #game-overlay → skip" est en place.
   lockScroll();
 
   // RÔLE : Fermer le menu si ouvert — l'overlay prend toute la place
@@ -99,6 +112,19 @@ function renderGameHub() {
     scoreEl.textContent = best !== null
       ? `Meilleur : ${parseInt(best, 10)} pts`
       : 'Meilleur : —';
+  }
+
+  // RÔLE : Afficher un indicateur ✨ discret sur la carte si le cristal doré est disponible.
+  // POURQUOI window._cx_estDoréDisponible : définie dans ui-cristaux.js (chargé après) —
+  //           on vérifie sa présence via typeof pour ne pas crasher si le fichier est absent.
+  //           L'indicateur aide l'utilisatrice à savoir quand lancer le jeu pour le bonus.
+  const indicEl = document.getElementById('cristaux-dore-indicateur');
+  if (indicEl) {
+    const doréDispo = typeof window._cx_estDoréDisponible === 'function'
+      && window._cx_estDoréDisponible();
+    // POURQUOI style.display plutôt que remove/create : évite de recréer un nœud DOM
+    //           à chaque appel de renderGameHub() (appelé à chaque ouverture du hub)
+    indicEl.style.display = doréDispo ? 'inline' : 'none';
   }
 }
 

@@ -433,66 +433,75 @@ function openCanvasFullscreen() {
   window._canvasFs_wasCompact = consoleEl ? consoleEl.classList.contains('compact') : false;
 
   // RÔLE : Retire compact si présent — en plein écran jardin le tama doit être pleine taille.
-  // POURQUOI : compact réduit .tama-shell à ~110px — incompatible avec le mode plein écran.
-  // POURQUOI void offsetHeight : force un reflow synchrone immédiatement après le retrait de compact,
-  //   avant toute injection dans le DOM. Sans ça, le layout se calcule encore avec margin-top:-48px
-  //   et le canvas s'affiche depuis le coin supérieur gauche.
-  if (consoleEl) {
-    consoleEl.classList.remove('compact');
-    void consoleEl.offsetHeight; // force reflow
-  }
+  // POURQUOI : compact applique margin-top:-48px sur #tama-bubble-wrap via une transition CSS 400ms.
+  //            Il faut attendre la fin de cette transition avant d'ouvrir l'overlay — sinon le
+  //            canvas est encore en position compacte (coin supérieur gauche) au moment du rendu.
+  if (consoleEl) consoleEl.classList.remove('compact');
 
-  // RÔLE : Force l'env jardin — le sticker 🌱 amène toujours au jardin, peu importe l'env actif.
-  // POURQUOI on mute D.g.activeEnv avant _buildGardenInfo() : cette fonction lit activeEnv
-  //          pour décider si elle retourne du contenu ou une chaîne vide.
-  // POURQUOI save() : persiste le changement d'env pour que p5 render.js le lise au prochain frame.
+  // RÔLE : Force l'env jardin avant de construire les infos
   if (window.D && window.D.g) {
     window.D.g.activeEnv = 'jardin';
     save();
   }
 
-  // ── Bloc infos jardin ────────────────────────────────────────────
-  // RÔLE : Infos contextuelles sous le canvas — env jardin garanti par la ligne ci-dessus.
-  const infoHTML = _buildGardenInfo();
-  const infoEl   = document.createElement('div');
-  infoEl.className = 'canvas-fs-info';
-  infoEl.innerHTML = infoHTML;
-  // RÔLE : Cache le bloc si toujours vide (données jardin absentes — premier lancement)
-  if (!infoHTML) infoEl.style.display = 'none';
+  // ── Fonction qui fait l'ouverture effective ─────────────────────
+  // POURQUOI séparée : si le tama était en mode compact, on doit attendre la fin
+  // de sa transition CSS (margin-top:-48px → 0, durée 400ms) avant d'injecter
+  // l'overlay — sinon le canvas se positionne encore depuis le coin supérieur gauche.
+  function _doOpen() {
+    // Bloc infos jardin
+    const infoHTML = _buildGardenInfo();
+    const infoEl   = document.createElement('div');
+    infoEl.className = 'canvas-fs-info';
+    infoEl.innerHTML = infoHTML;
+    if (!infoHTML) infoEl.style.display = 'none';
 
-  // ── Injection de l'overlay AVANT #console-top dans le DOM ─────────
-  // POURQUOI : document.body.appendChild() place l'overlay EN DERNIER dans le body,
-  //            après #console-top. Même avec pointer-events:none, un élément z:800
-  //            inséré après #console-top (z:850) dans le DOM peut créer un contexte
-  //            de stacking qui intercepte les événements sur .hdr-garden.
-  //            En insérant l'overlay AVANT #console-top, il est derrière dans le DOM
-  //            et ne peut pas bloquer les clics sur les éléments de #console-top.
-  const consoleTop = document.getElementById('console-top');
-  document.body.insertBefore(overlay, consoleTop);
+    // Injection de l'overlay AVANT #console-top
+    const consoleTop = document.getElementById('console-top');
+    document.body.insertBefore(overlay, consoleTop);
 
-  // RÔLE : Active la classe sur body — masque l'UI et reconfigure #console-top (z:850)
-  document.body.classList.add('garden-fullscreen');
-  // RÔLE : Rend le header jardin accessible (aria-hidden retiré à l'ouverture)
-  document.getElementById('hdr-garden')?.removeAttribute('aria-hidden');
+    // Active garden-fullscreen + header
+    document.body.classList.add('garden-fullscreen');
+    document.getElementById('hdr-garden')?.removeAttribute('aria-hidden');
 
-  // RÔLE : Injecte infoEl dans #console-top — partage son contexte de stacking (z:850)
-  if (consoleTop) consoleTop.appendChild(infoEl);
+    // Injecte les infos dans #console-top
+    if (consoleTop) consoleTop.appendChild(infoEl);
 
-  // RÔLE : Double RAF — laisse le reflow CSS s'appliquer avant de déclencher la transition
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => overlay.classList.add('open'));
-  });
+    // Déclenche la transition d'ouverture de l'overlay
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => overlay.classList.add('open'));
+    });
 
-  // RÔLE : Fermeture uniquement via le bouton ✕ dans .hdr-garden — pas de tap fond
-  // POURQUOI : Le jardin est une vue contemplatve — on évite les fermetures accidentelles
+    lockScroll();
+    // Retire inert de #console-top — lockScroll() vient de le poser, mais
+    // #console-top est la zone active en mode jardin (contient le bouton ✕)
+    const ct = document.getElementById('console-top');
+    if (ct) ct.inert = false;
+  }
 
-  lockScroll();
-  // RÔLE : Retire inert de #console-top après lockScroll().
-  // POURQUOI : lockScroll() appelle _setInert(true) qui met inert sur #console-top ET #dynamic-zone.
-  //            En mode jardin, #console-top est la zone ACTIVE (contient .hdr-garden et le bouton ✕)
-  //            — il ne doit pas être inerte. On le retire immédiatement après lockScroll().
-  const consoleElPost = document.getElementById('console-top');
-  if (consoleElPost) consoleElPost.inert = false;
+  // RÔLE : Si compact était actif, attendre la fin de sa transition avant d'ouvrir.
+  // POURQUOI transitionend sur #tama-bubble-wrap : c'est lui qui porte margin-top:-48px.
+  //   La transition dure 400ms — écouter transitionend est plus fiable qu'un setTimeout fixe.
+  //   On écoute 'margin-top' spécifiquement pour ne pas réagir à d'autres transitions.
+  //   { once:true } évite tout risque de double déclenchement.
+  if (window._canvasFs_wasCompact) {
+    const wrap = document.getElementById('tama-bubble-wrap');
+    if (wrap) {
+      wrap.addEventListener('transitionend', function handler(e) {
+        if (e.propertyName !== 'margin-top') return;
+        wrap.removeEventListener('transitionend', handler);
+        _doOpen();
+      }, { once: false }); // once:false car on filtre sur propertyName
+      // Fallback : si la transition ne se déclenche pas (ex: déjà à 0), ouvrir après 450ms
+      setTimeout(() => {
+        if (!document.body.classList.contains('garden-fullscreen')) _doOpen();
+      }, 450);
+    } else {
+      _doOpen();
+    }
+  } else {
+    _doOpen();
+  }
 
   if (typeof _fermerMenuSiOuvert === 'function') _fermerMenuSiOuvert();
 }

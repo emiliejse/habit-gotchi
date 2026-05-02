@@ -557,10 +557,14 @@ function openCanvasFullscreen() {
     overlay.classList.add('open');
 
     lockScroll();
-    // Retire inert de #console-top — lockScroll() vient de le poser, mais
-    // #console-top est la zone active en mode jardin (contient le bouton ✕)
-    const ct = document.getElementById('console-top');
-    if (ct) ct.inert = false;
+    // RÔLE : Rend interactif UNIQUEMENT .hdr-garden (le header avec le bouton ✕),
+    //        sans retirer inert de tout #console-top.
+    // POURQUOI : lockScroll() pose inert sur #console-top entier, ce qui bloquerait
+    //            le bouton ✕ jardin. Mais retirer inert sur tout #console-top rouvrirait
+    //            les interactions avec le canvas p5 et les zones de tap du gotchi derrière.
+    //            On cible uniquement l'élément .hdr-garden pour être chirurgical.
+    const hdrGarden = document.getElementById('hdr-garden');
+    if (hdrGarden) hdrGarden.inert = false;
   }
 
   // RÔLE : Bascule immédiatement en mode jardin dès le tap — masque l'UI ET fait passer

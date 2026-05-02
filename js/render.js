@@ -1837,6 +1837,22 @@ if (
   (menuEl && menuEl.classList.contains('open'))
 ) return true;
 
+// 🔒 GARDE 2b : atelier ouvert → l'overlay couvre tout visuellement mais p5 écoute
+// sur document entier, donc ses taps traversent quand même le fond.
+// POURQUOI : Sans cette garde, taper dans le vide de l'atelier déclenche les zones
+//            interactives du canvas (barres d'énergie, zones de tap gotchi…).
+const atelierOverlay = document.getElementById('atelier-overlay');
+if (atelierOverlay && atelierOverlay.style.display !== 'none') return true;
+
+// 🔒 GARDE 2c : overlay jardin (canvas-fs-overlay) ouvert
+// POURQUOI : Même problème — l'overlay jardin est pointer-events:none par design
+//            (sinon le bouton ✕ ne reçoit pas les taps). p5 reste donc accessible
+//            derrière. Cette garde bloque toute interaction p5 pendant le mode jardin.
+// NOTE : La GARDE 0a gère déjà garden-fullscreen pour le bouton ✕ — cette garde
+//        est complémentaire et couvre les autres zones du fond.
+const jardinOverlay = document.getElementById('canvas-fs-overlay');
+if (jardinOverlay) return true;
+
     // 🔒 GARDE 3 : l'utilisateur est focus sur un champ de saisie
     const active = document.activeElement;
     if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {

@@ -244,7 +244,9 @@ function drawChambre(p, theme, n) {
   p.rect(85, 65, 36, 36);
   p.fill(tc(n, theme.frameBg));
   p.rect(88, 68, 30, 30);
-  drawFrameMotif(p, theme, n);
+  // RÔLE : Affiche la peinture active si D.atelier.activeId est défini,
+  //        sinon replie sur le motif abstrait par défaut (drawFrameMotif)
+  drawAtelierFrame(p, theme, n);
 
   // 6. SOL PARQUET
   p.fill(tc(n, theme.floor));
@@ -352,6 +354,65 @@ function drawFrameMotif(p, theme, n) {
   px(p, 96, 76, PX*2, PX*2); px(p, 104, 84, PX*2, PX*2);
   p.fill(tc(n, theme.frameAccent2));
   px(p, 104, 76, PX, PX*3); px(p, 96, 84, PX*3, PX);
+}
+
+/**
+ * drawAtelierFrame() : affiche la peinture active dans le cadre mural de la Chambre
+ * RÔLE : Remplace le motif abstrait par défaut (drawFrameMotif) quand une peinture
+ *        est sélectionnée dans D.atelier.activeId.
+ * POURQUOI : La Partie 3 de la feature Atelier — le tableau peint dans l'éditeur
+ *            doit apparaître accroché au mur dans la scène Chambre.
+ */
+function drawAtelierFrame(p, theme, n) {
+  // Dimensions de la grille de l'éditeur (constantes définies dans ui-atelier.js,
+  // recopiées ici en dur pour éviter toute dépendance inter-fichier —
+  // envs.js est chargé AVANT ui-atelier.js selon l'ordre de index.html)
+  const _AC = 16; // colonnes
+  const _AR = 12; // lignes
+
+  // RÔLE : Vérifier qu'un tableau est bien sélectionné, sinon replier sur le motif par défaut
+  const activeId = window.D?.atelier?.activeId;
+  if (!activeId) {
+    drawFrameMotif(p, theme, n);
+    return;
+  }
+
+  // RÔLE : Retrouver les données du tableau actif dans D.atelier.tableaux
+  const tb = window.D?.atelier?.tableaux?.find(t => t.id === activeId);
+  if (!tb || !tb.pixels) {
+    // Tableau introuvable ou malformé → repli défensif sur le motif par défaut
+    drawFrameMotif(p, theme, n);
+    return;
+  }
+
+  // RÔLE : Redessiner le fond intérieur du cadre avant de poser les pixels
+  // POURQUOI : Assure une surface propre même si drawChambre() l'a déjà fait,
+  //            et permet un appel autonome de cette fonction dans d'autres contextes
+  p.fill(tc(n, theme.frameBg));
+  p.rect(88, 68, 30, 30);
+
+  // RÔLE : Calculer la taille de chaque cellule dans la zone scène
+  // Zone intérieure du cadre : x=88, y=68, w=30, h=30
+  // Grille éditeur : 16 colonnes × 12 lignes
+  // POURQUOI : cw ≈ 1.875 et ch = 2.5 → sub-pixel, donc px() (taille min=PX=5) est inutilisable
+  //            On utilise pxFree() qui accepte des dimensions libres sans plancher
+  const cw = 30 / _AC; // largeur d'une cellule scène ≈ 1.875 unités
+  const ch = 30 / _AR; // hauteur d'une cellule scène = 2.5 unités
+
+  // RÔLE : Parcourir chaque cellule du tableau et dessiner les pixels non-null
+  for (let row = 0; row < _AR; row++) {
+    for (let col = 0; col < _AC; col++) {
+      const hex = tb.pixels[row]?.[col];
+      if (!hex) continue; // null = transparence → on laisse le fond frameBg visible
+
+      p.fill(tc(n, hex)); // tc() applique le filtre jour/nuit à la couleur brute
+      const cx = 88 + col * cw; // position x du coin haut-gauche de la cellule
+      const cy = 68 + row * ch; // position y du coin haut-gauche de la cellule
+      // Math.ceil(cw)+1 et Math.ceil(ch)+1 pour éviter les gaps entre cellules voisines
+      // POURQUOI : à 1.875, Math.ceil = 2 → +1 = 3 → légère superposition intentionnelle
+      pxFree(p, cx, cy, Math.ceil(cw) + 1, Math.ceil(ch) + 1);
+    }
+  }
 }
 
 /**

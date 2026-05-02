@@ -2085,6 +2085,12 @@ async function bootstrap() {
 
     catchUpPoops();
 
+    // RÔLE : Initialise les éléments génératifs du biome Jardin (seed + positions + types).
+    // POURQUOI : appelé après loadDataFiles() et catchUpPoops() — D est prêt et complet.
+    //            La garde typeof vérifie que garden.js est bien chargé (ordre index.html).
+    //            Sans cette garde, un bug de chargement ferait crasher tout bootstrap().
+    if (typeof window.initGarden === 'function') window.initGarden();
+
     // ── Pénalité habitudes manquées ──────────────────────────────────────────
     // RÔLE : Au chargement, vérifie si des habitudes n'ont pas été cochées hier.
     //        Si oui, applique une pénalité XP légère et affiche une bulle douce.

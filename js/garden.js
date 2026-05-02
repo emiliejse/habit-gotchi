@@ -442,8 +442,7 @@ window.drawJardin = drawJardin;
 /**
  * drawJardinFond() : passe arrière-plan du Jardin
  * RÔLE : Dessine tout ce qui doit apparaître DERRIÈRE le Gotchi.
- *        Phase 1 : sol herbeux basique uniquement.
- *        Phase 2+ : herbes hautes, buissons de fond, chemins, etc.
+ *        Sol herbeux + tous les éléments de window._gardenElements dont layer === 'fond'.
  * @param {Object} p     - Instance p5.js
  * @param {Object} theme - Palette active (couleurs depuis config.js → ENV_THEMES, ex: 'pastel')
  * @param {number} n     - Ratio nuit 0 (jour) → 1 (nuit pleine)
@@ -451,14 +450,43 @@ window.drawJardin = drawJardin;
 function drawJardinFond(p, theme, n) {
   p.noStroke();
 
-  // Sol — aplat herbeux en deux tons pour simuler l'épaisseur de la pelouse.
+  // ── Sol herbeux ──────────────────────────────────────────────────
   // POURQUOI p.rect et non px() : même convention que drawParc/drawMontagne —
-  //          les grands aplats de sol utilisent p.rect (coordonnées libres),
-  //          les détails pixel art utiliseront px() en Phase 2.
+  //          les grands aplats de sol utilisent p.rect (coordonnées libres).
   p.fill(tc(n, theme.gnd));    p.rect(0, 120, CS, 80); // herbe principale
   p.fill(tc(n, theme.gndDk));  p.rect(0, 120, CS, PX * 2); // lisière sombre (2 pixels)
 
-  // Phase 2 : ajouter ici herbes hautes de fond, buissons, chemins de terre…
+  // ── Éléments génératifs de fond ──────────────────────────────────
+  // RÔLE : Itère sur window._gardenElements et dessine uniquement les éléments
+  //        dont layer === 'fond' (derrière le Gotchi).
+  // POURQUOI la garde _gardenElements : initGarden() est appelée depuis bootstrap()
+  //          après loadDataFiles(). Si pour une raison quelconque draw() tourne
+  //          avant que initGarden() ait fini, on évite un crash silencieux.
+  if (!window._gardenElements) return;
+
+  window._gardenElements.forEach(el => {
+    // RÔLE : Filtre — seul le fond est dessiné ici.
+    if (el.layer !== 'fond') return;
+
+    // RÔLE : Dispatch vers la bonne fonction de dessin selon le type.
+    // POURQUOI switch plutôt que if/else : plus lisible quand les cas sont nombreux,
+    //          et plus facile à étendre (Phase 3 pourrait ajouter 'buisson', 'arbre', etc.).
+    switch (el.type) {
+      case 'fleur':
+        drawFleur(p, el.x, el.y, el.variant, theme, n);
+        break;
+      case 'herbe':
+        drawHerbe(p, el.x, el.y, el.variant, n);
+        break;
+      case 'pierre':
+        drawPierre(p, el.x, el.y, el.variant, n);
+        break;
+      case 'champignon':
+        drawChampignon(p, el.x, el.y, el.variant, n);
+        break;
+      // default : type inconnu → on ignore silencieusement (forward-compat Phase 3)
+    }
+  });
 }
 window.drawJardinFond = drawJardinFond;
 
@@ -467,13 +495,41 @@ window.drawJardinFond = drawJardinFond;
 /**
  * drawJardinPremierPlan() : passe premier plan du Jardin
  * RÔLE : Dessine tout ce qui doit apparaître DEVANT le Gotchi.
- *        Phase 1 : vide — placeholder pour la Phase 2 (herbes courtes, fleurs au bord…).
+ *        Itère sur window._gardenElements dont layer === 'premier_plan'.
  * @param {Object} p     - Instance p5.js
  * @param {Object} theme - Thème actif
  * @param {number} n     - Ratio nuit 0 (jour) → 1 (nuit pleine)
  */
 function drawJardinPremierPlan(p, theme, n) {
-  // Phase 1 : intentionnellement vide.
-  // Phase 2 : ajouter ici brins d'herbe courts au bas du canvas, fleurs de bord, insectes…
+  p.noStroke();
+
+  // ── Éléments génératifs de premier plan ─────────────────────────
+  // RÔLE : Itère sur window._gardenElements et dessine uniquement les éléments
+  //        dont layer === 'premier_plan' (devant le Gotchi).
+  // POURQUOI cette passe est appelée APRÈS le Gotchi dans render.js :
+  //          les éléments premier_plan ont un y plus bas (158–170) que le Gotchi
+  //          (130–155) — les dessiner après garantit qu'ils passent visuellement
+  //          devant lui, créant la sensation de profondeur.
+  if (!window._gardenElements) return;
+
+  window._gardenElements.forEach(el => {
+    // RÔLE : Filtre — seul le premier plan est dessiné ici.
+    if (el.layer !== 'premier_plan') return;
+
+    switch (el.type) {
+      case 'fleur':
+        drawFleur(p, el.x, el.y, el.variant, theme, n);
+        break;
+      case 'herbe':
+        drawHerbe(p, el.x, el.y, el.variant, n);
+        break;
+      case 'pierre':
+        drawPierre(p, el.x, el.y, el.variant, n);
+        break;
+      case 'champignon':
+        drawChampignon(p, el.x, el.y, el.variant, n);
+        break;
+    }
+  });
 }
 window.drawJardinPremierPlan = drawJardinPremierPlan;

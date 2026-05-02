@@ -120,10 +120,11 @@ function _atelierFitCanvas() {
   const zoneW = zone.clientWidth;
   const zoneH = zone.clientHeight;
 
-  // POURQUOI : On soustrait 4px de marge de sécurité pour éviter tout débordement
-  //            dû aux marges de centrage flex ou à un arrondi navigateur.
-  const cellParLargeur = Math.floor((zoneW - 4) / ATELIER_COLS);
-  const cellParHauteur  = Math.floor((zoneH - 4) / ATELIER_ROWS);
+  // POURQUOI : On utilise toute la zone — le flex center dans #atelier-canvas-zone
+  //            absorbe le pixel résiduel sans débordement. On arrondit à l'entier
+  //            inférieur pour des cellules entières (pas d'artefact sous-pixel).
+  const cellParLargeur = Math.floor(zoneW / ATELIER_COLS);
+  const cellParHauteur  = Math.floor(zoneH / ATELIER_ROWS);
 
   // Le facteur limitant est la dimension la plus contrainte
   _atelierCellPx = Math.max(4, Math.min(cellParLargeur, cellParHauteur));
@@ -290,43 +291,47 @@ function _atelierRenderPalette() {
   const tb = window.D.atelier.tableaux.find(t => t.id === _atelierEditId);
   const couleurs = tb ? tb.paletteSnapshot : [];
 
-  let html = '';
+  // POURQUOI : 2 rangées de 4 couleurs + gomme à la fin de la 2e rangée = 9 boutons au total.
+  //            display:grid avec 5 colonnes → rangée 1 = couleurs 0-3, rangée 2 = couleurs 4-7 + gomme.
+  //            Boutons 40px avec gap 10px = plus lisibles et plus faciles à taper sur mobile.
+  let html = `<div style="display:grid;grid-template-columns:repeat(5,40px);gap:10px;justify-content:center">`;
 
   // ── 8 boutons colorés ──
   couleurs.forEach((hex, i) => {
-    // POURQUOI : outline offset négatif + 3px blanc entre couleur et contour = ring visible
-    //            sur n'importe quelle couleur sans avoir besoin d'une couleur de contraste calculée.
+    // POURQUOI : ring outline visible sur n'importe quelle couleur sans calcul de contraste.
     const actif = (_atelierColor === hex);
     const ring  = actif
-      ? 'outline:3px solid var(--text);outline-offset:2px;'
-      : 'outline:2px solid rgba(0,0,0,0.15);outline-offset:1px;';
+      ? 'outline:3px solid var(--text);outline-offset:3px;'
+      : 'outline:1px solid rgba(0,0,0,0.18);outline-offset:1px;';
     html += `<button
       onclick="window._atelierChoisirCouleur('${hex}')"
       aria-label="Couleur ${i + 1}"
-      style="
-        width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;
-        background:${hex};
-        ${ring}
-        flex-shrink:0;
-      "></button>`;
+      style="width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;
+             background:${hex};${ring}flex-shrink:0;"></button>`;
+
+    // POURQUOI : Après la 4e couleur (index 3), on insère un séparateur invisible
+    //            pour forcer le passage à la 2e rangée dans la grille 5 colonnes.
+    //            La grille a 5 colonnes : col 1–4 pour les couleurs, col 5 pour la gomme
+    //            mais en rangée 2. On utilise grid-column-start pour placer la gomme
+    //            en fin de rangée 2 via un span vide ici — solution : la gomme est simplement
+    //            le 9e élément, le navigateur la place en col 5 rangée 2 automatiquement.
   });
 
-  // ── Bouton gomme ──
+  // ── Bouton gomme (9e élément → col 5, rangée 2 automatique) ──
+  // POURQUOI : ✕ plutôt que 🧹 — icône plus claire, lisible à petite taille, sans dépendance emoji.
   const gommeActif = (_atelierColor === null);
   const gommeRing  = gommeActif
-    ? 'outline:3px solid var(--text);outline-offset:2px;'
-    : 'outline:2px solid rgba(0,0,0,0.15);outline-offset:1px;';
+    ? 'outline:3px solid var(--text);outline-offset:3px;'
+    : 'outline:1px solid rgba(0,0,0,0.18);outline-offset:1px;';
   html += `<button
     onclick="window._atelierChoisirCouleur(null)"
     aria-label="Gomme"
     title="Gomme"
-    style="
-      width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;
-      background:var(--bg);font-size:16px;line-height:32px;text-align:center;
-      ${gommeRing}
-      flex-shrink:0;
-    ">🧹</button>`;
+    style="width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;
+           background:var(--bg);font-size:18px;font-weight:700;color:var(--text2);
+           ${gommeRing}flex-shrink:0;display:flex;align-items:center;justify-content:center;">✕</button>`;
 
+  html += `</div>`;
   container.innerHTML = html;
 }
 
@@ -335,25 +340,79 @@ function _atelierRenderPalette() {
    ============================================================ */
 
 // ─────────────────────────────────────────────────────────────
-// RÔLE : Dessine une vignette miniature d'un tableau (48×36px) dans un canvas temporaire.
-// POURQUOI : Permet de prévisualiser chaque tableau dans la galerie sans charger l'éditeur.
-// Retourne un data URL PNG.
+// RÔLE : Redessine la galerie des tableaux sauvegardés.
+// POURQUOI : Affiche les vignettes, le badge ★ sur le tableau actif,
+//            et le bouton "+ Nouveau" avec la limite ATELIER_MAX.
 // ─────────────────────────────────────────────────────────────
-function _atelierVignette(tb) {
-  const W = 48, H = 36;
-  const cellW = W / ATELIER_COLS; // 3px par cellule
-  const cellH = H / ATELIER_ROWS; // 3px par cellule
+function _atelierRenderGalerie() {
+  const container = document.getElementById('atelier-galerie');
+  if (!container) return;
+
+  const tableaux = window.D.atelier.tableaux;
+  const activeId = window.D.atelier.activeId;
+
+  // POURQUOI : On calcule la taille des vignettes pour qu'elles remplissent
+  //            exactement toute la largeur du footer sur une seule ligne.
+  //            Nombre de slots = tableaux existants + 1 bouton "+" si < ATELIER_MAX.
+  //            Gap fixe à 10px entre chaque slot.
+  const nSlots  = tableaux.length + (tableaux.length < ATELIER_MAX ? 1 : 0);
+  const gapTotal = (nSlots - 1) * 10; // gap entre les N slots
+  // clientWidth est disponible car le container est dans un parent flex déjà rendu
+  const containerW = container.clientWidth || 300; // fallback si pas encore layouté
+  const vigW = Math.floor((containerW - gapTotal) / nSlots);
+  // POURQUOI : ratio 4:3 des tableaux (16 cols × 12 rows) → hauteur = largeur × (12/16)
+  const vigH = Math.floor(vigW * ATELIER_ROWS / ATELIER_COLS);
+
+  let html = `<div style="display:flex;gap:10px;align-items:flex-end;width:100%">`;
+
+  tableaux.forEach(tb => {
+    const imgSrc     = _atelierVignette(tb, vigW, vigH);
+    const estActif   = (tb.id === _atelierEditId);
+    const estChambre = (tb.id === activeId);
+
+    // Bordure épaisse sur le tableau en cours d'édition, fine sur les autres
+    const bordure = estActif
+      ? `border:3px solid var(--text);`
+      : `border:2px solid var(--border);`;
+
+    html += `<div style="position:relative;cursor:pointer;flex:1" onclick="_atelierSelectTableau('${tb.id}')">
+      <img src="${imgSrc}" width="${vigW}" height="${vigH}"
+        style="display:block;width:100%;height:auto;border-radius:6px;image-rendering:pixelated;${bordure}" />
+      ${estChambre ? `<span style="position:absolute;top:-7px;right:-3px;font-size:14px;line-height:1">★</span>` : ''}
+    </div>`;
+  });
+
+  // ── Bouton "+ Nouveau" — même largeur que les vignettes ──
+  if (tableaux.length < ATELIER_MAX) {
+    html += `<button onclick="_atelierNouveauTableau()"
+      style="flex:1;height:${vigH}px;border-radius:6px;border:2px dashed var(--border);
+             background:none;cursor:pointer;color:var(--text2);font-size:22px;">+</button>`;
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────
+// RÔLE : Génère une vignette à la taille demandée (W×H pixels).
+// POURQUOI : La galerie calcule dynamiquement la taille optimale — on passe W et H
+//            au lieu de valeurs fixes pour que les vignettes remplissent exactement la ligne.
+// ─────────────────────────────────────────────────────────────
+function _atelierVignette(tb, W, H) {
+  // Valeurs par défaut si appelé sans dimensions (ex. test)
+  W = W || 48;
+  H = H || 36;
+  const cellW = W / ATELIER_COLS;
+  const cellH = H / ATELIER_ROWS;
 
   const canvas = document.createElement('canvas');
   canvas.width  = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // Fond blanc
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, W, H);
 
-  // Pixels
   for (let row = 0; row < ATELIER_ROWS; row++) {
     for (let col = 0; col < ATELIER_COLS; col++) {
       const c = tb.pixels[row][col];
@@ -370,53 +429,6 @@ function _atelierVignette(tb) {
   }
 
   return canvas.toDataURL('image/png');
-}
-
-// ─────────────────────────────────────────────────────────────
-// RÔLE : Redessine la galerie des tableaux sauvegardés.
-// POURQUOI : Affiche les vignettes, le badge ★ sur le tableau actif,
-//            et le bouton "+ Nouveau" avec la limite ATELIER_MAX.
-// ─────────────────────────────────────────────────────────────
-function _atelierRenderGalerie() {
-  const container = document.getElementById('atelier-galerie');
-  if (!container) return;
-
-  const tableaux = window.D.atelier.tableaux;
-  const activeId = window.D.atelier.activeId;
-
-  let html = `<p style="margin:0 0 8px;font-family:var(--font-title);font-size:var(--fs-sm);color:var(--text2)">Mes tableaux</p>`;
-  html += `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px">`;
-
-  tableaux.forEach(tb => {
-    const imgSrc  = _atelierVignette(tb);
-    const estActif = (tb.id === _atelierEditId);
-    const estChambre = (tb.id === activeId);
-
-    // POURQUOI : Bordure bleue = tableau sélectionné dans l'éditeur.
-    //            Badge ★ = tableau affiché dans la chambre.
-    const bordure = estActif
-      ? 'border:3px solid var(--text);'
-      : 'border:2px solid var(--border);';
-
-    html += `<div style="position:relative;cursor:pointer" onclick="_atelierSelectTableau('${tb.id}')">
-      <img src="${imgSrc}" width="48" height="36"
-        style="display:block;border-radius:4px;image-rendering:pixelated;${bordure}" />
-      ${estChambre ? `<span style="position:absolute;top:-6px;right:-4px;font-size:12px">★</span>` : ''}
-    </div>`;
-  });
-
-  // ── Bouton "+ Nouveau" ──
-  const peutCrêer = (tableaux.length < ATELIER_MAX);
-  if (peutCrêer) {
-    html += `<button onclick="_atelierNouveauTableau()"
-      style="
-        width:48px;height:36px;border-radius:4px;border:2px dashed var(--border);
-        background:none;cursor:pointer;color:var(--text2);font-size:18px;line-height:36px;
-      ">+</button>`;
-  }
-
-  html += `</div>`;
-  container.innerHTML = html;
 }
 
 /* ============================================================
@@ -463,17 +475,28 @@ window.ouvrirAtelier = function() {
   const { tableaux, activeId } = window.D.atelier;
 
   if (tableaux.length === 0) {
-    // Galerie vide → crée un premier tableau sans déclencher le toast de limite
+    // Galerie vide → crée un premier tableau
     const nouveau = _atelierCréerTableau();
     window.D.atelier.tableaux.push(nouveau);
     _atelierEditId = nouveau.id;
     _atelierColor  = nouveau.paletteSnapshot[0] ?? null;
   } else {
-    // Sélectionne le tableau actif (affiché dans la chambre) s'il existe,
-    // sinon le premier de la galerie.
+    // Sélectionne le tableau actif s'il existe, sinon le premier
     const cible = tableaux.find(t => t.id === activeId) ?? tableaux[0];
     _atelierEditId = cible.id;
-    _atelierColor  = cible.paletteSnapshot[0] ?? null;
+
+    // RÔLE : Met à jour la palette du tableau courant depuis le thème actif.
+    // POURQUOI : Si l'utilisatrice a changé de thème depuis la dernière ouverture,
+    //            paletteSnapshot serait obsolète. On la rafraîchit à l'ouverture
+    //            pour que les couleurs proposées correspondent toujours à l'ambiance
+    //            visuelle courante. Les pixels déjà peints ne sont pas affectés.
+    const thèmeActuel = getEnvTheme(window.D.g.envTheme ?? 'pastel');
+    cible.paletteSnapshot = [...thèmeActuel.paintPalette];
+
+    // Si la couleur active n'est plus dans la nouvelle palette, on prend la première
+    if (!cible.paletteSnapshot.includes(_atelierColor)) {
+      _atelierColor = cible.paletteSnapshot[0] ?? null;
+    }
   }
 
   renderAtelier();

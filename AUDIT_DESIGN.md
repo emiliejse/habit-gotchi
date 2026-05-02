@@ -1,5 +1,11 @@
 # AUDIT_DESIGN.md — HabitGotchi v4.5
 
+> **Feature Atelier — retouches UI palette/galerie 2026-05-02**
+> - **Canvas** : `_atelierFitCanvas()` utilise désormais `zoneW/zoneH` sans soustraction de marge — le canvas occupe tout l'espace disponible, le centrage flex absorbe l'arrondi résiduel.
+> - **Palette** : grille CSS `repeat(5, 40px)` gap `10px` — 2 rangées × 4 couleurs (8 boutons ronds 40×40px) + gomme `✕` en 9e position (col 5, rangée 2 automatique). Boutons plus grands et mieux espacés qu'avant (32px → 40px, gap 6px → 10px). Gomme : `✕` texte pur remplace 🧹.
+> - **Galerie** : vignettes dynamiques pleine largeur sur une seule ligne. Taille calculée : `vigW = floor((containerW - gaps) / nSlots)`, `vigH = floor(vigW × 12/16)`. `flex:1` sur chaque slot + bouton "+ Nouveau" de même largeur. Bordure radius 6px (vs 4px avant). Badge ★ 14px (vs 12px).
+
+
 Audit design / CSS / HTML / assets — mise à jour **2026-05-02** (modif. Atelier Partie 2 + retouche plein écran).
 
 > **Feature Atelier — Partie 2 retouche UI plein écran 2026-05-02**

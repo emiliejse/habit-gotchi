@@ -201,6 +201,106 @@ function go(t) {
   syncDuringTransition(wrap);
 }
 
+/* ─── PLEIN ÉCRAN CANVAS ──────────────────────────────────── */
+
+/**
+ * RÔLE : Calcule le facteur scale pour que le canvas remplisse au mieux le viewport.
+ * POURQUOI : Le canvas p5 a une taille CSS fixe (généralement = CS*PX pixels).
+ *            On veut l'agrandir au maximum sans dépasser l'écran, en gardant le ratio carré.
+ *            On prend le min de (largeur / tailleCanvas) et (hauteur / tailleCanvas).
+ */
+function _calcCanvasScale(canvasEl) {
+  // Taille CSS réelle du canvas tel qu'il est rendu dans .tama-screen
+  const rect = canvasEl.getBoundingClientRect();
+  const size = Math.min(rect.width, rect.height); // carré → les deux sont identiques normalement
+
+  // Viewport disponible (on laisse 16px de marge de chaque côté)
+  const vw = window.innerWidth  - 32;
+  const vh = window.innerHeight - 32;
+
+  // POURQUOI Math.min : on veut que le canvas tienne EN ENTIER dans les deux dimensions
+  return Math.min(vw / size, vh / size);
+}
+
+/**
+ * RÔLE : Ouvre le canvas p5 en mode plein écran.
+ * POURQUOI : Permet de voir le gotchi agrandi sans recalculer la boucle p5.
+ *            L'agrandissement est purement CSS (transform:scale) — le canvas reste à sa taille logique.
+ *
+ * Séquence :
+ * 1. Récupère le canvas p5 dans .tama-screen
+ * 2. Calcule le scale optimal
+ * 3. Applique .canvas-fullscreen sur le canvas + le scale en style inline
+ * 4. Ouvre l'overlay de fond
+ * 5. Injecte le bouton ✕ dans le DOM
+ * 6. Bloque le scroll iOS (lockScroll)
+ */
+function openCanvasFullscreen() {
+  const canvas = document.querySelector('.tama-screen canvas');
+  if (!canvas) return; // sécurité si p5 n'a pas encore créé le canvas
+
+  const overlay = document.getElementById('canvas-overlay');
+  if (!overlay) return;
+
+  // RÔLE : Calcule et applique le scale CSS
+  const scale = _calcCanvasScale(canvas);
+  canvas.classList.add('canvas-fullscreen', 'open');
+  canvas.style.transform = `translate(-50%, -50%) scale(${scale})`;
+
+  // RÔLE : Affiche le fond noir
+  overlay.classList.add('open');
+
+  // RÔLE : Injecte le bouton ✕ (retiré à la fermeture — pas de doublon possible)
+  const closeBtn = document.createElement('button');
+  closeBtn.className   = 'canvas-close-btn';
+  closeBtn.textContent = '✕';
+  closeBtn.setAttribute('aria-label', 'Fermer le plein écran');
+  closeBtn.id          = 'canvas-close-btn';
+  closeBtn.onclick     = closeCanvasFullscreen;
+  document.body.appendChild(closeBtn);
+
+  // RÔLE : Ferme aussi si on tape sur le fond noir
+  overlay.onclick = closeCanvasFullscreen;
+
+  // RÔLE : Bloque le scroll iOS pendant le plein écran
+  lockScroll();
+
+  // RÔLE : Ferme le menu s'il était ouvert (évite deux overlays empilés)
+  if (typeof _fermerMenuSiOuvert === 'function') _fermerMenuSiOuvert();
+}
+
+/**
+ * RÔLE : Ferme le mode plein écran canvas et restaure l'état normal.
+ * POURQUOI : Retire les classes CSS + le style inline + le bouton ✕ injecté.
+ *            unlockScroll() restitue le scroll iOS.
+ */
+function closeCanvasFullscreen() {
+  const canvas = document.querySelector('.tama-screen canvas');
+  const overlay = document.getElementById('canvas-overlay');
+  const closeBtn = document.getElementById('canvas-close-btn');
+
+  if (canvas) {
+    canvas.classList.remove('canvas-fullscreen', 'open');
+    // POURQUOI : on retire le style inline — le canvas reprend son transform natif (.tama-screen canvas)
+    canvas.style.transform = '';
+  }
+
+  if (overlay) {
+    overlay.classList.remove('open');
+    overlay.onclick = null; // nettoyage du listener
+  }
+
+  // RÔLE : Retire le bouton ✕ injecté à l'ouverture
+  if (closeBtn) closeBtn.remove();
+
+  // RÔLE : Restitue le scroll iOS
+  unlockScroll();
+}
+
+// RÔLE : Exposer les deux fonctions globalement pour les appels depuis le menu HTML
+window.openCanvasFullscreen  = openCanvasFullscreen;
+window.closeCanvasFullscreen = closeCanvasFullscreen;
+
 /* ─── DATE ───────────────────────────────────────────────── */
 
 /**

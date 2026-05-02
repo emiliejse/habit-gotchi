@@ -1084,6 +1084,7 @@ function openTablet() {
   const getIcon = (ev) => {
   // Le subtype prime sur le type s'il existe
   if (ev.subtype === 'snack') return '🍽️';
+  if (ev.subtype === 'meal')  return '🍽️';
   if (ev.subtype === 'poop')  return '💩';
   if (ev.subtype === 'stade') return '🌱';
   if (ev.subtype === 'bain')  return '🛁';

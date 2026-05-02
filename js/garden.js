@@ -562,13 +562,24 @@ function _ageGarden() {
   // POURQUOI exclure les pierres (maxAge=999) : elles ne meurent jamais → jamais remplacées.
   // POURQUOI exclure les arbustes : leur maxAge long les rend rarissimes à mourir — le
   //   catalogue SLOTS complet dans initGarden() gère leur présence initiale.
-  const GERME_SLOTS = [
+  const SLOT_CHAMPIGNON_FOND = { type: 'champignon', layer: 'fond', y: 120, xMin: 10, xMax: 185, maxAge: 5, scaleMin: 1, scaleMax: 6 };
+  let GERME_SLOTS = [
     { type: 'fleur',      layer: 'fond',         y: 120, xMin: 10, xMax: 185, maxAge: 7,  scaleMin: 1, scaleMax: 8 },
     { type: 'herbe',      layer: 'fond',         y: 120, xMin: 10, xMax: 185, maxAge: 14, scaleMin: 1, scaleMax: 7 },
-    { type: 'champignon', layer: 'fond',         y: 120, xMin: 10, xMax: 185, maxAge: 5,  scaleMin: 1, scaleMax: 6 },
+    SLOT_CHAMPIGNON_FOND,
     { type: 'fleur',      layer: 'premier_plan', y: 160, xMin: 10, xMax: 185, maxAge: 7,  scaleMin: 1, scaleMax: 3 },
     { type: 'herbe',      layer: 'premier_plan', y: 160, xMin: 10, xMax: 185, maxAge: 14, scaleMin: 1, scaleMax: 3 },
   ];
+
+  // RÔLE : Si pluie en cours (rain > 0.5), le champignon a deux fois plus de chances de germer.
+  // POURQUOI duplication dans le tableau : le tirage est uniforme sur GERME_SLOTS.length —
+  //   ajouter une 2e entrée champignon fait passer sa probabilité de 1/5 à 2/6 (~33%).
+  //   C'est la façon la plus simple et la plus lisible d'ajuster un poids de tirage.
+  // POURQUOI window.meteoData?.rain : _ageGarden() est appelée depuis handleDailyReset()
+  //   dans app.js, après la mise à jour météo — meteoData est donc à jour au moment du tirage.
+  if ((window.meteoData?.rain ?? 0) > 0.5) {
+    GERME_SLOTS = [...GERME_SLOTS, SLOT_CHAMPIGNON_FOND];
+  }
 
   const MIN_ECART = 15; // distance minimale en px entre un germe et tout voisin du même layer
 
